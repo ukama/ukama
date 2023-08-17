@@ -1,8 +1,16 @@
+import { snackbarMessage } from '@/app-recoil';
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
-import { Node, useGetNodeQuery, useGetNodesLazyQuery } from '@/generated';
+import {
+  Node,
+  useGetNodeQuery,
+  useGetNodesLazyQuery,
+  useUpdateNodeMutation,
+} from '@/generated';
 import { useGetNodeRangeMetricLazyQuery } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
+import { TSnackMessage } from '@/types';
+import EditNode from '@/ui/molecules/EditNode';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
 import NodeOverviewTab from '@/ui/molecules/NodeOverviewTab';
@@ -14,24 +22,42 @@ import { getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useSetRecoilState } from 'recoil';
 
 export default function Page() {
   const router = useRouter();
+  const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [metrics, setMetrics] = useState<any>([]);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const onTabSelected = (_: any, value: number) => setSelectedTab(value);
 
-  const [getNodes, { data: getNodesData, loading: getNodesLoading }] =
-    useGetNodesLazyQuery({
-      fetchPolicy: 'cache-first',
-    });
+  const [
+    getNodes,
+    { data: getNodesData, loading: getNodesLoading, refetch: refetchNodes },
+  ] = useGetNodesLazyQuery({
+    fetchPolicy: 'cache-first',
+  });
 
   const { data: getNodeData, loading: getNodeLoading } = useGetNodeQuery({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        id: router.query['id'] as string,
+      },
+    },
     onCompleted: (data) => {
       setSelectedNode(data.getNode);
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'node-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
@@ -47,6 +73,27 @@ export default function Page() {
     client: metricsClient,
     onCompleted: (data) => {
       setMetrics(data.getNodeRangeMetric.values);
+    },
+  });
+
+  const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
+    onCompleted: (data) => {
+      setSelectedNode(data.updateNode);
+      refetchNodes();
+      setSnackbarMessage({
+        id: 'update-node-success-msg',
+        message: 'Node updated successfully.',
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'update-node-err-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
@@ -77,6 +124,24 @@ export default function Page() {
       });
   }, [metricFrom]);
 
+  const handleNodeSelected = (node: Node) => {
+    setSelectedNode(node);
+    router.query.id = node.id;
+    router.push(router);
+  };
+
+  const handleEditNode = (str: string) => {
+    setIsEditNode(false);
+    updateNode({
+      variables: {
+        data: {
+          id: selectedNode?.id || '',
+          name: str,
+        },
+      },
+    });
+  };
+
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
@@ -84,11 +149,11 @@ export default function Page() {
         loading={getNodeLoading}
         onAddNode={() => {}}
         selectedNode={selectedNode}
-        handleNodeSelected={() => {}}
-        handleEditNodeClick={() => {}}
         handleNodeActionClick={() => {}}
+        handleNodeSelected={handleNodeSelected}
         handleNodeActionItemSelected={() => {}}
         nodeActionOptions={NODE_ACTIONS_BUTTONS}
+        handleEditNodeClick={() => setIsEditNode(true)}
       />
 
       <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
@@ -164,6 +229,17 @@ export default function Page() {
             /> */}
         </TabPanel>
       </LoadingWrapper>
+      {isEditNode && (
+        <EditNode
+          title="Edit Node"
+          isOpen={isEditNode}
+          labelSuccessBtn="Save"
+          labelNegativeBtn="Cancel"
+          nodeName={selectedNode?.name || ''}
+          handleSuccessAction={handleEditNode}
+          handleCloseAction={() => setIsEditNode(false)}
+        />
+      )}
     </Stack>
   );
 }
