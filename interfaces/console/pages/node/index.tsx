@@ -1,6 +1,9 @@
+import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
+import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
+import { TSnackMessage } from '@/types';
 import AddNodeDialog from '@/ui/molecules/AddNode';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -8,51 +11,80 @@ import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
-
-const DATA = [
-  {
-    id: '1',
-    name: 'Node 1',
-    type: 'Home',
-    state: 'active',
-    network: 'Network 1',
-  },
-  {
-    id: '2',
-    name: 'Node 2',
-    type: 'Tower',
-    state: 'active',
-    network: 'Network 1',
-  },
-];
+import { useSetRecoilState } from 'recoil';
 
 const AVAILABLE_NODES = [
   { id: 'node-1', name: 'Node 1', isChecked: false },
   { id: 'node-2', name: 'Node 2', isChecked: false },
 ];
 
-const structureData = (data: any) => {};
-
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [nodes, setNodes] = useState(DATA);
-  const [availableNodes, setAvailableNodes] = useState(AVAILABLE_NODES);
+  const [nodes, setNodes] = useState<Node[] | undefined>(undefined);
+  const [availableNodes, setAvailableNodes] = useState<
+    Record<string, string | boolean>[] | undefined
+  >(undefined);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [isShowAddNodeDialog, setIsShowAddNodeDialog] =
     useState<boolean>(false);
 
+  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        isFree: false,
+      },
+    },
+    onCompleted: (data) => {
+      setNodes(data.getNodes.nodes);
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'nodes-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  const [getAvailableNodes, { loading: availableNodeLoading }] =
+    useGetNodesLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setAvailableNodes(
+          data.getNodes?.nodes?.map((node) => ({
+            id: node.id,
+            name: node.name,
+            isChecked: false,
+          })),
+        );
+      },
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'available-nodes-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
   useEffect(() => {
     if (search.length > 3) {
-      const nodes = DATA.filter((node) => {
-        const s = search.toLowerCase();
-        if (
-          node.name.toLowerCase().includes(s) ||
-          node.name.toLowerCase().includes(s)
-        )
-          return node;
-      });
-      setNodes(() => nodes);
+      const nodes: Node[] | undefined = nodesData?.getNodes.nodes.filter(
+        (node) => {
+          const s = search.toLowerCase();
+          if (
+            node.name.toLowerCase().includes(s) ||
+            node.name.toLowerCase().includes(s)
+          )
+            return node;
+        },
+      );
+      setNodes(nodes);
     } else if (search.length === 0) {
-      setNodes(() => DATA);
+      setNodes(nodesData?.getNodes.nodes);
     }
   }, [search]);
 
@@ -64,7 +96,7 @@ export default function Page() {
 
   const handleNodeCheck = (id: string, isChecked: boolean) => {
     setAvailableNodes((prev) => {
-      const nodes = prev.map((node) => {
+      const nodes = prev?.map((node) => {
         if (node.id === id) {
           return { ...node, isChecked };
         }
@@ -74,6 +106,16 @@ export default function Page() {
     });
   };
 
+  const handleClaimNodeAction = () => {
+    getAvailableNodes({
+      variables: {
+        data: {
+          isFree: true,
+        },
+      },
+    });
+    setIsShowAddNodeDialog(true);
+  };
   const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
   return (
     <>
@@ -94,7 +136,7 @@ export default function Page() {
             justifyContent={'flex-start'}
           >
             <PageContainerHeader
-              subtitle="3"
+              subtitle={nodes?.length ? `${nodes?.length}` : '0'}
               search={search}
               title={'My Nodes'}
               showSearch={true}
@@ -103,7 +145,7 @@ export default function Page() {
               handleButtonAction={() => setIsShowAddNodeDialog(true)}
             />
             <DataTableWithOptions
-              dataset={nodes}
+              dataset={nodes || []}
               icon={RouterIcon}
               onMenuItemClick={() => {}}
               columns={NODE_TABLE_COLUMNS}

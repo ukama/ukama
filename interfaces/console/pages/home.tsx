@@ -1,11 +1,24 @@
+import { commonData } from '@/app-recoil';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
+import { useGetSitesQuery } from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
+import { TCommonData } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
 import NetworkMap from '@/ui/molecules/NetworkMap';
 import NetworkStatus from '@/ui/molecules/NetworkStatus';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useRecoilValue } from 'recoil';
 
 export default function Page() {
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+
+  const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      networkId: _commonData?.networkId,
+    },
+  });
+
   return (
     <>
       <Grid container spacing={2}>

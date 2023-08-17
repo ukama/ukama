@@ -1,6 +1,6 @@
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
-import { Node, useGetNodesLazyQuery } from '@/generated';
+import { Node, useGetNodeQuery, useGetNodesLazyQuery } from '@/generated';
 import { useGetNodeRangeMetricLazyQuery } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -12,21 +12,31 @@ import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
+  const router = useRouter();
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [metrics, setMetrics] = useState<any>([]);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const onTabSelected = (_: any, value: number) => setSelectedTab(value);
 
-  const [getNodes, { data: getNodeData, loading: getNodeLoading }] =
+  const [getNodes, { data: getNodesData, loading: getNodesLoading }] =
     useGetNodesLazyQuery({
+      fetchPolicy: 'cache-first',
       onCompleted: (data) => {
         if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
       },
     });
+  const { data: getNodeData, loading: getNodeLoading } = useGetNodeQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      console.log(router.asPath, router.query);
+      // if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
+    },
+  });
 
   const [
     getNodeMetricRange,
