@@ -34,7 +34,6 @@ message AddInvitationRequest {
     string name = 3;
     string email = 4;
     RoleType role = 5;
-    
     google.protobuf.Timestamp expire_at = 6;
 }
 

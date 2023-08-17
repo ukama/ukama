@@ -8,8 +8,8 @@ import { Authentication } from "../../common/auth";
 export class GetInVitationsByOrgResolver {
   @Query(() => GetInvitationByOrgResDto)
   @UseMiddleware(Authentication)
-  async getInVitationsByOrg(@Ctx() ctx: Context): Promise<GetInvitationByOrgResDto> {
+  async getInvitationsByOrg(@Ctx() ctx: Context): Promise<GetInvitationByOrgResDto> {
     const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getInVitationsByOrg(headers.orgName);
+    return dataSources.dataSource.getInvitationsByOrg(headers.orgName);
   }
 }

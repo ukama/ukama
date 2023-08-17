@@ -24,6 +24,7 @@ export class SendInvitationResDto {
 }
 
 
+
 @ObjectType()
 export class InvitationDto{
   @Field()
@@ -36,7 +37,16 @@ export class InvitationDto{
   id: string;
 
   @Field()
+  name: string;
+
+  @Field()
+  role: string;
+
+  @Field()
   link: string;
+
+  @Field()
+  userId : string;
 
   @Field()
   org: string;
@@ -50,9 +60,18 @@ export class InvitationDto{
 export class InvitationAPIResDto{
   @Field()
   email: string;
+  
+  @Field()
+  name: string;
 
   @Field()
   expires_at: string;
+
+  @Field()
+  user_id: string;
+
+  @Field()
+  role: string;
 
   @Field()
   id: string;

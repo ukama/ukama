@@ -1,16 +1,18 @@
 import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
+
 import {
   MemberObj,
   PackageDto,
-  useAddMemberMutation,
   useAddPackageMutation,
+  useGetInvitationsByOrgLazyQuery,
   useDeletePacakgeMutation,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
+  useSendInvitationMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
@@ -38,7 +40,7 @@ const DataPlan = dynamic(() => import('./_dataplan'));
 
 const NODE_POOL_DATA = [
   {
-    type: 'Tower Node',
+    name: 'Tower Node',
     dateClaimed: '1231412414',
     id: '8910-3333-0000-3540-833',
   },
@@ -63,6 +65,8 @@ interface IManageMenu {
   selectedId: string;
   onMenuItemClick: (id: string) => void;
 }
+
+
 
 const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   <Paper
@@ -167,6 +171,33 @@ const Manage = () => {
       },
     });
 
+const [sendInvitation, { loading: sendInvitationLoading }] =
+    useSendInvitationMutation({
+      onCompleted: () => {
+        refetchMembers();
+        setSnackbarMessage({
+          id: 'send-invitation',
+          message: 'Invitation sent successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsInviteMember(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'send-invitation-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+      
+
+  
+
+
   const [getPackages, { loading: packagesLoading, refetch: getDataPlans }] =
     useGetPackagesLazyQuery({
       fetchPolicy: 'cache-and-network',
@@ -186,26 +217,27 @@ const Manage = () => {
       },
     });
 
-  const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
-    onCompleted: () => {
-      refetchMembers();
-      setSnackbarMessage({
-        id: 'add-member',
-        message: 'Invitation sent successfully',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-      setIsInviteMember(false);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'add-member-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+ const [getInvitationsByOrg, { loading: invitationsLoading }] =
+    useGetInvitationsByOrgLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          invitations: data?.getInvitationsByOrg.invitations ?? [],
+        }));
+      },
+
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'invitations',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      }
+    })
+
+
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
@@ -334,24 +366,18 @@ const Manage = () => {
         },
       });
     else if (id === 'manage-data-plan') getPackages();
+
+    else if (id === 'manage-members') getInvitationsByOrg();
+    
     setMenu(id);
   };
 
-  const handleAddMemberAction = (member: TObject) => {
-    addMember({
-      variables: {
-        data: {
-          userId: '',
-          role: member.role as string,
-        },
-      },
-    });
-  };
+
 
   const handleCreateNetwork = () => {
     console.log('adding node to network');
   };
-  
+
   const handleUploadSimsAction = (
     action: string,
     value: string,
@@ -401,6 +427,17 @@ const Manage = () => {
       });
     }
   };
+  const handleAddMemberAction = (member: TObject) => {
+    sendInvitation({
+      variables: {
+        data: {
+          email: member.email as string,
+          role: member.role as string,
+          name: member.name as string,
+        },
+      },
+    });
+  };
 
   const handleOptionMenuItemAction = (id: string, action: string) => {
     if (action === 'delete') {
@@ -429,11 +466,12 @@ const Manage = () => {
     packagesLoading ||
     simsLoading ||
     membersLoading ||
-    addMemberLoading ||
     uploadSimsLoading ||
     dataPlanLoading ||
+    invitationsLoading ||
     deletePkgLoading ||
-    updatePkgLoading;
+    updatePkgLoading ||
+    sendInvitationLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
@@ -483,7 +521,7 @@ const Manage = () => {
         title={'Invite member'}
         isOpen={isInviteMember}
         labelNegativeBtn={'Cancel'}
-        // invitationLoading={sendInvitationLoading}
+        invitationLoading={sendInvitationLoading}
         labelSuccessBtn={'Invite member'}
         handleSuccessAction={handleAddMemberAction}
         handleCloseAction={() => setIsInviteMember(false)}

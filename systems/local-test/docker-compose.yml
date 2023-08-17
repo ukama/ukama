@@ -170,7 +170,7 @@ services:
    - postgresd
 
  org:
-  build: ../registry/org
+  build: ../nucleus/org
   container_name: org
   ports:
    - '9068:9090'
@@ -188,8 +188,46 @@ services:
   depends_on:
    - postgresd
 
+ invitation:
+  build: ../nucleus/org
+  container_name: invitation
+  ports:
+   - '9078:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=ThisIsUkamaXPass
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+   - MSGCLIENT_HOST=msg-client-registry:9095
+   - ORG_SERVICE_HOST=org
+   - ORG_SERVICE_PORT=9090
+   - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
+  restart: always
+  depends_on:
+   - postgresd
+
+ member:
+  build: ../nucleus/member
+  container_name: member
+  ports:
+   - '9079:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=ThisIsUkamaXPass
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+   - MSGCLIENT_HOST=msg-client-registry:9095
+   - ORG_SERVICE_HOST=org
+   - ORG_SERVICE_PORT=9090
+   - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
+  restart: always
+  depends_on:
+   - postgresd
+
  node:
-  build: ../registry/node
+  build: ../nucleus/node
   container_name: node
   ports:
    - '9069:9090'

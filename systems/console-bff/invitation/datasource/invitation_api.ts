@@ -38,7 +38,7 @@ class InvitationApi extends RESTDataSource {
     return this.delete(`/${VERSION}/invitation/${id}`).then(res => res);
   } 
 
-  getInVitationsByOrg = async (orgName: string): Promise<GetInvitationByOrgResDto> => {
+  getInvitationsByOrg = async (orgName: string): Promise<GetInvitationByOrgResDto> => {
     return this.get(`/${VERSION}/invitation/${orgName}`).then(res => res);
   }
 
