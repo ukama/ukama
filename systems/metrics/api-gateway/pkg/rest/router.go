@@ -55,6 +55,15 @@ var upgrader = websocket.Upgrader{
 	},
 } // use default options
 
+var (
+	// pongWait is how long we will await a pong response from client
+	pongWait = 100 * time.Second
+	// pingInterval has to be less than pongWait, We cant multiply by 0.9 to get 90% of time
+	// Because that can make decimals, so instead *9 / 10 to get 90%
+	// The reason why it has to be less than PingRequency is becuase otherwise it will send a new Ping before getting response
+	pingInterval = (pongWait * 9) / 10
+)
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) *Clients {
 	c := &Clients{}
 	c.e = client.NewExporter(endpoints.Exporter, endpoints.Timeout)
@@ -152,7 +161,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
 
-		auth.GET("/live/metric", []fizz.OperationOption{
+		auth.GET("/live/metrics", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get metrics data stream. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.liveMetricHandler, http.StatusOK))
@@ -174,9 +183,14 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
+func parse_metrics_request(mReq string) []string {
+	return strings.Split(mReq, ",")
+}
+
 func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 
-	log.Infof("Requesting metric %s", m.Metric)
+	log.Infof("Requesting metrics %s", m.Metric)
+
 	//Upgrade get request to webSocket protocol
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -184,23 +198,38 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 		return err
 	}
 	defer ws.Close()
+
+	reqs := parse_metrics_request(m.Metric)
 	for {
+		ok := true
+		for i, req := range reqs {
+			mreq := *m
+			mreq.Metric = req
+			logrus.Infof("Calling routine %d for metric %+v", i, mreq)
 
-		w, err := ws.NextWriter(1)
-		if err != nil {
-			logrus.Errorf("Error getting writer: %s", err.Error())
+			w, err := ws.NextWriter(1)
+			if err != nil {
+				logrus.Errorf("Error getting writer: %s", err.Error())
+				ok = false
+				break
+			}
+
+			err = r.wsMetericHandler(w, &mreq)
+			if err != nil {
+				logrus.Info("write:", err)
+				ok = false
+				break
+			}
+
+			logrus.Infof("routine for metric %s", mreq.Metric)
+		}
+		if !ok {
 			break
 		}
-		err = r.wsMetericHandler(w, m)
-		if err != nil {
-			logrus.Info("write:", err)
-			break
-		}
-
 		time.Sleep(time.Duration(m.Interval) * time.Second)
 	}
-
 	return err
+
 }
 
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
@@ -255,7 +284,7 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 }
 
 func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricIntput) error {
-	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID))
+	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID), true)
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
@@ -282,7 +311,7 @@ func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterB
 	return httpErrorOrNil(httpCode, err)
 }
 
-func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *pkg.Filter) error {
+func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *pkg.Filter, formatting bool) error {
 
 	ok := r.m.MetricsExist(metric)
 	if !ok {
@@ -291,8 +320,8 @@ func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *
 			Message:  "Metric not found"}
 	}
 
-	logrus.Infof("Metrics request with filters: %+v", filter)
-	httpCode, err := r.m.GetMetric(strings.ToLower(metric), filter, writer)
+	logrus.Infof("Metrics %s requested with filters: %+v", metric, filter)
+	httpCode, err := r.m.GetMetric(strings.ToLower(metric), filter, writer, formatting)
 
 	return httpErrorOrNil(httpCode, err)
 }
