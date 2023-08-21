@@ -55,6 +55,9 @@ var upgrader = websocket.Upgrader{
 	},
 } // use default options
 
+//TODO: Commenting below lines because of unused variables warning
+
+/*
 var (
 	// pongWait is how long we will await a pong response from client
 	pongWait = 100 * time.Second
@@ -63,6 +66,7 @@ var (
 	// The reason why it has to be less than PingRequency is becuase otherwise it will send a new Ping before getting response
 	pingInterval = (pongWait * 9) / 10
 )
+*/
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) *Clients {
 	c := &Clients{}
