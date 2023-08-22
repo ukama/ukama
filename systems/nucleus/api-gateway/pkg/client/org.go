@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"google.golang.org/grpc/credentials/insecure"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/credentials/insecure"
 
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	"google.golang.org/grpc"
@@ -20,14 +20,14 @@ type OrgRegistry struct {
 	timeout   time.Duration
 }
 
-func NewOrgRegistry(networkHost string, orgHost string, timeout time.Duration) *OrgRegistry {
+func NewOrgRegistry(orgHost string, timeout time.Duration) *OrgRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	orgConn, err := grpc.DialContext(ctx, orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	orgClient := orgpb.NewOrgServiceClient(orgConn)
 
