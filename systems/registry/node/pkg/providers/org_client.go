@@ -86,4 +86,3 @@ func (p *registryInfoClient) GetByName(name string) (*OrgInfo, error) {
 
 	return &pkg, nil
 }
-
