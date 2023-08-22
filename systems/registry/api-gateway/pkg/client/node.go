@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
