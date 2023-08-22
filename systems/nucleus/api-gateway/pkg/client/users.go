@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+
 	pbusers "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -31,7 +32,7 @@ func NewUsers(host string, timeout time.Duration) *Users {
 
 	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pbusers.NewUserServiceClient(conn)
 
