@@ -130,7 +130,9 @@ func ParseHostString(host string, org *string) (*SystemLookupReq, error) {
 	} else if len(tok) == 2 {
 		s.System = tok[1]
 		s.Org = tok[0]
-	} else {
+	}
+
+	if s.System == "" || s.Org == "" {
 		return nil, fmt.Errorf("wrong hostname %s. Expected format orgname.systemname", host)
 	}
 
