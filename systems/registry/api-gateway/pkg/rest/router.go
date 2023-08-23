@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
@@ -41,9 +42,10 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Network network
-	Node    node
-	Member  member
+	Network    network
+	Node       node
+	Member     member
+	Invitation invitation
 }
 
 type network interface {
@@ -65,6 +67,13 @@ type member interface {
 	RemoveMember(userUUID string) error
 }
 
+type invitation interface {
+	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
+	GetInvitation(invitationId string) (*invpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
+	RemoveInvitation(invitationId string) error
+	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
+}
 type node interface {
 	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
@@ -85,6 +94,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Network = client.NewNetworkRegistry(endpoints.Network, endpoints.Timeout)
 	c.Node = client.NewNode(endpoints.Node, endpoints.Timeout)
 	c.Member = client.NewMemberRegistry(endpoints.Member, endpoints.Timeout)
+	c.Invitation = client.NewInvitationRegistry(endpoints.Invitation, endpoints.Timeout)
 
 	return c
 }
@@ -159,6 +169,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
 		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
+		// Invitation routes
+		const inv = "/invitations"
+		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
+		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
+		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
+		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
+		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
+		invitations.GET("/org/:org", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationByOrgHandler, http.StatusOK))
+
 		// Users routes
 		// const user = "/users"
 		// users := auth.Group(user, "Users", "Operations on Users")
@@ -212,6 +231,26 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 // func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
 // 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
 // }
+
+func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
+	return r.clients.Invitation.AddInvitation(req.Org, req.Name, req.Email, req.Role)
+}
+
+func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
+	return r.clients.Invitation.GetInvitation(req.InvitationId)
+}
+
+func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
+	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status)
+}
+
+func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) error {
+	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
+}
+
+func (r *Router) getInvitationByOrgHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
+	return r.clients.Invitation.GetInvitationByOrg(req.Org)
+}
 
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
 	return r.clients.Node.GetSiteNodes(req.SiteId)
