@@ -24,13 +24,16 @@ require (
 	github.com/loopfz/gadgeto v0.11.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
+	github.com/wI2L/fizz v0.22.0
+	google.golang.org/grpc v1.57.0
+)
+
+require (
 	github.com/ukama/ukama/systems/common v0.0.0-20230710205254-f576842a6ce8
 	github.com/ukama/ukama/systems/registry/invitation v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.57.0
 )
 
 require (
