@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -25,7 +26,7 @@ func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry
 
 	conn, err := grpc.DialContext(ctx, memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewMemberServiceClient(conn)
 

@@ -38,8 +38,8 @@ func (_m *invitation) AddInvitation(org string, name string, email string, role 
 	return r0, r1
 }
 
-// GetInvitation provides a mock function with given fields: invitationId
-func (_m *invitation) GetInvitation(invitationId string) (*gen.GetInvitationResponse, error) {
+// GetInvitationById provides a mock function with given fields: invitationId
+func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetInvitationResponse, error) {
 	ret := _m.Called(invitationId)
 
 	var r0 *gen.GetInvitationResponse
@@ -91,17 +91,29 @@ func (_m *invitation) GetInvitationByOrg(org string) (*gen.GetInvitationByOrgRes
 }
 
 // RemoveInvitation provides a mock function with given fields: invitationId
-func (_m *invitation) RemoveInvitation(invitationId string) error {
+func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteInvitationResponse, error) {
 	ret := _m.Called(invitationId)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	var r0 *gen.DeleteInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteInvitationResponse, error)); ok {
+		return rf(invitationId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.DeleteInvitationResponse); ok {
 		r0 = rf(invitationId)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteInvitationResponse)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(invitationId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateInvitation provides a mock function with given fields: invitationId, status
