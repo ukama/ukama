@@ -19,6 +19,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/member/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/member/pkg/server"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -77,7 +78,7 @@ func runGrpcServer(gormdb sql.Db) {
 	memberServer := server.NewMemberServer(db.NewMemberRepo(gormdb),
 		p, mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterMemberServiceServer(s, memberServer)

@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -29,7 +29,7 @@ func NewNetworkRegistry(networkHost string, timeout time.Duration) *NetworkRegis
 
 	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		logrus.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewNetworkServiceClient(conn)
 
