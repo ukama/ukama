@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	"gopkg.in/yaml.v2"
 
@@ -57,12 +56,6 @@ func initDb() sql.Db {
 }
 func runGrpcServer(gormdb sql.Db) {
 
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		/* used on local machines */
-		inst := uuid.NewV4()
-		instanceId = inst.String()
-	}
 	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
 	if err != nil {
 		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
