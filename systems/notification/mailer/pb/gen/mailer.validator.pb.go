@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -45,6 +45,9 @@ func (this *GetEmailByIdResponse) Validate() error {
 	return nil
 }
 func (this *SendEmailRequest) Validate() error {
+	if this.TemplateName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("TemplateName", fmt.Errorf(`value '%v' must not be an empty string`, this.TemplateName))
+	}
 	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
