@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	log "github.com/sirupsen/logrus"
+	msgbus "github.com/ukama/ukama/systems/common/msgbus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -97,7 +98,20 @@ func runGrpcServer(d sql.Db) {
 		log.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
 
+	/* Create a shovel if required */
+	initShovel()
+
 	grpcServer.StartServer()
+}
+
+func initShovel() {
+	p := msgbus.NewShovelProvider(serviceConfig.Queue.Uri, serviceConfig.DebugMode, serviceConfig.OrgName, "", "",
+		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
+		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
+	err := p.CreateShovel(serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to create shovelwith name %s. Error %+v.", serviceConfig.OrgName, err)
+	}
 }
 
 func signalHandler(handler *queue.MsgBusHandler, server *ugrpc.UkamaGrpcServer) {
