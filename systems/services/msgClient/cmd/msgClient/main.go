@@ -16,9 +16,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	log "github.com/sirupsen/logrus"
-	msgbus "github.com/ukama/ukama/systems/common/msgbus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	msgbus "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 
@@ -105,6 +105,12 @@ func runGrpcServer(d sql.Db) {
 }
 
 func initShovel() {
+
+	if serviceConfig.OrgName == serviceConfig.MasterOrgName {
+		log.Infof("Master org %s running no need to add shovel.", serviceConfig.MasterOrgName)
+		return
+	}
+
 	p := msgbus.NewShovelProvider(serviceConfig.Queue.Uri, serviceConfig.DebugMode, serviceConfig.OrgName, "", "",
 		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
 		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
