@@ -1,0 +1,179 @@
+package msgbus
+
+import (
+	"encoding/json"
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
+const shovelEndpoint = " /api/shovels/"
+
+type MsgBusShovelProvider interface {
+	AddShovel(name string) error
+	GetShovel(name string) (s *Shovel, err error)
+	DeleteShovel(name string) error
+	CreateShovel(name string) error
+	RestartShovel(name string) error
+}
+
+type Shovel struct {
+	SrcProtocol     string `json:"src_protocol" default:"amqp091"`
+	DestProtocol    string `default:"amqp091" json:"src-protocol"`
+	SrcExchange     string `default:"amqp.Topic" json:"src-exchange"`
+	SrcExchangeKey  string `json:"src-exchange-key,omitempty"`
+	DestExchange    string `default:"amqp.Topic" json:"dest-exchange,omitempty"`
+	DestExchangeKey string `json:"dest-exchange-key,omitempty"`
+	DestQueue       string `json:"dest-queue,omitempty"`
+	SrcQueue        string `json:"src-queue,omitempty"`
+	SrcUri          string `json:"src-uri"`
+	DestUri         string `json:"dest-uri"`
+}
+
+type msgBusShovelClient struct {
+	R        *rest.RestClient
+	user     string
+	password string
+	name     string
+	s        *Shovel
+}
+
+func NewShovelProvider(url string, debug bool, name, user, password, srcUri, destUri, srcExchange, destExchange, srcExchangeKey string) MsgBusShovelProvider {
+	f, err := rest.NewRestClient(url, debug)
+	if err != nil {
+		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
+	}
+
+	p := &msgBusShovelClient{
+		R:        f,
+		name:     name,
+		user:     user,
+		password: password,
+		s: &Shovel{
+			SrcExchange:    srcExchange,
+			DestExchange:   destExchange,
+			SrcUri:         srcUri,
+			DestUri:        destUri,
+			SrcExchangeKey: srcExchangeKey,
+			SrcProtocol:    "amqp091",
+			DestProtocol:   "amqp091",
+		},
+	}
+
+	return p
+}
+
+func (c *msgBusShovelClient) AddShovel(name string) error {
+	errStatus := &rest.ErrorMessage{}
+
+	resp, err := c.R.C.R().
+		SetError(errStatus).
+		SetBody(c.s).
+		Put(c.R.URL.String() + shovelEndpoint + "/" + name)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
+		return fmt.Errorf("api request to msgbus system failure: %w", err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to add shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		return fmt.Errorf("failed adding shovel %s to msgbus. Error %s", name, errStatus.Message)
+	}
+
+	log.Infof("Shovel %s added to msgbus.", name)
+
+	return nil
+}
+
+func (c *msgBusShovelClient) GetShovel(name string) (*Shovel, error) {
+	errStatus := &rest.ErrorMessage{}
+	s := &Shovel{}
+	resp, err := c.R.C.R().
+		SetError(errStatus).
+		Get(c.R.URL.String() + shovelEndpoint + "/" + name)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
+		return nil, fmt.Errorf("api request to msgbus system failure: %w", err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to reding shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		return nil, fmt.Errorf("failed reading shovel %s to msgbus. Error %s", name, errStatus.Message)
+	}
+
+	err = json.Unmarshal(resp.Body(), s)
+	if err != nil {
+		log.Tracef("Failed to deserialize shovel info. Error message is %s", err.Error())
+
+		return nil, fmt.Errorf("shovel info deserailization failure: %w", err)
+	}
+
+	log.Infof("Shovel %s info %+v.", name, s)
+
+	return s, nil
+}
+
+func (c *msgBusShovelClient) DeleteShovel(name string) error {
+	errStatus := &rest.ErrorMessage{}
+
+	resp, err := c.R.C.R().
+		SetError(errStatus).
+		Delete(c.R.URL.String() + shovelEndpoint + "/" + name)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
+		return fmt.Errorf("api request to msgbus system failure: %w", err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to delete shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		return fmt.Errorf("failed deleting shovel %s to msgbus. Error %s", name, errStatus.Message)
+	}
+
+	log.Infof("Shovel %s deleted from msgbus.", name)
+
+	return nil
+}
+
+func (c *msgBusShovelClient) RestartShovel(name string) error {
+	errStatus := &rest.ErrorMessage{}
+
+	resp, err := c.R.C.R().
+		SetError(errStatus).
+		Delete(c.R.URL.String() + shovelEndpoint + "/" + name + "/restart")
+
+	if err != nil {
+		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
+		return fmt.Errorf("api request to msgbus system failure: %w", err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to restart shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		return fmt.Errorf("failed restart shovel %s to msgbus. Error %s", name, errStatus.Message)
+	}
+
+	log.Infof("Shovel %s restarted in msgbus.", name)
+
+	return nil
+}
+
+func (c *msgBusShovelClient) CreateShovel(name string) error {
+
+	s, err := c.GetShovel(name)
+	if err == nil && s != nil {
+		log.Infof("Shovel %s already exists with %+v ", name, s)
+		return nil
+	} else {
+		log.Infof("Creating shovel %s with %+v", name, s)
+	}
+
+	err = c.AddShovel(name)
+	if err != nil {
+		log.Infof("Created shovel %s with %+v", name, c.s)
+	}
+
+	return nil
+}
