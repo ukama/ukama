@@ -1,15 +1,20 @@
 package msgBusServiceClient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+
+	"text/template"
 
 	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/grpc"
@@ -40,7 +45,7 @@ type msgBusServiceClient struct {
 	routes       []string
 }
 
-func NewMsgBusClient(timeout time.Duration, system string,
+func NewMsgBusClient(timeout time.Duration, org string, system string,
 	service string, instanceId string, msgBusURI string,
 	serviceURI string, msgClientURI string, exchange string, lq string, pq string, retry int8, routes []string) *msgBusServiceClient {
 
@@ -49,7 +54,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 
 	conn, err := grpc.DialContext(ctx, msgClientURI, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewMsgClientServiceClient(conn)
 
@@ -64,7 +69,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 		timeout:      timeout,
 		retry:        retry,
 		host:         serviceURI,
-		routes:       routes,
+		routes:       prepareListenerRoutes(org, system, service, routes),
 		listQueue:    lq,
 		publQueue:    pq,
 		exchange:     exchange,
@@ -73,7 +78,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 }
 
 func (m *msgBusServiceClient) Register() error {
-	logrus.Debugf("Registering %s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, m.msgClientURI)
+	log.Debugf("Registering %s service instance %s with routes %+v to MessageBusClient at %s.", m.service, m.instanceId, m.routes, m.msgClientURI)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -98,12 +103,12 @@ func (m *msgBusServiceClient) Register() error {
 		return fmt.Errorf("failed to register %s service instance %s: %s", m.service, m.instanceId, resp.State.String())
 	}
 
-	logrus.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
+	log.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
 	return nil
 }
 
 func (m *msgBusServiceClient) Start() error {
-	logrus.Debugf("Starting MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
+	log.Debugf("Starting MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -117,7 +122,7 @@ func (m *msgBusServiceClient) Start() error {
 }
 
 func (m *msgBusServiceClient) Stop() error {
-	logrus.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
+	log.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -132,7 +137,7 @@ func (m *msgBusServiceClient) Stop() error {
 }
 
 func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
-	logrus.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
+	log.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -148,7 +153,36 @@ func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.Prot
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Published:\n Message: %+v  \n Key: %s \n ", msg, route)
+	log.Debugf("Published:\n Message: %+v  \n Key: %s \n ", msg, route)
 	return nil
+
+}
+
+func prepareListenerRoutes(org, system, service string, route []string) []string {
+	routesList := make([]string, 0, len(route))
+	routeS := struct {
+		Org     string
+		System  string
+		Service string
+	}{
+		regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, ""), strings.ToLower(system), strings.ToLower(service),
+	}
+
+	for _, r := range route {
+		buf := new(bytes.Buffer)
+		t, err := template.New("route").Parse(r)
+		if err != nil {
+			log.Errorf("failed to create template %s. Error %s", r, err)
+		}
+
+		err = t.Execute(buf, routeS)
+		if err != nil {
+			log.Errorf("failed to create route from template %s. Error %s", r, err)
+			continue
+		}
+		routesList = append(routesList, buf.String())
+	}
+
+	return routesList
 
 }

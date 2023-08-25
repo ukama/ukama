@@ -2,6 +2,7 @@ package msgbus
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -9,8 +10,10 @@ const (
 	TYPE_EVENT         = "event"
 	TYPE_REQUEST       = "request"
 	TYPE_RESPONSE      = "request"
-	SOURCE_DEVICE      = "device"
+	SOURCE_NODE        = "node"
 	SOURCE_CLOUD       = "cloud"
+	SCOPE_LOCAL        = "local"
+	SCOPE_GLOBAL       = "global"
 	ACTION_CRUD_UPDATE = "update"
 	ACTION_CRUD_CREATE = "create"
 	ACTION_CRUD_DELETE = "delete"
@@ -28,11 +31,14 @@ func (k RoutingKey) StringLowercase() string {
 
 /*
  * AMQP Routing key:
- * <type>.<source>.<container>.<object>.<state>
+ * <type>.<source>.<scope>.<orgname>.<system>.<service>.<object>.<state>
  *
  * type:       event, request, response
- * source:     cloud, device
- * container:  mesh
+ * source:     cloud, node
+ * scope:      global,local
+ * orgName:    orgname(no specail charcter allowed)
+ * system:     Software system
+ * service:    service name
  * object:     link, cert
  * state:      (actions) connect, fail, active, lost, end, close, valid, invalid, update
  *             expired
@@ -40,17 +46,21 @@ func (k RoutingKey) StringLowercase() string {
  */
 
 type RoutingKeyBuilder struct {
-	msgType   string
-	source    string
-	container string
-	object    string
-	action    string //  connect, fail, active, lost, end, close, valid, invalid, update, expired
+	msgType string
+	source  string
+	scope   string
+	orgName string
+	system  string
+	service string
+	object  string
+	action  string //  connect, fail, active, lost, end, close, valid, invalid, update, expired
 }
 
 // Deprecated. Just use string constants. This one is hard to read
 func NewRoutingKeyBuilder() RoutingKeyBuilder {
 	return RoutingKeyBuilder{
 		msgType: TYPE_EVENT,
+		scope:   SCOPE_LOCAL,
 	}
 }
 
@@ -75,14 +85,38 @@ func (r RoutingKeyBuilder) SetCloudSource() RoutingKeyBuilder {
 }
 
 func (r RoutingKeyBuilder) SetDeviceSource() RoutingKeyBuilder {
-	r.source = SOURCE_DEVICE
+	r.source = SOURCE_NODE
 	return r
 }
 
-// SetContainer sets the container part of routing key. Here container means c4 container like mesh, registry ect.
-// use '*' create a routing key for all containers
-func (r RoutingKeyBuilder) SetContainer(container string) RoutingKeyBuilder {
-	r.container = container
+func (r RoutingKeyBuilder) SetGlobalScope() RoutingKeyBuilder {
+	r.scope = SCOPE_GLOBAL
+	return r
+}
+
+func (r RoutingKeyBuilder) SetScopeLocal() RoutingKeyBuilder {
+	r.scope = SCOPE_LOCAL
+	return r
+}
+
+func (r RoutingKeyBuilder) SetScope(scope string) RoutingKeyBuilder {
+	r.scope = scope
+	return r
+}
+
+func (r RoutingKeyBuilder) SetOrgName(orgName string) RoutingKeyBuilder {
+	r.orgName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(orgName, "")
+	return r
+}
+
+func (r RoutingKeyBuilder) SetSystem(system string) RoutingKeyBuilder {
+	r.system = system
+	return r
+}
+
+// Setservice sets the service part of routing key.
+func (r RoutingKeyBuilder) SetService(service string) RoutingKeyBuilder {
+	r.service = service
 	return r
 }
 
@@ -123,18 +157,31 @@ func (r RoutingKeyBuilder) Build() (string, error) {
 		return "", fmt.Errorf(errorFmt, "source")
 	}
 
-	if len(r.container) == 0 {
-		return "", fmt.Errorf(errorFmt, "container")
+	if len(r.service) == 0 {
+		return "", fmt.Errorf(errorFmt, "service")
 	}
 
 	if len(r.object) == 0 {
 		return "", fmt.Errorf(errorFmt, "object")
 	}
+
 	if len(r.msgType) == 0 {
 		return "", fmt.Errorf(errorFmt, "msgType")
 	}
 
-	return fmt.Sprintf("%s.%s.%s.%s.%s", r.msgType, r.source, r.container, r.object, r.action), nil
+	if len(r.scope) == 0 {
+		return "", fmt.Errorf(errorFmt, "scope")
+	}
+
+	if len(r.orgName) == 0 {
+		return "", fmt.Errorf(errorFmt, "orgname")
+	}
+
+	if len(r.system) == 0 {
+		return "", fmt.Errorf(errorFmt, "system")
+	}
+
+	return fmt.Sprintf("%s.%s.%s.%s.%s.%s.%s.%s", r.msgType, r.source, r.scope, r.orgName, r.system, r.service, r.object, r.action), nil
 }
 
 // Panics if one of the segments in not set
