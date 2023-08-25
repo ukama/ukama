@@ -165,7 +165,7 @@ func prepareListenerRoutes(org, system, service string, route []string) []string
 		System  string
 		Service string
 	}{
-		regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, ""), strings.ToLower(system), strings.ToLower(service),
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")), strings.ToLower(system), strings.ToLower(service),
 	}
 
 	for _, r := range route {

@@ -105,18 +105,18 @@ func (r RoutingKeyBuilder) SetScope(scope string) RoutingKeyBuilder {
 }
 
 func (r RoutingKeyBuilder) SetOrgName(orgName string) RoutingKeyBuilder {
-	r.orgName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(orgName, "")
+	r.orgName = strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(orgName, ""))
 	return r
 }
 
 func (r RoutingKeyBuilder) SetSystem(system string) RoutingKeyBuilder {
-	r.system = system
+	r.system = strings.ToLower(system)
 	return r
 }
 
 // Setservice sets the service part of routing key.
 func (r RoutingKeyBuilder) SetService(service string) RoutingKeyBuilder {
-	r.service = service
+	r.service = strings.ToLower(service)
 	return r
 }
 
