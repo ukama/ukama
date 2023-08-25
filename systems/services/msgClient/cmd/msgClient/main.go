@@ -86,9 +86,11 @@ func runGrpcServer(d sql.Db) {
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
-	p := msgbus.NewShovelProvider(serviceConfig.Queue.Uri, serviceConfig.DebugMode, serviceConfig.OrgName, "", "",
+	p := msgbus.NewShovelProvider(serviceConfig.MsgBus.ManagementUri, serviceConfig.DebugMode, serviceConfig.OrgName, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password,
 		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
 		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
+	/* Create a shovel if required */
+	initShovel(p)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewMsgClientServer(serviceRepo, routeRepo, p, handler, serviceConfig.System)
@@ -101,9 +103,6 @@ func runGrpcServer(d sql.Db) {
 	if err != nil {
 		log.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
-
-	/* Create a shovel if required */
-	initShovel(p)
 
 	grpcServer.StartServer()
 }

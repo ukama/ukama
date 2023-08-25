@@ -28,6 +28,7 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
+	github.com/icholy/digest v0.1.22 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

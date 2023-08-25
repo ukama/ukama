@@ -3,12 +3,14 @@ package msgbus
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const shovelEndpoint = " /api/shovels/"
+const shovelEndpoint = "/api/shovels/"
+const putShovelEndpoint = "/api/parameters/shovel/"
 
 type MsgBusShovelProvider interface {
 	AddShovel(name string, s *Shovel) error
@@ -19,16 +21,20 @@ type MsgBusShovelProvider interface {
 }
 
 type Shovel struct {
-	SrcProtocol     string `json:"src_protocol" default:"amqp091"`
-	DestProtocol    string `default:"amqp091" json:"src-protocol"`
-	SrcExchange     string `default:"amqp.Topic" json:"src-exchange"`
+	SrcProtocol     string `json:"src-protocol" default:"amqp091"`
+	DestProtocol    string `default:"amqp091" json:"dest-protocol"`
+	SrcExchange     string `default:"amq.topic" json:"src-exchange"`
 	SrcExchangeKey  string `json:"src-exchange-key,omitempty"`
-	DestExchange    string `default:"amqp.Topic" json:"dest-exchange,omitempty"`
+	DestExchange    string `default:"amq.topic" json:"dest-exchange,omitempty"`
 	DestExchangeKey string `json:"dest-exchange-key,omitempty"`
 	DestQueue       string `json:"dest-queue,omitempty"`
 	SrcQueue        string `json:"src-queue,omitempty"`
 	SrcUri          string `json:"src-uri"`
 	DestUri         string `json:"dest-uri"`
+	Name            string `json:"name,omitempty"`
+	Status          string `json:"status,omitempty"`
+	Vhost           string `json:"vhost,omitempty"`
+	Type            string `json:"type,omitempty"`
 }
 
 type msgBusShovelClient struct {
@@ -40,10 +46,12 @@ type msgBusShovelClient struct {
 }
 
 func NewShovelProvider(url string, debug bool, name, user, password, srcUri, destUri, srcExchange, destExchange, srcExchangeKey string) MsgBusShovelProvider {
+
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
 	}
+
 	s := &Shovel{
 		SrcExchange:    srcExchange,
 		DestExchange:   destExchange,
@@ -73,9 +81,10 @@ func (c *msgBusShovelClient) AddShovel(name string, s *Shovel) error {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := c.R.C.R().
+		SetBasicAuth(c.user, c.password).
 		SetError(errStatus).
-		SetBody(s).
-		Put(c.R.URL.String() + shovelEndpoint + "/" + name)
+		SetBody(map[string]interface{}{"value": *s}).
+		Put(c.R.URL.String() + putShovelEndpoint + url.PathEscape("/") + "/" + name)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
@@ -94,10 +103,12 @@ func (c *msgBusShovelClient) AddShovel(name string, s *Shovel) error {
 
 func (c *msgBusShovelClient) GetShovel(name string) (*Shovel, error) {
 	errStatus := &rest.ErrorMessage{}
-	s := &Shovel{}
+
+	s := &[]Shovel{}
 	resp, err := c.R.C.R().
+		SetBasicAuth(c.user, c.password).
 		SetError(errStatus).
-		Get(c.R.URL.String() + shovelEndpoint + "/" + name)
+		Get(c.R.URL.String() + shovelEndpoint + "vhost/" + url.PathEscape("/") + "/" + name)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
@@ -105,7 +116,7 @@ func (c *msgBusShovelClient) GetShovel(name string) (*Shovel, error) {
 	}
 
 	if !resp.IsSuccess() {
-		log.Errorf("Failed to reding shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to reading shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
 		return nil, fmt.Errorf("failed reading shovel %s to msgbus. Error %s", name, errStatus.Message)
 	}
 
@@ -118,15 +129,16 @@ func (c *msgBusShovelClient) GetShovel(name string) (*Shovel, error) {
 
 	log.Infof("Shovel %s info %+v.", name, s)
 
-	return s, nil
+	return &(*s)[0], nil
 }
 
 func (c *msgBusShovelClient) RemoveShovel(name string) error {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := c.R.C.R().
+		SetBasicAuth(c.user, c.password).
 		SetError(errStatus).
-		Delete(c.R.URL.String() + shovelEndpoint + "/" + name)
+		Delete(c.R.URL.String() + shovelEndpoint + "vhost/" + url.PathEscape("/") + "/" + name)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
@@ -147,8 +159,9 @@ func (c *msgBusShovelClient) RestartShovel(name string) error {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := c.R.C.R().
+		SetBasicAuth(c.user, c.password).
 		SetError(errStatus).
-		Delete(c.R.URL.String() + shovelEndpoint + "/" + name + "/restart")
+		Delete(c.R.URL.String() + shovelEndpoint + "vhost/" + url.PathEscape("/") + "/" + name + "/restart")
 
 	if err != nil {
 		log.Errorf("Failed to send api request to msgbus. Error %s", err.Error())
@@ -177,15 +190,15 @@ func (c *msgBusShovelClient) CreateShovel(name string, ns *Shovel) error {
 
 	if s != nil {
 		err = c.AddShovel(name, ns)
-		if err != nil {
+		if err == nil {
 			log.Infof("Created shovel %s with %+v", name, ns)
 		}
 	} else {
 		err = c.AddShovel(name, c.s)
-		if err != nil {
+		if err == nil {
 			log.Infof("Created shovel %s with %+v", name, c.s)
 		}
 	}
 
-	return nil
+	return err
 }
