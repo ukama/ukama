@@ -44,21 +44,26 @@ func NewShovelProvider(url string, debug bool, name, user, password, srcUri, des
 	if err != nil {
 		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
 	}
+	s := &Shovel{
+		SrcExchange:    srcExchange,
+		DestExchange:   destExchange,
+		SrcUri:         srcUri,
+		DestUri:        destUri,
+		SrcExchangeKey: srcExchangeKey,
+		SrcProtocol:    "amqp091",
+		DestProtocol:   "amqp091",
+	}
+
+	if srcExchange == "" && destExchange == "" && srcExchangeKey == "" && srcUri == "" && destUri == "" {
+		log.Fatalf("Required shovel parameter missing for shovel provider: %+v.", s)
+	}
 
 	p := &msgBusShovelClient{
 		R:        f,
 		name:     name,
 		user:     user,
 		password: password,
-		s: &Shovel{
-			SrcExchange:    srcExchange,
-			DestExchange:   destExchange,
-			SrcUri:         srcUri,
-			DestUri:        destUri,
-			SrcExchangeKey: srcExchangeKey,
-			SrcProtocol:    "amqp091",
-			DestProtocol:   "amqp091",
-		},
+		s:        s,
 	}
 
 	return p
