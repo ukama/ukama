@@ -86,8 +86,12 @@ func runGrpcServer(d sql.Db) {
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
+	p := msgbus.NewShovelProvider(serviceConfig.Queue.Uri, serviceConfig.DebugMode, serviceConfig.OrgName, "", "",
+		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
+		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler, serviceConfig.System)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, p, handler, serviceConfig.System)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
@@ -99,22 +103,19 @@ func runGrpcServer(d sql.Db) {
 	}
 
 	/* Create a shovel if required */
-	initShovel()
+	initShovel(p)
 
 	grpcServer.StartServer()
 }
 
-func initShovel() {
+func initShovel(p msgbus.MsgBusShovelProvider) {
 
 	if serviceConfig.OrgName == serviceConfig.MasterOrgName {
 		log.Infof("Master org %s running no need to add shovel.", serviceConfig.MasterOrgName)
 		return
 	}
 
-	p := msgbus.NewShovelProvider(serviceConfig.Queue.Uri, serviceConfig.DebugMode, serviceConfig.OrgName, "", "",
-		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
-		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
-	err := p.CreateShovel(serviceConfig.OrgName)
+	err := p.CreateShovel(serviceConfig.OrgName, nil)
 	if err != nil {
 		log.Fatalf("Failed to create shovelwith name %s. Error %+v.", serviceConfig.OrgName, err)
 	}
