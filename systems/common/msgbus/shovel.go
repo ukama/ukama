@@ -11,10 +11,10 @@ import (
 const shovelEndpoint = " /api/shovels/"
 
 type MsgBusShovelProvider interface {
-	AddShovel(name string) error
+	AddShovel(name string, s *Shovel) error
 	GetShovel(name string) (s *Shovel, err error)
-	DeleteShovel(name string) error
-	CreateShovel(name string) error
+	RemoveShovel(name string) error
+	CreateShovel(name string, s *Shovel) error
 	RestartShovel(name string) error
 }
 
@@ -64,12 +64,12 @@ func NewShovelProvider(url string, debug bool, name, user, password, srcUri, des
 	return p
 }
 
-func (c *msgBusShovelClient) AddShovel(name string) error {
+func (c *msgBusShovelClient) AddShovel(name string, s *Shovel) error {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := c.R.C.R().
 		SetError(errStatus).
-		SetBody(c.s).
+		SetBody(s).
 		Put(c.R.URL.String() + shovelEndpoint + "/" + name)
 
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *msgBusShovelClient) GetShovel(name string) (*Shovel, error) {
 	return s, nil
 }
 
-func (c *msgBusShovelClient) DeleteShovel(name string) error {
+func (c *msgBusShovelClient) RemoveShovel(name string) error {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := c.R.C.R().
@@ -129,11 +129,11 @@ func (c *msgBusShovelClient) DeleteShovel(name string) error {
 	}
 
 	if !resp.IsSuccess() {
-		log.Errorf("Failed to delete shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to remove shovel %s to msgbus. HTTP resp code %d and Error message is %s", name, resp.StatusCode(), errStatus.Message)
 		return fmt.Errorf("failed deleting shovel %s to msgbus. Error %s", name, errStatus.Message)
 	}
 
-	log.Infof("Shovel %s deleted from msgbus.", name)
+	log.Infof("Shovel %s remove from msgbus.", name)
 
 	return nil
 }
@@ -160,7 +160,7 @@ func (c *msgBusShovelClient) RestartShovel(name string) error {
 	return nil
 }
 
-func (c *msgBusShovelClient) CreateShovel(name string) error {
+func (c *msgBusShovelClient) CreateShovel(name string, ns *Shovel) error {
 
 	s, err := c.GetShovel(name)
 	if err == nil && s != nil {
@@ -170,9 +170,16 @@ func (c *msgBusShovelClient) CreateShovel(name string) error {
 		log.Infof("Creating shovel %s with %+v", name, s)
 	}
 
-	err = c.AddShovel(name)
-	if err != nil {
-		log.Infof("Created shovel %s with %+v", name, c.s)
+	if s != nil {
+		err = c.AddShovel(name, ns)
+		if err != nil {
+			log.Infof("Created shovel %s with %+v", name, ns)
+		}
+	} else {
+		err = c.AddShovel(name, c.s)
+		if err != nil {
+			log.Infof("Created shovel %s with %+v", name, c.s)
+		}
 	}
 
 	return nil
