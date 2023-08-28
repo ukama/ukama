@@ -37,7 +37,6 @@ type SimManagerServer struct {
 	agentFactory              adapters.AgentFactory
 	packageClient             providers.PackageClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
-	notificationClient providers.NotificationClient
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
 	msgbus                    mb.MsgBusServiceClient
@@ -45,6 +44,7 @@ type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
 	org            string
 	pushMetricHost string
+	notificationClient providers.NotificationClient
 	nucleusClient providers.NetworkClientProvider
 }
 
@@ -56,7 +56,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	org string,
 	pushMetricHost string,
 	notificationClient providers.NotificationClient,
-	netClient providers.NetworkClientProvider,
+	nucleusClient providers.NetworkClientProvider,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -72,7 +72,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
 		notificationClient:        notificationClient,
-		nucleusClient:             netClient,
+		nucleusClient:             nucleusClient,
 	}
 }
 
