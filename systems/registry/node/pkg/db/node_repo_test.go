@@ -321,4 +321,42 @@ func TestNodeRepo_Delete(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("NodeErrorGrouped", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnError(extsql.ErrNoRows)
+
+		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+			WithArgs(nodeId, nodeId).
+			WillReturnError(extsql.ErrNoRows)
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeStillGrouped", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnError(extsql.ErrNoRows)
+
+		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+			WithArgs(nodeId, nodeId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
