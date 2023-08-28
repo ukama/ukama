@@ -73,8 +73,7 @@ func TestRouter_sendEmail(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 	preq := &mailerpb.SendEmailRequest{
 		To:      []string{"brackley@ukama.com"},
-		Subject: "test",
-		Body:    "welcome to ukama",
+		TemplateName:"test-template",
 		Values:  nil,
 	}
 	m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
@@ -93,4 +92,3 @@ func TestRouter_sendEmail(t *testing.T) {
 	m.AssertExpectations(t)
 
 }
-

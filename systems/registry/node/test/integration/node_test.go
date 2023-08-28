@@ -6,6 +6,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -17,9 +21,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"math/rand"
-	"testing"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	uconf "github.com/ukama/ukama/systems/common/config"

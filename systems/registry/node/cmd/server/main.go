@@ -17,7 +17,6 @@ import (
 
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -48,7 +47,7 @@ func initConfig() {
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 

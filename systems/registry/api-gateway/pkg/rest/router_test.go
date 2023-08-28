@@ -14,6 +14,8 @@ import (
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
+	imocks "github.com/ukama/ukama/systems/registry/invitation/pb/gen/mocks"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	mmocks "github.com/ukama/ukama/systems/registry/member/pb/gen/mocks"
 	netmocks "github.com/ukama/ukama/systems/registry/network/pb/gen/mocks"
@@ -90,6 +92,43 @@ func TestGetMembers(t *testing.T) {
 		Node:    client.NewNodeFromClient(node),
 		Member:  client.NewRegistryFromClient(mem),
 		Network: client.NewNetworkRegistryFromClient(net),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	mem.AssertExpectations(t)
+}
+
+func TestGetInvitationByOrg(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/invitation", nil)
+	arc := &providers.AuthRestClient{}
+	net := &netmocks.NetworkServiceClient{}
+	node := &nmocks.NodeServiceClient{}
+	inv := &imocks.InvitationServiceClient{}
+	mem := &mmocks.MemberServiceClient{}
+	invId := uuid.NewV4()
+
+	mem.On("GetInvitationByOrg", mock.Anything, mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
+		Invitations: []*invpb.Invitation{{
+			Id:     invId.String(),
+			Org:    "ukama",
+			Name:   "ukama",
+			Email:  "test@ukama.com",
+			Role:   invpb.RoleType_Users,
+			Status: invpb.StatusType_Pending,
+		}},
+	}, nil)
+
+	r := NewRouter(&Clients{
+		Node:       client.NewNodeFromClient(node),
+		Member:     client.NewRegistryFromClient(mem),
+		Network:    client.NewNetworkRegistryFromClient(net),
+		Invitation: client.NewInvitationRegistryFromClient(inv),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act

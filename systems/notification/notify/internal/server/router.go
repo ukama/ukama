@@ -8,12 +8,12 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/notification/notify/cmd/version"
 	"github.com/ukama/ukama/systems/notification/notify/internal"
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"github.com/ukama/ukama/systems/notification/notify/internal/notify"
-	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/common/ukama"
 
 	"github.com/wI2L/fizz"
 )

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
@@ -54,7 +54,7 @@ type organization interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Organization = client.NewOrgRegistry(endpoints.Org, endpoints.Org, endpoints.Timeout)
+	c.Organization = client.NewOrgRegistry(endpoints.Org, endpoints.Timeout)
 	c.User = client.NewUsers(endpoints.User, endpoints.Timeout)
 	return c
 }
@@ -84,7 +84,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	log.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -96,7 +96,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			ctx.Set(USER_ID_KEY, DUMMY_AUTH_ID)
-			logrus.Info("Bypassing auth")
+			log.Info("Bypassing auth")
 			return
 		}
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)

@@ -48,6 +48,7 @@ services:
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - AUTHID=00000000-0000-0000-0000-00000000
       - OWNERNAME=ukama-test-org-owner
       - OWNEREMAIL=ukama-test-org-owner@domain.com
       - OWNERPHONE=0123456789

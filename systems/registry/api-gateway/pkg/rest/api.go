@@ -107,3 +107,27 @@ type AddNodeToSiteRequest struct {
 type ReleaseNodeFromSiteRequest struct {
 	NodeId string `json:"node" path:"node_id" validate:"required"`
 }
+
+type AddInvitationRequest struct {
+	Org   string `json:"org" validate:"required"`
+	Name  string `json:"name" validate:"required"`
+	Email string `json:"email" validate:"required"`
+	Role  string `json:"role" validate:"required"`
+}
+
+type GetInvitationByOrgRequest struct {
+	Org string `json:"org" path:"org" validate:"required"`
+}
+
+type GetInvitationRequest struct {
+	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
+}
+
+type UpdateInvitationRequest struct {
+	InvitationId string `json:"invitation_id" validate:"required" path:"invitation_id" `
+	Status       string `json:"status" validate:"required"`
+}
+
+type RemoveInvitationRequest struct {
+	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
+}
