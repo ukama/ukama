@@ -50,6 +50,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := i.nucleusSystem.GetOrgByName(req.GetOrg())
 	if err != nil {
 		return nil, err
@@ -64,6 +65,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
+
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
 		TemplateName: "member-invitation",
@@ -80,10 +82,13 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
-	_, err = i.iRepo.GetInvitationByEmail(req.GetEmail())
 
+	existingInvitation, err := i.iRepo.GetInvitationByEmail(req.GetEmail())
 	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
 
+	if existingInvitation == nil {
 		err = i.iRepo.Add(
 			&db.Invitation{
 				Id:        invitationId,
@@ -104,7 +109,20 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		}
 	}
 
-	return &pb.AddInvitationResponse{}, nil
+	return &pb.AddInvitationResponse{
+		Invitation: &pb.Invitation{
+			Id:       invitationId.String(),
+			Org:      req.GetOrg(),
+			Link:     link,
+			Email:    req.GetEmail(),
+			Role:     req.GetRole(),
+			Name:     req.GetName(),
+			Status:   pb.StatusType_Pending,
+			UserId:   userInfo.User.Id,
+			ExpireAt: timestamppb.New(i.invitationExpiryTime),
+		},
+
+	}, nil
 }
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
 	log.Infof("Deleting invitation %v", req)
