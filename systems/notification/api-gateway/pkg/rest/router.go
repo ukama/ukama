@@ -157,4 +157,3 @@ func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mai
 
 	return res, nil
 }
-
