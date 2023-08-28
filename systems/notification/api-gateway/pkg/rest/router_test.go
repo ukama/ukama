@@ -1,9 +1,11 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -64,31 +66,82 @@ func TestPingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
-func TestRouter_sendEmail(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/mailer/sendEmail",
-		strings.NewReader(`{"to": ["brackley@ukama.com"], "subject": "test", "body": "welcome to ukama"}`))
-
-	m := &mmocks.MailerServiceClient{}
+func TestRouter_notification(t *testing.T) {
+	cmailer := &mmocks.MailerServiceClient{}
 	arc := &providers.AuthRestClient{}
-	preq := &mailerpb.SendEmailRequest{
-		To:      []string{"brackley@ukama.com"},
-		TemplateName:"test-template",
-		Values:  nil,
-	}
-	m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
-		Message: "email sent successfully",
-	}, nil)
 
 	r := NewRouter(&Clients{
-		m: client.NewMailerFromClient(m),
+		m: client.NewMailerFromClient(cmailer),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	
+	m := &mailerpb.GetEmailByIdResponse{
+		MailId: "65d969f7-d63e-44eb-b526-fd200e62a2b0",
+		To:	 "test@ukama.com",
+		TemplateName: "test-template",
+		Values:  map[string]string{"Name": "test","Message": "welcome to ukama"},
+		
+	}
+	t.Run("sendEmail", func(t *testing.T) {
+		data := SendEmailReq{
+			To:      []string{"test@ukama.com"}, 
+			TemplateName: "test-template",
+			Values:  map[string]interface{}{"Name": "test","Message": "welcome to ukama"},
 
-	// act
-	r.ServeHTTP(w, req)
+		}
 
-	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	m.AssertExpectations(t)
+		jdata, err := json.Marshal(&data)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("POST", "/v1/mailer/sendEmail", bytes.NewReader(jdata))
+		assert.NoError(t, err)
+		newValues:= make(map[string]string)
+		for key, value := range data.Values {
+			newValues[key] = fmt.Sprintf("%v", value)
+		}
+		preq := &mailerpb.SendEmailRequest{
+			To:     data.To,
+			TemplateName: data.TemplateName,
+			Values: newValues,
+			
+		}
+
+		cmailer.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
+			Message: "email sent successfully",
+			MailId:  "65d969f7-d63e-44eb-b526-fd200e62a2b0",
+		}, nil)
+		
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		cmailer.AssertExpectations(t)
+	})
+
+
+	t.Run("getEmailById", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/mailer/"+m.MailId,nil)
+			
+		preq := &mailerpb.GetEmailByIdRequest{
+			MailId: m.MailId,
+		}
+		cmailer.On("GetEmailById", mock.Anything, preq).Return(&mailerpb.GetEmailByIdResponse{
+			MailId: m.MailId,
+			To:	 "test@ukama.com",
+			TemplateName: "test-template",
+			Values:  map[string]string{"Name": "test","Message": "welcome to ukama"},
+			Status: "sent",
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		cmailer.AssertExpectations(t)
+	})
+
+
 
 }
