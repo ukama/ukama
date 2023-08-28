@@ -135,6 +135,10 @@ func TestNodeRepo_Get(t *testing.T) {
 			WithArgs(nodeID).
 			WillReturnRows(row)
 
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeID).
+			WillReturnRows(row)
+
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
 			WithArgs(nodeID).
 			WillReturnRows(row)
@@ -145,6 +149,9 @@ func TestNodeRepo_Get(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
+
+		assert.Equal(t, nodeID.String(), node.Id)
+		assert.Equal(t, name, node.Name)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -202,16 +209,23 @@ func TestNodeRepo_GetAll(t *testing.T) {
 			WithArgs(nodeID).
 			WillReturnRows(row)
 
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeID).
+			WillReturnRows(row)
+
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
 			WithArgs(nodeID).
 			WillReturnRows(row)
 
 		// Act
-		node, err := r.GetAll()
+		nodes, err := r.GetAll()
 
 		// Assert
 		assert.NoError(t, err)
-		assert.NotNil(t, node)
+		assert.NotNil(t, nodes)
+
+		assert.Equal(t, nodeID.String(), nodes[0].Id)
+		assert.Equal(t, name, nodes[0].Name)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -237,7 +251,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 	var db *extsql.DB
 
 	// Arrange
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -260,29 +274,27 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	t.Run("NodeFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnError(extsql.ErrNoRows)
 
 		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeID, nodeID).
+			WithArgs(nodeId, nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 0))
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), nodeID).
+			WithArgs(sqlmock.AnyArg(), nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(nodeID).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), nodeID).
+			WithArgs(sqlmock.AnyArg(), nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
 		// Act
-		err = r.Delete(nodeID, nil)
+		err = r.Delete(nodeId, nil)
 
 		// Assert
 		assert.NoError(t, err)

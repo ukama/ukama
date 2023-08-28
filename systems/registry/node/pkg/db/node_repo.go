@@ -109,11 +109,16 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 
 	if res.RowsAffected > 0 {
 		return status.Errorf(codes.FailedPrecondition,
-			"node is grouped with other nodes.")
+			"node is still grouped with other nodes.")
 	}
 
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Select(clause.Associations, "NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
+		result := tx.Where("node_id", nodeId.StringLowercase()).Delete(&NodeStatus{})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		result = tx.Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
 		}
