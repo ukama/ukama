@@ -50,12 +50,12 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestNodeRepo_Add(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 	var db *extsql.DB
 
 	node := nodedb.Node{
-		Id:    nodeID.String(),
+		Id:    nodeId.String(),
 		Name:  "node-1",
 		OrgId: uuid.NewV4(),
 		Type:  "hnode",
@@ -100,7 +100,7 @@ func TestNodeRepo_Add(t *testing.T) {
 }
 
 func TestNodeRepo_Get(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 	var name = "node-1"
 
 	var db *extsql.DB
@@ -125,32 +125,32 @@ func TestNodeRepo_Get(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		// Arrange
 		row := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(nodeID, name)
+			AddRow(nodeId, name)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		// Act
-		node, err := r.Get(nodeID)
+		node, err := r.Get(nodeId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
 
-		assert.Equal(t, nodeID.String(), node.Id)
+		assert.Equal(t, nodeId.String(), node.Id)
 		assert.Equal(t, name, node.Name)
 
 		err = mock.ExpectationsWereMet()
@@ -159,11 +159,11 @@ func TestNodeRepo_Get(t *testing.T) {
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnError(extsql.ErrNoRows)
 
 		// Act
-		node, err := r.Get(nodeID)
+		node, err := r.Get(nodeId)
 
 		// Assert
 		assert.Error(t, err)
@@ -248,10 +248,14 @@ func TestNodeRepo_GetAll(t *testing.T) {
 }
 
 func TestNodeRepo_Delete(t *testing.T) {
-	var db *extsql.DB
-
 	// Arrange
 	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var name = "node-1"
+
+	var db *extsql.DB
+
+	row := sqlmock.NewRows([]string{"id", "name"}).
+		AddRow(nodeId, name)
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -298,6 +302,21 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeOnSite", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
