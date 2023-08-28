@@ -69,7 +69,7 @@ func NewMsgBusClient(timeout time.Duration, org string, system string,
 		timeout:      timeout,
 		retry:        retry,
 		host:         serviceURI,
-		routes:       prepareListenerRoutes(org, system, service, routes),
+		routes:       prepareListenerRoutes(org, routes),
 		listQueue:    lq,
 		publQueue:    pq,
 		exchange:     exchange,
@@ -158,14 +158,12 @@ func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.Prot
 
 }
 
-func prepareListenerRoutes(org, system, service string, route []string) []string {
+func prepareListenerRoutes(org string, route []string) []string {
 	routesList := make([]string, 0, len(route))
 	routeS := struct {
-		Org     string
-		System  string
-		Service string
+		Org string
 	}{
-		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")), strings.ToLower(system), strings.ToLower(service),
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
 	}
 
 	for _, r := range route {

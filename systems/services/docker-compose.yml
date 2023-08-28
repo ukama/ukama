@@ -13,7 +13,9 @@ services:
         - postgress-data:/var/lib/postgresql
 
     rabbitmq:
-      image: rabbitmq:3-management
+      build: 
+        context: ./rabbitmq
+        dockerfile: Dockerfile
       ports:
           - 5672:5672
           - 15672:15672
