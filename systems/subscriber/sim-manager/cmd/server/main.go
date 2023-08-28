@@ -122,8 +122,8 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 		serviceConfig.Org,
 		serviceConfig.PushMetricHost,
-		notificationClient,
-		nucleusP,
+		serviceConfig.NetworkHost,
+		serviceConfig.NotificationHost,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)
