@@ -18,16 +18,6 @@ type InvitationRegistry struct {
 	host    string
 }
 
-// GetInvitation implements rest.invitation.
-func (*InvitationRegistry) GetInvitation(invitationId string) (*pb.GetInvitationResponse, error) {
-	panic("unimplemented")
-}
-
-// RemoveInvitation implements rest.invitation.
-func (*InvitationRegistry) RemoveInvitation(invitationId string) error {
-	panic("unimplemented")
-}
-
 func NewInvitationRegistry(invitationHost string, timeout time.Duration) *InvitationRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -72,7 +62,7 @@ func (r *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteIn
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResponse, error) {
+func (r *InvitationRegistry) GetInvitation(id string) (*pb.GetInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
