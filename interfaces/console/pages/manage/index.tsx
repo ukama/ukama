@@ -1,21 +1,23 @@
-import { snackbarMessage } from '@/app-recoil';
+import { commonData, snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
-
 import {
   MemberObj,
   PackageDto,
+  useAddInvitationMutation,
+  useAddMemberMutation,
   useAddPackageMutation,
-  useGetInvitationsByOrgLazyQuery,
   useDeletePacakgeMutation,
+  useGetInvitationsByOrgLazyQuery,
+  useGetNetworksLazyQuery,
+  useGetNodesLazyQuery,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
-  useSendInvitationMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
-import { TObject, TSnackMessage } from '@/types';
+import { TCommonData, TObject, TSnackMessage } from '@/types';
 import DataPlanDialog from '@/ui/molecules/DataPlanDialog';
 import FileDropBoxDialog from '@/ui/molecules/FileDropBoxDialog';
 import InviteMemberDialog from '@/ui/molecules/InviteMemberDialog';
@@ -29,27 +31,15 @@ import {
   Paper,
   Stack,
 } from '@mui/material';
+import { format, parseISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
 const Member = dynamic(() => import('./_member'));
 const DataPlan = dynamic(() => import('./_dataplan'));
-
-const NODE_POOL_DATA = [
-  {
-    name: 'Tower Node',
-    dateClaimed: '1231412414',
-    id: '8910-3333-0000-3540-833',
-  },
-  {
-    type: 'Amplifier Node',
-    dateClaimed: '123120412414',
-    id: '8910-3000-0000-3540-833',
-  },
-];
 
 const structureData = (data: any) =>
   data && data.length > 0
@@ -65,8 +55,6 @@ interface IManageMenu {
   selectedId: string;
   onMenuItemClick: (id: string) => void;
 }
-
-
 
 const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   <Paper
@@ -113,13 +101,17 @@ const Manage = () => {
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
+  const _commonData = useRecoilValue<TCommonData>(commonData);
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+
   const [data, setData] = useState<any>({
     members: [],
     simPool: [],
     dataPlan: [],
-    node: NODE_POOL_DATA,
+    node: [],
+    networkList: [],
+    invitations: [],
   });
   const [dataplan, setDataplan] = useState({
     id: '',
@@ -139,12 +131,55 @@ const Manage = () => {
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        members: structureData(members?.getOrgMembers.members),
+        members: members?.getOrgMembers.members,
       }));
     },
     onError: (error) => {
       setSnackbarMessage({
         id: 'org-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        networkList: data?.getNetworks.networks ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'network',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      const filteredNodes = data?.getNodes.node
+        .filter((node) => node.created_at)
+        .map((node) => ({
+          ...node,
+          created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
+        }));
+
+      setData((prev: any) => ({
+        ...prev,
+        node: filteredNodes ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'node',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -171,33 +206,6 @@ const Manage = () => {
       },
     });
 
-const [sendInvitation, { loading: sendInvitationLoading }] =
-    useSendInvitationMutation({
-      onCompleted: () => {
-        refetchMembers();
-        setSnackbarMessage({
-          id: 'send-invitation',
-          message: 'Invitation sent successfully',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        setIsInviteMember(false);
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'send-invitation-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-
-      
-
-  
-
-
   const [getPackages, { loading: packagesLoading, refetch: getDataPlans }] =
     useGetPackagesLazyQuery({
       fetchPolicy: 'cache-and-network',
@@ -217,27 +225,70 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       },
     });
 
- const [getInvitationsByOrg, { loading: invitationsLoading }] =
-    useGetInvitationsByOrgLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          invitations: data?.getInvitationsByOrg.invitations ?? [],
-        }));
-      },
+  const [
+    getInvitationsByOrg,
+    { loading: invitationsLoading, refetch: getInvitations },
+  ] = useGetInvitationsByOrgLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        invitations: data?.getInvitationsByOrg ?? [],
+      }));
+    },
 
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'invitations',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
+    onCompleted: () => {
+      refetchMembers();
+      setSnackbarMessage({
+        id: 'add-member',
+        message: 'Invitation sent successfully',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      setIsInviteMember(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-member-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const [sendInvitation, { loading: sendInvitationLoading }] =
+    useAddInvitationMutation({
+      onCompleted: () => {
+        refetchMembers();
+        getInvitations();
+        setSnackbarMessage({
+          id: 'add-member',
+          message: 'Invitation sent successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsInviteMember(false);
+      },
       onError: (error) => {
         setSnackbarMessage({
-          id: 'invitations',
+          id: 'add-member-error',
           message: error.message,
           type: 'error' as AlertColor,
           show: true,
         });
-      }
-    })
-
-
+      },
+    });
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
@@ -326,6 +377,7 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
     });
 
   useEffect(() => {
+    console.log(memberSearch);
     if (memberSearch.length > 2) {
       const _members = members?.getOrgMembers.members.filter((member) => {
         const s = memberSearch.toLowerCase();
@@ -349,12 +401,12 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
 
   useEffect(() => {
     if (nodeSearch.length > 3) {
-      const nodes = NODE_POOL_DATA.filter((node) => {
+      const nodes = data.node.filter((node: any) => {
         if (node.id.includes(nodeSearch)) return node;
       });
       setData((prev: any) => ({ ...prev, node: nodes || [] }));
     } else if (nodeSearch.length === 0) {
-      setData((prev: any) => ({ ...prev, node: NODE_POOL_DATA }));
+      setData((prev: any) => ({ ...prev, node: data.node }));
     }
   }, [nodeSearch]);
 
@@ -366,17 +418,45 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
         },
       });
     else if (id === 'manage-data-plan') getPackages();
+    else if (id === 'manage-node') {
+      getNetworks();
+      getNodes();
+    }
 
-    else if (id === 'manage-members') getInvitationsByOrg();
-    
     setMenu(id);
   };
 
+  const handleAddMemberAction = (member: TObject) => {
+    // addMember({
+    //   variables: {
+    //     data: {
+    //       email: member.email as string,
+    //       role: member.role as string,
+    //       // name: member.name as string,
+    //     },
+    //   },
+    // });
 
-
-  const handleCreateNetwork = () => {
-    console.log('adding node to network');
+    sendInvitation({
+      variables: {
+        data: {
+          email: member.email as string,
+          role: member.role as string,
+          name: member.name as string,
+        },
+      },
+    });
   };
+
+  useEffect(() => {
+    getInvitationsByOrg({
+      variables: {
+        orgName: _commonData?.orgName,
+      },
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_commonData?.orgName]);
 
   const handleUploadSimsAction = (
     action: string,
@@ -427,17 +507,6 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       });
     }
   };
-  const handleAddMemberAction = (member: TObject) => {
-    sendInvitation({
-      variables: {
-        data: {
-          email: member.email as string,
-          role: member.role as string,
-          name: member.name as string,
-        },
-      },
-    });
-  };
 
   const handleOptionMenuItemAction = (id: string, action: string) => {
     if (action === 'delete') {
@@ -452,7 +521,7 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       );
       setDataplan({
         id: id,
-        amount: d.rate.amount,
+        amount: typeof d.rate.amount === 'number' ? d.rate.amount : 0,
         dataUnit: d.dataUnit,
         dataVolume: parseInt(parseInt(d.dataVolume).toFixed(2)),
         duration: parseInt(d.duration),
@@ -462,16 +531,23 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
     }
   };
 
+  const handleCreateNetwork = () => {
+    console.log('adding node to network');
+  };
+
   const isLoading =
     packagesLoading ||
     simsLoading ||
     membersLoading ||
+    addMemberLoading ||
+    sendInvitationLoading ||
     uploadSimsLoading ||
     dataPlanLoading ||
-    invitationsLoading ||
     deletePkgLoading ||
     updatePkgLoading ||
-    sendInvitationLoading;
+    networkLoading ||
+    invitationsLoading ||
+    getNodesLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
@@ -483,14 +559,14 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       >
         <>
           {menu === 'manage-members' && (
-             <Member
-             search={memberSearch}
-             setSearch={setMemberSearch}
-             invitationTitle=" There is one pending invitation."
-             memberData={data.members}
-             invitationsData={data.invitations}
-             handleButtonAction={() => setIsInviteMember(true)}
-           />
+            <Member
+              search={memberSearch}
+              setSearch={setMemberSearch}
+              invitationTitle=" There is one pending invitation."
+              memberData={data.members}
+              invitationsData={data.invitations}
+              handleButtonAction={() => setIsInviteMember(true)}
+            />
           )}
           {menu === 'manage-sim' && (
             <SimPool
@@ -499,13 +575,13 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
             />
           )}
           {menu === 'manage-node' && (
-             <NodePool
-             data={data.node}
-             search={nodeSearch}
-             setSearch={setNodeSearch}
-             networkList={data.networkList || []}
-             handleCreateNetwork={handleCreateNetwork}
-           />
+            <NodePool
+              data={data.node}
+              search={nodeSearch}
+              setSearch={setNodeSearch}
+              networkList={data.networkList || []}
+              handleCreateNetwork={handleCreateNetwork}
+            />
           )}
           {menu === 'manage-data-plan' && (
             <DataPlan
@@ -518,14 +594,14 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       </LoadingWrapper>
       {isInviteMember && (
         <InviteMemberDialog
-        title={'Invite member'}
-        isOpen={isInviteMember}
-        labelNegativeBtn={'Cancel'}
-        invitationLoading={sendInvitationLoading}
-        labelSuccessBtn={'Invite member'}
-        handleSuccessAction={handleAddMemberAction}
-        handleCloseAction={() => setIsInviteMember(false)}
-      />
+          title={'Invite member'}
+          isOpen={isInviteMember}
+          labelNegativeBtn={'Cancel'}
+          invitationLoading={sendInvitationLoading}
+          labelSuccessBtn={'Invite member'}
+          handleSuccessAction={handleAddMemberAction}
+          handleCloseAction={() => setIsInviteMember(false)}
+        />
       )}
       {isUploadSims && (
         <FileDropBoxDialog
@@ -540,6 +616,7 @@ const [sendInvitation, { loading: sendInvitationLoading }] =
       {isDataPlan && (
         <DataPlanDialog
           data={dataplan}
+          organizationName={_commonData.orgName}
           action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
           setData={setDataplan}

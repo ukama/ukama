@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import {
-  Paper,
-  Tabs,
-  Tab,
-  TextField,
-  Grid,
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
-import { Search } from '@mui/icons-material';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
-import EmptyView from '@/ui/molecules/EmptyView';
 import { MANAGE_TABLE_COLUMN } from '@/constants';
 import { colors } from '@/styles/theme';
+import EmptyView from '@/ui/molecules/EmptyView';
+import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
+import { Search } from '@mui/icons-material';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import {
+  Box,
+  Button,
+  Grid,
+  Paper,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from '@mui/material';
+import React, { useState } from 'react';
 
 interface IMember {
   memberData: any[];
@@ -32,6 +32,7 @@ const Member: React.FC<IMember> = ({
   search,
   setSearch,
   handleButtonAction,
+  onSearchChange,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
