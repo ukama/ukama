@@ -12,6 +12,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Box,
   Stack,
   TextField,
 } from '@mui/material';
@@ -24,6 +25,7 @@ type InviteMemberDialogProps = {
   labelNegativeBtn?: string;
   handleCloseAction: Function;
   handleSuccessAction?: Function;
+  invitationLoading?: boolean;
 };
 
 const InviteMemberDialog = ({
@@ -33,10 +35,12 @@ const InviteMemberDialog = ({
   labelNegativeBtn,
   handleCloseAction,
   handleSuccessAction,
+  invitationLoading,
 }: InviteMemberDialogProps) => {
   const [member, setMember] = useState({
     role: '',
     email: '',
+    name: '',
   });
   return (
     <Dialog
@@ -65,8 +69,22 @@ const InviteMemberDialog = ({
           gridAutoColumns={1}
           alignItems={'center'}
           justifyContent={'center'}
+          spacing={2}
         >
-          <Grid item xs={12}>
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              required
+              label="Name"
+              value={member.name}
+              id={'invite-member-name'}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(e) => setMember({ ...member, name: e.target.value })}
+            />
+          </Grid>
+          <Grid item xs={6}>
             <TextField
               fullWidth
               required
@@ -79,6 +97,7 @@ const InviteMemberDialog = ({
               onChange={(e) => setMember({ ...member, email: e.target.value })}
             />
           </Grid>
+
           <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel id={'invite-member-role-label'} shrink>
@@ -119,7 +138,12 @@ const InviteMemberDialog = ({
           )}
           {labelSuccessBtn && (
             <Button
-              disabled={!member.role || !member.email}
+              disabled={
+                !member.role ||
+                !member.email ||
+                !member.name ||
+                invitationLoading
+              }
               variant="contained"
               onClick={() =>
                 handleSuccessAction

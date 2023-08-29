@@ -97,9 +97,19 @@ export type DefaultMarkupResDto = {
   markup: Scalars['Float']['output'];
 };
 
+export type DeleteInvitationResDto = {
+  __typename?: 'DeleteInvitationResDto';
+  id: Scalars['String']['output'];
+};
+
 export type DeleteNode = {
   __typename?: 'DeleteNode';
   id: Scalars['String']['output'];
+};
+
+export type GetInvitationByOrgResDto = {
+  __typename?: 'GetInvitationByOrgResDto';
+  invitations: Array<InvitationDto>;
 };
 
 export type GetNodes = {
@@ -118,6 +128,19 @@ export type GetSimInputDto = {
 export type IdResponse = {
   __typename?: 'IdResponse';
   uuid: Scalars['String']['output'];
+};
+
+export type InvitationDto = {
+  __typename?: 'InvitationDto';
+  email: Scalars['String']['output'];
+  expiresAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  link: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  org: Scalars['String']['output'];
+  role: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
 };
 
 export type MemberInputDto = {
@@ -148,6 +171,7 @@ export type Mutation = {
   allocateSim: SimDto;
   attachNode: CBooleanResponse;
   defaultMarkup: CBooleanResponse;
+  deleteInvitation: DeleteInvitationResDto;
   deleteNodeFromOrg: DeleteNode;
   deletePackage: IdResponse;
   deleteSubscriber: CBooleanResponse;
@@ -155,8 +179,10 @@ export type Mutation = {
   getSim: SetActivePackageForSimResDto;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
+  sendInvitation: SendInvitationResDto;
   toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
+  updateInvitation: UpdateInvitationResDto;
   updateMember: CBooleanResponse;
   updateNode: Node;
   updateNodeState: Node;
@@ -216,6 +242,11 @@ export type MutationDefaultMarkupArgs = {
 };
 
 
+export type MutationDeleteInvitationArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteNodeFromOrgArgs = {
   data: NodeInput;
 };
@@ -251,6 +282,11 @@ export type MutationRemoveMemberArgs = {
 };
 
 
+export type MutationSendInvitationArgs = {
+  data: SendInvitationInputDto;
+};
+
+
 export type MutationToggleSimStatusArgs = {
   data: ToggleSimStatusInputDto;
 };
@@ -258,6 +294,12 @@ export type MutationToggleSimStatusArgs = {
 
 export type MutationUpdateFirstVisitArgs = {
   data: UserFistVisitInputDto;
+};
+
+
+export type MutationUpdateInvitationArgs = {
+  data: UpateInvitationInputDto;
+  id: Scalars['String']['input'];
 };
 
 
@@ -425,6 +467,8 @@ export type Query = {
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
+  getInvitation: InvitationDto;
+  getInvitationsByOrg: GetInvitationByOrgResDto;
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
@@ -455,6 +499,11 @@ export type QueryAddSiteArgs = {
 
 export type QueryGetDataUsageArgs = {
   simId: Scalars['String']['input'];
+};
+
+
+export type QueryGetInvitationArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -654,6 +703,15 @@ export type SubscribersResDto = {
 export type ToggleSimStatusInputDto = {
   simId: Scalars['String']['input'];
   status: Scalars['String']['input'];
+};
+
+export type UpateInvitationInputDto = {
+  status: Scalars['String']['input'];
+};
+
+export type UpdateInvitationResDto = {
+  __typename?: 'UpdateInvitationResDto';
+  id: Scalars['String']['output'];
 };
 
 export type UpdateMemberInputDto = {
