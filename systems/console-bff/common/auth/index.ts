@@ -1,8 +1,4 @@
-import {
-  MiddlewareInterface,
-  NextFn,
-} from "type-graphql/dist/interfaces/Middleware";
-import { ResolverData } from "type-graphql/dist/interfaces/ResolverData";
+import { MiddlewareInterface, NextFn, ResolverData } from "type-graphql";
 import { Service } from "typedi";
 
 import { HTTP401Error, Messages } from "../errors";
