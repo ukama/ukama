@@ -1,6 +1,6 @@
-"use strict";
-
 import winston from "winston";
+
+("use strict");
 
 const logger = winston.createLogger({
   transports: [new winston.transports.Console()],

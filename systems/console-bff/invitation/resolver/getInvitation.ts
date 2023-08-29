@@ -1,8 +1,9 @@
 import { Ctx, Query, Resolver } from "type-graphql";
+import { Arg, UseMiddleware } from "type-graphql";
+
+import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { InvitationDto } from "./types";
-import { Arg, UseMiddleware } from "type-graphql";
-import { Authentication } from "../../common/auth";
 
 @Resolver()
 export class GetInvitationResolver {

@@ -1,8 +1,7 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Ctx, Query, Resolver } from "type-graphql";
 
-import { getIdentity } from "../../common/auth/authCalls";
-import { WhoamiDto } from "./types";
 import { Context } from "../context";
+import { WhoamiDto } from "./types";
 
 @Resolver()
 export class WhoamiResolver {

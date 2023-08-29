@@ -125,17 +125,15 @@ const startServer = async () => {
   app.get("/ping", (_, res) => {
     res.send("pong");
   });
-
+  const TEMP_KID = "018688fa-d861-4e7b-b119-ffc5e1637ba8";
   app.get("/get-user", async (req, res) => {
     const kId = req.query["kid"] as string;
     if (kId) {
       const userApi = new UserApi();
       // const user: UserResDto = await userApi.auth(kId);
       // if (user.uuid) {
-      if ("018688fa-d861-4e7b-b119-ffc5e1637ba8") {
-        const whoamiRes: WhoamiDto = await userApi.whoami(
-          "018688fa-d861-4e7b-b119-ffc5e1637ba8"
-        );
+      if (TEMP_KID) {
+        const whoamiRes: WhoamiDto = await userApi.whoami(TEMP_KID);
         res.setHeader("Access-Control-Allow-Origin", "http://localhost:4455");
         res.setHeader("Access-Control-Allow-Credentials", "true");
         res.send(whoamiRes);

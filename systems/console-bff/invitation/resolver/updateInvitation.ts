@@ -2,7 +2,7 @@ import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 
 import { Authentication } from "../../common/auth";
 import { Context } from "../context";
-import { UpdateInvitationResDto ,UpateInvitationInputDto} from "./types";
+import { UpateInvitationInputDto, UpdateInvitationResDto } from "./types";
 
 @Resolver()
 export class UpdateInvitationResolver {

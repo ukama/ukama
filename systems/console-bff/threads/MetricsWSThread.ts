@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { kvsLocalStorage } = require("@kvs/node-localstorage");
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { workerData, isMainThread, parentPort } = require("worker_threads");
 
 const getTimestampCount = (count: string) =>

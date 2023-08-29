@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { workerData, isMainThread, parentPort } = require("worker_threads");
+/* eslint-disable @typescript-eslint/no-var-requires */
 const axios = require("axios");
 
 const runWorker = async () => {

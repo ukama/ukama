@@ -4,7 +4,7 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { API_METHOD_TYPE } from "../enums";
 
 export type ApiMethodDataDto = {
-  url: String;
+  url: string;
   method: API_METHOD_TYPE;
   params?: any;
   headers?: any;

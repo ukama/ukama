@@ -8,7 +8,7 @@ export class SendInvitationInputDto {
 
   @Field()
   @IsEmail()
-  email: string; 
+  email: string;
 
   @Field()
   role: string;
@@ -23,10 +23,8 @@ export class SendInvitationResDto {
   message: string;
 }
 
-
-
 @ObjectType()
-export class InvitationDto{
+export class InvitationDto {
   @Field()
   email: string;
 
@@ -46,21 +44,20 @@ export class InvitationDto{
   link: string;
 
   @Field()
-  userId : string;
+  userId: string;
 
   @Field()
   org: string;
 
   @Field()
   status: string;
-
 }
 
 @ObjectType()
-export class InvitationAPIResDto{
+export class InvitationAPIResDto {
   @Field()
   email: string;
-  
+
   @Field()
   name: string;
 
@@ -84,41 +81,40 @@ export class InvitationAPIResDto{
 
   @Field()
   status: string;
-
 }
 
 @ObjectType()
-export class GetInvitationByOrgResDto{
-  @Field( () => [InvitationDto])
+export class GetInvitationByOrgResDto {
+  @Field(() => [InvitationDto])
   invitations: InvitationDto[];
 }
 
 @InputType()
-export class GetInvitationInputDto{
+export class GetInvitationInputDto {
   @Field()
   id: string;
 }
 
 @InputType()
-export class GetInvitationByOrgInputDto{
+export class GetInvitationByOrgInputDto {
   @Field()
   orgName: string;
 }
 
 @ObjectType()
-export class UpdateInvitationResDto{
+export class UpdateInvitationResDto {
   @Field()
   id: string;
 }
 
 @ObjectType()
-export class DeleteInvitationResDto{
+export class DeleteInvitationResDto {
   @Field()
   id: string;
 }
 
 @InputType()
-export class UpateInvitationInputDto{
+export class UpateInvitationInputDto {
   @Field()
   status: string;
 }

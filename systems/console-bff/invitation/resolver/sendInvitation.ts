@@ -1,9 +1,8 @@
-
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 
+import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { SendInvitationInputDto, SendInvitationResDto } from "./types";
-import { Authentication } from "../../common/auth";
 
 @Resolver()
 export class SendInvitationResolver {
