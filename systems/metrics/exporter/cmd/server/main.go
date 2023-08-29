@@ -36,7 +36,7 @@ func main() {
 func initConfig() {
 	log.Infof("Initializing config")
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
-	
+
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -46,7 +46,7 @@ func initConfig() {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
-	
+
 	pkg.IsDebugMode = serviceConfig.DebugMode
 	log.Infof("Config: %+v", serviceConfig)
 }
@@ -64,7 +64,7 @@ func runGrpcServer() {
 	}
 
 	if serviceConfig.IsMsgBus {
-		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -77,12 +77,12 @@ func runGrpcServer() {
 	mc := collector.NewMetricsCollector(serviceConfig.MetricConfig)
 
 	// Exporter service
-	exporter, err := server.NewExporterServer(serviceConfig.Org, mbClient)
+	exporter, err := server.NewExporterServer(serviceConfig.OrgName, serviceConfig.Org, mbClient)
 	if err != nil {
 		log.Fatalf("Exporter server initialization failed. Error: %v", err)
 	}
-	
-	nSrv := server.NewExporterEventServer(mc)
+
+	nSrv := server.NewExporterEventServer(serviceConfig.OrgName, mc)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterExporterServiceServer(s, exporter)
