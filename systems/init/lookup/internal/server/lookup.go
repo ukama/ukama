@@ -280,7 +280,7 @@ func (l *LookupServer) getSystem(name string, org uint) (*db.System, error) {
 
 func (l *LookupServer) getOrgDetails(orgId, orgName string) (*db.Org, error) {
 	var err error
-	org := &db.Org{}
+	var org *db.Org
 	if orgName == "" {
 		id, err := uuid.FromString(orgId)
 		if err != nil {
