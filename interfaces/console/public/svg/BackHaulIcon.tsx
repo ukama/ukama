@@ -1,4 +1,4 @@
-const BackHaulIcon = () => (
+export const BackHaulIcon = () => (
   <svg
     width="24"
     height="24"

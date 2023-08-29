@@ -1,4 +1,4 @@
-const ControllerIcon = () => (
+export const ControllerIcon = () => (
   <svg
     width="24"
     height="24"

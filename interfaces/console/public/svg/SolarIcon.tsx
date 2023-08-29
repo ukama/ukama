@@ -1,4 +1,4 @@
-const SolarIcon = () => (
+export const SolarIcon = () => (
   <svg
     width="48"
     height="48"

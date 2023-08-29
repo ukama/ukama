@@ -1,4 +1,4 @@
-export const BatteryIcon = () => (
+export const NodeIcon = () => (
   <svg
     width="28"
     height="28"

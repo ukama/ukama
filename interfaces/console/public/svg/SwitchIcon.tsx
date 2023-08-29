@@ -1,4 +1,4 @@
-const SwitchIcon = () => (
+export const SwitchIcon = () => (
   <svg
     width="24"
     height="24"

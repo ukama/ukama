@@ -10,3 +10,8 @@ export { ThermometerIcon } from './ThermometerIcon';
 export { SettingsArrowIcon } from './SettingsArrowIcon';
 export { PagePlaceholderSvg } from './PagePlaceholderSvg';
 export { NoBillYet } from './NoBillYet';
+export { ControllerIcon } from './ControllerIcon';
+export { NodeIcon } from './NodeIcon';
+export { SolarIcon } from './SolarIcon';
+export { SvgContainer } from './SvgContainer';
+export { SwitchIcon } from './SwitchIcon';
