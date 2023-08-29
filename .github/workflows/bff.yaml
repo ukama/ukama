@@ -111,7 +111,7 @@ jobs:
         name: lint
         runs-on: ubuntu-latest
         env:
-          working-directory: systems/bff
+          working-directory: systems/console-bff
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v2
