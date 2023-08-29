@@ -48,10 +48,11 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout: 1 * time.Second,
-		Network: "network:9090",
-		Member:  "member:9090",
-		Node:    "node:9090",
+		Timeout:    1 * time.Second,
+		Network:    "network:9090",
+		Member:     "member:9090",
+		Node:       "node:9090",
+		Invitation: "invitation:9090",
 	})
 }
 
@@ -77,6 +78,7 @@ func TestGetMembers(t *testing.T) {
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
+	inv := &imocks.InvitationServiceClient{}
 	OrgId := uuid.NewV4()
 	UserId := uuid.NewV4()
 
@@ -89,9 +91,10 @@ func TestGetMembers(t *testing.T) {
 	}, nil)
 
 	r := NewRouter(&Clients{
-		Node:    client.NewNodeFromClient(node),
-		Member:  client.NewRegistryFromClient(mem),
-		Network: client.NewNetworkRegistryFromClient(net),
+		Node:       client.NewNodeFromClient(node),
+		Member:     client.NewRegistryFromClient(mem),
+		Network:    client.NewNetworkRegistryFromClient(net),
+		Invitation: client.NewInvitationRegistryFromClient(inv),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
