@@ -30,7 +30,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
   addSiteAction,
   restartSiteAction,
 }) => {
-  const [selectedSite, setSelectedSite] = React.useState('');
+  const [selectedSite, setSelectedSite] = React.useState('site1');
   const [siteHealth, setSiteHealth] = React.useState('online');
   const [isSiteSelected, setIsSiteSelected] = React.useState(false);
 
