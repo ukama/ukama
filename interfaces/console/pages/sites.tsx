@@ -1,27 +1,27 @@
 import { commonData } from '@/app-recoil';
-import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import { useGetSitesQuery } from '@/generated';
-import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData } from '@/types';
-import StatusCard from '@/ui/components/StatusCard';
-import EmptyView from '@/ui/molecules/EmptyView';
-import {
-  LabelOverlayUI,
-  SitesSelection,
-  SitesTree,
-} from '@/ui/molecules/NetworkMap/OverlayUI';
-import NetworkStatus from '@/ui/molecules/NetworkStatus';
-import NetworkIcon from '@mui/icons-material/Hub';
-import { Paper } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+import { colors } from '@/styles/theme';
+import SiteHeader from '@/ui/molecules/SiteHeader';
+import { Site } from '@/types';
+import { PageContainer } from '@/styles/global';
 import dynamic from 'next/dynamic';
 import { useRecoilValue } from 'recoil';
+import { Grid, Typography } from '@mui/material';
 const DynamicMap = dynamic(
   () => import('../ui/molecules/NetworkMap/DynamicMap'),
   {
     ssr: false,
   },
 );
+
+const sites: Site[] = [
+  { name: 'site1', health: 'online', duration: '3 days' },
+  { name: 'site2', health: 'offline', duration: '1 week' },
+  { name: 'site3', health: 'online', duration: '2 days' },
+];
 
 export default function Page() {
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -33,42 +33,46 @@ export default function Page() {
     },
   });
 
+  const handleSiteSelect = (site: any): void => {
+    console.log(site);
+  };
+  const handleAddSite = () => {
+    // Logic to add a new site
+  };
+  const handleSiteRestart = () => {
+    // Logic to restart a site
+  };
+
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid xs={12}>
-          <NetworkStatus
-            loading={false}
-            availableNodes={4}
-            statusType="ONLINE"
-            tooltipInfo="Network is online"
-          />
+      <LoadingWrapper
+        radius="small"
+        width={'100%'}
+        isLoading={false}
+        cstyle={{
+          backgroundColor: false ? colors.white : 'transparent',
+        }}
+      >
+        <SiteHeader
+          sites={sites}
+          sitesAction={handleSiteSelect}
+          addSiteAction={handleAddSite}
+          restartSiteAction={handleSiteRestart}
+        />
+
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <PageContainer>
+              <Typography variant="h6" gutterBottom>
+                Site details
+              </Typography>
+            </PageContainer>
+          </Grid>
+          <Grid item xs={6}>
+            Hello
+          </Grid>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
-          <StatusCard
-            Icon={UsersWithBG}
-            title={'Connected Users'}
-            options={TIME_FILTER}
-            subtitle1={'0'}
-            subtitle2={''}
-            option={''}
-            loading={false}
-            handleSelect={(value: string) => {}}
-          />
-        </Grid>
-        <Grid xs={12} md={6} lg={4}>
-          <StatusCard
-            title={'Data Usage'}
-            subtitle1={`0`}
-            subtitle2={`Package`}
-            Icon={DataUsage}
-            options={TIME_FILTER}
-            option={'usage'}
-            loading={false}
-            handleSelect={(value: string) => {}}
-          />
-        </Grid>
-      </Grid>
+      </LoadingWrapper>
     </>
   );
 }
