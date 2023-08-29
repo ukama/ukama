@@ -1,9 +1,13 @@
 package msgbus
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
+	"text/template"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -218,4 +222,53 @@ func ParseRouteList(s []string) ([]RoutingKey, error) {
 	}
 
 	return rk, nil
+}
+
+func PrepareRoutes(org string, route []string) []string {
+	routesList := make([]string, 0, len(route))
+	routeS := struct {
+		Org string
+	}{
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
+	}
+
+	for _, r := range route {
+		buf := new(bytes.Buffer)
+		t, err := template.New("route").Parse(r)
+		if err != nil {
+			log.Errorf("failed to create template %s. Error %s", r, err)
+		}
+
+		err = t.Execute(buf, routeS)
+		if err != nil {
+			log.Errorf("failed to create route from template %s. Error %s", r, err)
+			continue
+		}
+		routesList = append(routesList, buf.String())
+	}
+
+	return routesList
+
+}
+
+func PrepareRoute(org string, r string) string {
+	routeS := struct {
+		Org string
+	}{
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
+	}
+
+	buf := new(bytes.Buffer)
+	t, err := template.New("route").Parse(r)
+	if err != nil {
+		log.Fatalf("failed to create template %s. Error %s", r, err)
+	}
+
+	err = t.Execute(buf, routeS)
+	if err != nil {
+		log.Fatalf("failed to create route from template %s. Error %s", r, err)
+	}
+
+	return buf.String()
+
 }

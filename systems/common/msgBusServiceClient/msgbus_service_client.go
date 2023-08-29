@@ -1,11 +1,8 @@
 package msgBusServiceClient
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -13,8 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
-
-	"text/template"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -73,7 +68,7 @@ func NewMsgBusClient(timeout time.Duration, org string, system string,
 		timeout:      timeout,
 		retry:        retry,
 		host:         serviceURI,
-		routes:       prepareListenerRoutes(org, routes),
+		routes:       msgbus.PrepareRoutes(org, routes),
 		listQueue:    lq,
 		publQueue:    pq,
 		exchange:     exchange,
@@ -173,32 +168,5 @@ func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.Prot
 	}
 	log.Debugf("Published:\n Message: %+v  \n Key: %s \n ", msg, route)
 	return nil
-
-}
-
-func prepareListenerRoutes(org string, route []string) []string {
-	routesList := make([]string, 0, len(route))
-	routeS := struct {
-		Org string
-	}{
-		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
-	}
-
-	for _, r := range route {
-		buf := new(bytes.Buffer)
-		t, err := template.New("route").Parse(r)
-		if err != nil {
-			log.Errorf("failed to create template %s. Error %s", r, err)
-		}
-
-		err = t.Execute(buf, routeS)
-		if err != nil {
-			log.Errorf("failed to create route from template %s. Error %s", r, err)
-			continue
-		}
-		routesList = append(routesList, buf.String())
-	}
-
-	return routesList
 
 }
