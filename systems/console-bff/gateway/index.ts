@@ -70,7 +70,7 @@ const loadServers = async () => {
         introspection: "true",
       },
     }),
-    buildService({ name, url }) {
+    buildService({ url }) {
       return new RemoteGraphQLDataSource({
         url,
         willSendRequest({ request }: any) {
