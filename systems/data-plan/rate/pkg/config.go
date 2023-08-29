@@ -15,6 +15,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	BaseRate         string `deafult:"baserate:9090"`
+	OrgName          string
 }
 
 func NewConfig(name string) *Config {
