@@ -10,7 +10,7 @@ export class GetUserResolver {
     @Arg("userId") userId: string,
     @Ctx() ctx: Context
   ): Promise<UserResDto | null> {
-    const { dataSources, headers } = ctx;
+    const { dataSources } = ctx;
     return dataSources.dataSource.getUser(userId);
   }
 }

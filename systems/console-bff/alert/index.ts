@@ -11,8 +11,8 @@ import resolvers from "./resolver";
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
   await startStandaloneServer(server, {
-    context: async ({ req, res }) => {
-      const { cache } = server;
+    context: async ({ req }) => {
+      // const { cache } = server;
       return {
         headers: parseHeaders(req.headers),
         dataSources: {

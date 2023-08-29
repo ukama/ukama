@@ -22,10 +22,3 @@ export const parseNodeRes = (res: any): Node => {
     },
   };
 };
-
-const parseAttachedNodeRes = (res: any): [Node] => {
-  const nodes = res.map((node: any) => {
-    return parseNodeRes(node);
-  });
-  return nodes;
-};

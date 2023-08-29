@@ -16,7 +16,7 @@ class RateApi extends RESTDataSource {
   defaultMarkup = async (
     req: DefaultMarkupInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${req.markup}/default`).then(res => {
+    return this.post(`/${req.markup}/default`).then(() => {
       return {
         success: true,
       };

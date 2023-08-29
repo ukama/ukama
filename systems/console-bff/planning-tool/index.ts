@@ -31,7 +31,7 @@ const app = async () => {
     plugins: [ApolloServerPluginInlineTrace({})],
   });
 
-  const { url } = await startStandaloneServer(server, {
+  await startStandaloneServer(server, {
     context: async () => context,
     listen: { port: PLANNING_SERVICE_PORT },
   });

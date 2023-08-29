@@ -7,7 +7,7 @@ import { gql } from "graphql-tag";
 import * as tq from "type-graphql";
 import { NonEmptyArray } from "type-graphql";
 
-const SubGraphServer = async (resolvers: NonEmptyArray<Function>) => {
+const SubGraphServer = async (resolvers: NonEmptyArray<any>) => {
   const ts = await tq.buildSchema({
     resolvers: resolvers,
     scalarsMap: [{ type: GraphQLScalarType, scalar: DateTimeResolver }],

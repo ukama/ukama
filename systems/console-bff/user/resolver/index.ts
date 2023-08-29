@@ -4,7 +4,7 @@ import { GetUserResolver } from "./getUser";
 import { updateFirstVisitResolver } from "./updateFirstVisit";
 import { WhoamiResolver } from "./whoami";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   GetUserResolver,
   updateFirstVisitResolver,
   WhoamiResolver,

@@ -28,7 +28,7 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<CBooleanResponse> => {
     return this.patch(`/${subscriberId}`, {
       body: { ...req },
-    }).then(res => {
+    }).then(() => {
       return { success: true };
     });
   };
@@ -36,7 +36,7 @@ class SubscriberApi extends RESTDataSource {
   deleteSubscriber = async (
     subscriberId: string
   ): Promise<CBooleanResponse> => {
-    return this.delete(`/${subscriberId}`).then(res => {
+    return this.delete(`/${subscriberId}`).then(() => {
       return {
         success: true,
       };
