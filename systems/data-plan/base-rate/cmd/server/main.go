@@ -66,7 +66,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -75,7 +75,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb), mbClient)
+	srv := server.NewBaseRateServer(serviceConfig.OrgName, db.NewBaseRateRepo(gormdb), mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterBaseRatesServiceServer(s, srv)

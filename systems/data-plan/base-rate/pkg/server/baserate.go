@@ -23,17 +23,19 @@ import (
 const uuidParsingError = "Error parsing UUID"
 
 type BaseRateServer struct {
+	orgName        string
 	baseRateRepo   db.BaseRateRepo
 	msgBus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedBaseRatesServiceServer
 }
 
-func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClient) *BaseRateServer {
+func NewBaseRateServer(orgName string, baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClient) *BaseRateServer {
 	return &BaseRateServer{
+		orgName:        orgName,
 		baseRateRepo:   baseRateRepo,
 		msgBus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
