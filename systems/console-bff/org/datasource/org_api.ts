@@ -52,8 +52,9 @@ class OrgApi extends RESTDataSource {
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    return this.get(`/${VERSION}/orgs/${orgName}`)
-      .then(res => dtoToOrgResDto(res))
+    return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
+      dtoToOrgResDto(res)
+    );
   };
 
   addOrg = async (req: AddOrgInputDto): Promise<OrgDto> => {

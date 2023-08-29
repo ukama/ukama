@@ -1,9 +1,8 @@
-import {
-  InvitationAPIResDto,
-  InvitationDto,
-} from "../resolver/types";
+import { InvitationAPIResDto, InvitationDto } from "../resolver/types";
 
-export const dtoToInvitationResDto = (res: InvitationAPIResDto): InvitationDto => {
+export const dtoToInvitationResDto = (
+  res: InvitationAPIResDto
+): InvitationDto => {
   return {
     email: res.email,
     expiresAt: res.expires_at,
@@ -16,4 +15,3 @@ export const dtoToInvitationResDto = (res: InvitationAPIResDto): InvitationDto =
     status: res.status,
   };
 };
-

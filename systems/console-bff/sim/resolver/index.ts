@@ -15,20 +15,21 @@ import { SetActivePackageForSimResolver } from "./setActivePackageForSim";
 import { ToggleSimStatusResolver } from "./toggleSimStatus";
 import { UploadSimsResolver } from "./uploadSims";
 
-
-const resolvers: NonEmptyArray<Function> = [AddPackageToSimResolver,
-    AllocateSimResolver,
-    DeleteSimResolver,
-    GetSimByNetworkResolver,
-    GetSimBySubscriberResolver,
-    GetDataUsageResolver,
-    GetPackagesForSimResolver,
-    GetSimResolver,
-    GetSimPoolStatsResolver,
-    GetSimsResolver,
-    RemovePackageForSimResolver,
-    SetActivePackageForSimResolver,
-    ToggleSimStatusResolver,
-    UploadSimsResolver];
+const resolvers: NonEmptyArray<Function> = [
+  AddPackageToSimResolver,
+  AllocateSimResolver,
+  DeleteSimResolver,
+  GetSimByNetworkResolver,
+  GetSimBySubscriberResolver,
+  GetDataUsageResolver,
+  GetPackagesForSimResolver,
+  GetSimResolver,
+  GetSimPoolStatsResolver,
+  GetSimsResolver,
+  RemovePackageForSimResolver,
+  SetActivePackageForSimResolver,
+  ToggleSimStatusResolver,
+  UploadSimsResolver,
+];
 
 export default resolvers;

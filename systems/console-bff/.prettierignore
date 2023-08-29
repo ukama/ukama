@@ -11,3 +11,6 @@ README.md
 .prettierignore
 planning-tool/prisma
 yarn-error.log
+Makefile
+Dockerfile
+./dist
