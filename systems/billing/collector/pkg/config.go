@@ -34,11 +34,11 @@ func NewConfig(name string) *Config {
 			Host:    "msg-client-billing:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.{{ .Org}}.telna.cdr.sim.usage",
-				"event.cloud.{{ .Org}}.subscriber.registry.subscriber.create",
-				"event.cloud.{{ .Org}}.subscriber.registry.subscriber.update",
-				"event.cloud.{{ .Org}}.subscriber.registry.subscriber.delete",
-				"event.cloud.{{ .Org}}.subscriber.simmanager.package.activate",
+				"event.cloud.local.{{ .Org}}.telna.cdr.sim.usage",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 			},
 		},
 	}
