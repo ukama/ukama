@@ -12,13 +12,13 @@ type MsgBusShovelProvider struct {
 	mock.Mock
 }
 
-// AddShovel provides a mock function with given fields: name
-func (_m *MsgBusShovelProvider) AddShovel(name string) error {
-	ret := _m.Called(name)
+// AddShovel provides a mock function with given fields: name, s
+func (_m *MsgBusShovelProvider) AddShovel(name string, s *msgbus.Shovel) error {
+	ret := _m.Called(name, s)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(string, *msgbus.Shovel) error); ok {
+		r0 = rf(name, s)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -26,27 +26,13 @@ func (_m *MsgBusShovelProvider) AddShovel(name string) error {
 	return r0
 }
 
-// CreateShovel provides a mock function with given fields: name
-func (_m *MsgBusShovelProvider) CreateShovel(name string) error {
-	ret := _m.Called(name)
+// CreateShovel provides a mock function with given fields: name, s
+func (_m *MsgBusShovelProvider) CreateShovel(name string, s *msgbus.Shovel) error {
+	ret := _m.Called(name, s)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteShovel provides a mock function with given fields: name
-func (_m *MsgBusShovelProvider) DeleteShovel(name string) error {
-	ret := _m.Called(name)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(string, *msgbus.Shovel) error); ok {
+		r0 = rf(name, s)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -78,6 +64,20 @@ func (_m *MsgBusShovelProvider) GetShovel(name string) (*msgbus.Shovel, error) {
 	}
 
 	return r0, r1
+}
+
+// RemoveShovel provides a mock function with given fields: name
+func (_m *MsgBusShovelProvider) RemoveShovel(name string) error {
+	ret := _m.Called(name)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // RestartShovel provides a mock function with given fields: name

@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/common
 
-go 1.18
+go 1.20
 
 replace github.com/ukama/ukama/systems/common => ./
 

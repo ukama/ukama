@@ -16,6 +16,8 @@ import (
 
 	"text/template"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -28,6 +30,7 @@ type MsgBusServiceClient interface {
 }
 
 type msgBusServiceClient struct {
+	org          string
 	uuid         string
 	service      string
 	system       string
@@ -59,6 +62,7 @@ func NewMsgBusClient(timeout time.Duration, org string, system string,
 	client := pb.NewMsgClientServiceClient(conn)
 
 	return &msgBusServiceClient{
+		org:          org,
 		service:      service,
 		system:       system,
 		instanceId:   instanceId,
@@ -116,6 +120,20 @@ func (m *msgBusServiceClient) Start() error {
 		ServiceUuid: m.uuid})
 	if err != nil {
 		return err
+	}
+
+	msg := &epb.PublishServiceStatusUp{
+		OrgName:  m.org,
+		System:   m.system,
+		Service:  m.service,
+		Instance: m.instanceId,
+	}
+
+	route := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(m.system).SetOrgName(m.org).SetService(m.service).SetAction("up").SetObject("instance").MustBuild()
+	log.Debugf("Publishing service up message on bus: %v", msg)
+	err = m.PublishRequest(route, msg)
+	if err != nil {
+		log.Warningf("Failed to publish message on bus: %v", err)
 	}
 
 	return nil
