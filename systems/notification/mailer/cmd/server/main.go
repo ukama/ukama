@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/num30/config"
 
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/server"
@@ -60,13 +58,7 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		inst := uuid.NewV4()
-		instanceId = inst.String()
-	}
-
-	srv := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer)
+	srv := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer, serviceConfig.TemplatesPath)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterMailerServiceServer(s, srv)

@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
@@ -41,9 +42,10 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Network network
-	Node    node
-	Member  member
+	Network    network
+	Node       node
+	Member     member
+	Invitation invitation
 }
 
 type network interface {
@@ -54,6 +56,14 @@ type network interface {
 	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
 	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
+}
+
+type invitation interface {
+	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
+	GetInvitationById(invitationId string) (*invpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
+	RemoveInvitation(invitationId string) (*invpb.DeleteInvitationResponse, error)
+	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
 }
 
 type member interface {
@@ -85,6 +95,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Network = client.NewNetworkRegistry(endpoints.Network, endpoints.Timeout)
 	c.Node = client.NewNode(endpoints.Node, endpoints.Timeout)
 	c.Member = client.NewMemberRegistry(endpoints.Member, endpoints.Timeout)
+	c.Invitation = client.NewInvitationRegistry(endpoints.Invitation, endpoints.Timeout)
 
 	return c
 }
@@ -158,6 +169,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		member.GET("/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
 		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
 		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
+
+		// Invitation routes
+		const inv = "/invitations"
+		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
+		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
+		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
+		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
+		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
+		invitations.GET("/org/:org", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationByOrgHandler, http.StatusOK))
 
 		// Users routes
 		// const user = "/users"
@@ -312,6 +332,26 @@ func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*netpb.AddSiteResponse, error) {
 	return r.clients.Network.AddSite(req.NetworkId, req.SiteName)
+}
+
+func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
+	return r.clients.Invitation.AddInvitation(req.Org, req.Name, req.Email, req.Role)
+}
+
+func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
+	return r.clients.Invitation.GetInvitationById(req.InvitationId)
+}
+
+func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
+	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status)
+}
+
+func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) (*invpb.DeleteInvitationResponse, error) {
+	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
+}
+
+func (r *Router) getInvitationByOrgHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
+	return r.clients.Invitation.GetInvitationByOrg(req.Org)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

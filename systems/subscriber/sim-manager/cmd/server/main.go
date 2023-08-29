@@ -23,6 +23,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -102,7 +103,13 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
 	}
+	nucleusP := providers.NewNetworkClientProvider(serviceConfig.NetworkHost, serviceConfig.DebugMode)
 
+
+	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
+	if err != nil {
+		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
+	}
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
@@ -114,6 +121,8 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 		serviceConfig.Org,
 		serviceConfig.PushMetricHost,
+		notificationClient,
+		nucleusP,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)

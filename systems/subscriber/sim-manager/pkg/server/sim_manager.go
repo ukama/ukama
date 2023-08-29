@@ -44,6 +44,8 @@ type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
 	org            string
 	pushMetricHost string
+	notificationClient providers.NotificationClient
+	nucleusClient providers.NetworkClientProvider
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
@@ -53,6 +55,9 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	msgBus mb.MsgBusServiceClient,
 	org string,
 	pushMetricHost string,
+	notificationClient providers.NotificationClient,
+	nucleusClient providers.NetworkClientProvider,
+
 ) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:                   simRepo,
@@ -66,6 +71,8 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
+		notificationClient:        notificationClient,
+		nucleusClient:             nucleusClient,
 	}
 }
 
@@ -229,6 +236,26 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+	netInfo, err := s.nucleusClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	}
+	if poolSim.QrCode != "" && !poolSim.IsPhysical {
+		err = s.notificationClient.SendEmail(providers.SendEmailReq{
+			To:      []string{remoteSubResp.Subscriber.Email},
+			TemplateName: "sim-allocation",
+			Values:  map[string]interface{}{
+				"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
+				"NETWORK": netInfo.Name,
+				"NAME":    remoteSubResp.Subscriber.FirstName,
+				"QRCODE":  poolSim.QrCode,},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())

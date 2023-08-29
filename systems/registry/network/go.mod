@@ -13,7 +13,6 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/golang/protobuf v1.5.3
-	github.com/google/martian v2.1.0+incompatible
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.3
