@@ -1,4 +1,3 @@
-import { UserResDto, WhoamiDto } from "../../user/resolver/types";
 import { HTTP401Error, Messages } from "../errors";
 import { Meta, THeaders } from "../types";
 

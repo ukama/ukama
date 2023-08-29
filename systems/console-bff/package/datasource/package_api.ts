@@ -50,7 +50,7 @@ class PackageApi extends RESTDataSource {
   };
 
   deletePackage = async (packageId: string): Promise<IdResponse> => {
-    return this.delete(`/${packageId}`).then(res => {
+    return this.delete(`/${packageId}`).then(() => {
       return {
         uuid: packageId,
       };

@@ -7,7 +7,7 @@ import { GetNetworksResolver } from "./getNetworks";
 import { GetSiteResolver } from "./getSite";
 import { GetSitesResolver } from "./getSites";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AddNetworkResolver,
   AddSiteResolver,
   GetNetworkResolver,

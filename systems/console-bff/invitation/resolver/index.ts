@@ -6,7 +6,7 @@ import { GetInVitationsByOrgResolver } from "./getInvitationByOrg";
 import { SendInvitationResolver } from "./sendInvitation";
 import { UpdateInvitationResolver } from "./updateInvitation";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   SendInvitationResolver,
   GetInvitationResolver,
   GetInVitationsByOrgResolver,

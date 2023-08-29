@@ -36,7 +36,7 @@ class OrgApi extends RESTDataSource {
   removeMember = async (data: MemberInputDto): Promise<CBooleanResponse> => {
     return this.delete(
       `/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`
-    ).then(res => {
+    ).then(() => {
       return {
         success: true,
       };
@@ -83,7 +83,7 @@ class OrgApi extends RESTDataSource {
         isDeactivated: req.isDeactivated,
         role: req.role,
       },
-    }).then(res => {
+    }).then(() => {
       return {
         success: true,
       };

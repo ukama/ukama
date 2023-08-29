@@ -8,7 +8,7 @@ import { GetOrgsResolver } from "./getOrgs";
 import { RemoveMemberResolver } from "./removeMember";
 import { UpdateMemberResolver } from "./updateMember";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AddMemberResolver,
   AddOrgResolver,
   GetOrgResolver,

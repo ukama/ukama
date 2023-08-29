@@ -7,7 +7,7 @@ import { GetSubscriberMetricsByNetworkResolver } from "./getSubscriberMetricsByN
 import { GetSubscribersByNetworkResolver } from "./getSubscribersByNetwork";
 import { UpdateSubscriberResolver } from "./updateSubscriber";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AddSubscriberResolver,
   DeleteSubscriberResolver,
   GetSubscriberResolver,

@@ -7,7 +7,7 @@ import { GetCurrentBillResolver } from "./getCurrentBill";
 import { GetStripeCustomerResolver } from "./getStripeCustomer";
 import { RetrivePaymentMethodsResolver } from "./retrivePaymentMethods";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AttachPaymentWithCustomerResolver,
   CreateCustomerResolver,
   GetBillHistoryResolver,

@@ -15,7 +15,7 @@ import { SetActivePackageForSimResolver } from "./setActivePackageForSim";
 import { ToggleSimStatusResolver } from "./toggleSimStatus";
 import { UploadSimsResolver } from "./uploadSims";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AddPackageToSimResolver,
   AllocateSimResolver,
   DeleteSimResolver,

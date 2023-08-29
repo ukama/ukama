@@ -11,7 +11,7 @@ import { ReleaseNodeFromSiteResolver } from "./releaseNodeFromSite";
 import { UpdateNodeResolver } from "./updateNode";
 import { UpdateNodeStateResolver } from "./updateNodeState";
 
-const resolvers: NonEmptyArray<Function> = [
+const resolvers: NonEmptyArray<any> = [
   AddNodeResolver,
   GetNodeResolver,
   GetNodesResolver,
