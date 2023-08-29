@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD [ "yarn", "start", "metrics-start" ]
+CMD [ "yarn", "start" ]
