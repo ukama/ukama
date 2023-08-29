@@ -14,6 +14,7 @@ import { createServer } from "http";
 import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
+  INVITATION_PORT,
   GATEWAY_PORT,
   NETWORK_PORT,
   NODE_PORT,
@@ -61,6 +62,7 @@ const loadServers = async () => {
         { name: "sim", url: `http://localhost:${SIM_PORT}` },
         { name: "package", url: `http://localhost:${PACKAGE_PORT}` },
         { name: "rate", url: `http://localhost:${RATE_PORT}` },
+        {name:  "invitation", url: `http://localhost:${INVITATION_PORT}`},
         // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
       introspectionHeaders: {

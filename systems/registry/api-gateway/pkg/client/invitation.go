@@ -62,7 +62,7 @@ func (r *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteIn
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResponse, error) {
+func (r *InvitationRegistry) GetInvitation(id string) (*pb.GetInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
