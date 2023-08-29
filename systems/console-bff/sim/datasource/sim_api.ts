@@ -82,7 +82,7 @@ class SimApi extends RESTDataSource {
   getDataUsage = async (simId: string): Promise<SimDataUsage> => {
     //TODO: GET SIM DATA USAGE METRIC HERE
     return {
-      usage: "1240",
+      usage: `1240-${simId}`,
     };
   };
 
