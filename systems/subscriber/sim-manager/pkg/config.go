@@ -35,6 +35,7 @@ type Config struct {
 	PushMetricHost    string `default:"http://localhost:9091"`
 	NotificationHost  string `default:"http://192.168.1.81:8089"`
 	NetworkHost       string `default:"http://registry-api-gw:8080"`
+	OrgName           string
 }
 
 func NewConfig(name string) *Config {
@@ -45,7 +46,8 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
-			Timeout: 5 * time.Second,
+			Timeout:        5 * time.Second,
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"},
 		},
 	}
 }
