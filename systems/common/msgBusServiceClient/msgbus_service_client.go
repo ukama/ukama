@@ -170,3 +170,46 @@ func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.Prot
 	return nil
 
 }
+
+func (m *msgBusServiceClient) CreateShovel(name, srcUri, destUri, srcExchangeKey, srcExchange, destExchange, srcProtocol, destProtocol string) error {
+	log.Debugf("Creating shovel %s", name)
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	s := &pb.CreateShovelRequest{
+		SrcUri:         srcUri,
+		DestUri:        destUri,
+		SrcExchangeKey: srcExchangeKey,
+		SrcExchange:    srcExchange,
+		DestExchange:   destExchange,
+		SrcProtocol:    srcProtocol,
+		DestProtocol:   destProtocol,
+		Name:           name,
+	}
+	_, err := m.client.CreateShovel(ctx, s)
+	if err != nil {
+		log.Debugf("Failed creating shovel: %+v. Error: %v", s, err)
+		return err
+	}
+
+	log.Infof("Shovel %s created with %+v", name, s)
+	return nil
+
+}
+
+func (m *msgBusServiceClient) RemoveShovel(name string) error {
+	log.Debugf("Creating shovel %s", name)
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	s := &pb.RemoveShovelRequest{
+		Name: name,
+	}
+	_, err := m.client.RemoveShovel(ctx, s)
+	if err != nil {
+		log.Debugf("Failed removing shovel: %+v. Error: %v", s, err)
+		return err
+	}
+
+	log.Infof("Shovel %s removed.", name)
+	return nil
+
+}
