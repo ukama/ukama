@@ -245,7 +245,7 @@ void* refresh_lookup(void* args) {
 	Config *c = (Config*) args;
 	char* rIp = NULL;
 	while(TRUE) {
-		rIp = nslookup(c->systemDNS, c->dnsServer);
+		rIp = nslookup(c->systemDNS, c->nameServer);
 		if (rIp) {
 			if (strcmp(rIp, c->systemAddr) != 0) {
 				/* update IP */

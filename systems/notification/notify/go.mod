@@ -10,11 +10,9 @@ replace github.com/ukama/ukama/systems/common/services/msgClient => ../../servic
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.3
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/tj/assert v0.0.3
@@ -65,7 +63,8 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -74,8 +73,8 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230504181210-bf6632801c73 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
+	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect

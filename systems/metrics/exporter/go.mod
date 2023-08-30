@@ -21,9 +21,9 @@ require (
 
 require (
 	github.com/creasty/defaults v1.6.0 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
+	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 )
 
@@ -32,7 +32,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 )
 
-require github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
+require github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

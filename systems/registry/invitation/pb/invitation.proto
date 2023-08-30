@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/registry/invitation/pb/gen";
+
+package ukama.registry.invitation.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+service InvitationService {
+
+    /* Invitations */
+    rpc Add(AddInvitationRequest) returns (AddInvitationResponse);
+    rpc Get(GetInvitationRequest) returns (GetInvitationResponse);
+    rpc UpdateStatus(UpdateInvitationStatusRequest) returns (UpdateInvitationStatusResponse);
+    rpc Delete(DeleteInvitationRequest) returns (DeleteInvitationResponse);
+    rpc GetByOrg(GetInvitationByOrgRequest) returns (GetInvitationByOrgResponse);
+    rpc GetInvitationByEmail(GetInvitationByEmailRequest) returns (GetInvitationByEmailResponse);
+ 
+}
+
+message GetInvitationByEmailRequest {
+    string email = 1  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+}
+
+message GetInvitationByEmailResponse {
+    Invitation invitation = 1;
+}
+
+message AddInvitationRequest {
+    string org = 2;
+    string name = 3;
+    string email = 4;
+    RoleType role = 5;
+    google.protobuf.Timestamp expire_at = 6;
+}
+
+message GetInvitationByOrgRequest {
+    string org = 1 ;
+}
+
+message GetInvitationByOrgResponse {
+    repeated Invitation invitations = 1;
+}
+
+message AddInvitationResponse {
+    Invitation invitation = 1;
+}
+
+message GetInvitationRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+}
+
+message GetInvitationResponse {
+    Invitation invitation = 1;
+}
+
+message DeleteInvitationRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+}
+
+message DeleteInvitationResponse {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+}
+
+message UpdateInvitationStatusRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    StatusType status = 2;
+}
+
+message UpdateInvitationStatusResponse {
+   string  id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    StatusType status = 2;
+}
+
+message Invitation {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string org = 2;
+    string link = 3;
+    string name = 4;
+    string email = 5;
+    RoleType role = 6;
+    StatusType status = 7;
+    string userId = 8;
+    google.protobuf.Timestamp expire_at = 9;
+  }
+  
+  enum StatusType {
+    Pending   = 0;
+	Accepted  = 1;
+	Declined  = 2;
+    Unknown   = 3;
+  }
+  enum RoleType {
+    Owner     = 0;
+	Admin     = 1;
+	Employee  = 2;
+	Vendor    = 3;
+	Users     = 4;
+  }

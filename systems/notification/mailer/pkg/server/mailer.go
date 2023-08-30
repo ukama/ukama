@@ -117,7 +117,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 			log.Error("Error while saving email" + err.Error())
 			return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
 		}
-	}else {
+	} else {
 		err = s.mailerRepo.SendEmail(&db.Mailing{
 			MailId:       mailId,
 			Email:        req.To[0],
@@ -129,7 +129,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 			return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
 		}
 	}
-	
+
 	return &pb.SendEmailResponse{
 		Message: "Email Sent!",
 		MailId:  mailId.String(),

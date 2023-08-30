@@ -1,9 +1,12 @@
 syntax = "proto3";
-option go_package = "pb/gen";
 
-import "google/protobuf/timestamp.proto";
-package ukama.subscriber.registry.v1;
+option go_package = "github.com/ukama/ukama/systems/subscriber/registry/pb/gen";
+
 import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+package ukama.subscriber.registry.v1;
 
 /*
 Registry sub-system is responsible of:

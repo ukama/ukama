@@ -6,70 +6,75 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	res "github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
-type NetworkInfoClient interface {
-	GetNetworkInfo(networkId string, orgId string) (*NetworkInfo, error)
+const netEndpoint = "/v1/networks"
+
+type NetworkClientProvider interface {
+	GetNetwork(Id string) (*Network, error)
 }
 
-type networkInfoClient struct {
-	R *res.RestClient
+type nucleusInfoClient struct {
+	R *rest.RestClient
 }
+
+
 
 type Network struct {
-	NetworkInfo *NetworkInfo `json:"network"`
+	Id            string    `json:"id,omitempty"`
+	Name          string    `json:"name,omitempty"`
+	OrgId         string    `json:"org_id,omitempty"`
+	IsDeactivated bool      `json:"is_deactivated,omitempty"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 
-type NetworkInfo struct {
-	NetworkId     string    `json:"id"`
-	Name          string    `json:"name"`
-	OrgId         string    `json:"org_id"`
-	IsDeactivated bool      `json:"is_deactivated"`
-	CreatedAt     time.Time `json:"created_at"`
+type NetworkInfos struct {
+	Network *Network `json:"network"`
 }
 
-func NewNetworkClient(url string, debug bool) (*networkInfoClient, error) {
-	restClient, err := res.NewRestClient(url, debug)
+func NewNetworkClientProvider(url string, debug bool) NetworkClientProvider {
+	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
-		log.Errorf("Can't connect to %s. Error: %s", url, err.Error())
-		return nil, err
+		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
 	}
 
-	networkClient := &networkInfoClient{
-		R: restClient,
+	n := &nucleusInfoClient{
+		R: f,
 	}
 
-	return networkClient, nil
+	return n
 }
 
-func (nc *networkInfoClient) GetNetworkInfo(networkId string, orgId string) (*NetworkInfo, error) {
-	errStatus := &res.ErrorMessage{}
-	network := &Network{}
+func (p *nucleusInfoClient) GetNetwork(id string) (*Network, error) {
+	errStatus := &rest.ErrorMessage{}
 
-	resp, err := nc.R.C.R().
+	pkg := Network{}
+
+	resp, err := p.R.C.R().
 		SetError(errStatus).
-		Get(nc.R.URL.String() + "/v1/networks/" + networkId)
+		Get(p.R.URL.String() + netEndpoint + "/" + id)
+
 	if err != nil {
-		log.Errorf("Failed to send API request to network registry. Error: %s", err.Error())
-		return nil, err
+		log.Errorf("Failed to send api request to nucleus/network. Error %s", err.Error())
+
+		return nil, fmt.Errorf("api request to nucleus system failure: %w", err)
 	}
 
 	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch network info. HTTP response code: %d, Error message: %s", resp.StatusCode(), errStatus.Message)
-		return nil, fmt.Errorf("Network info failure: %s", errStatus.Message)
+		log.Tracef("Failed to fetch network info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+
+		return nil, fmt.Errorf("Network Info failure %s", errStatus.Message)
 	}
 
-	err = json.Unmarshal(resp.Body(), &network)
+	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
-		log.Tracef("Failed to deserialize network info. Error message: %s", err.Error())
-		return nil, fmt.Errorf("Network info deserialization failure: %s", err.Error())
+		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
+
+		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}
 
-	if orgId != network.NetworkInfo.OrgId {
-		log.Error("Missing network.")
-		return nil, fmt.Errorf("Network mismatch")
-	}
+	log.Infof("Network Info: %+v", pkg)
 
-	return network.NetworkInfo, nil
+	return &pkg, nil
 }

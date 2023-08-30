@@ -2,15 +2,14 @@ package client
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"google.golang.org/grpc"
-
-	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	"google.golang.org/grpc"
 )
 
 type Node struct {
@@ -52,7 +51,7 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, orgId string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 

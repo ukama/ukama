@@ -14,9 +14,9 @@ import (
 	"gorm.io/gorm"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	opb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	omocks "github.com/ukama/ukama/systems/nucleus/org/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	opb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	omocks "github.com/ukama/ukama/systems/registry/org/pb/gen/mocks"
 )
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
