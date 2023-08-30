@@ -533,61 +533,6 @@ func (x *GetNodesResponse) GetNode() []*Node {
 	return nil
 }
 
-type NodeStatus struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Connectivity string `protobuf:"bytes,1,opt,name=connectivity,proto3" json:"connectivity,omitempty"`
-	State        string `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
-}
-
-func (x *NodeStatus) Reset() {
-	*x = NodeStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *NodeStatus) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeStatus) ProtoMessage() {}
-
-func (x *NodeStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeStatus.ProtoReflect.Descriptor instead.
-func (*NodeStatus) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *NodeStatus) GetConnectivity() string {
-	if x != nil {
-		return x.Connectivity
-	}
-	return ""
-}
-
-func (x *NodeStatus) GetState() string {
-	if x != nil {
-		return x.State
-	}
-	return ""
-}
-
 type UpdateNodeStateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -601,7 +546,7 @@ type UpdateNodeStateRequest struct {
 func (x *UpdateNodeStateRequest) Reset() {
 	*x = UpdateNodeStateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[11]
+		mi := &file_node_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -614,7 +559,7 @@ func (x *UpdateNodeStateRequest) String() string {
 func (*UpdateNodeStateRequest) ProtoMessage() {}
 
 func (x *UpdateNodeStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[11]
+	mi := &file_node_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +572,7 @@ func (x *UpdateNodeStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateNodeStateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateNodeStateRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{11}
+	return file_node_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateNodeStateRequest) GetNodeId() string {
@@ -663,7 +608,7 @@ type UpdateNodeRequest struct {
 func (x *UpdateNodeRequest) Reset() {
 	*x = UpdateNodeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[12]
+		mi := &file_node_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -676,7 +621,7 @@ func (x *UpdateNodeRequest) String() string {
 func (*UpdateNodeRequest) ProtoMessage() {}
 
 func (x *UpdateNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[12]
+	mi := &file_node_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -689,7 +634,7 @@ func (x *UpdateNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateNodeRequest.ProtoReflect.Descriptor instead.
 func (*UpdateNodeRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{12}
+	return file_node_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateNodeRequest) GetNodeId() string {
@@ -717,7 +662,7 @@ type UpdateNodeResponse struct {
 func (x *UpdateNodeResponse) Reset() {
 	*x = UpdateNodeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[13]
+		mi := &file_node_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -730,7 +675,7 @@ func (x *UpdateNodeResponse) String() string {
 func (*UpdateNodeResponse) ProtoMessage() {}
 
 func (x *UpdateNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[13]
+	mi := &file_node_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +688,7 @@ func (x *UpdateNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateNodeResponse.ProtoReflect.Descriptor instead.
 func (*UpdateNodeResponse) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{13}
+	return file_node_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdateNodeResponse) GetNode() *Node {
@@ -764,7 +709,7 @@ type DeleteNodeRequest struct {
 func (x *DeleteNodeRequest) Reset() {
 	*x = DeleteNodeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[14]
+		mi := &file_node_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -777,7 +722,7 @@ func (x *DeleteNodeRequest) String() string {
 func (*DeleteNodeRequest) ProtoMessage() {}
 
 func (x *DeleteNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[14]
+	mi := &file_node_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +735,7 @@ func (x *DeleteNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteNodeRequest.ProtoReflect.Descriptor instead.
 func (*DeleteNodeRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{14}
+	return file_node_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteNodeRequest) GetNodeId() string {
@@ -809,7 +754,7 @@ type DeleteNodeResponse struct {
 func (x *DeleteNodeResponse) Reset() {
 	*x = DeleteNodeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[15]
+		mi := &file_node_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -822,7 +767,7 @@ func (x *DeleteNodeResponse) String() string {
 func (*DeleteNodeResponse) ProtoMessage() {}
 
 func (x *DeleteNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[15]
+	mi := &file_node_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +780,7 @@ func (x *DeleteNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteNodeResponse.ProtoReflect.Descriptor instead.
 func (*DeleteNodeResponse) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{15}
+	return file_node_proto_rawDescGZIP(), []int{14}
 }
 
 type AttachNodesRequest struct {
@@ -850,7 +795,7 @@ type AttachNodesRequest struct {
 func (x *AttachNodesRequest) Reset() {
 	*x = AttachNodesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[16]
+		mi := &file_node_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -863,7 +808,7 @@ func (x *AttachNodesRequest) String() string {
 func (*AttachNodesRequest) ProtoMessage() {}
 
 func (x *AttachNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[16]
+	mi := &file_node_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +821,7 @@ func (x *AttachNodesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachNodesRequest.ProtoReflect.Descriptor instead.
 func (*AttachNodesRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{16}
+	return file_node_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *AttachNodesRequest) GetNodeId() string {
@@ -902,7 +847,7 @@ type AttachNodesResponse struct {
 func (x *AttachNodesResponse) Reset() {
 	*x = AttachNodesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[17]
+		mi := &file_node_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -915,7 +860,7 @@ func (x *AttachNodesResponse) String() string {
 func (*AttachNodesResponse) ProtoMessage() {}
 
 func (x *AttachNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[17]
+	mi := &file_node_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -928,7 +873,7 @@ func (x *AttachNodesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachNodesResponse.ProtoReflect.Descriptor instead.
 func (*AttachNodesResponse) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{17}
+	return file_node_proto_rawDescGZIP(), []int{16}
 }
 
 type DetachNodeRequest struct {
@@ -942,7 +887,7 @@ type DetachNodeRequest struct {
 func (x *DetachNodeRequest) Reset() {
 	*x = DetachNodeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[18]
+		mi := &file_node_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -955,7 +900,7 @@ func (x *DetachNodeRequest) String() string {
 func (*DetachNodeRequest) ProtoMessage() {}
 
 func (x *DetachNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[18]
+	mi := &file_node_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +913,7 @@ func (x *DetachNodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DetachNodeRequest.ProtoReflect.Descriptor instead.
 func (*DetachNodeRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{18}
+	return file_node_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DetachNodeRequest) GetNodeId() string {
@@ -987,7 +932,7 @@ type DetachNodeResponse struct {
 func (x *DetachNodeResponse) Reset() {
 	*x = DetachNodeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[19]
+		mi := &file_node_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1000,7 +945,7 @@ func (x *DetachNodeResponse) String() string {
 func (*DetachNodeResponse) ProtoMessage() {}
 
 func (x *DetachNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[19]
+	mi := &file_node_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +958,7 @@ func (x *DetachNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DetachNodeResponse.ProtoReflect.Descriptor instead.
 func (*DetachNodeResponse) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{19}
+	return file_node_proto_rawDescGZIP(), []int{18}
 }
 
 type AddNodeToSiteRequest struct {
@@ -1029,7 +974,7 @@ type AddNodeToSiteRequest struct {
 func (x *AddNodeToSiteRequest) Reset() {
 	*x = AddNodeToSiteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[20]
+		mi := &file_node_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1042,7 +987,7 @@ func (x *AddNodeToSiteRequest) String() string {
 func (*AddNodeToSiteRequest) ProtoMessage() {}
 
 func (x *AddNodeToSiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[20]
+	mi := &file_node_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1055,7 +1000,7 @@ func (x *AddNodeToSiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddNodeToSiteRequest.ProtoReflect.Descriptor instead.
 func (*AddNodeToSiteRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{20}
+	return file_node_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AddNodeToSiteRequest) GetNodeId() string {
@@ -1088,7 +1033,7 @@ type AddNodeToSiteResponse struct {
 func (x *AddNodeToSiteResponse) Reset() {
 	*x = AddNodeToSiteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[21]
+		mi := &file_node_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1101,7 +1046,7 @@ func (x *AddNodeToSiteResponse) String() string {
 func (*AddNodeToSiteResponse) ProtoMessage() {}
 
 func (x *AddNodeToSiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[21]
+	mi := &file_node_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1114,7 +1059,7 @@ func (x *AddNodeToSiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddNodeToSiteResponse.ProtoReflect.Descriptor instead.
 func (*AddNodeToSiteResponse) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{21}
+	return file_node_proto_rawDescGZIP(), []int{20}
 }
 
 type ReleaseNodeFromSiteRequest struct {
@@ -1128,7 +1073,7 @@ type ReleaseNodeFromSiteRequest struct {
 func (x *ReleaseNodeFromSiteRequest) Reset() {
 	*x = ReleaseNodeFromSiteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[22]
+		mi := &file_node_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1141,7 +1086,7 @@ func (x *ReleaseNodeFromSiteRequest) String() string {
 func (*ReleaseNodeFromSiteRequest) ProtoMessage() {}
 
 func (x *ReleaseNodeFromSiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[22]
+	mi := &file_node_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,7 +1099,7 @@ func (x *ReleaseNodeFromSiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseNodeFromSiteRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseNodeFromSiteRequest) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{22}
+	return file_node_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ReleaseNodeFromSiteRequest) GetNodeId() string {
@@ -1173,7 +1118,7 @@ type ReleaseNodeFromSiteResponse struct {
 func (x *ReleaseNodeFromSiteResponse) Reset() {
 	*x = ReleaseNodeFromSiteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[23]
+		mi := &file_node_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1186,7 +1131,7 @@ func (x *ReleaseNodeFromSiteResponse) String() string {
 func (*ReleaseNodeFromSiteResponse) ProtoMessage() {}
 
 func (x *ReleaseNodeFromSiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[23]
+	mi := &file_node_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1199,7 +1144,133 @@ func (x *ReleaseNodeFromSiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseNodeFromSiteResponse.ProtoReflect.Descriptor instead.
 func (*ReleaseNodeFromSiteResponse) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{22}
+}
+
+type NodeStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Connectivity string `protobuf:"bytes,1,opt,name=connectivity,proto3" json:"connectivity,omitempty"`
+	State        string `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+}
+
+func (x *NodeStatus) Reset() {
+	*x = NodeStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_node_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeStatus) ProtoMessage() {}
+
+func (x *NodeStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeStatus.ProtoReflect.Descriptor instead.
+func (*NodeStatus) Descriptor() ([]byte, []int) {
 	return file_node_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *NodeStatus) GetConnectivity() string {
+	if x != nil {
+		return x.Connectivity
+	}
+	return ""
+}
+
+func (x *NodeStatus) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type Site struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId    string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	SiteId    string                 `protobuf:"bytes,2,opt,name=siteId,json=site_id,proto3" json:"siteId,omitempty"`
+	NetworkId string                 `protobuf:"bytes,3,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
+	AddedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=addedAt,json=added_at,proto3" json:"addedAt,omitempty"`
+}
+
+func (x *Site) Reset() {
+	*x = Site{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_node_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Site) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Site) ProtoMessage() {}
+
+func (x *Site) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Site.ProtoReflect.Descriptor instead.
+func (*Site) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *Site) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *Site) GetSiteId() string {
+	if x != nil {
+		return x.SiteId
+	}
+	return ""
+}
+
+func (x *Site) GetNetworkId() string {
+	if x != nil {
+		return x.NetworkId
+	}
+	return ""
+}
+
+func (x *Site) GetAddedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AddedAt
+	}
+	return nil
 }
 
 type Node struct {
@@ -1212,14 +1283,15 @@ type Node struct {
 	OrgId     string                 `protobuf:"bytes,3,opt,name=orgId,json=org_id,proto3" json:"orgId,omitempty"`
 	Type      string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
 	Status    *NodeStatus            `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
-	Attached  []*Node                `protobuf:"bytes,6,rep,name=attached,proto3" json:"attached,omitempty"`
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
+	Site      *Site                  `protobuf:"bytes,6,opt,name=site,proto3" json:"site,omitempty"`
+	Attached  []*Node                `protobuf:"bytes,7,rep,name=attached,proto3" json:"attached,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
 }
 
 func (x *Node) Reset() {
 	*x = Node{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_node_proto_msgTypes[24]
+		mi := &file_node_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1232,7 +1304,7 @@ func (x *Node) String() string {
 func (*Node) ProtoMessage() {}
 
 func (x *Node) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[24]
+	mi := &file_node_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1245,7 +1317,7 @@ func (x *Node) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Node.ProtoReflect.Descriptor instead.
 func (*Node) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{24}
+	return file_node_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *Node) GetId() string {
@@ -1279,6 +1351,13 @@ func (x *Node) GetType() string {
 func (x *Node) GetStatus() *NodeStatus {
 	if x != nil {
 		return x.Status
+	}
+	return nil
+}
+
+func (x *Node) GetSite() *Site {
+	if x != nil {
+		return x.Site
 	}
 	return nil
 }
@@ -1352,74 +1431,88 @@ var file_node_proto_rawDesc = []byte{
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x04, 0x6e, 0x6f, 0x64, 0x65,
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72,
 	0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x22, 0x46, 0x0a, 0x0a, 0x4e, 0x6f,
-	0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x6f, 0x6e, 0x6e,
-	0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c,
-	0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x12, 0x14, 0x0a, 0x05,
-	0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61,
-	0x74, 0x65, 0x22, 0x73, 0x0a, 0x16, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65,
-	0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06,
-	0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf,
-	0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x22, 0x0a,
-	0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74,
-	0x79, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0x48, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06,
-	0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf,
-	0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x12, 0x0a,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x22, 0x46, 0x0a, 0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72, 0x65,
-	0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4e,
-	0x6f, 0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x22, 0x34, 0x0a, 0x11, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f,
-	0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06,
-	0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22,
-	0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5b, 0x0a, 0x12, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x4e,
-	0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e,
-	0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f,
-	0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x24, 0x0a, 0x0d,
-	0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x02, 0x20,
-	0x03, 0x28, 0x09, 0x52, 0x0d, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x4e, 0x6f, 0x64,
-	0x65, 0x73, 0x22, 0x15, 0x0a, 0x13, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x34, 0x0a, 0x11, 0x44, 0x65, 0x74,
-	0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f,
-	0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06,
-	0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22,
-	0x14, 0x0a, 0x12, 0x44, 0x65, 0x74, 0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x6d, 0x0a, 0x14, 0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65,
-	0x54, 0x6f, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a,
-	0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2,
-	0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x1c,
-	0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06,
-	0x73, 0x69, 0x74, 0x65, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x69,
-	0x74, 0x65, 0x49, 0x64, 0x22, 0x17, 0x0a, 0x15, 0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x54,
-	0x6f, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3d, 0x0a,
-	0x1a, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x46, 0x72, 0x6f, 0x6d,
-	0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e,
-	0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f,
-	0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22, 0x1d, 0x0a, 0x1b,
-	0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x46, 0x72, 0x6f, 0x6d, 0x53,
-	0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x99, 0x02, 0x0a, 0x04,
-	0x4e, 0x6f, 0x64, 0x65, 0x12, 0x16, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x12, 0x20, 0x0a, 0x05, 0x6f, 0x72, 0x67, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42,
-	0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x06, 0x6f, 0x72, 0x67, 0x5f,
-	0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x3a, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72,
-	0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x12, 0x38, 0x0a, 0x08, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x18, 0x06,
+	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x22, 0x73, 0x0a, 0x16, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f,
+	0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74,
+	0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22,
+	0x48, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f,
+	0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x46, 0x0a, 0x12, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x30, 0x0a, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e,
+	0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64,
+	0x65, 0x22, 0x34, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07,
+	0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x5b, 0x0a,
+	0x12, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64,
+	0x65, 0x5f, 0x69, 0x64, 0x12, 0x24, 0x0a, 0x0d, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64,
+	0x4e, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x61, 0x74, 0x74,
+	0x61, 0x63, 0x68, 0x65, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x22, 0x15, 0x0a, 0x13, 0x41, 0x74,
+	0x74, 0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x34, 0x0a, 0x11, 0x44, 0x65, 0x74, 0x61, 0x63, 0x68, 0x4e, 0x6f, 0x64, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07,
+	0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x74, 0x61, 0x63,
+	0x68, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x6d, 0x0a,
+	0x14, 0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x54, 0x6f, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e,
+	0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72,
+	0x6b, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f,
+	0x72, 0x6b, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x69, 0x74, 0x65, 0x49, 0x64, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x69, 0x74, 0x65, 0x49, 0x64, 0x22, 0x17, 0x0a, 0x15,
+	0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x54, 0x6f, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3d, 0x0a, 0x1a, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65,
+	0x4e, 0x6f, 0x64, 0x65, 0x46, 0x72, 0x6f, 0x6d, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64,
+	0x65, 0x5f, 0x69, 0x64, 0x22, 0x1d, 0x0a, 0x1b, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x4e,
+	0x6f, 0x64, 0x65, 0x46, 0x72, 0x6f, 0x6d, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x46, 0x0a, 0x0a, 0x4e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74,
+	0x69, 0x76, 0x69, 0x74, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0xab, 0x01, 0x0a, 0x04,
+	0x53, 0x69, 0x74, 0x65, 0x12, 0x1e, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x06, 0x6e, 0x6f,
+	0x64, 0x65, 0x49, 0x64, 0x12, 0x22, 0x0a, 0x06, 0x73, 0x69, 0x74, 0x65, 0x49, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52,
+	0x07, 0x73, 0x69, 0x74, 0x65, 0x5f, 0x69, 0x64, 0x12, 0x28, 0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77,
+	0x6f, 0x72, 0x6b, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f,
+	0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x0a, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x5f,
+	0x69, 0x64, 0x12, 0x35, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x65, 0x64, 0x41, 0x74, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52,
+	0x08, 0x61, 0x64, 0x64, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x22, 0xcb, 0x02, 0x0a, 0x04, 0x4e, 0x6f,
+	0x64, 0x65, 0x12, 0x16, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06,
+	0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x20,
+	0x0a, 0x05, 0x6f, 0x72, 0x67, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2,
+	0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x06, 0x6f, 0x72, 0x67, 0x5f, 0x69, 0x64,
+	0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x74, 0x79, 0x70, 0x65, 0x12, 0x3a, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72, 0x65, 0x67,
+	0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f,
+	0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x30, 0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c,
+	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e,
+	0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x69, 0x74, 0x65, 0x52, 0x04, 0x73, 0x69,
+	0x74, 0x65, 0x12, 0x38, 0x0a, 0x08, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x18, 0x07,
 	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x72, 0x65, 0x67,
 	0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f,
 	0x64, 0x65, 0x52, 0x08, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x12, 0x39, 0x0a, 0x09,
-	0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
 	0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0a, 0x63, 0x72, 0x65,
 	0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x32, 0xe5, 0x09, 0x0a, 0x0b, 0x4e, 0x6f, 0x64, 0x65,
@@ -1519,7 +1612,7 @@ func file_node_proto_rawDescGZIP() []byte {
 	return file_node_proto_rawDescData
 }
 
-var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_node_proto_goTypes = []interface{}{
 	(*AddNodeRequest)(nil),              // 0: ukama.registry.node.v1.AddNodeRequest
 	(*AddNodeResponse)(nil),             // 1: ukama.registry.node.v1.AddNodeResponse
@@ -1531,62 +1624,65 @@ var file_node_proto_goTypes = []interface{}{
 	(*GetByOrgResponse)(nil),            // 7: ukama.registry.node.v1.GetByOrgResponse
 	(*GetNodesRequest)(nil),             // 8: ukama.registry.node.v1.GetNodesRequest
 	(*GetNodesResponse)(nil),            // 9: ukama.registry.node.v1.GetNodesResponse
-	(*NodeStatus)(nil),                  // 10: ukama.registry.node.v1.NodeStatus
-	(*UpdateNodeStateRequest)(nil),      // 11: ukama.registry.node.v1.UpdateNodeStateRequest
-	(*UpdateNodeRequest)(nil),           // 12: ukama.registry.node.v1.UpdateNodeRequest
-	(*UpdateNodeResponse)(nil),          // 13: ukama.registry.node.v1.UpdateNodeResponse
-	(*DeleteNodeRequest)(nil),           // 14: ukama.registry.node.v1.DeleteNodeRequest
-	(*DeleteNodeResponse)(nil),          // 15: ukama.registry.node.v1.DeleteNodeResponse
-	(*AttachNodesRequest)(nil),          // 16: ukama.registry.node.v1.AttachNodesRequest
-	(*AttachNodesResponse)(nil),         // 17: ukama.registry.node.v1.AttachNodesResponse
-	(*DetachNodeRequest)(nil),           // 18: ukama.registry.node.v1.DetachNodeRequest
-	(*DetachNodeResponse)(nil),          // 19: ukama.registry.node.v1.DetachNodeResponse
-	(*AddNodeToSiteRequest)(nil),        // 20: ukama.registry.node.v1.AddNodeToSiteRequest
-	(*AddNodeToSiteResponse)(nil),       // 21: ukama.registry.node.v1.AddNodeToSiteResponse
-	(*ReleaseNodeFromSiteRequest)(nil),  // 22: ukama.registry.node.v1.ReleaseNodeFromSiteRequest
-	(*ReleaseNodeFromSiteResponse)(nil), // 23: ukama.registry.node.v1.ReleaseNodeFromSiteResponse
-	(*Node)(nil),                        // 24: ukama.registry.node.v1.Node
-	(*timestamppb.Timestamp)(nil),       // 25: google.protobuf.Timestamp
+	(*UpdateNodeStateRequest)(nil),      // 10: ukama.registry.node.v1.UpdateNodeStateRequest
+	(*UpdateNodeRequest)(nil),           // 11: ukama.registry.node.v1.UpdateNodeRequest
+	(*UpdateNodeResponse)(nil),          // 12: ukama.registry.node.v1.UpdateNodeResponse
+	(*DeleteNodeRequest)(nil),           // 13: ukama.registry.node.v1.DeleteNodeRequest
+	(*DeleteNodeResponse)(nil),          // 14: ukama.registry.node.v1.DeleteNodeResponse
+	(*AttachNodesRequest)(nil),          // 15: ukama.registry.node.v1.AttachNodesRequest
+	(*AttachNodesResponse)(nil),         // 16: ukama.registry.node.v1.AttachNodesResponse
+	(*DetachNodeRequest)(nil),           // 17: ukama.registry.node.v1.DetachNodeRequest
+	(*DetachNodeResponse)(nil),          // 18: ukama.registry.node.v1.DetachNodeResponse
+	(*AddNodeToSiteRequest)(nil),        // 19: ukama.registry.node.v1.AddNodeToSiteRequest
+	(*AddNodeToSiteResponse)(nil),       // 20: ukama.registry.node.v1.AddNodeToSiteResponse
+	(*ReleaseNodeFromSiteRequest)(nil),  // 21: ukama.registry.node.v1.ReleaseNodeFromSiteRequest
+	(*ReleaseNodeFromSiteResponse)(nil), // 22: ukama.registry.node.v1.ReleaseNodeFromSiteResponse
+	(*NodeStatus)(nil),                  // 23: ukama.registry.node.v1.NodeStatus
+	(*Site)(nil),                        // 24: ukama.registry.node.v1.Site
+	(*Node)(nil),                        // 25: ukama.registry.node.v1.Node
+	(*timestamppb.Timestamp)(nil),       // 26: google.protobuf.Timestamp
 }
 var file_node_proto_depIdxs = []int32{
-	24, // 0: ukama.registry.node.v1.AddNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	24, // 1: ukama.registry.node.v1.GetNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	24, // 2: ukama.registry.node.v1.GetBySiteResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	24, // 3: ukama.registry.node.v1.GetByOrgResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	24, // 4: ukama.registry.node.v1.GetNodesResponse.node:type_name -> ukama.registry.node.v1.Node
-	24, // 5: ukama.registry.node.v1.UpdateNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	10, // 6: ukama.registry.node.v1.Node.status:type_name -> ukama.registry.node.v1.NodeStatus
-	24, // 7: ukama.registry.node.v1.Node.attached:type_name -> ukama.registry.node.v1.Node
-	25, // 8: ukama.registry.node.v1.Node.createdAt:type_name -> google.protobuf.Timestamp
-	0,  // 9: ukama.registry.node.v1.NodeService.AddNode:input_type -> ukama.registry.node.v1.AddNodeRequest
-	2,  // 10: ukama.registry.node.v1.NodeService.GetNode:input_type -> ukama.registry.node.v1.GetNodeRequest
-	4,  // 11: ukama.registry.node.v1.NodeService.GetNodesForSite:input_type -> ukama.registry.node.v1.GetBySiteRequest
-	6,  // 12: ukama.registry.node.v1.NodeService.GetNodesForOrg:input_type -> ukama.registry.node.v1.GetByOrgRequest
-	8,  // 13: ukama.registry.node.v1.NodeService.GetNodes:input_type -> ukama.registry.node.v1.GetNodesRequest
-	11, // 14: ukama.registry.node.v1.NodeService.UpdateNodeState:input_type -> ukama.registry.node.v1.UpdateNodeStateRequest
-	12, // 15: ukama.registry.node.v1.NodeService.UpdateNode:input_type -> ukama.registry.node.v1.UpdateNodeRequest
-	14, // 16: ukama.registry.node.v1.NodeService.DeleteNode:input_type -> ukama.registry.node.v1.DeleteNodeRequest
-	16, // 17: ukama.registry.node.v1.NodeService.AttachNodes:input_type -> ukama.registry.node.v1.AttachNodesRequest
-	18, // 18: ukama.registry.node.v1.NodeService.DetachNode:input_type -> ukama.registry.node.v1.DetachNodeRequest
-	20, // 19: ukama.registry.node.v1.NodeService.AddNodeToSite:input_type -> ukama.registry.node.v1.AddNodeToSiteRequest
-	22, // 20: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:input_type -> ukama.registry.node.v1.ReleaseNodeFromSiteRequest
-	1,  // 21: ukama.registry.node.v1.NodeService.AddNode:output_type -> ukama.registry.node.v1.AddNodeResponse
-	3,  // 22: ukama.registry.node.v1.NodeService.GetNode:output_type -> ukama.registry.node.v1.GetNodeResponse
-	5,  // 23: ukama.registry.node.v1.NodeService.GetNodesForSite:output_type -> ukama.registry.node.v1.GetBySiteResponse
-	7,  // 24: ukama.registry.node.v1.NodeService.GetNodesForOrg:output_type -> ukama.registry.node.v1.GetByOrgResponse
-	9,  // 25: ukama.registry.node.v1.NodeService.GetNodes:output_type -> ukama.registry.node.v1.GetNodesResponse
-	13, // 26: ukama.registry.node.v1.NodeService.UpdateNodeState:output_type -> ukama.registry.node.v1.UpdateNodeResponse
-	13, // 27: ukama.registry.node.v1.NodeService.UpdateNode:output_type -> ukama.registry.node.v1.UpdateNodeResponse
-	15, // 28: ukama.registry.node.v1.NodeService.DeleteNode:output_type -> ukama.registry.node.v1.DeleteNodeResponse
-	17, // 29: ukama.registry.node.v1.NodeService.AttachNodes:output_type -> ukama.registry.node.v1.AttachNodesResponse
-	19, // 30: ukama.registry.node.v1.NodeService.DetachNode:output_type -> ukama.registry.node.v1.DetachNodeResponse
-	21, // 31: ukama.registry.node.v1.NodeService.AddNodeToSite:output_type -> ukama.registry.node.v1.AddNodeToSiteResponse
-	23, // 32: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:output_type -> ukama.registry.node.v1.ReleaseNodeFromSiteResponse
-	21, // [21:33] is the sub-list for method output_type
-	9,  // [9:21] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	25, // 0: ukama.registry.node.v1.AddNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	25, // 1: ukama.registry.node.v1.GetNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	25, // 2: ukama.registry.node.v1.GetBySiteResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	25, // 3: ukama.registry.node.v1.GetByOrgResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	25, // 4: ukama.registry.node.v1.GetNodesResponse.node:type_name -> ukama.registry.node.v1.Node
+	25, // 5: ukama.registry.node.v1.UpdateNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	26, // 6: ukama.registry.node.v1.Site.addedAt:type_name -> google.protobuf.Timestamp
+	23, // 7: ukama.registry.node.v1.Node.status:type_name -> ukama.registry.node.v1.NodeStatus
+	24, // 8: ukama.registry.node.v1.Node.site:type_name -> ukama.registry.node.v1.Site
+	25, // 9: ukama.registry.node.v1.Node.attached:type_name -> ukama.registry.node.v1.Node
+	26, // 10: ukama.registry.node.v1.Node.createdAt:type_name -> google.protobuf.Timestamp
+	0,  // 11: ukama.registry.node.v1.NodeService.AddNode:input_type -> ukama.registry.node.v1.AddNodeRequest
+	2,  // 12: ukama.registry.node.v1.NodeService.GetNode:input_type -> ukama.registry.node.v1.GetNodeRequest
+	4,  // 13: ukama.registry.node.v1.NodeService.GetNodesForSite:input_type -> ukama.registry.node.v1.GetBySiteRequest
+	6,  // 14: ukama.registry.node.v1.NodeService.GetNodesForOrg:input_type -> ukama.registry.node.v1.GetByOrgRequest
+	8,  // 15: ukama.registry.node.v1.NodeService.GetNodes:input_type -> ukama.registry.node.v1.GetNodesRequest
+	10, // 16: ukama.registry.node.v1.NodeService.UpdateNodeState:input_type -> ukama.registry.node.v1.UpdateNodeStateRequest
+	11, // 17: ukama.registry.node.v1.NodeService.UpdateNode:input_type -> ukama.registry.node.v1.UpdateNodeRequest
+	13, // 18: ukama.registry.node.v1.NodeService.DeleteNode:input_type -> ukama.registry.node.v1.DeleteNodeRequest
+	15, // 19: ukama.registry.node.v1.NodeService.AttachNodes:input_type -> ukama.registry.node.v1.AttachNodesRequest
+	17, // 20: ukama.registry.node.v1.NodeService.DetachNode:input_type -> ukama.registry.node.v1.DetachNodeRequest
+	19, // 21: ukama.registry.node.v1.NodeService.AddNodeToSite:input_type -> ukama.registry.node.v1.AddNodeToSiteRequest
+	21, // 22: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:input_type -> ukama.registry.node.v1.ReleaseNodeFromSiteRequest
+	1,  // 23: ukama.registry.node.v1.NodeService.AddNode:output_type -> ukama.registry.node.v1.AddNodeResponse
+	3,  // 24: ukama.registry.node.v1.NodeService.GetNode:output_type -> ukama.registry.node.v1.GetNodeResponse
+	5,  // 25: ukama.registry.node.v1.NodeService.GetNodesForSite:output_type -> ukama.registry.node.v1.GetBySiteResponse
+	7,  // 26: ukama.registry.node.v1.NodeService.GetNodesForOrg:output_type -> ukama.registry.node.v1.GetByOrgResponse
+	9,  // 27: ukama.registry.node.v1.NodeService.GetNodes:output_type -> ukama.registry.node.v1.GetNodesResponse
+	12, // 28: ukama.registry.node.v1.NodeService.UpdateNodeState:output_type -> ukama.registry.node.v1.UpdateNodeResponse
+	12, // 29: ukama.registry.node.v1.NodeService.UpdateNode:output_type -> ukama.registry.node.v1.UpdateNodeResponse
+	14, // 30: ukama.registry.node.v1.NodeService.DeleteNode:output_type -> ukama.registry.node.v1.DeleteNodeResponse
+	16, // 31: ukama.registry.node.v1.NodeService.AttachNodes:output_type -> ukama.registry.node.v1.AttachNodesResponse
+	18, // 32: ukama.registry.node.v1.NodeService.DetachNode:output_type -> ukama.registry.node.v1.DetachNodeResponse
+	20, // 33: ukama.registry.node.v1.NodeService.AddNodeToSite:output_type -> ukama.registry.node.v1.AddNodeToSiteResponse
+	22, // 34: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:output_type -> ukama.registry.node.v1.ReleaseNodeFromSiteResponse
+	23, // [23:35] is the sub-list for method output_type
+	11, // [11:23] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_node_proto_init() }
@@ -1716,18 +1812,6 @@ func file_node_proto_init() {
 			}
 		}
 		file_node_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_node_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateNodeStateRequest); i {
 			case 0:
 				return &v.state
@@ -1739,7 +1823,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateNodeRequest); i {
 			case 0:
 				return &v.state
@@ -1751,7 +1835,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateNodeResponse); i {
 			case 0:
 				return &v.state
@@ -1763,7 +1847,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteNodeRequest); i {
 			case 0:
 				return &v.state
@@ -1775,7 +1859,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteNodeResponse); i {
 			case 0:
 				return &v.state
@@ -1787,7 +1871,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AttachNodesRequest); i {
 			case 0:
 				return &v.state
@@ -1799,7 +1883,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AttachNodesResponse); i {
 			case 0:
 				return &v.state
@@ -1811,7 +1895,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DetachNodeRequest); i {
 			case 0:
 				return &v.state
@@ -1823,7 +1907,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DetachNodeResponse); i {
 			case 0:
 				return &v.state
@@ -1835,7 +1919,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddNodeToSiteRequest); i {
 			case 0:
 				return &v.state
@@ -1847,7 +1931,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddNodeToSiteResponse); i {
 			case 0:
 				return &v.state
@@ -1859,7 +1943,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReleaseNodeFromSiteRequest); i {
 			case 0:
 				return &v.state
@@ -1871,7 +1955,7 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
-		file_node_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_node_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReleaseNodeFromSiteResponse); i {
 			case 0:
 				return &v.state
@@ -1883,7 +1967,31 @@ func file_node_proto_init() {
 				return nil
 			}
 		}
+		file_node_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_node_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Site); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_node_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Node); i {
 			case 0:
 				return &v.state
@@ -1902,7 +2010,7 @@ func file_node_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_node_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

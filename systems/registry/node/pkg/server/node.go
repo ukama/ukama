@@ -581,6 +581,12 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 		CreatedAt: timestamppb.New(dbn.CreatedAt),
 	}
 
+	if dbn.Site.NodeId != "" {
+		n.Site.SiteId = dbn.Site.SiteId.String()
+		n.Site.NetworkId = dbn.Site.NetworkId.String()
+		n.Site.AddedAt = timestamppb.New(dbn.Site.CreatedAt)
+	}
+
 	if len(dbn.Attached) > 0 {
 		n.Attached = make([]*pb.Node, 0)
 	}
