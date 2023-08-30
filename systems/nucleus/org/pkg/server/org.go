@@ -37,15 +37,15 @@ type OrgService struct {
 	debug               bool
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
+func NewOrgServer(orgName string, orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
 	return &OrgService{
 		orgRepo:             orgRepo,
 		userRepo:            userRepo,
 		orchestratorService: orch,
 		userService:         user,
 		registrySystem:      registry,
-		orgName:             defaultOrgName,
-		baseRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		orgName:             orgName,
+		baseRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:              msgBus,
 		pushgateway:         pushgateway,
 		debug:               debug,
