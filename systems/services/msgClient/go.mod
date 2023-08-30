@@ -18,7 +18,7 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
-require github.com/ukama/ukama/systems/common v0.0.0-20230830225034-02e4b6a09c59
+require github.com/ukama/ukama/systems/common v0.0.0-20230830232303-9c8fd4fa1384
 
 require (
 	github.com/gin-contrib/cors v1.3.0 // indirect
@@ -28,23 +28,16 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect; indirectgithub.com/ukama/ukama/systems/common
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/penglongli/gin-metrics v0.1.9 // indirect
-	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/spf13/cobra v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/vektra/mockery/v2 v2.12.2 // indirect
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 )
 
