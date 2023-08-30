@@ -1,30 +1,23 @@
 import React from 'react';
-import { Stack, Typography, Divider, Paper, Box, Grid } from '@mui/material';
-import Xarrow from 'react-xarrows';
-import { SteppedLineTo } from 'react-lineto';
+import { Stack, Typography, Paper, Grid } from '@mui/material';
+import { SiteHealth } from '@/public/svg';
 
-import {
-  NodeIcon,
-  SvgContainer,
-  SwitchIcon,
-  ControllerIcon,
-  BackHaulIcon,
-  BatteryLevelIcon,
-  SolarIcon,
-  SiteHealth,
-} from '@/public/svg';
-import { colors } from '@/styles/theme';
-
-interface BaseStationSiteHealthProps {
-  batteryLevel: number;
-  internetSwitch: boolean;
-  controllerSwitch: boolean;
+interface SiteOverallHealthProps {
+  voltage: string;
+  current: string;
+  power: string;
+  modelNumber: string;
+  version: string;
+  charge: string;
 }
 
-const BaseStationSiteHealth: React.FC<BaseStationSiteHealthProps> = ({
-  batteryLevel,
-  internetSwitch,
-  controllerSwitch,
+const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
+  voltage,
+  current,
+  power,
+  modelNumber,
+  version,
+  charge,
 }) => {
   return (
     <>
@@ -33,19 +26,74 @@ const BaseStationSiteHealth: React.FC<BaseStationSiteHealthProps> = ({
           <SiteHealth solarHealth={'warning'} />
         </Grid>
         <Grid item xs={4}>
-          <Paper>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 'semi-bold' }}
-              color="initial"
-            >
-              Battery information
-            </Typography>
-          </Paper>
+          <Stack direction={'column'} spacing={2}>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Stack direction="column" spacing={2}>
+                <Typography variant="h6" color="initial">
+                  Battery information
+                </Typography>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Model number :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {modelNumber}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Version :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {version}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Stack direction="column" spacing={2}>
+                <Typography variant="h6" color="initial">
+                  Battery information
+                </Typography>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Charge :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {charge}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Voltage :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {voltage}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Current :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {current}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={5}>
+                  <Typography variant="body1" color="initial">
+                    Power :
+                  </Typography>
+                  <Typography variant="body1" color="initial">
+                    {power}
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+          </Stack>
         </Grid>
       </Grid>
     </>
   );
 };
 
-export default BaseStationSiteHealth;
+export default SiteOverallHealth;

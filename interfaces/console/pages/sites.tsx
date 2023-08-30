@@ -1,7 +1,7 @@
 import { commonData } from '@/app-recoil';
 import { useGetSitesQuery } from '@/generated';
 import { TCommonData } from '@/types';
-import BaseStationSiteHealth from '@/ui/molecules/SiteHealth';
+import SiteOverallHealth from '@/ui/molecules/SiteHealth';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { colors } from '@/styles/theme';
 import SiteHeader from '@/ui/molecules/SiteHeader';
@@ -92,11 +92,7 @@ export default function Page() {
                 Site components
               </Typography>
 
-              <BaseStationSiteHealth
-                batteryLevel={75}
-                internetSwitch={true}
-                controllerSwitch={false}
-              />
+              <SiteOverallHealth />
             </Paper>
           </Grid>
         </Grid>
