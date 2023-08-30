@@ -11,8 +11,12 @@ lint:
 test:
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 
+deps:
+	go get github.com/vektra/mockery/v2/.../
+
+
 gen:
-	mockery --all --recursive --dir ./pkg
+	mockery --all --recursive
 
 clean:
 	rm pb/gen/*.go

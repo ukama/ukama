@@ -1,7 +1,11 @@
 syntax = "proto3";
-option go_package = "pb/gen";
-package ukama.subscriber.sim.v1;
+option go_package = "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen";
+
 import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+package ukama.subscriber.sim_pool.v1;
 
 /*
 Sim pool sub-system is responsible of:
