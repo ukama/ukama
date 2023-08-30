@@ -52,7 +52,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -83,7 +83,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -103,7 +103,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
