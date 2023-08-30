@@ -42,7 +42,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	switch e.RoutingKey {
 
 	// Send usage event
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.telna.cdr.sim.usage"):
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err

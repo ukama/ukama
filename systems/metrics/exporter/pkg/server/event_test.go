@@ -27,7 +27,7 @@ func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
 	t.MetricConfig = []pkg.MetricConfig{
 		{
-			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.telna.cdr.sim.usage"),
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "sim_usage",

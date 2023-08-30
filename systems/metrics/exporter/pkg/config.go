@@ -53,11 +53,11 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.telna.cdr.sim.usage"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage"},
 		},
 		MetricConfig: []MetricConfig{
 			{
-				Event: "event.cloud.local.{{ .Org}}.telna.cdr.sim.usage",
+				Event: "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage",
 				Schema: []MetricSchema{
 					{
 						// Data Usage
