@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
-int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
-				  ServiceURL **urls, int *count);
+#include "wimc.h"
+
+int get_service_url_from_provider(Config *cfg, char *name, char *tag,
+                                  ServiceURL **urls, int *count);
 #endif /* WIMC_PROVIDER_H */

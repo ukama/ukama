@@ -10,11 +10,13 @@
 #ifndef AGENT_JSERDES_H
 #define AGENT_JSERDES_H
 
+#include "usys_types.h"
+
 int serialize_agent_request(AgentReq *request, json_t **json);
 int serialize_agent_request_register(AgentReq *req, json_t **json);
 int serialize_agent_request_update(AgentReq *req, json_t **json);
 int serialize_agent_request_unregister(AgentReq *req, json_t **json);
 
-int deserialize_wimc_request(WimcReq **request, json_t *json);
+bool deserialize_wimc_request(WimcReq **request, json_t *json);
 
 #endif /* AGENT_JSERDES_H */
