@@ -162,39 +162,14 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 	return err
 }
 
-func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
-	batchGet := func(nodeIds []string) ([]Site, error) {
-		var nodes []Site
-
-		result := n.Db.GetGormDb().Where("node_id IN ?", nodeIds).Find(&nodes)
-
-		if result.Error != nil {
-			return nil, result.Error
-		}
-
-		if len(nodes) == 0 || len(nodes) != len(nodeIds) {
-			return nil,
-				fmt.Errorf("some of these nodes are not yet allocated to a site or are duplicated")
-		}
-
-		return nodes, nil
+func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) error {
+	if len(attachedNodeIds) == 0 || len(attachedNodeIds) > MaxAttachedNodes {
+		return fmt.Errorf("number of nodes (%d) to attach is not valid", len(attachedNodeIds))
 	}
-
-	attachedNodeSites, err := batchGet(attachedNodeId)
-	if err != nil {
-		return err
-	}
-
-	res, err := batchGet([]string{nodeId.StringLowercase()})
-	if err != nil {
-		return err
-	}
-
-	parentNodeSite := res[0]
 
 	parentNode, err := n.Get(nodeId)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to get parent node: %w", err)
 	}
 
 	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
@@ -202,43 +177,50 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 			"node type must be a towernode")
 	}
 
+	if parentNode.Site.SiteId == uuid.Nil {
+		return status.Errorf(codes.FailedPrecondition,
+			"node must belongs to a site")
+	}
+
+	attachedNodes, err := n.batchGet(attachedNodeIds)
+	if err != nil {
+		return fmt.Errorf("fail to get attached nodes: %w", err)
+	}
+
+	if len(attachedNodes) == 0 || len(attachedNodes) != len(attachedNodeIds) {
+		return fmt.Errorf("some of the nodes from %v were not found or were duplicated",
+			attachedNodeIds)
+	}
+
 	if parentNode.Attached == nil {
 		parentNode.Attached = make([]*Node, 0)
 	}
 
-	if len(attachedNodeId)+len(parentNode.Attached) > MaxAttachedNodes {
+	if len(attachedNodes)+len(parentNode.Attached) > MaxAttachedNodes {
 		return status.Errorf(codes.InvalidArgument,
-			"max number of attached nodes is %d", MaxAttachedNodes)
+			"max number of attached nodes should not be more than %d", MaxAttachedNodes)
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, aNds := range attachedNodeSites {
-			aNd, err := ukama.ValidateNodeId(aNds.NodeId)
-			if err != nil {
-				return err
-			}
-
-			an, err := n.Get(aNd)
-			if err != nil {
-				return err
-			}
+		for _, an := range attachedNodes {
 
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
 				return status.Errorf(codes.InvalidArgument,
 					"cannot attach non amplifier node")
 			}
 
-			if parentNodeSite.SiteId != aNds.SiteId {
+			if parentNode.Site.SiteId != an.Site.SiteId {
 				return status.Errorf(codes.InvalidArgument,
 					"cannot attach nodes from different sites")
 			}
 
-			parentNode.Attached = append(parentNode.Attached, an)
+			parentNode.Attached = append(parentNode.Attached, &an)
 		}
 
-		d := tx.Save(parentNode)
+		d := tx.Clauses(clause.OnConflict{DoNothing: true}).Save(parentNode)
 		if d.Error != nil {
-			return d.Error
+			return status.Errorf(codes.Internal,
+				"failed to update parent node. Error %s", d.Error.Error())
 		}
 
 		return nil
@@ -269,8 +251,8 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	return err
 }
 
-func (r *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, err error) {
-	db := r.Db.GetGormDb()
+func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, err error) {
+	db := n.Db.GetGormDb()
 
 	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
 		return 0, 0, 0, err
@@ -287,4 +269,16 @@ func (r *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 	}
 
 	return nodeCount, onlineCount, offlineCount, nil
+}
+
+func (n *nodeRepo) batchGet(nodeIds []string) ([]Node, error) {
+	var nodes []Node
+
+	result := n.Db.GetGormDb().Preload(clause.Associations).Where("id IN ?", nodeIds).Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
 }

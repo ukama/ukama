@@ -312,6 +312,8 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 
 	err = n.nodeRepo.AttachNodes(nodeId, nds)
 	if err != nil {
+		log.Errorf("fail to attach nodes. Errors %s", err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
