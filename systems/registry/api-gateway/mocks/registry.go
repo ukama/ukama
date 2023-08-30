@@ -14,6 +14,32 @@ type registry struct {
 	mock.Mock
 }
 
+// AddInvitation provides a mock function with given fields: email, role, org, name
+func (_m *registry) AddInvitation(email string, role string, org string, name string) (*gen.AddInvitationResponse, error) {
+	ret := _m.Called(email, role, org, name)
+
+	var r0 *gen.AddInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.AddInvitationResponse, error)); ok {
+		return rf(email, role, org, name)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.AddInvitationResponse); ok {
+		r0 = rf(email, role, org, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(email, role, org, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddMember provides a mock function with given fields: orgName, userUUID, role
 func (_m *registry) AddMember(orgName string, userUUID string, role string) (*gen.MemberResponse, error) {
 	ret := _m.Called(orgName, userUUID, role)
@@ -111,6 +137,32 @@ func (_m *registry) AddSite(netID string, siteName string) (*pbgen.AddSiteRespon
 
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
 		r1 = rf(netID, siteName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetInvitation provides a mock function with given fields: invitationId
+func (_m *registry) GetInvitation(invitationId string) (*gen.GetInvitationResponse, error) {
+	ret := _m.Called(invitationId)
+
+	var r0 *gen.GetInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.GetInvitationResponse, error)); ok {
+		return rf(invitationId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.GetInvitationResponse); ok {
+		r0 = rf(invitationId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(invitationId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -338,6 +390,32 @@ func (_m *registry) RemoveMember(orgName string, userUUID string) error {
 	}
 
 	return r0
+}
+
+// UpdateInvitation provides a mock function with given fields: invitationId, status
+func (_m *registry) UpdateInvitation(invitationId string, status string) (*gen.UpdateInvitationResponse, error) {
+	ret := _m.Called(invitationId, status)
+
+	var r0 *gen.UpdateInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (*gen.UpdateInvitationResponse, error)); ok {
+		return rf(invitationId, status)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) *gen.UpdateInvitationResponse); ok {
+		r0 = rf(invitationId, status)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(invitationId, status)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateMember provides a mock function with given fields: orgName, userUUID, isDeactivated, role
