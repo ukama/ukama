@@ -582,6 +582,9 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	}
 
 	if dbn.Site.NodeId != "" {
+		n.Site = &pb.Site{}
+
+		n.Site.NodeId = dbn.Site.NodeId
 		n.Site.SiteId = dbn.Site.SiteId.String()
 		n.Site.NetworkId = dbn.Site.NetworkId.String()
 		n.Site.AddedAt = timestamppb.New(dbn.Site.CreatedAt)
