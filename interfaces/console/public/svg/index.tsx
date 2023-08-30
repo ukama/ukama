@@ -15,3 +15,6 @@ export { NodeIcon } from './NodeIcon';
 export { SolarIcon } from './SolarIcon';
 export { SvgContainer } from './SvgContainer';
 export { SwitchIcon } from './SwitchIcon';
+export { BatteryLevelIcon } from './BatteryLevelIcon';
+export { BackHaulIcon } from './BackHaulIcon';
+export { SiteHealth } from './SiteHealth';
