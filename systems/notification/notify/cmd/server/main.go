@@ -70,7 +70,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = uuid.NewV4().String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, internal.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -80,10 +80,10 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNotifyServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
+		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb), mbClient)
 		generated.RegisterNotifyServiceServer(s, srv)
 
-		eSrv := server.NewNotifyEventServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient,
+		eSrv := server.NewNotifyEventServer(db.NewNotificationRepo(gormdb), mbClient,
 			serviceConfig.MsgClient.ListenerRoutes)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 

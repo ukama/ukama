@@ -15,7 +15,6 @@ import (
 )
 
 type NotifiyEventServer struct {
-	orgName        string
 	notifyRepo     db.NotificationRepo
 	listenerRoutes map[string]struct{}
 	msgbus         mb.MsgBusServiceClient
@@ -23,7 +22,7 @@ type NotifiyEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, routes []string) *NotifiyEventServer {
+func NewNotifyEventServer(nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, routes []string) *NotifiyEventServer {
 	r := make(map[string]struct{}, len(routes))
 
 	for _, route := range routes {
@@ -31,11 +30,11 @@ func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.M
 	}
 
 	return &NotifiyEventServer{
-		orgName:        orgName,
 		notifyRepo:     nRepo,
 		listenerRoutes: r,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().
+			SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 

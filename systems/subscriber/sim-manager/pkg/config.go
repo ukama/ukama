@@ -15,6 +15,7 @@ const (
 	GaugeType           = "gauge"
 )
 
+
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database  `default:"{}"`
@@ -51,6 +52,8 @@ func NewConfig(name string) *Config {
 		},
 	}
 }
+
+
 
 var SimMetric = []pmetric.MetricConfig{{
 	Name:   NumberOfSubscribers,

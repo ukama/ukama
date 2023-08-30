@@ -21,19 +21,18 @@ import (
 )
 
 type NotifyServer struct {
-	orgName        string
 	notifyRepo     db.NotificationRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedNotifyServiceServer
 }
 
-func NewNotifyServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifyServer {
+func NewNotifyServer(nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifyServer {
 	return &NotifyServer{
-		orgName:        orgName,
-		notifyRepo:     nRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
+		notifyRepo: nRepo,
+		msgbus:     msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().
+			SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 

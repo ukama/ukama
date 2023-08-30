@@ -16,8 +16,6 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	System           string `default:"notification"`
-	OrgName          string
-	MasterOrgName    string
 }
 
 func NewConfig(name string) *Config {
@@ -32,9 +30,10 @@ func NewConfig(name string) *Config {
 			Host:    "msg-client-notification:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.global.{{ .Org}}.registry.members.notification.sent",
-				"event.cloud.local.{{ .Org}}.registry.network.notification.sent",
-				"event.cloud.local.{{ .Org}}.registry.node.notification.sent",
+				"event.cloud.org.notification.sent",
+				"event.cloud.users.notification.sent",
+				"event.cloud.network.notification.sent",
+				"event.cloud.node.notification.sent",
 
 				// Add any other services that send
 				// notification using the same route scheme:

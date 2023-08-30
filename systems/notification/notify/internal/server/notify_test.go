@@ -29,7 +29,7 @@ func TestNotifyServer_Add(t *testing.T) {
 
 	repo := mocks.NotificationRepo{}
 
-	s := server.NewNotifyServer(OrgName, &repo, msgbusClient)
+	s := server.NewNotifyServer(&repo, msgbusClient)
 
 	t.Run("NotificationIsValid", func(tt *testing.T) {
 		notif := &pb.AddRequest{
@@ -115,7 +115,7 @@ func TestNotifyServer_Get(t *testing.T) {
 
 	repo := &mocks.NotificationRepo{}
 
-	s := server.NewNotifyServer(OrgName, repo, nil)
+	s := server.NewNotifyServer(repo, nil)
 
 	t.Run("NotificationFound", func(tt *testing.T) {
 		repo.On("Get", mock.Anything).
@@ -157,7 +157,7 @@ func TestNotifyServer_List(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 	repo := mocks.NotificationRepo{}
 	resp := make([]db.Notification, 1)
-	n := server.NewNotifyServer(OrgName, &repo, nil)
+	n := server.NewNotifyServer(&repo, nil)
 
 	t.Run("ListAll", func(t *testing.T) {
 		nt := NewTestDbNotification(node, "alert")
@@ -268,7 +268,7 @@ func TestNotifyServer_List(t *testing.T) {
 
 	t.Run("ListSortedAlertsForServiceWithCount", func(t *testing.T) {
 		repo := mocks.NotificationRepo{}
-		n := server.NewNotifyServer(OrgName, &repo, nil)
+		n := server.NewNotifyServer(&repo, nil)
 
 		service := "noded"
 		ntype := "alert"
@@ -354,7 +354,7 @@ func TestNotifyServer_Delete(t *testing.T) {
 
 	repo := mocks.NotificationRepo{}
 
-	n := server.NewNotifyServer(OrgName, &repo, msgbusClient)
+	n := server.NewNotifyServer(&repo, msgbusClient)
 
 	t.Run("NotificationNotFound", func(tt *testing.T) {
 		notificationId := uuid.NewV4()
@@ -406,7 +406,7 @@ func TestNotifyServer_Purge(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 	repo := mocks.NotificationRepo{}
 	resp := make([]db.Notification, 1)
-	n := server.NewNotifyServer(OrgName, &repo, msgbusClient)
+	n := server.NewNotifyServer(&repo, msgbusClient)
 
 	t.Run("DeleteEventsForNode", func(t *testing.T) {
 		ntype := "event"

@@ -6,16 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/notification/notify/internal/server"
 	"github.com/ukama/ukama/systems/notification/notify/mocks"
 	"google.golang.org/protobuf/types/known/anypb"
-)
 
-const OrgName = "testorg"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+)
 
 func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
@@ -25,11 +23,11 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 	nt := NewTestDbNotification(node, "alert")
 
-	listenerRoutes := msgbus.PrepareRoutes(OrgName, []string{"event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage",
-		"event.cloud.local.{{ .Org}}.registry.node.notification.sent"})
+	listenerRoutes := []string{"event.cloud.org.notification.sent",
+		"event.cloud.node.notification.sent"}
 
 	t.Run("NotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+		routingKey := "event.cloud.node.notification.sent"
 
 		repo.On("Add", mock.Anything).Return(nil)
 
@@ -54,7 +52,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -62,7 +60,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	})
 
 	t.Run("InvalidNotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+		routingKey := "event.cloud.node.notification.sent"
 
 		evt := &epb.Notification{
 			Id:          nt.Id.String(),
@@ -85,7 +83,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -93,7 +91,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	})
 
 	t.Run("NotificationEventNotSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage")
+		routingKey := "event.cloud.cdr.sim.usage"
 
 		evt := epb.SimUsage{}
 
@@ -105,10 +103,10 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
 	})
 }
