@@ -14,17 +14,20 @@ import (
 )
 
 type SimPoolServer struct {
+	orgName        string
 	simRepo        db.SimRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimServiceServer
 }
 
-func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
+func NewSimPoolServer(orgName string, simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{
+		orgName:        orgName,
 		simRepo:        simRepo,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
 }
 
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
