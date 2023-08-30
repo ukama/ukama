@@ -106,7 +106,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -120,9 +120,9 @@ require (
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 	github.com/ulikunitz/xz v0.5.9 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
+	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.opencensus.io v0.24.0 // indirect
