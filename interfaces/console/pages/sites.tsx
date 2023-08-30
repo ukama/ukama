@@ -92,7 +92,14 @@ export default function Page() {
                 Site components
               </Typography>
 
-              <SiteOverallHealth />
+              <SiteOverallHealth
+                voltage={'48'}
+                current={'23'}
+                power={'230'}
+                modelNumber={'67362'}
+                version={'v343'}
+                charge={'50'}
+              />
             </Paper>
           </Grid>
         </Grid>

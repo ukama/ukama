@@ -23,7 +23,14 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
     <>
       <Grid container spacing={2}>
         <Grid item xs={8}>
-          <SiteHealth solarHealth={'warning'} />
+          <SiteHealth
+            solarHealth={'warning'}
+            nodeHealth={'good'}
+            switchHealth={'good'}
+            controllerHealth={'good'}
+            batteryHealth={'good'}
+            backhaulHealth={'good'}
+          />
         </Grid>
         <Grid item xs={4}>
           <Stack direction={'column'} spacing={2}>
@@ -45,7 +52,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
                     Version :
                   </Typography>
                   <Typography variant="body1" color="initial">
-                    {version}
+                    {` V ${version}`}
                   </Typography>
                 </Stack>
               </Stack>
@@ -60,7 +67,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
                     Charge :
                   </Typography>
                   <Typography variant="body1" color="initial">
-                    {charge}
+                    {`${charge} %`}
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={5}>
@@ -68,7 +75,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
                     Voltage :
                   </Typography>
                   <Typography variant="body1" color="initial">
-                    {voltage}
+                    {`${voltage} V`}
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={5}>
@@ -76,7 +83,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
                     Current :
                   </Typography>
                   <Typography variant="body1" color="initial">
-                    {current}
+                    {`${current} A`}
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={5}>
@@ -84,7 +91,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
                     Power :
                   </Typography>
                   <Typography variant="body1" color="initial">
-                    {power}
+                    {`${power} W`}
                   </Typography>
                 </Stack>
               </Stack>
