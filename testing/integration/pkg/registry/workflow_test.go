@@ -59,7 +59,7 @@ func InitializeData() *RegistryData {
 
 	d.OrgName = strings.ToLower(faker.FirstName()) + "-org"
 
-	d.Host = "http://localhost:8082"
+	d.Host = "http://localhost:8075"
 	d.RegistryClient = pkg.NewRegistryClient(d.Host)
 	d.MbHost = "amqp://guest:guest@localhost:5672/"
 

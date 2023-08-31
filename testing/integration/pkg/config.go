@@ -18,9 +18,19 @@ type SystemConfig struct {
 	Metrics    string `default:"http://localhost:8072"`
 	Subscriber string `default:"http://localhost:8078"`
 	Billing    string `default:"http://localhost:8079"`
-	MessageBus string `default:"amqp://guest:guest@localhost:5672/"`
+	MessageBus string "amqp://guest:guest@localhost:5672/"
 }
 
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{
+		System: SystemConfig{
+			MessageBus: "amqp://guest:guest@localhost:5672/",
+			Dataplan:   "http://localhost:8074",
+			Init:       "http://localhost:8071",
+			Registry:   "http://localhost:8075",
+			Metrics:    "http://localhost:8072",
+			Subscriber: "http://localhost:8078",
+			Billing:    "http://localhost:8079",
+		},
+	}
 }
