@@ -9,6 +9,12 @@ interface SiteOverallHealthProps {
   modelNumber: string;
   version: string;
   charge: string;
+  solarHealth: 'good' | 'warning';
+  nodeHealth: 'good' | 'warning';
+  switchHealth: 'good' | 'warning';
+  controllerHealth: 'good' | 'warning';
+  batteryHealth: 'good' | 'warning';
+  backhaulHealth: 'good' | 'warning';
 }
 
 const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
@@ -18,18 +24,24 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = ({
   modelNumber,
   version,
   charge,
+  solarHealth,
+  nodeHealth,
+  switchHealth,
+  controllerHealth,
+  batteryHealth,
+  backhaulHealth,
 }) => {
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={8}>
           <SiteHealth
-            solarHealth={'warning'}
-            nodeHealth={'good'}
-            switchHealth={'good'}
-            controllerHealth={'good'}
-            batteryHealth={'good'}
-            backhaulHealth={'good'}
+            solarHealth={solarHealth}
+            nodeHealth={nodeHealth}
+            switchHealth={switchHealth}
+            controllerHealth={controllerHealth}
+            batteryHealth={batteryHealth}
+            backhaulHealth={backhaulHealth}
           />
         </Grid>
         <Grid item xs={4}>

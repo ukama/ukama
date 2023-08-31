@@ -1,21 +1,10 @@
-import { commonData } from '@/app-recoil';
-import { useGetSitesQuery } from '@/generated';
-import { TCommonData } from '@/types';
 import SiteOverallHealth from '@/ui/molecules/SiteHealth';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { colors } from '@/styles/theme';
 import SiteHeader from '@/ui/molecules/SiteHeader';
 import { Site } from '@/types';
-import { PageContainer } from '@/styles/global';
-import dynamic from 'next/dynamic';
-import { useRecoilValue } from 'recoil';
 import { Grid, Typography, Paper, Stack } from '@mui/material';
-const DynamicMap = dynamic(
-  () => import('../ui/molecules/NetworkMap/DynamicMap'),
-  {
-    ssr: false,
-  },
-);
+import Map from '@/ui/molecules/MapComponent';
 
 const sites: Site[] = [
   { name: 'site1', health: 'online', duration: '3 days' },
@@ -24,15 +13,6 @@ const sites: Site[] = [
 ];
 
 export default function Page() {
-  const _commonData = useRecoilValue<TCommonData>(commonData);
-
-  const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      networkId: _commonData?.networkId,
-    },
-  });
-
   const handleSiteSelect = (site: any): void => {
     console.log(site);
   };
@@ -61,7 +41,7 @@ export default function Page() {
         />
 
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={4}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Site details
@@ -78,12 +58,8 @@ export default function Page() {
               </Stack>
             </Paper>
           </Grid>
-          <Grid item xs={8}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Map
-              </Typography>
-            </Paper>
+          <Grid item xs={12} sm={8}>
+            <Map site={''} users={0} />
           </Grid>
 
           <Grid item xs={12}>
@@ -93,6 +69,12 @@ export default function Page() {
               </Typography>
 
               <SiteOverallHealth
+                solarHealth={'warning'}
+                nodeHealth={'good'}
+                switchHealth={'good'}
+                controllerHealth={'good'}
+                batteryHealth={'good'}
+                backhaulHealth={'good'}
                 voltage={'48'}
                 current={'23'}
                 power={'230'}
