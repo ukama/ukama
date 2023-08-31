@@ -200,7 +200,7 @@ func (r RoutingKeyBuilder) MustBuild() string {
 func Parse(s string) (RoutingKey, error) {
 
 	parts := strings.Split(s, ".")
-	if len(parts) != 5 {
+	if len(parts) != 8 {
 		return "", fmt.Errorf("invalid route %s", s)
 	}
 
@@ -271,4 +271,14 @@ func PrepareRoute(org string, r string) string {
 
 	return buf.String()
 
+}
+
+/* Set the key to orgname as "*" */
+func AcceptAllOrgNameKey(key string) string {
+	parts := strings.Split(key, ".")
+	if len(parts) != 8 {
+		return key
+	}
+	parts[3] = "*"
+	return strings.Join(parts, ".")
 }
