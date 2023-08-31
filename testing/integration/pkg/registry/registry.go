@@ -6,10 +6,10 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	upb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	upb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/ukama/ukama/testing/integration/pkg/utils"

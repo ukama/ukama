@@ -14,10 +14,10 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
 type RegistryData struct {

@@ -18,15 +18,6 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-const (
-	RegistryService_Get_FullMethodName             = "/ukama.subscriber.registry.v1.RegistryService/Get"
-	RegistryService_Add_FullMethodName             = "/ukama.subscriber.registry.v1.RegistryService/Add"
-	RegistryService_Update_FullMethodName          = "/ukama.subscriber.registry.v1.RegistryService/Update"
-	RegistryService_Delete_FullMethodName          = "/ukama.subscriber.registry.v1.RegistryService/Delete"
-	RegistryService_GetByNetwork_FullMethodName    = "/ukama.subscriber.registry.v1.RegistryService/GetByNetwork"
-	RegistryService_ListSubscribers_FullMethodName = "/ukama.subscriber.registry.v1.RegistryService/ListSubscribers"
-)
-
 // RegistryServiceClient is the client API for RegistryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
@@ -55,7 +46,7 @@ func NewRegistryServiceClient(cc grpc.ClientConnInterface) RegistryServiceClient
 
 func (c *registryServiceClient) Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error) {
 	out := new(GetSubscriberResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Get_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +55,7 @@ func (c *registryServiceClient) Get(ctx context.Context, in *GetSubscriberReques
 
 func (c *registryServiceClient) Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error) {
 	out := new(AddSubscriberResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Add_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +64,7 @@ func (c *registryServiceClient) Add(ctx context.Context, in *AddSubscriberReques
 
 func (c *registryServiceClient) Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error) {
 	out := new(UpdateSubscriberResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Update_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +73,7 @@ func (c *registryServiceClient) Update(ctx context.Context, in *UpdateSubscriber
 
 func (c *registryServiceClient) Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error) {
 	out := new(DeleteSubscriberResponse)
-	err := c.cc.Invoke(ctx, RegistryService_Delete_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +82,7 @@ func (c *registryServiceClient) Delete(ctx context.Context, in *DeleteSubscriber
 
 func (c *registryServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
 	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, RegistryService_GetByNetwork_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/GetByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +91,7 @@ func (c *registryServiceClient) GetByNetwork(ctx context.Context, in *GetByNetwo
 
 func (c *registryServiceClient) ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error) {
 	out := new(ListSubscribersResponse)
-	err := c.cc.Invoke(ctx, RegistryService_ListSubscribers_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/ListSubscribers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +162,7 @@ func _RegistryService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Get_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).Get(ctx, req.(*GetSubscriberRequest))
@@ -189,7 +180,7 @@ func _RegistryService_Add_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Add_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).Add(ctx, req.(*AddSubscriberRequest))
@@ -207,7 +198,7 @@ func _RegistryService_Update_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Update_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).Update(ctx, req.(*UpdateSubscriberRequest))
@@ -225,7 +216,7 @@ func _RegistryService_Delete_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_Delete_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).Delete(ctx, req.(*DeleteSubscriberRequest))
@@ -243,7 +234,7 @@ func _RegistryService_GetByNetwork_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_GetByNetwork_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/GetByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
@@ -261,7 +252,7 @@ func _RegistryService_ListSubscribers_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RegistryService_ListSubscribers_FullMethodName,
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/ListSubscribers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).ListSubscribers(ctx, req.(*ListSubscribersRequest))
