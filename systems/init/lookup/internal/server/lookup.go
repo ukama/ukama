@@ -361,7 +361,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		}
 	}
 
-	route := l.baseRoutingKey.SetAction("create").SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -416,7 +416,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 			req.SystemName, req.OrgName, err.Error())
 	}
 
-	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -456,7 +456,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 		}
 	}
 
-	route := l.baseRoutingKey.SetActionDelete().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetActionDelete().SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
