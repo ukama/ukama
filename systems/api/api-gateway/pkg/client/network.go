@@ -11,15 +11,15 @@ import (
 
 const netEndpoint = "/v1/networks"
 
-type NetworkClientProvider interface {
-	GetNetwork(Id string) (*Network, error)
+type NetworkClient interface {
+	GetNetwork(Id string) (*NetworkInfo, error)
 }
 
-type nucleusInfoClient struct {
+type networkClient struct {
 	R *rest.RestClient
 }
 
-type Network struct {
+type NetworkInfo struct {
 	Id            string    `json:"id,omitempty"`
 	Name          string    `json:"name,omitempty"`
 	OrgId         string    `json:"org_id,omitempty"`
@@ -27,24 +27,24 @@ type Network struct {
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 
-type NetworkInfos struct {
-	Network *Network `json:"network"`
+type Network struct {
+	NetworkInfo *NetworkInfo `json:"network"`
 }
 
-func NewNetworkClientProvider(url string, debug bool) NetworkClientProvider {
+func NewNetworkClient(url string, debug bool) NetworkClient {
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
 	}
 
-	n := &nucleusInfoClient{
+	n := &networkClient{
 		R: f,
 	}
 
 	return n
 }
 
-func (p *nucleusInfoClient) GetNetwork(id string) (*Network, error) {
+func (p *networkClient) GetNetwork(id string) (*NetworkInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
 	ntwk := Network{}
@@ -73,7 +73,7 @@ func (p *nucleusInfoClient) GetNetwork(id string) (*Network, error) {
 		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}
 
-	log.Infof("Network Info: %+v", ntwk)
+	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
 
-	return &ntwk, nil
+	return ntwk.NetworkInfo, nil
 }
