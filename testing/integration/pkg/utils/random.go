@@ -56,6 +56,13 @@ func GenerateFutureDate(a time.Duration) string {
 	return tmp
 }
 
+func GenerateFutureDateWithZ(a time.Duration) string {
+	t := time.Now()
+	f := t.Add(a)
+	tmp := f.Format("2006-01-02T15:04:05Z")
+	return tmp
+}
+
 func RandomIPv4() string {
 	return faker.IPv4()
 }

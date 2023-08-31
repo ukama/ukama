@@ -67,9 +67,9 @@ func InitializeData(org *string, owner *string) *InitData {
 	d.Sys = NewDataplanClient(d.Host)
 	d.SimType = "test"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
-		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
+		EffectiveAt: utils.GenerateFutureDateWithZ(5 * time.Hour),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
-		EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
+		EndAt:       utils.GenerateFutureDateWithZ(365 * 24 * time.Hour),
 		SimType:     d.SimType,
 	}
 
@@ -132,17 +132,19 @@ func InitializeData(org *string, owner *string) *InitData {
 		Country:  c,
 		Provider: p[utils.RandomInt(len(p)-1)],
 		SimType:  d.SimType,
-		From:     utils.GenerateFutureDate(24 * time.Hour),
-		To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+		From:     utils.GenerateFutureDateWithZ(24 * time.Hour),
+		To:       utils.GenerateFutureDateWithZ(30 * 24 * time.Hour),
 	}
+
+	log.Info("DATE:::", d.reqGetRateRequest.From, d.reqGetRateRequest.To)
 
 	d.ReqAddPackageRequest = api.AddPackageRequest{
 		OwnerId:    d.OwnerId,
 		OrgId:      d.OrgId,
 		Name:       faker.FirstName() + "-monthly-pack",
 		SimType:    d.SimType,
-		From:       utils.GenerateFutureDate(24 * time.Hour),
-		To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
+		From:       utils.GenerateFutureDateWithZ(24 * time.Hour),
+		To:         utils.GenerateFutureDateWithZ(30 * 24 * time.Hour),
 		BaserateId: "",
 		SmsVolume:  100,
 		DataVolume: 1024,
@@ -341,8 +343,8 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 			Country:  c,
 			Provider: p[len(p)-1],
 			SimType:  a.SimType,
-			From:     utils.GenerateFutureDate(24 * time.Hour),
-			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+			From:     utils.GenerateFutureDateWithZ(24 * time.Hour),
+			To:       utils.GenerateFutureDateWithZ(30 * 24 * time.Hour),
 		}
 		tc.SaveWorkflowData(a)
 		return nil
@@ -483,8 +485,8 @@ var TC_dp_get_rate = &test.TestCase{
 			Country:  c,
 			Provider: p[len(p)-1],
 			SimType:  a.SimType,
-			From:     utils.GenerateFutureDate(24 * time.Hour),
-			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+			From:     utils.GenerateFutureDateWithZ(24 * time.Hour),
+			To:       utils.GenerateFutureDateWithZ(30 * 24 * time.Hour),
 		}
 		tc.SaveWorkflowData(a)
 		return nil
@@ -615,6 +617,7 @@ var TC_dp_get_package_for_org = &test.TestCase{
 		a.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
 			OrgId: a.OrgId,
 		}
+
 		tc.SaveWorkflowData(a)
 		return nil
 	},

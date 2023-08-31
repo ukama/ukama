@@ -10,6 +10,7 @@ import (
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	upb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 
@@ -71,16 +72,16 @@ func (s *RegistryClient) GetOrg(req napi.GetOrgRequest) (*orgpb.GetResponse, err
 	return rsp, nil
 }
 
-func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse, error) {
+func (s *RegistryClient) AddMember(req api.MemberRequest) (*mempb.MemberResponse, error) {
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
-	rsp := &orgpb.MemberResponse{}
+	rsp := &mempb.MemberResponse{}
 
 	resp, err := s.r.
-		Post(s.u.String()+"/v1/orgs/"+req.OrgName+"/members", b)
+		Post(s.u.String()+"/v1/members", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -95,10 +96,10 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 	return rsp, nil
 }
 
-func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberResponse, error) {
-	rsp := &orgpb.MemberResponse{}
+func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*mempb.MemberResponse, error) {
+	rsp := &mempb.MemberResponse{}
 
-	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/members/" + req.UserUuid)
+	resp, err := s.r.Get(s.u.String() + "/v1/members/" + req.UserUuid)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -120,7 +121,7 @@ func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
 	}
 
 	_, err = s.r.
-		Patch(s.u.String()+"/v1/orgs/"+req.OrgName+"/members/"+req.UserUuid, b)
+		Patch(s.u.String()+"/v1/members/"+req.UserUuid, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
