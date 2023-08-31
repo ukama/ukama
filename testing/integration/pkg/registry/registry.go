@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
+	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	upb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
@@ -13,7 +14,6 @@ import (
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
-	jsonpb "google.golang.org/protobuf/encoding/protojson"
 )
 
 type RegistryClient struct {
@@ -29,7 +29,7 @@ func NewRegistryClient(h string) *RegistryClient {
 	}
 }
 
-func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, error) {
+func (s *RegistryClient) AddOrg(req napi.AddOrgRequest) (*orgpb.AddResponse, error) {
 	log.Debugf("Adding org: %v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 	return rsp, nil
 }
 
-func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, error) {
+func (s *RegistryClient) GetOrg(req napi.GetOrgRequest) (*orgpb.GetResponse, error) {
 	rsp := &orgpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName)
@@ -172,7 +172,7 @@ func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetRespon
 	return rsp, nil
 }
 
-func (s *RegistryClient) AddUser(req api.AddUserRequest) (*upb.AddResponse, error) {
+func (s *RegistryClient) AddUser(req napi.AddUserRequest) (*upb.AddResponse, error) {
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())

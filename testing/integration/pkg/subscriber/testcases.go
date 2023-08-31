@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 	rpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -68,9 +69,9 @@ type InitData struct {
 	reqAllocateSimReq            api.AllocateSimReq
 	reqActivateDeactivateSimReq  api.ActivateDeactivateSimReq
 	reqSetActivePackageForSimReq api.SetActivePackageForSimReq
-	reqAddOrgRequest             rapi.AddOrgRequest
+	reqAddOrgRequest             napi.AddOrgRequest
 	reqAddNetworkRequest         rapi.AddNetworkRequest
-	reqAddUserRequest            rapi.AddUserRequest
+	reqAddUserRequest            napi.AddUserRequest
 
 	/* API responses */
 
@@ -95,7 +96,7 @@ func InitializeData() *InitData {
 	d.EncKey = "the-key-has-to-be-32-bytes-long!"
 	d.SimType = "test"
 
-	d.reqAddOrgRequest = rapi.AddOrgRequest{
+	d.reqAddOrgRequest = napi.AddOrgRequest{
 		OrgName:     strings.ToLower(faker.FirstName() + "-org"),
 		Owner:       "",
 		Certificate: utils.RandomBase64String(2048),
@@ -178,7 +179,7 @@ func InitializeData() *InitData {
 		PackageId: "",
 	}
 
-	d.reqAddUserRequest = rapi.AddUserRequest{
+	d.reqAddUserRequest = napi.AddUserRequest{
 		Name:  d.reqSubscriberAddReq.FirstName,
 		Email: d.reqSubscriberAddReq.Email,
 		Phone: d.reqSubscriberAddReq.Phone,

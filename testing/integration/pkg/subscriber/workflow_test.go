@@ -35,7 +35,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			if err != nil {
 				return err
 			} else {
-				d.UserId = uresp.User.Uuid
+				d.UserId = uresp.User.Id
 			}
 
 			/* adding  */

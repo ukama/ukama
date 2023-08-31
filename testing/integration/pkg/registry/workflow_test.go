@@ -14,9 +14,11 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
+	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -34,8 +36,8 @@ type RegistryData struct {
 	MbHost         string
 
 	// API requests
-	reqAddUser    api.AddUserRequest
-	reqAddOrg     api.AddOrgRequest
+	reqAddUser    napi.AddUserRequest
+	reqAddOrg     napi.AddOrgRequest
 	reqAddMember  api.MemberRequest
 	reqAddNetwork api.AddNetworkRequest
 }
@@ -63,18 +65,19 @@ func InitializeData() *RegistryData {
 	d.RegistryClient = pkg.NewRegistryClient(d.Host)
 	d.MbHost = "amqp://guest:guest@localhost:5672/"
 
-	d.reqAddUser = api.AddUserRequest{
+	d.reqAddUser = napi.AddUserRequest{
 		Name:  d.Name,
 		Email: d.Email,
 		Phone: d.Phone,
 	}
 
-	d.reqAddOrg = api.AddOrgRequest{
+	d.reqAddOrg = napi.AddOrgRequest{
 		OrgName: d.OrgName,
 	}
 
 	d.reqAddMember = api.MemberRequest{
-		OrgName: d.OrgName,
+		UserUuid: d.OwnerId,
+		Role:     "admin",
 	}
 
 	d.reqAddNetwork = api.AddNetworkRequest{
@@ -186,7 +189,7 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-			a.OwnerId = resp.User.Uuid
+			a.OwnerId = resp.User.Id
 
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
@@ -211,9 +214,10 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-			a.reqAddOrg = api.AddOrgRequest{
-				OrgName: a.OrgName,
-				Owner:   a.OwnerId,
+			a.reqAddOrg = napi.AddOrgRequest{
+				OrgName:     a.OrgName,
+				Owner:       a.OwnerId,
+				Certificate: "-----BEGIN CERTIFICATE-----",
 			}
 
 			log.Debugf("Setting up watcher for %s", tc.Name)
@@ -298,7 +302,7 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	w.RegisterTestCase(&test.TestCase{
 		Name:        "Add member",
 		Description: "Add a user to an organization",
-		Data:        &orgpb.MemberResponse{},
+		Data:        &mempb.MemberResponse{},
 		Workflow:    w,
 		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 			// Setup required for test case Initialize any
