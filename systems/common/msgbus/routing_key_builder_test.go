@@ -40,4 +40,20 @@ func TestBuild(t *testing.T) {
 
 		assert.NotEqual(t, rk1, rk2)
 	})
+
+	t.Run("GlobalKeyUpdateToAccpetFromAllOrg", func(t *testing.T) {
+		rk := NewRoutingKeyBuilder()
+		rk1 := rk.SetEventType().SetCloudSource().
+			SetActionUpdate().SetCloudSource().SetGlobalScope().SetOrgName("org").SetSystem("system").SetService("service").SetObject("object").MustBuild()
+		newKey := UpdateToAcceptFromAllOrg(rk1)
+		assert.Equal(t, "event.cloud.global.*.system.service.object.update", newKey)
+	})
+
+	t.Run("LocalKeyUpdateToAccpetFromAllOrg", func(t *testing.T) {
+		rk := NewRoutingKeyBuilder()
+		rk1 := rk.SetEventType().SetCloudSource().
+			SetActionUpdate().SetCloudSource().SetLocalScope().SetOrgName("org").SetSystem("system").SetService("service").SetObject("object").MustBuild()
+		newKey := UpdateToAcceptFromAllOrg(rk1)
+		assert.Equal(t, "event.cloud.local.org.system.service.object.update", newKey)
+	})
 }

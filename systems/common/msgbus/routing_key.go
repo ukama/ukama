@@ -98,7 +98,7 @@ func (r RoutingKeyBuilder) SetGlobalScope() RoutingKeyBuilder {
 	return r
 }
 
-func (r RoutingKeyBuilder) SetScopeLocal() RoutingKeyBuilder {
+func (r RoutingKeyBuilder) SetLocalScope() RoutingKeyBuilder {
 	r.scope = SCOPE_LOCAL
 	return r
 }
@@ -274,11 +274,13 @@ func PrepareRoute(org string, r string) string {
 }
 
 /* Set the key to orgname as "*" */
-func AcceptAllOrgNameKey(key string) string {
+func UpdateToAcceptFromAllOrg(key string) string {
 	parts := strings.Split(key, ".")
 	if len(parts) != 8 {
 		return key
 	}
-	parts[3] = "*"
+	if parts[2] == SCOPE_GLOBAL {
+		parts[3] = "*"
+	}
 	return strings.Join(parts, ".")
 }
