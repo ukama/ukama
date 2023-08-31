@@ -159,7 +159,6 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	}
 	if err := validation.IsFutureDate(formattedEffectiveAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-
 	}
 
 	formattedEndAt, err := validation.ValidateDate(endAt)
