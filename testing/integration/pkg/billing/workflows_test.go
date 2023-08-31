@@ -20,6 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
+	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 
@@ -74,8 +75,8 @@ type BillingData struct {
 	NetworkId      string
 
 	// API requests
-	reqAddUser                 rapi.AddUserRequest
-	reqAddOrg                  rapi.AddOrgRequest
+	reqAddUser                 napi.AddUserRequest
+	reqAddOrg                  napi.AddOrgRequest
 	reqAddNetwork              rapi.AddNetworkRequest
 	reqUploadBaseRates         dapi.UploadBaseRatesRequest
 	reqGetBaseRatesByCountry   dapi.GetBaseRatesByCountryRequest
@@ -143,13 +144,13 @@ func InitializeData() *BillingData {
 	d.OrgName = strings.ToLower(faker.FirstName() + "-org")
 	d.NetworkName = strings.ToLower(faker.FirstName()) + "-net"
 
-	d.reqAddUser = rapi.AddUserRequest{
+	d.reqAddUser = napi.AddUserRequest{
 		Name:  d.OwnerName,
 		Email: d.OwnerEmail,
 		Phone: d.OwnerPhone,
 	}
 
-	d.reqAddOrg = rapi.AddOrgRequest{
+	d.reqAddOrg = napi.AddOrgRequest{
 		OrgName:     d.OrgName,
 		Owner:       d.OwnerId,
 		Certificate: utils.RandomBase64String(2048),
@@ -233,7 +234,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			assert.Equal(t, d.OwnerPhone, aUserResp.User.Phone)
 		}
 
-		d.OwnerId = aUserResp.User.Uuid
+		d.OwnerId = aUserResp.User.Id
 
 		// Add new org
 		d.reqAddOrg.Owner = d.OwnerId

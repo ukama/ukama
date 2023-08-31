@@ -8,7 +8,8 @@ type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	Service          *uconf.Service
 	System           SystemConfig
-	LogLevel         int `default:"4`
+	LogLevel         int    `default:"4`
+	Key              string `default:"KEY"`
 }
 
 type SystemConfig struct {
@@ -23,6 +24,7 @@ type SystemConfig struct {
 
 func NewConfig() *Config {
 	return &Config{
+		Key: "the-key-has-to-be-32-bytes-long!",
 		System: SystemConfig{
 			MessageBus: "amqp://guest:guest@localhost:5672/",
 			Dataplan:   "http://localhost:8074",
