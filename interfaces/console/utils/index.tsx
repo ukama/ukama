@@ -9,7 +9,7 @@ const getTitleFromPath = (path: string, id: string) => {
       return 'Home';
     case '/settings':
       return 'Settings';
-    case '/site':
+    case '/sites':
       return 'Sites';
     case '/node':
       return 'Nodes';
