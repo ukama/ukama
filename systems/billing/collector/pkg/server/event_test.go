@@ -26,7 +26,7 @@ const OrgName = "testOrg"
 func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage")
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
 
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -59,7 +59,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 
 	t.Run("SimUsageEventNotSent", func(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage")
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
 
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).
 			Return(errors.New("failed to send sim usage")).Once()
