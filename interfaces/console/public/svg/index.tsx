@@ -10,3 +10,5 @@ export { ThermometerIcon } from './ThermometerIcon';
 export { SettingsArrowIcon } from './SettingsArrowIcon';
 export { PagePlaceholderSvg } from './PagePlaceholderSvg';
 export { NoBillYet } from './NoBillYet';
+export { NodeIcon } from './NodeIcon';
+export { SiteHealth } from './SiteHealth';

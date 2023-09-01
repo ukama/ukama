@@ -7,6 +7,8 @@ import LayersIcon from '@mui/icons-material/Layers';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import RouterIcon from '@mui/icons-material/Router';
 
+import LocationIcon from '@mui/icons-material/LocationOn';
+
 export interface IRoute {
   // Path, like in basic prop
   path: string;
@@ -51,6 +53,7 @@ const getRouteObject = (
 export const routes = {
   Root: getRouteObject('/home', 'Home', true),
   Nodes: getRouteObject('/nodes', 'Nodes', true),
+  Sites: getRouteObject('/sites', 'Sites', true),
   Users: getRouteObject('/users', 'Users', true),
   Settings: getRouteObject('/settings', 'Settings', true, true),
   Billing: getRouteObject('/billing', 'Billing', true),
@@ -68,13 +71,13 @@ export const NavList = [
     isPrivate: true,
     isFullScreen: false,
   },
-  // {
-  //   name: 'Sites',
-  //   path: '/site',
-  //   icon: LocationIcon,
-  //   isPrivate: true,
-  //   isFullScreen: false,
-  // },
+  {
+    name: 'Sites',
+    path: '/sites',
+    icon: LocationIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
   {
     name: 'Nodes',
     path: '/node',
