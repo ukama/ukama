@@ -170,12 +170,22 @@ func (n *Node) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
 }
 
 func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
+	var attachedNodes []string
+
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
+	if l != "" {
+		attachedNodes = append(attachedNodes, strings.ToLower(l))
+	}
+
+	if r != "" {
+		attachedNodes = append(attachedNodes, strings.ToLower(r))
+	}
+
 	res, err := n.client.AttachNodes(ctx, &pb.AttachNodesRequest{
 		NodeId:        strings.ToLower(node),
-		AttachedNodes: []string{strings.ToLower(l), strings.ToLower(r)},
+		AttachedNodes: attachedNodes,
 	})
 	if err != nil {
 		return nil, err

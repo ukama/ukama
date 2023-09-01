@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -36,6 +38,10 @@ func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) 
 			return result.Error
 		}
 
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("node already belongs to site")
+		}
+
 		if nestedFunc != nil {
 			nestErr := nestedFunc(node, tx)
 			if nestErr != nil {
@@ -53,8 +59,9 @@ func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
 	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
-		Preload(clause.Associations).Where("sites.site_id=? AND sites.deleted_at IS NULL",
-		siteID.String()).Find(&nodes)
+		Preload(clause.Associations).Preload("Attached.Site").
+		Where("sites.site_id=? AND sites.deleted_at IS NULL",
+			siteID.String()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -70,8 +77,10 @@ func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
 func (s *siteRepo) GetFreeNodes() ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().Where("id NOT IN (?)",
-		s.Db.GetGormDb().Table("sites").Select("node_id").Where("deleted_at IS NULL")).Find(&nodes)
+	result := s.Db.GetGormDb().
+		Preload(clause.Associations).Preload("Attached.Site").Where("id NOT IN (?)",
+		s.Db.GetGormDb().Table("sites").Select("node_id").Where("deleted_at IS NULL")).
+		Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -83,7 +92,8 @@ func (s *siteRepo) GetFreeNodes() ([]Node, error) {
 func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().Where("id NOT IN (?) AND org_id= ?",
+	result := s.Db.GetGormDb().
+		Preload(clause.Associations).Preload("Attached.Site").Where("id NOT IN (?) AND org_id= ?",
 		s.Db.GetGormDb().Table("sites").Select("node_id").Where("deleted_at IS NULL"), orgId).Find(&nodes)
 
 	if result.Error != nil {
@@ -96,14 +106,13 @@ func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
 func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 	ok, nd := s.IsAllocated(nodeId)
 	if !ok {
-		return nil, status.Errorf(codes.FailedPrecondition, "node is not yet assigned to site/network")
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"node is not yet assigned to site/network")
 	}
 
-	// res := s.Db.GetGormDb().Exec("select * from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
-	// nodeId.StringLowercase(), nodeId.StringLowercase())
-
-	res := s.Db.GetGormDb().Exec("select * from attached_nodes where attached_id= ?  OR node_id= ?",
-		nodeId.StringLowercase(), nodeId.StringLowercase())
+	res := s.Db.GetGormDb().
+		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is NOT NULL)",
+			nodeId.StringLowercase(), nodeId.StringLowercase())
 
 	if res.Error != nil {
 		return nil, status.Errorf(codes.Internal,
@@ -112,7 +121,7 @@ func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 
 	if res.RowsAffected > 0 {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"node is grouped with other nodes.")
+			"node is still grouped with other nodes.")
 	}
 
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {

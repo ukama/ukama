@@ -83,7 +83,7 @@ func TestNodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(node.Id, node.Name, node.Type, node.OrgId,
+			WithArgs(node.Id, node.Name, node.Type, node.OrgId, node.ParentNodeId,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
@@ -131,7 +131,7 @@ func TestNodeRepo_Get(t *testing.T) {
 			WithArgs(nodeId).
 			WillReturnRows(row)
 
-		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
 			WithArgs(nodeId).
 			WillReturnRows(row)
 
@@ -175,7 +175,7 @@ func TestNodeRepo_Get(t *testing.T) {
 }
 
 func TestNodeRepo_GetAll(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 	var name = "node-1"
 
 	var db *extsql.DB
@@ -200,21 +200,21 @@ func TestNodeRepo_GetAll(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		// Arrange
 		row := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(nodeID, name)
+			AddRow(nodeId, name)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WillReturnRows(row)
 
-		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
-			WithArgs(nodeID).
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		// Act
@@ -224,7 +224,7 @@ func TestNodeRepo_GetAll(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, nodes)
 
-		assert.Equal(t, nodeID.String(), nodes[0].Id)
+		assert.Equal(t, nodeId.String(), nodes[0].Id)
 		assert.Equal(t, name, nodes[0].Name)
 
 		err = mock.ExpectationsWereMet()
@@ -277,13 +277,21 @@ func TestNodeRepo_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("NodeFound", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
 		mock.ExpectQuery(`^SELECT.*sites.*`).
 			WithArgs(nodeId).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(row)
 
-		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeId, nodeId).
-			WillReturnResult(sqlmock.NewResult(1, 0))
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
 
 		mock.ExpectBegin()
 
@@ -308,7 +316,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("NodeOnSite", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WithArgs(nodeId).
 			WillReturnRows(row)
 
@@ -323,13 +331,13 @@ func TestNodeRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("NodeErrorGrouped", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WithArgs(nodeId).
 			WillReturnError(extsql.ErrNoRows)
 
-		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeId, nodeId).
-			WillReturnError(extsql.ErrNoRows)
+		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+		// WithArgs(nodeId, nodeId).
+		// WillReturnError(extsql.ErrNoRows)
 
 		// Act
 		err = r.Delete(nodeId, nil)
@@ -342,13 +350,13 @@ func TestNodeRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("NodeStillGrouped", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WithArgs(nodeId).
 			WillReturnError(extsql.ErrNoRows)
 
-		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeId, nodeId).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+		// WithArgs(nodeId, nodeId).
+		// WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// Act
 		err = r.Delete(nodeId, nil)

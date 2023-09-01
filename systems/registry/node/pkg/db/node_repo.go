@@ -60,7 +60,8 @@ func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) erro
 func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "id=?", id.StringLowercase())
+	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
+		First(&node, "id=?", id.StringLowercase())
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -72,7 +73,8 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 func (n *nodeRepo) GetForOrg(orgId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).Where("org_id = ?", orgId.String()).Find(&nodes)
+	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
+		Where("org_id = ?", orgId.String()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -84,7 +86,7 @@ func (n *nodeRepo) GetForOrg(orgId uuid.UUID) ([]Node, error) {
 func (n *nodeRepo) GetAll() ([]Node, error) {
 	var nodes []Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).Find(&nodes)
+	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -94,25 +96,24 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 }
 
 func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
-	ok, _ := isAllocated(n.Db.GetGormDb(), nodeId)
-	if ok {
-		return status.Errorf(codes.FailedPrecondition, "node is still assigned to site/network")
+	node, err := n.Get(nodeId)
+	if err != nil {
+		return fmt.Errorf("fail to get node: %w", err)
 	}
 
-	res := n.Db.GetGormDb().Exec("select * from attached_nodes where attached_id= ?  OR node_id= ?",
-		nodeId.StringLowercase(), nodeId.StringLowercase())
-
-	if res.Error != nil {
-		return status.Errorf(codes.Internal,
-			"failed to get node grouping result. error %s", res.Error.Error())
+	if len(node.Attached) > 0 {
+		return fmt.Errorf("node %s still have child nodes", node.Id)
 	}
 
-	if res.RowsAffected > 0 {
-		return status.Errorf(codes.FailedPrecondition,
-			"node is still grouped with other nodes.")
+	if node.ParentNodeId != nil {
+		return fmt.Errorf("node %s is still attached to a parent node", node.Id)
 	}
 
-	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	if node.Site.SiteId != uuid.Nil {
+		return fmt.Errorf("node is still assigned to site/network")
+	}
+
+	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("node_id", nodeId.StringLowercase()).Delete(&NodeStatus{})
 		if result.Error != nil {
 			return result.Error
@@ -174,17 +175,17 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
 		return status.Errorf(codes.InvalidArgument,
-			"node type must be a towernode")
+			"parent node (%v) type must be a towernode", parentNode.Id)
 	}
 
 	if parentNode.Site.SiteId == uuid.Nil {
 		return status.Errorf(codes.FailedPrecondition,
-			"node must belongs to a site")
+			"parent node (%v)  must belong to a site", parentNode.Id)
 	}
 
 	attachedNodes, err := n.batchGet(attachedNodeIds)
 	if err != nil {
-		return fmt.Errorf("fail to get attached nodes: %w", err)
+		return fmt.Errorf("fail to get list of nodes to attach: %w", err)
 	}
 
 	if len(attachedNodes) == 0 || len(attachedNodes) != len(attachedNodeIds) {
@@ -203,10 +204,14 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		for _, an := range attachedNodes {
+			if an.ParentNodeId != nil {
+				return status.Errorf(codes.InvalidArgument,
+					"node %v is already attached to a parent", an.Id)
+			}
 
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
 				return status.Errorf(codes.InvalidArgument,
-					"cannot attach non amplifier node")
+					"cannot attach non amplifier node: %v", an.Id)
 			}
 
 			if parentNode.Site.SiteId != an.Site.SiteId {
@@ -214,13 +219,13 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 					"cannot attach nodes from different sites")
 			}
 
-			parentNode.Attached = append(parentNode.Attached, &an)
-		}
+			an.ParentNodeId = &parentNode.Id
 
-		d := tx.Clauses(clause.OnConflict{DoNothing: true}).Save(parentNode)
-		if d.Error != nil {
-			return status.Errorf(codes.Internal,
-				"failed to update parent node. Error %s", d.Error.Error())
+			d := tx.Save(&an)
+			if d.Error != nil {
+				return status.Errorf(codes.Internal,
+					"failed to attach node: %s . Error %s", an.Id, d.Error.Error())
+			}
 		}
 
 		return nil
@@ -231,18 +236,24 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		// result := tx.Exec("delete from attached_nodes where attached_id=(select id from nodes where id=?) OR node_id=(select id from nodes where id=?)",
-		// detachNodeId, detachNodeId)
-
-		result := tx.Exec("delete from attached_nodes where attached_id=? OR node_id=?",
-			detachNodeId, detachNodeId)
-
-		if result.Error != nil {
-			return fmt.Errorf("failed to remove from group for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
+		node, err := n.Get(detachNodeId)
+		if err != nil {
+			return fmt.Errorf("fail to get node: %w", err)
 		}
 
-		if result.RowsAffected == 0 {
-			return fmt.Errorf("node %s is not attached", detachNodeId.StringLowercase())
+		if node.ParentNodeId == nil {
+			return fmt.Errorf("node %s is not attached to a parent node", node.Id)
+		}
+
+		if len(node.Attached) > 0 {
+			return fmt.Errorf("node %s still have child nodes", node.Id)
+		}
+
+		node.ParentNodeId = nil
+
+		d := tx.Save(&node)
+		if d.Error != nil {
+			return fmt.Errorf("failed to detach node: %s . Error %s", node.Id, d.Error.Error())
 		}
 
 		return nil
@@ -274,7 +285,8 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 func (n *nodeRepo) batchGet(nodeIds []string) ([]Node, error) {
 	var nodes []Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).Where("id IN ?", nodeIds).Find(&nodes)
+	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
+		Where("id IN ?", nodeIds).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error

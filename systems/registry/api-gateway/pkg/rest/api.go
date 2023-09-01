@@ -81,8 +81,8 @@ type AddSiteRequest struct {
 
 type AttachNodesRequest struct {
 	ParentNode string `json:"node_id" path:"node_id" validate:"required"`
-	AmpNodeL   string `json:"anodel" validate:"required"`
-	AmpNodeR   string `json:"anoder" validate:"required"`
+	AmpNodeL   string `json:"anodel"`
+	AmpNodeR   string `json:"anoder"`
 }
 
 type DetachNodeRequest struct {
@@ -139,16 +139,16 @@ type ReleaseNodeFromSiteRequest struct {
 }
 
 type AddInvitationRequest struct {
-	Org string `json:"org" path:"org" validate:"required"`
+	Org   string `json:"org" path:"org" validate:"required"`
 	Email string `json:"email" validate:"required"`
-	Role string `json:"role" validate:"required"`
-	Name string `json:"name" validate:"required"`
+	Role  string `json:"role" validate:"required"`
+	Name  string `json:"name" validate:"required"`
 }
 type GetInvitationRequest struct {
 	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
 }
 
 type UpdateInvitationRequest struct {
-	InvitationId    string `json:"invitation_id" path:"invitation_id" validate:"required"`
-	State string `json:"state" validate:"required"`
+	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
+	State        string `json:"state" validate:"required"`
 }

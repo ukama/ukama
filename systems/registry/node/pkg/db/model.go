@@ -7,19 +7,21 @@ import (
 
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Node struct {
-	Id        string     `gorm:"primaryKey;type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
-	Name      string     `gorm:"type:string"`
-	Status    NodeStatus `gorm:"not null"`
-	Type      string     `gorm:"type:string;not null"`
-	OrgId     uuid.UUID  `gorm:"type:uuid;not null"`
-	Attached  []*Node    `gorm:"many2many:attached_nodes"`
-	Site      Site
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Id           string     `gorm:"primaryKey;type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
+	Name         string     `gorm:"type:string"`
+	Status       NodeStatus `gorm:"not null"`
+	Type         string     `gorm:"type:string;not null"`
+	OrgId        uuid.UUID  `gorm:"type:uuid;not null"`
+	ParentNodeId *string    `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
+	Attached     []*Node    `gorm:"foreignKey:ParentNodeId"`
+	Site         Site
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type NodeStatus struct {
@@ -125,4 +127,20 @@ type Site struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (n *NodeStatus) BeforeSave(tx *gorm.DB) (err error) {
+	tx.Statement.AddClause(clause.OnConflict{
+		DoNothing: true,
+	})
+
+	return nil
+}
+
+func (s *Site) BeforeSave(tx *gorm.DB) (err error) {
+	tx.Statement.AddClause(clause.OnConflict{
+		DoNothing: true,
+	})
+
+	return nil
 }
