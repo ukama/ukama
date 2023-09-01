@@ -1,0 +1,132 @@
+package rest
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/ukama/ukama/systems/common/rest"
+
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/configurator/api-gateway/cmd/version"
+	"github.com/wI2L/fizz"
+
+	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg/client"
+
+	"github.com/gin-gonic/gin"
+
+	log "github.com/sirupsen/logrus"
+	contPb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+)
+
+type Router struct {
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
+}
+
+type RouterConfig struct {
+	metricsConfig config.Metrics
+	httpEndpoints *pkg.HttpEndpoints
+	debugMode     bool
+	serverConf    *rest.HttpConfig
+	auth          *config.Auth
+}
+
+type Clients struct {
+	Controller    controller
+	
+}
+
+
+type controller interface {
+	RestartSite(siteName,networkId string) (*contPb., error)
+	RestartNode(nodeId string) (*contPb.GetInvitationResponse, error)
+	
+}
+
+
+
+func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
+	c := &Clients{}
+	c.Controller = client.NewController(endpoints., endpoints.Timeout)
+
+	return c
+}
+
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+	r := &Router{
+		clients: clients,
+		config:  config,
+	}
+
+	if !config.debugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r.init(authfunc)
+	return r
+}
+
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+	return &RouterConfig{
+		metricsConfig: svcConf.Metrics,
+		httpEndpoints: &svcConf.HttpServices,
+		serverConf:    &svcConf.Server,
+		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
+	}
+}
+
+func (rt *Router) Run() {
+	log.Info("Listening on port ", rt.config.serverConf.Port)
+	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			log.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		
+	
+	//reboot site
+	const controller = "/controller"
+	member := auth.Group(controller, "controller", "Operations on controller")
+	member.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
+	member.POST("/restartNode", formatDoc("restart node in org", "restaring a node within an org "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
+	
+	}
+}
+
+
+func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
+	return r.clients.Node.GetSiteNodes(req.SiteId)
+}
+
+func (r *Router) getAllNodesHandler(c *gin.Context, req *GetNodesRequest) (*nodepb.GetNodesResponse, error) {
+	return r.clients.Node.GetAllNodes(req.Free)
+}
+
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {
+	return r.clients.Node.GetNode(req.NodeId)
+}
