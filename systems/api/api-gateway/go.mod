@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/api/api-gateway
 
-go 1.18
+go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -10,6 +10,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
+	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 )
@@ -70,6 +71,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
