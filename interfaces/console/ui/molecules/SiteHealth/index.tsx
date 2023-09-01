@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
-import { Stack, Typography, Paper, Grid } from '@mui/material';
+import React from 'react';
+import { Box, Stack, Typography, Paper, Grid } from '@mui/material';
 import { SiteHealth } from '@/public/svg';
 
 interface BatteryInfo {
@@ -17,34 +17,55 @@ interface SiteOverallHealthProps {
   backhaulHealth: 'good' | 'warning';
 }
 
-class SiteOverallHealth extends PureComponent<SiteOverallHealthProps> {
-  renderBatteryInfo = (batteryInfo: BatteryInfo) => {
-    const { label, value } = batteryInfo;
-    return (
-      <Stack direction="row" spacing={5}>
-        <Typography variant="body1" color="initial">
-          {label}:
-        </Typography>
-        <Typography variant="body1" color="initial">
-          {value}
-        </Typography>
-      </Stack>
+const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
+  ({
+    batteryInfo,
+    solarHealth,
+    nodeHealth,
+    switchHealth,
+    controllerHealth,
+    batteryHealth,
+    backhaulHealth,
+  }) => {
+    const renderBatteryInfo = React.useCallback((batteryInfo: BatteryInfo) => {
+      const { label, value } = batteryInfo;
+      return (
+        <Box
+          display="flex"
+          component={Grid}
+          flexDirection="row"
+          alignItems="center"
+          spacing={5}
+        >
+          <Typography variant="body1" color="initial">
+            {label}:
+          </Typography>
+          <Typography variant="body1" color="initial">
+            {value}
+          </Typography>
+        </Box>
+      );
+    }, []);
+
+    const batteryCharge = React.useMemo(
+      () => `${batteryInfo[2].value} %`,
+      [batteryInfo],
     );
-  };
-
-  render() {
-    const {
-      batteryInfo,
-      solarHealth,
-      nodeHealth,
-      switchHealth,
-      controllerHealth,
-      batteryHealth,
-      backhaulHealth,
-    } = this.props;
+    const batteryVoltage = React.useMemo(
+      () => `${batteryInfo[0].value} V`,
+      [batteryInfo],
+    );
+    const batteryCurrent = React.useMemo(
+      () => `${batteryInfo[1].value} A`,
+      [batteryInfo],
+    );
+    const batteryPower = React.useMemo(
+      () => `${batteryInfo[3].value} W`,
+      [batteryInfo],
+    );
 
     return (
-      <>
+      <Box>
         <Grid container spacing={2}>
           <Grid item xs={8}>
             <SiteHealth
@@ -59,42 +80,43 @@ class SiteOverallHealth extends PureComponent<SiteOverallHealthProps> {
           <Grid item xs={4}>
             <Stack direction={'column'} spacing={2}>
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="column" spacing={2}>
+                <Stack direction="column" spacing={1} sx={{ p: 1 }}>
                   <Typography variant="h6" color="initial">
                     Battery information
                   </Typography>
-                  {batteryInfo.map(this.renderBatteryInfo)}
+                  {batteryInfo.map(renderBatteryInfo)}
                 </Stack>
               </Paper>
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="column" spacing={2}>
+                <Stack direction="column" spacing={1} sx={{ p: 1 }}>
                   <Typography variant="h6" color="initial">
                     Battery information
                   </Typography>
-                  {this.renderBatteryInfo({
+                  {renderBatteryInfo({
                     label: 'Charge',
-                    value: `${batteryInfo[2].value} %`,
+                    value: batteryCharge,
                   })}
-                  {this.renderBatteryInfo({
+                  {renderBatteryInfo({
                     label: 'Voltage',
-                    value: `${batteryInfo[0].value} V`,
+                    value: batteryVoltage,
                   })}
-                  {this.renderBatteryInfo({
+                  {renderBatteryInfo({
                     label: 'Current',
-                    value: `${batteryInfo[1].value} A`,
+                    value: batteryCurrent,
                   })}
-                  {this.renderBatteryInfo({
+                  {renderBatteryInfo({
                     label: 'Power',
-                    value: `${batteryInfo[3].value} W`,
+                    value: batteryPower,
                   })}
                 </Stack>
               </Paper>
             </Stack>
           </Grid>
         </Grid>
-      </>
+      </Box>
     );
-  }
-}
+  },
+);
 
 export default SiteOverallHealth;
+SiteOverallHealth.displayName = 'SiteOverallHealth';
