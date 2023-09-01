@@ -27,7 +27,7 @@ func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
 	t.MetricConfig = []pkg.MetricConfig{
 		{
-			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage"),
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "sim_usage",
@@ -106,7 +106,7 @@ func InitTestConfig() *TestConfig {
 
 func TestEvent_EventNotification(t *testing.T) {
 	tC := InitTestConfig()
-	mc := collector.NewMetricsCollector(tC.MetricConfig)
+	mc := collector.NewMetricsCollector(OrgName, tC.MetricConfig)
 	s := NewExporterEventServer(OrgName, mc)
 	simUsage := epb.SimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",

@@ -74,7 +74,7 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	mc := collector.NewMetricsCollector(serviceConfig.MetricConfig)
+	mc := collector.NewMetricsCollector(serviceConfig.OrgName, serviceConfig.MetricConfig)
 
 	// Exporter service
 	exporter, err := server.NewExporterServer(serviceConfig.OrgName, serviceConfig.Org, mbClient)

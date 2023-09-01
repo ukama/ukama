@@ -33,7 +33,7 @@ func (s *ExporterEventServer) EventNotification(ctx context.Context, e *epb.Even
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(s.orgName, "event.cloud.local.{{ .Org}}.subscriber.cdr.sim.usage"):
+	case msgbus.PrepareRoute(s.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalEventSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
