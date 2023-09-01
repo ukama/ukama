@@ -23,6 +23,13 @@ export default function Page() {
     // Logic to restart a site
   };
 
+  const batteryInfo = [
+    { label: 'Model number', value: 'V1234' },
+    { label: 'Current', value: '10 A' },
+    { label: 'Charge', value: '80 %' },
+    { label: 'Power', value: '100 W' },
+    { label: 'Voltage', value: '12 V' },
+  ];
   return (
     <>
       <LoadingWrapper
@@ -75,12 +82,7 @@ export default function Page() {
                 controllerHealth={'good'}
                 batteryHealth={'good'}
                 backhaulHealth={'good'}
-                voltage={'48'}
-                current={'23'}
-                power={'230'}
-                modelNumber={'67362'}
-                version={'v343'}
-                charge={'50'}
+                batteryInfo={batteryInfo}
               />
             </Paper>
           </Grid>
