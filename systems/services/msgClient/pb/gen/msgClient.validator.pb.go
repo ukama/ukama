@@ -17,6 +17,18 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *CreateShovelRequest) Validate() error {
+	return nil
+}
+func (this *CreateShovelResponse) Validate() error {
+	return nil
+}
+func (this *RemoveShovelRequest) Validate() error {
+	return nil
+}
+func (this *RemoveShovelResponse) Validate() error {
+	return nil
+}
 func (this *RegisterServiceReq) Validate() error {
 	if this.SystemName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))

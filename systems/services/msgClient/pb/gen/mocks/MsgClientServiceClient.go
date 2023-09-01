@@ -16,6 +16,39 @@ type MsgClientServiceClient struct {
 	mock.Mock
 }
 
+// CreateShovel provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) CreateShovel(ctx context.Context, in *gen.CreateShovelRequest, opts ...grpc.CallOption) (*gen.CreateShovelResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.CreateShovelResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateShovelRequest, ...grpc.CallOption) (*gen.CreateShovelResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateShovelRequest, ...grpc.CallOption) *gen.CreateShovelResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.CreateShovelResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateShovelRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PublishMsg provides a mock function with given fields: ctx, in, opts
 func (_m *MsgClientServiceClient) PublishMsg(ctx context.Context, in *gen.PublishMsgRequest, opts ...grpc.CallOption) (*gen.PublishMsgResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -74,6 +107,39 @@ func (_m *MsgClientServiceClient) RegisterService(ctx context.Context, in *gen.R
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterServiceReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveShovel provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) RemoveShovel(ctx context.Context, in *gen.RemoveShovelRequest, opts ...grpc.CallOption) (*gen.RemoveShovelResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RemoveShovelResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveShovelRequest, ...grpc.CallOption) (*gen.RemoveShovelResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveShovelRequest, ...grpc.CallOption) *gen.RemoveShovelResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveShovelResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveShovelRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

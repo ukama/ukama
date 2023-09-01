@@ -1,16 +1,23 @@
 package msgbus
 
 import (
+	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
+	"text/template"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
 	TYPE_EVENT         = "event"
 	TYPE_REQUEST       = "request"
 	TYPE_RESPONSE      = "request"
-	SOURCE_DEVICE      = "device"
+	SOURCE_NODE        = "node"
 	SOURCE_CLOUD       = "cloud"
+	SCOPE_LOCAL        = "local"
+	SCOPE_GLOBAL       = "global"
 	ACTION_CRUD_UPDATE = "update"
 	ACTION_CRUD_CREATE = "create"
 	ACTION_CRUD_DELETE = "delete"
@@ -28,11 +35,14 @@ func (k RoutingKey) StringLowercase() string {
 
 /*
  * AMQP Routing key:
- * <type>.<source>.<container>.<object>.<state>
+ * <type>.<source>.<scope>.<orgname>.<system>.<service>.<object>.<state>
  *
  * type:       event, request, response
- * source:     cloud, device
- * container:  mesh
+ * source:     cloud, node
+ * scope:      global,local
+ * orgName:    orgname(no specail charcter allowed)
+ * system:     Software system
+ * service:    service name
  * object:     link, cert
  * state:      (actions) connect, fail, active, lost, end, close, valid, invalid, update
  *             expired
@@ -40,17 +50,21 @@ func (k RoutingKey) StringLowercase() string {
  */
 
 type RoutingKeyBuilder struct {
-	msgType   string
-	source    string
-	container string
-	object    string
-	action    string //  connect, fail, active, lost, end, close, valid, invalid, update, expired
+	msgType string
+	source  string
+	scope   string
+	orgName string
+	system  string
+	service string
+	object  string
+	action  string //  connect, fail, active, lost, end, close, valid, invalid, update, expired
 }
 
 // Deprecated. Just use string constants. This one is hard to read
 func NewRoutingKeyBuilder() RoutingKeyBuilder {
 	return RoutingKeyBuilder{
 		msgType: TYPE_EVENT,
+		scope:   SCOPE_LOCAL,
 	}
 }
 
@@ -75,14 +89,38 @@ func (r RoutingKeyBuilder) SetCloudSource() RoutingKeyBuilder {
 }
 
 func (r RoutingKeyBuilder) SetDeviceSource() RoutingKeyBuilder {
-	r.source = SOURCE_DEVICE
+	r.source = SOURCE_NODE
 	return r
 }
 
-// SetContainer sets the container part of routing key. Here container means c4 container like mesh, registry ect.
-// use '*' create a routing key for all containers
-func (r RoutingKeyBuilder) SetContainer(container string) RoutingKeyBuilder {
-	r.container = container
+func (r RoutingKeyBuilder) SetGlobalScope() RoutingKeyBuilder {
+	r.scope = SCOPE_GLOBAL
+	return r
+}
+
+func (r RoutingKeyBuilder) SetLocalScope() RoutingKeyBuilder {
+	r.scope = SCOPE_LOCAL
+	return r
+}
+
+func (r RoutingKeyBuilder) SetScope(scope string) RoutingKeyBuilder {
+	r.scope = scope
+	return r
+}
+
+func (r RoutingKeyBuilder) SetOrgName(orgName string) RoutingKeyBuilder {
+	r.orgName = strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(orgName, ""))
+	return r
+}
+
+func (r RoutingKeyBuilder) SetSystem(system string) RoutingKeyBuilder {
+	r.system = strings.ToLower(system)
+	return r
+}
+
+// Setservice sets the service part of routing key.
+func (r RoutingKeyBuilder) SetService(service string) RoutingKeyBuilder {
+	r.service = strings.ToLower(service)
 	return r
 }
 
@@ -123,18 +161,31 @@ func (r RoutingKeyBuilder) Build() (string, error) {
 		return "", fmt.Errorf(errorFmt, "source")
 	}
 
-	if len(r.container) == 0 {
-		return "", fmt.Errorf(errorFmt, "container")
+	if len(r.service) == 0 {
+		return "", fmt.Errorf(errorFmt, "service")
 	}
 
 	if len(r.object) == 0 {
 		return "", fmt.Errorf(errorFmt, "object")
 	}
+
 	if len(r.msgType) == 0 {
 		return "", fmt.Errorf(errorFmt, "msgType")
 	}
 
-	return fmt.Sprintf("%s.%s.%s.%s.%s", r.msgType, r.source, r.container, r.object, r.action), nil
+	if len(r.scope) == 0 {
+		return "", fmt.Errorf(errorFmt, "scope")
+	}
+
+	if len(r.orgName) == 0 {
+		return "", fmt.Errorf(errorFmt, "orgname")
+	}
+
+	if len(r.system) == 0 {
+		return "", fmt.Errorf(errorFmt, "system")
+	}
+
+	return fmt.Sprintf("%s.%s.%s.%s.%s.%s.%s.%s", r.msgType, r.source, r.scope, r.orgName, r.system, r.service, r.object, r.action), nil
 }
 
 // Panics if one of the segments in not set
@@ -149,7 +200,7 @@ func (r RoutingKeyBuilder) MustBuild() string {
 func Parse(s string) (RoutingKey, error) {
 
 	parts := strings.Split(s, ".")
-	if len(parts) != 5 {
+	if len(parts) != 8 {
 		return "", fmt.Errorf("invalid route %s", s)
 	}
 
@@ -171,4 +222,65 @@ func ParseRouteList(s []string) ([]RoutingKey, error) {
 	}
 
 	return rk, nil
+}
+
+func PrepareRoutes(org string, route []string) []string {
+	routesList := make([]string, 0, len(route))
+	routeS := struct {
+		Org string
+	}{
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
+	}
+
+	for _, r := range route {
+		buf := new(bytes.Buffer)
+		t, err := template.New("route").Parse(r)
+		if err != nil {
+			log.Errorf("failed to create template %s. Error %s", r, err)
+		}
+
+		err = t.Execute(buf, routeS)
+		if err != nil {
+			log.Errorf("failed to create route from template %s. Error %s", r, err)
+			continue
+		}
+		routesList = append(routesList, buf.String())
+	}
+
+	return routesList
+
+}
+
+func PrepareRoute(org string, r string) string {
+	routeS := struct {
+		Org string
+	}{
+		strings.ToLower(regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(org, "")),
+	}
+
+	buf := new(bytes.Buffer)
+	t, err := template.New("route").Parse(r)
+	if err != nil {
+		log.Fatalf("failed to create template %s. Error %s", r, err)
+	}
+
+	err = t.Execute(buf, routeS)
+	if err != nil {
+		log.Fatalf("failed to create route from template %s. Error %s", r, err)
+	}
+
+	return buf.String()
+
+}
+
+/* Set the key to orgname as "*" */
+func UpdateToAcceptFromAllOrg(key string) string {
+	parts := strings.Split(key, ".")
+	if len(parts) != 8 {
+		return key
+	}
+	if parts[2] == SCOPE_GLOBAL {
+		parts[3] = "*"
+	}
+	return strings.Join(parts, ".")
 }

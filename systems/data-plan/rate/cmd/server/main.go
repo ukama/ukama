@@ -68,7 +68,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -82,7 +82,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to connect to base rate service %s. error: %s", serviceConfig.BaseRate, err)
 	}
 
-	srv := server.NewRateServer(db.NewMarkupsRepo(gormdb), db.NewDefaultMarkupRepo(gormdb), b, mbClient)
+	srv := server.NewRateServer(serviceConfig.OrgName, db.NewMarkupsRepo(gormdb), db.NewDefaultMarkupRepo(gormdb), b, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterRateServiceServer(s, srv)

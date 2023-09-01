@@ -25,6 +25,7 @@ type Config struct {
 	IsMsgBus          bool              `default:"true"`
 	MetricConfig      []MetricConfig    `default:"{}"`
 	Metrics           *config.Metrics   `default:"{}"`
+	OrgName           string
 }
 
 type MetricSchema struct {
@@ -52,11 +53,11 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.cdr.sim.usage"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"},
 		},
 		MetricConfig: []MetricConfig{
 			{
-				Event: "event.cloud.cdr.sim.usage",
+				Event: "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage",
 				Schema: []MetricSchema{
 					{
 						// Data Usage

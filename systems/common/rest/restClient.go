@@ -1,10 +1,11 @@
 package rest
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type RestClient struct {
@@ -23,7 +24,24 @@ func NewRestClient(path string, debug bool) (*RestClient, error) {
 		C:   c,
 		URL: url,
 	}
-	logrus.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	return rc, nil
+}
+
+func NewRestClientWithClient(hc *http.Client, path string, debug bool) (*RestClient, error) {
+	c := resty.NewWithClient(hc)
+
+	url, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c.SetDebug(debug)
+	rc := &RestClient{
+		C:   c,
+		URL: url,
+	}
+	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
 	return rc, nil
 }
 
@@ -34,6 +52,6 @@ func NewRestyClient(url *url.URL, debug bool) *RestClient {
 		C:   c,
 		URL: url,
 	}
-	logrus.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
 	return rc
 }

@@ -71,8 +71,8 @@ func (c *nodeRegistryClient) GetNode(id string) (*NodeInfo, error) {
 
 		return nil, fmt.Errorf("data package info deserailization failure: %+v", err)
 	} else {
-		nodeInfo.Id = rnode.Node.Node
-		nodeInfo.Network = rnode.Node.Network
+		nodeInfo.Id = rnode.Node.Id
+		nodeInfo.Network = "" /* TODO: Check if we can get it through soem api. */
 		nodeInfo.Org = ""
 		nodeInfo.Site = ""
 	}

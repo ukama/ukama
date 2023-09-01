@@ -8,12 +8,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"google.golang.org/protobuf/types/known/anypb"
 )
+
+const OrgName = "testOrg"
 
 type TestConfig struct {
 	MetricConfig []pkg.MetricConfig
@@ -24,7 +27,7 @@ func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
 	t.MetricConfig = []pkg.MetricConfig{
 		{
-			Event: "event.cloud.cdr.sim.usage",
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "sim_usage",
@@ -45,7 +48,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.allocate",
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "simcount",
@@ -57,7 +60,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "total_sims",
@@ -69,7 +72,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "subscriber_simcount",
@@ -81,7 +84,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count"),
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "subscriber_simcount",
@@ -103,8 +106,8 @@ func InitTestConfig() *TestConfig {
 
 func TestEvent_EventNotification(t *testing.T) {
 	tC := InitTestConfig()
-	mc := collector.NewMetricsCollector(tC.MetricConfig)
-	s := NewExporterEventServer(mc)
+	mc := collector.NewMetricsCollector(OrgName, tC.MetricConfig)
+	s := NewExporterEventServer(OrgName, mc)
 	simUsage := epb.SimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
