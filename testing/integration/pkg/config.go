@@ -19,6 +19,7 @@ type SystemConfig struct {
 	Metrics    string `default:"http://localhost:8072"`
 	Subscriber string `default:"http://localhost:8078"`
 	Billing    string `default:"http://localhost:8079"`
+	Nucleus    string `default:"http://localhost:8060"`
 	MessageBus string `default:"amqp://guest:guest@localhost:5672/"`
 }
 
@@ -33,6 +34,7 @@ func NewConfig() *Config {
 			Metrics:    "http://localhost:8072",
 			Subscriber: "http://localhost:8078",
 			Billing:    "http://localhost:8079",
+			Nucleus:    "http://localhost:8060",
 		},
 	}
 }

@@ -90,7 +90,6 @@ func InitializeData() *InitData {
 	d.Host = config.System.Subscriber
 	d.RegHost = config.System.Registry
 	d.MbHost = config.System.MessageBus
-
 	d.Sys = NewSubscriberClient(d.Host)
 	d.Reg = registry.NewRegistryClient(d.RegHost)
 	d.EncKey = "the-key-has-to-be-32-bytes-long!"
