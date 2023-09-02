@@ -7,6 +7,8 @@ import (
 
 	"github.com/bxcodec/faker/v4"
 	"github.com/goombaio/namegenerator"
+
+	"github.com/ukama/ukama/systems/common/validation"
 )
 
 func RandomPort() int {
@@ -52,14 +54,7 @@ func RandomPastDate(year int) string {
 func GenerateFutureDate(a time.Duration) string {
 	t := time.Now()
 	f := t.Add(a)
-	tmp := f.Format(time.RFC3339)
-	return tmp
-}
-
-func GenerateFutureDateWithZ(a time.Duration) string {
-	t := time.Now()
-	f := t.Add(a)
-	tmp := f.Format("2006-01-02T15:04:05Z")
+	tmp := f.Format(validation.DateLayout)
 	return tmp
 }
 
