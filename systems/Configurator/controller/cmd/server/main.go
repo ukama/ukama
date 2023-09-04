@@ -21,7 +21,6 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
@@ -48,9 +47,7 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-
-
-func runGrpcServer(gormdb sql.Db) {
+func runGrpcServer() {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
