@@ -32,9 +32,9 @@ type MsgClientServiceClient interface {
 	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
 	// / Call this rpc to publisg events
 	PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
-	/// Create a shovel
+	// / Create a shovel
 	CreateShovel(ctx context.Context, in *CreateShovelRequest, opts ...grpc.CallOption) (*CreateShovelResponse, error)
-	/// Remove shovel
+	// / Remove shovel
 	RemoveShovel(ctx context.Context, in *RemoveShovelRequest, opts ...grpc.CallOption) (*RemoveShovelResponse, error)
 }
 
@@ -123,9 +123,9 @@ type MsgClientServiceServer interface {
 	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
 	// / Call this rpc to publisg events
 	PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
-	/// Create a shovel
+	// / Create a shovel
 	CreateShovel(context.Context, *CreateShovelRequest) (*CreateShovelResponse, error)
-	/// Remove shovel
+	// / Remove shovel
 	RemoveShovel(context.Context, *RemoveShovelRequest) (*RemoveShovelResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }

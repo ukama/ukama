@@ -18,7 +18,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.32.0
 	google.golang.org/grpc v1.56.2
@@ -83,7 +83,9 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
+	github.com/ugorji/go/codec v1.2.6 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
+	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
