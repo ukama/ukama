@@ -154,6 +154,29 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteReque
 	return resp, nil
 }
 
+func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	log.Infof("Getting all nodes on site %v", req.GetNetworkId())
+
+	network, err := uuid.FromString(req.GetNetworkId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+	}
+
+	nodes, err := n.siteRepo.GetByNetwork(network)
+	if err != nil {
+		log.Errorf("error getting all nodes for network: %s", err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkId: req.GetNetworkId(),
+		Nodes:     dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
 func (n *NodeServer) GetNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
 	if req.Free {
 		// return only free nodes for org

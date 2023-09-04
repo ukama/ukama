@@ -14,6 +14,7 @@ import (
 
 type SiteRepo interface {
 	GetNodes(uuid.UUID) ([]Node, error)
+	GetByNetwork(uuid.UUID) ([]Node, error)
 	AddNode(*Site, func(*Site, *gorm.DB) error) error
 	RemoveNode(ukama.NodeID) (*Site, error)
 	GetFreeNodes() ([]Node, error)
@@ -55,13 +56,32 @@ func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) 
 	return err
 }
 
-func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
+func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
 	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
 		Preload(clause.Associations).Preload("Attached.Site").
 		Where("sites.site_id=? AND sites.deleted_at IS NULL",
-			siteID.String()).Find(&nodes)
+			siteId.String()).Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return nodes, nil
+}
+
+func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
+	var nodes []Node
+
+	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
+		Preload(clause.Associations).Preload("Attached.Site").
+		Where("sites.network_id=? AND sites.deleted_at IS NULL",
+			networkId.String()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error

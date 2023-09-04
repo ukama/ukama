@@ -22,6 +22,7 @@ const (
 	NodeService_AddNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/AddNode"
 	NodeService_GetNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/GetNode"
 	NodeService_GetNodesForSite_FullMethodName     = "/ukama.registry.node.v1.NodeService/GetNodesForSite"
+	NodeService_GetNodesForNetwork_FullMethodName  = "/ukama.registry.node.v1.NodeService/GetNodesForNetwork"
 	NodeService_GetNodesForOrg_FullMethodName      = "/ukama.registry.node.v1.NodeService/GetNodesForOrg"
 	NodeService_GetNodes_FullMethodName            = "/ukama.registry.node.v1.NodeService/GetNodes"
 	NodeService_UpdateNodeState_FullMethodName     = "/ukama.registry.node.v1.NodeService/UpdateNodeState"
@@ -40,6 +41,7 @@ type NodeServiceClient interface {
 	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 	GetNodesForSite(ctx context.Context, in *GetBySiteRequest, opts ...grpc.CallOption) (*GetBySiteResponse, error)
+	GetNodesForNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
 	GetNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
@@ -80,6 +82,15 @@ func (c *nodeServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opt
 func (c *nodeServiceClient) GetNodesForSite(ctx context.Context, in *GetBySiteRequest, opts ...grpc.CallOption) (*GetBySiteResponse, error) {
 	out := new(GetBySiteResponse)
 	err := c.cc.Invoke(ctx, NodeService_GetNodesForSite_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetNodesForNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
+	out := new(GetByNetworkResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetNodesForNetwork_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +185,7 @@ type NodeServiceServer interface {
 	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
 	GetNodesForSite(context.Context, *GetBySiteRequest) (*GetBySiteResponse, error)
+	GetNodesForNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
 	GetNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error)
@@ -198,6 +210,9 @@ func (UnimplementedNodeServiceServer) GetNode(context.Context, *GetNodeRequest) 
 }
 func (UnimplementedNodeServiceServer) GetNodesForSite(context.Context, *GetBySiteRequest) (*GetBySiteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodesForSite not implemented")
+}
+func (UnimplementedNodeServiceServer) GetNodesForNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodesForNetwork not implemented")
 }
 func (UnimplementedNodeServiceServer) GetNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodesForOrg not implemented")
@@ -289,6 +304,24 @@ func _NodeService_GetNodesForSite_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NodeServiceServer).GetNodesForSite(ctx, req.(*GetBySiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetNodesForNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetNodesForNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetNodesForNetwork_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetNodesForNetwork(ctx, req.(*GetByNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -473,6 +506,10 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNodesForSite",
 			Handler:    _NodeService_GetNodesForSite_Handler,
+		},
+		{
+			MethodName: "GetNodesForNetwork",
+			Handler:    _NodeService_GetNodesForNetwork_Handler,
 		},
 		{
 			MethodName: "GetNodesForOrg",
