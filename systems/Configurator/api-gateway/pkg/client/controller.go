@@ -36,7 +36,7 @@ func NewController(controllerHost string, timeout time.Duration) *Controller {
 	}
 }
 
-func NewInvitationRegistryFromClient(mClient pb.ControllerServiceClient) *Controller {
+func NewControllerFromClient(mClient pb.ControllerServiceClient) *Controller {
 	return &Controller{
 		host:    "localhost",
 		timeout: 1 * time.Second,
@@ -49,11 +49,11 @@ func (r *Controller) Close() {
 	r.conn.Close()
 }
 
-func (r *Controller) RestartSite( networkId ,siteName string) (*pb.RestartSiteResponse, error) {
+func (r *Controller) RestartSite(networkId, siteName string) (*pb.RestartSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteName: siteName,NetworkId: networkId})
+	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteName: siteName, NetworkId: networkId})
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (r *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId:nodeId})
+	res, err := r.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
 	if err != nil {
 		return nil, err
 	}
