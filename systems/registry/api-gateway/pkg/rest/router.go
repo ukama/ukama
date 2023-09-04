@@ -57,7 +57,7 @@ type registry interface {
 	RemoveMember(orgName string, userUUID string) error
 
 	//Invitation for members to join an organization
-	AddInvitation(email string, role string ,org string,name string) (*orgpb.AddInvitationResponse, error)
+	AddInvitation(email string, role string, org string, name string) (*orgpb.AddInvitationResponse, error)
 	GetInvitation(invitationId string) (*orgpb.GetInvitationResponse, error)
 	UpdateInvitation(invitationId string, status string) (*orgpb.UpdateInvitationResponse, error)
 
@@ -68,8 +68,6 @@ type registry interface {
 	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
 	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
-
-
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -191,6 +189,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
 		nodes.GET("sites/:site_id", formatDoc("Get Nodes For Site", "Get all nodes of a site"), tonic.Handler(r.getSiteNodesHandler, http.StatusOK))
+		nodes.GET("networks/:net_id", formatDoc("Get Nodes For Network", "Get all nodes of a network"), tonic.Handler(r.getNetworkNodesHandler, http.StatusOK))
 		nodes.POST("", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
 		nodes.PUT("/:node_id", formatDoc("Update Node", "Update node name or state"), tonic.Handler(r.putUpdateNodeHandler, http.StatusOK))
 		nodes.PATCH("/:node_id", formatDoc("Update Node State", "Update node state"), tonic.Handler(r.patchUpdateNodeStateHandler, http.StatusOK))
@@ -205,6 +204,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 // Node handlers
 func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
+}
+
+func (r *Router) getNetworkNodesHandler(c *gin.Context, req *GetNetworkNodesRequest) (*nodepb.GetByNetworkResponse, error) {
+	return r.clients.Node.GetNetworkNodes(req.NetworkId)
 }
 
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
@@ -354,12 +357,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
 
-	return r.clients.Registry.AddInvitation(req.Email,req.Role,c.Param("org"),req.Name)
+	return r.clients.Registry.AddInvitation(req.Email, req.Role, c.Param("org"), req.Name)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
 	return r.clients.Registry.GetInvitation(req.InvitationId)
 }
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*orgpb.UpdateInvitationResponse, error) {
-	return r.clients.Registry.UpdateInvitation(req.InvitationId,req.State) 
+	return r.clients.Registry.UpdateInvitation(req.InvitationId, req.State)
 }

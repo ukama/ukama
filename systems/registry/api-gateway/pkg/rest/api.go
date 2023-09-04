@@ -116,6 +116,10 @@ type GetSiteNodesRequest struct {
 	SiteId string `example:"{{SiteId}}" path:"site_id" validate:"required"`
 }
 
+type GetNetworkNodesRequest struct {
+	NetworkId string `example:"{{NetworkId}}" path:"net_id" validate:"required"`
+}
+
 type AddNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`

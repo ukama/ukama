@@ -97,6 +97,20 @@ func (n *Node) GetOrgNodes(orgId string, free bool) (*pb.GetByOrgResponse, error
 	return res, nil
 }
 
+func (n *Node) GetNetworkNodes(networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.GetNodesForNetwork(ctx, &pb.GetByNetworkRequest{
+		NetworkId: networkId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
