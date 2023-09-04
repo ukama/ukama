@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	msgbus "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 
@@ -85,8 +86,14 @@ func runGrpcServer(d sql.Db) {
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
+	p := msgbus.NewShovelProvider(serviceConfig.MsgBus.ManagementUri, serviceConfig.DebugMode, serviceConfig.OrgName, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password,
+		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
+		serviceConfig.Shovel.SrcExchange, serviceConfig.Shovel.SrcExchangeKey)
+	/* Create a shovel if required */
+	initShovel(p)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler, serviceConfig.System)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, p, handler, serviceConfig.System)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
@@ -98,6 +105,19 @@ func runGrpcServer(d sql.Db) {
 	}
 
 	grpcServer.StartServer()
+}
+
+func initShovel(p msgbus.MsgBusShovelProvider) {
+
+	if serviceConfig.OrgName == serviceConfig.MasterOrgName {
+		log.Infof("Master org %s running no need to add shovel.", serviceConfig.MasterOrgName)
+		return
+	}
+
+	err := p.CreateShovel(serviceConfig.OrgName, nil)
+	if err != nil {
+		log.Fatalf("Failed to create shovelwith name %s. Error %+v.", serviceConfig.OrgName, err)
+	}
 }
 
 func signalHandler(handler *queue.MsgBusHandler, server *ugrpc.UkamaGrpcServer) {

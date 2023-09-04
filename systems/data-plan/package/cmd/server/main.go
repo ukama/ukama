@@ -66,7 +66,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -80,7 +80,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("failed to connect to rate service. Error: %s", err)
 	}
 
-	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), rate, mbClient)
+	srv := server.NewPackageServer(serviceConfig.OrgName, db.NewPackageRepo(gormdb), rate, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)

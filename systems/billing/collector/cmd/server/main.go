@@ -69,7 +69,7 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -81,7 +81,7 @@ func runGrpcServer() {
 	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey,
 		serviceConfig.LagoHost, serviceConfig.LagoPort)
 
-	eSrv := server.NewBillingCollectorEventServer(lagoClient)
+	eSrv := server.NewBillingCollectorEventServer(serviceConfig.OrgName, lagoClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)

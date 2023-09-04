@@ -24,6 +24,7 @@ const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
+	orgName        string
 	netRepo        db.NetRepo
 	orgRepo        db.OrgRepo
 	siteRepo       db.SiteRepo
@@ -33,15 +34,16 @@ type NetworkServer struct {
 	pushGateway    string
 }
 
-func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
+func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
 	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
+		orgName:        orgName,
 		netRepo:        netRepo,
 		orgRepo:        orgRepo,
 		siteRepo:       siteRepo,
 		orgService:     orgService,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
 	}
 }

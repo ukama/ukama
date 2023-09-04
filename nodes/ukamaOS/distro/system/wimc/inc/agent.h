@@ -43,13 +43,11 @@
 #define AGENT_REQ_TYPE_UNREG_STR  "unregister"
 #define AGENT_REQ_TYPE_UPDATE_STR "update"
 
-/* Type of request originating from the agent. */
-typedef enum {
-  REQ_REG = 1,
-  REQ_UNREG,
-  REQ_UPDATE
-} ReqType;
+#define REQUEST_REGISTER   1
+#define REQUEST_UNREGISTER 2
+#define REQUEST_UPDATE     3
 
+/* Type of request originating from the agent. */
 typedef enum {
   CONTENT_CHUNK = 1,
   CONTENT_OCI,
@@ -100,7 +98,6 @@ typedef struct {
 /* Struct to define the request originating from the agent. */
 typedef struct {
   
-  ReqType    type;    /* Type of request, ReqType enum */
   Register   *reg;
   UnRegister *unReg;
   Update     *update;
@@ -129,7 +126,7 @@ typedef struct _Agent {
 } Agent;
 
 /* Functions header */
-int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid);
+bool register_agent(Agent **agents, char *method, char *url, char *uuid);
 int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid);
 Agent *find_matching_agent(Agent *agents, char *method);
 void clear_agents(Agent *agent);

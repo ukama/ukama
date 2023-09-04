@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg/client"
@@ -12,15 +13,17 @@ import (
 )
 
 type NnsEventServer struct {
+	orgName  string
 	Nns      *NnsServer
 	Registry client.NodeRegistryClient
 	Org      string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNnsEventServer(c client.NodeRegistryClient, s *NnsServer, o string) *NnsEventServer {
+func NewNnsEventServer(orgName string, c client.NodeRegistryClient, s *NnsServer, o string) *NnsEventServer {
 
 	return &NnsEventServer{
+		orgName:  orgName,
 		Registry: c,
 		Nns:      s,
 		Org:      o,
@@ -30,7 +33,7 @@ func NewNnsEventServer(c client.NodeRegistryClient, s *NnsServer, o string) *Nns
 func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.mesh.node.online":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
 		msg, err := l.unmarshalNodeOnlineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -41,7 +44,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case "event.cloud.mesh.node.offline":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
 		msg, err := l.unmarshalNodeOfflineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -51,7 +54,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
-	case "event.cloud.registry.node.assigned":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assigned"):
 		msg, err := l.unmarshalNodeAssignedEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -62,7 +65,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case "event.cloud.registry.node.release":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.released"):
 		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
 		if err != nil {
 			return nil, err

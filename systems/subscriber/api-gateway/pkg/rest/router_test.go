@@ -65,7 +65,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
@@ -90,7 +90,7 @@ func TestRouter_getSimByIccid(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.GetByIccidRequest{
 		Iccid: Iccid,
@@ -126,7 +126,7 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.GetStatsRequest{
 		SimType: "ukama_data",
@@ -160,7 +160,7 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.AddRequest{
 		Sim: []*spPb.AddSim{
@@ -205,7 +205,7 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.DeleteRequest{
 		Id: []uint64{1},
@@ -232,7 +232,7 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 func TestRouter_Subscriber(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
@@ -380,7 +380,7 @@ func TestRouter_Subscriber(t *testing.T) {
 func TestRouter_SimManager(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.SubscriberRegistryServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),

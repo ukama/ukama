@@ -74,9 +74,9 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
 	p := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	memberServer := server.NewMemberServer(db.NewMemberRepo(gormdb),
-		p, mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	memberServer := server.NewMemberServer(serviceConfig.OrgName, db.NewMemberRepo(gormdb),
+		p, mbClient, serviceConfig.PushGateway, id)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 

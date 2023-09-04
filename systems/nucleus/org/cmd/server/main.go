@@ -83,17 +83,20 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+
+	user := providers.NewUserClientProvider(svcConf.UserHost)
+	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
+	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
 
 	user := providers.NewUserClientProvider(svcConf.UserHost)
 	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
 	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
+	regServer := server.NewOrgServer(svcConf.OrgName, db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb), orch, user, registry,
-		svcConf.OrgName, mbClient,
-		svcConf.Pushgateway, svcConf.DebugMode)
+		mbClient, svcConf.Pushgateway, svcConf.DebugMode)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
