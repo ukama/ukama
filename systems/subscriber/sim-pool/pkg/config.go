@@ -14,6 +14,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"5s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	OrgName          string
 }
 
 func NewConfig(name string) *Config {
@@ -24,7 +25,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.simManager.sim.allocation"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.simManager.sim.allocation"},
 		},
 	}
 }

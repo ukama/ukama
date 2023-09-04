@@ -27,6 +27,7 @@ type Config struct {
 	AuthId            string
 	Queue             *config.Queue `default:"{}"`
 	PushGatewayHost   string        `default:"http://localhost:9091"`
+	OrgName           string
 }
 
 var UserMetric = []metric.MetricConfig{

@@ -20,6 +20,7 @@ type Config struct {
 	Service           *uconf.Service
 	Registry          string `default:"http://registry:8080"`
 	Org               string `default:""`
+	OrgName           string
 }
 
 type DnsConfig struct {
@@ -37,8 +38,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.mesh.node.online", "event.cloud.mesh.node.offline", "event.cloud.registry.node.assigned", "event.cloud.registry.node.release"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.messaging.mesh.node.online", "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline", "event.cloud.local.{{ .Org}}.registry.node.node.assigned", "event.cloud.local.{{ .Org}}.registry.node.node.release"},
 		},
-		Registry: "http://192.168.0.23:8075",
 	}
 }

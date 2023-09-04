@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
+
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -15,13 +17,15 @@ import (
 //var customLabelsSimUsage = []string{"session", "start", "end"}
 
 type ExporterEventServer struct {
-	mc *collector.MetricsCollector
+	orgName string
+	mc      *collector.MetricsCollector
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewExporterEventServer(m *collector.MetricsCollector) *ExporterEventServer {
+func NewExporterEventServer(orgName string, m *collector.MetricsCollector) *ExporterEventServer {
 	return &ExporterEventServer{
-		mc: m,
+		orgName: orgName,
+		mc:      m,
 	}
 }
 
@@ -29,7 +33,7 @@ func (s *ExporterEventServer) EventNotification(ctx context.Context, e *epb.Even
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case "event.cloud.cdr.sim.usage":
+	case msgbus.PrepareRoute(s.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalEventSimUsage(e.Msg)
 		if err != nil {
 			return nil, err

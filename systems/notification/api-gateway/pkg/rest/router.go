@@ -17,6 +17,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
+	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
@@ -35,6 +36,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	m client.Mailer
+	n client.Notify
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -47,7 +49,10 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 		log.Fatalf("failed to create mailer client: %v", err)
 	}
 
-	
+	c.n, err = client.NewNotify(endpoints.Notify, endpoints.Timeout)
+	if err != nil {
+		log.Fatalf("failed to create notify client: %v", err)
+	}
 
 	return c
 }
@@ -115,6 +120,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
 		mailer.GET("/:mailer_id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
 
+		// notify routes
+		notif := auth.Group("/notifications", "Notification", "Notifications")
+		notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
+		notif.GET("", formatDoc("Get Notifications", "Get a list of notifications"), tonic.Handler(r.getNotifications, http.StatusOK))
+		notif.GET("/:notification_id", formatDoc("Get Notification", "Get a specific notification"), tonic.Handler(r.getNotification, http.StatusOK))
+		notif.DELETE("", formatDoc("Delete Notifications", "Delete matching notifications"), tonic.Handler(r.deleteNotifications, http.StatusOK))
+		notif.DELETE("/:notification_id", formatDoc("Delete Notification", "Delete a specific notification"), tonic.Handler(r.deleteNotification, http.StatusOK))
 	}
 }
 
@@ -149,7 +161,7 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.
 
 // getEmailByIdHandler handles the get email by ID API endpoint.
 func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mailerpb.GetEmailByIdResponse, error) {
-	mailerId:=req.MailerId
+	mailerId := req.MailerId
 	res, err := r.clients.m.GetEmailById(mailerId)
 	if err != nil {
 		return nil, err
@@ -158,3 +170,23 @@ func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mai
 	return res, nil
 }
 
+func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
+	return r.clients.n.Add(req.NodeId, req.Severity,
+		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
+}
+
+func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {
+	return r.clients.n.Get(req.NotificationId)
+}
+
+func (r *Router) getNotifications(c *gin.Context, req *GetNotificationsReq) (*npb.ListResponse, error) {
+	return r.clients.n.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
+}
+
+func (r *Router) deleteNotification(c *gin.Context, req *GetNotificationReq) (*npb.DeleteResponse, error) {
+	return r.clients.n.Delete(req.NotificationId)
+}
+
+func (r *Router) deleteNotifications(c *gin.Context, req *DelNotificationsReq) (*npb.ListResponse, error) {
+	return r.clients.n.Purge(req.NodeId, req.ServiceName, req.Type)
+}

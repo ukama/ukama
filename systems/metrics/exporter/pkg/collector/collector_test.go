@@ -5,8 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 )
+
+const orgName = "testorg"
 
 type TestConfig struct {
 	MetricConfig []pkg.MetricConfig
@@ -17,7 +20,7 @@ func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
 	t.MetricConfig = []pkg.MetricConfig{
 		{
-			Event: "event.cloud.cdr.sim.usage",
+			Event: "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage",
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "sim_usage",
@@ -38,7 +41,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.allocate",
+			Event: "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "simcount",
@@ -50,7 +53,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count",
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "total_sims",
@@ -62,7 +65,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count",
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "subscriber_simcount",
@@ -74,7 +77,7 @@ func InitTestConfig() *TestConfig {
 			},
 		},
 		{
-			Event: "event.cloud.simmanager.sim.count",
+			Event: "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.count",
 			Schema: []pkg.MetricSchema{
 				{
 					Name:    "subscriber_simcount",
@@ -96,16 +99,16 @@ func InitTestConfig() *TestConfig {
 
 func TestCollector_NewMetricCollector(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.MetricConfig)
+	nm := NewMetricsCollector(orgName, tC.MetricConfig)
 	assert.NotNil(t, nm)
 }
 
 func TestCollector_GetConfigForEvent(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.MetricConfig)
+	nm := NewMetricsCollector(orgName, tC.MetricConfig)
 
 	t.Run("GetConfigSuccess", func(t *testing.T) {
-		k, err := nm.GetConfigForEvent(tC.MetricConfig[0].Event)
+		k, err := nm.GetConfigForEvent(msgbus.PrepareRoute(orgName, tC.MetricConfig[0].Event))
 		assert.NoError(t, err)
 		if assert.NotNil(t, k) {
 			assert.Equal(t, k.Schema[0].Name, tC.MetricConfig[0].Schema[0].Name)
@@ -123,7 +126,7 @@ func TestCollector_GetConfigForEvent(t *testing.T) {
 
 func TestCollector_GetMetric(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.MetricConfig)
+	nm := NewMetricsCollector(orgName, tC.MetricConfig)
 	m := NewMetrics(tC.MetricConfig[0].Schema[0].Name, tC.MetricConfig[0].Schema[0].Type)
 	t.Run("AddMetricsSuccess", func(t *testing.T) {
 		err := m.InitializeMetric(tC.MetricConfig[0].Schema[0])

@@ -30,19 +30,19 @@ struct Response {
 };
 
 /* Function def. */
-static int process_response_from_provider(WimcCfg *cfg, long statusCode,
+static int process_response_from_provider(Config *cfg, long statusCode,
 					   void *resp, ServiceURL **urls);
-static void create_provider_url(WimcCfg *cfg, char *url, char *name,
+static void create_provider_url(Config *cfg, char *url, char *name,
 				char *tag);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
-int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
+int get_service_url_from_provider(Config *cfg, char *name, char *tag,
 				  ServiceURL **urls, int *count);
 /*
  * process_response_from_provider --
  *
  */
-static int process_response_from_provider(WimcCfg *cfg, long statusCode,
+static int process_response_from_provider(Config *cfg, long statusCode,
 					   void *resp, ServiceURL **urls) {
 
   struct Response *response;
@@ -97,8 +97,8 @@ static int process_response_from_provider(WimcCfg *cfg, long statusCode,
  * create_provider_url -- create EP for the provider.
  *
  */
-static void create_provider_url(WimcCfg *cfg, char *url, char *name,
-				char *tag) {
+static void create_provider_url(Config *cfg, char *url, char *name,
+                                char *tag) {
 
   sprintf(url, "%s/%s?name=%s&tag=%s", cfg->hubURL, WIMC_EP_PROVIDER, name, tag);
 
@@ -133,8 +133,8 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  * get_service_url_from_provider -- 
  *
  */
-int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
-				  ServiceURL **urls, int *count) {
+int get_service_url_from_provider(Config *cfg, char *name, char *tag,
+                                  ServiceURL **urls, int *count) {
   
   int ret;
   long code=0;

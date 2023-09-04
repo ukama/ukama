@@ -24,6 +24,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const OrgName = "testorg"
+
 // Get Packages //
 // Success case
 type UkamaDbMock struct {
@@ -67,7 +69,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	var mockFilters = &pb.GetPackageRequest{
 		Uuid: packageUUID.String(),
 	}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 	packageRepo.On("Get", packageUUID).Return(&db.Package{
 		Name: "Daily-pack",
 	}, nil)
@@ -80,7 +82,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 // Error case SQL error
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.GetPackageRequest{
 		Uuid: packageUUID.String(),
@@ -98,7 +100,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	var mockFilters = &pb.GetByOrgPackageRequest{
 		OrgId: orgId.String(),
 	}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 
 	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
 		Uuid:        uuid.NewV4(),
@@ -138,7 +140,7 @@ func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
 	var mockFilters = &pb.GetByOrgPackageRequest{
 		OrgId: orgId.String(),
 	}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 
 	packageRepo.On("GetByOrg", orgId).
 		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
@@ -172,7 +174,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 			Provider: "ukama",
 		},
 	}, nil).Once()
-	s := NewPackageServer(packageRepo, rate, nil)
+	s := NewPackageServer(OrgName, packageRepo, rate, nil)
 
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:     true,
@@ -192,7 +194,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	s := NewPackageServer(packageRepo, nil, msgbusClient)
+	s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient)
 	packageUUID := uuid.NewV4()
 	mockPackage := &pb.UpdatePackageRequest{
 		Name: "Daily-pack-updated",
@@ -214,7 +216,7 @@ func TestPackageServer_UpdatePackage(t *testing.T) {
 
 func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
 		Uuid: packageUUID.String(),
@@ -229,7 +231,7 @@ func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 // Error case: Id 0
 func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
 		Uuid: packageUUID.String(),

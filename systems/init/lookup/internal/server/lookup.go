@@ -28,13 +28,13 @@ type LookupServer struct {
 	pb.UnimplementedLookupServiceServer
 }
 
-func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus mb.MsgBusServiceClient) *LookupServer {
+func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus mb.MsgBusServiceClient, orgName string) *LookupServer {
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
 		orgRepo:        orgRepo,
 		systemRepo:     systemRepo,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
 }
 
@@ -280,7 +280,7 @@ func (l *LookupServer) getSystem(name string, org uint) (*db.System, error) {
 
 func (l *LookupServer) getOrgDetails(orgId, orgName string) (*db.Org, error) {
 	var err error
-	org := &db.Org{}
+	var org *db.Org
 	if orgName == "" {
 		id, err := uuid.FromString(orgId)
 		if err != nil {
@@ -361,7 +361,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		}
 	}
 
-	route := l.baseRoutingKey.SetAction("create").SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -416,7 +416,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 			req.SystemName, req.OrgName, err.Error())
 	}
 
-	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -456,7 +456,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 		}
 	}
 
-	route := l.baseRoutingKey.SetActionDelete().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetActionDelete().SetObject("system").SetGlobalScope().MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

@@ -12,6 +12,17 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
+ prometheus:
+  image: prom/prometheus:latest
+  ports:
+   - 9090:9090
+  volumes:
+   - ./prometheus:/etc/prometheus
+   - prometheus-data:/prometheus
+  command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
+  networks:
+   - ukama-net
+
  exporter:
   build:
    context: ./exporter
@@ -39,7 +50,7 @@ services:
    - '8077:8080'
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
-   - AUTH_BYPASSAUTHMODE=true
+   - BYPASS_AUTH_MODE=true
   restart: always
   depends_on:
    - exporter
@@ -72,30 +83,6 @@ services:
    - '9091:9091'
   networks:
    - ukama-net
-
- prometheus:
-  image: prom/prometheus:latest
-  expose:
-   - '10250'
-  ports:
-   - 9090:9090
-  volumes:
-   - ./prometheus:/etc/prometheus
-   - prometheus-data:/prometheus
-  command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
-  networks:
-   - ukama-net
-
- # prometheus:
- #   image: prom/prometheus:latest
- #   ports:
- #       - 9090:9090
- #   volumes:
- #       - ./prometheus:/etc/prometheus
- #       - prometheus-data:/prometheus
- #   command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
- #   networks:
- #     - ukama-net
 
 volumes:
  postgress-data:

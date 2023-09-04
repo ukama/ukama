@@ -14,252 +14,165 @@
 #include "jserdes.h"
 #include "common/utils.h"
 
-static int serialize_wimc_request_fetch(WimcReq *req, json_t **json);
-static void log_json(json_t *json);
+#include "usys_error.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+#include "usys_types.h"
 
-/*
- * serialize_wimc_request --
- *
- */
-int serialize_wimc_request(WimcReq *request, json_t **json) {
+void json_log(json_t *json) {
 
-  int ret=FALSE;
-  json_t *req=NULL;
+    char *str = NULL;
 
-  *json = json_object();
-  if (*json == NULL)
-    return ret;
-
-  json_object_set_new(*json, JSON_WIMC_REQUEST, json_object());
-  req = json_object_get(*json, JSON_WIMC_REQUEST);
-
-  if (req==NULL) {
-    return ret;
-  }
-
-  if (request->type == (WReqType)WREQ_FETCH) {
-    ret = serialize_wimc_request_fetch(request, &req);
-  } else if (request->type == (WReqType)WREQ_UPDATE) {
-
-  }
-
-  if (ret) {
-    char *str;
-    str = json_dumps(*json, 0);
-
+    str = json_dumps(json, 0);
     if (str) {
-      log_debug("Wimc request str: %s", str);
-      free(str);
+        log_debug("json str: %s", str);
+        free(str);
     }
-    ret = TRUE;
-  }
-
-  return ret;
 }
 
-/*
- * serialize_wimc_request_fetch --
- *
- */
-static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
+static bool get_json_entry(json_t *json, char *key, json_type type,
+                           char **strValue, int *intValue,
+                           double *doubleValue) {
 
-  json_t *jfetch=NULL, *jcontent=NULL;;
-  WFetch *fetch=NULL;
-  WContent *content=NULL;
-  char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
+    json_t *jEntry=NULL;
 
-  if (req==NULL && req->fetch==NULL) {
-    return FALSE;
-  }
+    if (json == NULL || key == NULL) return USYS_FALSE;
 
-  fetch = req->fetch;
+    jEntry = json_object_get(json, key);
+    if (jEntry == NULL) {
+        log_error("Missing %s key in json", key);
+        return USYS_FALSE;
+    }
 
-  if (fetch->content==NULL) {
-    return FALSE;
-  }
+    switch(type) {
+    case (JSON_STRING):
+        *strValue = strdup(json_string_value(jEntry));
+        break;
+    case (JSON_INTEGER):
+        *intValue = json_integer_value(jEntry);
+        break;
+    case (JSON_REAL):
+        *doubleValue = json_real_value(jEntry);
+        break;
+    default:
+        log_error("Invalid type for json key-value: %d", type);
+        return USYS_FALSE;
+    }
 
-  content = fetch->content;
-
-  json_object_set_new(*json, JSON_TYPE, json_string(WIMC_REQ_TYPE_FETCH));
-
-  /* Add fetch object */
-  json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
-  jfetch = json_object_get(*json, JSON_TYPE_FETCH);
-
-  uuid_unparse(fetch->uuid, idStr);
-  json_object_set_new(jfetch, JSON_ID, json_string(idStr));
-  json_object_set_new(jfetch, JSON_CALLBACK_URL, json_string(fetch->cbURL));
-  json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
-		      json_integer(fetch->interval));
-
-  json_object_set_new(jfetch, JSON_CONTENT, json_object());
-  jcontent = json_object_get(jfetch, JSON_CONTENT);
-
-  /* Add content object. */
-  json_object_set_new(jcontent, JSON_NAME, json_string(content->name));
-  json_object_set_new(jcontent, JSON_TAG, json_string(content->tag));
-  json_object_set_new(jcontent, JSON_METHOD, json_string(content->method));
-  json_object_set_new(jcontent, JSON_PROVIDER_URL,
-		      json_string(content->providerURL));
-  json_object_set_new(jcontent, JSON_INDEX_URL, json_string(content->indexURL));
-  json_object_set_new(jcontent, JSON_STORE_URL, json_string(content->storeURL));
-
-  return TRUE;
+    return USYS_TRUE;
 }
 
-/*
- * deserialize_agent_request_register --
- *
- */
-static int deserialize_agent_request_register(Register **reg, json_t *json) {
+bool serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
 
-  json_t *jreg, *jmethod, *jurl;
+    json_t *jfetch=NULL, *jcontent=NULL;;
+    WFetch *fetch=NULL;
+    WContent *content=NULL;
+    char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
 
-  jreg = json_object_get(json, JSON_TYPE_REGISTER);
+    if (req == NULL && req->fetch == NULL) {
+        return USYS_FALSE;
+    }
 
-  if (jreg == NULL) {
-    return FALSE;
-  }
+    fetch = req->fetch;
+    content = fetch->content;
 
-  *reg = (Register *)calloc(sizeof(Register), 1);
-  if (*reg == NULL) {
-    return FALSE;
-  }
+    if (content == NULL) return USYS_FALSE;
 
-  jmethod = json_object_get(jreg, JSON_METHOD);
-  jurl = json_object_get(jreg, JSON_AGENT_URL);
-  if (jurl == NULL || jmethod == NULL) {
-    return FALSE;
-  }
+    json_object_set_new(*json, JSON_TYPE, json_string(WIMC_REQ_TYPE_FETCH));
 
-  (*reg)->method = strdup(json_string_value(jmethod));
-  (*reg)->url = strdup(json_string_value(jurl));
+    /* Add fetch object */
+    json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
+    jfetch = json_object_get(*json, JSON_TYPE_FETCH);
 
-  return TRUE;
+    uuid_unparse(fetch->uuid, idStr);
+    json_object_set_new(jfetch, JSON_ID, json_string(idStr));
+    json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
+                        json_integer(fetch->interval));
+
+    json_object_set_new(jfetch, JSON_CONTENT, json_object());
+    jcontent = json_object_get(jfetch, JSON_CONTENT);
+
+    /* Add content object. */
+    json_object_set_new(jcontent, JSON_NAME,
+                        json_string(content->name));
+    json_object_set_new(jcontent, JSON_TAG,
+                        json_string(content->tag));
+    json_object_set_new(jcontent, JSON_METHOD,
+                        json_string(content->method));
+    json_object_set_new(jcontent, JSON_INDEX_URL,
+                        json_string(content->indexURL));
+    json_object_set_new(jcontent, JSON_STORE_URL,
+                        json_string(content->storeURL));
+
+    return USYS_TRUE;
 }
 
-/*
- * deserialize_agent_request_update --
- */
-static int deserialize_agent_request_update(Update **update, json_t *json) {
+bool serialize_wimc_request(WimcReq *request, json_t **json) {
 
-  json_t *jupdate, *obj;
+    json_t *req=NULL;
 
-  jupdate = json_object_get(json, JSON_TYPE_UPDATE);
+    *json = json_object();
+    if (*json == NULL) return USYS_FALSE;
 
-  if (jupdate==NULL) {
-    return FALSE;
-  }
+    json_object_set_new(*json, JSON_WIMC_REQUEST, json_object());
+    req = json_object_get(*json, JSON_WIMC_REQUEST);
+    if (req == NULL) return USYS_FALSE;
 
-  *update = (Update *)calloc(sizeof(Update), 1);
-  if (*update == NULL) {
-    return FALSE;
-  }
+    if (request->type == (WReqType)WREQ_FETCH) {
+        return serialize_wimc_request_fetch(request, &req);
+    } else if (request->type == (WReqType)WREQ_UPDATE) {
+        
+    }
 
-  /* All updates must have the ID. */
-  obj = json_object_get(jupdate, JSON_ID);
-  if (obj == NULL) {
-    return FALSE;
-  } else {
-    uuid_parse(json_string_value(obj), (*update)->uuid);
-  }
 
-  /* Total data to be transfered as part of this fetch (in KB) */
-  obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
-  if (obj) {
-    (*update)->totalKB = json_integer_value(obj);
-  }
+    return USYS_FALSE;
+}
 
-  /* Activity so far. */
-  obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
-  if (obj) {
-    (*update)->transferKB = json_integer_value(obj);
-  }
+bool deserialize_agent_request_update(Update **update, json_t *json) {
 
-  /* Activity state. */
-  obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
-  if (obj) {
-    (*update)->transferState = convert_str_to_tx_state(json_string_value(obj));
-    obj = json_object_get(jupdate, JSON_VOID_STR);
+    json_t *jupdate, *obj;
+
+    jupdate = json_object_get(json, JSON_TYPE_UPDATE);
+
+    if (jupdate == NULL) return USYS_FALSE;
+
+    *update = (Update *)calloc(sizeof(Update), 1);
+    if (*update == NULL) return USYS_FALSE;
+
+    /* All updates must have the ID. */
+    obj = json_object_get(jupdate, JSON_ID);
+    if (obj == NULL) {
+        return USYS_FALSE;
+    } else {
+        uuid_parse(json_string_value(obj), (*update)->uuid);
+    }
+
+    /* Total data to be transfered as part of this fetch (in KB) */
+    obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
     if (obj) {
-      (*update)->voidStr = strdup(json_string_value(obj));
+        (*update)->totalKB = json_integer_value(obj);
     }
-  }
 
-  return TRUE;
+    /* Activity so far. */
+    obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
+    if (obj) {
+        (*update)->transferKB = json_integer_value(obj);
+    }
+
+    /* Activity state. */
+    obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
+    if (obj) {
+        (*update)->transferState =
+            convert_str_to_tx_state(json_string_value(obj));
+        obj = json_object_get(jupdate, JSON_VOID_STR);
+        if (obj) {
+            (*update)->voidStr = strdup(json_string_value(obj));
+        }
+    }
+
+    return USYS_TRUE;
 }
-
-/*
- * deserialize_agent_request_unreg --
- */
-static int deserialize_agent_request_unreg(UnRegister *unReg, json_t *json) {
-
-  json_t *jreq, *obj;
-
-  jreq = json_object_get(json, JSON_TYPE_UNREGISTER);
-
-  if (jreq == NULL) {
-    return FALSE;
-  }
-
-  unReg = (UnRegister *)calloc(sizeof(UnRegister), 1);
-  if (unReg == NULL) {
-    return FALSE;
-  }
-
-  obj = json_object_get(jreq, JSON_ID);
-  if (obj) {
-    uuid_unparse(json_string_value(obj), unReg->uuid);
-  } else {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-/*
- * deserialize_agent_request --
- *
- */
-int deserialize_agent_request(AgentReq **request, json_t *json) {
-
-  int ret=FALSE;
-  json_t *jreq, *jtype;
-
-  AgentReq *req = *request;
-  
-  if (!json) {
-    return FALSE;
-  }
-  
-  jreq = json_object_get(json, JSON_AGENT_REQUEST);
-  if (jreq == NULL) {
-    return FALSE;
-  }
-
-  jtype = json_object_get(jreq, JSON_TYPE);
-
-  if (jtype==NULL) {
-    return FALSE;
-  }
-
-  req->type = convert_str_to_type(json_string_value(jtype));
-
-  if (req->type == (ReqType)REQ_REG) {
-    ret = deserialize_agent_request_register(&req->reg, jreq);
-  } else if (req->type == (ReqType)REQ_UPDATE) {
-    ret = deserialize_agent_request_update(&req->update, jreq);
-  } else if (req->type == (ReqType)REQ_UNREG) {
-    ret = deserialize_agent_request_unreg(req->unReg, jreq);
-  }
-
-  return ret;
-}
-
-/*
- * deserialize_provider_response --
- *
- */
 
 int deserialize_provider_response(ServiceURL **urls, int *counter,
 				  json_t *json) {
@@ -331,166 +244,144 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
 int deserialize_hub_response(Artifact ***artifacts, int *counter,
 			     json_t *json) {
 
-  int i=0, j=0, count=0, formatsCount=0;
-  json_t *name=NULL;
-  json_t *jArray=NULL, *formatsArray=NULL, *elem=NULL;
-  json_t *url=NULL, *additionalInfo=NULL;
-  json_t *version=NULL, *createdAt=NULL;
-  json_t *size=NULL, *type=NULL, *extraInfo=NULL;
-  json_t *formatElem=NULL, *value=NULL;
-  ArtifactFormat *formats = NULL;
+    int i=0, j=0, count=0, formatsCount=0;
 
-  /* sanity check */
-  if (!json) return FALSE;
+    json_t *name=NULL;
+    json_t *jArray=NULL, *formatsArray=NULL, *elem=NULL;
+    json_t *url=NULL, *additionalInfo=NULL;
+    json_t *version=NULL, *createdAt=NULL;
+    json_t *size=NULL, *type=NULL, *extraInfo=NULL;
+    json_t *formatElem=NULL, *value=NULL;
+    
+    ArtifactFormat *formats = NULL;
 
-  log_debug("Deserializing hub response");
-  log_json(json);
+    /* sanity check */
+    if (!json) return USYS_FALSE;
 
-  *counter=0;
+    usys_log_debug("Deserializing hub response ...");
+    json_log(json);
 
-  name = json_object_get(json, JSON_NAME);
-  if (name == NULL) {
-    return FALSE;
-  }
+    *counter=0;
 
-  jArray = json_object_get(json, JSON_ARTIFACTS);
-  if (!jArray) { /* Error happened */
-    return FALSE;
-  }
+    name = json_object_get(json, JSON_NAME);
+    if (name == NULL) return USYS_FALSE;
 
-  if (json_is_array(jArray)) {
+    jArray = json_object_get(json, JSON_ARTIFACTS);
+    if (!jArray) return USYS_FALSE;
 
-    count = json_array_size(jArray);
-    *counter = count;
+    if (json_is_array(jArray)) {
 
-    if (count==0) { /* No response */
-      return TRUE;
+        count = json_array_size(jArray);
+        *counter = count;
+
+        if (count == 0) return USYS_TRUE;
+
+        *artifacts = (Artifact **)calloc(count, sizeof(Artifact *));
+        if (*artifacts == NULL) {
+            *counter = 0;
+            return USYS_FALSE;
+        }
+
+        for (i=0; i<count; i++) {
+            elem = json_array_get(jArray, i);
+            
+            if (elem == NULL) {
+                goto failure;
+            }
+
+            (*artifacts)[i] = (Artifact *)calloc(1, sizeof(Artifact));
+
+            /* name */
+            (*artifacts[i])->name = strdup(json_string_value(name));
+
+            /* version */
+            version = json_object_get(elem, JSON_VERSION);
+            if (version == NULL) goto failure;
+            (*artifacts)[i]->version = strdup(json_string_value(version));
+
+            /* formats */
+            formatsArray = json_object_get(elem, JSON_FORMATS);
+            if (!formatsArray)                goto failure;
+            if (!json_is_array(formatsArray)) goto failure;
+
+
+            formatsCount = json_array_size(formatsArray);
+            (*artifacts)[i]->formatsCount = formatsCount;
+
+            (*artifacts)[i]->formats = (ArtifactFormat **)
+                calloc(formatsCount, sizeof(ArtifactFormat *));
+            if ((*artifacts)[i]->formats == NULL) {
+                *counter = 0;
+                goto failure;
+            }
+
+            for (j=0; j<formatsCount; j++) {
+
+                (*artifacts)[i]->formats[j] = (ArtifactFormat *)
+                    calloc(1, sizeof(ArtifactFormat));
+                formats = (*artifacts)[i]->formats[j];
+
+                formatElem = json_array_get(formatsArray, j);
+
+                type      = json_object_get(formatElem, JSON_TYPE);
+                extraInfo = json_object_get(formatElem, JSON_EXTRA_INFO);
+                url       = json_object_get(formatElem, JSON_URL);
+                createdAt = json_object_get(formatElem, JSON_CREATED_AT);
+                size      = json_object_get(formatElem, JSON_SIZE_BYTES);
+
+                if (type && url && createdAt) {
+                    formats->type = strdup(json_string_value(type));
+                    formats->url  = strdup(json_string_value(url));
+                    formats->createdAt = strdup(json_string_value(createdAt));
+                } else {
+                    goto failure;
+                }
+
+                if (strcmp(formats->type, WIMC_METHOD_CHUNK_STR)==0) {
+                    formats->size = 0;
+                    if (extraInfo) {
+                        value = json_object_get(extraInfo, JSON_CHUNKS);
+                        if (value==NULL) goto failure;
+                        formats->extraInfo = strdup(json_string_value(value));
+                    } else goto failure;
+                } else {
+                    if (size==NULL) goto failure;
+                    else formats->size = (int)json_integer_value(size);
+                }
+            }
+        }
     }
+    
+    return USYS_TRUE;
 
-    *artifacts = (Artifact **)calloc(count, sizeof(Artifact *));
-    if (*artifacts == NULL) {
-      *counter = 0;
-      return FALSE;
-    }
-
+failure:
+    usys_log_error("Error deserializing the hub response");
+    *counter = 0;
     for (i=0; i<count; i++) {
-      elem = json_array_get(jArray, i);
-
-      if (elem == NULL) {
-	goto failure;
-      }
-
-      (*artifacts)[i] = (Artifact *)calloc(1, sizeof(Artifact));
-
-      /* name */
-      (*artifacts[i])->name = strdup(json_string_value(name));
-
-      /* version */
-      version = json_object_get(elem, JSON_VERSION);
-      if (version == NULL) {
-	goto failure;
-      }
-      (*artifacts)[i]->version = strdup(json_string_value(version));
-
-      /* formats */
-      formatsArray = json_object_get(elem, JSON_FORMATS);
-      if (!formatsArray) {
-	goto failure;
-      }
-      if (!json_is_array(formatsArray)) {
-	goto failure;
-      }
-
-      formatsCount = json_array_size(formatsArray);
-      (*artifacts)[i]->formatsCount = formatsCount;
-
-      (*artifacts)[i]->formats = (ArtifactFormat **)
-	calloc(formatsCount, sizeof(ArtifactFormat *));
-      if ((*artifacts)[i]->formats == NULL) {
-	*counter = 0;
-	goto failure;
-      }
-
-      for (j=0; j<formatsCount; j++) {
-
-	(*artifacts)[i]->formats[j] = (ArtifactFormat *)
-	  calloc(1, sizeof(ArtifactFormat));
-	formats = (*artifacts)[i]->formats[j];
-
-	formatElem = json_array_get(formatsArray, j);
-
-	type      = json_object_get(formatElem, JSON_TYPE);
-	extraInfo = json_object_get(formatElem, JSON_EXTRA_INFO);
-	url       = json_object_get(formatElem, JSON_URL);
-	createdAt = json_object_get(formatElem, JSON_CREATED_AT);
-	size      = json_object_get(formatElem, JSON_SIZE_BYTES);
-
-	if (type && url && createdAt) {
-	  formats->type = strdup(json_string_value(type));
-	  formats->url  = strdup(json_string_value(url));
-	  formats->createdAt = strdup(json_string_value(createdAt));
-	} else {
-	  goto failure;
-	}
-
-	if (strcmp(formats->type, WIMC_METHOD_CHUNK_STR)==0) {
-	  formats->size = 0;
-	  if (extraInfo) {
-	    value = json_object_get(extraInfo, JSON_CHUNKS);
-	    if (value==NULL) {
-	      goto failure;
-	    }
-	    formats->extraInfo = strdup(json_string_value(value));
-	  } else {
-	    goto failure;
-	  }
-	} else {
-	  if (size==NULL) {
-	    goto failure;
-	  } else {
-	    formats->size = (int)json_integer_value(size);
-	  }
-	}
-      }
+        usys_free((*artifacts)[i]->name);
+        usys_free((*artifacts)[i]->version);
+        
+        for (j=0; j<(*artifacts)[i]->formatsCount; j++) {
+            
+            formats = (*artifacts)[i]->formats[j];
+            
+            usys_free(formats->type);
+            usys_free(formats->url);
+            usys_free(formats->extraInfo);
+            usys_free(formats);
+        }
+        usys_free((*artifacts)[i]->formats);
+        usys_free((*artifacts)[i]);
     }
-  }
+    
+    usys_free(*artifacts);
 
-  return TRUE;
-
- failure:
-  log_error("Error deserializing the hub response");
-  *counter = 0;
-  for (i=0; i<count; i++) {
-    if ((*artifacts)[i]->name)    free((*artifacts)[i]->name);
-    if ((*artifacts)[i]->version) free((*artifacts)[i]->version);
-
-    for (j=0; j<(*artifacts)[i]->formatsCount; j++) {
-
-      formats = (*artifacts)[i]->formats[j];
-
-      if (formats->type)      free(formats->type);
-      if (formats->url)       free(formats->url);
-      if (formats->extraInfo) free(formats->extraInfo);
-
-      free(formats);
-    }
-    free((*artifacts)[i]->formats);
-    free((*artifacts)[i]);
-  }
-
-  if (*artifacts) {
-    free(*artifacts);
     *artifacts = NULL;
-  }
+    *counter = 0;
 
-  *counter = 0;
-  return FALSE;
+    return USYS_FALSE;
 }
 
-/*
- * serialize_task -- Serialize task struct.
- *
- */
 int serialize_task(WTasks *task, json_t **json) {
 
   int ret=FALSE;
