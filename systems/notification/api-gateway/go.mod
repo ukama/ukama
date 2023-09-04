@@ -7,10 +7,6 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/notification/api-gateway => ./
 
 replace github.com/ukama/ukama/systems/notification/mailer => ../mailer
-replace github.com/ukama/ukama/systems/notification/notify => ../notify
-
-
-replace github.com/ukama/ukama/systems/notification/notify => ../notify
 
 replace github.com/ukama/ukama/systems/notification/notify => ../notify
 
@@ -37,7 +33,7 @@ require (
 
 require (
 	github.com/stretchr/testify v1.8.4
-	github.com/ukama/ukama/systems/common v0.0.0-20230727230806-f34ca33a62c2
+	github.com/ukama/ukama/systems/common v0.0.0-20230830225034-02e4b6a09c59
 	github.com/ukama/ukama/systems/notification/notify v0.0.0-00010101000000-000000000000
 )
 

@@ -89,10 +89,6 @@ func runGrpcServer(gormdb sql.Db) {
 	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
 	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
 
-	user := providers.NewUserClientProvider(svcConf.UserHost)
-	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
-	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
-
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewOrgServer(svcConf.OrgName, db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb), orch, user, registry,
