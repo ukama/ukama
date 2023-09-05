@@ -3,10 +3,10 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
 )
 
 const netEndpoint = "/v1/networks"
@@ -16,7 +16,21 @@ type NetworkClient interface {
 }
 
 type networkClient struct {
-	R *rest.RestClient
+	u *url.URL
+	r *Resty
+}
+
+func NewNetworkClient(h string) NetworkClient {
+	u, err := url.Parse(h)
+
+	if err != nil {
+		log.Fatalf("Can't parse  %s url. Error %s", h, err.Error())
+	}
+
+	return &networkClient{
+		u: u,
+		r: NewResty(),
+	}
 }
 
 type NetworkInfo struct {
@@ -31,39 +45,48 @@ type Network struct {
 	NetworkInfo *NetworkInfo `json:"network"`
 }
 
-func NewNetworkClient(url string, debug bool) NetworkClient {
-	f, err := rest.NewRestClient(url, debug)
-	if err != nil {
-		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
-	}
-
-	n := &networkClient{
-		R: f,
-	}
-
-	return n
+type AddNetworkRequest struct {
+	OrgName string `json:"org" validate:"required"`
+	NetName string `json:"network_name" validate:"required"`
 }
 
-func (p *networkClient) GetNetwork(id string) (*NetworkInfo, error) {
-	errStatus := &rest.ErrorMessage{}
+func (n *networkClient) AddNetwork(req AddNetworkRequest) (error, error) {
+	log.Debugf("Adding network: %v", req)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+
+	// fix the response object
+	var rsp error
+
+	resp, err := n.r.Post(n.u.String()+netEndpoint, b)
+
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("AddNetwork failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (n *networkClient) GetNetwork(id string) (*NetworkInfo, error) {
+	log.Debugf("Getting network: %v", id)
 
 	ntwk := Network{}
 
-	resp, err := p.R.C.R().
-		SetError(errStatus).
-		Get(p.R.URL.String() + netEndpoint + "/" + id)
-
+	resp, err := n.r.Get(n.u.String() + netEndpoint + "/" + id)
 	if err != nil {
-		log.Errorf("Failed to send api request to nucleus/network. Error %s", err.Error())
+		log.Errorf("Failed to send api request. error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to nucleus system failure: %w", err)
-	}
-
-	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch network info. HTTP resp code %d and Error message is %s",
-			resp.StatusCode(), errStatus.Message)
-
-		return nil, fmt.Errorf("Network Info failure %s", errStatus.Message)
+		return nil, fmt.Errorf("GetNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
