@@ -104,19 +104,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 
-		//reboot site
-		const controller = "/controllers"
-		controllers := auth.Group(controller, "controller", "Operations on controller")
-		controllers.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
-		controllers.POST("/restartNode", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
+		const cont = "/controllers"
+		controller := auth.Group(cont, "Controllers", "Operations on controllers")
+		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
+		controller.POST("/restartNode", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
 
 	}
-}
-func formatDoc(summary string, description string) []fizz.OperationOption {
-	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
-		info.Summary = summary
-		info.Description = description
-	}}
 }
 
 func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest) (*contPb.RestartNodeResponse, error) {
@@ -125,4 +118,11 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
 	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
