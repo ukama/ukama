@@ -37,7 +37,7 @@ func TestAdd(t *testing.T) {
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
-			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC1123),
+			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",

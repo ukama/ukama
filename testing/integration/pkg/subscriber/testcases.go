@@ -22,6 +22,7 @@ import (
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/dataplan"
+	"github.com/ukama/ukama/testing/integration/pkg/nucleus"
 	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
@@ -34,8 +35,10 @@ var config *pkg.Config
 type InitData struct {
 	Sys             *SubscriberClient
 	Reg             *registry.RegistryClient
+	Nuc             *nucleus.NucleusClient
 	Host            string
 	RegHost         string
+	NucHost         string
 	SimType         string `default:"test"`
 	ICCID           []string
 	SimToken        []string
@@ -52,6 +55,7 @@ type InitData struct {
 	EncKey          string
 	SimId           string
 	SimStatus       string
+	AuthId          string
 	AllocatedSim    *spb.Sim
 
 	/* API requests */
@@ -89,9 +93,11 @@ func InitializeData() *InitData {
 	//d.SimToken = make([]string, MAX_POOL)
 	d.Host = config.System.Subscriber
 	d.RegHost = config.System.Registry
+	d.NucHost = config.System.Nucleus
 	d.MbHost = config.System.MessageBus
 	d.Sys = NewSubscriberClient(d.Host)
 	d.Reg = registry.NewRegistryClient(d.RegHost)
+	d.Nuc = nucleus.NewNucleusClient(d.NucHost)
 	d.EncKey = "the-key-has-to-be-32-bytes-long!"
 	d.SimType = "test"
 
@@ -179,9 +185,10 @@ func InitializeData() *InitData {
 	}
 
 	d.reqAddUserRequest = napi.AddUserRequest{
-		Name:  d.reqSubscriberAddReq.FirstName,
-		Email: d.reqSubscriberAddReq.Email,
-		Phone: d.reqSubscriberAddReq.Phone,
+		Name:   d.reqSubscriberAddReq.FirstName,
+		Email:  d.reqSubscriberAddReq.Email,
+		Phone:  d.reqSubscriberAddReq.Phone,
+		AuthId: uuid.NewV4().String(),
 	}
 
 	return d

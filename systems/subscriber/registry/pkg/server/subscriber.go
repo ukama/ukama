@@ -9,11 +9,11 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-	utils "github.com/ukama/ukama/systems/subscriber/registry/pkg/util"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -50,7 +50,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	dob, err := utils.ValidateDOB(req.GetDob())
+	dob, err := validate.ValidateDate(req.GetDob())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
