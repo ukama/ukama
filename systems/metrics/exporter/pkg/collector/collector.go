@@ -10,27 +10,31 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"google.golang.org/grpc"
 )
 
 type MetricsCollector struct {
+	orgName     string
 	MetricsMap  map[string]Metrics
 	Config      map[string]pkg.MetricConfig
 	registry    *prometheus.Registry
 	grpcMetrics *grpc_prometheus.ServerMetrics
 }
 
-func NewMetricsCollector(config []pkg.MetricConfig) *MetricsCollector {
+func NewMetricsCollector(orgName string, config []pkg.MetricConfig) *MetricsCollector {
 	c := new(MetricsCollector)
 	c.MetricsMap = make(map[string]Metrics)
 	c.Config = make(map[string]pkg.MetricConfig, len(c.Config))
 	c.grpcMetrics = grpc_prometheus.NewServerMetrics()
 	c.registry = prometheus.NewRegistry()
+	c.orgName = c.orgName
 	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}), c.grpcMetrics)
 
 	for _, cfg := range config {
-		c.Config[cfg.Event] = cfg
+		evt := msgbus.PrepareRoute(orgName, cfg.Event)
+		c.Config[evt] = cfg
 	}
 
 	return c
@@ -42,11 +46,11 @@ func (c *MetricsCollector) RegisterGrpcService(s *grpc.Server) {
 
 func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {
 	go func() {
-		
+
 		handler := promhttp.HandlerFor(c.registry, promhttp.HandlerOpts{})
 		http.Handle("/metrics", handler)
 		log.Infof("Starting metrics server on port %d", metrics.Port)
-		
+
 		err := http.ListenAndServe(fmt.Sprintf(":%d", metrics.Port), nil)
 		if err != nil {
 			log.Fatalf("Error starting metrics server: %s", err.Error())
@@ -81,7 +85,7 @@ func (c *MetricsCollector) AddMetrics(name string, m Metrics) error {
 	_, ok := c.MetricsMap[name]
 	if !ok {
 		c.MetricsMap[name] = m
-		
+
 		err := m.RegisterMetric(c.registry)
 		if err != nil {
 			log.Errorf("Metrics %s failed to register", name)

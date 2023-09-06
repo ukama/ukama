@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -144,10 +145,10 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, u, data, w)
+	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
 
-func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
+func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
 
 	_, ok := m.conf.Metrics[metricType]
 	if !ok {
@@ -164,7 +165,7 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, u, data, w)
+	return m.processPromRequest(ctx, metricType, u, data, w, formatting)
 }
 
 // GetAggregateMetric returns aggregated value of a metric based on filter
@@ -185,10 +186,42 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 
 	logrus.Infof("GetAggregateMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, u, data, w)
+	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
 
-func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.Values, w io.Writer) (httpStatusCode int, err error) {
+func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) error {
+
+	bytes, err := io.ReadAll(b)
+	if err != nil {
+		logrus.Errorf("Failed to read promtheus response for %s Error: %v", metricName, err)
+		return err
+	}
+
+	rmap := map[string]interface{}{}
+	err = json.Unmarshal([]byte(bytes), &rmap)
+	if err != nil {
+		logrus.Errorf("Failed to unmarshal promtheus response for %s Error: %v", metricName, err)
+		return err
+	}
+	rmap["Name"] = metricName
+
+	rb, err := json.Marshal(rmap)
+	if err != nil {
+		logrus.Errorf("Failed to marshal promtheus response for %s Error: %v", metricName, err)
+		return err
+	}
+
+	n, err := w.Write(rb)
+	if err != nil {
+		logrus.Errorf("Failed to add prometheus reponse to ws response for %s Error: %v", metricName, err)
+		return err
+	}
+
+	logrus.Infof("Updated %d bytes of response: %s", n, string(rb))
+	return nil
+}
+
+func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url string, data url.Values, w io.Writer, formatting bool) (httpStatusCode int, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(data.Encode()))
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to create request")
@@ -202,14 +235,22 @@ func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.V
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
 	}
 	logrus.Infof("Response Body %+v", res.Body)
-	_, err = io.Copy(w, res.Body)
-	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")
+	if formatting {
+		err = formatMetricsResponse(metricName, w, res.Body)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "failed to formatt response")
+		}
+	} else {
+		_, err = io.Copy(w, res.Body)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")
+		}
 	}
 
 	res.Body.Close()
 	return res.StatusCode, nil
 }
+
 func UpdatedName(oldName string, slice string, newSlice string) string {
 	return strings.Replace(oldName, slice, newSlice, 1)
 }

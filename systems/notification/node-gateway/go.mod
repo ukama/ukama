@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 )
 

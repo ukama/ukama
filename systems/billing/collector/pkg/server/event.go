@@ -6,6 +6,7 @@ import (
 	"time"
 
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -23,13 +24,15 @@ const (
 )
 
 type BillingCollectorEventServer struct {
+	org    string
 	client client.BillingClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewBillingCollectorEventServer(client client.BillingClient) *BillingCollectorEventServer {
+func NewBillingCollectorEventServer(org string, client client.BillingClient) *BillingCollectorEventServer {
 	return &BillingCollectorEventServer{
 		client: client,
+		org:    org,
 	}
 }
 
@@ -39,7 +42,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	switch e.RoutingKey {
 
 	// Send usage event
-	case "event.cloud.cdr.sim.usage":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -51,7 +54,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create customer
-	case "event.cloud.registry.subscriber.create":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -63,7 +66,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Update customer
-	case "event.cloud.registry.subscriber.update":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -75,7 +78,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Delete customer
-	case "event.cloud.registry.subscriber.delete":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -87,7 +90,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// add or update subscrition to customer
-	case "event.cloud.simmanager.package.activate":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate"):
 		msg, err := unmarshalSim(e.Msg)
 		if err != nil {
 			return nil, err

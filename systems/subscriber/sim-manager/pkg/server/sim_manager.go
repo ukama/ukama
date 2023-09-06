@@ -30,7 +30,6 @@ import (
 )
 
 const DefaultDaysDelayForPackageStartDate = 1
-const mailerServerName = "[Ukama]"
 
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
@@ -44,12 +43,14 @@ type SimManagerServer struct {
 	baseRoutingKey            msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimManagerServiceServer
 	org                string
+	orgName            string
 	pushMetricHost     string
 	notificationClient providers.NotificationClient
-	networkClient      providers.NetworkInfoClient
+	networkClient      providers.NetworkClientProvider
 }
 
-func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+func NewSimManagerServer(
+	orgName string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, packageClient providers.PackageClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
@@ -57,9 +58,11 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	org string,
 	pushMetricHost string,
 	notificationClient providers.NotificationClient,
-	networkClient providers.NetworkInfoClient,
+	networkClient providers.NetworkClientProvider,
+
 ) *SimManagerServer {
 	return &SimManagerServer{
+		orgName:                   orgName,
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
 		agentFactory:              agentFactory,
@@ -68,7 +71,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		simPoolService:            simPoolService,
 		key:                       key,
 		msgbus:                    msgBus,
-		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
 		notificationClient:        notificationClient,
@@ -77,7 +80,6 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-
 	subscriberID, err := uuid.FromString(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -237,20 +239,21 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	netInfo, err := s.networkClient.GetNetworkInfo(remoteSubResp.Subscriber.NetworkId, remoteSubResp.Subscriber.OrgId)
+	
+	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
-	
+
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.notificationClient.SendEmail(providers.SendEmailReq{
-			To:      []string{remoteSubResp.Subscriber.Email},
+			To:           []string{remoteSubResp.Subscriber.Email},
 			TemplateName: "sim-allocation",
-			Values:  map[string]interface{}{
+			Values: map[string]interface{}{
 				"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
-				"NETWORK": netInfo.Name,
-				"NAME":    remoteSubResp.Subscriber.FirstName,
-				"QRCODE":  poolSim.QrCode,},
+				"NETWORK":    netInfo.Name,
+				"NAME":       remoteSubResp.Subscriber.FirstName,
+				"QRCODE":     poolSim.QrCode},
 		})
 		if err != nil {
 			return nil, err

@@ -15,6 +15,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service   `default:"{}"`
 	Rate             string
+	OrgName          string
 }
 
 func NewConfig(name string) *Config {
@@ -25,7 +26,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.dataplan.baserate.upload"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.dataplan.baserate.baserate.upload"},
 		},
 		Rate: "rate:9090",
 	}

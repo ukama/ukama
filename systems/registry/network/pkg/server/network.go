@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -17,16 +18,13 @@ import (
 	"gorm.io/gorm"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-
-	"github.com/sirupsen/logrus"
 )
 
 const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
+	orgName        string
 	netRepo        db.NetRepo
 	orgRepo        db.OrgRepo
 	siteRepo       db.SiteRepo
@@ -36,15 +34,16 @@ type NetworkServer struct {
 	pushGateway    string
 }
 
-func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
+func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
 	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
+		orgName:        orgName,
 		netRepo:        netRepo,
 		orgRepo:        orgRepo,
 		siteRepo:       siteRepo,
 		orgService:     orgService,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
 	}
 }
@@ -55,14 +54,14 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	networkName := req.GetName()
 	org, err := n.orgRepo.GetByName(orgName)
 	if err != nil {
-		logrus.Infof("lookup for org %s remotely", orgName)
+		log.Infof("lookup for org %s remotely", orgName)
 
-		svc, err := n.orgService.GetClient()
-		if err != nil {
-			return nil, err
-		}
+		// svc, err := n.orgService.GetClient()
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-		remoteOrg, err := svc.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
+		remoteOrg, err := n.orgService.GetByName(orgName)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +78,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			return nil, status.Errorf(codes.InvalidArgument, "invalid remote org id: %v", err)
 		}
 
-		logrus.Infof("Adding remove org %s to local org repo", orgName)
+		log.Infof("Adding remove org %s to local org repo", orgName)
 		org = &db.Org{
 			Id:          remoteOrgID,
 			Name:        remoteOrg.Org.Name,
@@ -96,7 +95,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		OrgId: org.Id,
 	}
 
-	logrus.Infof("Adding network %s", networkName)
+	log.Infof("Adding network %s", networkName)
 	err = n.netRepo.Add(network, func(*db.Network, *gorm.DB) error {
 		network.Id = uuid.NewV4()
 
@@ -111,7 +110,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 	err = n.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	n.pushNetworkCount(org.Id)
@@ -170,17 +169,17 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 }
 
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	logrus.Infof("Deleting network %s", req.Name)
+	log.Infof("Deleting network %s", req.Name)
 
 	org, err := n.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		logrus.Errorf("Failed to find org %s. Errors %s", req.OrgName, err.Error())
+		log.Errorf("Failed to find org %s. Errors %s", req.OrgName, err.Error())
 		return nil, err
 	}
 
 	err = n.netRepo.Delete(req.OrgName, req.Name)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -189,7 +188,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	route := n.baseRoutingKey.SetAction("delete").SetObject("network").MustBuild()
 	err = n.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	n.pushNetworkCount(org.Id)
@@ -229,7 +228,7 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 
 	err = n.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	n.pushSiteCount(ntwk.OrgId, ntwk.Id)
@@ -340,24 +339,24 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
 	networkCount, err := n.netRepo.GetNetworkCount(orgId)
 	if err != nil {
-		logrus.Errorf("failed to get network counts: %s", err.Error())
+		log.Errorf("failed to get network counts: %s", err.Error())
 	}
 
 	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
-		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
+		log.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
 }
 
 func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
 	siteCount, err := n.siteRepo.GetSiteCount(netId)
 	if err != nil {
-		logrus.Errorf("failed to get site count: %s", err.Error())
+		log.Errorf("failed to get site count: %s", err.Error())
 	}
 
 	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
-		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
+		log.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
 }
 
@@ -366,7 +365,7 @@ func (n *NetworkServer) PushMetrics() error {
 	// Push Network count metric per org to pushgateway
 	orgs, err := n.orgRepo.GetAll()
 	if err != nil {
-		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		log.Errorf("Failed to get all networks. Error %s", err.Error())
 		return err
 	}
 
@@ -377,7 +376,7 @@ func (n *NetworkServer) PushMetrics() error {
 	// Push Site count metric per network to pushgateway
 	networks, err := n.netRepo.GetAll()
 	if err != nil {
-		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		log.Errorf("Failed to get all networks. Error %s", err.Error())
 		return err
 	}
 

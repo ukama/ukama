@@ -17,7 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/network/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -66,12 +65,12 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	networkServer := server.NewNetworkServer(db.NewNetRepo(gormdb),
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),
 		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
-		providers.NewOrgClientProvider(serviceConfig.OrgHost), mbClient, serviceConfig.PushGateway)
+		providers.NewOrgClientProvider(serviceConfig.OrgHost, serviceConfig.DebugMode), mbClient, serviceConfig.PushGateway)
 
-	logrus.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNetworkServiceServer(s, networkServer)

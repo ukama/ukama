@@ -28,6 +28,7 @@ import (
 )
 
 type NodeServer struct {
+	orgName        string
 	org            uuid.UUID
 	nodeRepo       db.NodeRepo
 	siteRepo       db.SiteRepo
@@ -41,13 +42,14 @@ type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
 	pushGateway string, msgBus mb.MsgBusServiceClient,
 	orgService providers.OrgClientProvider,
 	networkService providers.NetworkClientProvider,
 	org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 	return &NodeServer{
+		orgName:        orgName,
 		org:            org,
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
@@ -57,7 +59,7 @@ func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 

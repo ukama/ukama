@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/registry/network/pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 
-package ukama.network.v1;
+package ukama.registry.network.v1;
 
 service NetworkService {
   /* Networks */

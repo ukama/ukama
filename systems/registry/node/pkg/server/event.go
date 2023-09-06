@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
@@ -14,20 +15,22 @@ import (
 )
 
 type NodeEventServer struct {
-	s *NodeServer
+	s       *NodeServer
+	orgName string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNodeEventServer(s *NodeServer) *NodeEventServer {
+func NewNodeEventServer(orgName string, s *NodeServer) *NodeEventServer {
 	return &NodeEventServer{
-		s: s,
+		s:       s,
+		orgName: orgName,
 	}
 }
 
 func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.mesh.node.online":
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
 		msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -37,7 +40,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case "event.cloud.mesh.node.offline":
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
 		msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
 		if err != nil {
 			return nil, err

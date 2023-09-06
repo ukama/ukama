@@ -26,14 +26,39 @@ service MsgClientService {
     rpc UnregisterService(UnregisterServiceReq) returns (UnregisterServiceResp);
     /// Call this rpc to publisg events
     rpc PublishMsg(PublishMsgRequest) returns (PublishMsgResponse);
-
-}
+    /// Create a shovel
+    rpc CreateShovel(CreateShovelRequest) returns (CreateShovelResponse);
+    /// Remove shovel
+    rpc RemoveShovel(RemoveShovelRequest) returns(RemoveShovelResponse);
+}   
 
 /// Registration status enums
 enum REGISTRAION_STATUS {
     REGISTERED = 0; /// System registered status  
     NOT_REGISTERED = 1; /// System not registered status
 }
+
+message CreateShovelRequest {
+    string srcProtocol = 1;
+    string destProtocol = 2;
+    string srcExchange = 3;
+    string destExchange = 4;
+    string srcExchangeKey = 5;
+    string destExchangeKey = 6;
+    string srcQueue = 7;
+    string destQueue = 8;
+    string srcUri=  9;
+    string destUri= 10;
+    string name = 11;
+}
+
+message CreateShovelResponse {}
+
+message RemoveShovelRequest {
+    string Name =1;
+}
+
+message RemoveShovelResponse {}
 
 message RegisterServiceReq {
     string systemName = 1 [(validator.field) = {string_not_empty: true}];

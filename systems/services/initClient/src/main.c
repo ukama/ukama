@@ -51,7 +51,7 @@ void usage() {
 	fprintf(stdout, "--h, --help     this menu\n");
 	fprintf(stdout, "--V, --version  Version\n");
 	fprintf(stdout, "Environment variable used are: \n");
-	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t",
+	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t %s \n\t %s \n\t",
 			ENV_INIT_CLIENT_LOG_LEVEL,
 			ENV_SYSTEM_ORG,
 			ENV_SYSTEM_NAME,
@@ -108,7 +108,7 @@ void signal_term_handler(void) {
 	}
 
 	if (child)	{
-		pthread_cancel(&child);
+		pthread_cancel(child);
 	}
 
 	if (state->webInst) {
@@ -162,6 +162,7 @@ int store_cache_uuid(char *fileName, char* uuid, int global) {
 		sysReg->localUUID = strdup(uuid);
 	}
 
+	log_debug("Creating file %s", fileName);
 	if (!create_temp_file_and_store_uuid(fileName, sysReg)) {
 		return FALSE;
 	}
@@ -222,23 +223,25 @@ int register_system(Config *config, int global){
 	log_debug("Storing UUID %s to tempFile: %s", systemUUID,
 			config->tempFile);
 	store_cache_uuid(config->tempFile,
-			queryResponse->systemID, global);
+			systemUUID, global);
 
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-					if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
-						log_error("Error updating with the init system");
-						return FALSE;
-					}
+		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
+			if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
+				log_error("Error updating with the init system");
+				return FALSE;
+			}
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 	case REG_STATUS_NO_MATCH:
 		/* first time registering */
+		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
 		if (send_request_to_init(REQ_REGISTER, config, config->systemOrg, NULL, &response, global)
 				!= TRUE) {
-			log_error("Error registrating with the init system");
+			log_error("Error registering with the init system");
 			return FALSE;
 		}
 
@@ -249,6 +252,7 @@ int register_system(Config *config, int global){
 					response);
 			return FALSE;
 		}
+		log_info("Storing registration response for system %s for org %s in %s", config->systemName, config->systemOrg, config->tempFile);
 		store_cache_uuid(config->tempFile,
 				queryResponse->systemID, global);
 

@@ -20,6 +20,7 @@ type Config struct {
 	OrgHost          string `default:"org:9090"`
 	NetworkHost      string `default:"network:9090"`
 	OrgId            string `default:"org"`
+	OrgName          string
 }
 
 const (
@@ -56,8 +57,8 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.mesh.node.online",
-				"event.cloud.mesh.node.offline",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 			},
 		},
 	}

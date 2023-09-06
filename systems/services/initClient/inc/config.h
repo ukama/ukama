@@ -45,6 +45,7 @@
 #define GLOBAL_INIT_SYSTEM_DISABLE	0
 
 #define DEFAULT_TIME_PERIOD 10
+#define DEFAULT_DNS_SERVER "127.0.0.1"
 
 /* Struct to various env variables and runtime config parameters */
 typedef struct {
@@ -63,7 +64,7 @@ typedef struct {
 	char *systemAddr; /* address where system can be reached at */
 	char *systemPort; /* port where system can be reached at */
 	char *systemCert; /* Certificate for the system */
-
+    char *nameServer;
 	char *initSystemAPIVer; /* API version for init system */
 	char *initSystemAddr;   /* address for init system */
 	char *initSystemPort;   /* port for init system */
@@ -78,5 +79,5 @@ int read_config_from_env(Config **config);
 char* nslookup(char* name, char *server);
 void* refresh_lookup(void* args);
 void register_callback(UpdateIpCallback cb);
-
+char* parse_resolveconf();
 #endif /* INIT_CLIENT_CONFIG_H */

@@ -15,11 +15,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const OrgName = "testorg"
+
 func TestBaseRateService_UploadRates_Success(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-	rateService := NewBaseRateServer(mockRepo, msgbusClient)
+	rateService := NewBaseRateServer(OrgName, mockRepo, msgbusClient)
 	var mockSimTypeStr = string("ukama_data")
 	var mockEffectiveAt = time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 	var mockEndAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
@@ -49,7 +51,7 @@ func TestBaseRateService_GetBaseRatesById(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	var mockCountry = "The lunar maria"
 	rateID := uuid.NewV4()
-	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+	s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
 	baseRateRepo.On("GetBaseRateById", rateID).Return(&db.BaseRate{
 		Country: mockCountry,
@@ -72,7 +74,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 	}
 
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+	s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
 	baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
@@ -108,7 +110,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	}
 
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+	s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
 	baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{

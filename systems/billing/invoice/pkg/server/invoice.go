@@ -30,17 +30,19 @@ const defaultTemplate = "templates/test.html.tmpl"
 const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
+	orgName        string
 	invoiceRepo    db.InvoiceRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
+		orgName:        orgName,
 		invoiceRepo:    invoiceRepo,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
