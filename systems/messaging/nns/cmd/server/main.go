@@ -68,7 +68,7 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -84,7 +84,7 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig.Dns)
-		eSrv := server.NewNnsEventServer(registryClient, srv, serviceConfig.Org)
+		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, registryClient, srv, serviceConfig.Org)
 		pb.RegisterNnsServer(s, srv)
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)

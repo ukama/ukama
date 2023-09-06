@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -14,18 +15,19 @@ import (
 )
 
 const (
-	simAllocationRoutingKey = "event.cloud.simmanager.sim.allocate"
-	handlerTimeoutFactor    = 3
+	handlerTimeoutFactor = 3
 )
 
 type SimManagerEventServer struct {
-	s *SimManagerServer
+	orgName string
+	s       *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSimManagerEventServer(s *SimManagerServer) *SimManagerEventServer {
+func NewSimManagerEventServer(orgName string, s *SimManagerServer) *SimManagerEventServer {
 	return &SimManagerEventServer{
-		s: s,
+		orgName: orgName,
+		s:       s,
 	}
 }
 
@@ -33,7 +35,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case simAllocationRoutingKey:
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
 		msg, err := unmarshalSimManagerSimAllocate(e.Msg)
 		if err != nil {
 			return nil, err

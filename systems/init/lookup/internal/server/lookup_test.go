@@ -18,6 +18,7 @@ import (
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")
+var orgName = "test-org"
 
 func TestLookupServer_AddOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
@@ -41,7 +42,7 @@ func TestLookupServer_AddOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.AddOrg(context.TODO(), porg)
 
 	assert.NoError(t, err)
@@ -70,7 +71,7 @@ func TestLookupServer_UpdateOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.UpdateOrg(context.TODO(), porg)
 
 	assert.NoError(t, err)
@@ -94,7 +95,7 @@ func TestLookupServer_GetOrg(t *testing.T) {
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetOrg(context.TODO(), &pb.GetOrgRequest{OrgName: "ukama"})
 
 	assert.NoError(t, err)
@@ -131,7 +132,7 @@ func TestLookupServer_AddNodeForOrg(t *testing.T) {
 	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
 
-	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.AddNodeForOrg(context.TODO(), pnode)
 
 	assert.NoError(t, err)
@@ -163,7 +164,7 @@ func TestLookupServer_GetNode(t *testing.T) {
 
 	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
 
-	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: nodeStr})
 
 	assert.NoError(t, err)
@@ -197,7 +198,7 @@ func TestLookupServer_GetNodeForOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
 
-	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetNodeForOrg(context.TODO(), &pb.GetNodeForOrgRequest{NodeId: nodeStr, OrgName: "ukama"})
 
 	assert.NoError(t, err)
@@ -229,7 +230,7 @@ func TestLookupServer_DeleteNodeForOrg(t *testing.T) {
 	nodeRepo.On("Delete", testNodeId).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
 
-	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.DeleteNodeForOrg(context.TODO(), pnode)
 
 	assert.NoError(t, err)
@@ -267,7 +268,7 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	resp, err := s.GetSystemForOrg(context.TODO(), &pb.GetSystemRequest{SystemName: system.Name, OrgName: "ukama"})
 
 	assert.NoError(t, err)
@@ -310,7 +311,7 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	_, err = s.UpdateSystemForOrg(context.TODO(), psys)
 
 	assert.NoError(t, err)
@@ -351,7 +352,7 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 	systemRepo.On("Delete", system.Name, org.ID).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
 
-	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient)
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	_, err = s.DeleteSystemForOrg(context.TODO(), psys)
 
 	assert.NoError(t, err)

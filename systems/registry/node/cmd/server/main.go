@@ -80,7 +80,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Invalid organization identifier %s. Error %s", serviceConfig.OrgId, err)
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -90,13 +90,13 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
+		srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
 			serviceConfig.PushGateway, mbClient,
 			providers.NewOrgClientProvider(serviceConfig.OrgHost, serviceConfig.DebugMode),
 			providers.NewNetworkClientProvider(serviceConfig.NetworkHost),
 			orgId)
 
-		nSrv := server.NewNodeEventServer(srv)
+		nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv)
 		generated.RegisterNodeServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})

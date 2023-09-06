@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
@@ -12,21 +13,23 @@ import (
 )
 
 type SimPoolEventServer struct {
+	orgName     string
 	simPoolRepo db.SimRepo
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSimPoolEventServer(simPoolRepo db.SimRepo) *SimPoolEventServer {
+func NewSimPoolEventServer(orgName string, simPoolRepo db.SimRepo) *SimPoolEventServer {
 	return &SimPoolEventServer{
+		orgName:     orgName,
 		simPoolRepo: simPoolRepo,
 	}
 }
 func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.simManager.sim.allocation":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocation"):
 		msg, err := unmarshalAllocateSim(e.Msg)
-		if err != nil { 
+		if err != nil {
 			return nil, err
 		}
 
@@ -35,7 +38,7 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 	default:
-		log.Errorf("handler not registered for %s",e.RoutingKey)
+		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil

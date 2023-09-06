@@ -11,19 +11,21 @@ import (
 type ExporterServer struct {
 	pb.UnimplementedExporterServiceServer
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	Org            string
+	org            string
+	orgName        string
 	msgbus         mb.MsgBusServiceClient
 }
 
-func NewExporterServer(org string, msgBus mb.MsgBusServiceClient) (*ExporterServer, error) {
+func NewExporterServer(orgName string, org string, msgBus mb.MsgBusServiceClient) (*ExporterServer, error) {
 
 	exp := ExporterServer{
-		Org:    org,
-		msgbus: msgBus,
+		orgName: orgName,
+		org:     org,
+		msgbus:  msgBus,
 	}
 
 	if msgBus != nil {
-		exp.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+		exp.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
 
 	return &exp, nil

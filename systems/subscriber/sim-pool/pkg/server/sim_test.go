@@ -15,10 +15,12 @@ import (
 	"context"
 )
 
+const OrgName = "testOrg"
+
 func TestGetStats_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetStatsRequest{
 		SimType: "ukama_data",
 	}
@@ -38,7 +40,7 @@ func TestGetStats_Success(t *testing.T) {
 func TestGetStats_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetStatsRequest{
 		SimType: "ukama_data",
 	}
@@ -51,7 +53,7 @@ func TestGetStats_Error(t *testing.T) {
 func TestDelete_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
@@ -64,7 +66,7 @@ func TestDelete_Success(t *testing.T) {
 func TestDelete_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
@@ -77,7 +79,7 @@ func TestDelete_Error(t *testing.T) {
 func TestAdd_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.AddRequest{
 		Sim: []*pb.AddSim{
 			{
@@ -99,7 +101,7 @@ func TestAdd_Success(t *testing.T) {
 func TestAdd_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.AddRequest{
 		Sim: []*pb.AddSim{
 			{
@@ -121,7 +123,7 @@ func TestAdd_Error(t *testing.T) {
 func TestGet_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetRequest{
 		IsPhysicalSim: true,
 		SimType:       "ukama_data",
@@ -142,7 +144,7 @@ func TestGet_Success(t *testing.T) {
 func TestGet_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetRequest{
 		IsPhysicalSim: true,
 		SimType:       "ukama_data",
@@ -156,7 +158,7 @@ func TestGet_Error(t *testing.T) {
 func TestGetByIccid_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetByIccidRequest{
 		Iccid: "1234567890123456789",
 	}
@@ -176,7 +178,7 @@ func TestGetByIccid_Success(t *testing.T) {
 func TestGetByIccid_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 	reqMock := &pb.GetByIccidRequest{
 		Iccid: "1234567890123456789",
 	}

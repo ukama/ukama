@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const testOrgName = "test-org"
+const OrgName = "testorg"
 
 func TestOrgServer_Add(t *testing.T) {
 	// Arrange
@@ -55,7 +55,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
 
 	t.Run("AddValidOrg", func(tt *testing.T) {
 		// Act
@@ -78,7 +78,7 @@ func TestOrgServer_Add(t *testing.T) {
 	t.Run("AddOrgWithoutOwner", func(tt *testing.T) {
 		// Act
 		orgResp, err := s.Add(context.TODO(), &pb.AddRequest{
-			Org: &pb.Organization{Name: testOrgName},
+			Org: &pb.Organization{Name: OrgName},
 		})
 
 		assert.Error(t, err)
@@ -109,7 +109,7 @@ func TestOrgServer_Get(t *testing.T) {
 	orchSystem := &mocks.OrchestratorProvider{}
 	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgId}, nil).Once()
@@ -144,7 +144,7 @@ func TestOrgServer_GetByName(t *testing.T) {
 	orchSystem := &mocks.OrchestratorProvider{}
 	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
@@ -179,7 +179,7 @@ func TestOrgServer_GetByOwner(t *testing.T) {
 	orchSystem := &mocks.OrchestratorProvider{}
 	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
@@ -221,7 +221,7 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	orchSystem := &mocks.OrchestratorProvider{}
 	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
 
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
