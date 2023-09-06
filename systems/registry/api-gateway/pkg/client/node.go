@@ -96,6 +96,20 @@ func (n *Node) GetOrgNodes(orgId string, free bool) (*pb.GetByOrgResponse, error
 	return res, nil
 }
 
+func (n *Node) GetNetworkNodes(networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.GetNodesForNetwork(ctx, &pb.GetByNetworkRequest{
+		NetworkId: networkId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
@@ -169,12 +183,22 @@ func (n *Node) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
 }
 
 func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
+	var attachedNodes []string
+
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
+	if l != "" {
+		attachedNodes = append(attachedNodes, strings.ToLower(l))
+	}
+
+	if r != "" {
+		attachedNodes = append(attachedNodes, strings.ToLower(r))
+	}
+
 	res, err := n.client.AttachNodes(ctx, &pb.AttachNodesRequest{
 		NodeId:        strings.ToLower(node),
-		AttachedNodes: []string{strings.ToLower(l), strings.ToLower(r)},
+		AttachedNodes: attachedNodes,
 	})
 	if err != nil {
 		return nil, err

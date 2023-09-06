@@ -50,12 +50,12 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestNodeRepo_Add(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 	var db *extsql.DB
 
 	node := nodedb.Node{
-		Id:    nodeID.String(),
+		Id:    nodeId.String(),
 		Name:  "node-1",
 		OrgId: uuid.NewV4(),
 		Type:  "hnode",
@@ -83,7 +83,7 @@ func TestNodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(node.Id, node.Name, node.Type, node.OrgId,
+			WithArgs(node.Id, node.Name, node.Type, node.OrgId, node.ParentNodeId,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
@@ -100,7 +100,7 @@ func TestNodeRepo_Add(t *testing.T) {
 }
 
 func TestNodeRepo_Get(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 	var name = "node-1"
 
 	var db *extsql.DB
@@ -125,26 +125,33 @@ func TestNodeRepo_Get(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		// Arrange
 		row := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(nodeID, name)
+			AddRow(nodeId, name)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
-		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
-			WithArgs(nodeID).
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		// Act
-		node, err := r.Get(nodeID)
+		node, err := r.Get(nodeId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
+
+		assert.Equal(t, nodeId.String(), node.Id)
+		assert.Equal(t, name, node.Name)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -152,11 +159,11 @@ func TestNodeRepo_Get(t *testing.T) {
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnError(extsql.ErrNoRows)
 
 		// Act
-		node, err := r.Get(nodeID)
+		node, err := r.Get(nodeId)
 
 		// Assert
 		assert.Error(t, err)
@@ -168,7 +175,7 @@ func TestNodeRepo_Get(t *testing.T) {
 }
 
 func TestNodeRepo_GetAll(t *testing.T) {
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 	var name = "node-1"
 
 	var db *extsql.DB
@@ -193,25 +200,32 @@ func TestNodeRepo_GetAll(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		// Arrange
 		row := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(nodeID, name)
+			AddRow(nodeId, name)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WillReturnRows(row)
 
-		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
-			WithArgs(nodeID).
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WithArgs(nodeID).
+			WithArgs(nodeId).
 			WillReturnRows(row)
 
 		// Act
-		node, err := r.GetAll()
+		nodes, err := r.GetAll()
 
 		// Assert
 		assert.NoError(t, err)
-		assert.NotNil(t, node)
+		assert.NotNil(t, nodes)
+
+		assert.Equal(t, nodeId.String(), nodes[0].Id)
+		assert.Equal(t, name, nodes[0].Name)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -234,10 +248,14 @@ func TestNodeRepo_GetAll(t *testing.T) {
 }
 
 func TestNodeRepo_Delete(t *testing.T) {
+	// Arrange
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var name = "node-1"
+
 	var db *extsql.DB
 
-	// Arrange
-	var nodeID = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	row := sqlmock.NewRows([]string{"id", "name"}).
+		AddRow(nodeId, name)
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -259,33 +277,92 @@ func TestNodeRepo_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("NodeFound", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(nodeID).
-			WillReturnError(extsql.ErrNoRows)
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
 
-		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeID, nodeID).
-			WillReturnResult(sqlmock.NewResult(1, 0))
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), nodeID).
+			WithArgs(sqlmock.AnyArg(), nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(nodeID).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), nodeID).
+			WithArgs(sqlmock.AnyArg(), nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
 		// Act
-		err = r.Delete(nodeID, nil)
+		err = r.Delete(nodeId, nil)
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeOnSite", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeErrorGrouped", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnError(extsql.ErrNoRows)
+
+		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+		// WithArgs(nodeId, nodeId).
+		// WillReturnError(extsql.ErrNoRows)
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeStillGrouped", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnError(extsql.ErrNoRows)
+
+		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+		// WithArgs(nodeId, nodeId).
+		// WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Act
+		err = r.Delete(nodeId, nil)
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
