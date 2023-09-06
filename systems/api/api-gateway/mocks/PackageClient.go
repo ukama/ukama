@@ -12,17 +12,17 @@ type PackageClient struct {
 	mock.Mock
 }
 
-// GetPackage provides a mock function with given fields: id
-func (_m *PackageClient) GetPackage(id string) (*client.PackageInfo, error) {
-	ret := _m.Called(id)
+// GetPackage provides a mock function with given fields: Id
+func (_m *PackageClient) GetPackage(Id string) (*client.PackageInfo, error) {
+	ret := _m.Called(Id)
 
 	var r0 *client.PackageInfo
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*client.PackageInfo, error)); ok {
-		return rf(id)
+		return rf(Id)
 	}
 	if rf, ok := ret.Get(0).(func(string) *client.PackageInfo); ok {
-		r0 = rf(id)
+		r0 = rf(Id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.PackageInfo)
@@ -30,7 +30,7 @@ func (_m *PackageClient) GetPackage(id string) (*client.PackageInfo, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+		r1 = rf(Id)
 	} else {
 		r1 = ret.Error(1)
 	}

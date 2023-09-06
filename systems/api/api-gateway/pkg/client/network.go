@@ -20,7 +20,7 @@ type networkClient struct {
 	r *Resty
 }
 
-func NewNetworkClient(h string) NetworkClient {
+func NewNetworkClient(h string) *networkClient {
 	u, err := url.Parse(h)
 
 	if err != nil {

@@ -3,19 +3,33 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const PackageEndpoint = "/v1/packages/"
+const PackageEndpoint = "/v1/packages"
 
 type PackageClient interface {
-	GetPackage(id string) (*PackageInfo, error)
+	GetPackage(Id string) (*PackageInfo, error)
 }
 
 type packageClient struct {
-	R *rest.RestClient
+	u *url.URL
+	R *Resty
+}
+
+func NewPackageClient(h string) *packageClient {
+	u, err := url.Parse(h)
+
+	if err != nil {
+		log.Fatalf("Can't parse  %s url. Error %s", h, err.Error())
+	}
+
+	return &packageClient{
+		u: u,
+		R: NewResty(),
+	}
 }
 
 type Package struct {
@@ -31,51 +45,26 @@ type PackageInfo struct {
 	Duration uint   `json:"duration,string"`
 }
 
-func NewPackageClient(url string, debug bool) (*packageClient, error) {
-	f, err := rest.NewRestClient(url, debug)
-	if err != nil {
-		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
-
-		return nil, err
-	}
-
-	N := &packageClient{
-		R: f,
-	}
-
-	return N, nil
-}
-
-func (p *packageClient) GetPackage(uuid string) (*PackageInfo, error) {
-	errStatus := &rest.ErrorMessage{}
+func (p *packageClient) GetPackage(id string) (*PackageInfo, error) {
+	log.Debugf("Getting package: %v", id)
 
 	pkg := Package{}
 
-	resp, err := p.R.C.R().
-		SetError(errStatus).
-		Get(p.R.URL.String() + PackageEndpoint + uuid)
-
+	resp, err := p.R.Get(p.u.String() + PackageEndpoint + "/" + id)
 	if err != nil {
-		log.Errorf("Failed to send api request to data-plan/package. Error %s", err.Error())
+		log.Errorf("Failed to send api request. error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to data plan system failure: %w", err)
-	}
-
-	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch data package info. HTTP resp code %d and Error message is %s",
-			resp.StatusCode(), errStatus.Message)
-
-		return nil, fmt.Errorf("data package Info failure %s", errStatus.Message)
+		return nil, fmt.Errorf("GetPackage failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
-		log.Tracef("Failed to deserialize data package info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("package info deserailization failure: %w", err)
 	}
 
-	log.Infof("DataPackage Info: %+v", pkg.PackageInfo)
+	log.Infof("Package Info: %+v", pkg.PackageInfo)
 
 	return pkg.PackageInfo, nil
 }

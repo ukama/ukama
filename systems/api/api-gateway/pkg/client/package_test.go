@@ -22,7 +22,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 	t.Run("PackageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+testUuid)
+			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
 
 			// fake package info
 			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "is_active": true}}`
@@ -39,9 +39,9 @@ func TestPackageClient_GetPackage(t *testing.T) {
 			}
 		}
 
-		testPackageClient, err := client.NewPackageClient("", false)
+		testPackageClient := client.NewPackageClient("")
 
-		assert.NoError(tt, err)
+		// assert.NoError(tt, err)
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -55,7 +55,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 	t.Run("PackageNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+testUuid)
+			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -63,9 +63,9 @@ func TestPackageClient_GetPackage(t *testing.T) {
 			}
 		}
 
-		testPackageClient, err := client.NewPackageClient("", false)
+		testPackageClient := client.NewPackageClient("")
 
-		assert.NoError(tt, err)
+		// assert.NoError(tt, err)
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -77,7 +77,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+testUuid)
+			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -86,9 +86,9 @@ func TestPackageClient_GetPackage(t *testing.T) {
 			}
 		}
 
-		testPackageClient, err := client.NewPackageClient("", false)
+		testPackageClient := client.NewPackageClient("")
 
-		assert.NoError(tt, err)
+		// assert.NoError(tt, err)
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -100,13 +100,14 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+testUuid)
+			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
+
 			return nil
 		}
 
-		testPackageClient, err := client.NewPackageClient("", false)
+		testPackageClient := client.NewPackageClient("")
 
-		assert.NoError(tt, err)
+		// assert.NoError(tt, err)
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
