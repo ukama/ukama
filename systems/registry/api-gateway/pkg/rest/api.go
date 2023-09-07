@@ -50,8 +50,8 @@ type AddSiteRequest struct {
 
 type AttachNodesRequest struct {
 	ParentNode string `json:"node_id" path:"node_id" validate:"required"`
-	AmpNodeL   string `json:"anodel" validate:"required"`
-	AmpNodeR   string `json:"anoder" validate:"required"`
+	AmpNodeL   string `json:"anodel"`
+	AmpNodeR   string `json:"anoder"`
 }
 
 type DetachNodeRequest struct {
@@ -85,6 +85,10 @@ type GetSiteNodesRequest struct {
 	SiteId string `example:"{{SiteId}}" path:"site_id" validate:"required"`
 }
 
+type GetNetworkNodesRequest struct {
+	NetworkId string `example:"{{NetworkId}}" path:"net_id" validate:"required"`
+}
+
 type AddNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`
@@ -109,7 +113,7 @@ type ReleaseNodeFromSiteRequest struct {
 }
 
 type AddInvitationRequest struct {
-	Org   string `json:"org" validate:"required"`
+	Org   string `json:"org" path:"org" validate:"required"`
 	Name  string `json:"name" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role  string `json:"role" validate:"required"`

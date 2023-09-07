@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
@@ -12,14 +13,16 @@ import (
 )
 
 type LookupEventServer struct {
+	orgName    string
 	systemRepo db.SystemRepo
 	orgRepo    db.OrgRepo
 	nodeRepo   db.NodeRepo
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewLookupEventServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo) *LookupEventServer {
+func NewLookupEventServer(orgName string, nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo) *LookupEventServer {
 	return &LookupEventServer{
+		orgName:    orgName,
 		nodeRepo:   nodeRepo,
 		orgRepo:    orgRepo,
 		systemRepo: systemRepo,
@@ -29,7 +32,7 @@ func NewLookupEventServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo d
 func (l *LookupEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.lookup.organization.create":
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.init.lookup.organization.create"):
 		msg, err := unmarshalLookupOrganizationCreate(e.Msg)
 		if err != nil {
 			return nil, err

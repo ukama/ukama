@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.msgclient.v1;
+
+
+
+message PublishServiceStatusUp {
+    string orgName = 1;
+    string system = 2;
+    string service = 3;
+    string instance = 4;
+}

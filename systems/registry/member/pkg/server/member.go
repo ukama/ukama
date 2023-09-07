@@ -32,16 +32,16 @@ type MemberServer struct {
 	OrgName        string
 }
 
-func NewMemberServer(mRepo db.MemberRepo, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID, name string) *MemberServer {
+func NewMemberServer(orgName string, mRepo db.MemberRepo, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID) *MemberServer {
 
 	return &MemberServer{
 		mRepo:          mRepo,
 		nucleusSystem:  nucleusSystem,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
 		OrgId:          id,
-		OrgName:        name,
+		OrgName:        orgName,
 	}
 }
 

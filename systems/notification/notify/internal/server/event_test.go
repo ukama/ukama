@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/notification/notify/internal/server"
 	"github.com/ukama/ukama/systems/notification/notify/mocks"
@@ -23,11 +24,11 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 	nt := NewTestDbNotification(node, "alert")
 
-	listenerRoutes := []string{"event.cloud.org.notification.sent",
-		"event.cloud.node.notification.sent"}
+	listenerRoutes := []string{"event.cloud.global.{{ .Org}}.nucleus.org.notification.sent",
+		"event.cloud.local.{{ .Org}}.registry.node.notification.sent"}
 
 	t.Run("NotificationEventSent", func(t *testing.T) {
-		routingKey := "event.cloud.node.notification.sent"
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
 
 		repo.On("Add", mock.Anything).Return(nil)
 
@@ -52,7 +53,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -60,7 +61,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	})
 
 	t.Run("InvalidNotificationEventSent", func(t *testing.T) {
-		routingKey := "event.cloud.node.notification.sent"
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
 
 		evt := &epb.Notification{
 			Id:          nt.Id.String(),
@@ -83,7 +84,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -91,7 +92,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 	})
 
 	t.Run("NotificationEventNotSent", func(t *testing.T) {
-		routingKey := "event.cloud.cdr.sim.usage"
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
 
 		evt := epb.SimUsage{}
 
@@ -103,7 +104,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewNotifyEventServer(&repo, msgbusClient, listenerRoutes)
+		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
