@@ -1,0 +1,16 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "User")
+Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Home Page")
+Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "Network services")
+Rel_R(bffAlias, bffAlias, "Schedule job")
+Rel_R(bffAlias, bffAlias, "Subscription: getDataUsage")
+Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
+Container(cloudAlias, "Network Registery", "Go, Postgres", "Network services")
+
+Rel(personAlias, consoleAlias, "Route", "/")
+Rel(consoleAlias, bffAlias, "Query", "getDataUsage")
+Rel_L(bffAlias, AuthAlias, "Session Validation", "/sessions/whoami")
+Rel(bffAlias, cloudAlias, "GET", "???")
+@enduml

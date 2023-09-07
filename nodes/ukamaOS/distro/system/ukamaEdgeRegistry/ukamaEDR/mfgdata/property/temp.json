@@ -1,0 +1,121 @@
+{
+  "name" : "Property Definition",
+  "device" : {
+    "name" : "TMP464",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "property_table" : [ {
+      "id" : 1,
+      "name" : "T3 TEMPERATURE",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_input"
+    }, {
+      "id" : 2,
+      "name" : "T3 LOW LIMIT",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_min"
+    }, { 
+      "id" : 3,
+      "name" : "T3 HIGH LIMIT",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_max"
+    }, {
+      "id" : 4,
+      "name" : "T3 CRITICAL LIMIT",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_crit",
+      "dependendent" : {
+        "current_val_property" : 1,
+        "limit_val_property" : 2,
+        "alert_condition" : 3
+      }
+    }, { 
+      "id" : 5,
+      "name" : "T3 LOW LIMIT ALERT",
+      "data_type" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysfsfile" : "temp3_min_alarm",
+      "dependendent" : {
+        "current_val_property" : 1,
+        "limit_val_property" : 2,
+        "alert_condition" : "LESSTHENEQUALTO"
+      }   
+    }, { 
+      "id" : 6,
+      "name" : "T3 HIGH LIMIT ALERT",
+      "data_type" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysfsfile" : "temp3_max_alarm",
+      "dependendent" : {
+        "current_val_property" : 1,
+        "limit_val_property" : 3,
+        "alert_condition" : "GREATERTHENEQUALTO"
+      }     
+    }, {
+      "id" : 7,
+      "name" : "T3 CRITICAL LIMIT ALERT",
+      "data_type" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysfsfile" : "temp3_crit_alarm",
+      "dependendent" : {
+        "current_val_property" : 1,
+        "limit_val_property" : 4,
+        "alert_condition" : "GREATERTHENEQUALTO"
+      }         
+    },{ 
+      "id" : 8,
+      "name" : "T3 CRITICAL HYSTERESIS",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_crit_hyst"    
+    }, { 
+      "id" : 9,
+      "name" : "T3 MAX HYSTERESIS",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysfsfile" : "temp3_max_hyst"    
+    }, { 
+      "id" : 10,
+      "name" : "T3 OFFSET",
+      "data_type" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "prop_type" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysfsfile" : "temp3_offset"  
+    } ]
+  }
+}

@@ -1,0 +1,411 @@
+# Vietnamese Translation for LibIDN
+# Bản dịch tiếng Việt dành cho libidn.
+# Copyright © 2014 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn package.
+# Clytie Siddall <clytie@riverland.net.au>, 2005-2008.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn-1.29\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2014-08-12 07:59+0700\n"
+"Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
+"Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.5.5\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: lib/error.c:54
+#, fuzzy
+msgid "success"
+msgstr "Thành công"
+
+#: lib/error.c:56
+#, fuzzy
+msgid "out of memory"
+msgstr "Không thể cấp phát bộ nhớ"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr ""
+
+#: lib/error.c:60
+#, fuzzy
+msgid "could not convert string to UTF-8"
+msgstr "không thể chuyển đổi từ %s sang UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr ""
+
+#: lib/error.c:64
+#, fuzzy
+msgid "string could not be NFC normalized"
+msgstr "không thể tiêu chuẩn hoá kiểu NFKC"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr ""
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr ""
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr ""
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr ""
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr ""
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr ""
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr ""
+
+#: lib/error.c:80
+#, fuzzy
+msgid "string is not in Unicode NFC format"
+msgstr ""
+"Chuỗi không không thay đổi giá trị (sau khi tự nó nhân lên) dưới sự tiêu "
+"chuẩn hoá NFKC Unicode"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr ""
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr ""
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr ""
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr ""
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr ""
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr ""
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr ""
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr ""
+
+#: lib/error.c:98
+#, fuzzy
+msgid "string contains unassigned code point"
+msgstr "Cấm gán điểm mã trong dữ liệu nhập"
+
+#: lib/error.c:100
+#, fuzzy
+msgid "string has forbidden bi-directional properties"
+msgstr "Dữ liệu nhập chứa tài sản hai hướng xung đột"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr ""
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Lỗi không rõ"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Thử lệnh “%s --help” để xem thêm thông tin.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Cách dùng: %s [TÙY_CHỌN]... [CHUỖI]...\n"
+
+#: src/idn2.c:66
+#, fuzzy
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Chuyển đổi các CHUỖI sang IDN (tên miền đã quốc tế hoá), hay đầu vào tiêu "
+"chuẩn.\n"
+
+#: src/idn2.c:70
+#, fuzzy
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Giao diện dòng lệnh với thư viện tên miền đã quốc tế hoá.\n"
+"\n"
+"Mọi chuỗi nên được mã hoá theo bộ ký tự đã thích trong miền địa phương\n"
+"của bạn. Hãy dùng tùy chọn \"--debug\" (gỡ lỗi) để tìm biết bộ ký tự nào.\n"
+"Bạn cũng có thể ghi đè lên bộ ký tự này bằng cách đặt biến môi trường\n"
+"CHARSET.\n"
+"\n"
+"Để xử lý một chuỗi bắt đầu với \"-\", v.d. \"-foo\", dùng \"--\" để\n"
+"để ra tín hiệu kết thúc đối số, như trong \"idn --quiet -a -- -foo\".\n"
+"\n"
+"Mọi đối số bắt buộc phải sử dụng với tùy chọn dài thì cũng cũng bắt buộc với "
+"tùy chọn ngắn.\n"
+
+#: src/idn2.c:80
+#, fuzzy
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help               In ra trợ giúp rồi thoát\n"
+"  -V, --version            In ra số thứ tự phiên bản rồi thoát\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+
+#: src/idn2.c:94
+#, fuzzy
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --debug              In ra thông tin gỡ lỗi\n"
+"      --quiet              Thực hiện ở chế độ im lặng\n"
+
+#: src/idn2.c:217
+#, fuzzy, c-format
+msgid "Charset: %s\n"
+msgstr "Bộ ký tự \"%s\".\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Gõ mỗi chuỗi nhập trên một đường riêng, kết thúc bằng ký tự dòng mới.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "lỗi đầu vào"
+
+#~ msgid "String preparation failed"
+#~ msgstr "Chuẩn bị chuỗi gặp lỗi"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Punycode (mã yếu đuối) gặp lỗi"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "Dữ liệu nhập chứa ký tự không phải là chữ số/chữ/dấu gạch nối"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "Không cho phép dấu gạch nối (“-”) đi trước hay theo sau"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "Dữ liệu xuất sẽ quá lớn hay quá nhỏ"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "Dữ liệu nhập không bắt đầu bằng tiền tố ACE (“xn--”)"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "Chuỗi không tránh nhân lên dưới ToASCII"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "Dữ liệu nhập đã sẵn chứa tiền tố ACE (“xn--”)"
+
+#~ msgid "System iconv failed"
+#~ msgstr "Lỗi iconv hệ thống"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "Lỗi dlopen hệ thống"
+
+#~ msgid "Invalid input"
+#~ msgstr "Dữ liệu nhập không hợp lệ"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "Dữ liệu xuất sẽ vượt quá dung lượng bộ nhớ đệm đã cung cấp"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "Giới hạn kích cỡ chuỗi bị vượt quá"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "Dữ liệu nhập chứa điểm mã cấm"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "Chuỗi thuận nghịch có dạng sai"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "Dữ liệu nhập chứa điểm mã hai hướng cấm"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "Lỗi trong định nghĩa hồ sơ stringprep (chuẩn bị chuỗi)"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "Cờ xung dột với hồ sơ"
+
+#~ msgid "Unknown profile"
+#~ msgstr "Hồ sơ lạ"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Lỗi tiêu chuẩn hoá Unicode (lỗi nội bộ)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "Điểm mã bị cấm bởi miền cấp đầu"
+
+#~ msgid "Missing input"
+#~ msgstr "Thiếu dữ liệu nhập"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "Không tìm thấy miền cấp đầu trong dữ liệu nhập"
+
+#~ msgid ""
+#~ "  -s, --stringprep         Prepare string according to nameprep profile\n"
+#~ "  -d, --punycode-decode    Decode Punycode\n"
+#~ "  -e, --punycode-encode    Encode Punycode\n"
+#~ "  -a, --idna-to-ascii      Convert to ACE according to IDNA (default "
+#~ "mode)\n"
+#~ "  -u, --idna-to-unicode    Convert from ACE according to IDNA\n"
+#~ msgstr ""
+#~ "  -s, --stringprep         Chuẩn bị chuỗi tùy theo hồ sơ nameprep\n"
+#~ "  -d, --punycode-decode    Giải mã Punycode\n"
+#~ "  -e, --punycode-encode    Mã hoá Punycode\n"
+#~ "  -a, --idna-to-ascii      Chuyển đổi sang ACE tùy theo IDNA (chế độ mặc "
+#~ "định)\n"
+#~ "  -u, --idna-to-unicode    Chuyển đổi từ ACE tùy theo IDNA\n"
+
+#~ msgid ""
+#~ "      --allow-unassigned   Toggle IDNA AllowUnassigned flag (default "
+#~ "off)\n"
+#~ "      --usestd3asciirules  Toggle IDNA UseSTD3ASCIIRules flag (default "
+#~ "off)\n"
+#~ msgstr ""
+#~ "      --allow-unassigned   Bật/tắt cờ IDNA AllowUnassigned (mặc định là "
+#~ "tắt)\n"
+#~ "      --usestd3asciirules  Bật/tắt cờ IDNA UseSTD3ASCIIRules (mặc định là "
+#~ "tắt)\n"
+
+#~ msgid ""
+#~ "      --no-tld             Don't check string for TLD specific rules\n"
+#~ "                             Only for --idna-to-ascii and --idna-to-"
+#~ "unicode\n"
+#~ msgstr ""
+#~ "  -t, --no-tld             Không kiểm tra chuỗi cho quy tắc đặc tả TLD\n"
+#~ "                            Chỉ dành cho --idna-to-ascii và --idna-to-"
+#~ "unicode\"\n"
+
+#~ msgid ""
+#~ "  -n, --nfkc               Normalize string according to Unicode v3.2 "
+#~ "NFKC\n"
+#~ msgstr ""
+#~ "  -n, --nfkc               Tiêu chuẩn hoá chuỗi tùy theo Unicode v3.2 "
+#~ "NFKC\n"
+
+#~ msgid ""
+#~ "  -p, --profile=STRING     Use specified stringprep profile instead\n"
+#~ "                             Valid stringprep profiles: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+#~ msgstr ""
+#~ "  -p, --profile=CHUỖI      Dùng hồ sơ stringprep đã chỉ định thay vào đó\n"
+#~ "                             Các hồ sơ stringprep hợp lệ: “Nameprep”,\n"
+#~ "                             “iSCSI”, “Nodeprep”, “Resourceprep”, \n"
+#~ "                             “trace”, “SASLprep”\n"
+
+#~ msgid "only one of -s, -e, -d, -a, -u or -n can be specified"
+#~ msgstr "chỉ có thể chỉ ra một trong số các đối số -s, -e, -d, -a, -u hay -n"
+
+#~ msgid "could not convert from UTF-8 to UCS-4"
+#~ msgstr "không thể chuyển đổi từ UTF-8 sang UCS-4"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profile: %s"
+
+#~ msgid "could not convert from UTF-8 to %s"
+#~ msgstr "không thể chuyển đổi từ UTF-8 sang %s"
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode: %s"
+
+#~ msgid "malloc"
+#~ msgstr "malloc"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode: %s"
+
+#~ msgid "could not convert from UCS-4 to UTF-8"
+#~ msgstr "không thể chuyển đổi từ UCS-4 sang UTF-8"
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD): %s"
+
+#~ msgid "tld_check_4z (position %lu): %s"
+#~ msgstr "tld_check_4z (vị trí %lu): %s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z: %s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <%s>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Thông báo lỗi cho <%s>.\n"

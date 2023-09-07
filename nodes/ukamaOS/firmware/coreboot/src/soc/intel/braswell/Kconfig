@@ -1,0 +1,147 @@
+config SOC_INTEL_BRASWELL
+	bool
+	help
+	  Braswell M/D part support.
+
+if SOC_INTEL_BRASWELL
+
+config CPU_SPECIFIC_OPTIONS
+	def_bool y
+	select ACPI_INTEL_HARDWARE_SLEEP_VALUES
+	select ARCH_BOOTBLOCK_X86_32
+	select ARCH_RAMSTAGE_X86_32
+	select ARCH_ROMSTAGE_X86_32
+	select ARCH_VERSTAGE_X86_32
+	select BOOT_DEVICE_SUPPORTS_WRITES
+	select CACHE_MRC_SETTINGS
+	select SUPPORT_CPU_UCODE_IN_CBFS
+	select MICROCODE_BLOB_NOT_IN_BLOB_REPO
+	select CPU_INTEL_TURBO_NOT_PACKAGE_SCOPED
+	select HAVE_SMI_HANDLER
+	select NO_FIXED_XIP_ROM_SIZE
+	select PARALLEL_MP
+	select PCIEXP_ASPM
+	select PCIEXP_CLK_PM
+	select PCIEXP_COMMON_CLOCK
+	select PLATFORM_USES_FSP1_1
+	select REG_SCRIPT
+	select RTC
+	select SOC_INTEL_COMMON
+	select SOC_INTEL_COMMON_ACPI_WAKE_SOURCE
+	select SOC_INTEL_COMMON_BLOCK
+	select SOC_INTEL_COMMON_BLOCK_HDA
+	select SOC_INTEL_COMMON_RESET
+	select SMP
+	select SPI_FLASH
+	select SSE2
+	select TSC_MONOTONIC_TIMER
+	select TSC_SYNC_MFENCE
+	select UDELAY_TSC
+	select USE_GENERIC_FSP_CAR_INC
+	select INTEL_DESCRIPTOR_MODE_CAPABLE
+	select HAVE_SPI_CONSOLE_SUPPORT
+	select HAVE_FSP_GOP
+	select GENERIC_GPIO_LIB
+	select INTEL_GMA_ACPI
+	select INTEL_GMA_SWSMISCI
+	select CPU_INTEL_COMMON
+	select SOUTHBRIDGE_INTEL_COMMON_SMBUS
+	select C_ENVIRONMENT_BOOTBLOCK
+
+config DCACHE_BSP_STACK_SIZE
+	hex
+	default 0x2000
+	help
+	  The amount of anticipated stack usage in CAR by bootblock and
+	  other stages.
+
+config C_ENV_BOOTBLOCK_SIZE
+	hex
+	default 0x8000
+
+config VBOOT
+	select VBOOT_MUST_REQUEST_DISPLAY
+	select VBOOT_STARTS_IN_ROMSTAGE
+
+config MMCONF_BASE_ADDRESS
+	hex
+	default 0xe0000000
+
+config MAX_CPUS
+	int
+	default 4
+
+config SMM_TSEG_SIZE
+	hex
+	default 0x800000
+
+config SMM_RESERVED_SIZE
+	hex
+	default 0x100000
+
+# Cache As RAM region layout:
+#
+# +-------------+ DCACHE_RAM_BASE + DCACHE_RAM_SIZE
+# |  Stack      |
+# |    |        |
+# |    v        |
+# +-------------+
+# |    ^        |
+# |    |        |
+# | CAR Globals |
+# +-------------+ DCACHE_RAM_BASE
+#
+
+config DCACHE_RAM_BASE
+	hex
+	default 0xfef00000
+
+config DCACHE_RAM_SIZE
+	hex
+	default 0x4000
+	help
+	  The size of the cache-as-ram region required during bootblock
+	  and/or romstage. Note DCACHE_RAM_SIZE and DCACHE_RAM_MRC_VAR_SIZE
+	  must add up to a power of 2.
+
+config RESET_ON_INVALID_RAMSTAGE_CACHE
+	bool "Reset the system on S3 wake when ramstage cache invalid."
+	default n
+	help
+	  The haswell romstage code caches the loaded ramstage program
+	  in SMM space. On S3 wake the romstage will copy over a fresh
+	  ramstage that was cached in the SMM space. This option determines
+	  the action to take when the ramstage cache is invalid. If selected
+	  the system will reset otherwise the ramstage will be reloaded from
+	  cbfs.
+
+config ENABLE_BUILTIN_COM1
+	bool "Enable builtin COM1 Serial Port"
+	default n
+	help
+	  The PMC has a legacy COM1 serial port. Choose this option to
+	  configure the pads and enable it. This serial port can be used for
+	  the debug console.
+
+config DISABLE_HPET
+	bool "Disable the HPET device"
+	default n
+	help
+	 Enable this to disable the HPET support
+	 Solves the Linux MP-BIOS bug timer not connected.
+
+config USE_GOOGLE_FSP
+	bool
+	help
+	 Select this to use Google's custom Braswell FSP header/binary
+	 instead of the public release on Github. Only google/cyan
+	 variants require this; all other boards should use the public release.
+
+config FSP_HEADER_PATH
+	string
+	default "$(src)/vendorcode/intel/fsp/fsp1_1/braswell" if USE_GOOGLE_FSP
+	default "3rdparty/fsp/BraswellFspBinPkg/Include/"
+	help
+	 Location of FSP header file FspUpdVpd.h
+
+endif

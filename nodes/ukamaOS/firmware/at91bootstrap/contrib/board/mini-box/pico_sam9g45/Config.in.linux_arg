@@ -1,0 +1,3 @@
+config LINUX_KERNEL_ARG_STRING
+	default "mem=128M@0x20000000 mem=128M@0x70000000 console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if PICOSAM9G45 && SDCARD && !OF_LIBFDT
+	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if PICOSAM9G45 && SDCARD && OF_LIBFDT

@@ -1,0 +1,403 @@
+# Serbian translation of libidn.
+# Copyright © 2020 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Aleksandar Jelenak <jelenak@verizon.net>, 2004, 2005.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2012–2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2-2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-07-03 07:02+0200\n"
+"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"Language-Team: Serbian <(nothing)>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "успешно"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "нема више меморије"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "не могу да одредим запис кодирања језика"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "не могу да претворим ниску у УТФ-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "грешка ниске кодирања"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "ниска не може бити НФЦ нормализована"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "ниска садржи неисправне „punycode“ податке"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "„punycode“ кодирани подаци биће превелики"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "„punycode“ претварање је резултирало препуњавањем"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "назив домена је дужи од 255 знакова"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "натпис домена је дужи од 63 знакова"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "унос „А-натпис“ није исправан"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "уноси „A-натпис“ и „U-натпис“ се не подударају"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "ниска није у запису Уникода НФЦ"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "ниска садржи забрањена два шаблона заграде"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "ниска почиње/завршава се забрањеном заградом"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "ниска садржи забрањени водећи комбинујући знак"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "ниска садржи недопуштени знак"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "ниска садржи забрањени садржајни-ј знак"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "ниска садржи садржајни-ј знак са ништавним правилом"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "ниска садржи забрањени садржајни-о знак"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "ниска садржи садржајни-о знак са ништавним правилом"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "ниска садржи недодељену кодну тачку"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "ниска има забрањена дво-усмеравајућа својства"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "натпис домена има забрањену тачку (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "натпис домена има знак забрањен у транзиционом режиму (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr "натпис домена има знак забрањен у не-транзиционом режиму (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "Време одзива А-натписа није успело"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Непозната грешка"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Пробајте „%s --help“ за више информација.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Употреба: %s [ОПЦИЈА]... [НИСКЕ]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Интернационализовани назив домена (IDNA2008) претвара НИСКЕ, или стандардни "
+"улаз.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Сучеље линије наредби за „Libidn2“ примену „IDNA2008“.\n"
+"\n"
+"Очекује се да су све ниске кодиране у скупу знакова коришћеног језика.\n"
+"\n"
+"Да обрадите ниску која почиње са „-“, на пример „-foo“, употребите „--“\n"
+"да назначите крај параметара, као у „idn2 --quiet -- -foo“.\n"
+"\n"
+"Обавезни аргументи за дуге опције су такође обавезни и за кратке опције.\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help                Исписује помоћ и излази\n"
+"  -V, --version             Исписује издање и излази\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              Декодира (punycode) назив домена\n"
+"  -l, --lookup              Тражи назив домена (основно)\n"
+"  -r, --register            Записује натпис\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               Укључује TR46 транзициону обраду\n"
+"  -N, --tr46nt              Укључује TR46 не-транзициону обраду\n"
+"      --no-tr46             Искључује TR46 обраду\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   Укључује STD3 АСКРИ правила\n"
+"      --no-alabelroundtrip  Искључује време одзива А-натписа за тражењем\n"
+"      --debug               Исписује податке о пречишћавању\n"
+"      --quiet               Нечујна радња\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Скуп знакова: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Куцајте сваку улазну ниску у засебном реду, завршавајући знаком за нови "
+"ред.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "улазна грешка"
+
+#~ msgid "String preparation failed"
+#~ msgstr "Није успела припрема ниске"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Паникод није успео"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "Нецифра/слово/цртица у улазу"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "Недозвољени водећи или завршни знак минус („-“)"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "Излаз би био превелик или премали"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "Улаз не почиње АЦЕ префиксом („xn--“)"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "Ниска није истомоћна под ТоАСКРИ"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "Улаз већ садржи АЦЕ префикс („xn--“)"
+
+#~ msgid "System iconv failed"
+#~ msgstr "Иконв система није успео"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "Длопен система није успео"
+
+#~ msgid "Invalid input"
+#~ msgstr "Неисправан улаз"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "Излаз би премашио предвиђену величину бафера"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "Премашено је ограничење величине ниске"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "Забрањене кодне тачке у улазу"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "Лоша двосмерна ниска"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "Забрањене двосмерне кодне тачке у улазу"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "Грешка у одредници профила стрингпреп"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "Сукоб опција са профилом"
+
+#~ msgid "Unknown profile"
+#~ msgstr "Непознат профил"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Неуспех Уникод нормализације (унутрашња грешка)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "Кодне тачке забрањене доменом највишег нивоа"
+
+#~ msgid "Missing input"
+#~ msgstr "Недостаје улаз"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "Домен највишег нивоа није нађен у улазу"
+
+#~ msgid ""
+#~ "  -s, --stringprep         Prepare string according to nameprep profile\n"
+#~ "  -d, --punycode-decode    Decode Punycode\n"
+#~ "  -e, --punycode-encode    Encode Punycode\n"
+#~ "  -a, --idna-to-ascii      Convert to ACE according to IDNA (default "
+#~ "mode)\n"
+#~ "  -u, --idna-to-unicode    Convert from ACE according to IDNA\n"
+#~ msgstr ""
+#~ "  -s, --stringprep         Припрема ниску у складу са профилом нејмпреп\n"
+#~ "  -d, --punycode-decode    Декодира Паникод\n"
+#~ "  -e, --punycode-encode    Кодира Паникод\n"
+#~ "  -a, --idna-to-ascii      Претвара у АЦЕ у складу са ИДНА-ом (основни "
+#~ "режим)\n"
+#~ "  -u, --idna-to-unicode    Претвара из АЦЕ-а у складу са ИДНА-ом\n"
+
+#~ msgid ""
+#~ "      --allow-unassigned   Toggle IDNA AllowUnassigned flag (default "
+#~ "off)\n"
+#~ "      --usestd3asciirules  Toggle IDNA UseSTD3ASCIIRules flag (default "
+#~ "off)\n"
+#~ msgstr ""
+#~ "      --allow-unassigned   Пребацује опцију ИДНА Дозволи недодељене "
+#~ "(унапред искључено)\n"
+#~ "      --usestd3asciirules  Пребацује опцију ИДНА КористиСТД3АСКРИ правила "
+#~ "(унапред искључено)\n"
+
+#~ msgid ""
+#~ "      --no-tld             Don't check string for TLD specific rules\n"
+#~ "                             Only for --idna-to-ascii and --idna-to-"
+#~ "unicode\n"
+#~ msgstr ""
+#~ "      --no-tld             Не проверава ниску за ТЛД посебним правилима\n"
+#~ "                             Само за --idna-to-ascii и --idna-to-unicode\n"
+
+#~ msgid ""
+#~ "  -n, --nfkc               Normalize string according to Unicode v3.2 "
+#~ "NFKC\n"
+#~ msgstr ""
+#~ "  -n, --nfkc               Нормализује ниску у складу са Уникодом в3.2 "
+#~ "НФКЦ\n"
+
+#~ msgid ""
+#~ "  -p, --profile=STRING     Use specified stringprep profile instead\n"
+#~ "                             Valid stringprep profiles: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+#~ msgstr ""
+#~ "  -p, --profile=НИСКА     Уместо тога користи одређени профил "
+#~ "стрингпрепа\n"
+#~ "                             Исправни стрингпреп профили: „Nameprep“,\n"
+#~ "                             „iSCSI“, „Nodeprep“, „Resourceprep“, \n"
+#~ "                             „trace“, „SASLprep“\n"
+
+#~ msgid "only one of -s, -e, -d, -a, -u or -n can be specified"
+#~ msgstr "може бити задато само једно од: -s, -e, -d, -a или -u"
+
+#~ msgid "could not convert from UTF-8 to UCS-4"
+#~ msgstr "не могу да претворим из УТФ-8 у УЦС-4"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profile: %s"
+
+#~ msgid "could not convert from UTF-8 to %s"
+#~ msgstr "не могу да претворим из УТФ-8 у %s"
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode: %s"
+
+#~ msgid "malloc"
+#~ msgstr "додела меморије"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode: %s"
+
+#~ msgid "could not convert from UCS-4 to UTF-8"
+#~ msgstr "не могу да претворим из УЦС-4 у УТФ-8"
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD): %s"
+
+#~ msgid "tld_check_4z (position %lu): %s"
+#~ msgstr "tld_check_4z (положај %lu): %s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z: %s"
+
+#~ msgid "input[%d] = U+%04x\n"
+#~ msgstr "улаз[%d] = U+%04x\n"
+
+#~ msgid "output[%d] = U+%04x\n"
+#~ msgstr "излаз[%d] = U+%04x\n"
+
+#~ msgid "tld[%d] = U+%04x\n"
+#~ msgstr "tld[%d] = U+%04x\n"

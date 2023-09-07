@@ -1,0 +1,67 @@
+{
+	"pmecc_header": {
+		"struct": [
+		{
+			"name": "usePmecc",
+			"type": "bit_field",
+			"start": 0,
+			"len": 1
+		},
+		{
+			"name": "nbSectorPerPage",
+			"type": "bit_field",
+			"start":1,
+			"len":3,
+			"meaning": {
+				"0": ["1 sectors per page", 1],
+				"1": ["2 sectors per page", 2],
+				"2": ["4 sectors per page", 4],
+				"3": ["8 sectors per page", 8]
+			}
+		},
+		{
+			"name": "spareSize",
+			"type": "bit_field",
+			"start":4,
+			"len":9
+		},
+		{
+			"name": "eccBitReq",
+			"type":"bit_field",
+			"start":13,
+			"len":3,
+			"meaning": {
+				"0": ["2-bit ECC", 2],
+				"1": ["4-bit ECC", 4],
+				"2": ["8-bit ECC", 8],
+				"3": ["12-bit ECC", 12],
+				"4": ["24-bit ECC", 24]
+			}
+		},
+		{
+			"name": "sectorSize",
+			"type":"bit_field",
+			"start":16,
+			"len":2,
+			"meaning": {
+				"0": ["512 bytes", 512],
+				"1": ["1024 bytes", 1024]
+			}
+		},
+		{
+			"name": "eccOffset",
+			"type":"bit_field",
+			"start":18,
+			"len":9
+		},
+		{
+			"name": "key",
+			"type":"bit_field",
+			"start":28,
+			"len":4,
+			"meaning": {
+				"12":["valid key", 12]
+			}
+		}]
+	}
+}

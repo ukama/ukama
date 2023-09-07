@@ -1,0 +1,145 @@
+# Protocol Documentation
+<a name="top"></a>
+
+## Table of Contents
+{{range .Files}}
+{{range .Services}} - [{{.Name}}](#{{.FullName}}){{end}}
+- [Directory structure](#directory-structure)
+- [How to use?](#how-to)
+{{$file_name := .Name}} - [{{.Name}}](#{{.Name}})
+  {{range .Messages}} - [{{.Name}} Messages](#{{.FullName}})
+  {{end}}{{range .Enums}}  - [{{.LongName}}](#{{.FullName}}){{end}}
+{{end}}- [Scalar Value Types](#scalar-value-types)
+
+{{range .Files}}
+{{$file_name := .Name}}
+<a name="{{.Name}}"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+{{range .Services}}
+<a name="{{.FullName}}"></a>
+
+# {{.Name}}
+{{.Description}}
+
+## RPC Functions
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+{{range .Methods -}}
+  | {{.Name}} | [{{.RequestLongType}}](#{{.RequestFullType}}) | [{{.ResponseLongType}}](#{{.RequestFullType}}) | {{nobr .Description}} |
+{{end}}
+{{end}}
+
+
+<a name="#directory-structure"></a>
+
+## Directory structure
+
+#DIR_CONTENT#
+
+- **cmd**: Contains the server and system/sub-system version. Purpose of this file is to initialize the DB and start server. We use `make server` command to run this file.
+- **mocks**: This directory contains the auto generated file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
+- **pb**: This directory contains the `*.proto` file. In proto file we define service with all the rpc's and messages.
+- **internal/db**: DB directory under pkg contains 2 files.
+  `model.go` file contains the db model structure/s.
+  `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
+- **internal/queue** This dir contains the logic of Queue's. like: Listner queue, Publisher queue.
+- **internal/server** This dir contains the logic of RPC handlers.
+
+<a name="#how-to"></a>
+
+## How to use?
+
+Before using the repo make sure below tools are installed:
+
+- Go 1.18
+- PostgreSQL
+- gRPC client
+Then navigate into base-rate directory and run below command:
+
+**To Test**
+
+For unit tests run below commands:
+
+```
+make test
+```
+
+This command will run unit tests under all {{.Name}} directories.
+
+**To Generate PB file**
+
+```
+make gen
+```
+
+This command will generate protobuf files from {{.Name}}.
+
+**Make sure rabbitMq is running on docker**
+
+```
+docker run -d --name rabbit -p 5672:5672 -p 5673:5673 -p 15672:15672 rabbitmq:3-management
+```
+
+**To Run Server**
+
+```
+make server
+```
+
+## {{.Name}}
+{{.Description}}
+
+{{range .Messages}}
+<a name="{{.FullName}}"></a>
+
+### {{.LongName}}
+{{.Description}}
+
+{{if .HasFields}}
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+{{range .Fields -}}
+  | {{.Name}} | [{{.LongType}}](#{{.FullType}}) | {{.Label}} | {{nobr .Description}}{{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+{{end}}
+{{end}}
+
+{{end}}
+
+{{range .Enums}}
+<a name="{{.FullName}}"></a>
+
+### {{.LongName}}
+{{.Description}}
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+{{range .Values -}}
+  | {{.Name}} | {{.Number}} | {{nobr .Description}} |
+{{end}}
+
+{{end}}
+
+{{if .HasExtensions}}
+<a name="{{$file_name}}-extensions"></a>
+
+### File-level Extensions
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+{{range .Extensions -}}
+  | {{.Name}} | {{.LongType}} | {{.ContainingLongType}} | {{.Number}} | {{nobr .Description}}{{if .DefaultValue}} Default: `{{.DefaultValue}}`{{end}} |
+{{end}}
+{{end}} 
+
+
+
+{{end}}
+
+## Scalar Value Types
+
+| .proto Type | Notes | C++ Type | Java Type | Python Type |
+| ----------- | ----- | -------- | --------- | ----------- |
+{{range .Scalars -}}
+  | <a name="{{.ProtoType}}" ></a> {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} |
+{{end}}

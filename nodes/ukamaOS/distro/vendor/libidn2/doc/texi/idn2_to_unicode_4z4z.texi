@@ -1,0 +1,18 @@
+@subheading idn2_to_unicode_4z4z
+@anchor{idn2_to_unicode_4z4z}
+@deftypefun {int} {idn2_to_unicode_4z4z} (const uint32_t * @var{input}, uint32_t ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated UTF-32 string.
+
+@var{output}: Newly allocated UTF-32 output string.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in UTF-32 format into a
+UTF-32 string (punycode decoding). The output buffer will be zero-terminated
+and must be deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+

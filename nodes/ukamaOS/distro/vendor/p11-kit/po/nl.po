@@ -1,0 +1,343 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Richard E. van der Luit <nippur@fedoraproject.org>, 2012
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-19 11:45+0000\n"
+"Last-Translator: Stef Walter <stefw@gnome.org>\n"
+"Language-Team: Dutch (http://www.transifex.com/freedesktop/p11-kit/language/nl/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "De bewerking werd afgebroken"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "Onvoldoende geheugen beschikbaar"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "De opgegeven slot ID is niet geldig"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "Interne fout"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "De bewerking mislukte"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "Ongeldige argumenten"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "De module kan de noodzakelijke threads niet aanmaken"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "De module kan de data niet naar behoren vergrendelen"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "Het veld is alleen-lezen"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "Het veld is vertrouwelijk en kan niet worden onthuld"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "Het veld is ongeldig of bestaat niet"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "Ongeldige waarde voor veld"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "De data is niet geldig of wordt niet herkend"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "De data is te lang"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "Er trad een fout op bij het apparaat"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "Onvoldoende geheugen op het apparaat beschikbaar"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "Het apparaat werd verwijderd of afgekoppeld"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "De versleutelde data is niet geldig of wordt niet herkend"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "De versleutelde data is te lang"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "Deze bewerking wordt niet ondersteund"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "De sleutel ontbreekt of is ongeldig"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "De sleutel heeft een verkeerde grootte"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "De sleutel is van het verkeerde type"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "Er is geen sleutel nodig"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "De sleutel is anders dan voorheen"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "Er is een sleutel nodig"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "Kan geen sleutel in de digest opnemen"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "Deze bewerking kan niet met deze sleutel uitgevoerd worden"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "Sleutelwrapping niet gelukt"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "Kan deze sleutel niet exporteren"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "Het crypto mechanisme is ongeldig of wordt niet herkend"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "Het crypto mechanisme heeft een ongeldig argument"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "Het object mist of is ongeldig"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "Er wordt al een andere bewerking uitgevoerd"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "Er wordt momenteel geen bewerking uitgevoerd"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "Het wachtwoord of PIN in incorrect"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "Het wachtwoord of PIN is ongeldig"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "Het wachtwoord of PIN heeft een ongeldige lengte"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "Het wachtwoord of PIN is verlopen"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "Het wachtwoord of PIN is vergrendeld"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "De sessie is afgesloten"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "Er zijn te veel sessies actief"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "De sessie is ongeldig"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "De sessie is alleen-lezen"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "Er is een open sessie"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "Er is een alleen-lezen sessie"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "Er is een beheerder sessie"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "De handtekening is fout of gecorrumpeerd"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "De handtekening wordt niet herkend of is gecorrumpeerd"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "Sommige verplichte velden ontbreken"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "Bepaalde velden hebben ongeldige waarden"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "Het apparaat is niet aanwezig of afgekoppeld "
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "Het apparaat is ongeldig of onherkenbaar"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "Het apparaat is beveiligd tegen schrijven"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "Kan niet importeren omdat de sleutel ongeldig is"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "Kan niet importeren omdat de sleutel de verkeerde lengte heeft"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "Kan niet importeren omdat de sleutel van het verkeerde type is"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "U bent reeds ingelogd"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "Er is geen gebruiker ingelogd"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "Het wachtwoord of PIN van gebruiker is niet ingesteld"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "De gebruiker is van het verkeerde gebruikerstype"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "Er is reeds een andere gebruiker ingelogd"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "Er zijn te veel gebruikers van verschillende types ingelogd"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "Kan geen ongeldige sleutel importeren"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "Kan geen sleutel importeren van de verkeerde grootte"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "Kan niet exporteren omdat de sleutel ongeldig is"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "Kan niet exporteren omdat de sleutel de verkeerde grootte heeft"
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "Kan niet exporteren omdat de sleutel van het verkeerde type is"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "Niet in staat de random-number-generator te initialiseren"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "Geen random-number-generator beschikbaar"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "Het crypto mechanisme heeft een ongeldige parameter"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "Niet genoeg ruimte om het resultaat op te slaan"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "De opgeslagen status is ongeldig "
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "De informatie is vertrouwelijk en kan niet worden onthuld"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "De status kan niet opgeslagen worden"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "De module is niet geïnitialiseerd"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "De module is reeds geïnitialiseerd"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "Kan data niet vergrendelen"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "De data kan niet vergrendeld worden"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr ""
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "Onbekende fout"

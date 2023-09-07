@@ -1,0 +1,97 @@
+menu  "NAND flash configuration"
+
+choice
+	prompt "ECC Configuration"
+	default USE_PMECC if CPU_HAS_PMECC
+	default ENABLE_SW_ECC if !CPU_HAS_PMECC
+	help
+		Select ECC Configuration
+
+config ENABLE_SW_ECC
+	bool "Using Software ECC"
+
+config USE_PMECC
+	bool "Using PMECC"
+	depends on CPU_HAS_PMECC
+
+config ON_DIE_ECC
+	bool "Using On-Die ECC"
+	depends on USE_ON_DIE_ECC_SUPPORT
+
+endchoice
+
+menu "PMECC Configuration"
+	depends on USE_PMECC
+
+config PMECC_AUTO_DETECT
+	bool "Auto-detect ONFI minimum error requirement"
+	default y
+	help
+	  Detect the ONFI parameters and use the minimum error
+	  requirement
+
+choice
+	prompt "PMECC Error Correction Bits"
+	depends on !PMECC_AUTO_DETECT
+	default PMECC_CORRECT_BITS_2
+	help
+		Select the PMECC correction bits
+
+config PMECC_CORRECT_BITS_2
+	bool "2-bit"
+
+config PMECC_CORRECT_BITS_4
+	bool "4-bit"
+
+config PMECC_CORRECT_BITS_8
+	bool "8-bit"
+
+config PMECC_CORRECT_BITS_12
+	bool "12-bit"
+
+config PMECC_CORRECT_BITS_24
+	bool "24-bit"
+
+endchoice
+
+choice
+	prompt "PMECC Sector Size"
+	depends on !PMECC_AUTO_DETECT
+	default PMECC_SECTOR_SIZE_512
+	help
+		Select the PMECC sector size
+
+config PMECC_SECTOR_SIZE_512
+	bool "512-byte"
+
+config PMECC_SECTOR_SIZE_1024
+	bool "1024-byte"
+
+endchoice
+
+endmenu
+
+config NANDFLASH_SMALL_BLOCKS
+	bool "Use NAND flash with small blocks"
+	default n
+	help
+	  Use NAND flash with small blocks
+
+config NANDFLASH_RECOVERY
+	bool "Support NAND flash recovery by pressing a button"
+	default y
+	depends on ALLOW_NANDFLASH_RECOVERY
+	help
+	  Support erasing first NAND flash block by pressing a recovery
+	  button.
+
+config ONFI_DETECT_SUPPORT
+	bool "Support NAND flash ONFI detect function"
+	default y
+
+
+config USE_ON_DIE_ECC_SUPPORT
+	bool "Support to use NAND flash On-Die ECC"
+	default y
+
+endmenu

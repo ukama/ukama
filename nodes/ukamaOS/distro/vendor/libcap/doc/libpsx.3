@@ -1,0 +1,84 @@
+.TH LIBPSX 3 "2020-01-07" "" "Linux Programmer's Manual"
+.SH NAME
+psx_syscall3, psx_syscall6 \- POSIX semantics for system calls
+.SH SYNOPSIS
+.nf
+.B #include <sys/psx_syscall.h>
+.sp
+.BI "long int psx_syscall3(long int" " syscall_nr, " "long int" " arg1, " "long int" " arg2, " "long int" " arg3);"
+.sp
+.BI "long int psx_syscall6(long int" " syscall_nr, " "long int" " arg1, " "long int" " arg2, " "long int" " arg3, " "long int" " arg4, " "long int" " arg5, " "long int" " arg6);"
+.sp
+Link with one of these:
+.sp
+.I   ld ... -lpsx -lpthread --wrap=pthread_create
+.sp
+.I   gcc ... -lpsx -lpthread -Wl,-wrap,pthread_create
+.SH DESCRIPTION
+The
+.B libpsx
+library attempts to fill a gap left by the
+.BR pthreads (7)
+implementation on Linux. To be compliant POSIX threads, via the
+.BR nptl "(7) " setxid
+mechanism glibc maintains consistent UID and GID credentials amongst
+all of the threads associated with the current process. However, other
+credential state is not supported by this abstraction. To support
+these extended kernel managed security attributes,
+.BR libpsx (3)
+provides a more generic pair of wrapping system call functions:
+.BR psx_syscall3 "(3) and " psx_syscall6 (3).
+Like the
+.B setxid
+mechanism, the coordination of thread state is arranged by a realtime
+signal SIGRTMAX which is usurped for this process.
+.PP
+A linker trick of
+.I wrapping
+the
+.BR pthread_create ()
+call with a psx thread registration function is used to allow
+.B libpsx
+to keep track of all pthreads. If that trick is not usable by your application, then the much more cumbersome and fragile
+.BR psx_register ( pthread_t " thread)"
+function is provided to register threads manually with the library. To
+successfully use this approach an explanation of how to code for it is
+provided at the top of the
+.B <sys/psx_syscall.h>
+header file.
+.PP
+An inefficient macrology trick supports the psx_syscall() pseudo
+function which takes 1 to 7 arguments, depending on the needs of the
+caller. The macrology pads out the call to actually use
+.BR psx_syscall3 (3)
+or
+.BR psx_syscall6 (3)
+with zeros filling the missing arguments. While using this in source
+code will make it appear clean, the actual code footprint is
+larger. You are encouraged to use the more explicit
+.BR psx_syscall3 (3)
+and
+.BR psx_syscall6 (3)
+functions.
+.SH RETURN VALUE
+The return value for system call functions is generally the value
+returned by the kernel, or -1 in the case of an error. In such cases
+.BR errno (3)
+is set to the detailed error value. The
+.BR psx_syscall3 " and " psx_syscall6
+functions attempt a single threaded system call and return immediately
+in the case of an error. Should this call succeed, then the same
+system calls are executed from a signal handler on each of the other
+threads of the process.
+.SH CONFORMING TO
+The needs of
+.BR libcap (3)
+for POSIX semantics of capability manipulation.
+.SH "REPORTING BUGS"
+Please report bugs via:
+.TP
+https://bugzilla.kernel.org/buglist.cgi?component=libcap&list_id=1047723&product=Tools&resolution=---
+.SH SEE ALSO
+.BR libcap (3),
+.BR pthreads "(7) and"
+.BR nptl (7).

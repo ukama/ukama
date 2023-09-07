@@ -1,0 +1,6 @@
+/TAGS
+/build*/
+/src/*.o
+mprof*
+/*.tar.gz
+mesh.d

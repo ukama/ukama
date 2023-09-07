@@ -1,0 +1,239 @@
+# Ukrainian translation of libidn2.
+# Copyright (C) 2011 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+#
+# Yuri Chornoivan <yurchor@ukr.net>, 2011, 2018, 2019, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-05-13 11:53+0300\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Lokalize 20.12.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "виконано"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "не вистачає пам'яті"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "не вдалося визначити формат кодування локалі"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "не вдалося перетворити дані до UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "помилка кодування рядка"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "не вдалося виконати NFC-нормалізацію"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "рядок містить некоректні дані punycode"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "закодовані дані punycode будуть надто великими"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "у результаті перетворення punycode отримано переповнення"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "назва домену є довшою за 255 символів"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "мітка домену є довшою за 63 символи"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "вхідна A-мітка не є чинною"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "вхідні A-мітка і U-мітка є різними"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "рядок не є рядком у форматі Unicode NFC"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "рядок містить заборонений фрагмент із двома дефісами"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "рядок починається або завершується на заборонений дефіс"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "рядок містить заборонений початковий комбінований символ"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "рядок містить заборонений символ"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "рядок містить заборонений символ контексту-j"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "рядок містить символ контексту-j із нульовим правилом"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "рядок містить заборонений символ контексту-o"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "рядок містить символ контексту-o із нульовим правилом"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "у рядку міститься непов'язана позиція у таблиці кодів"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "рядок має заборонені двонапрямні властивості"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "у мітці домену виявлено заборонену крапку (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+"у мітці домену виявлено символ, який заборонено у перехідному режимі (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+"у мітці домену виявлено символ, який заборонено у неперехідному режимі (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "Помилка під час обходу A-міток"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Невідома помилка"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Виконайте команду «%s --help», щоб дізнатися більше.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Використання: %s [ПАРАМЕТР]... [РЯДКИ]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"РЯДКИ для перетворення Internationalized Domain Name (IDNA2008) або "
+"стандартне джерело даних.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Інтерфейс командного рядка до реалізації Libidn2 IDNA2008.\n"
+"\n"
+"Програма вважає, що кодуванням всіх рядків є основне кодування вашої\n"
+"локалі.\n"
+"\n"
+"Для обробки рядка, що починається з «-», наприклад, «-foo» додайте у команду "
+"«--»\n"
+"для позначення завершення параметрів. Приклад: «idn2 --quiet -- -foo».\n"
+"\n"
+"Обов’язкові аргументи для параметрів у розгорнутому записів є обов’язковими "
+"і для\n"
+"скорочених форм запису.\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help                вивести довідкові дані і завершити роботу\n"
+"  -V, --version             вивести дані щодо версії і завершити роботу\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              розкодувати (punycode) назву домену\n"
+"  -l, --lookup              шукати назву домену (типова поведінка)\n"
+"  -r, --register            зареєструвати мітку\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               увімкнути проміжну обробку TR46\n"
+"  -N, --tr46nt              увімкнути непроміжну обробку TR46\n"
+"      --no-tr46             вимкнути обробку TR46\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   увімкнути правила ASCII STD3\n"
+"      --no-alabelroundtrip  вимкнути обхід A-міток для пошуку\n"
+"      --debug               вивести відомості для діагностики\n"
+"      --quiet               режим без повідомлень\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Набір символів: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Виводити кожен рядок у окремому рядку, розділяти рядки символом нового "
+"рядка.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "помилка у вхідних даних"

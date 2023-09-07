@@ -1,0 +1,26 @@
+config ARCH_ARM
+	bool
+
+config ARCH_BOOTBLOCK_ARM
+	bool
+	select ARCH_ARM
+	select C_ENVIRONMENT_BOOTBLOCK
+
+config ARCH_VERSTAGE_ARM
+	bool
+	select ARCH_ARM
+
+config ARCH_ROMSTAGE_ARM
+	bool
+	select ARCH_ARM
+
+config ARCH_RAMSTAGE_ARM
+	bool
+	select ARCH_ARM
+
+source src/arch/arm/armv4/Kconfig
+source src/arch/arm/armv7/Kconfig
+
+config ARM_LPAE
+	bool
+	default n

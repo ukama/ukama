@@ -1,0 +1,7 @@
+CONFIG_SAMA5D3XEK=y
+CONFIG_CPU_CLK_528MHZ=y
+CONFIG_RAM_512MB=y
+CONFIG_FLASH=y
+CONFIG_LOAD_LINUX=y
+CONFIG_LINUX_KERNEL_ARG_STRING="mem=512M console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs"
+CONFIG_DEBUG=y

@@ -1,0 +1,12 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Container_Boundary(c1, "Base Rate") {
+Container(service,"UploadBaseRates","go, grpc, gorm")
+ContainerDb(database, "Database", "PostgreSQL", "Store rates")
+
+Rel_R(Call, service, "{{ *FileURL, *EffectiveAt, *SimType }}")
+Rel_R(service, database, "Read/Write base rates data")
+}
+
+@enduml

@@ -1,0 +1,3 @@
+config BOARDNAME
+	default "core9g25"	if CORE9G25
+

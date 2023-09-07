@@ -1,0 +1,14 @@
+# Config file for mesh.d
+
+[server-config]
+	remote-accept = "9275"
+	local-accept  = "4444"
+	amqp-host     = "192.168.0.100"
+	amqp-port     = "5672"
+	amqp-exchange = "amq.direct"
+	cert          = "/a/b/c/cert.crt"
+	key           = "/x/y/z/pem.key"
+	init-client-host = "localhost"
+	init-client-port = "9091"
+
+#nothing here.

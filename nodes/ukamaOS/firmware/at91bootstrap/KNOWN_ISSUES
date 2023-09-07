@@ -1,0 +1,9 @@
+KNOWN ISSUES
+
+1./ With building with "gcc version 4.6.3 (Sourcery CodeBench Lite 2012.03-57)",
+    Some issue is found when running on the ek board.
+
+2./ With older gcc , version below 5.0, there are reported errors on accessing
+eMMC and SD-Card devices, namely when using 8-bit bus width.
+It is recommended to use toolchain newer than 6.0.
+

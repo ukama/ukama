@@ -1,0 +1,5 @@
+/TAGS
+/build*/
+mprof*
+/*.tar.gz
+/provider/build*/

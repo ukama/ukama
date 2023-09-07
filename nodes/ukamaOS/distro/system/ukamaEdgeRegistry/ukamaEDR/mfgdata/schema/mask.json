@@ -1,0 +1,80 @@
+{
+	"header":	{
+		"dbversion":	{
+			"major":	0,
+			"minor":	1
+		},
+		"index_table_offset":	64,
+		"index_tuple_size":	24,
+		"index_tuple_max_count":	50,
+		"index_current_tuple":	2,
+		"module_capability":	"DEPENDENT",
+		"module_mode":	"SLAVE",
+		"module_device_owner":	"DEVICE_SLAVE"
+	},
+	"index_table":	[{
+			"field_id":	3,
+			"payload_offset":	3776,
+			"payload_size":	167,
+			"payload_version":	{
+				"major":	3,
+				"minor":	3
+			},
+			"payload_crc":	3421000616,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	4,
+			"payload_offset":	3968,
+			"payload_size":	372,
+			"payload_version":	{
+				"major":	3,
+				"minor":	4
+			},
+			"payload_crc":	1876718055,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}],
+	"module_info":	{
+		"UUID":	"UK-3001-MSK-1101",
+		"name":	"MASK",
+		"type":	6,
+		"partno":	"MASK-WIFI-0XXXX",
+		"hw_version":	"REV-A",
+		"mac":	"",
+		"sw_version":	{
+			"major":	3,
+			"minor":	1
+		},
+		"production_sw_version":	{
+			"major":	3,
+			"minor":	1
+		},
+		"manufacturing_date":	"31-07-2020",
+		"manufacturer_name":	"UBQ",
+		"device_count":	3
+	},
+	"module_config":	[{
+			"name":	"ADT7481",
+			"description":	"Wifi Controller",
+			"type":	1,
+			"class":	2,
+			"devsysfs":	"/tmp/sys/class/hwmon/hwmon0/3/adt7481_1/",
+			"dev_hwattrs":	{
+				"bus":	0,
+				"address":	72
+			}
+		}, {
+			"name":	"INA226",
+			"description":	"PCI",
+			"type":	2,
+			"class":	2,
+			"devsysfs":	"/tmp/sys/class/hwmon/hwmon0/3/ina226_1/"
+		}, {
+			"name":	"GPIO",
+			"description":	"MASK DISABLE",
+			"type":	3,
+			"class":	1,
+			"devsysfs":	"/tmp/sys/class/gpio/gpio40/"
+		}]
+}

@@ -1,0 +1,39 @@
+@subheading idn2_to_ascii_4i2
+@anchor{idn2_to_ascii_4i2}
+@deftypefun {int} {idn2_to_ascii_4i2} (const uint32_t * @var{input}, size_t @var{inlen}, char ** @var{output}, int @var{flags})
+@var{input}: zero terminated input Unicode (UCS-4) string.
+
+@var{inlen}: number of elements in  @code{input} .
+
+@var{output}: pointer to newly allocated zero-terminated output string.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+The ToASCII operation takes a sequence of Unicode code points that make
+up one domain label and transforms it into a sequence of code points in
+the ASCII range (0..7F). If ToASCII succeeds, the original sequence and
+the resulting sequence are equivalent labels.
+
+It is important to note that the ToASCII operation can fail.
+ToASCII fails if any step of it fails. If any step of the
+ToASCII operation fails on any label in a domain name, that domain
+name MUST NOT be used as an internationalized domain name.
+The method for dealing with this failure is application-specific.
+
+The inputs to ToASCII are a sequence of code points.
+
+ToASCII never alters a sequence of code points that are all in the ASCII
+range to begin with (although it could fail). Applying the ToASCII operation multiple
+effect as applying it just once.
+
+The default behavior of this function (when flags are zero) is to apply
+the IDNA2008 rules without the TR46 amendments. As the TR46
+non-transitional processing is nowadays ubiquitous, when unsure, it is
+recommended to call this function with the @code{IDN2_NONTRANSITIONAL} 
+and the @code{IDN2_NFC_INPUT}  flags for compatibility with other software.
+
+Return value: Returns @code{IDN2_OK}  on success, or error code.
+
+@strong{Since:} 2.1.1
+@end deftypefun
+

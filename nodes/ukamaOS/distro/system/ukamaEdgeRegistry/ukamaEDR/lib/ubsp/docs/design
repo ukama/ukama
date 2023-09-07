@@ -1,0 +1,44 @@
+/*
+ * Comments on 02/08/2020
+1. ukdb_create should be called for every module.
+2. *.inc file with mfg data should be there for each module.
+3. ModuleCfg** g_mod_cfg;
+   ModuleInfo* g_mod_info;
+   These structures might not be required anymore.
+4. int cs_fetch_module_info(void* data, uint16_t* size, uint8_t idx);
+int cs_fetch_module_info_by_uuid(void* p_data, char *uuid, uint16_t* size, uint8_t count);
+int cs_fetch_module_cfg(void* p_data, char* uuid, uint16_t* size, uint8_t count);
+Check the implementation of above three function we should return module info and config based on the UUID only.
+
+How ukdb_create should work.
+
+1. Read the json/cs file with unit info/module info.
+2. Update all the required data. MW, Header, Index table, Unit  Module etc.
+3. Based on the Unit Info read the next file json/cs for the Module UKDB.
+4. Repeat it unit done for all Modules.
+
+TODO:
+ All the returns in int ukdb_create_db() in ukdb.c needs to check for free.
+ 
+ Alert Testing:
+ 
+1) Create dummyfiles for read and write:
+	mkdir -p /tmp/sys/hwmon/hwmon0/temp1/
+	touch temp_ip0 temp_ll0 temp_hl0 temp_cl0 temp_abll0 temp_aahl0 temp_aacl0 temp_aclr0 temp_asw0
+2) Write values:
+ 	echo 45000 > temp_ip0
+	echo 75000 > temp_hl0 
+	echo -20000 > temp_ll0 
+	echo 85000 > temp_cl0
+
+3)  echo 1 > temp_abll0
+	Alert will be raised but not reported because current temp is 45000 milli celsius.
+
+4)  echo -45000 > temp_ip0
+5)	 echo 1 > temp_abll0 (True nature is if Any alarm file if written you should see a alert as interrupt line is shared and we read all alerts on its toggle. )
+
+17:43:13 DEBUG /home/cnode/c_drive/work/prj/ukama/ws/u-bsp//test/test.c:515: TEST:: App Callback function for Device name TMP464 Disc: Pmic Module UUID UK1001-COMV1 called from ubsp with 1 alerts.
+17:43:13 DEBUG /home/cnode/c_drive/work/prj/ukama/ws/u-bsp//test/test.c:532: TEST:: Alert received for for Property[5], Name: LOW LIMIT ALERT , Value -45000 milliCelsius.
+	
+*/
+

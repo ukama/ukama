@@ -1,0 +1,24 @@
+{
+    "cgroups": [],
+    "mounts": [
+        {
+            "destination": "/containers/onboot/000-sysctl/rootfs",
+            "source": "/containers/onboot/000-sysctl/rootfs",
+            "options": [
+                "bind"
+            ]
+        }
+    ],
+    "mkdir": [],
+    "interfaces": [],
+    "bindNS": {
+        "cgroup": "",
+        "ipc": "",
+        "mnt": "",
+        "net": "",
+        "pid": "",
+        "user": "",
+        "uts": ""
+    },
+    "namespace": ""
+}

@@ -1,0 +1,13 @@
+@startuml AllocateSim
+APIGateway -> SubscriberRegistry: Validate Subscriber Request
+SubscriberRegistry --> APIGateway: Validate Subscriber Response
+APIGateway -> SimManager: Allocate Sim To Subscriber
+SimManager -> SimPool: Provide Me a Sim
+SimPool --> SimManager: Sim 
+SimManager -> SimManager: Add to SimDB
+SimManager -> SubscriberRegistry: Add Sim to subscriber
+SubscriberRegistry -> SubscriberRegistry: Update to SubscriberDB
+SubscriberRegistry --> SimManager: Sim added to subscriber
+SimManager -> MsgClient: Post Sim Allocation Event
+SimManager -->APIGateway: Sim Allocation Completed 
+@enduml

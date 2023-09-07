@@ -1,0 +1,108 @@
+menu "Kernel Image Storage Setup"
+	depends on LINUX_IMAGE
+
+config OVERRIDE_CMDLINE
+	bool "Override the config kernel command-line"
+	default n
+	help
+	  The board will override the kernel command-line which specified through the config.
+
+if OVERRIDE_CMDLINE
+
+config LINUX_KERNEL_ARG_STRING
+	depends on LOAD_LINUX
+	string "Linux kernel command-line"
+source "board/at91sam9261ek/Config.in.linux_arg"
+source "board/at91sam9263ek/Config.in.linux_arg"
+source "board/at91sam9g10ek/Config.in.linux_arg"
+source "board/at91sam9g20ek/Config.in.linux_arg"
+source "board/at91sam9rlek/Config.in.linux_arg"
+source "board/at91sam9xeek/Config.in.linux_arg"
+source "board/at91sam9m10g45ek/Config.in.linux_arg"
+source "board/at91sam9x5ek/Config.in.linux_arg"
+source "board/at91sam9n12ek/Config.in.linux_arg"
+source "board/sama5d3xek/Config.in.linux_arg"
+source "board/sama5d3_xplained/Config.in.linux_arg"
+source "board/sama5d3x_cmp/Config.in.linux_arg"
+source "board/sama5d4ek/Config.in.linux_arg"
+source "board/sama5d4_xplained/Config.in.linux_arg"
+source "board/sama5d2_ptc_ek/Config.in.linux_arg"
+source "board/sama5d2_xplained/Config.in.linux_arg"
+source "board/sama5d2_icp/Config.in.linux_arg"
+source "board/sama5d27_som1_ek/Config.in.linux_arg"
+source "board/sama5d27_wlsom1_ek/Config.in.linux_arg"
+source "board/sama5d27_ukama_anode/Config.in.linux_arg"
+source "board/sama7g5ek/Config.in.linux_arg"
+source "contrib/board/Config.in.linux_arg"
+
+endif
+
+config OVERRIDE_CMDLINE_FROM_EXT_FILE
+	bool "Override the config kernel command-line taken from external file"
+	depends on !OVERRIDE_CMDLINE && SDCARD
+	default n
+	help
+	  The board will override the kernel command-line which specified
+          through an external file.
+
+if OVERRIDE_CMDLINE_FROM_EXT_FILE
+
+config LINUX_KERNEL_ARG_STRING_FILE
+	depends on LOAD_LINUX
+	string "File's name where the Linux kernel command-line is"
+	help
+          This file should be in the same VFAT partition where the kernel is.
+
+endif
+
+config LINUX_KERNEL_ARG_STRING
+	depends on LOAD_ANDROID
+	string "Android kernel command-line"
+source "board/sama5d3xek/Config.in.android_arg"
+
+config IMG_ADDRESS
+	depends on DATAFLASH || FLASH || NANDFLASH
+	string "Flash Offset for Linux Kernel Image"
+	default "0x00200000" if FLASH
+	default "0x00040000" if DATAFLASH
+	default "0x00200000" if NANDFLASH
+	default	"0x00000000" if SDCARD
+
+
+config JUMP_ADDR
+	string "The External Ram Address to Load Kernel Image"
+	default "0x72000000" if AT91SAM9G45 && !BOARD_HAS_2_BANKS
+	default "0x62000000" if SAMA7G5
+	default "0x22000000"
+	help
+	  The entry point to which the bootstrap will pass control.
+
+menu "Flattened Device Tree"
+
+config OF_LIBFDT
+	bool "Flattened Device Tree Support"
+	default y
+
+config OF_OVERRIDE_DTB_NAME
+	string "Override Flattended Device Tree Blob filename"
+	depends on OF_LIBFDT && SDCARD
+
+config OF_OFFSET
+	string "The Offset of Flash Device Tree Blob"
+	depends on OF_LIBFDT && (DATAFLASH || FLASH || NANDFLASH)
+	default "0x00008400" if DATAFLASH
+	default "0x00180000" if NANDFLASH
+	default "0x00100000" if FLASH
+	default	"0x00000000" if SDCARD
+
+config OF_ADDRESS
+	string "The External Ram Address to Load Device Tree Blob"
+	depends on OF_LIBFDT
+	default "0x71000000" if AT91SAM9G45 && !BOARD_HAS_2_BANKS
+	default "0x61000000" if SAMA7G5
+	default "0x21000000"
+
+
+endmenu
+
+endmenu

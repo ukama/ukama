@@ -1,0 +1,119 @@
+config SECURE
+	bool "Secure Mode support"
+	default n
+	depends on CPU_HAS_AES
+	select AES
+	help
+	  Decrypt and check the signature of the application file
+
+menu "Secure Mode Options"
+	depends on SECURE
+
+choice
+	prompt "Key Size"
+	default AES_KEY_SIZE_256
+	help
+	  Select the length of the cipher and CMAC keys
+
+config	AES_KEY_SIZE_128
+	bool "AES-128"
+
+config	AES_KEY_SIZE_192
+	bool "AES-192"
+
+config	AES_KEY_SIZE_256
+	bool "AES-256"
+
+endchoice
+
+comment "Big-endian order: Word0 is the most significant word"
+
+config AES_CIPHER_KEY_WORD0
+	hex "Cipher Key Word0"
+	default "0x00000000"
+
+config AES_CIPHER_KEY_WORD1
+	hex "Cipher Key Word1"
+	default "0x00000000"
+
+config AES_CIPHER_KEY_WORD2
+	hex "Cipher Key Word2"
+	default "0x00000000"
+
+config AES_CIPHER_KEY_WORD3
+	hex "Cipher Key Word3"
+	default "0x00000000"
+
+config AES_CIPHER_KEY_WORD4
+	hex "Cipher Key Word4"
+	default "0x00000000"
+	depends on (AES_KEY_SIZE_192 || AES_KEY_SIZE_256)
+
+config AES_CIPHER_KEY_WORD5
+	hex "Cipher Key Word5"
+	default "0x00000000"
+	depends on (AES_KEY_SIZE_192 || AES_KEY_SIZE_256)
+
+config AES_CIPHER_KEY_WORD6
+	hex "Cipher Key Word6"
+	default "0x00000000"
+	depends on AES_KEY_SIZE_256
+
+config AES_CIPHER_KEY_WORD7
+	hex "Cipher Key Word7"
+	default "0x00000000"
+	depends on AES_KEY_SIZE_256
+
+config AES_IV_WORD0
+	hex "Initialization Vector Word0"
+	default "0x00000000"
+
+config AES_IV_WORD1
+	hex "Initialization Vector Word1"
+	default "0x00000000"
+
+config AES_IV_WORD2
+	hex "Initialization Vector Word2"
+	default "0x00000000"
+
+config AES_IV_WORD3
+	hex "Initialization Vector Word3"
+	default "0x00000000"
+
+config AES_CMAC_KEY_WORD0
+	hex "CMAC Key Word0"
+	default "0x00000000"
+
+config AES_CMAC_KEY_WORD1
+	hex "CMAC Key Word1"
+	default "0x00000000"
+
+config AES_CMAC_KEY_WORD2
+	hex "CMAC Key Word2"
+	default "0x00000000"
+
+config AES_CMAC_KEY_WORD3
+	hex "CMAC Key Word3"
+	default "0x00000000"
+
+config AES_CMAC_KEY_WORD4
+	hex "CMAC Key Word4"
+	default "0x00000000"
+	depends on (AES_KEY_SIZE_192 || AES_KEY_SIZE_256)
+
+config AES_CMAC_KEY_WORD5
+	hex "CMAC Key Word5"
+	default "0x00000000"
+	depends on (AES_KEY_SIZE_192 || AES_KEY_SIZE_256)
+
+config AES_CMAC_KEY_WORD6
+	hex "CMAC Key Word6"
+	default "0x00000000"
+	depends on AES_KEY_SIZE_256
+
+config AES_CMAC_KEY_WORD7
+	hex "CMAC Key Word7"
+	default "0x00000000"
+	depends on AES_KEY_SIZE_256
+
+endmenu

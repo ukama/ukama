@@ -1,0 +1,17 @@
+throughput_Downlink 64000
+Throughput_uplink 128000
+Cell_Id 101
+tx_status 1
+operation_State 1
+Signal_Strength -64
+RRC_Connection_failure 100
+Active_Users 64
+RRC_setup_Attempt 400
+RRC_setup_Success 300
+RRC_Success_Rate  75
+ERAB_Setup_Attempt 200
+ERAB_Setup_Success 100
+ERAB_Drop_rate 50
+RLC_Drops 20	
+InterFrequency_handlover 2
+Intra_Frequency_handlover 0

@@ -1,0 +1,403 @@
+# Swedish translation for libidn2
+# Copyright © 2016, 2018, 2019 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Josef Andersson <josef.andersson@fripost.org>, 2016.
+# Sebastian Rasmussen <sebras@gmail.com>, 2018, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.1.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2019-02-13 22:51+0100\n"
+"Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
+"Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 2.2.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "lyckades"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "kan inte allokera minne"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "det gick inte att avgöra lokalt kodningsformat"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "kunde inte konvertera sträng till UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "strängkodningsfel"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "sträng kunde inte NFC-normaliseras"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "sträng innehåller ogiltig punycode-data"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "punycode-kodad data kommer att bli för stor"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "punycode-konvertering resulterade i överspill"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "domännamn längre än 255 tecken"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "domänetikett längre än 63 tecken"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "indata A-etikett är inte giltig"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "indata A-etikett och U-etikett matchar inte"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "strängen är inte i Unicode NFC-format"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "sträng innehåller förbjudet tvåstrecksmönster"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "sträng börjar/slutar med förbjudet bindestreck"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "sträng innehåller ett förbjudet inledande kombineringstecken"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "sträng innehåller ett otillåtet tecken"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "sträng innehåller ett förbjudet kontext-j-tecken"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "sträng innehåller ett kontext-j-tecken med nullregel"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "sträng innehåller ett förbjudet kontext-o-tecken"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "sträng innehåller ett kontext-o-tecken med nullregel"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "sträng innehåller otilldelade kodpunkter"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "sträng har förbjudna dubbelriktade egenskaper"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "domänetikett har förbjuden punkt (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "domänetikett har förbjudet tecken i övergångsläge (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr "domänetikett har förbjudet tecken i icke-övergångsläge (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Okänt fel"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Prova ”%s --help” för mer information.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Användning: %s [FLAGGA]… [STRÄNGAR]…\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Internationaliserat domännamn (IDNA2008) konverterar STRÄNGAR, eller "
+"standard in.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Kommandoradsgränssnitt till Libidn2-implementationen av IDNA2008.\n"
+"\n"
+"Alla strängar förväntas vara kodade i den lokala teckenuppsättningen.\n"
+"\n"
+"För att bearbeta en sträng som börjar med ”-”, till exempel ”-foo”, använd "
+"”--”\n"
+"för signalera slut på parametrar, som i ”idn --quiet -a -- -foo”.\n"
+"\n"
+"Obligatoriska argument för långa flaggor är obligatoriska också för korta "
+"flaggor.\n"
+
+#: src/idn2.c:80
+#, fuzzy
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help               Skriv ut hjälp och avsluta\n"
+"  -V, --version            Skriv ut version och avsluta\n"
+
+#: src/idn2.c:84
+#, fuzzy
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode             Avkoda (punycode) domännamn\n"
+"  -l, --lookup             Slå upp domännamn (standard)\n"
+"  -r, --register           Registrera etikett\n"
+
+#: src/idn2.c:89
+#, fuzzy
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t              Aktivera TR46-övergångshantering\n"
+"  -N, --tr46nt             Aktivera TR46-ickeövergångshantering\n"
+"      --no-tr46            Inaktivera TR46-hantering\n"
+
+#: src/idn2.c:94
+#, fuzzy
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules  Aktivera STD3 ASCII-regler\n"
+"      --debug              Skriv ut felsökningsinformation\n"
+"      --quiet              Tyst åtgärd\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Teckenuppsättning: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Skriv varje inmatningssträng på en egen rad, avslutad med nyradstecken.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "indatafel"
+
+#~ msgid "String preparation failed"
+#~ msgstr "Misslyckades med strängförberedelse"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Misslyckades med punycode"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "Icke-siffra/bokstav/bindestreck i indata"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "Förbjudet inledande eller eftersläpande minustecken (”-”)"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "Utdata skulle vara för stort eller för litet"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "Indata startar inte med ACE-prefix (”xn--”)"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "Strängen är inte idempotent under ToASCII"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "Indata innehåller redan ACE-prefix (”xn--”)"
+
+#~ msgid "System iconv failed"
+#~ msgstr "Misslyckades med systemanrop iconv"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "Misslyckades med systemanrop dlopen"
+
+#~ msgid "Invalid input"
+#~ msgstr "Ogiltig indata"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "Utdata skulle överskrida tillhandahållet buffertutrymme"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "Strängstorleken överskriden"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "Förbjudna kodpunkter i indata"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "Felaktig dubbelriktad sträng"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "Förbjudna dubbelriktade kodpunkter i indata"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "Fel i profildefinition för stringprep"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "Märk konflikt med profil"
+
+#~ msgid "Unknown profile"
+#~ msgstr "Okänd profil"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Misslyckades med Unicode-normalisering (internt fel)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "Kodpunkter förbjudna hos toppnivådomän"
+
+#~ msgid "Missing input"
+#~ msgstr "Saknar indata"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "Inga toppnivådomäner funna i indata"
+
+#~ msgid ""
+#~ "  -s, --stringprep         Prepare string according to nameprep profile\n"
+#~ "  -d, --punycode-decode    Decode Punycode\n"
+#~ "  -e, --punycode-encode    Encode Punycode\n"
+#~ "  -a, --idna-to-ascii      Convert to ACE according to IDNA (default "
+#~ "mode)\n"
+#~ "  -u, --idna-to-unicode    Convert from ACE according to IDNA\n"
+#~ msgstr ""
+#~ "  -s, --stringprep         Förbered sträng efter nameprep-profil\n"
+#~ "  -d, --punycode-decode    Avkoda punycode\n"
+#~ "  -e, --punycode-encode    Koda punycode\n"
+#~ "  -a, --idna-to-ascii      Konvertera till ACE utifrån IDNA "
+#~ "(standardläge)\n"
+#~ "  -u, --idna-to-unicode    Konvertera från ACE utifrån IDNA\n"
+
+#~ msgid ""
+#~ "      --allow-unassigned   Toggle IDNA AllowUnassigned flag (default "
+#~ "off)\n"
+#~ "      --usestd3asciirules  Toggle IDNA UseSTD3ASCIIRules flag (default "
+#~ "off)\n"
+#~ msgstr ""
+#~ "      --allow-unassigned   Växla IDNA AllowUnassigned-flaggan (av som "
+#~ "standard)\n"
+#~ "      --usestd3asciirules  Växla IDNA UseSTD3ASCIIRules-flaggan (av som "
+#~ "standard)\n"
+
+#~ msgid ""
+#~ "      --no-tld             Don't check string for TLD specific rules\n"
+#~ "                             Only for --idna-to-ascii and --idna-to-"
+#~ "unicode\n"
+#~ msgstr ""
+#~ "      --no-tld             Kontrollera inte sträng efter TLD-specifika "
+#~ "regler\n"
+#~ "                             Endast för --idna-to-ascii och --idna-to-"
+#~ "unicode\n"
+
+#~ msgid ""
+#~ "  -n, --nfkc               Normalize string according to Unicode v3.2 "
+#~ "NFKC\n"
+#~ msgstr ""
+#~ "  -n, --nfkc               Normalisera sträng utefter Unicode v3.2 NFKC\n"
+
+#~ msgid ""
+#~ "  -p, --profile=STRING     Use specified stringprep profile instead\n"
+#~ "                             Valid stringprep profiles: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+#~ msgstr ""
+#~ "  -p, --profile=STRING     Använd specificerad stringprep-profil "
+#~ "istället\n"
+#~ "                             Giltiga stringprep-profiler: ”Nameprep”,\n"
+#~ "                             ”iSCSI”, ”Nodeprep”, ”Resourceprep”, \n"
+#~ "                             ”trace”, ”SASLprep”\n"
+
+#~ msgid "only one of -s, -e, -d, -a, -u or -n can be specified"
+#~ msgstr "kan endast specificera en av -s, -e, -d, -a, -u eller -n"
+
+#~ msgid "could not convert from UTF-8 to UCS-4"
+#~ msgstr "kunde inte konvertera från UTF-8 till UCS-4"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profil: %s"
+
+#~ msgid "could not convert from UTF-8 to %s"
+#~ msgstr "kunde inte konvertera från UTF-8 till %s"
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode: %s"
+
+#~ msgid "malloc"
+#~ msgstr "malloc"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode: %s"
+
+#~ msgid "could not convert from UCS-4 to UTF-8"
+#~ msgstr "kunde inte konvertera från UCS-4 till UTF-8"
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD): %s"
+
+#~ msgid "tld_check_4z (position %lu): %s"
+#~ msgstr "tld_check_4z (position %lu): %s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z: %s"
+
+#~ msgid "Could not convert string in locale encoding."
+#~ msgstr "Kunde inte konvertera sträng i lokal kodning."

@@ -1,0 +1,169 @@
+kernel/arch/x86/kvm/kvm.ko: kernel/virt/lib/irqbypass.ko
+kernel/arch/x86/kvm/kvm-intel.ko: kernel/arch/x86/kvm/kvm.ko kernel/virt/lib/irqbypass.ko
+kernel/arch/x86/kvm/kvm-amd.ko: kernel/arch/x86/kvm/kvm.ko kernel/virt/lib/irqbypass.ko
+kernel/fs/nfs_common/grace.ko:
+kernel/fs/nfs/nfs.ko: kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfs/nfsv3.ko: kernel/fs/nfs/nfs.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfs/nfsv4.ko: kernel/fs/nfs/nfs.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfs/filelayout/nfs_layout_nfsv41_files.ko: kernel/fs/nfs/nfsv4.ko kernel/fs/nfs/nfs.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfs/blocklayout/blocklayoutdriver.ko: kernel/fs/nfs/nfsv4.ko kernel/fs/nfs/nfs.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfs/flexfilelayout/nfs_layout_flexfiles.ko: kernel/fs/nfs/nfsv4.ko kernel/fs/nfs/nfs.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/nfsd/nfsd.ko: kernel/net/sunrpc/auth_gss/auth_rpcgss.ko kernel/fs/lockd/lockd.ko kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/lockd/lockd.ko: kernel/fs/nfs_common/grace.ko kernel/net/sunrpc/sunrpc.ko
+kernel/fs/ntfs/ntfs.ko:
+kernel/fs/btrfs/btrfs.ko: kernel/crypto/xor.ko kernel/lib/zstd/zstd_decompress.ko kernel/lib/zstd/zstd_compress.ko kernel/lib/raid6/raid6_pq.ko
+kernel/fs/ceph/ceph.ko: kernel/net/ceph/libceph.ko
+kernel/crypto/crypto_engine.ko:
+kernel/crypto/xor.ko:
+kernel/drivers/pci/controller/pci-hyperv-intf.ko:
+kernel/drivers/char/tpm/tpm_i2c_atmel.ko:
+kernel/drivers/char/tpm/tpm_i2c_infineon.ko:
+kernel/drivers/char/tpm/tpm_i2c_nuvoton.ko:
+kernel/drivers/char/tpm/tpm_nsc.ko:
+kernel/drivers/char/tpm/tpm_atmel.ko:
+kernel/drivers/char/tpm/tpm_infineon.ko:
+kernel/drivers/char/tpm/st33zp24/tpm_st33zp24.ko:
+kernel/drivers/char/tpm/st33zp24/tpm_st33zp24_i2c.ko: kernel/drivers/char/tpm/st33zp24/tpm_st33zp24.ko
+kernel/drivers/char/tpm/xen-tpmfront.ko:
+kernel/drivers/char/tpm/tpm_vtpm_proxy.ko:
+kernel/drivers/block/drbd/drbd.ko: kernel/lib/lru_cache.ko
+kernel/drivers/block/rbd.ko: kernel/net/ceph/libceph.ko
+kernel/drivers/dax/pmem/dax_pmem.ko: kernel/drivers/dax/pmem/dax_pmem_core.ko
+kernel/drivers/dax/pmem/dax_pmem_core.ko:
+kernel/drivers/dax/pmem/dax_pmem_compat.ko: kernel/drivers/dax/pmem/dax_pmem_core.ko
+kernel/drivers/scsi/raid_class.ko:
+kernel/drivers/scsi/scsi_transport_iscsi.ko:
+kernel/drivers/scsi/scsi_transport_sas.ko:
+kernel/drivers/scsi/libiscsi.ko: kernel/drivers/scsi/scsi_transport_iscsi.ko
+kernel/drivers/scsi/libiscsi_tcp.ko: kernel/drivers/scsi/libiscsi.ko kernel/drivers/scsi/scsi_transport_iscsi.ko
+kernel/drivers/scsi/iscsi_tcp.ko: kernel/drivers/scsi/libiscsi_tcp.ko kernel/drivers/scsi/libiscsi.ko kernel/drivers/scsi/scsi_transport_iscsi.ko
+kernel/drivers/scsi/hpsa.ko: kernel/drivers/scsi/scsi_transport_sas.ko
+kernel/drivers/scsi/smartpqi/smartpqi.ko: kernel/drivers/scsi/scsi_transport_sas.ko
+kernel/drivers/scsi/megaraid/megaraid_sas.ko:
+kernel/drivers/net/ethernet/amazon/ena/ena.ko:
+kernel/drivers/net/ethernet/broadcom/bnx2.ko:
+kernel/drivers/net/ethernet/broadcom/cnic.ko: kernel/drivers/uio/uio.ko
+kernel/drivers/net/ethernet/broadcom/bnx2x/bnx2x.ko: kernel/drivers/net/mdio.ko
+kernel/drivers/net/ethernet/broadcom/tg3.ko:
+kernel/drivers/net/ethernet/broadcom/bnxt/bnxt_en.ko:
+kernel/drivers/net/ethernet/google/gve/gve.ko:
+kernel/drivers/net/ethernet/intel/e1000/e1000.ko:
+kernel/drivers/net/ethernet/intel/e1000e/e1000e.ko:
+kernel/drivers/net/ethernet/intel/igb/igb.ko: kernel/drivers/i2c/algos/i2c-algo-bit.ko
+kernel/drivers/net/ethernet/intel/igbvf/igbvf.ko:
+kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko: kernel/drivers/net/mdio.ko
+kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko:
+kernel/drivers/net/ethernet/intel/i40e/i40e.ko:
+kernel/drivers/net/ethernet/intel/ixgb/ixgb.ko:
+kernel/drivers/net/ethernet/intel/iavf/iavf.ko:
+kernel/drivers/net/ethernet/intel/ice/ice.ko:
+kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko:
+kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko: kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
+kernel/drivers/net/ethernet/mellanox/mlx5/core/mlx5_core.ko: kernel/drivers/pci/controller/pci-hyperv-intf.ko
+kernel/drivers/net/ethernet/netronome/nfp/nfp.ko:
+kernel/drivers/net/ethernet/realtek/8139cp.ko: kernel/drivers/net/mii.ko
+kernel/drivers/net/bonding/bonding.ko:
+kernel/drivers/net/dummy.ko:
+kernel/drivers/net/mii.ko:
+kernel/drivers/net/mdio.ko:
+kernel/drivers/net/team/team.ko:
+kernel/drivers/net/team/team_mode_broadcast.ko: kernel/drivers/net/team/team.ko
+kernel/drivers/net/team/team_mode_roundrobin.ko: kernel/drivers/net/team/team.ko
+kernel/drivers/net/team/team_mode_random.ko: kernel/drivers/net/team/team.ko
+kernel/drivers/net/team/team_mode_activebackup.ko: kernel/drivers/net/team/team.ko
+kernel/drivers/net/team/team_mode_loadbalance.ko: kernel/drivers/net/team/team.ko
+kernel/drivers/net/geneve.ko:
+kernel/drivers/net/ppp/ppp_generic.ko: kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/ppp_async.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/bsd_comp.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/ppp_deflate.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/ppp_mppe.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/ppp_synctty.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/pppox.ko: kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/pppoe.ko: kernel/drivers/net/ppp/pppox.ko kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/ppp/pptp.ko: kernel/drivers/net/ppp/pppox.ko kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/drivers/net/slip/slhc.ko:
+kernel/drivers/usb/host/ehci-hcd.ko:
+kernel/drivers/usb/host/ehci-pci.ko: kernel/drivers/usb/host/ehci-hcd.ko
+kernel/drivers/usb/host/ohci-hcd.ko:
+kernel/drivers/usb/host/ohci-pci.ko: kernel/drivers/usb/host/ohci-hcd.ko
+kernel/drivers/usb/host/uhci-hcd.ko:
+kernel/drivers/usb/host/xhci-hcd.ko:
+kernel/drivers/usb/host/xhci-pci.ko: kernel/drivers/usb/host/xhci-hcd.ko
+kernel/drivers/usb/storage/usb-storage.ko:
+kernel/drivers/i2c/algos/i2c-algo-bit.ko:
+kernel/drivers/md/dm-multipath.ko:
+kernel/drivers/md/dm-round-robin.ko: kernel/drivers/md/dm-multipath.ko
+kernel/drivers/md/dm-queue-length.ko: kernel/drivers/md/dm-multipath.ko
+kernel/drivers/md/dm-service-time.ko: kernel/drivers/md/dm-multipath.ko
+kernel/drivers/crypto/virtio/virtio_crypto.ko: kernel/crypto/crypto_engine.ko
+kernel/drivers/uio/uio.ko:
+kernel/drivers/block/aoe/aoe.ko:
+kernel/drivers/vhost/vhost_net.ko: kernel/drivers/vhost/vhost.ko
+kernel/drivers/vhost/vhost_vsock.ko: kernel/net/vmw_vsock/vmw_vsock_virtio_transport_common.ko kernel/net/vmw_vsock/vsock.ko kernel/drivers/vhost/vhost.ko
+kernel/drivers/vhost/vhost.ko:
+kernel/net/sched/sch_cbq.ko:
+kernel/net/sched/sch_htb.ko:
+kernel/net/sched/sch_hfsc.ko:
+kernel/net/sched/sch_red.ko:
+kernel/net/sched/sch_gred.ko:
+kernel/net/sched/sch_ingress.ko:
+kernel/net/sched/sch_dsmark.ko:
+kernel/net/sched/sch_sfb.ko:
+kernel/net/sched/sch_sfq.ko:
+kernel/net/sched/sch_tbf.ko:
+kernel/net/sched/sch_teql.ko:
+kernel/net/sched/sch_prio.ko:
+kernel/net/sched/sch_multiq.ko:
+kernel/net/sched/sch_netem.ko:
+kernel/net/sched/sch_drr.ko:
+kernel/net/sched/sch_mqprio.ko:
+kernel/net/sched/sch_choke.ko:
+kernel/net/sched/sch_qfq.ko:
+kernel/net/ipv4/ip_gre.ko:
+kernel/net/ipv4/ip_vti.ko:
+kernel/net/ipv4/ah4.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv4/esp4.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv4/ipcomp.ko: kernel/net/xfrm/xfrm_ipcomp.ko kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv4/xfrm4_tunnel.ko:
+kernel/net/xfrm/xfrm_algo.ko:
+kernel/net/xfrm/xfrm_user.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/xfrm/xfrm_ipcomp.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv6/ah6.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv6/esp6.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv6/ipcomp6.ko: kernel/net/ipv6/xfrm6_tunnel.ko kernel/net/xfrm/xfrm_ipcomp.ko kernel/net/xfrm/xfrm_algo.ko
+kernel/net/ipv6/xfrm6_tunnel.ko:
+kernel/net/ipv6/mip6.ko:
+kernel/net/ipv6/ila/ila.ko:
+kernel/net/ipv6/ip6_vti.ko:
+kernel/net/ipv6/sit.ko:
+kernel/net/ipv6/ip6_gre.ko:
+kernel/net/bpfilter/bpfilter.ko:
+kernel/net/mpls/mpls_gso.ko:
+kernel/net/mpls/mpls_router.ko:
+kernel/net/mpls/mpls_iptunnel.ko: kernel/net/mpls/mpls_router.ko
+kernel/net/key/af_key.ko: kernel/net/xfrm/xfrm_algo.ko
+kernel/net/sunrpc/sunrpc.ko:
+kernel/net/sunrpc/auth_gss/auth_rpcgss.ko: kernel/net/sunrpc/sunrpc.ko
+kernel/net/sunrpc/auth_gss/rpcsec_gss_krb5.ko: kernel/net/sunrpc/auth_gss/auth_rpcgss.ko kernel/net/sunrpc/sunrpc.ko
+kernel/net/l2tp/l2tp_core.ko:
+kernel/net/l2tp/l2tp_ppp.ko: kernel/net/l2tp/l2tp_core.ko kernel/drivers/net/ppp/pppox.ko kernel/drivers/net/ppp/ppp_generic.ko kernel/drivers/net/slip/slhc.ko
+kernel/net/sctp/sctp.ko:
+kernel/net/sctp/sctp_diag.ko: kernel/net/sctp/sctp.ko
+kernel/net/ceph/libceph.ko:
+kernel/net/openvswitch/openvswitch.ko: kernel/net/nsh/nsh.ko
+kernel/net/openvswitch/vport-vxlan.ko: kernel/net/openvswitch/openvswitch.ko kernel/net/nsh/nsh.ko
+kernel/net/openvswitch/vport-geneve.ko: kernel/drivers/net/geneve.ko kernel/net/openvswitch/openvswitch.ko kernel/net/nsh/nsh.ko
+kernel/net/openvswitch/vport-gre.ko: kernel/net/ipv4/ip_gre.ko kernel/net/openvswitch/openvswitch.ko kernel/net/nsh/nsh.ko
+kernel/net/vmw_vsock/vsock.ko:
+kernel/net/vmw_vsock/vsock_diag.ko: kernel/net/vmw_vsock/vsock.ko
+kernel/net/vmw_vsock/vmw_vsock_virtio_transport.ko: kernel/net/vmw_vsock/vmw_vsock_virtio_transport_common.ko kernel/net/vmw_vsock/vsock.ko
+kernel/net/vmw_vsock/vmw_vsock_virtio_transport_common.ko: kernel/net/vmw_vsock/vsock.ko
+kernel/net/vmw_vsock/hv_sock.ko: kernel/net/vmw_vsock/vsock.ko
+kernel/net/nsh/nsh.ko:
+kernel/lib/zstd/zstd_compress.ko:
+kernel/lib/zstd/zstd_decompress.ko:
+kernel/lib/raid6/raid6_pq.ko:
+kernel/lib/lru_cache.ko:
+kernel/virt/lib/irqbypass.ko:
+extra/wireguard.ko:

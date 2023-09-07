@@ -1,0 +1,343 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Tomoyuki KATO <inactive+katomo@transifex.com>, 2012-2013
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-19 11:45+0000\n"
+"Last-Translator: Tomoyuki KATO <inactive+katomo@transifex.com>\n"
+"Language-Team: Japanese (http://www.transifex.com/freedesktop/p11-kit/language/ja/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "操作が取り消されました"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "利用可能なメモリーが不足しています"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "指定されたスロット ID が無効です"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "内部エラー"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "操作が失敗しました"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "無効な引数"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "モジュールが必要なスレッドを作成できません"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "モジュールがデータを適切にロックできません"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "項目が読み込み専用です"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "項目は大文字小文字を区別します、明らかにできません"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "項目が無効です、または存在しません"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "項目に対する無効な値"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "データが有効ではありません、または認識されません"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "データが長すぎます"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "デバイスにおいてエラーが発生しました"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "デバイスにおいて利用可能なメモリーが不足しています"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "デバイスが削除されました、または取り外されました"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "暗号化されたデータが有効ではありません、または認識されません"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "暗号化されたデータが長すぎます"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "この操作はサポートされません"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "キーがありません、または無効です"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "キーが誤った大きさです"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "キーが誤った形式です"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "キーは必要ありません"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "キーが以前のものと異なります"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "キーが必要です"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "ダイジェストにキーを含められません"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "この操作はこのキーを用いて実行できません"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "キーをラップできません"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "このキーをエクスポートできません"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "暗号化機能が無効です、または認識されません"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "暗号化機能が無効な引数を持ちます"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "オブジェクトがありません、または無効です"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "他の操作がすでに起きています"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "発生している操作がありません"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "パスワードまたは PIN が正しくありません"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "パスワードまたは PIN が無効です"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "パスワードまたは PIN が不正な長さです"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "パスワードまたは PIN が失効しています"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "パスワードまたは PIN がロックされています"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "セッションが終了しました"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "有効なセッションが多すぎます"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "セッションが無効です"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "セッションが読み込み専用です"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "開いているセッションが存在します"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "読み込み専用のセッションが存在します"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "管理者セッションが存在します"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "署名が不正です、または破損しています"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "署名が認識できません、または破損しています"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "特定の必須項目がありません"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "特定の必須項目が無効な値を持っています"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "デバイスが存在しません、または取り外されました"
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "デバイスが無効です、まあは認識されません"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "デバイスが書き込み保護されています"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "キーが無効なためインポートできません"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "キーの大きさが不正なためインポートできません"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "キーの形式が不正なためインポートできません"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "すでにログインしています"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "ログインしているユーザーはいません"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "ユーザーのパスワードまたは PIN が設定されていません"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "ユーザーが無効な種類です"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "他のユーザーがすでにログインしています"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "異なる種類の多すぎるユーザーがログインしています"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "無効なキーをインポートできません"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "不正な大きさのキーをインポートできません"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "キーが無効なためエクスポートできません"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "キーが誤った大きさのためエクスポートできません"
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "キーが誤った形式のためエクスポートできません"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "乱数生成器を初期化できません"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "利用可能な乱数生成器がありません"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "暗号化機能が無効なパラメーターを持っています"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "結果を保存するために十分な領域がありません"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "保存された状態が無効です"
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "情報は大文字小文字を区別しますが、明らかにできません"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "状態が保存できません"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "モジュールが初期化されませんでした"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "モジュールがすでに初期化されています"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "データをロックできません"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "データがロックできません"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr "リクエストがユーザーにより拒否されました。"
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "未知のエラー"

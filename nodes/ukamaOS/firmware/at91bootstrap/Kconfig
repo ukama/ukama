@@ -1,0 +1,699 @@
+mainmenu "AT91 Bootstrap configuration"
+
+config HAVE_DOT_CONFIG
+	bool
+	default y
+	help
+	  Indicate that have an included file.
+
+source "board/Config.in"
+
+source "driver/Config.in.driver"
+
+config PROJECT
+	string
+	default "dataflash"	if DATAFLASH
+	default "flash"		if FLASH
+	default "nandflash"	if NANDFLASH
+	default "sdcard"	if SDCARD
+
+choice
+	prompt "Image Loading Strategy"
+	default LOAD_UBOOT
+
+config LOAD_UBOOT
+	bool "Load U-Boot into last MBYTE of SDRAM"
+	help
+	  Use this mode to load an second level boot monitor
+	  like U-boot into the last MB of SDRAM.
+
+config LOAD_LINUX
+	select LINUX_IMAGE
+	bool "Support loading Linux directly"
+	---help---
+	   Load Linux kernel directly from storage media
+
+config LOAD_NONE
+	bool "Do not load any image after bootstrap run"
+	help
+	  Do not not load any image after bootstrap run.
+	  Bootstrap will endless loop, use JTAG to load application.
+
+config LOAD_ANDROID
+	select LINUX_IMAGE
+	bool "Support loading Android directly"
+	help
+	   Load Android image directly from storage media
+
+config LOAD_1MB
+	bool "Load 1 MB into start of SDRAM"
+	help
+	  Use this mode to load an embedded application
+	  which can have a size of up to 1 MByte
+
+config LOAD_4MB
+	bool "Load 4 MB into start of SDRAM"
+	help
+	  Use this mode to load an embedded application
+	  which can have a size of up to 4 MByte
+
+config LOAD_64KB
+	bool "Load 64 kB into the start of SDRAM"
+	help
+	  Use this mode to load an embedded application
+	  which can have max 64 kB Size
+
+endchoice
+
+config LINUX_IMAGE
+	depends on LOAD_LINUX || LOAD_ANDROID
+	bool
+	help
+	  Select to load linux uImage or zImage to boot
+
+config SKIP_COPY_IMAGE
+	bool "Skip copying image from external media"
+	help
+	  In some cases we cannot copy the image from external media
+	  to DRAM. With this config, the copying is skipped.
+	  Bootstrap will jump directly to the DRAM area where the image
+	  should be located. It relies on a different way of loading the
+	  image to DRAM. For example it can be copied using the boot
+	  assistant SAM-BA or JTAG.
+
+config BKPT_NOTIFY_DONE
+	depends on LOAD_NONE
+	bool "Build image for use with debuggers"
+	help
+	  In order to load code into DRAM from a debugger, a bootstrap is
+	  required to configure the clocks, pio, and memory correctly.  Selecting
+	  this option builds an image that can be used for this purpose.
+
+#
+# Kernel Image Storage Setup
+#
+source "Config.in.kernel"
+
+#
+# U-Boot Image Storage Setup
+#
+source "Config.in.u-boot"
+
+#
+# Demo App Image Storage Setup
+#
+source "Config.in.app-image"
+
+config IMAGE_NAME
+	depends on FATFS
+	string "Image Name"
+	default "Image" if LINUX_IMAGE
+	default "u-boot.bin" if LOAD_UBOOT
+	default "softpack.bin" if LOAD_64KB || LOAD_4MB || LOAD_1MB
+	default "none" if LOAD_NONE
+
+config DEBUG
+	bool "Debug Support"
+	default n
+	help
+	  Output Debug messages
+choice
+	prompt "Debug Level"
+	depends on DEBUG
+
+config DEBUG_INFO
+	bool "General debug information"
+
+config DEBUG_LOUD
+	bool "Loud debug output"
+
+config DEBUG_VERY_LOUD
+	bool "Even louder debug output"
+
+endchoice
+
+source "Config.in.secure"
+
+config THUMB
+	depends on !(SAMA5D3X || SAMA5D4)
+	bool "Build in thumb mode"
+	help
+	  Build code in thumb mode
+
+config DISABLE_WATCHDOG
+	bool "Disable Watchdog"
+	default y
+	help
+	  Disable the watchdog in the boostrap
+
+menu "Hardware Initialization Options"
+
+config HW_DISPLAY_BANNER
+	bool "Display Banner"
+	default y
+	help
+	  Display banner
+
+config HW_BANNER
+	string "Banner"
+	default "\"\\n\\nAT91Bootstrap \" AT91BOOTSTRAP_VERSION \" (\" COMPILE_TIME \")\\n\\n\""
+	depends on HW_DISPLAY_BANNER
+	help
+	  The banner displayed on serial port
+
+config HW_INIT
+	bool "Call Hardware Initialization"
+	default y
+	help
+	  Initialize Hardware
+
+config USER_HW_INIT
+	bool "Call User specific Hardware Initialization"
+	help
+	  Initialize Hardware
+
+endmenu
+
+menu "Slow Clock Configuration Options"
+	depends on CPU_HAS_SCKC
+
+choice
+	prompt "Select slow clock configuration profile"
+	default SCLK
+	help
+	  Decide which slow clock to use
+
+config SCLK
+	bool "Use external 32kHz crystal oscillator as source of slow clock"
+	help
+	  Use external 32kHz crystal oscillator as source of slow clock instead
+	  of the embedded 32 khz RC source which typically has a lower accuracy
+	  Both XIN32 and XOUT32 need to be connected to enable the SoC to
+	  drive the crystal oscillator.
+	  Behavior can be changed using SCLK_BYPASS, if this is
+	  supported by the SoC.
+	  If SCLK_BYPASS is unavailable, only a crystal oscillator
+	  can be connected.
+
+config SCLK_INTRC
+	bool "Use internal RC oscillator as a source of slow clock"
+	help
+	  Use internal 32 kHz internal RC oscillator as a source of slow clock.
+	  This means that an oscillator/crystal connected on XIN32/XOUT32
+	  pins of the SoC will be unused.
+
+endchoice
+
+config SCLK_BYPASS
+	depends on SCLK && CPU_HAS_SCLK_BYPASS
+	bool "Use external 32kHz clock signal as source of slow clock"
+	default n
+	help
+	  Use external 32kHz clock signal as source of slow clock instead of
+	  an external crystal oscillator.
+	  This option disables the internal driving on the XOUT32 pin.
+	  The external source has to provide a stable clock on the XIN32 pin.
+	  If this option is disabled, the SoC expects a crystal oscillator
+	  that needs driving on both XIN32 and XOUT32 lines.
+
+endmenu
+
+menu "ARM TrustZone Options"
+	depends on CPU_HAS_TRUSTZONE
+
+config MATRIX
+	bool "Enable Configure the Matrix"
+	default y
+	help
+	  This interface let you to configure the MATRIX0(H64MX) and
+	  MATRIX1(H32MX) slave security  and to select the APB slave security startup.
+
+config ENTER_NWD
+	select MATRIX
+	bool "Enable Enter the Normal World before Jumping"
+	default y
+	help
+	  This interface let you to make the system to enter from the Secure World
+	  to the Non-Secure World before the jumping.
+
+config REDIRECT_ALL_INTS_AIC
+	bool "Redirect All Peripherals Interrupts to AIC"
+	default y
+	help
+	  This interface let you to redirect all peripherals interrupts to AIC,
+	  otherwise, the secure peripherals interrupts direct to SAIC, others to AIC.
+
+config TZC400
+	bool "Configure TrustZone Controller TZC400"
+	default y if CPU_HAS_TZC400
+	help
+	  This will select the code that initializes the TZC 400 TrustZone Controller.
+
+config TZC400_SPECULATIVE_LOAD
+	bool "Enable TZC400 Speculative Load for all regions"
+	depends on TZC400
+	default n
+	help
+	  This will enable the Speculative Load for the TZC.
+	  Speculative load means that the TZC will send requests to DDR
+	  before the security check, but block the results and treat the
+	  requests with RAZ/WI if security check fails.
+	  May improve performance but bound for security checks.
+	  If unsure, say "n".
+
+choice
+	prompt "Select controller profile"
+	depends on TZC400
+	default TZC400_SIMPLE_PROFILE
+	help
+	  Decide which configuration to use for the controller.
+
+config TZC400_SIMPLE_PROFILE
+	bool "Simple TZC400 Profile"
+	depends on TZC400
+	help
+	  A single TrustZone Area with everything permitted.
+endchoice
+
+endmenu
+
+config PM
+	bool "Power Management Options"
+	depends on SUPPORT_PM
+	default y
+	help
+	  This interface let you select the external devices on the board to
+	  enter the power down mode at startup, such as Audio Codec(wm8904), HDMI(SiI9022ACUN)
+	  and ethernet PHY(KSZ8081RNB). Its purpose is to make sure the external devices
+	  which will not be touched in the kernel are set the proper power state.
+
+menu "Select the Devices to the Low-power mode"
+	depends on PM
+
+config MAC0_PHY
+	bool "MAC0 PHYs"
+	depends on HAS_EHT0_PHY
+	select MACB
+	default y
+	help
+	  This interface allow you to select the MAC0 PHY on the board
+	  which will be put into the Power-Down mode.
+
+config MAC1_PHY
+	bool "MAC1 PHYs"
+	depends on HAS_EHT1_PHY
+	select MACB
+	default y
+	help
+	  This interface allow you to select the MAC1 PHY on the board
+	  which will be put into the Power-Down mode.
+
+config HDMI
+	bool "HDMI (SiI9022)"
+	depends on HAS_HDMI
+	select TWI
+	default y
+	help
+	  This interface allow you to select the HDMI chip on the board
+	  which will be put into the Power-Down mode.
+
+choice
+	prompt "HDMI on TWI Select"
+	depends on HDMI && !AUTOTWI_BUS
+	default HDMI_ON_TWI0
+	help
+	  This interface allow you select which TWI bus for the HDMI to wire on.
+
+config	HDMI_ON_TWI0
+	bool "On TWI0"
+	depends on CPU_HAS_TWI0
+	select TWI0
+
+config	HDMI_ON_TWI1
+	bool "On TWI1"
+	depends on CPU_HAS_TWI1
+	select TWI1
+
+config	HDMI_ON_TWI2
+	bool "On TWI2"
+	depends on CPU_HAS_TWI2
+	select TWI2
+
+config	HDMI_ON_TWI3
+	bool "On TWI3"
+	depends on CPU_HAS_TWI3
+	select TWI3
+
+endchoice
+
+config WM8904
+	bool "Audio CODEC (wm8904)"
+	depends on HAS_AUDIO_CODEC
+	select TWI
+	default y
+	help
+	  This interface allow you to select the CODEC chip on the board
+	  which will be put into the Power-Down mode.
+
+choice
+	prompt "CODEC on TWI Select"
+	depends on WM8904 && !AUTOTWI_BUS
+	default CODEC_ON_TWI0
+	help
+	  This interface allow you select which TWI bus for the CODEC to wire on.
+
+config	CODEC_ON_TWI0
+	bool "On TWI0"
+	depends on CPU_HAS_TWI0
+	select TWI0
+
+config	CODEC_ON_TWI1
+	bool "On TWI1"
+	depends on CPU_HAS_TWI1
+	select TWI1
+
+config	CODEC_ON_TWI2
+	bool "On TWI2"
+	depends on CPU_HAS_TWI2
+	select TWI2
+
+config	CODEC_ON_TWI3
+	bool "On TWI3"
+	depends on CPU_HAS_TWI3
+	select TWI3
+
+endchoice
+
+config PM_PMIC
+	bool "PMIC (ACT8865)"
+	depends on HAS_PMIC_ACT8865
+	select ACT8865
+	default y
+	help
+	  This interface allow you to select the PMIC(ACT8865) chip on the board
+	  which will be set the Power-Saving mode.
+
+endmenu
+
+config BACKUP_MODE
+	bool "Enable Backup Mode"
+	default n
+	help
+	  Enables "Backup mode". Starting with sama5d2, it is possible to put
+	  use DDR Self Refresh and shutdown the core. Resuming from that state
+	  requires support in the bootloader.
+
+
+menu "Board's Workaround Options"
+	depends on HAS_PMIC_ACT8865
+
+config ACT8865_SET_VOLTAGE
+	bool "Set ACT8865 Initial Output Voltage"
+	select ACT8865
+	default n
+	help
+	  This interface let you to set the ACT8865 initial output value
+
+config DISABLE_ACT8865_I2C
+	bool "Disable the ACT8865 I2C interface"
+	depends on HAS_PMIC_ACT8865
+	select ACT8865
+	select ACT8865_SET_VOLTAGE
+	default y
+	help
+	  This interface let you to disable the ACT8865's I2C interface.
+	  There are some issue about active-semi ACT8865's I2C interface,
+	  which affects the other chip which stands on the same I2C bus, such as MXT touchscreen.
+
+config SUSPEND_ACT8945A_CHARGER
+	bool "Suspend ACT8945A Charger"
+	select ACT8865
+	default n
+	help
+	  This interface let you to suspend the ACT8945A charger
+	  function after boot.
+
+endmenu
+
+config ACT8865
+	bool "PMIC (ACT8865) Support"
+	depends on HAS_PMIC_ACT8865
+	select TWI
+	default n
+
+config MCP16502
+	bool "PMIC (MCP16502) Support"
+	select TWI
+	default n
+
+choice
+	prompt "PMIC (ACT8865) on TWI Select"
+	depends on ACT8865 && !AUTOTWI_BUS
+	default PMIC_ON_TWI0
+	help
+	  This interface allow you select which TWI bus for the PMIC to wire on.
+
+config	PMIC_ON_TWI0
+	bool "On TWI0"
+	depends on CPU_HAS_TWI0
+	select TWI0
+
+config	PMIC_ON_TWI1
+	bool "On TWI1"
+	depends on CPU_HAS_TWI1
+	select TWI1
+
+config	PMIC_ON_TWI2
+	bool "On TWI2"
+	depends on CPU_HAS_TWI2
+	select TWI2
+
+config	PMIC_ON_TWI3
+	bool "On TWI3"
+	depends on CPU_HAS_TWI2
+	select TWI3
+
+endchoice
+
+menu "Board Hardware Information Options"
+	depends on HAS_HW_INFO
+
+config LOAD_ONE_WIRE
+	bool "Load Information from 1-Wire"
+	depends on HAS_ONE_WIRE
+	select LOAD_HW_INFO
+	default y
+	help
+	  This interface allow you to select hardware information from 1-Wire chips.
+
+config LOAD_EEPROM
+	bool "Load Information from EEPROM"
+	depends on HAS_EEPROM
+	select TWI
+	select LOAD_HW_INFO
+	default y
+	help
+	  This interface allow you to select hardware information from EEPROM chips.
+
+choice
+	prompt "EEPROM on TWI Select"
+	depends on LOAD_EEPROM && !AUTOTWI_BUS
+	default EEPROM_ON_TWI0
+	help
+	  This interface allow you select which TWI bus for the EEPROM to wire on.
+
+config	EEPROM_ON_TWI0
+	bool "On TWI0"
+	depends on CPU_HAS_TWI0 || CPU_HAS_FLEXCOM
+	select TWI0
+
+config	EEPROM_ON_TWI1
+	bool "On TWI1"
+	depends on CPU_HAS_TWI1 || CPU_HAS_FLEXCOM
+	select TWI1
+
+config	EEPROM_ON_TWI2
+	bool "On TWI2"
+	depends on CPU_HAS_TWI2 || CPU_HAS_FLEXCOM
+	select TWI2
+
+config	EEPROM_ON_TWI3
+	bool "On TWI3"
+	depends on CPU_HAS_TWI3 || CPU_HAS_FLEXCOM
+	select TWI3
+
+endchoice
+
+endmenu
+
+config AUTOTWI_BUS
+	bool "Auto Configure TWI Bus by Board"
+	depends on TWI
+	select TWI0 if CPU_HAS_TWI0 || CPU_HAS_FLEXCOM
+	select TWI1 if CPU_HAS_TWI1 || CPU_HAS_FLEXCOM
+	select TWI2 if CPU_HAS_TWI2 || CPU_HAS_FLEXCOM
+	select TWI3 if CPU_HAS_TWI3 || CPU_HAS_FLEXCOM
+	default y
+	help
+	  This interface allow the board determines  which TWI bus that
+	  the HDMI, Audio CODEC(wm8904), PMIC(ACT8865) is wired on,
+	  select automatically, no menuconfig selecting to need.
+
+menu "Basic Drivers support"
+
+config PIT
+	bool "Programmable interrupt timer support"
+	default y
+	depends on AT91SAM9260 || AT91SAM9261 || AT91SAM9263 || AT91SAM9G10 || \
+		AT91SAM9G20 || AT91SAM9G45 || AT91SAM9N12 || AT91SAM9RL || \
+		AT91SAM9X5 || AT91SAM9XE || SAMA5D4 || SAMA5D3X || SAMA5D2 || \
+		SAM9X60
+	help
+	  Programmable interrupt timer support
+
+config PIT64B
+	bool "64-bit Periodic Interval Timer"
+	default y
+	depends on SAMA7G5
+	help
+	  Enable 64-bit periodic interval timer.
+
+choice
+	prompt "Watchdog timer controller selection"
+	default WDT
+
+config WDT
+	bool "Watchdog timer support"
+	depends on !CPU_HAS_WDT2
+	help
+	  Watchdog timer support
+
+config WDT2
+	bool "Watchdog timer 2 support"
+	depends on CPU_HAS_WDT2
+	help
+	  Watchdog timer 2 support. This is a newer version of the old
+	  watchdog timer (WDT). Only one of them is present in each
+	  product.
+
+endchoice
+
+config WDTS
+	bool "Programmable Secure dual watchdog timer support"
+	depends on CPU_HAS_DWDT && WDT2
+	help
+	  This adds support for an additional Programmable Secure Watchdog.
+	  Products with this additional watchdog have a Dual Watchog Timer.
+
+config RSTC
+	bool "Reset controller support"
+	default y
+	help
+	  Reset controller support
+
+config USART
+	bool "Serial controller support"
+	default y
+	help
+	  Serial controller support
+
+config PIO
+	bool "Programmable I/O support"
+	default y
+	help
+	  Programmable I/O support
+
+config PMC_COMMON
+	bool "Common support for power management controller"
+	default y
+	help
+	  Common support for power management controller
+
+config PMC_V1
+	bool "Power management controller support for first version"
+	depends on AT91SAM9260 || AT91SAM9261 || AT91SAM9263 || AT91SAM9G10 || \
+		AT91SAM9G20 || AT91SAM9G45 || AT91SAM9N12 || AT91SAM9RL || \
+		AT91SAM9X5 || AT91SAM9XE || SAMA5D4 || SAMA5D3X || SAMA5D2
+	default y
+	help
+	  Enable power management controller support for first version
+
+config PMC_V2
+	bool "Peripheral management controller support for second version"
+	depends on SAM9X60
+	default y
+	help
+	  Enable power management controller support for second version
+
+config PMC_V3
+	bool "Peripheral management controller support for third version"
+	depends on SAMA7G5
+	default y
+	help
+	  Enable power management controller support for third version
+
+config PMC_PERIPH_CLK_AT91SAM9
+	bool "PMC peripheral clock control for AT91SAM9 SoCs"
+	depends on AT91SAM9260 || AT91SAM9261 || AT91SAM9263 || AT91SAM9G10 || \
+		AT91SAM9G20 || AT91SAM9G45 || AT91SAM9RL
+	default y
+	help
+	  Enable peripheral clock for AT91SAM9 related SoCs
+
+config PMC_PERIPH_CLK_SAM9X5
+	bool "PMC peripheral clock control for SAM9X5 SoCs and above"
+	depends on AT91SAM9X5 || AT91SAM9N12 || SAMA5D3X || SAMA5D4 || \
+		SAMA5D2 || SAM9X60 || SAMA7G5
+	default y
+	help
+	  Enable peripheral clock control for SAM9X5 SoCs and above
+
+config PMC_GENERIC_CLK
+	bool "PMC generic clock control support"
+	depends on SAMA5D2 || SAM9X60 || SAMA7G5
+	default y
+	help
+	   Enable generic clock control support
+
+config PMC_UTMI_CLK
+	bool "PMC UTMI clock control support"
+	depends on AT91SAM9X5 || AT91SAM9G45 || AT91SAM9RL || SAMA5D3X || \
+		SAMA5D4 || SAMA5D2
+	default y
+	help
+	  Enable PMC UTMI clock control
+
+config PMC_PLL_CLK
+	bool "PMC PLL clock control support"
+	depends on AT91SAM9260 || AT91SAM9261 || AT91SAM9263 || AT91SAM9G10 || \
+		AT91SAM9G20 || AT91SAM9G45 || AT91SAM9N12 || AT91SAM9RL || \
+		AT91SAM9X5 || AT91SAM9XE || SAMA5D4 || SAMA5D3X || SAMA5D2
+	default y
+	help
+	  Enable PMC PLL clock control
+
+config PMC_PLL_CLK_SAM9X60
+	bool "PMC PLL clock control support for SAM9X60 SoCs"
+	depends on SAM9X60 || SAMA7G5
+	default y
+	help
+	  Enable PMC PLL clock control for SAM9X60 SoCs
+
+config PMC_MCK_CLK
+	bool "PMC master clock support"
+	depends on AT91SAM9260 || AT91SAM9261 || AT91SAM9263 || AT91SAM9G10 || \
+		AT91SAM9G20 || AT91SAM9G45 || AT91SAM9N12 || AT91SAM9RL || \
+		AT91SAM9X5 || AT91SAM9XE || SAMA5D4 || SAMA5D3X || SAMA5D2 || \
+		SAM9X60
+	default y
+	help
+	  Enable PMC master clock support
+
+config PMC_MCK_CLK_SAMA7G5
+	bool "PMC master clock support for SAMA7G5 SoCs"
+	depends on SAMA7G5
+	default y
+	help
+	  Enable PMC master clock support for SAMA7G5 SoCs
+endmenu
+

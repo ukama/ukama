@@ -1,0 +1,12 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Container_Boundary(c1, "Base Rate") {
+    Container(service,"GetBaseRate","go, grpc, gorm")
+    ContainerDb(database, "Database", "PostgreSQL", "Store rates")
+
+    Rel_R(Call, service, "{{ BaseRateId }}")
+    Rel_R(service, database, "Scan base rate data")
+}
+
+@enduml

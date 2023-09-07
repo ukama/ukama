@@ -1,0 +1,2 @@
+config BOARDNAME
+	default "sama5d3_stephan" if SAMA5D3_STEPHAN

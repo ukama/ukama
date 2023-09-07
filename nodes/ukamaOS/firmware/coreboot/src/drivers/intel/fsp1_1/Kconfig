@@ -1,0 +1,106 @@
+##
+## This file is part of the coreboot project.
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; version 2 of the License.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+
+config PLATFORM_USES_FSP1_1
+	bool
+	select UEFI_2_4_BINDING
+	select INTEL_GMA_ADD_VBT if RUN_FSP_GOP
+	help
+	  Does the code require the Intel Firmware Support Package?
+
+if PLATFORM_USES_FSP1_1
+
+comment "Intel FSP 1.1"
+
+config FSP_USE_REPO
+	bool "Use FSP binary from 3rdparty/fsp repo"
+	select HAVE_FSP_BIN
+	depends on SOC_INTEL_BRASWELL && !USE_GOOGLE_FSP
+	default y
+
+config HAVE_FSP_BIN
+	bool "Add Intel FSP binary to flash image"
+	help
+	  Select this option to add an Intel FSP binary to
+	  the resulting coreboot image.
+
+	  Note: Without this binary, coreboot builds relying on the FSP
+	  will not boot
+
+config FSP_FILE
+	string
+	prompt "Intel FSP binary path and filename" if !FSP_USE_REPO
+	depends on HAVE_FSP_BIN
+	default "3rdparty/fsp/BraswellFspBinPkg/FspBin/BSWFSP.fd" if FSP_USE_REPO
+	default ""
+	help
+	  The path and filename of the Intel FSP binary for this platform.
+
+config FSP_LOC
+	hex "Intel FSP Binary location in CBFS"
+	default 0xfff6e000 if SOC_INTEL_BRASWELL && USE_GOOGLE_FSP
+	default 0xfff20000 if SOC_INTEL_BRASWELL
+	default 0xffee0000 if SOC_INTEL_SKYLAKE
+	help
+	  The location in CBFS that the FSP is located. This must match the
+	  value that is set in the FSP binary.  If the FSP needs to be moved,
+	  rebase the FSP with Intel's BCT (tool).
+
+config DISPLAY_HOBS
+	bool "Display hand-off-blocks (HOBs)"
+	default n
+
+config DISPLAY_VBT
+	bool "Display Video BIOS Table (VBT)"
+	default n
+
+config DISPLAY_FSP_ENTRY_POINTS
+	bool "Display FSP entry points"
+	default n
+
+config DISPLAY_UPD_DATA
+	bool "Display UPD data"
+	default n
+	help
+	  Display the user specified product data prior to memory
+	  initialization.
+
+config USE_GENERIC_FSP_CAR_INC
+	bool
+	default n
+	help
+	  The chipset can select this to use a generic cache_as_ram.inc file
+	  that should be good for all FSP based platforms.
+
+config RESET_ON_INVALID_RAMSTAGE_CACHE
+	bool "Reset the system on S3 wake when ramstage cache invalid."
+	default n
+
+config SKIP_FSP_CAR
+	def_bool n
+	help
+	  Selected by platforms that implement their own CAR setup.
+
+config FSP1_1_DISPLAY_LOGO
+	bool "Enable logo"
+	default n
+	help
+	  Uses the FSP to display the boot logo. This method supports a
+	  BMP file only. The uncompressed size can be up to 1 MB.
+
+config FSP1_1_LOGO_FILE_NAME
+	string "Logo file"
+	depends on FSP1_1_DISPLAY_LOGO
+	default "3rdparty/blobs/mainboard/$(MAINBOARDDIR)/logo.bmp"
+
+endif #PLATFORM_USES_FSP1_1

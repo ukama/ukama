@@ -1,0 +1,25 @@
+{
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
+
+	"ukama-cApp": [
+		{
+			"name": "hello-world",
+			"tag": "0.0.1",
+			"restart": "no",
+			"contained": "boot"
+		}
+	],
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "user"
+		},
+		{
+			"type": "mount"
+		}
+	]
+}

@@ -1,0 +1,156 @@
+# -*- makefile -*-
+# Copyright 2012 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Toolchain configuration build system
+#
+
+# Toolchain configuration
+
+min_make_version:=3.82
+make_version_ok:=$(filter $(min_make_version), \
+	$(firstword $(sort $(MAKE_VERSION) $(min_make_version))))
+ifeq ($(make_version_ok),)
+$(error ERROR: GNU make version $(min_make_version) or higher required.)
+endif
+
+# Default to clang if TEST_ASAN is enabled
+ifneq ($(TEST_FUZZ)$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
+CC=clang
+endif
+
+# Extract cc-name
+cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
+
+# Try not to assume too much about optional tools and prefixes
+CCACHE:=$(shell which ccache 2>/dev/null)
+ifeq ($(origin HOST_CROSS_COMPILE),undefined)
+HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-gcc 2>/dev/null),x86_64-pc-linux-gnu-,)
+endif
+
+AR=$(CROSS_COMPILE)ar
+CC=$(CCACHE) $(CROSS_COMPILE)$(cc-name)
+CPP=$(CC) -E
+CXX=$(CROSS_COMPILE)clang++
+LD=$(CROSS_COMPILE)ld
+NM=$(CROSS_COMPILE)nm
+OBJCOPY=$(CROSS_COMPILE)objcopy
+OBJDUMP=$(CROSS_COMPILE)objdump
+ADDR2LINE=$(CROSS_COMPILE)addr2line
+PKG_CONFIG?=pkg-config
+BUILDCC?=$(CCACHE) gcc
+HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)gcc
+HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)g++
+PROTOC?=protoc
+
+C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
+COMMON_WARN = -Wall -Wundef -Werror -Werror-implicit-function-declaration \
+	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
+	-fno-common -fno-strict-aliasing -fno-strict-overflow
+
+UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
+	-fno-sanitize=vptr \
+	-fno-sanitize-recover=all
+
+CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
+CXXFLAGS_WARN = $(COMMON_WARN)
+CFLAGS_DEBUG= -g
+CFLAGS_DEBUG+=$(CFLAGS_DEBUG_CHIP)
+CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
+CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD=$(EMPTY) \
+                               -DTEST_TASKFILE=$(PROJECT).tasklist,) \
+            $(if $(CTS_MODULE), $(CFLAGS_CTS)) \
+            $(if $(EMU_BUILD),-DEMU_BUILD=$(EMPTY)) \
+            $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
+            -DTEST_$(PROJECT)=$(EMPTY) -DTEST_$(UC_PROJECT)=$(EMPTY) \
+            $(if $(TEST_ASAN),-fsanitize=address) \
+            $(if $(TEST_MSAN),-fsanitize=memory) \
+            $(if $(TEST_UBSAN),$(UBSAN_FLAGS)) \
+            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link \
+                       -fno-experimental-new-pass-manager -DTEST_FUZZ=$(EMPTY))
+CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
+				      -DTEST_COVERAGE=$(EMPTY),)
+CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
+              -DBOARD=$(BOARD) -DCORE=$(CORE) -DPROJECT=$(PROJECT) \
+              -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_FAMILY=$(CHIP_FAMILY) \
+              -DBOARD_$(UC_BOARD)=$(EMPTY) \
+	      -DCHIP_$(UC_CHIP)=$(EMPTY) \
+	      -DCORE_$(UC_CORE)=$(EMPTY) \
+              -DCHIP_VARIANT_$(UC_CHIP_VARIANT)=$(EMPTY) \
+	      -DCHIP_FAMILY_$(UC_CHIP_FAMILY)=$(EMPTY) \
+	      -DFINAL_OUTDIR=$(out) \
+	      -DPROTOBUF_MIN_PROTOC_VERSION=0 \
+              $(CFLAGS_BASEBOARD)
+CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
+	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
+	-DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+BUILD_CPPFLAGS=$(CFLAGS_DEFINE) -Icore/host $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
+	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
+	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
+	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(LATE_CFLAGS_DEFINE) \
+	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+ifneq ($(BOARD),host)
+CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib
+CPPFLAGS+=-Ibuiltin/
+else
+CPPFLAGS+=-Og
+endif
+CPPFLAGS+= -DCHROMIUM_EC=$(EMPTY)
+CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
+CFLAGS+= -ffunction-sections -fshort-wchar
+CFLAGS+= -fno-delete-null-pointer-checks
+ifneq ($(cc-name),clang)
+CFLAGS+= -ffat-lto-objects
+CFLAGS+= -fconserve-stack
+endif
+CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
+
+FTDIVERSION:=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
+ifneq ($(FTDIVERSION),)
+  LIBFTDI_NAME=ftdi1
+else
+  LIBFTDI_NAME=ftdi
+endif
+
+LIBFTDIUSB_CFLAGS:=$(shell $(PKG_CONFIG) --cflags lib${LIBFTDI_NAME} libusb-1.0)
+LIBFTDIUSB_LDLIBS:=$(shell $(PKG_CONFIG) --libs   lib${LIBFTDI_NAME} libusb-1.0)
+
+ifeq ($(TEST_FUZZ),y)
+LIBPROTOBUF_CFLAGS:=$(shell $(PKG_CONFIG) --cflags protobuf)
+LIBPROTOBUF_LDLIBS:=$(shell $(PKG_CONFIG) --libs   protobuf)
+
+LIBPROTOBUF_MUTATOR_CFLAGS:=${LIBPROTOBUF_CFLAGS} \
+	$(shell $(PKG_CONFIG) --cflags libprotobuf-mutator)
+LIBPROTOBUF_MUTATOR_LDLIBS:=$(shell $(PKG_CONFIG) --libs libprotobuf-mutator) \
+	${LIBPROTOBUF_LDLIBS}
+endif
+
+BUILD_CFLAGS=$(LIBFTDIUSB_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG)
+BUILD_CFLAGS+=$(CFLAGS_WARN)
+BUILD_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
+HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) \
+	    -DHOST_TOOLS_BUILD=$(EMPTY)
+HOST_CFLAGS+=$(LIBFTDIUSB_CFLAGS)
+HOST_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
+ifneq (${SYSROOT},)
+  LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
+endif
+LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
+	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
+BUILD_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
+HOST_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
+HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
+		  -fuse-ld=bfd \
+		  $(if $(TEST_COVERAGE),-fprofile-arcs,) \
+		  $(if $(TEST_ASAN), -fsanitize=address) \
+		  $(if $(TEST_MSAN), -fsanitize=memory) \
+		  $(if $(TEST_UBSAN), ${UBSAN_FLAGS}) \
+		  $(if $(TEST_FUZZ), -fsanitize=fuzzer)
+
+# utility function to provide overridable defaults
+# $1: name of variable to set
+# $2: first default to use
+# $3: second default to use
+set-option = $(eval $1=$$(strip $$(if $(2),$(2),$(3))))

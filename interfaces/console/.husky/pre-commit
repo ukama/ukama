@@ -1,0 +1,48 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo '🏗️👷 Styling, testing and building your project before committing'
+
+# Check Prettier standards
+yarn pretty && git add . ||
+        (
+                echo '❌ Unable to format your code!'
+                false
+        )
+echo '✅ Code is Pretty now.'
+
+# Check tsconfig standards
+yarn check-types ||
+        (
+                echo '🤡❌🤡 Failed Type check. 🤡❌🤡
+            Types check failed! Make the changes required above.'
+                false
+        )
+echo '✅ No Typescript types issue found.'
+
+# Check ESLint Standards
+yarn lint && yarn pre-commit-lint ||
+        (
+                echo '😤👋😤 Follow lint standards 😤👋😤 
+                ESLint Check Failed. Make the required changes listed above, add changes and try to commit again.'
+                false
+        )
+echo '✅ No Linting issue found.'
+
+# Run and check tests
+yarn test ||
+        (
+                echo '😤👋😤 Tests Failed 😤👋😤 
+                Tests Failed. Run the tests locally and fix them, then try to commit again.'
+                false
+        )
+echo '✅ All Tests passed.'
+
+yarn build ||
+        (
+                echo '❌ Build failed ❌
+            Types check failed! Make the changes required above.'
+                false
+        )
+echo '✅ Build successfully.'
+echo '✅💯👍 Success... Committing code. 👍💯✅'

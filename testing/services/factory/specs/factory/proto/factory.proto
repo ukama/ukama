@@ -1,0 +1,13 @@
+syntax="proto3";
+
+option go_package = "specs/factory/spec";
+
+package main;
+
+
+
+// Virtual Node Status update event 
+message EvtUpdateVirtnode {
+    string uuid = 1;
+    string status = 2;
+}

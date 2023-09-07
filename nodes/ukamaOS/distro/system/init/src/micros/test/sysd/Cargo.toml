@@ -1,0 +1,15 @@
+[package]
+name = "sysd"
+version = "0.1.0"
+authors = ["vishal <vthakur7f@hotmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["termcolor"]
+
+[dependencies]
+procfs = "0.9.1"
+simplelog = "^0.9.0"
+log = { version = "0.4.*", features = ["max_level_trace","std","release_max_level_debug"] }
+termcolor = { version = "1.1.*", optional = true }

@@ -1,0 +1,13 @@
+add admin port and bind it to delete/put methods on /containers.
+remove put/delete method access from the client endpoint
+create admin endpoint /admin
+admin endpoint should have ability to shutdown/kill?
+handle signal etc. for system shutdown/restart/etc.
+Write RFC and readme
+Memory and performance benchmark
+
+-- after re-arch --
+Mock test server for the cloud.
+Mock agent.
+
+

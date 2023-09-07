@@ -1,0 +1,241 @@
+html {
+  box-sizing: border-box;
+  overflow: -moz-scrollbars-vertical;
+  overflow-y: scroll;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+}
+
+.swagger-ui a {
+  color: #4990e2;
+  text-decoration: none;
+}
+
+body,
+.swagger-ui,
+.swagger-ui input,
+.swagger-ui textarea,
+.swagger-ui input[type="text"],
+.swagger-ui select,
+.swagger-ui .btn,
+.swagger-ui .info .title,
+.swagger-ui .opblock-tag,
+.swagger-ui section.models h4,
+.swagger-ui .dialog-ux .modal-ux-header h3,
+.swagger-ui .dialog-ux .modal-ux-content h4,
+.swagger-ui .dialog-ux .modal-ux-content p {
+  color: #ffffff;
+}
+.swagger-ui a.nostyle,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .parameter__deprecated,
+.swagger-ui .parameter__in,
+.swagger-ui table thead tr th,
+.swagger-ui .response-col_status,
+.swagger-ui table thead tr td,
+.swagger-ui .opblock .opblock-section-header h4,
+.swagger-ui label,
+.swagger-ui .tab li,
+.swagger-ui .opblock .opblock-section-header label,
+.swagger-ui .opblock .opblock-summary-operation-id,
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__deprecated,
+.swagger-ui .scheme-container,
+.swagger-ui .scheme-container .schemes > label,
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .opblock-external-docs-wrapper p,
+.swagger-ui .opblock-title_normal p,
+.swagger-ui .info li,
+.swagger-ui .info p,
+.swagger-ui .info table,
+.swagger-ui .model,
+.swagger-ui .model-title,
+.swagger-ui .model .property.primitive,
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5,
+.swagger-ui .renderedMarkdown,
+.swagger-ui .opblock-tag small {
+  color: #cccccc;
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method,
+.swagger-ui .opblock-post .btn.execute {
+  background: #007841;
+}
+.swagger-ui .opblock.opblock-post .opblock-summary,
+.swagger-ui .opblock-post .btn.execute {
+  border-color: #007841;
+}
+.swagger-ui .opblock-post .opblock-summary-description {
+  color: #007841;
+}
+
+.swagger-ui .opblock.opblock-patch .opblock-summary-method,
+.swagger-ui .opblock-patch .btn.execute {
+  background: #266e5e;
+}
+.swagger-ui .opblock.opblock-patch .opblock-summary,
+.swagger-ui .opblock-patch .btn.execute {
+  border-color: #266e5e;
+}
+.swagger-ui .opblock-patch .opblock-summary-description {
+  color: #266e5e;
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary-method,
+.swagger-ui .opblock-get .btn.execute {
+  background: #0064c9;
+}
+.swagger-ui .opblock.opblock-get .opblock-summary,
+.swagger-ui .opblock-get .btn.execute {
+  border-color: #0064c9;
+}
+.swagger-ui .opblock-get .opblock-summary-description {
+  color: #0064c9;
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method,
+.swagger-ui .opblock-put .btn.execute {
+  background: #a55b00;
+}
+.swagger-ui .opblock.opblock-put .opblock-summary,
+.swagger-ui .opblock-put .btn.execute {
+  border-color: #a55b00;
+}
+.swagger-ui .opblock-put .opblock-summary-description {
+  color: #a55b00;
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method,
+.swagger-ui .opblock-delete .btn.execute {
+  background: #990000;
+}
+.swagger-ui .opblock.opblock-delete .opblock-summary,
+.swagger-ui .opblock-delete .btn.execute {
+  border-color: #990000;
+}
+.swagger-ui .opblock-delete .opblock-summary-description {
+  color: #990000;
+}
+
+body,
+.swagger-ui .info .title,
+.swagger-ui .scheme-container,
+.swagger-ui select,
+.swagger-ui textarea,
+.swagger-ui input[type="text"],
+.swagger-ui input[type="email"],
+.swagger-ui input[type="file"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="search"],
+.swagger-ui textarea,
+.swagger-ui .topbar,
+.swagger-ui .dialog-ux .modal-ux {
+  background-color: rgb(15, 23, 36)!important;
+}
+
+.swagger-ui .opblock .opblock-section-header,
+.swagger-ui input[type="email"].invalid,
+.swagger-ui input[type="file"].invalid,
+.swagger-ui input[type="password"].invalid,
+.swagger-ui input[type="search"].invalid,
+.swagger-ui input[type="text"].invalid,
+.swagger-ui textarea.invalid {
+  background-color: transparent;
+}
+
+.swagger-ui input[disabled],
+.swagger-ui select[disabled],
+.swagger-ui textarea[disabled] {
+  border: none;
+  color: rgb(146, 171, 207);
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  color: rgb(146, 171, 207);
+  background-color: rgb(146, 171, 207);
+  color: rgb(15, 23, 36);
+  border: none;
+  border-radius: 25px;
+}
+
+input[type="text"]::placeholder {
+  color: rgb(146, 171, 207);
+  opacity: 1;
+}
+
+.swagger-ui .btn,
+.swagger-ui select {
+  border-color: #ccc;
+}
+
+.swagger-ui select {
+  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M13.418 7.859a.695.695 0 01.978 0 .68.68 0 010 .969l-3.908 3.83a.697.697 0 01-.979 0l-3.908-3.83a.68.68 0 010-.969.695.695 0 01.978 0L10 11l3.418-3.141z"/></svg>')
+    right 10px center no-repeat;
+}
+
+.swagger-ui .model-toggle:after {
+  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M13.418 7.859a.695.695 0 01.978 0 .68.68 0 010 .969l-3.908 3.83a.697.697 0 01-.979 0l-3.908-3.83a.68.68 0 010-.969.695.695 0 01.978 0L10 11l3.418-3.141z"/></svg>')
+    50% no-repeat;
+}
+
+.swagger-ui svg {
+  fill: #ccc;
+}
+
+.swagger-ui .topbar,
+.swagger-ui .opblock .opblock-section-header,
+.swagger-ui table thead tr td,
+.swagger-ui table thead tr th {
+  border-bottom: 1px solid rgb(59, 65, 81);
+}
+.swagger-ui .opblock-tag,
+.swagger-ui .dialog-ux .modal-ux,
+.swagger-ui section.models .model-container {
+  border: 1px solid rgb(59, 65, 81);
+}
+
+.swagger-ui section.models.is-open h4,
+.swagger-ui section.models,
+.swagger-ui .dialog-ux .modal-ux-header,
+.swagger-ui .auth-container {
+  border-color: rgb(59, 65, 81);
+}
+
+.swagger-ui span.model-title__text {
+  color: #10bf9c;
+}
+
+.swagger-ui .property-row td:first-child {
+  color: #e57044;
+  font-weight: normal;
+}
+
+.swagger-ui .prop-type {
+  color: #d95dbd;
+}
+
+.swagger-ui .model .property.primitive {
+  color: rgb(59, 65, 81);
+}
+
+.swagger-ui .auth-btn-wrapper .modal-btn {
+  margin-right: 1rem;
+}
+
+.swagger-ui .opblock:hover {
+  border-color: #005876
+}
+
+pre {
+  background-color: rgb(15, 23, 36) !important;
+}

@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/registry/network/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.registry.network.v1;
+
+service NetworkService {
+  /* Networks */
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
+    rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    // Update
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  /* Sites */
+    rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
+    rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
+    rpc GetSiteByName(GetSiteByNameRequest) returns (GetSiteResponse);
+    rpc GetSitesByNetwork(GetSitesByNetworkRequest) returns (GetSitesByNetworkResponse);
+    // UpdateSite
+    // RemoveSite
+}
+
+
+message AddRequest{
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
+}
+
+message AddResponse{
+    string org = 1;
+    Network network = 2;
+}
+
+message GetRequest{
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+}
+
+message GetResponse{
+    Network network = 1;
+}
+
+message GetByNameRequest{
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
+}
+
+message GetByNameResponse{
+    Network network = 1;
+    string org = 2;
+}
+
+message GetByOrgRequest{
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+}
+
+message GetByOrgResponse{
+    string orgId = 1 [json_name = "org_id"];
+    repeated Network networks = 2;
+}
+
+message DeleteRequest{
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true} , json_name = "org"];
+}
+
+message DeleteResponse{
+}
+
+message AddSiteRequest{
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
+}
+
+message AddSiteResponse{
+    Site site = 1;
+}
+
+message GetSiteRequest{
+    string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
+}
+
+message GetSiteResponse{
+    Site site = 1;
+}
+
+message GetSiteByNameRequest{
+    string networkId = 1 [json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
+}
+
+message GetSitesByNetworkRequest{
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+}
+
+message GetSitesByNetworkResponse{
+    string networkId = 1 [json_name = "network_id"];
+    repeated Site sites = 2;
+}
+
+
+message Network {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name = 2;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    bool isDeactivated = 4 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
+}
+
+message Site {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name = 2;
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    bool isDeactivated = 4 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
+}

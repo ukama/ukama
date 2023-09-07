@@ -1,0 +1,62 @@
+@subheading idn2_register_u8
+@anchor{idn2_register_u8}
+@deftypefun {int} {idn2_register_u8} (const uint8_t * @var{ulabel}, const uint8_t * @var{alabel}, uint8_t ** @var{insertname}, int @var{flags})
+@var{ulabel}: input zero-terminated UTF-8 and Unicode NFC string, or NULL.
+
+@var{alabel}: input zero-terminated ACE encoded string (xn--), or NULL.
+
+@var{insertname}: newly allocated output variable with name to register in DNS.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+Perform IDNA2008 register string conversion on domain label  @code{ulabel} and  @code{alabel} , as described in section 4 of RFC 5891.  Note that the
+input  @code{ulabel} must be encoded in UTF-8 and be in Unicode NFC form.
+
+Pass @code{IDN2_NFC_INPUT}  in  @code{flags} to convert input  @code{ulabel} to NFC form
+before further processing.
+
+It is recommended to supply both  @code{ulabel} and  @code{alabel} for better
+error checking, but supplying just one of them will work.  Passing
+in only  @code{alabel} is better than only  @code{ulabel} .  See RFC 5891 section
+4 for more information.
+
+After version 0.11:  @code{insertname} may be NULL to test conversion of  @code{src} without allocating memory.
+
+@strong{Returns:} On successful conversion @code{IDN2_OK}  is returned, when the
+given  @code{ulabel} and  @code{alabel} does not match each other
+@code{IDN2_UALABEL_MISMATCH}  is returned, when either of the input
+labels are too long @code{IDN2_TOO_BIG_LABEL}  is returned, when  @code{alabel} does does not appear to be a proper A-label @code{IDN2_INVALID_ALABEL} 
+is returned, or another error code is returned.
+@end deftypefun
+
+@subheading idn2_register_ul
+@anchor{idn2_register_ul}
+@deftypefun {int} {idn2_register_ul} (const char * @var{ulabel}, const char * @var{alabel}, char ** @var{insertname}, int @var{flags})
+@var{ulabel}: input zero-terminated locale encoded string, or NULL.
+
+@var{alabel}: input zero-terminated ACE encoded string (xn--), or NULL.
+
+@var{insertname}: newly allocated output variable with name to register in DNS.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+Perform IDNA2008 register string conversion on domain label  @code{ulabel} and  @code{alabel} , as described in section 4 of RFC 5891.  Note that the
+input  @code{ulabel} is assumed to be encoded in the locale's default
+coding system, and will be transcoded to UTF-8 and NFC normalized
+by this function.
+
+It is recommended to supply both  @code{ulabel} and  @code{alabel} for better
+error checking, but supplying just one of them will work.  Passing
+in only  @code{alabel} is better than only  @code{ulabel} .  See RFC 5891 section
+4 for more information.
+
+After version 0.11:  @code{insertname} may be NULL to test conversion of  @code{src} without allocating memory.
+
+@strong{Returns:} On successful conversion @code{IDN2_OK}  is returned, when the
+given  @code{ulabel} and  @code{alabel} does not match each other
+@code{IDN2_UALABEL_MISMATCH}  is returned, when either of the input
+labels are too long @code{IDN2_TOO_BIG_LABEL}  is returned, when  @code{alabel} does does not appear to be a proper A-label @code{IDN2_INVALID_ALABEL} 
+is returned, when  @code{ulabel} locale to UTF-8 conversion failed
+@code{IDN2_ICONV_FAIL}  is returned, or another error code is returned.
+@end deftypefun
+

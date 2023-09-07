@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/data-plan/rate/pb/gen";
+
+package ukama.dataplan.rate.v1;
+
+import "validator.proto";
+
+import "baserate.proto";
+
+/* 
+
+Rate
+Rate service adds the markup on the current cost i.e base rates and provides the final applicable rate for the user.
+If the user doesn't have any custom rates for him then the default markup is applied otherwise custom markup is considered
+
+*/
+
+service RateService {
+
+    rpc GetMarkup(GetMarkupRequest) returns (GetMarkupResponse);
+    rpc UpdateMarkup(UpdateMarkupRequest) returns (UpdateMarkupResponse);
+    rpc DeleteMarkup(DeleteMarkupRequest) returns (DeleteMarkupResponse);
+    rpc GetMarkupHistory(GetMarkupHistoryRequest) returns (GetMarkupHistoryResponse);
+    
+    rpc GetDefaultMarkup(GetDefaultMarkupRequest) returns (GetDefaultMarkupResponse);
+    rpc UpdateDefaultMarkup(UpdateDefaultMarkupRequest) returns (UpdateDefaultMarkupResponse);
+    rpc GetDefaultMarkupHistory(GetDefaultMarkupHistoryRequest) returns (GetDefaultMarkupHistoryResponse);
+    
+    rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
+    rpc GetRate(GetRateRequest) returns (GetRateResponse);
+    rpc GetRateById(GetRateByIdRequest) returns (GetRateByIdResponse);
+
+}
+
+message MarkupRates {
+    string createdAt = 1;
+    string deletedAt = 2;
+    double Markup = 3;
+}
+
+message UpdateMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    double Markup = 2;
+}
+
+message UpdateMarkupResponse {
+}
+
+message DeleteMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message DeleteMarkupResponse {
+}
+
+message GetMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetMarkupResponse {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    double Markup = 2;
+}
+
+message GetDefaultMarkupRequest {
+}
+
+message GetDefaultMarkupResponse {
+    double Markup = 1;
+}
+
+message GetDefaultMarkupHistoryRequest {
+}
+
+message GetDefaultMarkupHistoryResponse {
+    repeated MarkupRates markupRates= 1;
+}
+
+message GetMarkupHistoryRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetMarkupHistoryResponse {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    repeated MarkupRates markupRates = 2;
+}
+
+
+message UpdateDefaultMarkupRequest {
+    double Markup = 1;
+}
+
+message UpdateDefaultMarkupResponse {
+}
+
+message GetRatesRequest{
+    string country = 1;
+    string provider =2;
+    string to =3;
+    string from  = 4;
+    string simType=5 [json_name = "sim_type"];
+    string effectiveAt = 6 [json_name = "effective_at"];
+}
+
+message GetRatesResponse {
+    repeated ukama.dataplan.baserate.v1.Rate rates = 1;
+}
+
+message GetRateRequest{
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string country = 2;
+    string provider =3;
+    string to =4;
+    string from  = 5;
+    string simType=6 [json_name = "sim_type"];
+    string effectiveAt = 7 [json_name = "effective_at"];
+}
+
+message GetRateResponse{
+    repeated ukama.dataplan.baserate.v1.Rate rates =1;
+}
+
+message GetRateByIdRequest {
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string baseRate = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetRateByIdResponse {
+    ukama.dataplan.baserate.v1.Rate rate =1 ;
+}
+

@@ -1,0 +1,153 @@
+name: Build image
+description: Build application and image
+
+inputs:
+  registry-name:
+    description: The repository where the code is. Should match with the folder on deployment-repo and the container name
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+  aws-access-key: 
+    description: The AWS access key
+    required: true
+  aws-secret-key:
+    description: The AWS secret key
+    required: true
+  build-listener: 
+    description: The build listener image 
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Init vars
+    id: vars_step
+    uses: ./.github/actions/git-vars
+
+  - name: Set up Go
+    uses: actions/setup-go@v2
+    with:
+      go-version: 1.19
+
+  - name: Granting private modules access
+    shell: bash
+    run: |
+      git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
+
+  - uses: actions/cache@v3
+    with:
+      path: |
+        ~/.cache/go-build
+        ~/go/pkg/mod
+        /opt/sonar-scanner/.sonar/cache
+      key: ${{ runner.os }}-go-ukama
+      restore-keys: |
+        ${{ runner.os }}-go-
+
+  - name: Build
+    shell: bash
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    run: make build
+    working-directory: ${{ inputs.working-directory }}
+
+  - name: Test
+    shell: bash
+    run: go test -v ./... -coverprofile="coverage.out"
+    working-directory: ${{ inputs.working-directory }}
+  
+  - name: Archive code coverage results
+    uses: actions/upload-artifact@v3
+    with:
+      name: code-coverage-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/coverage.out
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ inputs.aws-access-key }}
+      aws-secret-access-key: ${{ inputs.aws-secret-key }}
+      aws-region: us-east-1
+
+  - name: Login to Amazon ECR
+    shell: bash
+    run: |
+      aws ecr get-login-password --region us-east-1 | \
+      buildah login \
+        --username AWS \
+        --password-stdin \
+        003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+  - name: OCI build and push
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    env:
+     REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run: |
+      buildah bud --pull -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.tag }} \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+        -t $REGISTRY\:latest .  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.tag }}  
+  
+  - name: OCI push [latest]
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    if: github.ref == 'refs/heads/main'
+    env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run:  buildah push $REGISTRY\:latest
+
+  - name: OCI Push listener 
+    shell: bash
+    if: ${{ inputs.build-listener == 'true' }}
+    working-directory: ${{ env.working-directory }}
+    env:
+      REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}-listener
+    run: |                        
+          buildah bud -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+              -t $REGISTRY\:${{ steps.vars_step.outputs.tag }} \
+              -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+              -t $REGISTRY\:latest .  && \
+          buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+          buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
+          buildah push $REGISTRY\:${{ steps.vars_step.outputs.tag }} 
+  
+  - name: OCI push listener  [latest]
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    if: ${{ inputs.build-listener == 'true' &&  github.ref == 'refs/heads/main' }}
+    env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}-listener
+    run:  buildah push $REGISTRY\:latest
+
+  - name: OCI Push Integration Tests
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    env:
+      REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run: |
+      buildah bud --pull -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.tag }}-test \
+        -t $REGISTRY\:latest-test .  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.tag }}-test
+
+     
+
+  - name: OCI Push Integration Tests [latest]
+    shell: bash
+    if: github.ref == 'refs/heads/main'
+    working-directory: ${{ inputs.working-directory }}
+    env:
+      REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run:  buildah push $REGISTRY\:latest-test

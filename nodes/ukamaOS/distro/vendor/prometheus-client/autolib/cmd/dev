@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+########################################################################################################################
+# Meta
+########################################################################################################################
+
+# Propagate environment variables
+if [[ "$AUTO_DEBUG" == "1" ]]; then
+  set -x
+  export AUTO_DEBUG=1
+fi
+
+PROGRAM_NAME="$(basename $0)"
+
+short="Initialize the development environment"
+
+read -d '' long <<EOF
+You MUST execute this command from your development workstation. You
+MUST NOT execute this command from an existing docker container.
+
+-e Execute the following executable
+-a Pass an argument to the executable given by -e. You may specify
+   this flag multiple times. The order is preserved.
+-p Port to map to the host environment.
+   Default: 8000
+-i The docker image to use.
+   Default: ubuntu:18.04
+   Options: ubuntu:18.04, ubuntu:16.04, debian:buster, debian:stretch, debian:jessie
+EOF
+
+usage() {
+  cat <<EOF
+
+$PROGRAM_NAME [-h | -e EXECUTABLE [-a ARG1 -a ARG2 ...]]
+
+$short
+
+DESCRIPTION
+
+$long
+
+EOF
+}
+
+########################################################################################################################
+# End Meta
+########################################################################################################################
+
+source $(dirname ${BASH_SOURCE[0]})/../autolib.sh
+
+declare DOCKER_IMAGE=${DOCKER_IMAGE:=ubuntu:18.04}
+declare DOCKER_EXEC
+declare DOCKER_PORT=${DOCKER_PORT=8000}
+declare -a DOCKER_EXEC_ARGS
+
+run(){
+  local r
+  autolib_output_banner "Building development container"
+  autolib_write_dockerfile "$DOCKER_IMAGE" || return $?
+  pushd docker > /dev/null || return $?
+    make || {
+      r=$?
+      autolib_output_error "Docker Build Failure"
+      return $r
+    }
+  popd > /dev/null
+
+  autolib_output_banner "Entering development environment"
+  declare -a args
+  args+=(--name prometheus-client-c-dev)      # Give the running container a name to use instead of the ID
+  args+=(--interactive)                       # Interactive shell
+  args+=(--volume "${PWD}:/code")             # Mount code into the container
+  args+=(--env DEV=1)                         # Enables check if executing in dev environment
+  args+=(--cap-add=SYS_PTRACE)                # Required for valgrind and gdb
+  args+=(--security-opt seccomp=unconfined)   # Required for debugging
+  args+=(--publish $DOCKER_PORT:$DOCKER_PORT) # map DOCKER_PORT to the host
+  args+=(--rm)                                # Remove when done
+  if (( ${CI} == 0 )); then
+    args+=(--tty)
+  fi
+
+  echo ${args[@]}
+  docker run ${args[@]} prometheus-client-c-dev ${DOCKER_EXEC} ${DOCKER_EXEC_ARGS[@]}
+}
+
+main(){
+  while getopts "he:a:i:p:" opt; do
+    case $opt in
+      ( h ) {
+        usage && exit 0
+      } ;;
+      ( i ) {
+        DOCKER_IMAGE="$OPTARG"
+      } ;;
+      ( e ) {
+        DOCKER_EXEC="$OPTARG"
+      } ;;
+      ( a ) {
+        DOCKER_EXEC_ARGS+=($OPTARG)
+      } ;;
+      ( p ) {
+        DOCKER_PORT=${OPTARG}
+      } ;;
+    esac
+  done
+  run $@; exit $?
+}
+
+[[ $BASH_SOURCE == $0 ]] && main $@
+
+#  curl -L -o /tmp/gcc-${GCC_VERSION}.tar.xz https://ftpmirror.gnu.org/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz && \
+#     tar xf /tmp/gcc-${GCC_VERSION}.tar.xz -C /tmp && \
+#     rm -rf /tmp/gcc-${GCC_VERSION}.tar.xz && \
+#     cd /tmp/gcc-${GCC_VERSION} && \
+#       contrib/download_prerequisites && \
+#       ./configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=/usr/local/gcc --enable-checking=release --enable-languages=c --disable-multilib && \
+#       make && \
+#       make install-strip && \
+#     cd $OLDPWD && \
+#     echo 'export PATH=/usr/local/gcc/bin:$PATH' >> /root/.bashrc && \
+#     echo 'LD_LIBRARY_PATH=/usr/local/gcc/lib64:$LD_LIBRARY_PATH' >> /root/.bashrc && \
+#     curl -sL https://github.com/Kitware/CMake/releases/download/v3.14.5/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz | tar xzf - -C /opt && \
+#     cp /opt/cmake-${CMAKE_VERSION}-Linux-x86_64/bin/* /usr/local/bin/ && \
+#     cp -R /opt/cmake-${CMAKE_VERSION}-Linux-x86_64/share/cmake-3.14 /usr/local/share/ && \

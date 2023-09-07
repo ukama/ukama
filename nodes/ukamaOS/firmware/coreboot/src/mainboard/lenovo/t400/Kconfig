@@ -1,0 +1,85 @@
+if BOARD_LENOVO_T400 || BOARD_LENOVO_T500 || BOARD_LENOVO_R400 \
+	|| BOARD_LENOVO_W500 || BOARD_LENOVO_R500
+
+config BOARD_SPECIFIC_OPTIONS
+	def_bool y
+	select SYSTEM_TYPE_LAPTOP
+	select CPU_INTEL_SOCKET_P
+	select NORTHBRIDGE_INTEL_GM45
+	select SOUTHBRIDGE_INTEL_I82801IX
+	select EC_LENOVO_PMH7
+	select EC_LENOVO_H8
+	select H8_HAS_BAT_TRESHOLDS_IMPL
+	select BOARD_ROMSIZE_KB_8192 if !BOARD_LENOVO_R500
+	select BOARD_ROMSIZE_KB_4096 if BOARD_LENOVO_R500
+	select DRIVERS_GENERIC_IOAPIC
+	select HAVE_MP_TABLE
+	select HAVE_ACPI_TABLES
+	select EC_ACPI
+	select HAVE_OPTION_TABLE
+	select HAVE_CMOS_DEFAULT
+	select HAVE_ACPI_RESUME
+	select INTEL_INT15
+	select SUPERIO_NSC_PC87382
+	select SUPERIO_NSC_PC87384
+	select DRIVERS_LENOVO_HYBRID_GRAPHICS
+	select MAINBOARD_HAS_LIBGFXINIT
+	select MAINBOARD_USES_IFD_GBE_REGION if !BOARD_LENOVO_R500
+	select INTEL_GMA_HAVE_VBT
+
+config VBOOT
+	select VBOOT_VBNV_CMOS
+	select GBB_FLAG_DISABLE_LID_SHUTDOWN
+	select GBB_FLAG_DISABLE_PD_SOFTWARE_SYNC
+	select GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC
+	select GBB_FLAG_DISABLE_FWMP
+
+config VBOOT_SLOTS_RW_A
+	default y
+
+config VBOOT_VBNV_OFFSET
+	hex
+	default 0x82
+
+config FMDFILE
+	string
+	default "src/mainboard/$(CONFIG_MAINBOARD_DIR)/vboot-rwa.fmd" if VBOOT
+
+config MAINBOARD_DIR
+	string
+	default lenovo/t400
+
+config VARIANT_DIR
+	string
+	default "t400" if BOARD_LENOVO_T400 || BOARD_LENOVO_T500 \
+		|| BOARD_LENOVO_R400 || BOARD_LENOVO_W500
+	default "r500" if BOARD_LENOVO_R500
+
+config MAINBOARD_PART_NUMBER
+	string
+	default "ThinkPad T400" if BOARD_LENOVO_T400
+	default "ThinkPad T500" if BOARD_LENOVO_T500
+	default "ThinkPad R400" if BOARD_LENOVO_R400
+	default "ThinkPad R500" if BOARD_LENOVO_R500
+	default "ThinkPad W500" if BOARD_LENOVO_W500
+
+config OVERRIDE_DEVICETREE
+	string
+	default "variants/$(CONFIG_VARIANT_DIR)/overridetree.cb"
+
+config USBDEBUG_HCD_INDEX
+	int
+	default 2
+
+config MAX_CPUS
+	int
+	default 4
+
+config CBFS_SIZE
+	hex
+	default 0x200000
+
+config INTEL_GMA_VBT_FILE
+	default "src/mainboard/$(MAINBOARDDIR)/variants/$(VARIANT_DIR)/data.vbt"
+
+endif # BOARD_LENOVO_T400

@@ -1,0 +1,145 @@
+idn2.o: idn2.c \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h \
+ ../config.h ../gl/stdint.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdint.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/stdint.h \
+ ../gl/limits.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/limits.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/limits.h \
+ ../gl/stdio.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdio.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdarg.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h \
+ ../gl/sys/types.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/types.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/endian.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/select.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h \
+ ../gl/alloca.h ../gl/string.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/string.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/strings.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/locale.h \
+ ../gl/unistd.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/unistd.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/posix.h \
+ ../gl/getopt-cdefs.h ../gl/getopt-pfx-core.h ../gl/getopt-core.h \
+ ../lib/idn2.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unitypes.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/stdint.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/inttypes.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/uniconv.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unitypes.h \
+ ../unistring/iconveh.h ../unistring/localcharset.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistr.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/cdefs.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/inline.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/stdbool.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdbool.h \
+ ../gl/error.h ../gl/gettext.h ../gl/progname.h ../gl/version-etc.h \
+ idn2_cmd.h blurbs.h
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h:
+
+../config.h:
+
+../gl/stdint.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdint.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/stdint.h:
+
+../gl/limits.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/limits.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/limits.h:
+
+../gl/stdio.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdio.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdarg.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h:
+
+../gl/sys/types.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/types.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/endian.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/select.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h:
+
+../gl/alloca.h:
+
+../gl/string.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/string.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/strings.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/locale.h:
+
+../gl/unistd.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/unistd.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/posix.h:
+
+../gl/getopt-cdefs.h:
+
+../gl/getopt-pfx-core.h:
+
+../gl/getopt-core.h:
+
+../lib/idn2.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unitypes.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/stdint.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/inttypes.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/uniconv.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unitypes.h:
+
+../unistring/iconveh.h:
+
+../unistring/localcharset.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistr.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/cdefs.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/inline.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/system/vendor/build/include/unistring/stdbool.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdbool.h:
+
+../gl/error.h:
+
+../gl/gettext.h:
+
+../gl/progname.h:
+
+../gl/version-etc.h:
+
+idn2_cmd.h:
+
+blurbs.h:

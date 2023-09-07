@@ -1,0 +1,245 @@
+# German translation of libidn2.
+# Copyright (C) 2004 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+#
+# Roland Illig <roland.illig@gmx.de>, 2004, 2009, 2011.
+# Mario Blättermann <mario.blaettermann@gmail.com>, 2019, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-05-13 17:47+0200\n"
+"Last-Translator: Mario Blättermann <mario.blaettermann@gmail.com>\n"
+"Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Lokalize 21.04.0\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "Erfolg"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "Nicht genug Speicher"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "Kodierungsformat der Locale konnte nicht erkannt werden"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "Zeichenkette konnte nicht nach UTF-8 konvertiert werden"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "Kodierungsfehler der Zeichenkette"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "Zeichenkette konnte nicht NFC-normalisiert werden"
+
+# https://de.wikipedia.org/wiki/Punycode
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "Zeichenkette enthält unzulässige Punycode-Daten"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "Mit Punycode kodierte Daten werden zu groß sein"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "Punycode-Umwandlung verursachte einen Überlauf"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "Domain-Name ist länger als 255 Zeichen"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "Domain-Label ist länger als 63 Zeichen"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "A-Label der Eingabe ist ungültig"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "A-Label der Eingabe und U-Label passen nicht zusammen"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "Zeichenkette ist nicht im Unicode-NFC-Format"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "Zeichenkette enthält verbotenes Muster aus zwei Bindestrichen"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "Zeichenkette beginnt/endet mit einem verbotenen Bindestrich"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "Zeichenkette enthält verbotenes vorangestelltes Kombinationszeichen"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "Zeichenkette enthält ein unerlaubtes Zeichen"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "Zeichenkette enthält verbotenes Context-j-Zeichen"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "Zeichenkette enthält ein Context-j-Zeichen mit Null-Regel"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "Zeichenkette enthält verbotenes Context-o-Zeichen"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "Zeichenkette enthält ein Context-o-Zeichen mit Null-Regel"
+
+# https://de.wikipedia.org/wiki/Codepoint
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "Zeichenkette enthält nicht zugewiesenen Codepoint"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "Zeichenkette hat widersprüchliche bidirektional-Eigenschaften"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "Domain-Label enthält einen verbotenen Punkt (TR 46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+"Domain-Label enthält ein im transitionalen Modus verbotenes Zeichen (TR 46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+"Domain-Label enthält ein im nicht-transitionalen Modus verbotenes Zeichen "
+"(TR 46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "A-Label-Rundlauf ist fehlgeschlagen"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Versuchen Sie »%s --help« für mehr Informationen.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Aufruf: %s [OPTION] … [STRINGS] …\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Internationalized Domain Name (IDNA2008) konvertiert Zeichenketten oder die "
+"Standardeingabe.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Befehlszeilenprogramm für die Libidn2-Implementierung nach IDNA2008.\n"
+"\n"
+"Alle Zeichenketten werden so codiert erwartet, wie es der Zeichensatz der "
+"Locale\n"
+"angibt.\n"
+"\n"
+"Um einen String zu verarbeiten, der mit »-« beginnt (zum Beispiel »-foo«),\n"
+"können Sie das Ende der Optionen mit »--« kennzeichnen.\n"
+"Zum Beispiel: »idn2 --quiet -- -foo«.\n"
+"\n"
+"Notwendige Argumente für die langen Optionen gelten genau so für die\n"
+"kurzen Optionen.\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help                Hilfe ausgeben und beenden\n"
+"  -V, --version             Version ausgeben und beenden\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              Domainname dekodieren (Punycode)\n"
+"  -l, --lookup              Domainname nachschlagen (Standard)\n"
+"  -r, --register            Label registrieren\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               Transitionale TR46-Verarbeitung aktivieren\n"
+"  -N, --tr46nt              Nicht-transitionale TR46-Verarbeitung "
+"aktivieren\n"
+"      --no-tr46             TR46-Verarbeitung deaktivieren\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   STD3-ASCII-Regeln aktivieren\n"
+"      --no-alabelroundtrip  A-Label-Rundlauf für "
+"Nachschlagungen                              deaktivieren\n"
+"      --debug               Debugging-Informationen ausgeben\n"
+"      --quiet               Still arbeiten\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Zeichensatz: %s«\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Geben Sie jede Eingabezeichenkette in einer eigenen Zeile ein, durch einen "
+"Zeilenumbruch abgeschlossen.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "Eingabefehler"

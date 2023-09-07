@@ -1,0 +1,13 @@
+#Highlevel TODO items for the mesh.d
+
+. Convert tinyproxy into lib and integrate main into mesh.d device
+. Add reverse proxy on mesh.d (remote)
+. Forward packet from local client (on remote) to cloud. (complete bi-dir works)
+. REST API for promethous to gather stats.
+. Controller piece for managing mesh.d, certs, keys, etc.
+. Enable East-West connectivity between nodes. currently is only North-South.
+. Interface wtih MQQT to publish notification etc.
+. Implement stats counters.
+. CLI
+. logging.
+. Performance tunning, testing, etc.

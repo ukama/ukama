@@ -1,0 +1,14 @@
+=========================== Aleena Stoney VBIOS BRT39459 release  ======================================
+Aleena Stoney VBIOS BRT39459
+BRT39459.001 11/27/18,03:10:27 CL#1712289 @ 15.49.0.18 ATOMBuild#435785
+
+Major Changes included:
+1. Change register UNIPHY_TMDP_REG3_TMDP_EDP_HIGH_VDIFF_CLK2_AND_PL0_VL0_VAL to 0x250d8001
+2. Change register UNIPHY_TX_CONTROL3_TMDP_EDP_HIGH_VDIFF_CLK2_AND_PL0_VL0_VAL to 0x09000000
+
+=========================== Aleena Stoney VBIOS BRT39201 release  ======================================
+Aleena Stoney VBIOS BRT39201
+BRT39201.001 11/21/18,03:43:46 CL#1709986 @ 15.49.0.18 ATOMBuild#435327
+
+Major Changes included:
+1. First Stoney VBIOS released to Aleena w/ eDP SI tuning result.

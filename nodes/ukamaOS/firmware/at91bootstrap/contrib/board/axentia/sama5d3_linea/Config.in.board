@@ -1,0 +1,19 @@
+config SAMA5D3_LINEA
+	bool "sama5d3_linea"
+	select SAMA5D3X
+	select DDRC
+	select LPDDR1
+	select ALLOW_NANDFLASH
+	select ALLOW_SDCARD
+	select ALLOW_CPU_CLK_266MHZ
+	select ALLOW_CPU_CLK_332MHZ
+	select ALLOW_CPU_CLK_396MHZ
+	select ALLOW_CPU_CLK_444MHZ
+	select ALLOW_CPU_CLK_498MHZ
+	select ALLOW_CPU_CLK_528MHZ
+	select ALLOW_CRYSTAL_12_000MHZ
+	select SUPPORT_BUS_SPEED_133MHZ
+	select SUPPORT_BUS_SPEED_148MHZ
+	select SUPPORT_BUS_SPEED_166MHZ
+	help
+	    Use the Axentia Linea SAMA5D31-based module

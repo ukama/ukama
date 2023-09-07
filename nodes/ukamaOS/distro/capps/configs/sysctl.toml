@@ -1,0 +1,40 @@
+
+#
+# Sysctl config file to build and create capp 
+#
+
+# Application build parameters
+
+[build-from]
+	rootfs="default"     # default is busybox minimal capp config
+	contained="default"  # default namespace, cgroup, etc.
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/home/kashif/work/ukama/ukamaOS/distro/vendor/sysctl"
+	cmd="make"
+	bin_from="/home/kashif/work/ukama/ukamaOS/distro/vendor/sysctl/sysctl"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf /proc/sys"
+
+[build-conf]
+        from="/home/kashif/work/ukama/ukamaOS/distro/vendor/sysctl/00-linuxkit.conf"
+        to="/conf/sysctl_config.file"
+
+# Following are use to create config.json file which is used by lxce.d to start 
+# the capp within ukamaOS and pkg everything
+[capp-exec]
+	name="sysctl"
+	version="latest"
+	bin="sysctl"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	args="-configDir /conf/sysctl_config.file"
+	
+# Final output format for capp
+[capp-output]
+	format="tar.gz"
+
+# Nothing to see here. Move on.

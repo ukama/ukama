@@ -1,0 +1,12 @@
+config SAMA5D27_UKAMA_ANODE
+	bool "sama5d27_ukama_anode"
+	select SAMA5D2
+	select CPU_V7
+	select DDRC
+	select ALLOW_DATAFLASH
+	select ALLOW_SDCARD
+	select ALLOW_CPU_CLK_492MHZ
+	select ALLOW_CRYSTAL_24_000MHZ
+	select SUPPORT_BUS_SPEED_164MHZ
+	help
+	  Use the Ukama Anode device

@@ -1,0 +1,25 @@
+@subheading idn2_to_unicode_44i
+@anchor{idn2_to_unicode_44i}
+@deftypefun {int} {idn2_to_unicode_44i} (const uint32_t * @var{in}, size_t @var{inlen}, uint32_t * @var{out}, size_t * @var{outlen}, int @var{flags})
+@var{in}: Input array with UTF-32 code points.
+
+@var{inlen}: number of code points of input array
+
+@var{out}: output array with UTF-32 code points.
+
+@var{outlen}: on input, maximum size of output array with UTF-32 code points,
+on exit, actual size of output array with UTF-32 code points.
+
+@var{flags}: Currently unused.
+
+The ToUnicode operation takes a sequence of UTF-32 code points
+that make up one domain label and returns a sequence of UTF-32
+code points. If the input sequence is a label in ACE form, then the
+result is an equivalent internationalized label that is not in ACE
+form, otherwise the original sequence is returned unaltered.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+

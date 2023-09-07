@@ -1,0 +1,17 @@
+.config
+log
+log/*
+config/at91bootstrap-config/
+.config.cmd
+.config.old
+.auto.deps
+.prepared
+build
+result
+binaries
+*~
+*.orig
+*.o
+tags
+*.swp
+*.pyc

@@ -1,0 +1,45 @@
+@subheading idn2_lookup_u8
+@anchor{idn2_lookup_u8}
+@deftypefun {int} {idn2_lookup_u8} (const uint8_t * @var{src}, uint8_t ** @var{lookupname}, int @var{flags})
+@var{src}: input zero-terminated UTF-8 string in Unicode NFC normalized form.
+
+@var{lookupname}: newly allocated output variable with name to lookup in DNS.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+Perform IDNA2008 lookup string conversion on domain name  @code{src} , as
+described in section 5 of RFC 5891.  Note that the input string
+must be encoded in UTF-8 and be in Unicode NFC form.
+
+Pass @code{IDN2_NFC_INPUT}  in  @code{flags} to convert input to NFC form before
+further processing.  @code{IDN2_TRANSITIONAL}  and @code{IDN2_NONTRANSITIONAL} 
+do already imply @code{IDN2_NFC_INPUT} .
+
+Pass @code{IDN2_ALABEL_ROUNDTRIP}  in  @code{flags} to
+convert any input A-labels to U-labels and perform additional
+testing. This is default since version 2.2.
+To switch this behavior off, pass IDN2_NO_ALABEL_ROUNDTRIP
+
+Pass @code{IDN2_TRANSITIONAL}  to enable Unicode TR46
+transitional processing, and @code{IDN2_NONTRANSITIONAL}  to enable
+Unicode TR46 non-transitional processing.
+
+Multiple flags may be specified by binary or:ing them together.
+
+After version 2.0.3: @code{IDN2_USE_STD3_ASCII_RULES}  disabled by default.
+Previously we were eliminating non-STD3 characters from domain strings
+such as _443._tcp.example.com, or IPs 1.2.3.4/24 provided to libidn2
+functions. That was an unexpected regression for applications switching
+from libidn and thus it is no longer applied by default.
+Use @code{IDN2_USE_STD3_ASCII_RULES}  to enable that behavior again.
+
+After version 0.11:  @code{lookupname} may be NULL to test lookup of  @code{src} without allocating memory.
+
+@strong{Returns:} On successful conversion @code{IDN2_OK}  is returned, if the
+output domain or any label would have been too long
+@code{IDN2_TOO_BIG_DOMAIN}  or @code{IDN2_TOO_BIG_LABEL}  is returned, or
+another error code is returned.
+
+@strong{Since:} 0.1
+@end deftypefun
+

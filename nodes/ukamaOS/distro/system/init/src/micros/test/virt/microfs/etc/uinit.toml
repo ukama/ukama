@@ -1,0 +1,43 @@
+init:
+    - name: "init"
+      image: "init"
+      version: "v0.0.1"
+    - name: "runc"
+      init: "runc"
+      version: "v0.0.1"
+      path: "/bin/runc"
+    - name: "uCE"
+      image: "uCE"
+      version: "v0.0.1" 
+      path: "/bin/uCE" 
+onboot:
+    - name: sysctl
+      image: "harbor/ukama/sysctl"
+      version: "v0.0.1"
+      path: "/containers/onboot/000-sysctl"
+    - name: "dhcpcd"
+      image: "harbor/ukama/dhcpcd"
+      version: "v0.0.1"
+      path: "/containers/onboot/001-dhcpcd"
+
+onshutdown:
+    - name: poweroff
+      image: "harbor/ukama/poweroff"
+      version: "v0.0.1"
+sysservice:
+    - name: dm
+      image: "harbor/ukama/dm"
+      version: "v0.0.1"
+      path: "/containers/onboot/dm"
+    - name: "edr"
+      image: "harbor/ukama/edr"
+      version: "v0.0.1"
+      path: "/containers/onboot/edr"
+userservice:
+    - name: lte
+      image: "harbor/ukama/lte"
+      version: "v0.0.1"
+      path: "/containers/onboot/lte"
+
+
+

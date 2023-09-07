@@ -1,0 +1,31 @@
+{
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
+
+	"name": "shutdown",
+	"hostname": "ukama-shutdown",
+	"uid": "0",
+	"gid": "0",
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "uts"
+		},
+		{
+			"type": "mount"
+		},
+		{
+			"type": "user"
+		}
+	],
+
+	"capabilities": [
+		"CAP_SYSLOG",
+		"CAP_SYS_TIME",
+		"CAP_NET_ADMIN"
+	]
+}
+

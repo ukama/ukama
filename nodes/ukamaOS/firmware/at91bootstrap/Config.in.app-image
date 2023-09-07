@@ -1,0 +1,27 @@
+menu "Demo Application Image Storage Setup"
+	depends on LOAD_64KB || LOAD_1MB || LOAD_4MB
+
+config IMG_ADDRESS
+	string "Flash Offset for Demo-App"
+	depends on DATAFLASH || FLASH || NANDFLASH
+	default "0x00008400" if DATAFLASH
+	default "0x00040000" if NANDFLASH
+	default	"0x00000000" if SDCARD
+
+config IMG_SIZE
+	string "Demo-App Image Size"
+	depends on DATAFLASH || FLASH || NANDFLASH
+	default	"0x00010000"	if LOAD_64KB
+	default	"0x00100000"	if LOAD_1MB
+	default	"0x00400000"	if LOAD_4MB
+	help
+	  at91bootstrap will copy this size of Demo-App image
+
+config JUMP_ADDR
+	string "The External Ram Address to Load Demo-App Image"
+	default "0x70000000" if AT91SAM9G45
+	default "0x20000000"
+	help
+	  The entry point to which the bootstrap will pass control.
+
+endmenu

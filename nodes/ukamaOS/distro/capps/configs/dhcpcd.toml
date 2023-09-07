@@ -1,0 +1,41 @@
+
+#
+# dhcpcd config file to build and create capp 
+#
+
+# Application build parameters
+
+[build-from]
+	rootfs="default"     # default is busybox minimal capp config
+	contained="default"  # default namespace, cgroup, etc.
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/home/kashif/work/ukama/ukamaOS/distro/vendor/"
+	cmd="make dhcpcd XGCCPATH=/usr/bin/"
+	bin_from="/home/kashif/work/ukama/ukamaOS/distro/vendor/build/sbin/dhcpcd"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+        from="/home/kashif/work/ukama/ukamaOS/distro/vendor/build/etc/dhcpcd.conf"
+        to="/conf/dhcpcd_config.file"
+
+# Following are use to create config.json file which is used by lxce.d to start 
+# the capp within ukamaOS and pkg everything
+[capp-exec]
+	name="dhcpcd"
+	version="latest"
+	bin="dhcpcd"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	args="--config /conf/dhcpcd_config.file"
+
+	
+# Final output format for capp
+[capp-output]
+	format="tar.gz"
+
+# Nothing to see here. Move on.

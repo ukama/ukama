@@ -1,0 +1,232 @@
+{
+	"header":	{
+		"dbversion":	{
+			"major":	0,
+			"minor":	1
+		},
+		"index_table_offset":	64,
+		"index_tuple_size":	24,
+		"index_tuple_max_count":	50,
+		"index_current_tuple":	10,
+		"module_capability":	"AUTONOMOUS",
+		"module_mode":	"MASTER",
+		"module_device_owner":	"DEVICE_OWNER"
+	},
+	"index_table":	[{
+			"field_id":	1,
+			"payload_offset":	2560,
+			"payload_size":	159,
+			"payload_version":	{
+				"major":	0,
+				"minor":	1
+			},
+			"payload_crc":	1968601988,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	2,
+			"payload_offset":	2752,
+			"payload_size":	246,
+			"payload_version":	{
+				"major":	0,
+				"minor":	2
+			},
+			"payload_crc":	3421000616,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	3,
+			"payload_offset":	3776,
+			"payload_size":	167,
+			"payload_version":	{
+				"major":	0,
+				"minor":	3
+			},
+			"payload_crc":	3421000616,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	4,
+			"payload_offset":	3968,
+			"payload_size":	620,
+			"payload_version":	{
+				"major":	0,
+				"minor":	4
+			},
+			"payload_crc":	1876718055,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	5,
+			"payload_offset":	6400,
+			"payload_size":	151,
+			"payload_version":	{
+				"major":	0,
+				"minor":	5
+			},
+			"payload_crc":	1086213052,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	6,
+			"payload_offset":	10496,
+			"payload_size":	151,
+			"payload_version":	{
+				"major":	0,
+				"minor":	6
+			},
+			"payload_crc":	1973727029,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	7,
+			"payload_offset":	14592,
+			"payload_size":	153,
+			"payload_version":	{
+				"major":	0,
+				"minor":	1
+			},
+			"payload_crc":	4150665426,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	8,
+			"payload_offset":	18688,
+			"payload_size":	153,
+			"payload_version":	{
+				"major":	0,
+				"minor":	1
+			},
+			"payload_crc":	3124760747,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	9,
+			"payload_offset":	22784,
+			"payload_size":	151,
+			"payload_version":	{
+				"major":	0,
+				"minor":	1
+			},
+			"payload_crc":	334372334,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}, {
+			"field_id":	10,
+			"payload_offset":	26880,
+			"payload_size":	154,
+			"payload_version":	{
+				"major":	0,
+				"minor":	1
+			},
+			"payload_crc":	3702013338,
+			"state":	"ENABLED",
+			"valid":	"TRUE"
+		}],
+	"unit_info":	{
+		"UUID":	"UK-5001-ANODE-SA03-1101",
+		"name":	"aNode",
+		"type":	4,
+		"partno":	"RFCTRL-BOARD--0XXXX",
+		"skew":	"UK_ANODE-GSM-0001",
+		"mac":	"10:20:30:20:50:64",
+		"sw_version":	{
+			"major":	0,
+			"minor":	1
+		},
+		"production_sw_version":	{
+			"major":	1,
+			"minor":	1
+		},
+		"assembly_date":	"30-07-2020",
+		"OEM_name":	"SANMINA",
+		"module_count":	2
+	},
+	"unit_config":	[{
+			"UUID":	"UK-5001-RFC-1101",
+			"name":	"RF CTRL BOARD",
+			"dbsysfs":	"/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
+			"devicedb":	{
+				"bus":	2,
+				"address":	80
+			}
+		}, {
+			"UUID":	"UK-4001-RFA-1101",
+			"name":	"RF BOARD",
+			"dbsysfs":	"/tmp/sys/bus/i2c/devices/i2c-1/1-0052/eeprom",
+			"devicedb":	{
+				"bus":	1,
+				"address":	80
+			}
+		}],
+	"module_info":	{
+		"UUID":	"UK-5001-RFC-1101",
+		"name":	"RF CTRL BOARD",
+		"type":	2,
+		"partno":	"RF-CTRL-1001",
+		"hw_version":	"REV-A",
+		"mac":	"10:20:30:20:50:64",
+		"sw_version":	{
+			"major":	0,
+			"minor":	1
+		},
+		"production_sw_version":	{
+			"major":	1,
+			"minor":	1
+		},
+		"manufacturing_date":	"31-07-2020",
+		"manufacturer_name":	"AVALON",
+		"device_count":	6
+	},
+	"module_config":	[{
+			"name":	"SE98",
+			"description":	"RF MicroProcessor",
+			"type":	1,
+			"class":	2,
+			"devsysfs":	"/tmp/sys/class/hwmon/hwmon0/5/se98_1/",
+			"dev_hwattrs":	{
+				"bus":	1,
+				"address":	24
+			}
+		}, {
+			"name":	"TMP464",
+			"description":	"Pmic",
+			"type":	1,
+			"class":	2,
+			"devsysfs":	"/tmp/sys/class/hwmon/hwmon0/5/tmp464_1/",
+			"dev_hwattrs":	{
+				"bus":	0,
+				"address":	48
+			}
+		}, {
+			"name":	"LED-TRICOLOR",
+			"description":	"RF LED 0",
+			"type":	4,
+			"class":	1,
+			"devsysfs":	"/tmp/sys/class/led/led0/"
+		}, {
+			"name":	"LED-TRICOLOR",
+			"description":	"RF LED 1",
+			"type":	4,
+			"class":	1,
+			"devsysfs":	"/tmp/sys/class/led/led1/"
+		}, {
+			"name":	"LED-TRICOLOR",
+			"description":	"RF LED 2",
+			"type":	4,
+			"class":	1,
+			"devsysfs":	"/tmp/sys/class/led/led2/"
+		}, {
+			"name":	"LED-TRICOLOR",
+			"description":	"RF LED 3",
+			"type":	4,
+			"class":	1,
+			"devsysfs":	"/tmp/sys/class/led/led3/"
+		}],
+	"factory_config":	"mfgdata/schema/fact.cfg",
+	"user_config":	"mfgdata/schema/user.cfg",
+	"fact_calibaration":	"mfgdata/schema/fact.calib",
+	"user_calibration":	"mfgdata/schema/user.calib",
+	"boot_strap_certs":	"mfgdata/schema/bs.certs",
+	"lwm2m2_certs":	"mfgdata/schema/lwm2m.certs"
+}

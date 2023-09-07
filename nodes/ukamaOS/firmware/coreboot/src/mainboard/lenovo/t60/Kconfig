@@ -1,0 +1,49 @@
+if BOARD_LENOVO_T60 || BOARD_LENOVO_Z61T || BOARD_LENOVO_R60
+
+config BOARD_SPECIFIC_OPTIONS
+	def_bool y
+	select SYSTEM_TYPE_LAPTOP
+	select CPU_INTEL_SOCKET_M
+	select NORTHBRIDGE_INTEL_I945
+	select NORTHBRIDGE_INTEL_SUBTYPE_I945GM
+	select SOUTHBRIDGE_INTEL_I82801GX
+	select SUPERIO_NSC_PC87382
+	select SUPERIO_NSC_PC87384
+	select SOUTHBRIDGE_TI_PCI1X2X
+	select EC_LENOVO_PMH7
+	select EC_LENOVO_H8
+	select DRIVERS_I2C_CK505
+	select HAVE_OPTION_TABLE
+	select INTEL_INT15
+	select HAVE_MP_TABLE
+	select BOARD_ROMSIZE_KB_2048
+	select HAVE_ACPI_TABLES
+	select HAVE_ACPI_RESUME
+	select HAVE_CMOS_DEFAULT
+	select I945_LVDS
+	select INTEL_GMA_HAVE_VBT
+
+config MAINBOARD_DIR
+	string
+	default lenovo/t60
+
+config VARIANT_DIR
+	string
+	default "t60" if BOARD_LENOVO_T60 || BOARD_LENOVO_R60
+	default "z61t" if BOARD_LENOVO_Z61T
+
+config OVERRIDE_DEVICETREE
+	string
+	default "variants/$(CONFIG_VARIANT_DIR)/overridetree.cb"
+
+config MAINBOARD_PART_NUMBER
+	string
+	default "ThinkPad T60" if BOARD_LENOVO_T60
+	default "ThinkPad Z61t" if BOARD_LENOVO_Z61T
+	default "ThinkPad R60" if BOARD_LENOVO_R60
+
+config MAX_CPUS
+	int
+	default 2
+
+endif # BOARD_LENOVO_T60 || BOARD_LENOVO_Z61T || BOARD_LENOVO_R60

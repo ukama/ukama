@@ -1,0 +1,2 @@
+config LINUX_KERNEL_ARG_STRING
+	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if SAMA5D2_ICP && SDCARD

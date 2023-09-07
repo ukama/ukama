@@ -1,0 +1,805 @@
+config	HAVE_DOT_CONFIG
+	bool
+	default y
+
+choice
+	prompt "Board Type"
+	default	AT91SAM9260EK
+	help
+	  Select which board you want to build for
+
+source "board/at91sam9260ek/Config.in.board"
+source "board/at91sam9261ek/Config.in.board"
+source "board/at91sam9263ek/Config.in.board"
+source "board/at91sam9rlek/Config.in.board"
+source "board/at91sam9xeek/Config.in.board"
+source "board/at91sam9g10ek/Config.in.board"
+source "board/at91sam9g20ek/Config.in.board"
+source "board/at91sam9m10g45ek/Config.in.board"
+source "board/at91sam9x5ek/Config.in.board"
+source "board/at91sam9n12ek/Config.in.board"
+source "board/sama5d3xek/Config.in.board"
+source "board/sama5d3_xplained/Config.in.board"
+source "board/sama5d3x_cmp/Config.in.board"
+source "board/sama5d4ek/Config.in.board"
+source "board/sama5d4_xplained/Config.in.board"
+source "board/sama5d2_ptc_ek/Config.in.board"
+source "board/sama5d2_xplained/Config.in.board"
+source "board/sama5d27_som1_ek/Config.in.board"
+source "board/sama5d27_wlsom1_ek/Config.in.board"
+source "board/sama5d27_ukama_anode/Config.in.board
+source "board/sama5d2_lpddr2sip_vb/Config.in.board"
+source "board/sama5d2_icp/Config.in.board"
+source "board/sam9x60ek/Config.in.board"
+source "board/sam9x60_ddr2_sip_eb/Config.in.board"
+source "board/sam9x60_sdr_sip_eb/Config.in.board"
+source "board/sama7g5ek/Config.in.board"
+source "contrib/board/Config.in.board"
+
+endchoice
+
+config BOARDNAME
+	string
+	default "at91sam9rlek"	if AT91SAM9RLEK
+	default "at91sam9260ek"	if AT91SAM9260EK
+	default "at91sam9261ek"	if AT91SAM9261EK
+	default "at91sam9263ek"	if AT91SAM9263EK
+	default "at91sam9xeek"	if AT91SAM9XEEK
+	default "at91sam9g10ek"	if AT91SAM9G10EK
+	default "at91sam9g20ek"	if AT91SAM9G20EK
+	default "at91sam9m10g45ek" if AT91SAM9M10G45EK
+	default "at91sam9n12ek"	if AT91SAM9N12EK
+	default "at91sam9x5ek"	if AT91SAM9X5EK
+	default "sama5d3_xplained" if SAMA5D3_XPLAINED
+	default "sama5d3xek" if SAMA5D3XEK
+	default "sama5d3x_cmp" if SAMA5D3X_CMP
+	default "sama5d4_xplained" if SAMA5D4_XPLAINED
+	default "sama5d4ek" if SAMA5D4EK
+	default "sama5d2_ptc_ek" if SAMA5D2_PTC_EK
+	default "sama5d2_xplained" if SAMA5D2_XPLAINED
+	default "sama5d27_som1_ek" if SAMA5D27_SOM1_EK
+	default "sama5d27_wlsom1_ek" if SAMA5D27_WLSOM1_EK
+	default "sama5d27_ukama_anode" if SAMA5D27_UKAMA_ANODE
+	default "sama5d2_lpddr2sip_vb" if SAMA5D2_LPDDR2SIP_VB
+	default "sama5d2_icp" if SAMA5D2_ICP
+	default "sam9x60ek" if SAM9X60EK
+	default "sam9x60_ddr2_sip_eb" if SAM9X60_DDR2_SIP_EB
+	default "sam9x60_sdr_sip_eb" if SAM9X60_SDR_SIP_EB
+	default "sama7g5ek" if SAMA7G5EK
+source "contrib/board/Config.in.boardname"
+
+config AT91SAM9260
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_MCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9261
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_MCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9263
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_MCI0
+	select CPU_HAS_MCI1
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9RL
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_SCKC
+	select CPU_HAS_SPI0
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9XE
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_MCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9G10
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_MCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9G20
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_MCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9G45
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_SCKC
+	select CPU_HAS_HSMCI0
+	select CPU_HAS_HSMCI1
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config AT91SAM9X5
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_TWI2
+	select CPU_HAS_SCKC
+	select CPU_HAS_PIO3
+	select CPU_HAS_PMECC
+	select CPU_HAS_HSMCI0
+	select CPU_HAS_HSMCI1
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config SAM9X60
+	select CORE_ARM926EJS
+	select CPU_HAS_SCKC
+	select CPU_HAS_PIO3
+	select CPU_HAS_PMECC
+	select CPU_HAS_SDHC0
+	select CPU_HAS_SDHC1
+	select CPU_HAS_QSPI0
+	select CPU_HAS_WDT2
+	select CPU_HAS_SCLK_BYPASS
+	select CPU_HAS_FLEXCOM
+	select CPU_HAS_QSPI_RICR_WICR
+	bool
+
+config AT91SAM9N12
+	select CORE_ARM926EJS
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_SCKC
+	select CPU_HAS_PIO3
+	select CPU_HAS_PMECC
+	select CPU_HAS_HSMCI0
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config SAMA5D3X
+	select CORE_CORTEX_A5
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_TWI2
+	select CPU_HAS_AES
+	select CPU_HAS_SCKC
+	select CPU_HAS_PIO3
+	select CPU_HAS_PMECC
+	select CPU_HAS_HSMCI0
+	select CPU_HAS_HSMCI1
+	select CPU_HAS_HSMCI2
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SCLK_BYPASS
+	bool
+
+config SAMA5D4
+	select CORE_CORTEX_A5
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_TWI2
+	select CPU_HAS_TWI3
+	select CPU_HAS_AES
+	select CPU_HAS_L2CC
+	select CPU_HAS_SCKC
+	select CPU_HAS_H32MXDIV
+	select CPU_HAS_PIO3
+	select CPU_HAS_PMECC
+	select CPU_HAS_TRUSTZONE
+	select CPU_HAS_HSMCI0
+	select CPU_HAS_HSMCI1
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SPI2
+	bool
+
+config SAMA5D2
+	select CORE_CORTEX_A5
+	select CPU_HAS_TWI0
+	select CPU_HAS_TWI1
+	select CPU_HAS_FLEXCOM
+	select CPU_HAS_AES
+	select CPU_HAS_L2CC
+	select CPU_HAS_SCKC
+	select CPU_HAS_H32MXDIV
+	select CPU_HAS_PIO4
+	select CPU_HAS_PMECC
+	select CPU_HAS_TRUSTZONE
+	select CPU_HAS_SDHC0
+	select CPU_HAS_SDHC1
+	select CPU_HAS_SPI0
+	select CPU_HAS_SPI1
+	select CPU_HAS_SPI0_IOSET1
+	select CPU_HAS_SPI0_IOSET2
+	select CPU_HAS_SPI1_IOSET1
+	select CPU_HAS_SPI1_IOSET2
+	select CPU_HAS_SPI1_IOSET3
+	select CPU_HAS_QSPI0
+	select CPU_HAS_QSPI1
+	select CPU_HAS_QSPI0_IOSET1
+	select CPU_HAS_QSPI0_IOSET2
+	select CPU_HAS_QSPI0_IOSET3
+	select CPU_HAS_QSPI1_IOSET1
+	select CPU_HAS_QSPI1_IOSET2
+	select CPU_HAS_QSPI1_IOSET3
+	bool
+
+config SAMA7G5
+	select CORE_CORTEX_A7
+	select CPU_HAS_PIO4
+	select CPU_HAS_SCKC
+	select CPU_HAS_SCLK_BYPASS
+	select CPU_HAS_FLEXCOM
+	select CPU_HAS_TRUSTZONE
+	select CPU_HAS_WDT2
+	select CPU_HAS_DWDT
+	select CPU_HAS_SDHC0
+	select CPU_HAS_SDHC1
+	bool
+
+config MACH_TYPE
+	string
+	default "1099"	if AT91SAM9260
+	default "0x350"	if AT91SAM9261
+	default "0x4B2"	if AT91SAM9263
+	default "1326"	if AT91SAM9RL
+	default "0x44B"	if AT91SAM9XE
+	default "0x86F"	if AT91SAM9G10
+	default "0x658"	if AT91SAM9G20
+	default "1830"	if AT91SAM9G45
+	default "3373"	if AT91SAM9X5
+	default "9999"	if AT91SAM9N12
+	default "3373"	if SAM9X60
+	default "9999"	if SAMA5D3X
+	default "9999"	if SAMA5D4
+	default "9999"	if SAMA5D2
+	default "9999"	if SAMA7G5
+
+config OVERRIDE_MACH_TYPE
+	bool "Override the default mach type"
+	help
+	  This setting will let you choose a custom mach type.
+	  The selected CUSTOM_MACH_TYPE will override the autoselected
+	  MACH_TYPE setting which is based on the selected board.
+
+if OVERRIDE_MACH_TYPE
+
+config CUSTOM_MACH_TYPE
+	string "custom mach type"
+	default MACH_TYPE
+	help
+	  Custom mach type
+
+endif
+
+config LINK_ADDR
+	string
+	default "0x200000" if AT91SAM9260 || AT91SAM9G20 || SAMA5D4  || SAMA5D2
+	default "0x100000" if SAMA7G5
+	default "0x300000" if !(AT91SAM9260 && AT91SAM9G20)
+
+
+config DATA_SECTION_ADDR
+	string
+	default "0x304000" if AT91SAM9XE
+
+
+config TOP_OF_MEMORY
+	string
+	default "0x301000"	if AT91SAM9260
+	default "0x328000"	if AT91SAM9261
+	default "0x314000"	if AT91SAM9263
+	default "0x310000"	if AT91SAM9RL
+	default "0x306000"	if AT91SAM9XE
+	default "0x304000"	if AT91SAM9G10
+	default "0x304000"	if AT91SAM9G20
+	default "0x30A000"	if AT91SAM9G45
+	default "0x308000"	if AT91SAM9X5
+	default "0x308000"	if AT91SAM9N12
+	default "0x308000"	if SAM9X60
+	default "0x310000"	if SAMA5D3X
+	default "0x210000"	if SAMA5D4
+	default "0x210000"	if SAMA5D2
+	default "0x120000"	if SAMA7G5
+	help
+	    The top address of internal SRAM
+
+menu "Main Crystal configuration"
+
+choice
+	prompt "Crystal Frequency"
+	default CRYSTAL_18_432MHZ
+	help
+	  Select the crystal frequency
+
+config CRYSTAL_12_000MHZ
+	bool "Build for use of an 12.000 MHz crystal"
+	depends on ALLOW_CRYSTAL_12_000MHZ
+
+config CRYSTAL_16_000MHZ
+	bool "Build for use of an 16.000 MHz crystal"
+	depends on ALLOW_CRYSTAL_16_000MHZ
+
+config CRYSTAL_16_36766MHZ
+	bool "Build for use of an 16.36766 MHz crystal"
+	depends on ALLOW_CRYSTAL_16_36766MHZ
+
+config CRYSTAL_18_432MHZ
+	bool "Build for use of an 18.432 MHz crystal"
+	depends on ALLOW_CRYSTAL_18_432MHZ
+
+config CRYSTAL_24_000MHZ
+	bool "Build for use of an 24.000 MHz crystal"
+	depends on ALLOW_CRYSTAL_24_000MHZ
+
+endchoice
+
+config MCK_BYPASS
+	bool "Use external clock signal as a source of main clock"
+	default n
+	help
+	  Use external 8 to 24 Mhz clock signal as source of main clock instead
+	  of an external crystal oscillator.
+	  This option disables the internal driving on the XOUT pin.
+	  The external source has to provide a stable clock on the XIN pin.
+	  If this option is disabled, the SoC expects a crystal oscillator
+	  that needs driving on both XIN and XOUT lines.
+
+endmenu
+
+config ALLOW_CRYSTAL_12_000MHZ
+	bool
+
+config ALLOW_CRYSTAL_16_000MHZ
+	bool
+
+config ALLOW_CRYSTAL_16_36766MHZ
+	bool
+
+config ALLOW_CRYSTAL_18_432MHZ
+	bool
+
+config ALLOW_CRYSTAL_24_000MHZ
+	bool
+
+config CRYSTAL
+	string
+
+
+config CRYSTAL
+	string
+	default "CRYSTAL_12_000MHZ"	if CRYSTAL_12_000MHZ
+	default "CRYSTAL_16_000MHZ"	if CRYSTAL_16_000MHZ
+	default "CRYSTAL_16_36766MHZ"	if CRYSTAL_16_36766MHZ
+	default "CRYSTAL_18_432MHZ"	if CRYSTAL_18_432MHZ
+	default "CRYSTAL_24_000MHZ"     if CRYSTAL_24_000MHZ
+	default "CRYSTAL_18_432MHZ"
+
+choice
+	prompt "CPU clock"
+	default CPU_CLK_200MHZ
+	default CPU_CLK_492MHZ if SAMA5D2_PTC_EK
+	default CPU_CLK_498MHZ if SAMA5D2_XPLAINED
+	default CPU_CLK_492MHZ if SAMA5D27_SOM1_EK
+	default CPU_CLK_492MHZ if SAMA5D27_WLSOM1_EK
+	default CPU_CLK_492MHZ if SAMA5D27_UKAMA_ANODE
+	default CPU_CLK_498MHZ if SAMA5D2_LPDDR2SIP_VB
+
+
+config	CPU_CLK_166MHZ
+	bool "166 MHz"
+	depends on ALLOW_CPU_CLK_166MHZ
+
+config	CPU_CLK_180MHZ
+	bool "180 MHz"
+	depends on ALLOW_CPU_CLK_180MHZ
+
+config	CPU_CLK_200MHZ
+	bool "200 MHz"
+	depends on ALLOW_CPU_CLK_200MHZ
+
+config	CPU_CLK_240MHZ
+	bool "240 MHz"
+	depends on ALLOW_CPU_CLK_240MHZ
+	depends on !DISABLE_CPU_CLK_240MHZ
+
+config	CPU_CLK_266MHZ
+	bool "266 MHz"
+	depends on ALLOW_CPU_CLK_266MHZ
+
+config	CPU_CLK_332MHZ
+	bool "332 MHz"
+	depends on ALLOW_CPU_CLK_332MHZ
+
+config	CPU_CLK_348MHZ
+	bool "348 MHz"
+	depends on ALLOW_CPU_CLK_348MHZ
+
+config	CPU_CLK_396MHZ
+	bool "396 MHz"
+	depends on ALLOW_CPU_CLK_396MHZ
+
+config	CPU_CLK_400MHZ
+	bool "400 MHz"
+	depends on ALLOW_CPU_CLK_400MHZ
+
+config	CPU_CLK_444MHZ
+	bool "444 MHz"
+	depends on ALLOW_CPU_CLK_444MHZ
+
+config CPU_CLK_492MHZ
+	bool "492 MHz"
+	depends on ALLOW_CPU_CLK_492MHZ
+
+config CPU_CLK_498MHZ
+	bool "498 MHz"
+	depends on ALLOW_CPU_CLK_498MHZ
+
+config CPU_CLK_510MHZ
+	bool "510 MHz"
+	depends on ALLOW_CPU_CLK_510MHZ
+
+config CPU_CLK_528MHZ
+	bool "528 MHz"
+	depends on ALLOW_CPU_CLK_528MHZ
+
+config CPU_CLK_594MHZ
+	bool "594 MHz"
+	depends on ALLOW_CPU_CLK_594MHZ
+
+config CPU_CLK_600MHZ
+	bool "600 MHz"
+	depends on ALLOW_CPU_CLK_600MHZ
+
+config CPU_CLK_800MHZ
+	bool "800 MHz"
+	depends on ALLOW_CPU_CLK_800MHZ
+
+config CPU_CLK_1000MHZ
+	bool "1000 MHz"
+	depends on ALLOW_CPU_CLK_1000MHZ
+
+endchoice
+
+config	ALLOW_CPU_CLK_166MHZ
+	bool
+
+config	ALLOW_CPU_CLK_180MHZ
+	bool
+
+config	ALLOW_CPU_CLK_200MHZ
+	bool
+
+config	ALLOW_CPU_CLK_240MHZ
+	bool
+
+config	ALLOW_CPU_CLK_266MHZ
+	bool
+
+config	ALLOW_CPU_CLK_332MHZ
+	bool
+
+config	ALLOW_CPU_CLK_348MHZ
+	bool
+
+config	ALLOW_CPU_CLK_396MHZ
+	bool
+
+config	ALLOW_CPU_CLK_400MHZ
+	bool
+
+config	ALLOW_CPU_CLK_444MHZ
+	bool
+
+config  ALLOW_CPU_CLK_492MHZ
+	bool
+
+config  ALLOW_CPU_CLK_498MHZ
+	bool
+
+config  ALLOW_CPU_CLK_510MHZ
+	bool
+
+config  ALLOW_CPU_CLK_528MHZ
+	bool
+
+config  ALLOW_CPU_CLK_594MHZ
+	bool
+
+config  ALLOW_CPU_CLK_600MHZ
+	bool
+
+config  ALLOW_CPU_CLK_800MHZ
+	bool
+
+config  ALLOW_CPU_CLK_1000MHZ
+	bool
+
+config	DISABLE_CPU_CLK_240MHZ
+	bool
+	default y if AT91SAM9263EK && CRYSTAL_16_36766MHZ
+	default n
+
+choice
+	prompt "Bus Speed"
+	default BUS_SPEED_133MHZ
+	help
+	  Select the speed of the bus
+
+config BUS_SPEED_83MHZ
+	bool "83 MHz"
+	depends on SUPPORT_BUS_SPEED_83MHZ && CPU_CLK_166MHZ
+
+config BUS_SPEED_90MHZ
+	bool "90 MHz"
+	depends on SUPPORT_BUS_SPEED_90MHZ && CPU_CLK_180MHZ
+
+config BUS_SPEED_100MHZ
+	bool "100 MHz"
+	depends on SUPPORT_BUS_SPEED_100MHZ && (CPU_CLK_200MHZ || CPU_CLK_400MHZ)
+
+config BUS_SPEED_116MHZ
+	bool "116 MHz"
+	depends on SUPPORT_BUS_SPEED_116MHZ && CPU_CLK_348MHZ
+
+config BUS_SPEED_124MHZ
+	bool "124 MHz"
+	depends on SUPPORT_BUS_SPEED_124MHZ && CPU_CLK_498MHZ
+
+config BUS_SPEED_133MHZ
+	bool "133 MHz"
+	depends on SUPPORT_BUS_SPEED_133MHZ && (CPU_CLK_528MHZ || CPU_CLK_400MHZ || CPU_CLK_396MHZ || CPU_CLK_266MHZ)
+
+config BUS_SPEED_148MHZ
+	bool "148 MHz"
+	depends on SUPPORT_BUS_SPEED_148MHZ && (CPU_CLK_444MHZ || CPU_CLK_594MHZ)
+
+config BUS_SPEED_164MHZ
+	bool "164 MHz"
+	depends on SUPPORT_BUS_SPEED_164MHZ && CPU_CLK_492MHZ
+
+config BUS_SPEED_166MHZ
+	bool "166 MHz"
+	depends on SUPPORT_BUS_SPEED_166MHZ && (CPU_CLK_498MHZ || CPU_CLK_332MHZ)
+
+config BUS_SPEED_170MHZ
+	bool "170 MHz"
+	depends on SUPPORT_BUS_SPEED_170MHZ && CPU_CLK_510MHZ
+
+config BUS_SPEED_176MHZ
+	bool "176 MHz"
+	depends on SUPPORT_BUS_SPEED_176MHZ && CPU_CLK_528MHZ
+
+config BUS_SPEED_200MHZ
+	bool "200 MHz"
+	depends on SUPPORT_BUS_SPEED_200MHZ && (CPU_CLK_600MHZ || CPU_CLK_800MHZ || CPU_CLK_1000MHZ)
+
+endchoice
+
+config SUPPORT_BUS_SPEED_83MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_90MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_100MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_116MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_124MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_133MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_148MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_164MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_166MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_170MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_176MHZ
+	bool
+
+config SUPPORT_BUS_SPEED_200MHZ
+	bool
+
+config CPU_HAS_TRUSTZONE
+	bool
+	default n
+
+config CPU_HAS_TZC400
+	bool
+	default n
+
+config CPU_V7
+	bool
+	default n
+
+config HAS_PMIC_ACT8865
+	bool
+	default n
+
+config SUPPORT_PM
+	bool
+	default n
+
+config HAS_ONE_WIRE
+	bool
+	default n
+
+config HAS_EEPROM
+	bool
+	default n
+
+config HAS_EHT0_PHY
+	bool
+	default n
+
+config HAS_EHT1_PHY
+	bool
+	default n
+
+config HAS_AUDIO_CODEC
+	bool
+	default n
+
+config HAS_HDMI
+	bool
+	default n
+
+config CORE_ARM926EJS
+	bool
+	default n
+
+config CORE_CORTEX_A5
+	bool
+	default n
+
+config CORE_CORTEX_A7
+	bool
+	default n
+
+config CPU_HAS_SCKC
+	bool
+	default n
+
+config CPU_HAS_H32MXDIV
+	bool
+	default n
+
+config CPU_HAS_HSMCI0
+	bool
+	default n
+
+config CPU_HAS_HSMCI1
+	bool
+	default n
+
+config CPU_HAS_HSMCI2
+	bool
+	default n
+
+config CPU_HAS_MCI0
+	bool
+	default n
+
+config CPU_HAS_MCI1
+	bool
+	default n
+
+config CPU_HAS_SDHC0
+	bool
+	default n
+
+config CPU_HAS_SDHC1
+	bool
+	default n
+
+config CPU_HAS_SPI0
+	bool
+	default n
+
+config CPU_HAS_SPI1
+	bool
+	default n
+
+config CPU_HAS_SPI0_IOSET1
+	bool
+	default n
+
+config CPU_HAS_SPI0_IOSET2
+	bool
+	default n
+
+config CPU_HAS_SPI1_IOSET1
+	bool
+	default n
+
+config CPU_HAS_SPI1_IOSET2
+	bool
+	default n
+
+config CPU_HAS_SPI1_IOSET3
+	bool
+	default n
+
+config CPU_HAS_QSPI0
+	bool
+	default n
+
+config CPU_HAS_QSPI1
+	bool
+	default n
+
+config CPU_HAS_QSPI0_IOSET1
+	bool
+	default n
+
+config CPU_HAS_QSPI0_IOSET2
+	bool
+	default n
+
+config CPU_HAS_QSPI0_IOSET3
+	bool
+	default n
+
+config CPU_HAS_QSPI1_IOSET1
+	bool
+	default n
+
+config CPU_HAS_QSPI1_IOSET2
+	bool
+	default n
+
+config CPU_HAS_QSPI1_IOSET3
+	bool
+	default n
+
+config BOARD_HAS_2_BANKS
+	bool
+	default n
+
+config CPU_HAS_SCLK_BYPASS
+	bool
+	default n
+

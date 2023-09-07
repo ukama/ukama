@@ -1,0 +1,246 @@
+config SPI_FLASH
+	bool
+	default n
+
+config ALLOW_DATAFLASH_RECOVERY
+	bool
+	default	n
+
+config	SPI_CLK
+	int "SPI clock speed"
+	default 33000000
+	help
+	  Which speed (in Hz) should the SPI run at.
+
+config DATAFLASH_RECOVERY
+	bool "Support Dataflash recovery by pressing a button"
+	default y
+	depends on ALLOW_DATAFLASH_RECOVERY
+	help
+	  Let bootstrap disassemble the first 7 double words
+	  and check that all, except the reserved vector
+	  contains a jump/branch
+
+choice
+	prompt "SPI Interface Select"
+	default	SPI
+
+config SPI
+	bool "Standard SPI Interface"
+	depends on CPU_HAS_SPI0 || CPU_HAS_SPI1 || CPU_HAS_SPI1
+
+config QSPI
+	select SPI_FLASH
+	bool "Quad SPI Interface"
+	depends on CPU_HAS_QSPI0 || CPU_HAS_QSPI1
+
+endchoice
+
+menu  "SPI configuration"
+	depends on SPI
+
+config SMALL_DATAFLASH
+	bool "Support < 32 Mbit dataflashes"
+	default	y
+	help
+	  Deselect this to save some bytes of memory
+	  at the expense of flexibility in selecting memory sizes.
+
+# ------- SPI boot source -----------------------------------------------------
+choice
+	prompt "SPI Bus Select"
+	default SPI_BUS0
+
+
+config SPI_BUS0
+	bool "SPI Bus 0"
+	depends on CPU_HAS_SPI0
+
+config SPI_BUS1
+	bool "SPI Bus 1"
+	depends on CPU_HAS_SPI1
+
+config SPI_BUS2
+	bool "SPI Bus 2"
+	depends on CPU_HAS_SPI2
+
+endchoice
+
+menu  "SPI IOSET Select"
+	depends on CPU_HAS_PIO4
+
+choice
+	prompt "SPI0 IOSET"
+	depends on SPI_BUS0
+	default	SPI0_IOSET_1
+
+
+config SPI0_IOSET_1
+	depends on CPU_HAS_SPI0_IOSET1
+	bool "SPI0 IOSET 1"
+
+config SPI0_IOSET_2
+	depends on CPU_HAS_SPI0_IOSET2
+	bool "SPI0 IOSET 2"
+
+endchoice
+
+choice
+	prompt "SPI1 IOSET"
+	depends on SPI_BUS1
+	default	SPI1_IOSET_1
+
+
+config SPI1_IOSET_1
+	depends on CPU_HAS_SPI1_IOSET1
+	bool "SPI1 IOSET 1"
+
+config SPI1_IOSET_2
+	depends on CPU_HAS_SPI1_IOSET2
+	bool "SPI1 IOSET 2"
+
+config SPI1_IOSET_3
+	depends on CPU_HAS_SPI1_IOSET3
+	bool "SPI1 IOSET 3"
+
+endchoice
+
+endmenu
+
+choice
+	prompt "Chip Select"
+	default SPI_BOOT_CS0
+	help
+	  Determine which SPI chip select is to be used
+
+config	SPI_BOOT_CS0
+	bool	"Boot from chip select 0"
+	depends on ALLOW_BOOT_FROM_DATAFLASH_CS0
+
+config	SPI_BOOT_CS1
+	bool	"Boot from chip select 1"
+	depends on ALLOW_BOOT_FROM_DATAFLASH_CS1
+
+config	SPI_BOOT_CS2
+	bool	"Boot from chip select 2"
+	depends on ALLOW_BOOT_FROM_DATAFLASH_CS2
+
+config	SPI_BOOT_CS3
+	bool	"Boot from chip select 3"
+	depends on ALLOW_BOOT_FROM_DATAFLASH_CS3
+
+endchoice
+
+config DATAFLASHCARD_ON_CS0
+	bool
+	default n
+
+config DATAFLASHCARD_ON_CS1
+	bool
+	default n
+
+config DATAFLASHCARD_ON_CS2
+	bool
+	default n
+
+config DATAFLASHCARD_ON_CS3
+	bool
+	default n
+
+config DATAFLASHCARD
+	bool
+	default y if DATAFLASHCARD_ON_CS0 && SPI_BOOT_CS0
+	default y if DATAFLASHCARD_ON_CS1 && SPI_BOOT_CS1
+	default y if DATAFLASHCARD_ON_CS2 && SPI_BOOT_CS2
+	default y if DATAFLASHCARD_ON_CS3 && SPI_BOOT_CS3
+	default n
+
+config CARD_SUFFIX
+	string
+	default "card" if DATAFLASHCARD
+	default ""
+
+config SPI_BOOT
+	string
+	default "AT91C_SPI_PCS0_DATAFLASH"	if SPI_BOOT_CS0
+	default "AT91C_SPI_PCS1_DATAFLASH"	if SPI_BOOT_CS1
+	default "AT91C_SPI_PCS2_DATAFLASH"	if SPI_BOOT_CS2
+	default "AT91C_SPI_PCS3_DATAFLASH"	if SPI_BOOT_CS3
+
+endmenu
+
+menu "QSPI Configuration"
+	depends on QSPI
+
+choice
+	prompt "QSPI Bus Select"
+	default QSPI_BUS0
+
+
+config QSPI_BUS0
+	bool "QSPI Bus 0"
+	depends on CPU_HAS_QSPI0
+
+config QSPI_BUS1
+	bool "QSPI Bus 1"
+	depends on CPU_HAS_QSPI1
+
+endchoice
+
+menu  "QSPI IOSET Select"
+	depends on CPU_HAS_PIO4
+
+choice
+	prompt "QSPI0 IOSET"
+	depends on QSPI_BUS0
+	default	QSPI0_IOSET_1
+
+
+config QSPI0_IOSET_1
+	depends on CPU_HAS_QSPI0_IOSET1
+	bool "QSPI0 IOSET 1"
+
+config QSPI0_IOSET_2
+	depends on CPU_HAS_QSPI0_IOSET2
+	bool "QSPI0 IOSET 2"
+
+config QSPI0_IOSET_3
+	depends on CPU_HAS_QSPI0_IOSET3
+	bool "QSPI0 IOSET 3"
+
+endchoice
+
+choice
+	prompt "QSPI1 IOSET"
+	depends on QSPI_BUS1
+	default	QSPI1_IOSET_1
+
+
+config QSPI1_IOSET_1
+	depends on CPU_HAS_QSPI1_IOSET1
+	bool "QSPI1 IOSET 1"
+
+config QSPI1_IOSET_2
+	depends on CPU_HAS_QSPI1_IOSET2
+	bool "QSPI1 IOSET 2"
+
+config QSPI1_IOSET_3
+	depends on CPU_HAS_QSPI1_IOSET3
+	bool "QSPI1 IOSET 3"
+
+endchoice
+
+endmenu
+
+config QSPI_4B_OPCODES
+	bool "Quad SPI NOR flash memory is >16MiB (>128Mib)"
+	default n
+	help
+	  Should be selected when the size of SPI NOR flash memory is above
+	  16MiB (128Mib).
+
+config QSPI_XIP
+	bool "eXecute In Place"
+	default n
+
+endmenu

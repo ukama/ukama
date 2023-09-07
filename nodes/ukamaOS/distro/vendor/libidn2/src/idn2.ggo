@@ -1,0 +1,25 @@
+# Copyright (C) 2011-2021 Simon Josefsson
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+option "decode" d "Decode (punycode) domain name" no
+option "lookup" l "Lookup domain name (default)" no
+option "register" r "Register label" no
+option "tr46t" T "Enable TR46 transitional processing" flag off
+option "tr46nt" N "Enable TR46 non-transitional processing" flag off
+option "no-tr46" - "Disable TR46 processing" flag off
+option "usestd3asciirules" - "Enable STD3 ASCII rules" flag off
+option "no-alabelroundtrip" - "Disable A-label roundtrip for lookups" flag off
+option "debug" - "Print debugging information" flag off
+option "quiet" - "Silent operation" flag off

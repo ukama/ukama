@@ -1,0 +1,3 @@
+config LINUX_KERNEL_ARG_STRING
+	default "mem=64M console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel),60M(rootfs),-(spare) root=/dev/mtdblock1 rw rootfstype=jffs2" if AT91SAM9263EK && !SDCARD
+	default "mem=64M console=ttyS0,115200 root=/dev/mmcblk0p2 rootdelay=2" if AT91SAM9263EK && SDCARD

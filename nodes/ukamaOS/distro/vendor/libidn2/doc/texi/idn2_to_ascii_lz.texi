@@ -1,0 +1,25 @@
+@subheading idn2_to_ascii_lz
+@anchor{idn2_to_ascii_lz}
+@deftypefun {int} {idn2_to_ascii_lz} (const char * @var{input}, char ** @var{output}, int @var{flags})
+@var{input}: zero terminated input UTF-8 string.
+
+@var{output}: pointer to newly allocated output string.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+Convert a domain name in locale's encoding to ASCII string using the IDNA2008
+rules.  The domain name may contain several labels, separated by dots.
+The output buffer must be deallocated by the caller.
+
+The default behavior of this function (when flags are zero) is to apply
+the IDNA2008 rules without the TR46 amendments. As the TR46
+non-transitional processing is nowadays ubiquitous, when unsure, it is
+recommended to call this function with the @code{IDN2_NONTRANSITIONAL} 
+and the @code{IDN2_NFC_INPUT}  flags for compatibility with other software.
+
+@strong{Returns:} @code{IDN2_OK}  on success, or error code.
+Same as described in @code{idn2_lookup_ul()}  documentation.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+

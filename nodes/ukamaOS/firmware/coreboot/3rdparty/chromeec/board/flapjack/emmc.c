@@ -1,0 +1,1 @@
+../../baseboard/kukui/emmc.c

@@ -1,0 +1,3019 @@
+2021-07-19  Simon Josefsson  <simon@josefsson.org>
+
+	version 2.3.2
+	* NEWS: Record release date.
+
+	Update gnulib submodule.
+
+	doc: Don't ship HTML/PDF manual.  Drop custom CSS stylesheet.
+
+	doc: More GTK-DOC fixes.
+
+	doc: Improve GTK-DOC manual.
+
+	doc: Suggest abigail-tools for abidiff.
+
+	Ignore more.
+
+	doc: Mention GNULIB_SRCDIR envvar.
+
+	Fix build errors related to doc/idn2--help.texi.  Closes: #93.
+	With older makeinfo, this would manifest itself by looking for
+	idn2-help.texi instead.  Further, some BSD grep implementations did
+	not like the \+ regexp command, so we now rely on the (apparently)
+	more portable * regexp command.  Reported-By: David Gessel.  See
+	<https://gitlab.com/libidn/libidn2/-/issues/93>.
+
+	cicd: Try to fix armcross by adding apt-get update.  Closes: #94.
+
+2021-05-18  Simon Josefsson  <simon@josefsson.org>
+
+	Use https URLs.
+
+	doc: Add NEWS item.
+
+	Try bootstrap cache.
+
+	Update TR46 tables from Unicode to 13. Now U+32FF works. Fixes #77.
+
+2021-05-14  Simon Josefsson  <simon@josefsson.org>
+
+	Update IdnaTest.txt from Unicode 6.3.0 to 10.0.0.
+
+	Use local valgrind suppressions file.  Fixes #88.
+
+	cicd: Improve sast.
+
+	cicd: Use normal stage names.
+
+	cicd: Configure SAST.
+
+	Update gnulib files.
+
+	Update gnulib files.
+
+	cicd: See if new VALGRINDFLAGS works.
+
+	Update gnulib.
+
+	Improve valgrind handling.
+
+	cicd: Drop T-CentOS6.
+
+	cicd: Drop old B-CentOS7.
+
+	cicd: More CentOS fixes.
+
+	cicd: Avoid yum.
+
+	cicd: Fix CentOS6.
+
+	cicd: Add CentOS6.
+
+	Fix CentOS targets.
+
+2021-05-13  Simon Josefsson  <simon@josefsson.org>
+
+	cicd: T-Centos needs libunistring-devel for #88 too.
+
+	Attempt to reproduce #88.
+
+	Fix typo.
+
+	Drop gendoc, made redundant via redme-release.
+
+	Markup fixes.  Drop badges from here, they are configured on GitLab.
+
+	Add lgtm badge.  Fix pipeline badge.
+
+2021-05-12  Simon Josefsson  <simon@josefsson.org>
+
+	Fix valgrind summary text.
+
+	Work around buggy gnulib_dir default.
+
+	Hopefully fix fuzz-coverage badge.
+
+	cicd: Perform syntax-check early.
+
+	Indent code.
+
+	Spell check.
+
+	Doc fixes.
+
+	Update README-release patch.
+
+	Add, work around our peculiar webroot.
+
+	Fix title of manual.
+
+	Really add old_NEWS_hash.
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.3.1
+	* NEWS: Record release date.
+
+	Further cicd optimization.
+
+	Optimize cicd.
+
+	Add arm cross-compile, one from git and one from tarball.
+
+	Move calls that rely on iconv to test-locale.c, and skip it when no iconv.  Fixes: #84.
+
+	Modernize versioning and release infrastructure.
+
+2021-05-11  Simon Josefsson  <simon@josefsson.org>
+
+	Use term A-label consistently.
+
+	Fix cicd.
+
+	Doc fix.
+
+	Fix help2man dependency.
+
+	Fix .gitignore.
+
+	Autogenerate idn2 --help for libidn2.texi too.
+
+	Sync idn2 man page with tool automatically.
+
+	Sync idn2 --help to get new --no-alabelroundtrip.
+
+	Silence gettext.h VLA warning.
+
+	Drop obsolete maintainer rules.
+
+	Update macro.
+
+	Refresh IDNA table.
+
+	Sync bootstrap from gnulib.
+
+	Fix copyright years.
+
+	Remove test code.
+
+	Fix typo, suggested by Benno Schulenberg.
+
+2021-05-10  Simon Josefsson  <simon@josefsson.org>
+
+	Remove, does not appear to be used.
+
+	Build fixes.
+
+	Reorder.
+
+	Use older ax_prog_cc_for_build.m4 that works with autoconf < 2.70.
+
+	Update gnulib.
+
+2021-03-30  Simon Josefsson  <simon@josefsson.org>
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Fix.
+
+	Add.
+
+2021-02-27  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Avoid malloca in libgnu.a to get rid of 'multiple definition of mmalloca'
+
+	Add ax_code_coverage.m4 again as CI fails when autoconf-archive isn't installed
+
+	Remove @CODE_COVERAGE_RULES@, 'make coverage' works without it
+
+2021-02-20  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Create m4/ if it doesn't exist
+
+	lib/Makefile.am: Use defaults for BUILD vars
+
+	Remove .m4 files from m4/ (autoconf-archive provides them)
+
+2021-01-17  Simon Josefsson  <simon@josefsson.org>
+
+	Reorder.
+
+	Update CC_FOR_BUILD macro.
+
+	Update copyright years.  Add custom my-update-copyright rule.
+
+	Move test generator script.
+
+	Update bootstrap script.
+
+	doc: Update build dependencies.
+
+2021-01-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	* .gitlab-ci.yml: Do no use && to concatenate commands
+
+	* gitlab-ci.yml: Save config.h on failure
+
+	* bootstrap.conf: Remove git reset --hard
+
+2021-01-10  Simon Josefsson  <simon@josefsson.org>
+
+	Skip PO files.
+
+	Print CC_FOR_BUILD after ./configure has run for debugging.
+
+	Update gnulib.
+
+	Build fixes for newer gnulib.
+
+	Sync bootstrap script with gnulib.
+
+	Drop valgrind patch that break bootstrap.
+
+2021-01-06  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	* gl/override/m4/valgrind-tests.m4.diff: Update
+
+	* gnulib: Update
+
+2020-11-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix domain too long error
+	Reported-by: Ian Eldred Pudney <puddles@google.com>
+
+2020-11-19  Simon Josefsson  <simon@josefsson.org>
+
+	Ignore more.
+
+2020-11-17  Simon Josefsson  <simon@josefsson.org>
+
+	Add NEWS blurb.
+
+2020-05-01  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix fuzzers (broken by previous commit)
+
+	Add and/or amend the licenses for files in fuzz/
+
+2020-02-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Implement full roundtrip for lookup functionality
+	With TR64 enabled (default), 'â˜ºi' was converted to 'xn-- o-oia59s'.
+	The output contains an illegal space and thus could not be decoded any more.
+
+	References:
+	https://gitlab.com/libidn/libidn2/issues/78
+	https://gitlab.isc.org/isc-projects/bind9/issues/1610
+
+	Reported-by: Chris Malton
+
+2019-12-26  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix copyright line for 'idn2 --version'
+
+2019-11-14  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Use make -j12 when creating release files
+
+	Remove 'except: tags' from CI tarball generator
+
+	Fix: Enable test-glibc only on host_os 'linux-gnu' (Fixes #72)
+
+	Update NEWS for release
+
+	Enable test-glibc only on host_os 'linux-gnu' (Fixes #72)
+
+	Prepare for release
+
+2019-11-13  Florian Weimer  <fweimer@redhat.com>
+
+	Turn _idn2_punycode_encode, _idn2_punycode_decode into compat symbols
+	These internal symbols should not be used by applications, but were
+	previously exported.  Contrary to our expectations, outright removal
+	is not possible due to some use in old GNUTLS versions.
+
+	The aliases are required because internal hidden references turn the
+	target symbol into a hidden symbol.  It would have been possible to
+	preserve the internal API using another __asm__ alias, but this commit
+	renames the call sites instead, for simplicity.
+
+	The -export-symbols-regex argument in lib/Makefile.am is not adjusted
+	because targets which do not support version scripts probably do not
+	have stringent backwards compatibility requirements.
+
+	Fixes libidn/libidn2#74.
+
+2019-07-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update NEWS for CVE-2019-12290
+
+2019-06-23  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	NOTES: removed; this file no longer reflects development approach
+
+2019-06-22  Orivej Desh  <orivej@gmx.fr>
+
+	Update data tables from Unicode 6.3.0 to Unicode 11.0.0
+
+2019-06-22  Orivej Desh  <orivej@gmx.fr>
+
+	Generate data.c from idna-tables-properties.csv
+	This simplifies the generation of data.c and allows to distclean it since that
+	becomes independent from perl.
+
+	The generated data.c is identical.
+
+2019-06-21  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: updated conversion from libidn instructions
+	This now uses the IDN2_USE_STD3_ASCII_RULES and recommends using
+	the default flags rather than explicitly specify the transitional.
+
+2019-05-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Set gnulib-tool's --test_base to gl/tests
+
+2019-05-23  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update NEWS and configure.ac for release
+
+	Fix generation of idn2.1 man page file
+
+	Skip sc_prohibit_gnu_make_extensions in 'make syntax-check'
+
+	Fix some gtk-doc issues
+
+	Update gnulib
+
+2019-05-13  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	* doc/gdoc: Fix URL to online manual
+
+2019-04-12  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	abi-check: simplify ABI comparison using libabigail tools
+	These have output ABI format compatibility and that means we can
+	take snapshots to test ABI against. We also hard-code explicitly
+	the SONAME version to ensure no accidental SONAME bumps happen.
+
+2019-04-11  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	.gitlab-ci.yml: add config.log in artifacts
+
+	.gitlab-ci.yml: fedora: moved to f29
+
+2019-04-11  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix strncasecmp conflicts
+
+	Add test for round-trip failure
+
+	Fix lookup round-trip check
+
+2019-04-10  Florian Weimer  <fweimer@redhat.com>
+
+	Add test-glibc, based on API traces from the glibc AI_IDN tests
+	This test should ensure that future libidn2 changes do not break
+	the expectations of the glibc test suite.
+
+2019-04-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Perform A-Label roundtrip for lookup functions by default
+	This adds another check to avoid unexpected results.
+	It was a longstanding FIXME.
+
+	Thanks to  Jonathan Birch of Microsoft Corporation,
+	Florian Weimer (GNU glibc) and Nikos Mavrogiannopoulos (GnuTLS)
+	for investigation, discussion and testing.
+
+2019-04-10  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	coverage badge: generate line coverage
+	Previously we were reporting the highest number from the coverage html.
+	We now switch to the first number which is the line coverage.
+
+	Resolves: #70
+
+2019-02-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Stricter check of punycode-decode input
+
+2019-02-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix overflow introduced in ce0d453222ca51c056f4f442988710eb0b696365
+
+2019-02-23  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix decoding with no ASCII chars but given delimiter
+	Reported-by: Florian Weimer
+
+2019-02-20  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	idn2: Respect --no-tr46 (was a no-op)
+
+	Allow _ as basic code point in domain labels
+
+2019-02-09  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fail make if 'ronn' doesn't existi when building docs
+
+	Update contrib/release to create -latest files
+
+2019-02-09  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Revert "Remove redundant input check in idn2_to_ascii_4i()"
+	This reverts commit 144f4ba6f8fe899fa15516524a495c9175dff6cb.
+
+	Undoing a stupid failure...
+
+2019-02-09  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove redundant input check in idn2_to_ascii_4i()
+
+2019-02-08  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update NEWS for release
+
+2019-01-29  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Adjust green of fuzz-coverage badge
+
+	Create pages via CI for master only
+
+	Create SVG badge for fuzz coverage
+
+2019-01-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Don't export _idn2_* symbols for non-ld linkers
+
+	register_fuzzer: Add NULL input/output tests
+
+	ascii_8z_fuzzer: Add NULL input/output tests
+
+	unicode_8z8z_fuzzer: Add NULL input/output tests
+
+2019-01-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Revert SONAME bump
+	See discussion at https://gitlab.com/libidn/libidn2/merge_requests/69
+	and at https://gitlab.com/libidn/libidn2/issues/63
+
+	Cleanup tests/test-lookup.c
+
+	Fuzz error code
+
+2019-01-22  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	tests/test-lookup.c: Fix printf() crash on Solaris
+
+	Punycode encode: Check input for valid unicode
+
+	fuzz/main.c: Avoid alloca() / VLA / heap allocation
+
+2019-01-20  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Avoid excessive CPU usage with large inputs to idn2_lookup_u8()
+	The punycode encoding was done on any input sizes, the output length check
+	happended afterwards. Due to the O(N^2) nature of the encoding, this
+	lead to excessive CPU usage on large inputs.
+	This was unneeded because the result was IDN2_TOO_BIG_DOMAIN anyways.
+
+	It allowed a Denial-Of-Service (DOS) if the calling functions didn't
+	have their own length check. In fact we saw this as timeout issues
+	when fuzzing GnuTLS via OSS-Fuzz.
+
+	The affected functions are idn2_lookup_u8(), idn2_lookup_ul(),
+	idn2_to_ascii_4i, idn2_to_ascii_4i2(), idn2_to_ascii_4z(),
+	idn2_to_ascii_8z(), idn2_to_ascii_lz().
+
+	Also the tool 'idn2' is affected in lookup/toASCII mode.
+
+2019-01-20  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	test-lookup.c: Remove non UTF-8 chars from comment
+
+2019-01-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	README.md: Add fuzzing section [skip ci]
+
+	README.md: Fix several links [skip ci]
+
+	Update oss-fuzz corpora
+
+	run-clang.sh: Fix -I directory
+
+2019-01-12  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Use gnulib repo from git.savannah.gnu.org
+
+	Add compiler-suggested function attributes
+
+2019-01-11  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update fuzzer corpora from oss-fuzz
+
+2019-01-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix include in lib/tr64map.h
+
+	Fix gcc attributes and header guards
+
+	Deprecate idn2_to_ascii_4i(), add idn2_to_ascii_4i2()
+
+2019-01-09  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Publish fuzzing code coverage, add a reference to README.md
+
+	Add fuzzing of version and error functions
+
+	Remove overhead from error.c, add missing TR46 values
+
+	Update fuzz corpora from oss-fuzz
+
+	get_ossfuzz_corpora: Improve download speed
+
+	Add crash reproducer from oss-fuzz
+
+	idn2_to_ascii_4i(): Restrict output length to 63
+
+2019-01-06  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix libidn2_to_ascii_8z_fuzzer for C++
+
+2019-01-05  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update NEWS
+
+	Improve libidn2_to_ascii_8z_fuzzer
+
+	Fix free of random (stack) value in idn2_to_ascii_4i()
+
+	Update NEWS
+
+	Add libidn2_register_fuzzer and corpora
+
+2019-01-04  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix version for release
+
+	Update NEWS and configure.ac for release
+
+	Update gnulib
+
+2018-12-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix typos found by contrib/spell-checker
+
+	Add contrib/spell-checker
+
+2018-12-21  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix label length check for idn2_register_u8()
+	idn2_register_u8() returned IDN2_TOO_BIG_LABEL even in cases
+	where the a-label was <= 63 characters (but the ulabel was > 63 chars).
+
+	Reported-by: Mauro Lozano
+
+	Bug report at https://gitlab.com/libidn/libidn2/issues/60
+
+2018-11-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	bootstrap: Fix if 'python' command isn't found
+
+2018-11-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Improve CI tarball build
+
+	Test tarball build in CI
+
+	Update gnulib submodule
+
+2018-07-12  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix typo
+
+	Do not expose _idn2_punycode_* functions
+
+2018-07-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix typos in docs of lib/lookup.c
+
+	Amend fuzz/ to clang-6.0
+
+	Stricter checks for input and output of punycode_decode()
+
+2018-07-06  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Check codepoint validity in punycode_decode()
+	punycode_decode() was able to generate invalid unicode values
+	returned with IDN2_OK. The only affected function was
+	idn2_to_unicode_8z4z().
+
+	Reported-by: Mike Schiffman (Farsight Security, Inc.)
+
+2018-07-02  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	idn2_to_unicode: clarify that @flags are unused
+	Resolves #55
+
+2018-06-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add missing errors in idn2_strerror_name()
+
+	Cleanup .gitignore (fixes CI build)
+
+	Exclude bootstrap in cfg.mk
+
+	Fix 'AC_COMPILE_IFELSE was called before AC_USE_SYSTEM_EXTENSIONS'
+
+	Use python gnulib-tool if possible (much faster)
+
+	Fix gcc warning 'nested extern'
+
+	Do not remove docs with 'make check'
+	Removing them break tarball builds without developer tools
+	after 'make clean'.
+
+2018-05-30  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Use printf's %u instead of %zu for better compatibility
+
+	Makefile.am: Check for .git directory before calling git
+
+2018-05-18  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove hard-coded gcc warn flag -Wno-missing-field-initializers
+	That flag is not understood by e.g. Solaris cc.
+
+	Update release date in NEWS
+
+2018-05-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix configure.ac for older versions of gtk-doc
+
+2018-05-15  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	NEWS: corrected typo [ci skip]
+
+	doc: document new flags and behavior
+
+2018-05-14  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	configure.ac: bumped version to 2.0.5
+
+2018-05-12  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	apply TR#46 non-transitional processing by default
+	This switches the default library behavior from "pure" IDNA2008
+	to IDNA2008 + non-transitional processing. This can be API and
+	ABI break for certain applications which intentionally needed
+	the non amended IDNA2008.  It is done in the interest of interoperability
+	based on the fact that this is what most application writers care about
+	rather than strict compliance with a particular protocol.
+
+	Resolves #49
+
+2018-05-12  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	introduced flag to disable TR46 processing
+	These introduce flag IDN2_NO_TR46 which can be used by applications
+	to explicitly disable TR46 processing which is now the default option.
+
+	tests: removed IdnaTest.inc as it is generated from txt
+
+2018-05-11  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	gen-utc-test.pl: skip lines which would have generated empty tests
+	Resolves #50
+
+2018-04-13  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add gnulib module getopt-gnu
+
+2018-03-31  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix 'make check-valgrind'
+
+	Fix linking of libunistring
+	The fix allows to link libunistring with rpath, e.g. when installing
+	an own version in /usr/local for testing, this will be linked to
+	the fuzzers and linkers. Before this fix, the system installed version
+	was linked.
+
+	Fix uninitialized var in src/idn2.c
+
+2018-03-23  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: corrected typo
+
+2018-03-22  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: updated idn2 command line options
+
+	documentation clarifications
+
+2018-03-21  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	idn2_to_ascii: clarified documentation on default flags [ci skip]
+
+2018-03-21  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: mention that stringprep is not included and obsolete
+	Provide an advice on what applications requiring stringprep should do,
+	and what new applications which require similar processing should do.
+
+	Resolves #28
+
+2018-03-21  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	README.md: the homepage of libidn2 is de facto the gitlab site and the manual
+
+2018-03-19  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	documented changes since 2.0.4 [ci skip]
+
+2018-03-18  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	abi-check target was updated to check against the previous release
+	As abi-dumper and abi-compliance-checker tools are not always reliable
+	when run across systems, we compare the previous tag ABI with the current
+	compiled library.
+
+	Resolves #42
+
+2018-03-16  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Revert "Update abi-compliance-checker dump files"
+	This reverts commit 65513357cabdb8911d05c0ff5d10ff3fb2f8d575.
+
+	Revert "Remove abi-compliance-check from Gitlab CI"
+	This reverts commit a620d7dbaf83526e31449ad8529d929a302ff7da.
+
+2018-03-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix memleak in idn2_to_unicode_8zlz()
+
+	Return error (IDN2_ICOV_FAIL) on charset conversion errors
+
+2018-02-18  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix idn2 --nostd3asciirules to --usestd3asciirules
+
+2018-02-08  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix STD3 ASCII rules
+
+2018-02-02  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix --disable-doc configure option
+
+2017-12-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Use fedora27 image in .gitlab-ci.yml
+
+2017-12-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-no-abi-check' into 'master'
+	Remove abi-check from dist-hook
+
+	See merge request libidn/libidn2!60
+
+2017-12-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove abi-check from dist-hook
+
+	Remove abi-compliance-check from Gitlab CI
+
+	syntax-check: Use $(PATH_SEPARATOR) in Makefile.am
+
+	Update abi-compliance-checker dump files
+
+	Let 'make abi-check' fail early
+
+	Let ./bootstrap download latest translations (.po files)
+
+2017-12-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-update-doc' into 'master'
+	libidn2.texi: document the IDN2_USE_STD3_ASCII_RULES transition
+
+	See merge request libidn/libidn2!59
+
+2017-12-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	libidn2.texi: document the IDN2_USE_STD3_ASCII_RULES transition
+
+2017-11-26  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix idn_free to idn2_free in test-lookup.c
+
+2017-09-04  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix abi-check and abi-dump make targets
+
+	Add ABI infos for 2.0.3 and 2.0.4
+
+2017-08-31  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Check for gtk-doc
+
+	Improve .gitignore
+
+	gtk-doc: Remove auto-generated files from repository
+
+	Fix sanitizer run
+
+2017-08-30  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove /libidn2.info from CLEANFILES
+
+	Use  instead make in cfg.mk
+
+	Add --enable-gtk-doc-pdf to automatic configure runs
+
+	Prepare release
+
+	Fix generating idn2.1
+
+2017-08-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix gitlab yaml
+
+	Add config.log to CI artifacts
+
+	Fix idna_free() to idn_free()
+
+2017-08-08  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: document the idn2_flags in functions using them
+
+	README.md: corrected typo
+
+2017-08-01  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update fuzzer corpora
+
+	lib/puny_decode: Fix integer overflow (found by fuzzing)
+
+	lib/bidi: Fix integer overflow (found by fuzzing)
+
+	* fuzz/README.md : Add -fsanitize=undefined,integer,nullability to CFLAGS
+
+2017-07-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Don't check for ronn and makeinfo in bootstrap.conf
+	Ronn is not packaged for every distribution.
+	And maybe someone doesn't want to build the docs at all.
+
+	Add --disable-gcc-warnings to DISTCHECK_CONFIGURE_FLAGS
+
+	Move check for ronn and makeinfo into bootstrapi.conf
+
+	Split punycode.c into encoding/decoding
+
+	Update fuzz corpora
+
+2017-07-26  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Improve fuzzing
+
+2017-07-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fuzzing reworked
+
+2017-07-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Prepare release
+
+2017-07-22  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-update-gnulib' into 'master'
+	gnulib: updated to latest master
+
+	See merge request !58
+
+2017-07-22  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	gnulib: updated to latest master
+
+2017-07-21  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix docs for IDN2_USE_STD3_ASCII_RULES and IDN2_INVALID_FLAGS
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-fix-coverage-report' into 'master'
+	Remove tests/*.c from coverage report
+
+	See merge request !57
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove tests/*.c from coverage report
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-add-coverage-build-in-non-master' into 'master'
+	.gitlab-ci.yml: added test rule for pages
+
+	See merge request !56
+
+2017-07-19  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: added test rule for pages
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove GTKDOC test
+
+	Fix coverage build
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-cplusplus-build' into 'master'
+	C++ build and distcheck solution
+
+	See merge request !55
+
+2017-07-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Disable gtk-doc for make distcheck on CIs
+
+	Fix C++ build errors
+
+2017-07-18  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	TR46: Disable STD3 ASCII rules by default
+
+	Move check for makeinfo to configure.ac
+
+	Revert "Check for 'gengetopt' in configure run"
+	This reverts commit 80696f6d0a9946c2fa73177ec0292e63709d1d79.
+
+	Check for gengetopt and makeinfo in bootstrap.conf
+
+	Document func/param attributes in idn2.h.in
+
+2017-07-18  Simon Josefsson  <simon@josefsson.org>
+
+	Doc fixes.
+
+2017-07-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix space-tab sequence in gtk-doc.make
+
+2017-07-17  Simon Josefsson  <simon@josefsson.org>
+
+	Fix.
+
+2017-07-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix links for git and perl in CONTRIBUTING.md
+
+2017-07-17  Simon Josefsson  <simon@josefsson.org>
+
+	Bump version.
+
+	Mention abi-compliance-checker.
+
+2017-07-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Reference 'ronn' in CONTRIBUTING.md
+
+	Check for 'gengetopt' in configure run
+
+	Check for ronn if doc build is requested
+
+2017-07-17  Simon Josefsson  <simon@josefsson.org>
+
+	Fix gtk-doc more.
+
+	Doc fixes.
+
+	Fix upstream bugs.
+
+	Modernize gtk-doc building.
+
+	Update from gnulib.
+
+2017-06-19  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	README.md: updated to no longer refer to libidn [ci skip]
+
+2017-06-07  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	manual: removed trailing space
+
+	manual: updated intro
+	Added URI of libidn2 hosting, and removed text on being used extensively
+	(no longer the case). Reformatted the references to RFCs as an itemized
+	list.
+
+2017-05-06  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: updated documentation on IDNA2003 fallback
+	The example provided only falls back to IDNA2003 if there are
+	disallowed characters in the IDNA2008 set. That follows the
+	behavior used in curl.
+
+2017-04-28  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-improve-docs' into 'master'
+	doc: document Tim's backwards compatible construction
+	
+	See merge request !50
+
+2017-04-28  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: document Tim's backwards compatible construction
+	This introduces text allowing to operate like browsers like
+	firefox do.
+
+	Relates: #28
+
+2017-04-27  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	contrib/release: Fix contributor list creation [skip ci]
+
+	NEWS: Update release date
+
+	Gitlab CI: Split Debian runner
+
+	fuzz/main.c: Exlude from sc_require_config_h and sc_require_config_h_first
+
+	idn2.h: Don't use symbols from config.h
+
+2017-04-26  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	ABI-Check: Fix for gtk-doc
+
+	Prepare release
+
+	Docs: Fix several gtk-doc warnings
+
+	contrib/release: Update script [skip ci]
+
+	Travis CI: Initial commit
+
+2017-04-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Makefile.am: Do not use TMPDIR and TMPFILE
+	Reassigning TMPDIR may cause havoc with build tools that
+	use it for temporary files/directories,  like 'ar' on OSX.
+
+	Reported-by: Dominyk Tiller
+
+2017-04-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	lib/idna.c (_idn2_ascii_p): Quick return on false
+
+2017-04-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-fix-tr46-transitional' into 'master'
+	Fix TR46 transitional
+	
+	Closes #25
+	
+	See merge request !48
+
+2017-04-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix TR46 transitional
+	Transitional label processing accidentally went through IDNA 2008
+	tests. That made lookup functions fail on disallowed characters, that
+	are allowed regarding IDNA 2003.
+	The only transitonal test cases we had just covered 'deviation'
+	codepoints, e.g. german sharp s. This patch also adds a non-deviation
+	codepoint to the tests.
+
+	Reported-by: Daniel Stenberg
+	Closes #25
+
+2017-04-23  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	fuzz: Fix memleak in idn2_to_unicode_8z8z_fuzzer
+
+2017-04-23  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: clarify expected input and output forms in examples
+
+	doc: improved text on converting from libidn
+
+	doc: corrected typo
+
+	README.md: switched download site to ftp.gnu.org
+
+2017-04-22  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Prepared release
+
+2017-04-22  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-simplify-examples' into 'master'
+	doc: do not utilize the NFC_INPUT flag on examples
+	
+	See merge request !47
+
+2017-04-22  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: do not utilize the NFC_INPUT flag on examples
+	That flag is implicitly enabled in non-transitiional
+	encoding.
+
+2017-04-07  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: added value assignment in conversion example
+
+2017-04-07  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	* src/Makefile.am: Do not install idn2_noinstall
+
+2017-04-06  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-improve-compat-doc' into 'master'
+	Improved compatibility notes (switch from libidn)
+	
+	See merge request !46
+
+2017-04-06  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: include code snippets instead of just functions in compatibility section
+
+	texinfo.css: improved HTML presentation
+
+	doc: improved documentation on switching from libidn
+
+2017-04-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-fix-doc' into 'master'
+	Addressed documentation issues, and improved example
+	
+	See merge request !45
+
+2017-04-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: fixed version in idn2_to_unicode functions
+
+2017-04-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	idn2_to_ascii: corrected documentation
+	These functions were documented as equivalent to idn2_lookup_ul()
+	with %IDN2_NONTRANSITIONAL and %IDN2_NFC_INPUT flags, however was
+	not the case.
+
+	The idna_to_ascii functions were setting these flags by default.
+
+2017-04-04  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	examples: use non-transitional IDNA2008
+
+2017-04-03  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-idn2-be-tr46-by-default' into 'master'
+	Enable tr46 by default
+	
+	See merge request !44
+
+2017-04-03  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	idn2: enable TR#46 non-transitional processing by default
+
+	idn2: use idn2_to_ascii_lz instead of idn2_lookup_ul
+
+2017-04-03  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix contrib/release script [skip ci]
+
+2017-03-29  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Prepare for release
+
+	ChangeLog: Create with 'git log'
+
+2017-03-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-versioning' into 'master'
+	Tmp versioning
+	
+	See merge request !42
+
+2017-03-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'master' into 'tmp-versioning'
+	# Conflicts:
+	#   configure.ac
+
+2017-03-28  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	configure: replace simon@josefsson.org by help-libidn@gnu.org
+	Resolves #21
+
+2017-03-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add automatic version defines for idn2.h
+
+2017-03-28  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-update-manual' into 'master'
+	doc: added section on converting from libidn
+	
+	See merge request !43
+
+2017-03-28  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: added section on converting from libidn
+
+2017-03-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add contrib/release script [ci skip]
+
+2017-03-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	README.md: Fix mentioning INSTALL
+
+2017-03-24  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-add-ax-m4-files-needed' into 'master'
+	m4: added ax_prog_cc_for_build.m4
+	
+	Closes #19
+	
+	See merge request !41
+
+2017-03-24  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	m4: added ax_prog_cc_for_build.m4
+	This allows compiling the library from repository without requiring
+	autoconf-archive package being installed.
+
+	Resolves #19
+
+2017-03-23  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-cross-compile-readme' into 'master'
+	README.md: added section on cross-compiling
+	
+	Closes #8
+	
+	See merge request !40
+
+2017-03-23  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	README.md: added section on cross-compiling
+	Resolves #8
+
+2017-03-21  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-added-build-with-werror' into 'master'
+	.gitlab-ci.yml: introduced a -Werror build in Debian build
+	
+	Closes #17
+	
+	See merge request !39
+
+2017-03-20  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	.gitlab-ci.yml: introduced a -Werror build in Debian build
+
+2017-03-20  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-use-local-submodule' into 'master'
+	gnulib: use local submodule from gitlab
+	
+	See merge request !38
+
+2017-03-20  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	gnulib: use local submodule from gitlab
+	This will allow faster checkouts on CI
+
+2017-03-19  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-auto-create-changelog' into 'master'
+	Automatically generate changelog on make dist
+	
+	Closes #15
+	
+	See merge request !37
+
+2017-03-19  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	CONTRIBUTING.md: added git2cl and ronn dependencies
+
+	Automatically generate changelog on make dist
+	Resolves #15
+
+2017-03-19  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Check malloc() return value in _tr46()
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-fix-links' into 'master'
+	Change several http:// links to https://
+	
+	Closes #16
+	
+	See merge request !36
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Change several http:// links to https://
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	doc: set default encoding of manual to be utf-8
+	This allows printing UTF-8 characters from .c files.
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-update-readme' into 'master'
+	README.md: removed copyright information and extended description
+	
+	See merge request !35
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	doc: improved intro section
+
+	doc: added examples for ToASCII and ToUnicode operations
+	Also listed all the major new functions at the introduction.
+	The examples brought, bring the library in par with libidn
+	documentation, allowing one to switch easily, but also use
+	UTF-8 input and output by default. There is no point to promote
+	the locale encoded version of the functions, as UTF-8 is today
+	used ubituously.
+
+	doc: added Since version tag in functions
+
+	doc: added description for idn2_to_unicode functions
+
+	README.md: removed copyright information and extended description
+	The copyright information in the README file were a distraction from
+	reading the text (were as long as the previous text), and were not
+	accurate anyway. Extended the description to include more information
+	on the library and the libidn compatibility.
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update AUTHORS
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-fix-badge' into 'master'
+	Tmp fix badge
+	
+	See merge request !34
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	README.md: build badge points to pipelines page [ci skip]
+
+	Revert "README.md: build badge points to pipelines page [ci skip]"
+	This reverts commit 91c091490a8efe6090d37ad8acb5a08a1e355e9a.
+
+	README.md: build badge points to pipelines page [ci skip]
+
+	doc: updated idn2 commands in manual
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-abolish-help2man' into 'master'
+	Abolish help2man
+	
+	Closes #9
+	
+	See merge request !33
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	configure.ac: bumped version to 2.0
+	Relates #12
+
+	CONTRIBUTING.md: recommend using merge requests for patches
+
+	doc update
+
+	doc: generate the idn2 man-page using ronn
+	That is, no longer use help2man and ship a markdown version
+	of the manual. The manual page is generated from markdown
+	using ronn.
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	docs: Deploy libidn2 manual
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-deploy-docs' into 'master'
+	Tmp deploy docs
+	
+	See merge request !32
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	README.md: Add link to online coverage report and API docs [ci skip]
+
+	docs: Deploy HTML docs [ci skip]
+
+	Add Coverity badge
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-fix-valgrind-compilation' into 'master'
+	Fix compilation with valgrind
+	
+	Closes #11
+	
+	See merge request !30
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	valgrind: use suppressions file by default
+	Also introduce an initial suppressions file to ignore unistring
+	issues.
+
+	Resolves #11
+
+2017-03-17  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	tests: enable run under valgrind by using LOG_COMPILER
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-merge-sanitizer-runners' into 'master'
+	Tmp merge sanitizer runners
+	
+	See merge request !31
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	CI: Merge Debian runners
+
+2017-03-17  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'master' into 'master'
+	fix IdnaTest.inc generation w/out of tree builds
+	
+	See merge request !29
+
+2017-03-17  Mike Frysinger  <vapier@gentoo.org>
+
+	fix IdnaTest.inc generation w/out of tree builds
+	The current rule will always look for IdnaTest.txt in the current
+	directory (and output IdnaTest.inc to the current directory).
+	When doing an out-of-tree build, the Makefile (via vpaths) will
+	find the source files, but when the rule runs, it won't.  Change
+	the rules to use automatic makefile variables so it can deal with
+	srcdir/builddir dynamically.
+
+	It does mean that always write IdnaTest.txt to the builddir and
+	not the sourcedir, but I think that's what the code intends.
+	When doing a `make dist`, it'll source the right file and save
+	it to the right place in the tarball.
+
+2017-03-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	pages: simplified
+
+	Coverage: Test code coverage as artifact
+
+2017-03-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-update-gnulib' into 'master'
+	Update gnulib
+	
+	See merge request !28
+
+2017-03-16  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update gnulib
+
+	Add gentr46map.c to EXTRA_DIST
+
+2017-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	fix up tr46map_data.c generation
+	Make the gentr46map handling consistent regardless of cross-compiling,
+	and improve things so we regenerate the source file only when needed.
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-added-clang-analyzer-run' into 'master'
+	Added static analyzer run
+	
+	See merge request !22
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	gentr46map: initialize variable to avoid clang warning
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	gentr46map: added mem allocation check to eliminate clang analyzer warning
+
+	lib: removed dead assignment (found by clang)
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: added clang static analyzer run
+	This will allow catching issues that can be detected with
+	a static analyzer.
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-added-centos7-build' into 'master'
+	Added centos7 CI build
+	
+	See merge request !20
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: Added centos7 build
+
+	idn2: localcharset is a unistring header
+	This fixes builds in Centos7.
+
+2017-03-15  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-fix-tests-warnings' into 'master'
+	Tmp fix tests warnings
+	
+	See merge request !26
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	tests: Fix -Wpointer-sign
+
+	tests: Fix -Wunused-parameter
+
+	tests: Fix gcc-7 -Wformat-truncation=
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-ci-distcheck' into 'master'
+	Tmp ci distcheck
+	
+	See merge request !25
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add assert.h to tests/repro-common.h
+
+	syntax-check: Remove #ifdef HAVE_CONFIG_H
+
+	lib/tr46map.c: Add empty line after config.h
+
+	syntax-check: Add lib/gentr46map.c to config.h excludes
+
+	syntax-check: Remove trailing space
+
+	syntax-check: Remove empty lines at EOF
+
+	syntax-check: Remove assert.h from tests/repro*.c
+
+	syntax-check: Add tests/.*interesting.* to excludes
+
+	CI: Make syntax-check and distcheck
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-gentr46map-fix-clang-warning' into 'master'
+	gentr46map: Fix clang analyzer warning
+	
+	See merge request !24
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	gentr46map: Fix clang analyzer warning
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-gentr46map' into 'master'
+	Remove gentr46map libunistring dependency
+	
+	See merge request !23
+
+2017-03-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	gentr46map: Remove gnulib dependency
+
+	gentr46map: Replace getline() by fgets()
+
+	gentr46map: Remove errno.h dependency
+
+	gentr46map: Remove libunistring dependency
+
+2017-03-14  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	doc: fix idn2.1 cross-compile build
+
+	Fix lib/Makefile.am
+
+	Remove make target check-coverage
+
+	Rewrite and simplify BIDI check
+
+	Cross-compile check for building gentr46map
+
+	tr46map: Amend for better cross-compilation experience
+
+2017-03-14  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Merge branch 'tmp-readme-fixes' into 'master'
+	README: switched repositories to libidn/libidn2
+	
+	See merge request !21
+
+2017-03-14  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	README: switched repositories to libidn/libidn2
+
+2017-03-14  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-fix-build-breakages' into 'master'
+	Added gnulib as submodule
+	
+	Closes #7
+	
+	See merge request !19
+
+2017-03-14  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	Added gnulib as submodule
+	This prevents breakages of gnulib to be propagated to the libidn2
+	project.
+
+2017-03-14  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	configure.ac: Add better support for cross-compiling
+
+	Docs: Skipp making idn2.1 when cross-compiling
+
+2017-03-13  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	.gitignore: Add files and dirs
+
+	fuzz: Format *.cc, add TR46 testing
+
+2017-03-11  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-include-fuzzer-tools' into 'master'
+	Include fuzzer tools
+	
+	See merge request !17
+
+2017-03-11  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-coverage' into 'master'
+	Added code coverage badge and coverage configure option
+	
+	See merge request !18
+
+2017-03-10  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	Added coverage run in CI
+	That "make local-code-coverage-output" will output the percentage
+	of lines of code covered by the test suite.
+
+	configure: Add a code coverage option
+	Configure with:
+	  ./configure --enable-code-coverage
+	Show coverage output with:
+	  make && make check && make code-coverage-capture
+
+2017-03-10  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	tests: added initial corpus of test cases for reproducers
+	Although these do not actually cause an issue, they do provide
+	coverage of the parsers. This is currently not included in the
+	distribution but only in the repository.
+
+	fuzz: added manually run fuzzers for basic functions of the library
+	These fuzzers are modeled in a way to be run either in oss-fuzz
+	project (which uses libfuzzer) or using AFL with the wrapper in main.c.
+
+	tests: added tools to reproduce issues found by fuzzers
+
+2017-03-04  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Merge branch 'fix/needless-ssize_t' into 'master'
+	drop needless ssize_t cast, would need sys/types.h
+	
+	See merge request !16
+
+2017-03-03  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
+
+	drop needless ssize_t cast, would need sys/types.h
+
+2017-02-28  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: use pre-build images for CI
+
+2017-02-27  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	README.md: Use HTTPS ifor license link
+
+	CONTRIBUTING.md: Use HTTPS where possible
+
+2017-02-27  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	CONTRIBUTING.md: fixed typos
+
+	README.md: introduced dependencies section
+
+2017-02-27  rockdaboot  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-enable-pure-funcs' into 'master'
+	Mark functions as constant and pure to enable compiler optimizations
+	
+	See merge request !12
+
+2017-02-27  rockdaboot  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-enable-mingw64-checks' into 'master'
+	.gitlab-ci.yml: enabled make check in mingw build
+	
+	See merge request !9
+
+2017-02-27  rockdaboot  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-markdown' into 'master'
+	Converted documentation to markdown
+	
+	Closes #4
+	
+	See merge request !13
+
+2017-02-27  rockdaboot  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-update-iconv-doc' into 'master'
+	README: update documentation on iconv
+	
+	See merge request !10
+
+2017-02-26  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	CONTRIBUTING.md: added section on test suite
+
+	converted main documents to markdown
+
+	tests: test-register: added several casts to silence warnings in windows build
+
+	.gitlab-ci.yml: enabled make check in mingw build
+	Also added the iconv package into installed packages. We require
+	iconv to be able to convert from locale to unicode.
+
+	use the GL macros to mark internal functions as const or pure
+	We don't use the macros from idn2.h because this header file is
+	not universally included.
+
+	idn2.h: Introduced macros to mark pure and constant functions
+	That is, the macros _IDN2_ATTRIBUTE_PURE and _IDN2_ATTRIBUTE_CONST.
+	The functions marked currently are idn2_strerror(), idn2_strerror_name(),
+	as constant, and idn2_check_version() as pure.
+
+	error.c: improved bindtextdomain macro
+	We don't check the error code of the function, thus the dummy
+	replacement shouldn't define an error code. That removes a compiler
+	warning for statement without effect.
+
+	configure: enable gcc warnings by default
+	Also enable warnings on sign-conversion.
+
+	lib: eliminated several sign-conversion related warnings
+
+	README: update documentation on iconv
+
+2017-02-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	tests: test-lookup.c: Fix error msgs and wchar_t portability
+
+2017-02-20  rockdaboot  <tim.ruehsen@gmx.de>
+
+	Merge branch 'tmp-document-changes' into 'master'
+	document changes in 0.17
+	
+	See merge request !8
+
+2017-02-20  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: use libasan3 in debian testing
+	The previously used libasan2 is no longer available.
+
+	document changes in 0.17
+
+2017-02-20  Simon Josefsson  <simon@josefsson.org>
+
+	Doc fix.
+
+2017-02-15  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix docs
+
+	Fix 'make syntax-check'
+
+	Remove trailing empty lines from lib/Makefile.am
+
+	Remove gl/version-etc.c from po/POTFILES.in as syntax-check suggests
+
+	Update bootstrap from gnulib/build-aux/
+
+	Set source_bae in bootstrap.conf
+
+	Fix path in po/POTFILES.in
+
+2017-02-14  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	.gitlab-ci.yml: added MinGW64 build
+
+	renamed idn2/ subdir to lib/
+	This makes apparent the location of the actual library.
+
+	unistring: avoid including twice the posix-malloc module
+	This allows compiling in systems which do require the posix-malloc,
+	but conflict on gnulib symbols as they are available both in
+	libgnu and libunistring.
+
+2017-02-14  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	lib renamed to gl
+	This better distinguishes the gnulib library from the main
+	IDN2 library.
+
+	configure: building documentation can be skipped
+	This allows building on systems without texinfo.
+
+2017-02-14  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	unistring library will be included if it is not installed
+
+	Moved IDN2 files in idn2 subdir
+
+2017-02-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add test coverage of idna_to_ascii_* functions
+
+	Fix docs (params) for idn2_to_ascii_4i
+
+	Add IDN2_ALLOW_UNASSIGNED and IDN2_USE_STD3_ASCII_RULES to doc comment
+
+2017-02-10  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	Add docs to idn2_to_ascii_* in lookup.c
+
+2017-02-08  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix compat enums and defines in idn2.h.in
+
+2017-02-07  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Libidn toASCII compatibility functions
+
+	Start of libidn compatibility layer
+	Define IDN2_SKIP_LIBIDN_COMPAT before including <idn2.h> to
+	disable the compatibilty layer.
+	It is also disabled when including <idna.h> before <idn2.h>.
+	Just to allow programs to link with libidn and libidn2.
+
+	Add more test cases
+	More test cases from Nikos Mavrogiannopoulos
+
+	Add bad utf-8 test input to idn2_to_unicode_*()
+
+	Add test with bad utf-8 encoding
+
+2017-02-07  Nikos Mavrogiannopoulos  <nmav@redhat.com>
+
+	.gitlab-ci.yml: use debian-stretch for building
+
+2017-02-07  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove unused code from punycode.c
+
+	More tests for tests/test-tounicode.c
+
+	More tests for tests/test-lookup.c
+
+	Fix input checking in decode.c
+
+	Reduce 'make check-coverage' to library code
+
+	Cleanup tests, remove compiler warnings
+
+	Add more testing to tests/test-tounicode.c
+
+	Add gnulib module stdio to bootstrap.conf
+
+	Add manywarning flags to tests/Makefile.am
+
+	Fix string creation in idn2_to_unicode_44i()
+
+	Fix double free in idn2_to_unicode_4z4z()
+
+	Adjust .gitignore
+
+	New test test-tounicode.c
+
+	Allow XN-- and xn-- for punycode
+
+	Add idn2_to_unicode_* functions for punycode decoding
+	That are
+	  idn2_to_unicode_8z4z
+	  idn2_to_unicode_4z4z
+	  idn2_to_unicode_44i
+	  idn2_to_unicode_8z8z
+	  idn2_to_unicode_8zlz
+	  idn2_to_unicode_lzlz
+
+	Add idn2_fromASCII() and idn2 -d
+
+2017-02-07  Nikos Mavrogiannopoulos  <nmav@gnutls.org>
+
+	.gitlab-ci.yml: added ASAN, and UBSAN builds
+
+	.gitlab-ci.yml: added ABI check as part of the CI process
+
+	.gitlab-ci.yml: keep built artifacts (log files) on failure
+
+	Makefile: added abi-dump and abi-check rules
+	These allow dumping and checking the ABI of the produced
+	library.
+
+2017-02-07  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add 'getline' gnulib module
+
+2017-02-03  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add 'error' gnulib module
+
+2017-01-24  userwithuid  <userwithuid@gmail.com>
+
+	Add pkg-config file.
+
+	Fix parallel make.
+	Ensure gengetopt is only run once to avoid build errors with make -j.
+
+2017-01-16  Simon Josefsson  <simon@josefsson.org>
+
+	Bump versions.
+
+	Typo fix.
+
+	Version 0.16.
+
+	Add.
+
+	Fix @DEFS@.
+
+2017-01-14  Simon Josefsson  <simon@josefsson.org>
+
+	Fix DEFS.
+
+	Fix idn2_cmd.* rules.  Copied from libidn.
+
+	Bump versions.
+
+	Version 0.15.
+
+	Indent.
+
+	Fix syntax-check rules.
+
+	Fixes.
+
+	Doc fix.
+
+	Update copyright lines.
+
+	Add.
+
+2017-01-12  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Reduce TR46 data by ca 33k
+
+	Reduce TR46 map entries to 62 bits (yet unpacked)
+
+	Fix out-of-bounds access
+
+	Fix printf format specifier
+
+	Enable silent make rules by default
+
+	Enable gcc color diagnostics even when using ccache
+
+2017-01-11  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix indentation
+
+	Make autogenrated array 'mapdata' static
+
+	Separate TR46 generated data and data functions
+
+	Some code rearranged
+
+	Fix printf format string warnings
+
+	Fix incorrect check of memory allocation
+
+	Add two more lookup tests
+
+2017-01-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix NFC Quick Check
+	IDN2_NFC_INPUT with idn2_lookup_*() and non-NFC input resulted in
+	IDN2_NOT_NFC error. Regression from version 0.13. This fixes it.
+
+	This commit also adds tests to catch non-working IDN2_NFC_INPUT.
+
+	Reported-by: Daurn Imator
+
+2017-01-10  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove unused flags from TR46 mapping data
+
+2017-01-05  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Move -DSRCDIR to AM_CPPFLAGS to satisfy syntax-check
+
+	Disable sc_GPL_version syntax-check
+
+2016-12-30  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	TR46 mapping codepoints as 8-bit stream
+
+2016-12-30  Simon Josefsson  <simon@josefsson.org>
+
+	Cleanup.  Fix build dependencies.
+
+	Bump version.
+
+	Update for 0.13.
+
+	Version 0.14.
+
+	Bump versions.
+
+	Fix gentr46map build.
+
+2016-12-29  Simon Josefsson  <simon@josefsson.org>
+
+	Syntax-check fixes.
+
+	Version 0.13.
+
+	Doc fixes.
+
+	Libunistring required.
+
+2016-12-28  Simon Josefsson  <simon@josefsson.org>
+
+	Unicode license conditions.
+
+2016-12-28  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Remove doublettes from TR46 mapping data
+
+	Add unicode files to avoid downloading
+
+	Add tests/IdnaTest.*
+
+	Test downloaded file integrity
+
+2016-12-28  Simon Josefsson  <simon@josefsson.org>
+
+	Doc fix.
+
+	Fix dependencies.
+
+	Make sure ChangeLog is re-generated.
+
+	Mark libunistring as optional.
+
+	Make self-tests work with non-system libunistring.
+
+	Doc fix.
+
+	Simplify.
+
+	Re-add some libunistring modules, if absent from system.
+
+	Drop.
+
+	Ignore more.
+
+	Add po/Makefile.in after gettext simplification.
+
+	Simplify.
+
+	Prettify.
+
+	Prettyify output.
+
+	Typo fix.
+
+	Ignore more.
+
+	Fix test output.
+
+	More dependency fixes.
+
+	Fix build deps.
+
+	Doc fixes.
+
+	Typo.
+
+	Automake requires that ChangeLog exist. (snippet from coreutils)
+
+	Modernize.
+
+	Add gitlab CI rules.
+
+	Remove, should be automatically generated by git2cl.
+
+	Rename for gitlab.
+
+2016-12-27  Simon Josefsson  <simon@josefsson.org>
+
+	Clarify license.  Suggested by Nikos Mavrogiannopoulos.
+
+2016-12-26  Simon Josefsson  <simon@josefsson.org>
+
+	Bump after release.
+
+	Ignore more.
+
+	Version 0.12.
+
+	Doc fixes.
+
+	Doc fix.
+
+	More text.
+
+	Don't modify .gitignore.
+
+	Don't assume C99/C11.
+
+	Fix coverage rules.
+
+	Drop unused code.
+
+	Fix broken indent.
+
+	Use COMPILE instead of CC (this should be an implicit automake rule).
+
+	Indent sources.
+
+	Syntax-check cleanups.
+
+	Remove.
+
+	Unrelease 0.12.
+
+	Mention Tim.
+
+	Re-add some gnulib modules.  Fix license.
+
+2016-12-26  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Prepare for release
+
+	Add texinfo to prerequisite list in README-alpha
+
+2016-12-25  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add uninorm/base to bootstrap.conf
+
+	Use gettext 0.19.3 in configure.ac
+
+2016-12-22  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix tests/Makefile.am
+
+	Fix  in src/
+
+	Fix 'make clean' for docs
+
+	docs: Adjust IGNORE_HFILES
+
+2016-12-21  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Fix make distcheck
+
+2016-12-09  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Add NFC quick check to avoid unneeded NFC normalizations
+
+	Add test cases to cover more code paths
+
+	Add new test test-strerror.c
+	Cover code paths in idn2_strerror() and idn2_strerror_name().
+
+	Use idn2_free() instead of free() in tests
+
+	Add make target 'check-coverage'
+	For this to work, you need 'lcov' and 'genhtml' installed.
+	After 'make check-coverage', view lcov/index.html for results.
+
+	Fix test-lookup.c for libunistring <= 0.9.3
+
+	Clean built sources with 'make clean'
+
+	Add make target 'check-valgrind'
+
+	Link with libunistring
+	This patch uses libunistring instead of code copied from
+	gnulib. It also introduces ./bootstrap initialization.
+
+	Remove tests/IdnaTest.inc and tests/IdnaTest.txt from repo
+
+	Add testing of official test suite
+
+	Add -T/--tr46t and -N/--tr46nt to idn2 utility
+
+	idn2.c: Refactor code into process_input()
+
+	Add TR46 support
+	* Makefile.am: Add tr46map.h, tr46map.c to libidn2_la_SOURCES.
+	  Download IdnaMappingTable.txt, DerivedNormalizationProps.txt.
+	  Create tr46map.c via gentr46map.
+	* gentr46map.c: New file, generates tr46map.c from downloaded files.
+	* idn2.h.in: Add IDN2_TRANSITIONAL and IDN2_NONTRANSITIONAL flags.
+	  Add error codes IDN2_INVALID_FLAGS, IDN2_DOT_IN_LABEL,
+	  IDN2_INVALID_TRANSITIONAL and IDN2_INVALID_NONTRANSITIONAL.
+	* idna.c (_idn2_label_test): Add tests for TEST_TRANSITIONAL and
+	  TEST_NONTRANSITIONAL.
+	* idna.h: Add test flags TEST_TRANSITIONAL and TEST_NONTRANSITIONAL.
+	* lookup.c: New function _tr46() implements TR46 processing.
+	  (idn2_lookup_u8): Call _tr46() if requested.
+
+2016-12-06  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Update IDNA tests to Unicode 6.3.0
+
+	Remove tests/IdnaTest.inc and tests/IdnaTest.txt from git repo
+
+	Makefile cleanup, use HTTPS URLs for download
+
+	Set lookup test result for U+19DA to IDN2_DISALLOWED
+
+	Update from 5.2.0 to 6.3.0 IDNA tables
+
+	Remove auto-generated data.c from repo
+
+	Add config.cache to .gitignore
+
+	Fix crash in idn2_register_ul()
+	* register.c (idn2_register_ul): Do not crash if 'ulabel'  is NULL
+
+	Fix crash in lookup functions
+	* lookup.c (idn2_lookup_ul): Do not crash if 'src'  is NULL.
+	  (idn2_lookup_u8): Set output to NULL if input is NULL.
+
+	* register.c: Do not taint insertname on error
+	This patch
+	- does not taint output variable on error
+	- does only allocate memory on success
+	- allows insertname being NULL for testing
+
+	* lookup.c (idn2_lookup_u8): Do not taint lookupname on error
+	This patch
+	- does not taint output variable on error
+	- does only allocate memory on success
+	- allows lookupname being NULL for testing
+
+2016-12-06  Tim Rühsen  <tim.ruehsen@gmx.de>
+
+	Use binary instead of linear search in idna table
+	Also return UNASSIGNED instead of calling abort() in tables.c.
+
+	Do not not call abort() in a library, you never know who/what relies
+	on it. Instead, return a reasonable value. If there were an error
+	return and/or logging facility, that should be used.
+
+2016-11-06  Simon Josefsson  <simon@josefsson.org>
+
+	Trivial memleak fix.  Patch from Hanno Böck <hanno@hboeck.de>.
+
+2016-11-03  Simon Josefsson  <simon@josefsson.org>
+
+	Don't install examples.  Reported by Dagobert Michelsen <dam@opencsw.org>.
+
+	Version 0.11.
+
+	Fix PGP key.
+
+	Update for 0.10.
+
+	Bump versions.
+
+	Update copyright years.
+
+	Export _idn2_punycode_??code for non-version script platforms.
+	Reported by Dagobert Michelsen <dam@opencsw.org>.
+
+	Fix stack underflow in 'idn2' command line tool.
+	Reported by Hanno Böck <hanno@hboeck.de>.
+
+	Update from libidn.
+
+2015-05-18  Simon Josefsson  <simon@josefsson.org>
+
+	Move from gitorious to gitlab.
+
+2014-10-02  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.
+
+2014-06-25  Simon Josefsson  <simon@josefsson.org>
+
+	Version 0.10.
+
+	Fix syntax-check.
+
+	Ignore more.
+
+	Dual-license the library.
+
+	Bump copyright years.
+
+	Upgrade gnulib.
+
+2013-07-24  Simon Josefsson  <simon@josefsson.org>
+
+	Bump version.
+
+	Ignore more.
+
+	Use devhelp2 format.
+
+	Fix syntax-check.
+
+2013-07-23  Simon Josefsson  <simon@josefsson.org>
+
+	Version 0.9.
+
+	Fix copyright year.
+
+	Fix release target.
+
+	Fix broken IANA link.
+
+	Add.
+
+	Update copyright headers.
+
+	Use update-copyright intervals.
+
+	Add update-copyright gnulib module.
+
+	Ignore more.
+
+	Update gnulib files.
+
+	Work around automake problem.
+
+2012-08-08  Simon Josefsson  <simon@josefsson.org>
+
+	Add another self-test.
+
+2012-03-07  Simon Josefsson  <simon@josefsson.org>
+
+	Ignore more.
+
+	Update gnulib files.
+
+2011-11-13  Simon Josefsson  <simon@josefsson.org>
+
+	Bump versions.
+
+	Update gnulib files.
+
+2011-09-28  Simon Josefsson  <simon@josefsson.org>
+
+	Update for 0.8.
+
+	Update for 0.6.
+
+	Ignore more.
+
+	Version 0.8.
+
+	Bump version.
+
+	Enable warnings for src/ and fix some issues.
+
+	Update gnulib files.  Add manywarnings module to src/.
+
+2011-08-11  Simon Josefsson  <simon@josefsson.org>
+
+	Version 0.7.
+
+	Ignore idn2_cmd.h header file too.
+
+	Update gnulib files in src/.
+
+	Update gnulib files.  Add strchrnul and strverscmp modules.
+	Reported by Ray Satiro <raysatiro@yahoo.com>.
+
+	Update gnulib files.
+
+2011-05-25  Simon Josefsson  <simon@josefsson.org>
+
+	Version 0.6.
+
+	Update gnulib files.
+
+	Bump versions.
+
+	tests: Use -no-install instead of -static to fix --disable-static.
+	Reported by Robert Scheck <robert@fedoraproject.org>.
+
+	Add linenumbers to IdnaTest.inc.
+
+2011-05-19  Simon Josefsson  <simon@josefsson.org>
+
+	Doc fix.
+
+2011-05-18  Simon Josefsson  <simon@josefsson.org>
+
+	Add.
+
+	Version 0.5.
+
+	Describe valgrind change.
+
+	Update gnulib files.
+
+	Disable valgrind by default for users.
+
+	Fix NFC check to compare entire strings.
+	Some non-NFC strings were permitted when they should have been
+	rejected.  Reported by Robert Scheck <robert@fedoraproject.org>.
+
+2011-05-09  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.
+
+2011-05-08  Simon Josefsson  <simon@josefsson.org>
+
+	Bump versions.
+
+	Add gnupload module.
+
+	Handle if ChangeLog is already commited.
+
+2011-05-06  Simon Josefsson  <simon@josefsson.org>
+
+	Fix release target.
+
+	Version 0.4.
+
+	Rewrite release target.
+
+	Add.
+
+	Use modern libtool calls.
+
+	Add license.
+
+	Prepare for GNU upload more.
+
+	Doc fix for return codes.
+
+	Prepare for upload to GNU.
+
+2011-05-05  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.  Add clang rules.
+
+	tests: Added several new Arabic test vectors.
+
+	libidn2: Fix domain name maximum size issue.
+
+	Documentation clarification of IDN2_DOMAIN_MAX_LENGTH.
+
+	Fix return codes for overlong ASCII labels/domains.
+
+	Only check ASCII labels for max length.
+	Note that non-ASCII labels are checked implicitely by
+	punycode_encode() and will yield IDN2_PUNYCODE_BIG_OUTPUT.
+
+	Test some corner cases.
+
+	Drop errorenous max domain length check applied to UTF-8 encoded values.
+
+2011-04-20  Simon Josefsson  <simon@josefsson.org>
+
+	Bump versions.
+
+	Version 0.3.
+
+	Add texinfo manual and man pages.
+
+2011-04-19  Simon Josefsson  <simon@josefsson.org>
+
+	Add examples.
+
+	Add.
+
+2011-04-11  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.  Fix syntax-check warning.
+
+2011-03-31  Simon Josefsson  <simon@josefsson.org>
+
+	Reduce code duplication.
+
+	Add.
+
+	Add U+19DA test vector.
+
+2011-03-30  Simon Josefsson  <simon@josefsson.org>
+
+	Bump version.
+
+	Dist more.
+
+	Bump versions.
+
+	Fix release target.
+
+	Version 0.2.
+
+	Fix.
+
+	Indent.
+
+	Add command line tool.
+
+	Workaround genhtml bugs.
+
+	Update gnulib files.
+
+2011-03-29  Simon Josefsson  <simon@josefsson.org>
+
+	Improve utc tests.
+
+	Drop UTC's test vectors.
+
+	Fix UTC tests.
+
+	Hack it.
+
+	Add UTC test vectors.
+
+	Bump versions.
+
+	Version 0.1.
+
+	Add test vectors.
+
+	Fix U+200C.
+
+	Use valgrind.
+
+	Namespace fixes for gtk-doc.
+
+	Doc fixes.
+
+2011-03-28  Simon Josefsson  <simon@josefsson.org>
+
+	Doc fix.
+
+	Warning cleanup.
+
+	More warnings.
+
+	Fix warning.
+
+	Use visibility.
+
+	Update gnulib files.
+
+	C++ fix.
+
+	Fix cludge.
+
+	Doc fix.
+
+	Register test vectors.
+
+	More register.
+
+	More register.
+
+	More register.
+
+	More register.
+
+	More register.
+
+	Add backup rule.
+
+	Generalize.
+
+	Fix.
+
+	Simplify what.
+
+	Revamp ascii.
+
+	Revamp allocation.
+
+2011-03-27  Simon Josefsson  <simon@josefsson.org>
+
+	Rewrite lookup.
+
+	Drop getopt stuff.
+
+	Fix comment.
+
+	Add constants.
+
+	Add data.c, for offline work.
+
+	Build static to make valgrind produce useful output.
+
+	Constify.
+
+2011-03-22  Simon Josefsson  <simon@josefsson.org>
+
+	Fix tests.
+
+	Drop striconv stuff.
+
+	Remove unused gnulib module.
+
+	Ignore more.
+
+	Fix U+200C rule.
+
+	Add.
+
+	Add joiningtype gnulib module.
+
+2011-03-20  Simon Josefsson  <simon@josefsson.org>
+
+	Parts of U+200C rule.
+
+	More self tests.
+
+2011-03-19  Simon Josefsson  <simon@josefsson.org>
+
+	doc fix
+
+	fix
+
+	Add more.
+
+	Ignore more.
+
+	Fix U+200D contet rule.  Fix combining mark bug.
+
+2011-03-09  Simon Josefsson  <simon@josefsson.org>
+
+	Bump version.
+
+	Fix release target.
+
+	No .clcopying.
+
+	Update gtk-doc files.
+
+	Fix.
+
+	Fix version.
+
+	Version 0.0.
+
+	Add.
+
+	Hard code version for now.
+
+2011-03-08  Simon Josefsson  <simon@josefsson.org>
+
+	Version fix.
+
+	Version fixes.
+
+	Add.
+
+	Fix name.
+
+	Fix.
+
+	Fix.
+
+	Reorder.
+
+	Split up.
+
+	Improve errors.
+
+	Reorder.
+
+2011-03-07  Simon Josefsson  <simon@josefsson.org>
+
+	Simplify.
+
+	Add FIXME.
+
+	Add nl_langinfo replacement.
+
+	Add striconv.
+
+	Doc fix.
+
+	Fix errcodes.
+
+	Fix version.
+
+	Fix version.
+
+	Ignore more.
+
+	Revamp punycode.
+
+	Doc fix.
+
+	Doc fix.
+
+	Add gtk-doc.
+
+	Header cleanup.
+
+	Reorder.
+
+	Error handling.
+
+	Internalize punycode too.
+
+	Update.
+
+	Move gnulib to gl/.
+
+	Move self-tests to tests/.
+
+	Internalize some interfaces.
+
+	Improve self checks.
+
+2011-03-02  Simon Josefsson  <simon@josefsson.org>
+
+	Fix.
+
+	Improve self-test.
+
+	Add.
+
+	Add more.
+
+	Cleanup self-tests.
+
+	Ignore more.
+
+	Add strerror functions.
+
+	Fix some syntax-check bugs.
+
+	Ignore gnulib files.
+
+2011-03-01  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.
+
+2011-02-28  Simon Josefsson  <simon@josefsson.org>
+
+	Update gnulib files.
+
+	Relicense under GPLv3+.
+
+2011-02-24  Simon Josefsson  <simon@josefsson.org>
+
+	Handle empty strings.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	New.
+
+	Fix off by one bug.
+
+	Fix.
+
+2011-02-23  Simon Josefsson  <simon@josefsson.org>
+
+	Fix.
+
+	Add.
+
+	Update.
+
+	Commit old stuff.
+
+2011-01-30  Simon Josefsson  <simon@josefsson.org>
+
+	Rename APIs.
+
+	Stick at Unicode 5.2 files.
+
+	More testing.
+
+2011-01-25  Simon Josefsson  <simon@josefsson.org>
+
+	Fixup punycode.
+
+	Revamp punycode implementation.
+
+2011-01-13  Simon Josefsson  <simon@josefsson.org>
+
+	Simplistic ace.
+
+2011-01-11  Simon Josefsson  <simon@josefsson.org>
+
+	Fix output.
+
+	Rename.
+
+	Fix.
+
+	Rename from libidna to libidn2.
+
+2011-01-09  Simon Josefsson  <simon@josefsson.org>
+
+	Goodnight.
+
+	Add u8-from-locale.
+
+	Add hyphen-startend.
+
+	Update.
+
+	Update bidi.
+
+	Fix warning.
+
+	Update libunistring to 5.2.0.
+
+	Improve bidi.
+
+	Add bidi functions.
+
+	Bidi template.
+
+	Unassigned.
+
+	Update.
+
+	contexto-has-rule.
+
+2011-01-08  Simon Josefsson  <simon@josefsson.org>
+
+	Add.
+
+	Update.
+
+	Fix.
+
+	Add.
+
+	Update.
+
+	Fixes.
+
+	Fixes.
+
+	Add context rule template.
+
+	Fix first bug.
+
+	Improve.
+
+	Improve.
+
+	Add contextj.
+
+	Dist tables.h.
+
+	Drop NFC api.
+
+2011-01-06  Simon Josefsson  <simon@josefsson.org>
+
+	Add.
+
+	Add.
+
+	Terminate array.
+
+2011-01-05  Simon Josefsson  <simon@josefsson.org>
+
+	LGPLv3+
+
+	Add test vectors.
+
+	Add.
+
+	Update.
+
+	Use uint32 internally.
+
+	Fix.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Update.
+
+2011-01-04  Simon Josefsson  <simon@josefsson.org>
+
+	Add.
+
+	Fix.
+
+	Add.
+
+	Add.
+
+	Fix.
+
+	Add.
+
+	Fix.
+
+	Add.
+
+	More.
+
+	Update.
+
+	Update.
+
+	Update.
+
+	Fix.
+
+	Add NFC module.
+
+	Update.
+
+	Typo.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Fix range.
+
+	Update.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Update.
+
+	Add.
+
+	Add.
+
+	Add.
+
+	Update.
+
+	Add.
+
+	Add.
+
+	Add.

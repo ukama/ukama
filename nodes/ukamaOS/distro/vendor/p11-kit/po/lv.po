@@ -1,0 +1,343 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2013
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-19 15:00+0000\n"
+"Last-Translator: Stef Walter <stefw@gnome.org>\n"
+"Language-Team: Latvian (http://www.transifex.com/freedesktop/p11-kit/language/lv/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: lv\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : 2);\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "Darbība tika atcelta"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "Nav pietiekami daudz brīvas atmiņas"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "Norādītais slota ID nav derīgs"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "Iekšēja kļūda"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "Darbība cieta neveiksmi"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "Nederīgi parametri"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "Modulis nevar izveidot vajadzīgos pavedienus"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "Modulis nevar noslēgt datu īpašību"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "Lauks ir tikai lasāms"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "Lauks ir sensitīvs un to nevar atklāt"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "Lauks ir nederīgs vai arī neeksistē"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "Nederīga vērtība vai lauks"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "Dati nav derīgi vai arī nav atpazīti"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "Pārāk daudz datu"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "Uz ierīces gadījās kļūda"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "Uz ierīces nepietiek brīvās atmiņas"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "Ierīce tika izņemta vai atvienota"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "Šifrētie dati nav derīgi vai nav atpazīti"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "Šifrētie dati ir pārāk daudz"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "Darbība nav atbalstīta"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "Trūkst vai nav derīga atslēga"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "Atslēgai ir nepareizs izmērs"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "Atslēgai ir nepareizs tips"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "Atslēgas nav vajadzīgas"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "Atslēga ir citādāka, kā iepriekš"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "Ir nepieciešama atslēga"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "Īssavilkumā nevar iekļaut atslēgu"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "Ar šo atslēgu nevar izpildīt šo darbību"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "Atslēgu nevar ietīt"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "Nevar eksportēt šo atslēgu"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "Šifrēšanas mehānisms ir nederīgs vai nav atpazīts"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "Šifrēšanas mehānismam ir nederīgi parametri"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "Trūkst objekta, vai arī tas ir nederīgs"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "Jau notiek cita darbība"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "Pašlaik nenotiek neviena darbība"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "Parole vai PIN nav pareiza"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "Parole vai PIN nav derīga"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "Parolei vai PIN ir nederīgs garums"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "Parolei vai PIN ir beidzies termiņš"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "Parole vai PIN ir bloķēta"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "Sesija ir aizvērta"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "Ir pārāk daudz aktīvu sesiju"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "Sesija nav derīga"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "Sesija ir tikai lasāma"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "Eksistē atvērta sesija"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "Eksistē tikai lasāma sesija"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "Eksistē administratora sesija"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "Paraksts ir slikts vai bojāts"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "Paraksts ir neatpazīts vai bojāts"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "Trūkst noteikti pieprasītie lauki"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "Noteiktiem laukiem ir nederīgas vērtības"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "Ierīce nav pievienota"
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "Ierīce ir nederīga vai nav atpazīta"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "Ierīcē nevar rakstīt"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "Nevar importēt, jo atslēga nav derīga"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "Nevar importēt, jo atslēgai ir nepareizs izmērs"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "Nevar importēt, jo atslēgai ir nepareizs tips"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "Jūs jau esat ierakstījies"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "Neviens lietotājs nav ierakstījies"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "Lietotāja parole vai PIN nav iestatīta"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "Lietotājam ir nederīgs tips"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "Kāds cits lietotājs jau ir ierakstījies"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "Ir ierakstījušies pārāk daudz dažādu veidu lietotāji"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "Nevar importēt nederīgu atslēgu"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "Nevar eksportēt, jo atslēgai ir nepareizs izmērs"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "Nevar eksportēt, jo atslēga ir nederīga"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "Nevar eksportēt, jo atslēgai ir nepareizs izmērs"
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "Nevar eksportēt, jo atslēgai ir nepareizs tips"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "Nevar inicializēt nejaušo skaitļu ģeneratoru"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "Nav pieejams nejaušo skaitļu ģenerators"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "Šifrēšanas mehānismam ir nederīgs parametrs"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "Nepietiek vietas, lai saglabātu rezultātu"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "Saglabātais stāvoklis nav derīgs"
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "Informācija ir sensitīva un to nevar atklāt"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "Stāvokli nevar saglabāt"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "Modulis nav inicializēts"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "Modulis jau ir inicializēts"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "Nevar noslēgt datus"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "Datus nevar noslēgt"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr ""
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "Nezināma kļūda"

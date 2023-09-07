@@ -1,0 +1,23 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "User")
+Container_Boundary(c1, "onBoarding Flow") {
+Container(ukamaAuthAlias,"Auth App","ReactJs,Typescript & MUI")
+Container(rootConsole, "Console", "ReactJS, Typescript & MUI", "Root")
+Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Home")
+Container(consoleOnBoardingAlias, "Console", "ReactJS, Typescript & MUI", "OnBoarding Page")
+Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "User services")
+Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
+Container(cloudAlias, "User Registery", "Go", "User services")
+
+Rel(personAlias, ukamaAuthAlias, "[/login]")
+Rel(ukamaAuthAlias, rootConsole, "[/]")
+Rel(rootConsole, consoleOnBoardingAlias, "getAccountDetails returns [firstVisit=true]", "/")
+Rel( rootConsole, consoleAlias, "getAccountDetails returns [firstVisit=false] ", "/home")
+BiRel( rootConsole, bffAlias, "/getAccountDetails")
+Rel(bffAlias, AuthAlias,"Return firstVisit from collection")
+Rel( consoleOnBoardingAlias, bffAlias, "Mutation","addUser")
+Rel( bffAlias , cloudAlias, "Query", "addUser")
+}
+@enduml

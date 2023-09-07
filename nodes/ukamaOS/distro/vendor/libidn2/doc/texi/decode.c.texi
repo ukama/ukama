@@ -1,0 +1,117 @@
+@subheading idn2_to_unicode_8z4z
+@anchor{idn2_to_unicode_8z4z}
+@deftypefun {int} {idn2_to_unicode_8z4z} (const char * @var{input}, uint32_t ** @var{output}, G_GNUC_UNUSED int @var{flags})
+@var{input}: Input zero-terminated UTF-8 string.
+
+@var{output}: Newly allocated UTF-32/UCS-4 output string.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in UTF-8 format into a
+UTF-32 string (punycode decoding). The output buffer will be zero-terminated
+and must be deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+
+@subheading idn2_to_unicode_4z4z
+@anchor{idn2_to_unicode_4z4z}
+@deftypefun {int} {idn2_to_unicode_4z4z} (const uint32_t * @var{input}, uint32_t ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated UTF-32 string.
+
+@var{output}: Newly allocated UTF-32 output string.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in UTF-32 format into a
+UTF-32 string (punycode decoding). The output buffer will be zero-terminated
+and must be deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+
+@subheading idn2_to_unicode_44i
+@anchor{idn2_to_unicode_44i}
+@deftypefun {int} {idn2_to_unicode_44i} (const uint32_t * @var{in}, size_t @var{inlen}, uint32_t * @var{out}, size_t * @var{outlen}, int @var{flags})
+@var{in}: Input array with UTF-32 code points.
+
+@var{inlen}: number of code points of input array
+
+@var{out}: output array with UTF-32 code points.
+
+@var{outlen}: on input, maximum size of output array with UTF-32 code points,
+on exit, actual size of output array with UTF-32 code points.
+
+@var{flags}: Currently unused.
+
+The ToUnicode operation takes a sequence of UTF-32 code points
+that make up one domain label and returns a sequence of UTF-32
+code points. If the input sequence is a label in ACE form, then the
+result is an equivalent internationalized label that is not in ACE
+form, otherwise the original sequence is returned unaltered.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+
+@subheading idn2_to_unicode_8z8z
+@anchor{idn2_to_unicode_8z8z}
+@deftypefun {int} {idn2_to_unicode_8z8z} (const char * @var{input}, char ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated UTF-8 string.
+
+@var{output}: Newly allocated UTF-8 output string.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in UTF-8 format into a
+UTF-8 string (punycode decoding). The output buffer will be zero-terminated
+and must be deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+
+@subheading idn2_to_unicode_8zlz
+@anchor{idn2_to_unicode_8zlz}
+@deftypefun {int} {idn2_to_unicode_8zlz} (const char * @var{input}, char ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated UTF-8 string.
+
+@var{output}: Newly allocated output string in current locale's character set.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in UTF-8 format into a
+string encoded in the current locale's character set (punycode
+decoding). The output buffer will be zero-terminated and must be
+deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+
+@subheading idn2_to_unicode_lzlz
+@anchor{idn2_to_unicode_lzlz}
+@deftypefun {int} {idn2_to_unicode_lzlz} (const char * @var{input}, char ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated string encoded in the current locale's character set.
+
+@var{output}: Newly allocated output string in current locale's character set.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in the locale's character
+set into a string encoded in the current locale's character set (punycode
+decoding). The output buffer will be zero-terminated and must be
+deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+

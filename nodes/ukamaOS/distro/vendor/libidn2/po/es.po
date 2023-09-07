@@ -1,0 +1,215 @@
+# Spanish translation for libidn2 2.0.4.
+# Copyright (C) 20118 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Francisco Javier Serrador <fserrador@gmail.com>, 2018
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.0.4\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2018-04-28 14:11+0200\n"
+"Last-Translator: Francisco Javier Serrador <fserrador@gmail.com>\n"
+"Language-Team: Spanish <es@tp.org.es>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 2.0.4\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "correcto"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "memoria agotada"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr ""
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "no pudo convertir cadena textual a UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "error codificando cadena textual"
+
+#: lib/error.c:64
+#, fuzzy
+msgid "string could not be NFC normalized"
+msgstr "cadena no está en formato Unicode NFC"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr ""
+
+#: lib/error.c:68
+#, fuzzy
+msgid "punycode encoded data will be too large"
+msgstr "Tamaño codificado de %d es demasiado grande para leer\n"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr ""
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr ""
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr ""
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "entrada A-etiquetada no válida"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr ""
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "cadena no está en formato Unicode NFC"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr ""
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr ""
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr ""
+
+#: lib/error.c:88
+#, fuzzy
+msgid "string contains a disallowed character"
+msgstr "STRING-UID-NAME no contiene ningún dígito"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr ""
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr ""
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr ""
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr ""
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr ""
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr ""
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr ""
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Error desconocido"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Pruebe `%s --help' para más información.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Modo de empleo: %s [OPCIÓN]... [CADENA]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+
+#: src/idn2.c:80
+#, fuzzy
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help        Escribe ayuda y termina.\n"
+"  -V, --version     Escribe versión y termina.\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Conjunto de caracteres: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "error de entrada"
