@@ -40,18 +40,18 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 			/* adding  */
 			d.reqAddOrgRequest.Owner = d.UserId
-			resp, err := d.Nuc.AddOrg(d.reqAddOrgRequest)
-			if err != nil {
-				return err
-			} else {
-				d.OrgId = resp.Org.Id
-				d.OrgName = resp.Org.Name
-			}
+			// resp, err := d.Nuc.AddOrg(d.reqAddOrgRequest)
+			// if err != nil {
+			// 	return err
+			// } else {
+			d.OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
+			d.OrgName = "ukama-test-org"
+			// }
 
 			/* adding network */
 			nresp, err := d.Reg.AddNetwork(rapi.AddNetworkRequest{
-				OrgName: resp.Org.Name,
-				NetName: resp.Org.Name + "-net",
+				OrgName: d.OrgId,
+				NetName: d.OrgName + "-net",
 			})
 			if err != nil {
 				return err

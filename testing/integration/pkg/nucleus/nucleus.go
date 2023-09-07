@@ -139,7 +139,7 @@ func (s *NucleusClient) GetUser(req napi.GetUserRequest) (*upb.GetResponse, erro
 func (s *NucleusClient) GetUserByAuthId(req napi.GetUserByAuthIdRequest) (*upb.GetResponse, error) {
 	rsp := &upb.GetResponse{}
 
-	resp, err := s.r.Get(s.u.String() + VERSION + USER + req.AuthId)
+	resp, err := s.r.Get(s.u.String() + VERSION + USER + "auth/" + req.AuthId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 

@@ -31,10 +31,11 @@ type NucleusData struct {
 	MbHost        string
 
 	// API requests
-	reqAddUser napi.AddUserRequest
-	reqAddOrg  napi.AddOrgRequest
-	reqGetUser napi.GetUserRequest
-	reqGetOrg  napi.GetOrgRequest
+	reqAddUser       napi.AddUserRequest
+	reqAddOrg        napi.AddOrgRequest
+	reqGetUser       napi.GetUserRequest
+	reqGetOrg        napi.GetOrgRequest
+	reqGetUserByAuth napi.GetUserByAuthIdRequest
 }
 
 type TestData struct {
@@ -56,8 +57,8 @@ func InitializeData() *NucleusData {
 	d.Phone = strings.ToLower(faker.Phonenumber())
 	d.AuthId = strings.ToLower(faker.UUIDHyphenated())
 
-	d.OrgName = strings.ToLower(faker.FirstName()) + "-org"
-
+	// d.OrgName = strings.ToLower(faker.FirstName()) + "-org"
+	d.OrgName = "ukama-test-org"
 	d.Host = config.System.Nucleus
 	d.NucleusClient = NewNucleusClient(d.Host)
 	d.MbHost = config.System.MessageBus
@@ -74,6 +75,10 @@ func InitializeData() *NucleusData {
 	}
 
 	d.reqAddOrg = napi.AddOrgRequest{
+		OrgName: d.OrgName,
+	}
+
+	d.reqGetOrg = napi.GetOrgRequest{
 		OrgName: d.OrgName,
 	}
 
@@ -152,7 +157,7 @@ var TC_nucleus_add_user = &test.TestCase{
 		}
 
 		a.OwnerId = resp.User.Id
-
+		a.AuthId = resp.User.AuthId
 		tc.SaveWorkflowData(a)
 		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 		tc.Watcher.Stop()
@@ -161,104 +166,104 @@ var TC_nucleus_add_user = &test.TestCase{
 	},
 }
 
-var TC_nucleus_add_org = &test.TestCase{
-	Name:        "Add org",
-	Description: "Add an organization",
-	Data:        &orgpb.AddResponse{},
-	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		// Setup required for test case Initialize any
-		// test specific data if required
-		a, ok := tc.GetWorkflowData().(*NucleusData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+// var TC_nucleus_add_org = &test.TestCase{
+// 	Name:        "Add org",
+// 	Description: "Add an organization",
+// 	Data:        &orgpb.AddResponse{},
+// 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+// 		// Setup required for test case Initialize any
+// 		// test specific data if required
+// 		a, ok := tc.GetWorkflowData().(*NucleusData)
+// 		if !ok {
+// 			log.Errorf("Invalid data type for Workflow data.")
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+// 			return fmt.Errorf("invalid data type for Workflow data")
+// 		}
 
-		a.reqAddOrg = napi.AddOrgRequest{
-			OrgName:     a.OrgName,
-			Owner:       a.OwnerId,
-			Certificate: "-----BEGIN CERTIFICATE-----",
-		}
+// 		a.reqAddOrg = napi.AddOrgRequest{
+// 			OrgName:     a.OrgName,
+// 			Owner:       a.OwnerId,
+// 			Certificate: "-----BEGIN CERTIFICATE-----",
+// 		}
 
-		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost,
-			[]string{"event.cloud.org.org.add"})
+// 		log.Debugf("Setting up watcher for %s", tc.Name)
+// 		tc.Watcher = utils.SetupWatcher(a.MbHost,
+// 			[]string{"event.cloud.org.org.add"})
 
-		return nil
-	},
+// 		return nil
+// 	},
 
-	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Test Case
-		var err error
+// 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+// 		// Test Case
+// 		var err error
 
-		td, ok := tc.GetWorkflowData().(*NucleusData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+// 		td, ok := tc.GetWorkflowData().(*NucleusData)
+// 		if !ok {
+// 			log.Errorf("Invalid data type for Workflow data.")
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+// 			return fmt.Errorf("invalid data type for Workflow data")
+// 		}
 
-		// make sure the owner or admin is the request executor
-		tc.Data, err = td.NucleusClient.AddOrg(td.reqAddOrg)
+// 		// make sure the owner or admin is the request executor
+// 		tc.Data, err = td.NucleusClient.AddOrg(td.reqAddOrg)
 
-		return err
-	},
+// 		return err
+// 	},
 
-	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		// Check for possible failures during test case
-		check := false
+// 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+// 		// Check for possible failures during test case
+// 		check := false
 
-		resp := tc.GetData().(*orgpb.AddResponse)
-		if resp != nil {
-			data := tc.GetWorkflowData().(*NucleusData)
-			if data.reqAddOrg.OrgName == resp.Org.Name &&
-				resp.Org.Id != "" {
-				check = true
-			}
-		}
-		return check, nil
-	},
+// 		resp := tc.GetData().(*orgpb.AddResponse)
+// 		if resp != nil {
+// 			data := tc.GetWorkflowData().(*NucleusData)
+// 			if data.reqAddOrg.OrgName == resp.Org.Name &&
+// 				resp.Org.Id != "" {
+// 				check = true
+// 			}
+// 		}
+// 		return check, nil
+// 	},
 
-	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Here we save any data required to be saved from the
-		// test case Cleanup any test specific data
+// 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+// 		// Here we save any data required to be saved from the
+// 		// test case Cleanup any test specific data
 
-		resp, ok := tc.GetData().(*orgpb.AddResponse)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+// 		resp, ok := tc.GetData().(*orgpb.AddResponse)
+// 		if !ok {
+// 			log.Errorf("Invalid data type for Workflow data.")
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+// 			return fmt.Errorf("invalid data type for Workflow data")
+// 		}
 
-		a, ok := tc.GetWorkflowData().(*NucleusData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+// 		a, ok := tc.GetWorkflowData().(*NucleusData)
+// 		if !ok {
+// 			log.Errorf("Invalid data type for Workflow data.")
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+// 			return fmt.Errorf("invalid data type for Workflow data")
+// 		}
 
-		a.OrgId = resp.Org.Id
+// 		a.OrgId = resp.Org.Id
 
-		tc.SaveWorkflowData(a)
-		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-		tc.Watcher.Stop()
+// 		tc.SaveWorkflowData(a)
+// 		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+// 		tc.Watcher.Stop()
 
-		return nil
-	},
-}
+// 		return nil
+// 	},
+// }
 
 var TC_nucleus_get_org = &test.TestCase{
 	Name:        "Get Org",
 	Description: "Get Org by name",
-	Data:        &orgpb.GetByNameRequest{},
+	Data:        &orgpb.GetRequest{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
 		a := tc.GetWorkflowData().(*NucleusData)
 		a.reqGetOrg = napi.GetOrgRequest{
-			OrgName: a.OrgName,
+			OrgName: "ukama-test-org",
 		}
 		tc.SaveWorkflowData(a)
 		return nil
@@ -281,10 +286,10 @@ var TC_nucleus_get_org = &test.TestCase{
 		/* Check for possible failures during test case */
 		check := false
 
-		resp := tc.GetData().(*orgpb.GetByNameRequest)
+		resp := tc.GetData().(*orgpb.GetResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*NucleusData)
-			if data.reqGetOrg.OrgName == resp.Name {
+			if data.reqGetOrg.OrgName == resp.Org.Name {
 				check = true
 			}
 		}
@@ -327,6 +332,96 @@ var TC_nucleus_get_user = &test.TestCase{
 		check := false
 
 		resp := tc.GetData().(*userpb.GetResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*NucleusData)
+			if data.reqGetUser.UserId == resp.User.Id {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_nucleus_get_user_by_auth = &test.TestCase{
+	Name:        "Get user by auth",
+	Description: "Get user by auth id",
+	Data:        &userpb.GetByAuthIdRequest{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*NucleusData)
+		a.reqGetUserByAuth = napi.GetUserByAuthIdRequest{
+			AuthId: a.AuthId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*NucleusData)
+		if ok {
+			tc.Data, err = a.NucleusClient.GetUserByAuthId(a.reqGetUserByAuth)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*userpb.GetResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*NucleusData)
+			if data.reqGetUserByAuth.AuthId == resp.User.AuthId {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_nucleus_whoami = &test.TestCase{
+	Name:        "Whoami",
+	Description: "Whoami by user id",
+	Data:        &userpb.GetRequest{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*NucleusData)
+		a.reqGetUser = napi.GetUserRequest{
+			UserId: a.reqGetUser.UserId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*NucleusData)
+		if ok {
+			tc.Data, err = a.NucleusClient.Whoami(a.reqGetUser)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*userpb.WhoamiResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*NucleusData)
 			if data.reqGetUser.UserId == resp.User.Id {

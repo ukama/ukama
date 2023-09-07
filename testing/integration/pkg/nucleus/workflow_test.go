@@ -34,8 +34,11 @@ func TestWorkflow_NucleusSystem(t *testing.T) {
 	/* Get user */
 	w.RegisterTestCase(TC_nucleus_get_user)
 
-	/* Add org */
-	w.RegisterTestCase(TC_nucleus_add_org)
+	/* Get user by auth id */
+	w.RegisterTestCase(TC_nucleus_get_user_by_auth)
+
+	/* Whoami */
+	w.RegisterTestCase(TC_nucleus_whoami)
 
 	/* Get org */
 	w.RegisterTestCase(TC_nucleus_get_org)

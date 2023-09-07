@@ -3,7 +3,7 @@ services:
  postgresd:
   image: postgres:13.3
   ports:
-   - '5432:5432'
+   - '5412:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -45,6 +45,7 @@ services:
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
+   - NETWORK_HOST=http://localhost:8075
   restart: always
   networks:
    - ukama-net
@@ -66,6 +67,9 @@ services:
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
+   - DATA_PLAN=http://localhost:8074
+   - NETWORK_HOST=http://localhost:8075
+   - ORG_HOST=http://localhost:8060
   restart: always
   networks:
    - ukama-net
