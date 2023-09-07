@@ -1,0 +1,11 @@
+syntax="proto3";
+
+option go_package = "specs/controller/spec";
+
+package ukama.testing.network.v1;
+
+// Virtual Node Status update event 
+message EvtUpdateVirtnode {
+    string uuid = 1;
+    string status = 2;
+}
