@@ -10,6 +10,8 @@ type Config struct {
 	System           SystemConfig
 	LogLevel         int    `default:"4`
 	Key              string `default:"KEY"`
+	OrgId            string `default:"ORG_ID"`
+	OrgName          string `default:"ORG_NAME"`
 }
 
 type SystemConfig struct {
@@ -25,7 +27,9 @@ type SystemConfig struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Key: "the-key-has-to-be-32-bytes-long!",
+		OrgName: "ukama-test-org",
+		OrgId:   "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc",
+		Key:     "the-key-has-to-be-32-bytes-long!",
 		System: SystemConfig{
 			MessageBus: "amqp://guest:guest@localhost:5672/",
 			Dataplan:   "http://localhost:8074",

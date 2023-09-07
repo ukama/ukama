@@ -14,6 +14,9 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
+const VERSION = "/v1"
+const MEMBERS = "/members/"
+
 type RegistryClient struct {
 	u *url.URL
 	r utils.Resty
@@ -52,13 +55,33 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*mempb.MemberResponse
 }
 
 func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*mempb.MemberResponse, error) {
+
 	rsp := &mempb.MemberResponse{}
 
-	resp, err := s.r.Get(s.u.String() + "/v1/members/" + req.UserUuid)
+	resp, err := s.r.Get(s.u.String() + VERSION + MEMBERS + req.UserUuid)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
-		return nil, fmt.Errorf("GetMember failure: %w", err)
+		return nil, fmt.Errorf("GetUser failure: %w", err)
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) GetMembers() (*mempb.GetMembersResponse, error) {
+
+	rsp := &mempb.GetMembersResponse{}
+
+	resp, err := s.r.Get(s.u.String() + VERSION + MEMBERS)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("GetUser failure: %w", err)
 	}
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)

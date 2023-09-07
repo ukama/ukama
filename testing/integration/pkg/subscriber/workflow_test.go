@@ -44,8 +44,8 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			// if err != nil {
 			// 	return err
 			// } else {
-			d.OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
-			d.OrgName = "ukama-test-org"
+			d.OrgId = config.OrgId
+			d.OrgName = config.OrgName
 			// }
 
 			/* adding network */

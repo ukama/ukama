@@ -60,7 +60,8 @@ func InitializeData() *NucleusData {
 	d.AuthId = strings.ToLower(faker.UUIDHyphenated())
 
 	// d.OrgName = strings.ToLower(faker.FirstName()) + "-org"
-	d.OrgName = "ukama-test-org"
+	d.OrgId = config.OrgId
+	d.OrgName = config.OrgName
 	d.Host = config.System.Nucleus
 	d.NucleusClient = NewNucleusClient(d.Host)
 	d.MbHost = config.System.MessageBus
@@ -265,7 +266,7 @@ var TC_nucleus_get_org = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*NucleusData)
 		a.reqGetOrg = napi.GetOrgRequest{
-			OrgName: "ukama-test-org",
+			OrgName: a.OrgName,
 		}
 		tc.SaveWorkflowData(a)
 		return nil
