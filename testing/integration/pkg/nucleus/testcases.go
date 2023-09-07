@@ -31,11 +31,13 @@ type NucleusData struct {
 	MbHost        string
 
 	// API requests
-	reqAddUser       napi.AddUserRequest
-	reqAddOrg        napi.AddOrgRequest
-	reqGetUser       napi.GetUserRequest
-	reqGetOrg        napi.GetOrgRequest
-	reqGetUserByAuth napi.GetUserByAuthIdRequest
+	reqAddUser           napi.AddUserRequest
+	reqAddOrg            napi.AddOrgRequest
+	reqGetUser           napi.GetUserRequest
+	reqGetOrg            napi.GetOrgRequest
+	reqGetUserByAuth     napi.GetUserByAuthIdRequest
+	reqAddUserToOrg      napi.UserOrgRequest
+	reqRemoveUserFromOrg napi.UserOrgRequest
 }
 
 type TestData struct {
@@ -289,6 +291,7 @@ var TC_nucleus_get_org = &test.TestCase{
 		resp := tc.GetData().(*orgpb.GetResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*NucleusData)
+			data.OrgId = resp.Org.Id
 			if data.reqGetOrg.OrgName == resp.Org.Name {
 				check = true
 			}
@@ -429,6 +432,114 @@ var TC_nucleus_whoami = &test.TestCase{
 			}
 		}
 
+		return check, nil
+	},
+}
+
+var TC_nucleus_add_user_to_org = &test.TestCase{
+	Name:        "Add user to org",
+	Description: "Add a new user to org",
+	Data:        &orgpb.RegisterUserRequest{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*NucleusData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqAddUserToOrg = napi.UserOrgRequest{
+			OrgId:  a.OrgId,
+			UserId: a.OwnerId, //User Id
+		}
+
+		log.Debugf("Setting up watcher for %s", tc.Name)
+		// tc.Watcher = utils.SetupWatcher(a.MbHost,
+		// 	[]string{"event.cloud.users.user.add"})
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*NucleusData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		tc.Data, err = td.NucleusClient.AddUsrToOrg(td.reqAddUserToOrg)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*orgpb.RegisterUserResponse)
+		if resp != nil {
+			check = true
+		}
+		return check, nil
+	},
+}
+
+var TC_nucleus_remove_user_from_org = &test.TestCase{
+	Name:        "Remove user from org",
+	Description: "Remove user from org by providing org id and user id",
+	Data:        &orgpb.RemoveOrgForUserRequest{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*NucleusData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqAddUserToOrg = napi.UserOrgRequest{
+			OrgId:  a.OrgId,
+			UserId: a.OwnerId, //User Id
+		}
+
+		log.Debugf("Setting up watcher for %s", tc.Name)
+		// tc.Watcher = utils.SetupWatcher(a.MbHost,
+		// 	[]string{"event.cloud.users.user.add"})
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*NucleusData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		tc.Data, err = td.NucleusClient.RemoveUsrFromOrg(td.reqAddUserToOrg)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*orgpb.RemoveOrgForUserResponse)
+		if resp != nil {
+			check = true
+		}
 		return check, nil
 	},
 }

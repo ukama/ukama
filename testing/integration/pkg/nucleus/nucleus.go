@@ -96,6 +96,26 @@ func (s *NucleusClient) AddUsrToOrg(req napi.UserOrgRequest) (*orgpb.RegisterUse
 	return rsp, nil
 }
 
+func (s *NucleusClient) RemoveUsrFromOrg(req napi.UserOrgRequest) (*orgpb.RemoveOrgForUserResponse, error) {
+	log.Debugf("Remove user from org: %v", req)
+
+	rsp := &orgpb.RemoveOrgForUserResponse{}
+
+	resp, err := s.r.Delete(s.u.String()+VERSION+ORG+req.OrgId+USER+req.UserId)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("AddUsrToOrg failure: %w", err)
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
 func (s *NucleusClient) AddUser(req napi.AddUserRequest) (*upb.AddResponse, error) {
 	b, err := json.Marshal(req)
 	if err != nil {

@@ -43,6 +43,12 @@ func TestWorkflow_NucleusSystem(t *testing.T) {
 	/* Get org */
 	w.RegisterTestCase(TC_nucleus_get_org)
 
+	/* Add user to org */
+	w.RegisterTestCase(TC_nucleus_add_user_to_org)
+
+	/* Remove user from org */
+	// w.RegisterTestCase(TC_nucleus_remove_user_from_org)
+
 	/* Run */
 	err := w.Run(t, context.Background())
 	assert.NoError(t, err)
