@@ -33,6 +33,9 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	/* Get Members */
 	w.RegisterTestCase(TC_registry_get_members)
 
+	/* Update Member */
+	w.RegisterTestCase(TC_registry_update_member)
+
 	/* Add Network */
 	w.RegisterTestCase(TC_registry_add_network)
 

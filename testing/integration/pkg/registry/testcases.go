@@ -38,10 +38,11 @@ type RegistryData struct {
 	MbHost         string
 
 	// API requests
-	reqAddUser    napi.AddUserRequest
-	reqAddMember  api.MemberRequest
-	reqGetMember  api.GetMemberRequest
-	reqAddNetwork api.AddNetworkRequest
+	reqAddUser      napi.AddUserRequest
+	reqAddMember    api.MemberRequest
+	reqGetMember    api.GetMemberRequest
+	reqUpdateMember api.UpdateMemberRequest
+	reqAddNetwork   api.AddNetworkRequest
 }
 
 func InitializeData() *RegistryData {
@@ -191,6 +192,72 @@ var TC_registry_get_member = &test.TestCase{
 			data := tc.GetWorkflowData().(*RegistryData)
 			if data.reqGetMember.UserUuid == resp.Member.UserId &&
 				resp.Member.OrgId != "" {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_update_member = &test.TestCase{
+	Name:        "Update member",
+	Description: "Update member from default org",
+	Data:        &mempb.MemberResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a.NetName = strings.ToLower(faker.FirstName()) + "-net"
+		a.reqUpdateMember = api.UpdateMemberRequest{
+			UserUuid:      a.UserId,
+			IsDeactivated: false,
+			Role:          "Vendor",
+		}
+
+		// log.Debugf("Setting up watcher for %s", tc.Name)
+		// tc.Watcher = utils.SetupWatcher(a.MbHost,
+		// 	[]string{"event.cloud.network.network.add"})
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			err = a.RegistryClient.UpdateMember(a.reqUpdateMember)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*mempb.MemberRequest)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data != nil {
 				check = true
 			}
 		}
