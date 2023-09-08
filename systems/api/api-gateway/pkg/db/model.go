@@ -28,6 +28,7 @@ const (
 
 func (s *ResourceStatus) Scan(value interface{}) error {
 	*s = ResourceStatus(uint8(value.(int64)))
+
 	return nil
 }
 
