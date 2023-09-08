@@ -32,6 +32,7 @@ type RegistryData struct {
 	OrgId          string
 	OrgName        string
 	NetName        string
+	NetworkId      string
 	RegistryClient *RegistryClient
 	Nuc            *nucleus.NucleusClient
 	Host           string
@@ -43,6 +44,8 @@ type RegistryData struct {
 	reqGetMember    api.GetMemberRequest
 	reqUpdateMember api.UpdateMemberRequest
 	reqAddNetwork   api.AddNetworkRequest
+	reqGetNetwork   api.GetNetworkRequest
+	reqGetNetworks  api.GetNetworksRequest
 }
 
 func InitializeData() *RegistryData {
@@ -86,17 +89,10 @@ var TC_registry_get_members = &test.TestCase{
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		// Setup required for test case Initialize any
 		// test specific data if required
-		a, ok := tc.GetWorkflowData().(*RegistryData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+		a := tc.GetWorkflowData().(*RegistryData)
 
-		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost,
-			[]string{"event.cloud.org.member.add"})
-
+		tc.SaveWorkflowData(a)
 		return nil
 	},
 
@@ -221,10 +217,6 @@ var TC_registry_update_member = &test.TestCase{
 			Role:          "Vendor",
 		}
 
-		// log.Debugf("Setting up watcher for %s", tc.Name)
-		// tc.Watcher = utils.SetupWatcher(a.MbHost,
-		// 	[]string{"event.cloud.network.network.add"})
-
 		return nil
 	},
 
@@ -247,21 +239,6 @@ var TC_registry_update_member = &test.TestCase{
 			return fmt.Errorf("invalid data type for Workflow data")
 		}
 		return err
-	},
-
-	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-
-		// Check for possible failures during test case
-		check := false
-
-		resp := tc.GetData().(*mempb.MemberRequest)
-		if resp != nil {
-			data := tc.GetWorkflowData().(*RegistryData)
-			if data != nil {
-				check = true
-			}
-		}
-		return check, nil
 	},
 }
 
@@ -322,8 +299,101 @@ var TC_registry_add_network = &test.TestCase{
 		resp := tc.GetData().(*netpb.AddResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*RegistryData)
+			data.NetworkId = resp.Network.Id
 			if data.reqAddNetwork.NetName == resp.Network.Name &&
 				data.OrgId == resp.Network.OrgId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_networks = &test.TestCase{
+	Name:        "Get networks",
+	Description: "Get networks of default org",
+	Data:        &netpb.GetByOrgResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetNetworks = api.GetNetworksRequest{
+			OrgUuid: a.OrgId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetNetworks(td.reqGetNetworks)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*netpb.GetByOrgResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if resp.OrgId == data.OrgId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_network = &test.TestCase{
+	Name:        "Get network",
+	Description: "Get network by id",
+	Data:        &netpb.GetResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetNetwork = api.GetNetworkRequest{
+			NetworkId: a.NetworkId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetNetwork(td.reqGetNetwork)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*netpb.GetResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.OrgId == resp.Network.OrgId {
 				check = true
 			}
 		}

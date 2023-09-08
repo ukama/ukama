@@ -39,6 +39,12 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	/* Add Network */
 	w.RegisterTestCase(TC_registry_add_network)
 
+	/* Get Network */
+	w.RegisterTestCase(TC_registry_get_network)
+
+	/* Get Networks */
+	w.RegisterTestCase(TC_registry_get_networks)
+
 	/* Run */
 	err := w.Run(t, context.Background())
 	assert.NoError(t, err)
