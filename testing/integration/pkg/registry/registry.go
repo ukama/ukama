@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
@@ -20,6 +21,7 @@ const MEMBERS = "/members/"
 const NETWORKS = "/networks/"
 const SITES = "/sites/"
 const NODES = "/nodes/"
+const INVITATIONS = "/invitations/"
 
 type RegistryClient struct {
 	u *url.URL
@@ -384,14 +386,14 @@ func (s *RegistryClient) AttachNode(req api.AttachNodesRequest) (*nodepb.AttachN
 func (s *RegistryClient) DetachNode(req api.DetachNodeRequest) (*nodepb.DetachNodeResponse, error) {
 	log.Debugf("Detach node: %v", req)
 
-	b, err := json.Marshal(req)
+	_, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
 	rsp := &nodepb.DetachNodeResponse{}
 
-	resp, err := s.r.Delete(s.u.String()+VERSION+NODES+req.NodeId+"/attach", b)
+	resp, err := s.r.Delete(s.u.String() + VERSION + NODES + req.NodeId + "/attach")
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -444,6 +446,90 @@ func (s *RegistryClient) GetNodesForSite(req api.GetSiteNodesRequest) (*nodepb.G
 	rsp := &nodepb.GetBySiteResponse{}
 
 	resp, err := s.r.Get(s.u.String() + VERSION + NODES + SITES + req.SiteId)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) AddInvitations(req api.AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
+	log.Debugf("Add invitation: %v", req)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+
+	rsp := &invpb.AddInvitationResponse{}
+
+	resp, err := s.r.Post(s.u.String()+VERSION+INVITATIONS, b)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("add invitation failure: %w", err)
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) UpdateInvitations(req api.UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
+	log.Debugf("Update invitation: %v", req)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+
+	rsp := &invpb.UpdateInvitationStatusResponse{}
+
+	resp, err := s.r.Post(s.u.String()+VERSION+INVITATIONS, b)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("update invitation failure: %w", err)
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) GetInvitationByOrg(req api.GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
+	rsp := &invpb.GetInvitationByOrgResponse{}
+
+	resp, err := s.r.Get(s.u.String() + VERSION + INVITATIONS + "orgs/" + req.Org)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) GetInvitation(req api.GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
+	rsp := &invpb.GetInvitationResponse{}
+
+	resp, err := s.r.Get(s.u.String() + VERSION + INVITATIONS + req.InvitationId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
