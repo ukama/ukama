@@ -824,7 +824,7 @@ var TC_registry_add_node = &test.TestCase{
 			NodeId: a.NodeId,
 			Name:   a.NodeName,
 			OrgId:  a.OrgId,
-			State:  "Onboarded",
+			State:  "onboarded",
 		}
 		tc.SaveWorkflowData(a)
 		return nil
@@ -943,7 +943,7 @@ var TC_registry_update_node_state = &test.TestCase{
 		}
 		a.reqUpdateNodeState = api.UpdateNodeStateRequest{
 			NodeId: a.NodeId,
-			State:  "Active",
+			State:  "active",
 		}
 		tc.SaveWorkflowData(a)
 		return nil
