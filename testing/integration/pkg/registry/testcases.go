@@ -15,8 +15,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
 var config *pkg.Config
@@ -28,24 +30,48 @@ type RegistryData struct {
 	Email          string
 	Phone          string
 	OwnerId        string
+	InviteId       string
+	NodeId         string
+	NodeName       string
+	NodeState      string
 	MemberId       string
 	OrgId          string
 	OrgName        string
 	NetName        string
+	aNodeId        string
+	lNodeId        string
 	NetworkId      string
+	SiteName       string
+	SiteId         string
 	RegistryClient *RegistryClient
 	Nuc            *nucleus.NucleusClient
 	Host           string
 	MbHost         string
 
 	// API requests
-	reqAddUser      napi.AddUserRequest
-	reqAddMember    api.MemberRequest
-	reqGetMember    api.GetMemberRequest
-	reqUpdateMember api.UpdateMemberRequest
-	reqAddNetwork   api.AddNetworkRequest
-	reqGetNetwork   api.GetNetworkRequest
-	reqGetNetworks  api.GetNetworksRequest
+	reqAddUser          napi.AddUserRequest
+	reqAddMember        api.MemberRequest
+	reqGetMember        api.GetMemberRequest
+	reqUpdateMember     api.UpdateMemberRequest
+	reqAddNetwork       api.AddNetworkRequest
+	reqGetNetwork       api.GetNetworkRequest
+	reqGetNetworks      api.GetNetworksRequest
+	reqAddSite          api.AddSiteRequest
+	reqGetSite          api.GetSiteRequest
+	reqGetSites         api.GetNetworkRequest
+	reqAddInvite        api.AddInvitationRequest
+	reqUpdateInvitation api.UpdateInvitationRequest
+	reqGetInvite        api.GetInvitationRequest
+	reqGetInvites       api.GetInvitationByOrgRequest
+	reqAddNode          api.AddNodeRequest
+	reqUpdateNode       api.UpdateNodeRequest
+	reqUpdateNodeState  api.UpdateNodeStateRequest
+	reqAttachNode       api.AttachNodesRequest
+	reqDetachNode       api.DetachNodeRequest
+	reqAddNodeToSite    api.AddNodeToSiteRequest
+	reqGetNodes         api.GetNodesRequest
+	reqGetNode          api.GetNodeRequest
+	reqGetNodeForSite   api.GetSiteNodesRequest
 }
 
 func InitializeData() *RegistryData {
@@ -394,6 +420,876 @@ var TC_registry_get_network = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*RegistryData)
 			if data.OrgId == resp.Network.OrgId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_add_site = &test.TestCase{
+	Name:        "Add site",
+	Description: "Add site to network",
+	Data:        &netpb.AddSiteResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a.SiteName = strings.ToLower(faker.FirstName()) + "-site"
+		a.reqAddSite = api.AddSiteRequest{
+			NetworkId: a.NetworkId,
+			SiteName:  a.SiteName,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AddSite(a.reqAddSite)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*netpb.AddSiteResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			data.SiteId = resp.Site.Id
+			data.SiteName = resp.Site.Name
+			if data.SiteName == resp.Site.Name &&
+				resp.Site.Id != "" {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_site = &test.TestCase{
+	Name:        "Get site",
+	Description: "Get site by id",
+	Data:        &netpb.GetSiteResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetSite = api.GetSiteRequest{
+			NetworkId: a.NetworkId,
+			SiteName:  a.SiteName,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetSite(td.reqGetSite)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*netpb.GetSiteResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.NetworkId == resp.Site.NetworkId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_sites = &test.TestCase{
+	Name:        "Get sites",
+	Description: "Get sites by network",
+	Data:        &netpb.GetSitesByNetworkResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetSites = api.GetNetworkRequest{
+			NetworkId: a.NetworkId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetSites(td.reqGetSites)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*netpb.GetSitesByNetworkResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.NetworkId == resp.NetworkId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_add_invite = &test.TestCase{
+	Name:        "Add invite",
+	Description: "Add invite",
+	Data:        &invpb.AddInvitationResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a.reqAddInvite = api.AddInvitationRequest{
+			Org:   a.OrgName,
+			Name:  a.Name,
+			Email: a.Email,
+			Role:  "admin",
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AddInvitations(a.reqAddInvite)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*invpb.AddInvitationResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			data.InviteId = resp.Invitation.Id
+
+			if data.OrgName == resp.Invitation.Org &&
+				resp.Invitation.Status == invpb.StatusType_Pending {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_update_invite = &test.TestCase{
+	Name:        "update invite",
+	Description: "update invite",
+	Data:        &invpb.UpdateInvitationStatusResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a.reqUpdateInvitation = api.UpdateInvitationRequest{
+			InvitationId: a.InviteId,
+			Status:       "Accepted",
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.UpdateInvitations(a.reqUpdateInvitation)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*invpb.UpdateInvitationStatusResponse)
+		if resp != nil {
+			if resp.Status == invpb.StatusType_Accepted {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_invite = &test.TestCase{
+	Name:        "Get invite",
+	Description: "Get invite by id",
+	Data:        &invpb.GetInvitationResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetInvite = api.GetInvitationRequest{
+			InvitationId: a.InviteId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetInvitation(td.reqGetInvite)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*invpb.GetInvitationResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.InviteId == resp.Invitation.Id {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_invites = &test.TestCase{
+	Name:        "Get invites",
+	Description: "Get invites by org",
+	Data:        &invpb.GetInvitationByOrgResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetInvites = api.GetInvitationByOrgRequest{
+			Org: a.OrgId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetInvitationByOrg(td.reqGetInvites)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*invpb.GetInvitationByOrgResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			for _, invite := range resp.Invitations {
+				if invite.Id == data.InviteId {
+					check = true
+					break
+				}
+			}
+
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_add_node = &test.TestCase{
+	Name:        "Add node",
+	Description: "Add Node",
+	Data:        &nodepb.AddNodeResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.NodeName = "node" + strings.ToLower(faker.Word())
+		a.NodeId = utils.RandomGetNodeId()
+		a.reqAddNode = api.AddNodeRequest{
+			NodeId: a.NodeId,
+			Name:   a.NodeName,
+			OrgId:  a.OrgId,
+			State:  "Onboarded",
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AddNode(a.reqAddNode)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.AddNodeResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.OrgId == resp.Node.OrgId {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_update_node = &test.TestCase{
+	Name:        "Update node",
+	Description: "Update Node",
+	Data:        &nodepb.UpdateNodeResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.NodeName = "node" + strings.ToLower(faker.Word())
+		a.reqUpdateNode = api.UpdateNodeRequest{
+			NodeId: a.NodeId,
+			Name:   a.NodeName,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.UpdateNode(a.reqUpdateNode)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.UpdateNodeResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.NodeName == resp.Node.Name {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_update_node_state = &test.TestCase{
+	Name:        "Update node state",
+	Description: "Update Node State",
+	Data:        &nodepb.UpdateNodeResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqUpdateNodeState = api.UpdateNodeStateRequest{
+			NodeId: a.NodeId,
+			State:  "Active",
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.UpdateNodeState(a.reqUpdateNodeState)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.UpdateNodeResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.NodeName == resp.Node.Name {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_add_node_site = &test.TestCase{
+	Name:        "Add node to site",
+	Description: "Add Node to site",
+	Data:        &nodepb.AddNodeToSiteResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqAddNodeToSite = api.AddNodeToSiteRequest{
+			NodeId: a.NodeId,
+			SiteId: a.SiteId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AddToSite(a.reqAddNodeToSite)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.UpdateNodeResponse)
+		if resp != nil {
+			check = true
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_attach_node = &test.TestCase{
+	Name:        "Attach node",
+	Description: "Attach node",
+	Data:        &nodepb.AttachNodesResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqAttachNode = api.AttachNodesRequest{
+			ParentNode: a.aNodeId,
+			AmpNodeL:   a.aNodeId,
+			AmpNodeR:   a.lNodeId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AttachNode(a.reqAttachNode)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.AttachNodesResponse)
+		if resp != nil {
+			check = true
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_detach_node = &test.TestCase{
+	Name:        "Detach node",
+	Description: "Detach node",
+	Data:        &nodepb.DetachNodeResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		a.reqDetachNode = api.DetachNodeRequest{
+			NodeId: a.aNodeId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		a, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		// make sure the owner or admin is the request executor
+		if ok {
+			tc.Data, err = a.RegistryClient.AttachNode(a.reqAttachNode)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.DetachNodeResponse)
+		if resp != nil {
+			check = true
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_nodes = &test.TestCase{
+	Name:        "Get nodes",
+	Description: "Get nodes",
+	Data:        &nodepb.GetNodesResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetNodes = api.GetNodesRequest{
+			Free: true,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetNodes(td.reqGetNodes)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.GetNodesResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			data.aNodeId = resp.Node[0].Id
+			data.lNodeId = resp.Node[1].Id
+			for _, node := range resp.Node {
+				if node.Id == data.NodeId {
+					check = true
+					break
+				}
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_node = &test.TestCase{
+	Name:        "Get node",
+	Description: "Get node",
+	Data:        &nodepb.GetNodeResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetNode = api.GetNodeRequest{
+			NodeId: a.NodeId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetNode(td.reqGetNode)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.GetNodeResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.NodeId == resp.Node.Id {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var TC_registry_get_nodes_by_site = &test.TestCase{
+	Name:        "Get nodes for site",
+	Description: "Get nodes for site",
+	Data:        &nodepb.GetBySiteResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Setup required for test case Initialize any
+		// test specific data if required
+		a := tc.GetWorkflowData().(*RegistryData)
+		a.reqGetNodeForSite = api.GetSiteNodesRequest{
+			SiteId: a.SiteId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+
+		td, ok := tc.GetWorkflowData().(*RegistryData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		tc.Data, err = td.RegistryClient.GetNodesForSite(td.reqGetNodeForSite)
+
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during test case
+		check := false
+
+		resp := tc.GetData().(*nodepb.GetBySiteResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*RegistryData)
+			if data.SiteId == resp.SiteId {
 				check = true
 			}
 		}

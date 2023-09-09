@@ -160,7 +160,7 @@ func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetRespon
 func (s *RegistryClient) GetNetworks(req api.GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
 	rsp := &netpb.GetByOrgResponse{}
 
-	resp, err := s.r.Get(s.u.String() + VERSION + NETWORKS + req.OrgUuid)
+	resp, err := s.r.Get(s.u.String() + VERSION + NETWORKS + "?org=" + req.OrgUuid)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
@@ -184,7 +184,7 @@ func (s *RegistryClient) AddSite(req api.AddSiteRequest) (*netpb.AddSiteResponse
 
 	rsp := &netpb.AddSiteResponse{}
 
-	resp, err := s.r.Post(s.u.String()+VERSION+NETWORKS+req.NetworkId+SITES+req.SiteName, b)
+	resp, err := s.r.Post(s.u.String()+VERSION+NETWORKS+req.NetworkId+SITES, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 

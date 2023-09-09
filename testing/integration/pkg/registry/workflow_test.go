@@ -45,6 +45,54 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	/* Get Networks */
 	w.RegisterTestCase(TC_registry_get_networks)
 
+	/* Add Site */
+	w.RegisterTestCase(TC_registry_add_site)
+
+	/* Get Sites */
+	w.RegisterTestCase(TC_registry_get_sites)
+
+	/* Get Site */
+	w.RegisterTestCase(TC_registry_get_site)
+
+	// /* Add Invite */
+	// w.RegisterTestCase(TC_registry_add_invite)
+
+	// /* Update Invite */
+	// w.RegisterTestCase(TC_registry_update_invite)
+
+	// /* Get Invite */
+	// w.RegisterTestCase(TC_registry_get_invite)
+
+	// /* Get Invites by org */
+	// w.RegisterTestCase(TC_registry_get_invites)
+
+	/* Add Node */
+	w.RegisterTestCase(TC_registry_add_node)
+
+	/* Update Node */
+	w.RegisterTestCase(TC_registry_update_node)
+
+	/* Update Node State */
+	w.RegisterTestCase(TC_registry_update_node_state)
+
+	/* Attach Node */
+	w.RegisterTestCase(TC_registry_attach_node)
+
+	/* Detach Node */
+	w.RegisterTestCase(TC_registry_detach_node)
+
+	/* Detach Node */
+	w.RegisterTestCase(TC_registry_detach_node)
+
+	/* Add Node to site*/
+	w.RegisterTestCase(TC_registry_add_node_site)
+
+	/* Get nodes*/
+	w.RegisterTestCase(TC_registry_get_nodes)
+
+	/* Get node*/
+	w.RegisterTestCase(TC_registry_get_node)
+
 	/* Run */
 	err := w.Run(t, context.Background())
 	assert.NoError(t, err)

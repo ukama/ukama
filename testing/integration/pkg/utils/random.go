@@ -2,6 +2,7 @@ package utils
 
 import (
 	b64 "encoding/base64"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -11,6 +12,9 @@ import (
 	"github.com/ukama/ukama/systems/common/validation"
 )
 
+var node_type = []string{"hnode", "tnode", "anode"}
+var country_code = []string{"us", "uk", "eu", "pk", "rc"}
+
 func RandomPort() int {
 	n, _ := faker.RandomInt(1024, 65336)
 	return n[0]
@@ -19,6 +23,12 @@ func RandomPort() int {
 func RandomInt(m int) int {
 	n, _ := faker.RandomInt(0, m, 1)
 	return n[0]
+}
+
+func RandomGetNodeId() string {
+	nIndex := rand.Int() % len(node_type)
+	cIndex := rand.Int() % len(country_code)
+	return country_code[cIndex] + "-" + RandomString(6) + "-" + node_type[nIndex] + "-" + RandomString(2) + "-" + RandomString(4)
 }
 
 func RandomIntInRange(min int, max int) int {
