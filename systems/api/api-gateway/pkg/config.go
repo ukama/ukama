@@ -11,22 +11,23 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	// Services          GrpcEndpoints  `mapstructure:"services"`
+	HttpServices HttpEndpoints  `mapstructure:"httpServices"`
+	Metrics      config.Metrics `mapstructure:"metrics"`
+	Auth         *config.Auth   `mapstructure:"auth"`
 }
 
 type HttpEndpoints struct {
 	Timeout     time.Duration
+	Network     string
 	NodeMetrics string
 }
 
-type GrpcEndpoints struct {
-	Timeout time.Duration
-	Mailer  string
-	Notify  string
-}
+// type GrpcEndpoints struct {
+// Timeout time.Duration
+// Mailer  string
+// Network string
+// }
 
 func NewConfig() *Config {
 	defaultCors := cors.DefaultConfig()
@@ -38,9 +39,9 @@ func NewConfig() *Config {
 			DebugMode: false,
 		},
 
-		Services: GrpcEndpoints{
-			Timeout: 5 * time.Second,
-		},
+		// Services: GrpcEndpoints{
+		// Timeout: 5 * time.Second,
+		// },
 
 		Server: rest.HttpConfig{
 			Port: 8080,
@@ -49,6 +50,7 @@ func NewConfig() *Config {
 
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
+			Network:     "http://localhost",
 			NodeMetrics: "http://localhost",
 		},
 
