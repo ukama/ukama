@@ -14,6 +14,32 @@ type MsgClientServiceServer struct {
 	mock.Mock
 }
 
+// CreateShovel provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) CreateShovel(_a0 context.Context, _a1 *gen.CreateShovelRequest) (*gen.CreateShovelResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.CreateShovelResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateShovelRequest) (*gen.CreateShovelResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateShovelRequest) *gen.CreateShovelResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.CreateShovelResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateShovelRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PublishMsg provides a mock function with given fields: _a0, _a1
 func (_m *MsgClientServiceServer) PublishMsg(_a0 context.Context, _a1 *gen.PublishMsgRequest) (*gen.PublishMsgResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -58,6 +84,32 @@ func (_m *MsgClientServiceServer) RegisterService(_a0 context.Context, _a1 *gen.
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterServiceReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveShovel provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) RemoveShovel(_a0 context.Context, _a1 *gen.RemoveShovelRequest) (*gen.RemoveShovelResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.RemoveShovelResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveShovelRequest) (*gen.RemoveShovelResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveShovelRequest) *gen.RemoveShovelResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveShovelResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveShovelRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

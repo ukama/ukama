@@ -23,6 +23,7 @@ import (
 )
 
 type PackageServer struct {
+	orgName        string
 	packageRepo    db.PackageRepo
 	rate           client.RateService
 	msgbus         mb.MsgBusServiceClient
@@ -30,12 +31,14 @@ type PackageServer struct {
 	pb.UnimplementedPackagesServiceServer
 }
 
-func NewPackageServer(packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient) *PackageServer {
+func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient) *PackageServer {
 	return &PackageServer{
+		orgName:        orgName,
 		packageRepo:    packageRepo,
 		msgbus:         msgBus,
 		rate:           rate,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {

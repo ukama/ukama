@@ -39,7 +39,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 		Role:     pb.RoleType(db.Users),
 	}).Return(nil).Once()
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-	s := NewMemberServer(mRepo, nOrg, msgclientRepo, "", orgId, testOrgName)
+	s := NewMemberServer(testOrgName, mRepo, nOrg, msgclientRepo, "", orgId)
 
 	// Act
 	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
@@ -69,7 +69,7 @@ func TestMemberServer_GetMember(t *testing.T) {
 
 	mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
 
-	s := NewMemberServer(mRepo, nil, msgclientRepo, "", orgId, testOrgName)
+	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
 
 	// Act
 	resp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
@@ -109,7 +109,7 @@ func TestMemberServer_GetMembers(t *testing.T) {
 
 	mRepo.On("GetMembers").Return(members, nil).Once()
 
-	s := NewMemberServer(mRepo, nil, msgclientRepo, "", orgId, testOrgName)
+	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
 
 	// Act
 	resp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{})
@@ -145,7 +145,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 			UserUuid: member.UserId.String(),
 		}).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-		s := NewMemberServer(mRepo, nil, msgclientRepo, "", orgId, testOrgName)
+		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
@@ -174,7 +174,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
 
-		s := NewMemberServer(mRepo, nil, msgclientRepo, "", orgId, testOrgName)
+		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{

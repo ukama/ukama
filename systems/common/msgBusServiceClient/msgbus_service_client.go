@@ -9,8 +9,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -23,6 +25,7 @@ type MsgBusServiceClient interface {
 }
 
 type msgBusServiceClient struct {
+	org          string
 	uuid         string
 	service      string
 	system       string
@@ -40,7 +43,7 @@ type msgBusServiceClient struct {
 	routes       []string
 }
 
-func NewMsgBusClient(timeout time.Duration, system string,
+func NewMsgBusClient(timeout time.Duration, org string, system string,
 	service string, instanceId string, msgBusURI string,
 	serviceURI string, msgClientURI string, exchange string, lq string, pq string, retry int8, routes []string) *msgBusServiceClient {
 
@@ -49,11 +52,12 @@ func NewMsgBusClient(timeout time.Duration, system string,
 
 	conn, err := grpc.DialContext(ctx, msgClientURI, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewMsgClientServiceClient(conn)
 
 	return &msgBusServiceClient{
+		org:          org,
 		service:      service,
 		system:       system,
 		instanceId:   instanceId,
@@ -64,7 +68,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 		timeout:      timeout,
 		retry:        retry,
 		host:         serviceURI,
-		routes:       routes,
+		routes:       msgbus.PrepareRoutes(org, routes),
 		listQueue:    lq,
 		publQueue:    pq,
 		exchange:     exchange,
@@ -73,7 +77,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 }
 
 func (m *msgBusServiceClient) Register() error {
-	logrus.Debugf("Registering %s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, m.msgClientURI)
+	log.Debugf("Registering %s service instance %s with routes %+v to MessageBusClient at %s.", m.service, m.instanceId, m.routes, m.msgClientURI)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -98,12 +102,12 @@ func (m *msgBusServiceClient) Register() error {
 		return fmt.Errorf("failed to register %s service instance %s: %s", m.service, m.instanceId, resp.State.String())
 	}
 
-	logrus.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
+	log.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
 	return nil
 }
 
 func (m *msgBusServiceClient) Start() error {
-	logrus.Debugf("Starting MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
+	log.Debugf("Starting MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -113,11 +117,25 @@ func (m *msgBusServiceClient) Start() error {
 		return err
 	}
 
+	msg := &epb.PublishServiceStatusUp{
+		OrgName:  m.org,
+		System:   m.system,
+		Service:  m.service,
+		Instance: m.instanceId,
+	}
+
+	route := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(m.system).SetOrgName(m.org).SetService(m.service).SetAction("up").SetObject("instance").MustBuild()
+	log.Debugf("Publishing service up message on bus: %v", msg)
+	err = m.PublishRequest(route, msg)
+	if err != nil {
+		log.Warningf("Failed to publish message on bus: %v", err)
+	}
+
 	return nil
 }
 
 func (m *msgBusServiceClient) Stop() error {
-	logrus.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
+	log.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -132,7 +150,7 @@ func (m *msgBusServiceClient) Stop() error {
 }
 
 func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
-	logrus.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
+	log.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -148,7 +166,50 @@ func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.Prot
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Published:\n Message: %+v  \n Key: %s \n ", msg, route)
+	log.Debugf("Published:\n Message: %+v  \n Key: %s \n ", msg, route)
+	return nil
+
+}
+
+func (m *msgBusServiceClient) CreateShovel(name, srcUri, destUri, srcExchangeKey, srcExchange, destExchange, srcProtocol, destProtocol string) error {
+	log.Debugf("Creating shovel %s", name)
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	s := &pb.CreateShovelRequest{
+		SrcUri:         srcUri,
+		DestUri:        destUri,
+		SrcExchangeKey: srcExchangeKey,
+		SrcExchange:    srcExchange,
+		DestExchange:   destExchange,
+		SrcProtocol:    srcProtocol,
+		DestProtocol:   destProtocol,
+		Name:           name,
+	}
+	_, err := m.client.CreateShovel(ctx, s)
+	if err != nil {
+		log.Debugf("Failed creating shovel: %+v. Error: %v", s, err)
+		return err
+	}
+
+	log.Infof("Shovel %s created with %+v", name, s)
+	return nil
+
+}
+
+func (m *msgBusServiceClient) RemoveShovel(name string) error {
+	log.Debugf("Creating shovel %s", name)
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	s := &pb.RemoveShovelRequest{
+		Name: name,
+	}
+	_, err := m.client.RemoveShovel(ctx, s)
+	if err != nil {
+		log.Debugf("Failed removing shovel: %+v. Error: %v", s, err)
+		return err
+	}
+
+	log.Infof("Shovel %s removed.", name)
 	return nil
 
 }

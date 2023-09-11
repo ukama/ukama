@@ -19,6 +19,7 @@ type Config struct {
 	LagoHost          string `default:"localhost"`
 	LagoPort          uint   `default:"3000"`
 	LagoAPIKey        string
+	OrgName           string
 }
 
 func NewConfig(name string) *Config {
@@ -33,13 +34,11 @@ func NewConfig(name string) *Config {
 			Host:    "msg-client-billing:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.cdr.sim.usage",
-				"event.cloud.package.package.create",
-				"event.cloud.registry.subscriber.create",
-				"event.cloud.registry.subscriber.update",
-				"event.cloud.registry.subscriber.delete",
-				"event.cloud.simmanager.sim.allocate",
-				"event.cloud.simmanager.sim.activepackage",
+				"event.cloud.local.{{ .Org}}.operator.cdr.sim.usage",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 			},
 		},
 	}

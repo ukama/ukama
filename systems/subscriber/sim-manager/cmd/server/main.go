@@ -89,7 +89,7 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -111,6 +111,7 @@ func runGrpcServer(gormDB sql.Db) {
 		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
 	}
 	simManagerServer := server.NewSimManagerServer(
+		serviceConfig.OrgName,
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
 		adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent, serviceConfig.Timeout, pkg.IsDebugMode),
@@ -125,7 +126,7 @@ func runGrpcServer(gormDB sql.Db) {
 		nucleusP,
 	)
 
-	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)
+	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 

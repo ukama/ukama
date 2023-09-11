@@ -20,6 +20,7 @@ import (
 )
 
 type SubcriberServer struct {
+	orgName              string
 	subscriberRepo       db.SubscriberRepo
 	msgbus               mb.MsgBusServiceClient
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
@@ -28,12 +29,15 @@ type SubcriberServer struct {
 	network           client.NetworkInfoClient
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.NetworkInfoClient) *SubcriberServer {
-	return &SubcriberServer{subscriberRepo: subscriberRepo,
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.NetworkInfoClient) *SubcriberServer {
+	return &SubcriberServer{
+		orgName:              orgName,
+		subscriberRepo:       subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,
 		network:              network,
-		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
+		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
 }
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {

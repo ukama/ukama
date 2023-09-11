@@ -22,6 +22,8 @@ import (
 	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
+const OrgName = "testorg"
+
 func TestUserService_Add(t *testing.T) {
 	name := "Joe"
 	email := "test@example.com"
@@ -49,7 +51,7 @@ func TestUserService_Add(t *testing.T) {
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{User: userRequest}).Return(nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
 
 	t.Run("AddValidUser", func(tt *testing.T) {
 		aResp, err := s.Add(context.Background(), &pb.AddRequest{User: userRequest})
@@ -76,7 +78,7 @@ func TestUserService_Get(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
 
 	t.Run("UserFound", func(t *testing.T) {
 		userId := uuid.NewV4()
@@ -112,7 +114,7 @@ func TestUserService_GetByAuthId(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
 
 	t.Run("UserFound", func(t *testing.T) {
 		authId := uuid.NewV4()
@@ -166,7 +168,7 @@ func TestUserService_Deactivate(t *testing.T) {
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserId: userUUID.String()}).Return(nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
 
@@ -186,7 +188,7 @@ func TestUserService_Delete(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	userRepo := &mocks.UserRepo{}
 
-	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
 
 	t.Run("UserFoundAndInactive", func(t *testing.T) {
 		userId := uuid.NewV4()
@@ -252,7 +254,7 @@ func TestUserService_Whoami(t *testing.T) {
 		AuthId: authId,
 	}
 
-	s := server.NewUserService(userRepo, orgService, msgclientRepo, "")
+	s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
 
 	t.Run("NonValidUser", func(tt *testing.T) {
 		userId := "df7d48f9-9ca0-4f0d-89f1-42df51ea2f6z"
@@ -301,7 +303,7 @@ func TestUserService_Whoami(t *testing.T) {
 			&orgpb.GetByOwnerRequest{UserUuid: user.Id.String()}).
 			Return(nil, errors.New("Not Found")).Once()
 
-		s := server.NewUserService(userRepo, orgService, msgclientRepo, "")
+		s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
 
 		uResp, err := s.Whoami(context.TODO(), &pb.GetRequest{UserId: user.Id.String()})
 

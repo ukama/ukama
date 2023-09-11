@@ -32,6 +32,10 @@ type MsgClientServiceClient interface {
 	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
 	// / Call this rpc to publisg events
 	PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
+	/// Create a shovel
+	CreateShovel(ctx context.Context, in *CreateShovelRequest, opts ...grpc.CallOption) (*CreateShovelResponse, error)
+	/// Remove shovel
+	RemoveShovel(ctx context.Context, in *RemoveShovelRequest, opts ...grpc.CallOption) (*RemoveShovelResponse, error)
 }
 
 type msgClientServiceClient struct {
@@ -87,6 +91,24 @@ func (c *msgClientServiceClient) PublishMsg(ctx context.Context, in *PublishMsgR
 	return out, nil
 }
 
+func (c *msgClientServiceClient) CreateShovel(ctx context.Context, in *CreateShovelRequest, opts ...grpc.CallOption) (*CreateShovelResponse, error) {
+	out := new(CreateShovelResponse)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/CreateShovel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClientServiceClient) RemoveShovel(ctx context.Context, in *RemoveShovelRequest, opts ...grpc.CallOption) (*RemoveShovelResponse, error) {
+	out := new(RemoveShovelResponse)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/RemoveShovel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgClientServiceServer is the server API for MsgClientService service.
 // All implementations must embed UnimplementedMsgClientServiceServer
 // for forward compatibility
@@ -101,6 +123,10 @@ type MsgClientServiceServer interface {
 	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
 	// / Call this rpc to publisg events
 	PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
+	/// Create a shovel
+	CreateShovel(context.Context, *CreateShovelRequest) (*CreateShovelResponse, error)
+	/// Remove shovel
+	RemoveShovel(context.Context, *RemoveShovelRequest) (*RemoveShovelResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }
 
@@ -122,6 +148,12 @@ func (UnimplementedMsgClientServiceServer) UnregisterService(context.Context, *U
 }
 func (UnimplementedMsgClientServiceServer) PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishMsg not implemented")
+}
+func (UnimplementedMsgClientServiceServer) CreateShovel(context.Context, *CreateShovelRequest) (*CreateShovelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateShovel not implemented")
+}
+func (UnimplementedMsgClientServiceServer) RemoveShovel(context.Context, *RemoveShovelRequest) (*RemoveShovelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveShovel not implemented")
 }
 func (UnimplementedMsgClientServiceServer) mustEmbedUnimplementedMsgClientServiceServer() {}
 
@@ -226,6 +258,42 @@ func _MsgClientService_PublishMsg_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MsgClientService_CreateShovel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateShovelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgClientServiceServer).CreateShovel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/CreateShovel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgClientServiceServer).CreateShovel(ctx, req.(*CreateShovelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MsgClientService_RemoveShovel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveShovelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgClientServiceServer).RemoveShovel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/RemoveShovel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgClientServiceServer).RemoveShovel(ctx, req.(*RemoveShovelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MsgClientService_ServiceDesc is the grpc.ServiceDesc for MsgClientService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -252,6 +320,14 @@ var MsgClientService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PublishMsg",
 			Handler:    _MsgClientService_PublishMsg_Handler,
+		},
+		{
+			MethodName: "CreateShovel",
+			Handler:    _MsgClientService_CreateShovel_Handler,
+		},
+		{
+			MethodName: "RemoveShovel",
+			Handler:    _MsgClientService_RemoveShovel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

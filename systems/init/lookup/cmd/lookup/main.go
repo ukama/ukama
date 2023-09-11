@@ -80,7 +80,7 @@ func runGrpcServer(d sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -90,8 +90,8 @@ func runGrpcServer(d sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
-		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
+		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient, serviceConfig.OrgName)
+		nSrv := server.NewLookupEventServer(serviceConfig.OrgName, db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
 		generated.RegisterLookupServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})

@@ -69,7 +69,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 
 func TestMetrics_SetupMetrics(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.MetricConfig)
+	nm := NewMetricsCollector(orgName, tC.MetricConfig)
 
 	t.Run("SetUpNewMetric", func(t *testing.T) {
 		m, err := SetUpMetric(nm, tC.MetricConfig[0].Schema[0])

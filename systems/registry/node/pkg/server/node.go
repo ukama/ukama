@@ -28,6 +28,7 @@ import (
 )
 
 type NodeServer struct {
+	orgName        string
 	org            uuid.UUID
 	nodeRepo       db.NodeRepo
 	siteRepo       db.SiteRepo
@@ -41,13 +42,14 @@ type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
 	pushGateway string, msgBus mb.MsgBusServiceClient,
 	orgService providers.OrgClientProvider,
 	networkService providers.NetworkClientProvider,
 	org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 	return &NodeServer{
+		orgName:        orgName,
 		org:            org,
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
@@ -57,7 +59,7 @@ func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -149,6 +151,29 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteReque
 	resp := &pb.GetBySiteResponse{
 		SiteId: req.GetSiteId(),
 		Nodes:  dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	log.Infof("Getting all nodes on site %v", req.GetNetworkId())
+
+	network, err := uuid.FromString(req.GetNetworkId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+	}
+
+	nodes, err := n.siteRepo.GetByNetwork(network)
+	if err != nil {
+		log.Errorf("error getting all nodes for network: %s", err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkId: req.GetNetworkId(),
+		Nodes:     dbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -312,6 +337,8 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 
 	err = n.nodeRepo.AttachNodes(nodeId, nds)
 	if err != nil {
+		log.Errorf("fail to attach nodes. Errors %s", err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
@@ -579,6 +606,15 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 		Name:      dbn.Name,
 		OrgId:     dbn.OrgId.String(),
 		CreatedAt: timestamppb.New(dbn.CreatedAt),
+	}
+
+	if dbn.Site.NodeId != "" {
+		n.Site = &pb.Site{}
+
+		n.Site.NodeId = dbn.Site.NodeId
+		n.Site.SiteId = dbn.Site.SiteId.String()
+		n.Site.NetworkId = dbn.Site.NetworkId.String()
+		n.Site.AddedAt = timestamppb.New(dbn.Site.CreatedAt)
 	}
 
 	if len(dbn.Attached) > 0 {

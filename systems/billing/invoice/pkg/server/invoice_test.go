@@ -18,97 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const raw = `{
-	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
-	"sequential_id": 2,
-	"number": "LAG-1234-001-002",
-	"issuing_date": "2022-04-30",
-	"status": "finalized",
-	"payment_status": "succeeded",
-	"amount_cents": 100,
-	"amount_currency": "EUR",
-	"vat_amount_cents": 20,
-	"vat_amount_currency": "EUR",
-	"credit_amount_cents": 10,
-	"credit_amount_currency": "EUR",
-	"total_amount_cents": 110,
-	"total_amount_currency": "EUR",
-	"file_url": "https://getlago.com/invoice/file",
-	"legacy": false,
-	"customer": {
-	"lago_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
-	"external_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
-	"address_line1": "5230 Penfield Ave",
-	"address_line2": null,
-	"city": "Woodland Hills",
-	"country": "US",
-	"created_at": "2022-04-29T08:59:51Z",
-	"email": "dinesh@piedpiper.test",
-	"legal_name": "Coleman-Blair",
-	"legal_number": "49-008-2965",
-	"logo_url": "http://hooli.com/logo.png",
-	"name": "Gavin Belson",
-	"phone": "1-171-883-3711 x245",
-	"state": "CA",
-	"url": "http://hooli.com",
-	"vat_rate": 20.0,
-	"zipcode": "91364"
-	},
-	"subscriptions": [
-	{
-	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"external_id": "susbcription_external_id",
-	"lago_customer_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
-	"external_customer_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
-	"canceled_at": "2022-04-29T08:59:51Z",
-	"created_at": "2022-04-29T08:59:51Z",
-	"plan_code": "new_code",
-	"started_at": "2022-04-29T08:59:51Z",
-	"status": "active",
-	"terminated_at": null
-	}
-	],
-	"fees": [
-	{
-	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
-	"lago_group_id": null,
-	"item": {
-	"type": "subscription",
-	"code": "plan_code",
-	"name": "Plan"
-	},
-	"amount_cents": 100,
-	"amount_currency": "EUR",
-	"vat_amount_cents": 20,
-	"vat_amount_currency": "EUR",
-	"total_amount_cents": 120,
-	"total_amount_currency": "EUR",
-	"units": "0.32",
-	"events_count": 23
-	}
-	],
-	"credits": [
-	{
-	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"item": {
-	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"type": "coupon",
-	"code": "coupon_code",
-	"name": "Coupon"
-	},
-	"amount_cents": 100,
-	"amount_currency": "EUR"
-	}
-	],
-	"metadata": [
-	{
-	"lago_id": "27f12d13-4ae0-437b-b822-8771bcd62e3a",
-	"key": "digital_ref_id",
-	"value": "INV-0123456-98765",
-	"created_at": "2022-04-29T08:59:51Z"
-	}
-	]
-	}`
+const OrgName = "testorg"
 
 func TestInvoiceServer_Add(t *testing.T) {
 	t.Run("SubscriberIsValid", func(t *testing.T) {
@@ -122,7 +32,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, msgbusClient)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, msgbusClient)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -233,7 +143,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -285,7 +195,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*db.Invoice)
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -303,7 +213,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo.On("Get", invoiceId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 		resp, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -317,7 +227,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId})
 
@@ -341,7 +251,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 					IsPaid:       false,
 				}}, nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(),
 			&pb.GetBySubscriberRequest{SubscriberId: subscriberId.String()})
@@ -360,7 +270,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 
 		invoiceRepo.On("GetBySubscriber", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
 			SubscriberId: subscriberId.String()})
@@ -375,7 +285,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
 			SubscriberId: subscriberID})
@@ -396,7 +306,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, msgbusClient)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, msgbusClient)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -414,7 +324,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -430,7 +340,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo, nil)
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId,

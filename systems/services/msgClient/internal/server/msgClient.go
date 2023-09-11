@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/queue"
 	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
@@ -16,16 +17,17 @@ type MsgClientServer struct {
 	s   db.ServiceRepo
 	r   db.RouteRepo
 	h   queue.MsgBusHandlerInterface
-
+	p   msgbus.MsgBusShovelProvider
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h queue.MsgBusHandlerInterface, sys string) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, p msgbus.MsgBusShovelProvider, h queue.MsgBusHandlerInterface, sys string) *MsgClientServer {
 	return &MsgClientServer{
 		sys: sys,
 		s:   serviceRepo,
 		r:   keyRepo,
 		h:   h,
+		p:   p,
 	}
 }
 
@@ -155,4 +157,29 @@ func (m *MsgClientServer) PublishMsg(ctx context.Context, req *pb.PublishMsgRequ
 		return nil, err
 	}
 	return &pb.PublishMsgResponse{}, nil
+}
+
+func (m *MsgClientServer) CreateShovel(ctx context.Context, in *pb.CreateShovelRequest) (*pb.CreateShovelResponse, error) {
+	err := m.p.CreateShovel(in.Name, &msgbus.Shovel{
+		SrcProtocol:    in.SrcProtocol,
+		DestProtocol:   in.DestProtocol,
+		SrcUri:         in.SrcUri,
+		DestUri:        in.DestUri,
+		SrcExchangeKey: in.SrcExchangeKey,
+		SrcExchange:    in.SrcExchange,
+		DestExchange:   in.DestExchange,
+	})
+
+	if err != nil {
+		log.Errorf("Failed to create shovel %v. Error %+v.", in, err)
+	}
+	return &pb.CreateShovelResponse{}, err
+}
+
+func (m *MsgClientServer) RemoveShovel(ctx context.Context, in *pb.RemoveShovelRequest) (*pb.RemoveShovelResponse, error) {
+	err := m.p.RemoveShovel(in.Name)
+	if err != nil {
+		log.Errorf("Failed to remove shovel %s. Error %+v.", in.Name, err)
+	}
+	return &pb.RemoveShovelResponse{}, err
 }
