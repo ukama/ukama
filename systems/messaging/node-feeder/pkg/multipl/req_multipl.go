@@ -2,9 +2,10 @@ package multipl
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
-	"strings"
 )
 
 type requestMultiplier struct {
@@ -33,7 +34,7 @@ func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
 		return fmt.Errorf("device id in target is not supported")
 	}
 
-	nodes, err := r.registryClient.GetNodesList(orgName)
+	nodes, err := r.registryClient.GetNodesList()
 	if err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
 	counter := 0
 	for _, n := range nodes {
 		err = r.queue.Publish(pkg.DevicesUpdateRequest{
-			Target:     orgName + "." + n.NodeId,
+			Target:     orgName + "." + n.Id,
 			HttpMethod: req.HttpMethod,
 			Path:       req.Path,
 			Body:       req.Body,

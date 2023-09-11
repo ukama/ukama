@@ -17,7 +17,6 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
 	"github.com/ukama/ukama/systems/common/config"
-
 )
 
 var serviceConfig *pkg.Config

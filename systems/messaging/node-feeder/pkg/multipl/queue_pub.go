@@ -2,10 +2,11 @@ package multipl
 
 import (
 	"encoding/json"
+
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -17,9 +18,11 @@ type QueuePublisher interface {
 	Publish(msg pkg.DevicesUpdateRequest) error
 }
 
+
 func NewQueuePublisher(queueUri string) (*queuePublisher, error) {
 
 	publisher, err := rabbitmq.NewPublisher(queueUri, amqp.Config{})
+
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +31,8 @@ func NewQueuePublisher(queueUri string) (*queuePublisher, error) {
 		publisher: publisher,
 	}, nil
 }
+
+
 
 func (q *queuePublisher) Publish(msg pkg.DevicesUpdateRequest) error {
 

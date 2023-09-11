@@ -2,21 +2,22 @@ package multipl
 
 import (
 	"context"
+	"time"
+
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"time"
 )
 
 type registryClient struct {
-	registryClient pb.RegistryServiceClient
+	registryClient nodepb.NodeServiceClient
 	timeoutSecond  int
 }
 
 type RegistryClient interface {
-	GetNodesList(orgName string) (nodes []*pb.Node, err error)
+	GetNodesList() (nodes []*nodepb.Node, err error)
 }
 
 func NewRegistryClient(registryHost string, timeoutSecond int) (*registryClient, error) {
@@ -30,18 +31,18 @@ func NewRegistryClient(registryHost string, timeoutSecond int) (*registryClient,
 	}
 
 	return &registryClient{timeoutSecond: timeoutSecond,
-		registryClient: pb.NewRegistryServiceClient(conn)}, nil
+		registryClient: nodepb.NewNodeServiceClient(conn)}, nil
 }
 
-func (r registryClient) GetNodesList(orgName string) (nodes []*pb.Node, err error) {
+func (r registryClient) GetNodesList(orgName string) (nodes []*nodepb.Node, err error) {
 	log.Info("Getting device list")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
-	resp, err := r.registryClient.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName}, grpc_retry.WithMax(3))
+	resp, err := r.registryClient.GetNodes(ctx, &nodepb.GetNodesRequest{Free: true}, grpc_retry.WithMax(3))
 	if err != nil {
 		log.Errorf("Could not get device list: %v", err)
 		return nil, err
 	}
 
-	return resp.Nodes, nil
+	return resp.Node, nil
 }

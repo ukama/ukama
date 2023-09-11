@@ -2,12 +2,14 @@ package pkg
 
 import (
 	"context"
-	"google.golang.org/grpc/credentials/insecure"
 	"time"
 
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/net/pb/gen"
-	"github.com/ukama/ukama/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -36,7 +38,7 @@ func NewDeviceIpResolver(netHost string, timeoutSecond int) (*deviceIpResolver, 
 func (r *deviceIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
-	res, err := r.netClient.Get(ctx, &pb.GetRequest{NodeId: nodeId.String()})
+	res, err := r.netClient.Get(ctx, &pb.GetNodeIPRequest{NodeId: nodeId.String()})
 	if err != nil {
 		return "", err
 	}
