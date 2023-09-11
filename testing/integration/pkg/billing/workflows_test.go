@@ -30,6 +30,7 @@ import (
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
 	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
+	nuc "github.com/ukama/ukama/testing/integration/pkg/nucleus"
 	subs "github.com/ukama/ukama/testing/integration/pkg/subscriber"
 )
 
@@ -63,6 +64,7 @@ type BillingData struct {
 	SimId            string
 	ActivePackageId  string
 
+	NucleusClient *nuc.NucleusClient
 	RegistryClient *reg.RegistryClient
 	RegHost        string
 	OwnerName      string
@@ -226,7 +228,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 		w.Data = d
 
 		// Add new user
-		aUserResp, err := d.RegistryClient.AddUser(d.reqAddUser)
+		aUserResp, err := d.NucleusClient.AddUser(d.reqAddUser)
 		if assert.NoError(t, err) {
 			assert.NotNil(t, aUserResp)
 			assert.Equal(t, d.OwnerName, aUserResp.User.Name)
@@ -239,7 +241,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 		// Add new org
 		d.reqAddOrg.Owner = d.OwnerId
 
-		aOrgResp, err := d.RegistryClient.AddOrg(d.reqAddOrg)
+		aOrgResp, err := d.NucleusClient.AddOrg(d.reqAddOrg)
 		if assert.NoError(t, err) {
 			assert.NotNil(t, aOrgResp)
 			assert.Equal(t, d.OrgName, aOrgResp.Org.Name)

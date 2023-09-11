@@ -39,6 +39,8 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.dataplan.package.create",
 			},
 		},
 	}

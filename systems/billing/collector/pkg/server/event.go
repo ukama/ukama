@@ -36,15 +36,28 @@ type BillableMetric struct {
 }
 
 type BillingCollectorEventServer struct {
-	org    string
-	client client.BillingClient
+	org     string
+	client  client.BillingClient
+	bMetric BillableMetric
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewBillingCollectorEventServer(org string, client client.BillingClient) *BillingCollectorEventServer {
+	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize billable metric: %v", err)
+	}
+
+	bMetric := BillableMetric{
+		Id:   bm,
+		Code: DefaultBillableMetricCode,
+	}
+
 	return &BillingCollectorEventServer{
-		client: client,
-		org:    org,
+		org:     org,
+		client:  client,
+		bMetric: bMetric,
 	}
 }
 
@@ -66,7 +79,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create plan
-	case "event.cloud.package.package.create":
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.dataplan.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -113,9 +126,21 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 			return nil, err
 		}
 
-	// add or update subscrition to customer
+	// add subscrition to customer
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+		msg, err := unmarshalSimAllocation(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleSimManagerAllocateSimEvent(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
+	// update subscrition to customer
 	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate"):
-		msg, err := unmarshalSim(e.Msg)
+		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -388,19 +413,6 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func unmarshalSim(msg *anypb.Any) (*simpb.Sim, error) {
-	p := &simpb.Sim{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("failed to Unmarshal sim manager's sim message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}
