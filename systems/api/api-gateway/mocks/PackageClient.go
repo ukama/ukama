@@ -12,8 +12,8 @@ type PackageClient struct {
 	mock.Mock
 }
 
-// GetPackage provides a mock function with given fields: Id
-func (_m *PackageClient) GetPackage(Id string) (*client.PackageInfo, error) {
+// Get provides a mock function with given fields: Id
+func (_m *PackageClient) Get(Id string) (*client.PackageInfo, error) {
 	ret := _m.Called(Id)
 
 	var r0 *client.PackageInfo

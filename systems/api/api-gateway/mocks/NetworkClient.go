@@ -12,8 +12,8 @@ type NetworkClient struct {
 	mock.Mock
 }
 
-// GetNetwork provides a mock function with given fields: Id
-func (_m *NetworkClient) GetNetwork(Id string) (*client.NetworkInfo, error) {
+// Get provides a mock function with given fields: Id
+func (_m *NetworkClient) Get(Id string) (*client.NetworkInfo, error) {
 	ret := _m.Called(Id)
 
 	var r0 *client.NetworkInfo

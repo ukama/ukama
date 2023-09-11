@@ -7,9 +7,27 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 const netEndpoint = "/v1/networks"
+
+type NetworkInfo struct {
+	Id            uuid.UUID `json:"id,omitempty"`
+	Name          string    `json:"name,omitempty"`
+	OrgId         string    `json:"org_id,omitempty"`
+	IsDeactivated bool      `json:"is_deactivated,omitempty"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+}
+
+type Network struct {
+	NetworkInfo *NetworkInfo `json:"network"`
+}
+
+type AddNetworkRequest struct {
+	OrgName string `json:"org" validate:"required"`
+	NetName string `json:"network_name" validate:"required"`
+}
 
 type NetworkClient interface {
 	Get(Id string) (*NetworkInfo, error)
@@ -33,24 +51,7 @@ func NewNetworkClient(h string) *networkClient {
 	}
 }
 
-type NetworkInfo struct {
-	Id            string    `json:"id,omitempty"`
-	Name          string    `json:"name,omitempty"`
-	OrgId         string    `json:"org_id,omitempty"`
-	IsDeactivated bool      `json:"is_deactivated,omitempty"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-}
-
-type Network struct {
-	NetworkInfo *NetworkInfo `json:"network"`
-}
-
-type AddNetworkRequest struct {
-	OrgName string `json:"org" validate:"required"`
-	NetName string `json:"network_name" validate:"required"`
-}
-
-func (n *networkClient) Add(req AddNetworkRequest) (error, error) {
+func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 	log.Debugf("Adding network: %v", req)
 
 	b, err := json.Marshal(req)
@@ -58,8 +59,7 @@ func (n *networkClient) Add(req AddNetworkRequest) (error, error) {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
-	// fix the response object
-	var rsp error
+	ntwk := Network{}
 
 	resp, err := n.r.Post(n.u.String()+netEndpoint, b)
 
@@ -69,12 +69,14 @@ func (n *networkClient) Add(req AddNetworkRequest) (error, error) {
 		return nil, fmt.Errorf("AddNetwork failure: %w", err)
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
-	return rsp, nil
+	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
+
+	return ntwk.NetworkInfo, nil
 }
 
 func (n *networkClient) Get(id string) (*NetworkInfo, error) {
