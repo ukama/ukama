@@ -239,7 +239,7 @@ func (s *RegistryClient) GetNode(req api.GetNodeRequest) (*nodepb.GetNodeRespons
 }
 
 func (s *RegistryClient) GetNodesForSite(req api.GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
-	url := s.u.String() + VERSION + NODES + SITES + req.SiteId
+	url := s.u.String() + VERSION + NODES + "sites/" + req.SiteId
 	rsp := &nodepb.GetBySiteResponse{}
 
 	if err := s.r.SendRequest(http.MethodGet, url, req, rsp); err != nil {

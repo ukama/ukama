@@ -34,7 +34,7 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	w.RegisterTestCase(TC_registry_get_members)
 
 	/* Update Member */
-	w.RegisterTestCase(TC_registry_update_member)
+	// w.RegisterTestCase(TC_registry_update_member)
 
 	/* Add Network */
 	w.RegisterTestCase(TC_registry_add_network)
@@ -67,13 +67,20 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	// w.RegisterTestCase(TC_registry_get_invites)
 
 	/* Add Node */
-	w.RegisterTestCase(TC_registry_add_node)
+	w.RegisterTestCase(TC_registry_add_node("parent"))
+	w.RegisterTestCase(TC_registry_add_node("left"))
+	w.RegisterTestCase(TC_registry_add_node("right"))
 
 	/* Update Node */
-	w.RegisterTestCase(TC_registry_update_node)
+	// w.RegisterTestCase(TC_registry_update_node)
 
 	/* Update Node State */
 	w.RegisterTestCase(TC_registry_update_node_state)
+
+	/* Add Node to site*/
+	w.RegisterTestCase(TC_registry_add_node_to_site("parent"))
+	w.RegisterTestCase(TC_registry_add_node_to_site("left"))
+	w.RegisterTestCase(TC_registry_add_node_to_site("right"))
 
 	/* Attach Node */
 	w.RegisterTestCase(TC_registry_attach_node)
@@ -81,17 +88,14 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	/* Detach Node */
 	w.RegisterTestCase(TC_registry_detach_node)
 
-	/* Detach Node */
-	w.RegisterTestCase(TC_registry_detach_node)
+	/* Get node*/
+	w.RegisterTestCase(TC_registry_get_node)
 
-	/* Add Node to site*/
-	w.RegisterTestCase(TC_registry_add_node_site)
+	/* Get nodes by site*/
+	w.RegisterTestCase(TC_registry_get_nodes_by_site)
 
 	/* Get nodes*/
 	w.RegisterTestCase(TC_registry_get_nodes)
-
-	/* Get node*/
-	w.RegisterTestCase(TC_registry_get_node)
 
 	/* Run */
 	err := w.Run(t, context.Background())

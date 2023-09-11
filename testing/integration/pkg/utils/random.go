@@ -25,10 +25,14 @@ func RandomInt(m int) int {
 	return n[0]
 }
 
-func RandomGetNodeId() string {
+func RandomGetNodeId(typ string) string {
 	nIndex := rand.Int() % len(node_type)
 	cIndex := rand.Int() % len(country_code)
-	return country_code[cIndex] + "-" + RandomString(6) + "-" + node_type[nIndex] + "-" + RandomString(2) + "-" + RandomString(4)
+	if typ == "" {
+		typ = node_type[nIndex]
+	}
+
+	return strings.ToLower(country_code[cIndex] + "-" + RandomString(6) + "-" + typ + "-" + RandomString(2) + "-" + RandomString(4))
 }
 
 func RandomIntInRange(min int, max int) int {
