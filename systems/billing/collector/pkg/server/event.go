@@ -395,6 +395,19 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	return p, nil
 }
 
+func unmarshalSim(msg *anypb.Any) (*simpb.Sim, error) {
+	p := &simpb.Sim{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("failed to Unmarshal sim manager's sim message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
 func unmarshalSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
 	p := &epb.SimUsage{}
 

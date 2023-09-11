@@ -24,9 +24,6 @@ import (
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-const USER_ID_KEY = "UserId"
-const ORG_URL_PARAMETER = "org"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -153,15 +150,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		// org routes
-		// const org = "/orgs"
-		// orgs := auth.Group(org, "Orgs", "Operations on Orgs")
-		// orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
-		// orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
-		// orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
-		// update org
-		// Deactivate org
-		// Delete org
 		const mem = "/members"
 		member := auth.Group(mem, "Members", "Operations on Members")
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
@@ -179,19 +167,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
 		invitations.GET("/org/:org", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationByOrgHandler, http.StatusOK))
-
-		// Users routes
-		// const user = "/users"
-		// users := auth.Group(user, "Users", "Operations on Users")
-		// users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-		// users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
-		// users.GET("/auth/:auth_id", formatDoc("Get User By AuthId", "Get a specific user by authId"), tonic.Handler(r.getUserByAuthIdHandler, http.StatusOK))
-		// users.GET("/whoami/:user_id", formatDoc("Get detailed User", "Get a specific user details with all linked orgs"), tonic.Handler(r.whoamiHandler, http.StatusOK))
-		// user orgs-member
-		// update user
-		// Deactivate user
-		// Delete user
-		// users.DELETE("/:user_id", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -229,11 +204,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes.DELETE("/:node_id/sites", formatDoc("Release From Site", "Release node from site"), tonic.Handler(r.deleteNodeFromSiteHandler, http.StatusOK))
 	}
 }
-
-// Node handlers
-// func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
-// 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
-// }
 
 func (r *Router) getNetworkNodesHandler(c *gin.Context, req *GetNetworkNodesRequest) (*nodepb.GetByNetworkResponse, error) {
 	return r.clients.Node.GetNetworkNodes(req.NetworkId)
