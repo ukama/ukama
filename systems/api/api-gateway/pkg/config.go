@@ -10,8 +10,10 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
+	DB                *config.Database `default:"{}"`
 	Server            rest.HttpConfig
 	// Services          GrpcEndpoints  `mapstructure:"services"`
+	// Service          *uconf.Service
 	HttpServices HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics      config.Metrics `mapstructure:"metrics"`
 	Auth         *config.Auth   `mapstructure:"auth"`
@@ -29,7 +31,7 @@ type HttpEndpoints struct {
 // Network string
 // }
 
-func NewConfig() *Config {
+func NewConfig(name string) *Config {
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
 	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
@@ -38,6 +40,12 @@ func NewConfig() *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
 		},
+
+		DB: &config.Database{
+			DbName: name,
+		},
+
+		// Service: uconf.LoadServiceHostConfig(name),
 
 		// Services: GrpcEndpoints{
 		// Timeout: 5 * time.Second,
