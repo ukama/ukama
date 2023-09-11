@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/ukama/ukama/systems/common/rest"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -38,7 +37,7 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 	var err error
 
 	resp := &resty.Response{}
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 
 	if b != nil {
 		r.C.R().SetError(errStatus).SetBody(b)
@@ -53,9 +52,9 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 
 	if resp.StatusCode() != http.StatusCreated {
 		log.Errorf("Failed to perform PUT operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
@@ -65,7 +64,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 	var err error
 
 	resp := &resty.Response{}
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 
 	if b != nil {
 		r.C.R().SetError(errStatus).SetBody(b)
@@ -79,16 +78,16 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 
 	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
 		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Get(url string) (*resty.Response, error) {
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 
 	resp, err := r.C.R().SetError(errStatus).Get(url)
 
@@ -100,16 +99,16 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 
 	resp, err := r.C.R().SetError(errStatus).SetQueryString(q).Get(url)
 
@@ -121,9 +120,9 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
@@ -132,7 +131,7 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 	resp := &resty.Response{}
 
 	if b != nil {
@@ -148,16 +147,16 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform PATCH operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Delete(url string) (*resty.Response, error) {
-	errStatus := &rest.ErrorResponse{}
+	errStatus := &ErrorResponse{}
 
 	resp, err := r.C.R().SetError(errStatus).Delete(url)
 
@@ -169,10 +168,18 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform Delete operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Error)
+			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
 	}
 
 	return resp, nil
+}
+
+type ErrorResponse struct {
+	Err string `json:"error,omitempty"`
+}
+
+func (e *ErrorResponse) Error() string {
+	return e.Err
 }
