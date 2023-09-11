@@ -45,6 +45,7 @@ type InitData struct {
 	MbHost          string
 	SubscriberId    string
 	OrgId           string
+	OwnerId         string
 	OrgName         string
 	NetworkId       string
 	NetworkName     string
@@ -98,8 +99,11 @@ func InitializeData() *InitData {
 	d.Sys = NewSubscriberClient(d.Host)
 	d.Reg = registry.NewRegistryClient(d.RegHost)
 	d.Nuc = nucleus.NewNucleusClient(d.NucHost)
-	d.EncKey = "the-key-has-to-be-32-bytes-long!"
+	d.EncKey = config.Key
 	d.SimType = "test"
+	d.OrgId = config.OrgId
+	d.OrgName = config.OrgName
+	d.OwnerId = config.OrgOwnerId
 
 	d.reqAddOrgRequest = napi.AddOrgRequest{
 		OrgName:     strings.ToLower(faker.FirstName() + "-org"),
@@ -107,7 +111,10 @@ func InitializeData() *InitData {
 		Certificate: utils.RandomBase64String(2048),
 	}
 
-	d.reqAddNetworkRequest = rapi.AddNetworkRequest{}
+	d.reqAddNetworkRequest = rapi.AddNetworkRequest{
+		OrgName: d.OrgName,
+		NetName: faker.Word() + "-net",
+	}
 
 	d.reqSimPoolUploadSimReq = api.SimPoolUploadSimReq{
 		SimType: d.SimType,

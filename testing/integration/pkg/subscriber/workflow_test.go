@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	"github.com/ukama/ukama/testing/integration/pkg/dataplan"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 )
@@ -38,21 +37,16 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 				d.UserId = uresp.User.Id
 			}
 
-			/* adding  */
-			d.reqAddOrgRequest.Owner = d.UserId
 			// resp, err := d.Nuc.AddOrg(d.reqAddOrgRequest)
 			// if err != nil {
 			// 	return err
 			// } else {
-			d.OrgId = config.OrgId
-			d.OrgName = config.OrgName
+			// d.OrgId = config.OrgId
+			// d.OrgName = config.OrgName
 			// }
 
 			/* adding network */
-			nresp, err := d.Reg.AddNetwork(rapi.AddNetworkRequest{
-				OrgName: d.OrgId,
-				NetName: d.OrgName + "-net",
-			})
+			nresp, err := d.Reg.AddNetwork(d.reqAddNetworkRequest)
 			if err != nil {
 				return err
 			} else {
