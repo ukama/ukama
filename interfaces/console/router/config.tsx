@@ -80,14 +80,14 @@ export const NavList = [
   },
   {
     name: 'Nodes',
-    path: '/node',
+    path: '/nodes',
     icon: RouterIcon,
     isPrivate: true,
     isFullScreen: false,
   },
   {
     name: 'Subscribers',
-    path: '/subscriber',
+    path: '/subscribers',
     icon: SubscriberIcon,
     isPrivate: true,
     isFullScreen: false,

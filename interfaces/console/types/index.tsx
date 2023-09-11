@@ -29,7 +29,7 @@ export type NodeAppDetailsTypes = {
   memory: number;
   nodeAppName: string;
 };
-export type statsPeriodItemType = {
+export type StatsPeriodItemType = {
   id: string;
   label: string;
 };
@@ -57,7 +57,7 @@ export type BillingTableHeaderOptionsType = {
   id?: number;
   label: string;
 };
-export type currentBillType = {
+export type CurrentBillType = {
   id: number;
   name: string;
   rate: string;
