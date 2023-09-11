@@ -15,7 +15,7 @@ deps:
 			github.com/vektra/mockery/v2/.../
 
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep -I ../base-rate/pb --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
  			  rate.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
