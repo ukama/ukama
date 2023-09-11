@@ -47,7 +47,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 		// so that the test stays a unit test e.g no server/network call.
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		p, err := testPackageClient.GetPackage(testUuid)
+		p, err := testPackageClient.Get(testUuid)
 
 		assert.NoError(tt, err)
 		assert.Equal(tt, testUuid, p.Id)
@@ -69,7 +69,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		p, err := testPackageClient.GetPackage(testUuid)
+		p, err := testPackageClient.Get(testUuid)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, p)
@@ -92,7 +92,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		p, err := testPackageClient.GetPackage(testUuid)
+		p, err := testPackageClient.Get(testUuid)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, p)
@@ -111,7 +111,7 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		p, err := testPackageClient.GetPackage(testUuid)
+		p, err := testPackageClient.Get(testUuid)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, p)

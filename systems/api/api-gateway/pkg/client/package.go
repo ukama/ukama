@@ -11,7 +11,7 @@ import (
 const PackageEndpoint = "/v1/packages"
 
 type PackageClient interface {
-	GetPackage(Id string) (*PackageInfo, error)
+	Get(Id string) (*PackageInfo, error)
 }
 
 type packageClient struct {
@@ -45,7 +45,7 @@ type PackageInfo struct {
 	Duration uint   `json:"duration,string"`
 }
 
-func (p *packageClient) GetPackage(id string) (*PackageInfo, error) {
+func (p *packageClient) Get(id string) (*PackageInfo, error) {
 	log.Debugf("Getting package: %v", id)
 
 	pkg := Package{}

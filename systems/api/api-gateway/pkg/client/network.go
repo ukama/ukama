@@ -12,7 +12,7 @@ import (
 const netEndpoint = "/v1/networks"
 
 type NetworkClient interface {
-	GetNetwork(Id string) (*NetworkInfo, error)
+	Get(Id string) (*NetworkInfo, error)
 }
 
 type networkClient struct {
@@ -50,7 +50,7 @@ type AddNetworkRequest struct {
 	NetName string `json:"network_name" validate:"required"`
 }
 
-func (n *networkClient) AddNetwork(req AddNetworkRequest) (error, error) {
+func (n *networkClient) Add(req AddNetworkRequest) (error, error) {
 	log.Debugf("Adding network: %v", req)
 
 	b, err := json.Marshal(req)
@@ -77,7 +77,7 @@ func (n *networkClient) AddNetwork(req AddNetworkRequest) (error, error) {
 	return rsp, nil
 }
 
-func (n *networkClient) GetNetwork(id string) (*NetworkInfo, error) {
+func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 	log.Debugf("Getting network: %v", id)
 
 	ntwk := Network{}
