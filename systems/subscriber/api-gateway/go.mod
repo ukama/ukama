@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
