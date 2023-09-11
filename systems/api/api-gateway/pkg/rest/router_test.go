@@ -11,10 +11,11 @@ import (
 	"github.com/ukama/ukama/systems/common/providers"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 
-	// mmocks "github.com/ukama/ukama/systems/api/mailer/pb/gen/mocks"
-	// nmocks "github.com/ukama/ukama/systems/api/notify/pb/gen/mocks"
+	cmocks "github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
 )
@@ -36,30 +37,27 @@ var routerConfig = &RouterConfig{
 	},
 }
 
-var testClientSet *Clients
+var testClientSet client.Client
 
 func init() {
+	resRepo := &mocks.ResourceRepo{}
+
 	gin.SetMode(gin.TestMode)
-	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+	testClientSet = client.NewClientsSet(resRepo, &pkg.HttpEndpoints{
 		Timeout: 1 * time.Second,
-		Mailer:  "0.0.0.0:9092",
-		Notify:  "0.0.0.0:9093",
+		Network: "http://localhost:9093",
 	})
 }
 
 func TestRouter_PingRoute(t *testing.T) {
-	// var m = &mmocks.MailerServiceClient{}
-	// var n = &nocks.NotifyServiceClient{}
+	var c = &cmocks.Client{}
 	var arc = &providers.AuthRestClient{}
 
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(&Clients{
-		// m: client.NewMailerFromClient(m),
-		// n: client.NewNotifyFromClient(n),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 

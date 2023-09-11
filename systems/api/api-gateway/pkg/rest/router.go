@@ -5,10 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/api/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
@@ -20,7 +22,7 @@ var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
 	f       *fizz.Fizz
-	clients *Clients
+	clients client.Client
 	config  *RouterConfig
 }
 
@@ -30,30 +32,7 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-type Clients struct {
-	// m client.Mailer
-	// n client.Notify
-}
-
-func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
-	// var err error
-
-	c := &Clients{}
-
-	// c.m, err = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
-	// if err != nil {
-	// log.Fatalf("failed to create mailer client: %v", err)
-	// }
-
-	// c.n, err = client.NewNotify(endpoints.Notify, endpoints.Timeout)
-	// if err != nil {
-	// log.Fatalf("failed to create notify client: %v", err)
-	// }
-
-	return c
-}
-
-func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(clients client.Client, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -111,8 +90,24 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	auth.Use()
 	{
-
+		// network routes
+		network := auth.Group("/networks", "Network", "Networks")
+		network.POST("", formatDoc("Creste Network", "Create a new network"), tonic.Handler(r.postNetwork, http.StatusCreated))
+		network.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetwork, http.StatusOK))
 	}
+}
+
+func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.NetworkInfo, error) {
+	res, _, err := r.clients.CreateNetwork(req.OrgName, req.NetName)
+
+	return res, err
+}
+
+// func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*npb.GetResponse, error) {
+func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.NetworkInfo, error) {
+	res, _, err := r.clients.GetNetwork(req.NetworkId)
+
+	return res, err
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
