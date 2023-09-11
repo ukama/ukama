@@ -2,17 +2,20 @@ package pkg
 
 import (
 	"encoding/json"
+
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/metrics"
-	"github.com/ukama/ukama/common"
-	"github.com/wagslane/go-rabbitmq"
+
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/wagslane/go-rabbitmq"
 )
 
 const deadLetterExchangeName = "node-feeder.dead-letter"
