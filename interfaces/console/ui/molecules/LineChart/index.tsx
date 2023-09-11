@@ -38,7 +38,6 @@ const LineChart = ({
         load: function () {
           var series: any = Highcharts.charts[0]?.series[0];
           PubSub.subscribe('memory_trx_used', (_, data) => {
-            console.log('Subscription data: ', data);
             series.addPoint(data, true, true);
           });
           // setInterval(function () {
