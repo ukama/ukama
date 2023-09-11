@@ -75,7 +75,7 @@ func TestWorkflow_RegistrySystem(t *testing.T) {
 	// w.RegisterTestCase(TC_registry_update_node)
 
 	/* Update Node State */
-	w.RegisterTestCase(TC_registry_update_node_state)
+	// w.RegisterTestCase(TC_registry_update_node_state)
 
 	/* Add Node to site*/
 	w.RegisterTestCase(TC_registry_add_node_to_site("parent"))

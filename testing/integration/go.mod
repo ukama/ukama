@@ -53,7 +53,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/ukama/ukama/systems/billing/invoice v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/common v0.0.0-20230710205254-f576842a6ce8
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/data-plan/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb
@@ -64,8 +64,10 @@ require (
 	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/api-gateway v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/invitation v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
@@ -138,19 +140,17 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/ukama/ukama/systems/registry/invitation v0.0.0-00010101000000-000000000000 // indirect
-	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/net v0.13.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20230526161137-0005af68ea54 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
-	google.golang.org/grpc v1.57.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/grpc v1.58.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.2 // indirect
