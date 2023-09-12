@@ -1613,15 +1613,15 @@ const HealtChartsConfigure: any = {
 };
 
 const MASK_BY_TYPE = {
-  HOME: '{uk- }######{ -hnode- }##{ - }####',
-  AMPLIFIER: '{uk- }######{ -\\anode- }##{ - }}####',
-  TOWER: '{uk- }######{ -tnode- }##{ - }}####',
+  hnode: '{uk- }######{ -hnode- }##{ - }####',
+  anode: '{uk- }######{ -\\anode- }##{ - }}####',
+  tnode: '{uk- }######{ -tnode- }##{ - }}####',
 };
 
 const MASK_PLACEHOLDERS = {
-  HOME: 'uk- ______ -hnode- __ - ____',
-  AMPLIFIER: 'uk- ______ -anode- __ - ____',
-  TOWER: 'uk- ______ -tnode- __ - ____',
+  hnode: 'uk- ______ -hnode- __ - ____',
+  anode: 'uk- ______ -anode- __ - ____',
+  tnode: 'uk- ______ -tnode- __ - ____',
 };
 
 const SIM_VARIANT = [
@@ -1667,11 +1667,12 @@ export {
 };
 
 const NODE_IMAGES = {
-  TOWER:
+  tnode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png',
-  AMPLIFIER:
+  anode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png',
-  HOME: 'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
+  hnode:
+    'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
 };
 
 const BILLING_PLANS = [

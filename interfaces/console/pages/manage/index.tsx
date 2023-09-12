@@ -3,11 +3,11 @@ import { MANAGE_MENU_LIST } from '@/constants';
 import {
   MemberObj,
   PackageDto,
-  useAddInvitationMutation,
+  // useAddInvitationMutation,
   useAddMemberMutation,
   useAddPackageMutation,
   useDeletePacakgeMutation,
-  useGetInvitationsByOrgLazyQuery,
+  // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
   useGetOrgMemberQuery,
@@ -31,7 +31,6 @@ import {
   Paper,
   Stack,
 } from '@mui/material';
-import { format, parseISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -165,12 +164,12 @@ const Manage = () => {
   const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      const filteredNodes = data?.getNodes.node
-        .filter((node) => node.created_at)
-        .map((node) => ({
-          ...node,
-          created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
-        }));
+      const filteredNodes = data?.getNodes.nodes;
+      // .filter((node) => node.created_at)
+      // .map((node) => ({
+      //   ...node,
+      //   created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
+      // }));
 
       setData((prev: any) => ({
         ...prev,
@@ -225,27 +224,27 @@ const Manage = () => {
       },
     });
 
-  const [
-    getInvitationsByOrg,
-    { loading: invitationsLoading, refetch: getInvitations },
-  ] = useGetInvitationsByOrgLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev: any) => ({
-        ...prev,
-        invitations: data?.getInvitationsByOrg ?? [],
-      }));
-    },
+  // const [
+  //   getInvitationsByOrg,
+  //   { loading: invitationsLoading, refetch: getInvitations },
+  // ] = useGetInvitationsByOrgLazyQuery({
+  //   fetchPolicy: 'cache-and-network',
+  //   onCompleted: (data) => {
+  //     setData((prev: any) => ({
+  //       ...prev,
+  //       invitations: data?.getInvitationsByOrg ?? [],
+  //     }));
+  //   },
 
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'invitations',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'invitations',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
   const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
     onCompleted: () => {
@@ -267,28 +266,28 @@ const Manage = () => {
       });
     },
   });
-  const [sendInvitation, { loading: sendInvitationLoading }] =
-    useAddInvitationMutation({
-      onCompleted: () => {
-        refetchMembers();
-        getInvitations();
-        setSnackbarMessage({
-          id: 'add-member',
-          message: 'Invitation sent successfully',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        setIsInviteMember(false);
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'add-member-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  // const [sendInvitation, { loading: sendInvitationLoading }] =
+  //   useAddInvitationMutation({
+  //     onCompleted: () => {
+  //       refetchMembers();
+  //       getInvitations();
+  //       setSnackbarMessage({
+  //         id: 'add-member',
+  //         message: 'Invitation sent successfully',
+  //         type: 'success' as AlertColor,
+  //         show: true,
+  //       });
+  //       setIsInviteMember(false);
+  //     },
+  //     onError: (error) => {
+  //       setSnackbarMessage({
+  //         id: 'add-member-error',
+  //         message: error.message,
+  //         type: 'error' as AlertColor,
+  //         show: true,
+  //       });
+  //     },
+  //   });
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
@@ -436,25 +435,23 @@ const Manage = () => {
     //     },
     //   },
     // });
-
-    sendInvitation({
-      variables: {
-        data: {
-          email: member.email as string,
-          role: member.role as string,
-          name: member.name as string,
-        },
-      },
-    });
+    // sendInvitation({
+    //   variables: {
+    //     data: {
+    //       email: member.email as string,
+    //       role: member.role as string,
+    //       name: member.name as string,
+    //     },
+    //   },
+    // });
   };
 
   useEffect(() => {
-    getInvitationsByOrg({
-      variables: {
-        orgName: _commonData?.orgName,
-      },
-    });
-
+    // getInvitationsByOrg({
+    //   variables: {
+    //     orgName: _commonData?.orgName,
+    //   },
+    // });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_commonData?.orgName]);
 
@@ -540,13 +537,13 @@ const Manage = () => {
     simsLoading ||
     membersLoading ||
     addMemberLoading ||
-    sendInvitationLoading ||
+    // sendInvitationLoading ||
     uploadSimsLoading ||
     dataPlanLoading ||
     deletePkgLoading ||
     updatePkgLoading ||
     networkLoading ||
-    invitationsLoading ||
+    // invitationsLoading ||
     getNodesLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -597,7 +594,7 @@ const Manage = () => {
           title={'Invite member'}
           isOpen={isInviteMember}
           labelNegativeBtn={'Cancel'}
-          invitationLoading={sendInvitationLoading}
+          // invitationLoading={sendInvitationLoading}
           labelSuccessBtn={'Invite member'}
           handleSuccessAction={handleAddMemberAction}
           handleCloseAction={() => setIsInviteMember(false)}
@@ -616,7 +613,7 @@ const Manage = () => {
       {isDataPlan && (
         <DataPlanDialog
           data={dataplan}
-          organizationName={_commonData.orgName}
+          // organizationName={_commonData.orgName}
           action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
           setData={setDataplan}

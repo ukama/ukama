@@ -13,7 +13,7 @@ import {
   useUpdateDraftNameMutation,
   useUpdateLocationMutation,
   useUpdateSiteMutation,
-} from '@/generated/planning';
+} from '@/generated';
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';

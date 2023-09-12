@@ -1,5 +1,5 @@
 import { colors } from '@/styles/theme';
-import { statsPeriodItemType } from '@/types';
+import { StatsPeriodItemType } from '@/types';
 import {
   Box,
   ToggleButton,
@@ -9,7 +9,7 @@ import {
 
 interface ITimeFilter {
   filter?: string;
-  options?: statsPeriodItemType[];
+  options?: StatsPeriodItemType[];
   handleFilterSelect: Function;
 }
 
@@ -27,7 +27,7 @@ const TimeFilter = ({
         value={filter}
         onChange={(_, value: string) => handleFilterSelect(value)}
       >
-        {options.map(({ id, label }: statsPeriodItemType) => (
+        {options.map(({ id, label }: StatsPeriodItemType) => (
           <ToggleButton
             fullWidth
             key={id}

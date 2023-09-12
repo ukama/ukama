@@ -1,4 +1,4 @@
-import { Draft } from '@/generated/planning';
+import { Draft } from '@/generated';
 import { colors } from '@/styles/theme';
 import { hexToRGB } from '@/utils';
 import { Edit } from '@mui/icons-material';
@@ -26,7 +26,7 @@ import {
 
 interface IDraftDropdown {
   draft: Draft | undefined;
-  drafts: Draft[];
+  drafts: any;
   isLoading: boolean;
   handleAddDraft: Function;
   handleDeleteDraft: Function;

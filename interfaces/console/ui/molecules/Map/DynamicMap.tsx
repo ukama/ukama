@@ -1,4 +1,4 @@
-import { Link, Site } from '@/generated/planning';
+import { Link, Site } from '@/generated';
 import styles from '@/styles/Map.module.css';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
