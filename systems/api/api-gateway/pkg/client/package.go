@@ -52,7 +52,7 @@ func (p *packageClient) Get(id string) (*PackageInfo, error) {
 
 	resp, err := p.R.Get(p.u.String() + PackageEndpoint + "/" + id)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("GetPackage failure. error %s", err.Error())
 
 		return nil, fmt.Errorf("GetPackage failure: %w", err)
 	}

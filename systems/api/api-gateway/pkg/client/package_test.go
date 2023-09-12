@@ -18,14 +18,14 @@ func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return r(req), nil
 }
 
-func TestPackageClient_GetPackage(t *testing.T) {
+func TestPackageClient_Get(t *testing.T) {
 	t.Run("PackageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
 
 			// fake package info
-			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "is_active": true}}`
+			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true}}`
 
 			// Send mock response
 			return &http.Response{
@@ -40,8 +40,6 @@ func TestPackageClient_GetPackage(t *testing.T) {
 		}
 
 		testPackageClient := client.NewPackageClient("")
-
-		// assert.NoError(tt, err)
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -65,8 +63,6 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 		testPackageClient := client.NewPackageClient("")
 
-		// assert.NoError(tt, err)
-
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Get(testUuid)
@@ -88,8 +84,6 @@ func TestPackageClient_GetPackage(t *testing.T) {
 
 		testPackageClient := client.NewPackageClient("")
 
-		// assert.NoError(tt, err)
-
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Get(testUuid)
@@ -106,8 +100,6 @@ func TestPackageClient_GetPackage(t *testing.T) {
 		}
 
 		testPackageClient := client.NewPackageClient("")
-
-		// assert.NoError(tt, err)
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 

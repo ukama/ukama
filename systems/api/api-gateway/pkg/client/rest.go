@@ -70,7 +70,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		r.C.R().SetError(errStatus).SetBody(b)
 	}
 
-	resp, err = r.C.R().SetError(errStatus).Put(url)
+	resp, err = r.C.R().SetError(errStatus).Post(url)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 

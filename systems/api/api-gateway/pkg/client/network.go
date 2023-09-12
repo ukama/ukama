@@ -10,7 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
-const netEndpoint = "/v1/networks"
+const NetworkEndpoint = "/v1/networks"
 
 type NetworkInfo struct {
 	Id            uuid.UUID `json:"id,omitempty"`
@@ -35,7 +35,7 @@ type NetworkClient interface {
 
 type networkClient struct {
 	u *url.URL
-	r *Resty
+	R *Resty
 }
 
 func NewNetworkClient(h string) *networkClient {
@@ -47,7 +47,7 @@ func NewNetworkClient(h string) *networkClient {
 
 	return &networkClient{
 		u: u,
-		r: NewResty(),
+		R: NewResty(),
 	}
 }
 
@@ -61,17 +61,19 @@ func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 
 	ntwk := Network{}
 
-	resp, err := n.r.Post(n.u.String()+netEndpoint, b)
+	resp, err := n.R.Post(n.u.String()+NetworkEndpoint, b)
 
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("AddNetwork failure. error %s", err.Error())
 
 		return nil, fmt.Errorf("AddNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+		log.Tracef("Failed to deserialize network info. Error message is %s", err.Error())
+
+		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}
 
 	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
@@ -84,16 +86,16 @@ func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 
 	ntwk := Network{}
 
-	resp, err := n.r.Get(n.u.String() + netEndpoint + "/" + id)
+	resp, err := n.R.Get(n.u.String() + NetworkEndpoint + "/" + id)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("GetNetwork failure. error %s", err.Error())
 
 		return nil, fmt.Errorf("GetNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
-		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize network info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}
