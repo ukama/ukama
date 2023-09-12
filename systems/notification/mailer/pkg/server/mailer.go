@@ -129,6 +129,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 			return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
 		}
 	}
+
 	return &pb.SendEmailResponse{
 		Message: "Email Sent!",
 		MailId:  mailId.String(),

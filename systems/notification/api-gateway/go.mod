@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/notification/api-gateway => ./
 
 replace github.com/ukama/ukama/systems/notification/mailer => ../mailer
 
+replace github.com/ukama/ukama/systems/notification/notify => ../notify
+
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1

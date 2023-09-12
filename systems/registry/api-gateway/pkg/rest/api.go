@@ -59,9 +59,8 @@ type DetachNodeRequest struct {
 }
 
 type UpdateNodeStateRequest struct {
-	NodeId       string `json:"node_id" path:"node_id" validate:"required"`
-	State        string `json:"state" validate:"required"`
-	Connectivity string `json:"connectivity" validate:"required"`
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+	State  string `json:"state" path:"state" validate:"required"`
 }
 
 type UpdateNodeRequest struct {
@@ -86,10 +85,15 @@ type GetSiteNodesRequest struct {
 	SiteId string `example:"{{SiteId}}" path:"site_id" validate:"required"`
 }
 
+type GetNetworkNodesRequest struct {
+	NetworkId string `example:"{{NetworkId}}" path:"net_id" validate:"required"`
+}
+
 type AddNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`
 	OrgId  string `json:"org_id" validate:"required"`
+	State  string `json:"state" validate:"required"`
 }
 
 type DeleteNodeRequest struct {
@@ -109,7 +113,7 @@ type ReleaseNodeFromSiteRequest struct {
 }
 
 type AddInvitationRequest struct {
-	Org   string `json:"org" validate:"required"`
+	Org   string `json:"org" path:"org" validate:"required"`
 	Name  string `json:"name" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role  string `json:"role" validate:"required"`

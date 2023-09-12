@@ -68,22 +68,6 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 	return resp, nil
 }
 
-func (p *SimPoolServer) GetSims(ctx context.Context, req *pb.GetSimsRequest) (*pb.GetSimsResponse, error) {
-	logrus.Infof("GetSims : %v ", req.GetSimType())
-
-	sims, err := p.simRepo.GetSims(db.ParseType(req.SimType))
-	if err != nil {
-		logrus.Error("error getting a sim pool stats" + err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
-	}
-	resp := dbSimsToPbSim(sims)
-
-	return &pb.GetSimsResponse{
-		Sims: resp,
-	}, nil
-}
-
 func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Add Sims : %v ", req.Sim)
 	result := utils.PbParseToModel(req.Sim)
@@ -151,6 +135,5 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		UpdatedAt:      p.UpdatedAt.String(),
 		IsPhysical:     p.IsPhysical,
 		QrCode:         p.QrCode,
-		IsFailed:       p.IsFailed,
 	}
 }

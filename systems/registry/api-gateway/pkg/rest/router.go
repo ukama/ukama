@@ -58,6 +58,14 @@ type network interface {
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
 }
 
+type invitation interface {
+	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
+	GetInvitationById(invitationId string) (*invpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
+	RemoveInvitation(invitationId string) (*invpb.DeleteInvitationResponse, error)
+	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
+}
+
 type member interface {
 	GetMember(userUUID string) (*mpb.MemberResponse, error)
 	GetMembers() (*mpb.GetMembersResponse, error)
@@ -67,17 +75,11 @@ type member interface {
 	RemoveMember(userUUID string) error
 }
 
-type invitation interface {
-	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
-	GetInvitation(invitationId string) (*invpb.GetInvitationResponse, error)
-	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
-	RemoveInvitation(invitationId string) (*invpb.DeleteInvitationResponse, error)
-	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
-}
 type node interface {
 	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetOrgNodes(orgId string, free bool) (*nodepb.GetByOrgResponse, error)
+	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
 	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
@@ -186,6 +188,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// users.GET("/auth/:auth_id", formatDoc("Get User By AuthId", "Get a specific user by authId"), tonic.Handler(r.getUserByAuthIdHandler, http.StatusOK))
 		// users.GET("/whoami/:user_id", formatDoc("Get detailed User", "Get a specific user details with all linked orgs"), tonic.Handler(r.whoamiHandler, http.StatusOK))
 		// user orgs-member
+		// update user
+		// Deactivate user
+		// Delete user
+		// users.DELETE("/:user_id", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -212,6 +218,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
 		nodes.GET("sites/:site_id", formatDoc("Get Nodes For Site", "Get all nodes of a site"), tonic.Handler(r.getSiteNodesHandler, http.StatusOK))
+		nodes.GET("networks/:net_id", formatDoc("Get Nodes For Network", "Get all nodes of a network"), tonic.Handler(r.getNetworkNodesHandler, http.StatusOK))
 		nodes.POST("", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
 		nodes.PUT("/:node_id", formatDoc("Update Node", "Update node name or state"), tonic.Handler(r.putUpdateNodeHandler, http.StatusOK))
 		nodes.PATCH("/:node_id", formatDoc("Update Node State", "Update node state"), tonic.Handler(r.patchUpdateNodeStateHandler, http.StatusOK))
@@ -228,6 +235,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 // 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
 // }
 
+func (r *Router) getNetworkNodesHandler(c *gin.Context, req *GetNetworkNodesRequest) (*nodepb.GetByNetworkResponse, error) {
+	return r.clients.Node.GetNetworkNodes(req.NetworkId)
+}
+
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
 	return r.clients.Node.GetSiteNodes(req.SiteId)
 }
@@ -241,7 +252,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId, req.State)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
@@ -297,14 +308,6 @@ func (r *Router) removeMemberHandler(c *gin.Context, req *RemoveMemberRequest) e
 	return r.clients.Member.RemoveMember(req.UserUuid)
 }
 
-func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeactivateResponse, error) {
-	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
-}
-
-func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
-	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
-}
-
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
@@ -342,7 +345,7 @@ func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
-	return r.clients.Invitation.GetInvitation(req.InvitationId)
+	return r.clients.Invitation.GetInvitationById(req.InvitationId)
 }
 
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {

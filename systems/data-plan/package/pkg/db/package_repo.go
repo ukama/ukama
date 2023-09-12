@@ -67,11 +67,15 @@ func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 }
 
 func (r *packageRepo) Delete(uuid uuid.UUID) error {
-	p := &Package{}
-	result := r.Db.GetGormDb().Model(&Package{}).Where("uuid=?", uuid).Delete(p)
-	if result.Error != nil {
-		return result.Error
+	p := &Package{
+		Uuid: uuid,
 	}
+
+	d := r.Db.GetGormDb().Select(clause.Associations).Delete(p)
+	if d.Error != nil {
+		return d.Error
+	}
+
 	return nil
 }
 

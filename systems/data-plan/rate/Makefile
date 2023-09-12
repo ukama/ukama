@@ -12,6 +12,7 @@ gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep  -I ../base-rate/pb --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 					rate.proto
 
+
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 

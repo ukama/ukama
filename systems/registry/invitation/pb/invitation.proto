@@ -93,7 +93,6 @@ message Invitation {
 	Declined  = 2;
     Unknown   = 3;
   }
-  
   enum RoleType {
     Owner     = 0;
 	Admin     = 1;

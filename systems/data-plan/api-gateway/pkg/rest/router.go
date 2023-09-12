@@ -65,7 +65,7 @@ type packageS interface {
 	GetPackage(id string) (*pb.GetPackageResponse, error)
 	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
-	DeletePackage(id string, orgId string) (*pb.DeletePackageResponse, error)
+	DeletePackage(id string) (*pb.DeletePackageResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -290,7 +290,7 @@ func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) 
 }
 
 func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := r.clients.p.DeletePackage(req.Uuid, c.Request.Header.Get("Org-id"))
+	resp, err := r.clients.p.DeletePackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -305,7 +305,6 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		Uuid:   req.Uuid,
 		Name:   req.Name,
 		Active: req.Active,
-		OrgId:  c.Request.Header.Get("Org-id"),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -314,6 +313,7 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	}
 
 	return resp, nil
+
 }
 
 func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
@@ -324,7 +324,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		OwnerId:     req.OwnerId,
 		From:        req.From,
 		To:          req.To,
-		BaserateId:  req.BaserateId,
+		Baserate:    req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
@@ -337,7 +337,6 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Type:        req.Type,
 		Flatrate:    req.Flatrate,
 		Amount:      req.Amount,
-		Duration:    req.Duration,
 	}
 
 	return r.clients.p.AddPackage(pack)

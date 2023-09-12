@@ -11,8 +11,6 @@ func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
 	failed := 0
 	available := 0
 	consumed := 0
-	physical := 0
-	esim := 0
 	for _, value := range slice {
 		if value.IsAllocated {
 			consumed = consumed + 1
@@ -20,11 +18,6 @@ func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
 			failed = failed + 1
 		} else {
 			available = available + 1
-			if value.IsPhysical {
-				physical = physical + 1
-			} else {
-				esim = esim + 1
-			}
 		}
 	}
 	return &pb.GetStatsResponse{
@@ -32,8 +25,6 @@ func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
 		Failed:    uint64(failed),
 		Available: uint64(available),
 		Consumed:  uint64(consumed),
-		Physical:  uint64(physical),
-		Esim:      uint64(esim),
 	}
 }
 

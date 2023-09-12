@@ -85,9 +85,10 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
+	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect

@@ -11,8 +11,6 @@ type SimRepo interface {
 	GetSimsByType(simType SimType) ([]Sim, error)
 	Add(sims []Sim) error
 	Delete(id []uint64) error
-	UpdateStatus(iccid string, isAllocated, IsFailed bool) error
-	GetSims(simType SimType) ([]Sim, error)
 }
 
 type simRepo struct {
@@ -25,23 +23,6 @@ func NewSimRepo(db sql.Db) *simRepo {
 	}
 }
 
-func (s *simRepo) GetSims(simType SimType) ([]Sim, error) {
-	var sim []Sim
-	if simType != SimTypeUnknown {
-		result := s.Db.GetGormDb().Where("sim_type = ?", simType).Find(&sim)
-		if result.Error != nil {
-			return nil, result.Error
-		}
-	} else {
-		result := s.Db.GetGormDb().Find(&sim)
-		if result.Error != nil {
-			return nil, result.Error
-		}
-	}
-	return sim, nil
-
-}
-
 func (s *simRepo) Get(isPhysicalSim bool, simType SimType) (*Sim, error) {
 	var sim Sim
 	result := s.Db.GetGormDb().Where("is_allocated = ?", false).Where("is_physical = ?", isPhysicalSim).Where("sim_type = ?", simType).First(&sim)
@@ -51,14 +32,6 @@ func (s *simRepo) Get(isPhysicalSim bool, simType SimType) (*Sim, error) {
 	}
 
 	return &sim, nil
-}
-
-func (s *simRepo) UpdateStatus(iccid string, isAllocated, IsFailed bool) error {
-	result := s.Db.GetGormDb().Update("is_allocated = ?", isAllocated).Update("is_failed = ?", IsFailed).Where("iccid = ?", iccid).First(&Sim{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
 }
 
 func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {

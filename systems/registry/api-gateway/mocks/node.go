@@ -168,6 +168,32 @@ func (_m *node) GetAllNodes(free bool) (*gen.GetNodesResponse, error) {
 	return r0, r1
 }
 
+// GetNetworkNodes provides a mock function with given fields: networkId
+func (_m *node) GetNetworkNodes(networkId string) (*gen.GetByNetworkResponse, error) {
+	ret := _m.Called(networkId)
+
+	var r0 *gen.GetByNetworkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.GetByNetworkResponse, error)); ok {
+		return rf(networkId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.GetByNetworkResponse); ok {
+		r0 = rf(networkId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByNetworkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(networkId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNode provides a mock function with given fields: nodeId
 func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
 	ret := _m.Called(nodeId)

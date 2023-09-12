@@ -29,7 +29,7 @@ func NewMetricsCollector(orgName string, config []pkg.MetricConfig) *MetricsColl
 	c.Config = make(map[string]pkg.MetricConfig, len(c.Config))
 	c.grpcMetrics = grpc_prometheus.NewServerMetrics()
 	c.registry = prometheus.NewRegistry()
-	c.orgName = orgName
+	c.orgName = c.orgName
 	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}), c.grpcMetrics)
 
 	for _, cfg := range config {

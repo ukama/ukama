@@ -28,6 +28,7 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
+	orgName         string
 	userRepo        db.UserRepo
 	orgService      pkgP.OrgClientProvider
 	baseRoutingKey  msgbus.RoutingKeyBuilder
@@ -35,11 +36,12 @@ type UserService struct {
 	pushGatewayHost string
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
+func NewUserService(orgName string, userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
 	return &UserService{
+		orgName:         orgName,
 		userRepo:        userRepo,
 		orgService:      orgService,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:          msgBus,
 		pushGatewayHost: pushGatewayHost,
 	}

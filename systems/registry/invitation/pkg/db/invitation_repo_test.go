@@ -158,64 +158,6 @@ func TestInvitationRepo_Getinvitation(t *testing.T) {
 		assert.NotNil(t, rm)
 	})
 }
-func TestInvitationRepo_Getinvitation(t *testing.T) {
-	t.Run("InvitationExist", func(t *testing.T) {
-		// Arrange
-		invId := uuid.NewV4()
-		invitation := db_inv.Invitation{
-			Id:        invId,
-			Name:      "test",
-			Email:     "test@ukama.com",
-			Org:       "ukama",
-			Role:      db_inv.Employee,
-			Status:    db_inv.Pending,
-			UserId:    uuid.NewV4().String(),
-			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
-			Link:      "https://ukama.com/invitation/accept/" + uuid.NewV4().String(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			DeletedAt: gorm.DeletedAt{},
-		}
-
-		var db *extsql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "user_id", "role"}).
-			AddRow(invId, invitation.UserId, invitation.Role)
-
-		mock.ExpectQuery(`^SELECT.*invitations.*`).
-			WithArgs(invitation.Id).
-			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := db_inv.NewInvitationRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		rm, err := r.Get(invitation.Id)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, rm)
-	})
-}
 
 func TestInvitationRepo_GetByOrg(t *testing.T) {
 	t.Run("InvitationExist", func(t *testing.T) {

@@ -277,13 +277,21 @@ func TestNodeRepo_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("NodeFound", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(nodeID).
-			WillReturnError(extsql.ErrNoRows)
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
 
-		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
-			WithArgs(nodeID, nodeID).
-			WillReturnResult(sqlmock.NewResult(1, 0))
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeId).
+			WillReturnRows(row)
 
 		mock.ExpectBegin()
 

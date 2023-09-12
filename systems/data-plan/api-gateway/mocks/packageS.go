@@ -38,25 +38,25 @@ func (_m *packageS) AddPackage(req *gen.AddPackageRequest) (*gen.AddPackageRespo
 	return r0, r1
 }
 
-// DeletePackage provides a mock function with given fields: id, orgId
-func (_m *packageS) DeletePackage(id string, orgId string) (*gen.DeletePackageResponse, error) {
-	ret := _m.Called(id, orgId)
+// DeletePackage provides a mock function with given fields: id
+func (_m *packageS) DeletePackage(id string) (*gen.DeletePackageResponse, error) {
+	ret := _m.Called(id)
 
 	var r0 *gen.DeletePackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.DeletePackageResponse, error)); ok {
-		return rf(id, orgId)
+	if rf, ok := ret.Get(0).(func(string) (*gen.DeletePackageResponse, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.DeletePackageResponse); ok {
-		r0 = rf(id, orgId)
+	if rf, ok := ret.Get(0).(func(string) *gen.DeletePackageResponse); ok {
+		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeletePackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(id, orgId)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}

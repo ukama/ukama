@@ -42,10 +42,11 @@ type SimManagerServer struct {
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimManagerServiceServer
-	org            string
-	pushMetricHost string
+	org                string
+	orgName            string
+	pushMetricHost     string
 	notificationClient providers.NotificationClient
-	nucleusClient providers.NetworkClientProvider
+	networkClient      providers.NetworkClientProvider
 }
 
 func NewSimManagerServer(
@@ -57,7 +58,7 @@ func NewSimManagerServer(
 	org string,
 	pushMetricHost string,
 	notificationClient providers.NotificationClient,
-	nucleusClient providers.NetworkClientProvider,
+	networkClient providers.NetworkClientProvider,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -74,7 +75,7 @@ func NewSimManagerServer(
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
 		notificationClient:        notificationClient,
-		nucleusClient:             nucleusClient,
+		networkClient:             networkClient,
 	}
 }
 
@@ -238,19 +239,21 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	netInfo, err := s.nucleusClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
+	
+	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
+
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.notificationClient.SendEmail(providers.SendEmailReq{
-			To:      []string{remoteSubResp.Subscriber.Email},
+			To:           []string{remoteSubResp.Subscriber.Email},
 			TemplateName: "sim-allocation",
-			Values:  map[string]interface{}{
+			Values: map[string]interface{}{
 				"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
-				"NETWORK": netInfo.Name,
-				"NAME":    remoteSubResp.Subscriber.FirstName,
-				"QRCODE":  poolSim.QrCode,},
+				"NETWORK":    netInfo.Name,
+				"NAME":       remoteSubResp.Subscriber.FirstName,
+				"QRCODE":     poolSim.QrCode},
 		})
 		if err != nil {
 			return nil, err

@@ -27,7 +27,7 @@ require (
 require (
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
 )

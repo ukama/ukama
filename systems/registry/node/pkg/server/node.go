@@ -77,10 +77,10 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		Id:    req.NodeId,
+		Id:    nId.StringLowercase(),
 		OrgId: n.org,
 		Status: db.NodeStatus{
-			NodeId: req.NodeId,
+			NodeId: nId.StringLowercase(),
 			Conn:   db.Unknown,
 			State:  db.Undefined,
 		},
