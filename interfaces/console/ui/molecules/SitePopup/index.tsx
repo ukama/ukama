@@ -1,5 +1,5 @@
 import { SITE_PLANNING_AP_OPTIONS, SOLAR_UPTIME_OPTIONS } from '@/constants';
-import { Site } from '@/generated/planning';
+import { Site } from '@/generated';
 import {
   Button,
   Divider,

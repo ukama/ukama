@@ -1,4 +1,4 @@
-import { Site } from '@/generated/planning';
+import { Site } from '@/generated';
 import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import SearchBar from '@/ui/molecules/SearchBar';

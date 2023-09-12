@@ -1,4 +1,4 @@
-import { Link, Site } from '@/generated/planning';
+import { Link, Site } from '@/generated';
 import { colors } from '@/styles/theme';
 import parse_georaster from 'georaster';
 import GeoRasterLayer from 'georaster-layer-for-leaflet';

@@ -1,7 +1,7 @@
 import { colors } from '@/styles/theme';
 import { Site } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
-import Map from '@/ui/molecules/MapComponent';
+// import Map from '@/ui/molecules/MapComponent';
 import SiteHeader from '@/ui/molecules/SiteHeader';
 import SiteOverallHealth from '@/ui/molecules/SiteHealth';
 import { Grid, Paper, Stack, Typography } from '@mui/material';
@@ -64,7 +64,7 @@ export default function Page() {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={8}>
-            <Map site={''} users={0} />
+            {/* <Map site={''} users={0} /> */}
           </Grid>
 
           <Grid item xs={12}>

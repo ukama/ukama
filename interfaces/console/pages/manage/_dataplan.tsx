@@ -41,7 +41,7 @@ const DataPlan = ({
         title={'Data plans'}
         buttonTitle={'CREATE DATA PLAN'}
         handleButtonAction={handleActionButon}
-        warningIcon={true}
+        // warningIcon={true}
       />
       <br />
       {data.length === 0 ? (
