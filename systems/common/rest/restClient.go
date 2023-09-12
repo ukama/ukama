@@ -28,6 +28,23 @@ func NewRestClient(path string, debug bool) (*RestClient, error) {
 	return rc, nil
 }
 
+func NewRestClientWithClient(hc *http.Client, path string, debug bool) (*RestClient, error) {
+	c := resty.NewWithClient(hc)
+
+	url, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c.SetDebug(debug)
+	rc := &RestClient{
+		C:   c,
+		URL: url,
+	}
+	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	return rc, nil
+}
+
 func NewRestyClient(url *url.URL, debug bool) *RestClient {
 	c := resty.New()
 	c.SetDebug(debug)
@@ -35,6 +52,6 @@ func NewRestyClient(url *url.URL, debug bool) *RestClient {
 		C:   c,
 		URL: url,
 	}
-	logrus.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
 	return rc
 }
