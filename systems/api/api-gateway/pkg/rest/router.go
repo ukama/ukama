@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/ukama/ukama/systems/api/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/db"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
@@ -98,14 +100,44 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.NetworkInfo, error) {
-	res, _, err := r.clients.CreateNetwork(req.OrgName, req.NetName)
+	res, status, err := r.clients.CreateNetwork(req.OrgName, req.NetName)
+	if err != nil {
+		if !errors.Is(err, &client.ErrorResponse{}) {
+			return nil, rest.HttpError{
+				HttpCode: http.StatusRequestTimeout,
+				Message:  err.Error(),
+			}
+		}
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
+
+	c.Status(resourceStatusToHTTPStatus(*status))
 
 	return res, err
 }
 
 // func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*npb.GetResponse, error) {
 func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.NetworkInfo, error) {
-	res, _, err := r.clients.GetNetwork(req.NetworkId)
+	res, status, err := r.clients.GetNetwork(req.NetworkId)
+	if err != nil {
+		if !errors.Is(err, &client.ErrorResponse{}) {
+			return nil, rest.HttpError{
+				HttpCode: http.StatusRequestTimeout,
+				Message:  err.Error(),
+			}
+		}
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
+
+	c.Status(resourceStatusToHTTPStatus(*status))
 
 	return res, err
 }
@@ -115,4 +147,17 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func resourceStatusToHTTPStatus(status db.ResourceStatus) int {
+	switch status {
+	case db.ResourceStatusPending:
+		return http.StatusPartialContent
+
+	case db.ResourceStatusCompleted:
+		return http.StatusOK
+
+	default:
+		return http.StatusUnprocessableEntity
+	}
 }
