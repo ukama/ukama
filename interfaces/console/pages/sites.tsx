@@ -1,10 +1,10 @@
-import SiteOverallHealth from '@/ui/molecules/SiteHealth';
-import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { colors } from '@/styles/theme';
-import SiteHeader from '@/ui/molecules/SiteHeader';
 import { Site } from '@/types';
-import { Grid, Typography, Paper, Stack } from '@mui/material';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/MapComponent';
+import SiteHeader from '@/ui/molecules/SiteHeader';
+import SiteOverallHealth from '@/ui/molecules/SiteHealth';
+import { Grid, Paper, Stack, Typography } from '@mui/material';
 
 const sites: Site[] = [
   { name: 'site1', health: 'online', duration: '3 days' },
@@ -13,9 +13,7 @@ const sites: Site[] = [
 ];
 
 export default function Page() {
-  const handleSiteSelect = (site: any): void => {
-    console.log(site);
-  };
+  const handleSiteSelect = (site: any): void => {};
   const handleAddSite = () => {
     // Logic to add a new site
   };
