@@ -75,7 +75,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", nil)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	srv := server.NewSimPoolServer(serviceConfig.OrgName, db.NewSimRepo(gormdb), mbClient)
 	nSrv := server.NewSimPoolEventServer(serviceConfig.OrgName, db.NewSimRepo(gormdb))

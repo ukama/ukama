@@ -25,13 +25,13 @@ type SimServiceClient interface {
 	// / Get sim from pool
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByIccid(ctx context.Context, in *GetByIccidRequest, opts ...grpc.CallOption) (*GetByIccidResponse, error)
-	// /Get sim pool statistaics
+	// / Get sim pool statistaics
 	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
-	// /Add sims to pool
+	// / Add sims to pool
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	// /Delete sims from pool
+	// / Delete sims from pool
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	// /Batch upload sims from CSV
+	// / Batch upload sims from CSV
 	Upload(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
 	// / Get sims from pool
 	GetSims(ctx context.Context, in *GetSimsRequest, opts ...grpc.CallOption) (*GetSimsResponse, error)
@@ -115,13 +115,13 @@ type SimServiceServer interface {
 	// / Get sim from pool
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByIccid(context.Context, *GetByIccidRequest) (*GetByIccidResponse, error)
-	// /Get sim pool statistaics
+	// / Get sim pool statistaics
 	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
-	// /Add sims to pool
+	// / Add sims to pool
 	Add(context.Context, *AddRequest) (*AddResponse, error)
-	// /Delete sims from pool
+	// / Delete sims from pool
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	// /Batch upload sims from CSV
+	// / Batch upload sims from CSV
 	Upload(context.Context, *UploadRequest) (*UploadResponse, error)
 	// / Get sims from pool
 	GetSims(context.Context, *GetSimsRequest) (*GetSimsResponse, error)

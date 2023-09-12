@@ -12,8 +12,6 @@ service PackagesService {
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
     rpc GetByOrg (GetByOrgPackageRequest) returns (GetByOrgPackageResponse){}
-
-
 }
 
 message GetPackageRequest{
