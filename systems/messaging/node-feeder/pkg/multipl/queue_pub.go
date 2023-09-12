@@ -3,32 +3,55 @@ package multipl
 import (
 	"encoding/json"
 
-	amqp "github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/wagslane/go-rabbitmq"
 )
 
 type queuePublisher struct {
-	publisher *rabbitmq.Publisher
+	conn        *rabbitmq.Conn
+	publisher   *rabbitmq.Publisher
+	serviceName string
+	instanceId  string
+
 }
+
+
 
 type QueuePublisher interface {
 	Publish(msg pkg.DevicesUpdateRequest) error
+	PublishProto(payload proto.Message, routingKey string) error
+	PublishToQueue(queueName string, payload any) error
+	Close() error
 }
 
+func NewQPub(queueUri string, serviceName string, exchange string, instanceId string) (*queuePublisher, error) {
+	conn, err := rabbitmq.NewConn(
+		queueUri,
+		rabbitmq.WithConnectionOptionsLogging,
+	)
+	if err != nil {
+		log.Infof("Error creating publisher %s.", err.Error())
+		return nil, err
+	}
 
-func NewQueuePublisher(queueUri string) (*queuePublisher, error) {
-
-	publisher, err := rabbitmq.NewPublisher(queueUri, amqp.Config{})
-
+	publisher, err := rabbitmq.NewPublisher(conn,
+		rabbitmq.WithPublisherOptionsLogging,
+		rabbitmq.WithPublisherOptionsExchangeName(exchange),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &queuePublisher{
-		publisher: publisher,
+		conn:        conn,
+		publisher:   publisher,
+		serviceName: serviceName,
+		instanceId:  instanceId,
 	}, nil
 }
 
@@ -50,5 +73,48 @@ func (q *queuePublisher) Publish(msg pkg.DevicesUpdateRequest) error {
 		return err
 	}
 
+	return nil
+}
+func (q *queuePublisher) PublishToQueue(queueName string, payload any) error {
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	err = q.publisher.Publish(b, []string{queueName},
+		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
+			"source-service": q.serviceName,
+			"instance-id":    q.instanceId,
+		}))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (q *queuePublisher) PublishProto(payload proto.Message, routingKey string) error {
+
+	b, err := proto.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	err = q.publisher.Publish(b, []string{routingKey},
+		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
+			"source-service": q.serviceName,
+			"instance-id":    q.instanceId,
+		}),
+		rabbitmq.WithPublishOptionsExchange(msgbus.DefaultExchange))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (q *queuePublisher) Close() error {
+	q.conn.Close()
 	return nil
 }

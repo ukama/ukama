@@ -30,7 +30,7 @@ func main() {
 		logrus.Fatalf("Failed to create registry client: %v", err)
 	}
 
-	pub, err := multipl.NewQueuePublisher(serviceConfig.Queue.Uri)
+	pub, err := multipl.NewQPub(serviceConfig.Queue.Uri, global.ServiceName, serviceConfig.Registry.Host, os.Getenv(global.POD_NAME_ENV_VAR))
 	if err != nil {
 		logrus.Fatalf("Failed to create publisher: %v", err)
 	}
@@ -83,3 +83,4 @@ func exposeMetrics() {
 
 	}
 }
+
