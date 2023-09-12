@@ -22,6 +22,7 @@ func TestNetworkClient_Get(t *testing.T) {
 			// Send mock response
 			return &http.Response{
 				StatusCode: 200,
+				Status:     "200 OK",
 
 				// Send response to be tested
 				Body: io.NopCloser(bytes.NewBufferString(ntwk)),
@@ -49,6 +50,7 @@ func TestNetworkClient_Get(t *testing.T) {
 
 			return &http.Response{
 				StatusCode: 404,
+				Status:     "404 NOT FOUND",
 				Header:     make(http.Header),
 			}
 		}
@@ -69,6 +71,7 @@ func TestNetworkClient_Get(t *testing.T) {
 
 			return &http.Response{
 				StatusCode: 200,
+				Status:     "200 OK",
 				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
 				Header:     make(http.Header),
 			}
@@ -114,6 +117,7 @@ func TestNetworkClient_Add(t *testing.T) {
 			// Send mock response
 			return &http.Response{
 				StatusCode: 201,
+				Status:     "201 CREATED",
 
 				// Send response to be tested
 				Body: io.NopCloser(bytes.NewBufferString(ntwk)),
@@ -144,6 +148,7 @@ func TestNetworkClient_Add(t *testing.T) {
 
 			return &http.Response{
 				StatusCode: 500,
+				Status:     "500 INTERNAL SERVER ERROR",
 				Body:       io.NopCloser(bytes.NewBufferString(`INTERNAL SERVER ERROR`)),
 				Header:     make(http.Header),
 			}
@@ -168,6 +173,7 @@ func TestNetworkClient_Add(t *testing.T) {
 
 			return &http.Response{
 				StatusCode: 201,
+				Status:     "201 CREATED",
 				Body:       io.NopCloser(bytes.NewBufferString(`CREATED`)),
 				Header:     make(http.Header),
 			}

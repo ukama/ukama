@@ -42,7 +42,7 @@ func NewNetworkClient(h string) *networkClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error %s", h, err.Error())
+		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
 	}
 
 	return &networkClient{
@@ -64,14 +64,14 @@ func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 	resp, err := n.R.Post(n.u.String()+NetworkEndpoint, b)
 
 	if err != nil {
-		log.Errorf("AddNetwork failure. error %s", err.Error())
+		log.Errorf("AddNetwork failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("AddNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
-		log.Tracef("Failed to deserialize network info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
 
 		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}
@@ -88,14 +88,14 @@ func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 
 	resp, err := n.R.Get(n.u.String() + NetworkEndpoint + "/" + id)
 	if err != nil {
-		log.Errorf("GetNetwork failure. error %s", err.Error())
+		log.Errorf("GetNetwork failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("GetNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
-		log.Tracef("Failed to deserialize network info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
 
 		return nil, fmt.Errorf("network info deserailization failure: %w", err)
 	}

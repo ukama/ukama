@@ -38,7 +38,9 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, *db.ResourceStatus, error
 }
 
 func (c *clients) CreateNetwork(orgName, NetworkName string) (*NetworkInfo, *db.ResourceStatus, error) {
-	net, err := c.network.Add(AddNetworkRequest{OrgName: orgName, NetName: NetworkName})
+	net, err := c.network.Add(AddNetworkRequest{
+		OrgName: orgName,
+		NetName: NetworkName})
 	if err != nil {
 		return nil, nil, err
 	}

@@ -36,16 +36,16 @@ func NewRestyWithBearer(key string) *Resty {
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	resp := &resty.Response{}
-	errStatus := &ErrorResponse{}
+	errStatus := ErrorResponse{}
 
 	if b != nil {
-		r.C.R().SetError(errStatus).SetBody(b)
+		r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err = r.C.R().SetError(errStatus).Put(url)
+	resp, err := r.C.R().SetError(&errStatus).Put(url)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -54,7 +54,8 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 		log.Errorf("Failed to perform PUT operation on %s HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
@@ -63,16 +64,16 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	resp := &resty.Response{}
-	errStatus := &ErrorResponse{}
+	errStatus := ErrorResponse{}
 
 	if b != nil {
-		r.C.R().SetError(errStatus).SetBody(b)
+		r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err = r.C.R().SetError(errStatus).Post(url)
+	resp, err := r.C.R().SetError(&errStatus).Post(url)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -81,19 +82,20 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Get(url string) (*resty.Response, error) {
-	errStatus := &ErrorResponse{}
+	errStatus := ErrorResponse{}
 
-	resp, err := r.C.R().SetError(errStatus).Get(url)
-
+	resp, err := r.C.R().SetError(&errStatus).Get(url)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -102,19 +104,21 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
-	errStatus := &ErrorResponse{}
+	errStatus := ErrorResponse{}
 
-	resp, err := r.C.R().SetError(errStatus).SetQueryString(q).Get(url)
+	resp, err := r.C.R().SetError(&errStatus).SetQueryString(q).Get(url)
 
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -123,7 +127,8 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
@@ -132,16 +137,16 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	errStatus := &ErrorResponse{}
-	resp := &resty.Response{}
+	errStatus := ErrorResponse{}
 
 	if b != nil {
-		r.C.R().SetError(errStatus).SetBody(b)
+		r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err = r.C.R().SetError(errStatus).Put(url)
+	resp, err := r.C.R().SetError(&errStatus).Put(url)
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -150,19 +155,21 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 		log.Errorf("Failed to perform PATCH operation on %s HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			&ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Delete(url string) (*resty.Response, error) {
-	errStatus := &ErrorResponse{}
+	errStatus := ErrorResponse{}
 
-	resp, err := r.C.R().SetError(errStatus).Delete(url)
+	resp, err := r.C.R().SetError(&errStatus).Delete(url)
 
 	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
+		log.Errorf("Failed to send api request. error: %s", err.Error())
+		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
@@ -171,7 +178,8 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 		log.Errorf("Failed to perform Delete operation on %s HTTP resp code %d and Error message is %s",
 			url, resp.StatusCode(), errStatus.Error())
 
-		return nil, fmt.Errorf("rest api failure. error : %w", errStatus)
+		return nil, fmt.Errorf("rest api failure. error: %w",
+			&ErrorResponse{Err: fmt.Sprintf("%d", resp.StatusCode())})
 	}
 
 	return resp, nil
@@ -181,6 +189,6 @@ type ErrorResponse struct {
 	Err string `json:"error,omitempty"`
 }
 
-func (e *ErrorResponse) Error() string {
+func (e ErrorResponse) Error() string {
 	return e.Err
 }

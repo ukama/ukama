@@ -102,7 +102,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.NetworkInfo, error) {
 	res, status, err := r.clients.CreateNetwork(req.OrgName, req.NetName)
 	if err != nil {
-		if !errors.Is(err, &client.ErrorResponse{}) {
+		e := client.ErrorResponse{}
+
+		if !errors.As(err, &e) {
 			return nil, rest.HttpError{
 				HttpCode: http.StatusRequestTimeout,
 				Message:  err.Error(),
@@ -124,7 +126,9 @@ func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.Networ
 func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.NetworkInfo, error) {
 	res, status, err := r.clients.GetNetwork(req.NetworkId)
 	if err != nil {
-		if !errors.Is(err, &client.ErrorResponse{}) {
+		e := client.ErrorResponse{}
+
+		if !errors.As(err, &e) {
 			return nil, rest.HttpError{
 				HttpCode: http.StatusRequestTimeout,
 				Message:  err.Error(),
