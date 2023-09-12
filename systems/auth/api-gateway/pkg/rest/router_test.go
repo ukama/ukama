@@ -143,7 +143,7 @@ func TestUpdateRole(t *testing.T) {
 		},
 	}
 	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{
-		Identity: identity,
+		Identity: &identity,
 	}, nil)
 
 	cma.On("UpdateRole", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -181,11 +181,11 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	cma.On("AuthorizeUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&client.Session{
-		Identity: identity,
+		Identity: &identity,
 	}, nil)
 
 	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{
-		Identity: identity,
+		Identity: &identity,
 	}, nil)
 
 	r.ServeHTTP(w, req)
