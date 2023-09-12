@@ -96,7 +96,7 @@ const Page = () => {
           title={'My subscribers'}
           subtitle={`${subscriber.subscribers.length}`}
           buttonTitle={'Add Subscriber'}
-          handleButtonAction={() => console.log('Add subscriber')}
+          handleButtonAction={()=>{}}
           onSearchChange={(e: string) => setSearch(e)}
           search={search}
         />
