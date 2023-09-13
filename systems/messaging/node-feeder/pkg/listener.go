@@ -1,54 +1,37 @@
 package pkg
 
 import (
-	"context"
-	"fmt"
-	"time"
+	"encoding/json"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
-	"github.com/wagslane/go-rabbitmq"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
+	"github.com/pkg/errors"
+	mb "github.com/ukama/ukama/systems/common/msgbus"
 
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/anypb"
+	//  "github.com/rabbitmq/amqp091-go"
+	amqp "github.com/streadway/amqp"
 
 	log "github.com/sirupsen/logrus"
-	amqp "github.com/streadway/amqp"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	mb "github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	hpb "github.com/ukama/ukama/systems/common/pb/gen/health"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
+	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/metrics"
 )
-
-const deadLetterExchangeName = "node-feeder.dead-letter"
+const deadLetterExchangeName = "device-feeder.dead-letter"
 const deadLetterExchangeHeaderName = "x-dead-letter-exchange"
 const errorCreatingWaitingQueueErr = "error declaring waiting queue"
 const deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
 
-
-
 type QueueListener struct {
-	mConn          mb.Consumer
-	gConn          *grpc.ClientConn
-	gClient        pb.EventNotificationServiceClient
-	hClient        hpb.HealthClient
-	grpcTimeout    time.Duration
-	serviceUuid    string
-	serviceName    string
+	consumer       mb.Consumer
+	serviceId      string
+	requestMult    RequestMultiplier
+	requestExec    RequestExecutor
 	maxRetryCount  int64
-	serviceHost    string
-	state          bool
-	queue          string
-	exchange       string
-	c              chan bool
-	routes         []string
-	lastPing       time.Time
-	continuousMiss uint32
 	retryPeriodSec int
-
+	listenerConfig ListenerConfig
 }
-
 
 type RequestMultiplier interface {
 	Process(body *DevicesUpdateRequest) error
@@ -60,119 +43,91 @@ type DevicesUpdateRequest struct {
 	Path       string `json:"path"`
 	Body       string `json:"body"`
 }
-
-func NewQueueListener(s db.Service) (*QueueListener, error) {
-
-	var gc pb.EventNotificationServiceClient
-	var hc hpb.HealthClient
-
-	if len(s.Routes) <= 0 {
-		return nil, fmt.Errorf("%s", "listener must have at least one route")
-	}
-
-	routes := make([]string, len(s.Routes))
-
-	t := time.Duration(s.GrpcTimeout) * time.Second
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t))
-	defer cancel()
-	log.Info("Connecting to... ", s.ServiceUri)
-	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", s.ServiceUri, err.Error())
-	} else {
-		gc = pb.NewEventNotificationServiceClient(conn)
-		hc = hpb.NewHealthClient(conn)
-	}
-
-	client, err := mb.NewConsumerClient(s.MsgBusUri)
+func NewQueueListener(queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
+	
+	client, err := mb.NewConsumerClient(queueUri)
 	if err != nil {
 		return nil, err
 	}
-
-	for idx, r := range s.Routes {
-		/*  Create a queue listner for each service */
-		routes[idx] = r.Key
+	q := &QueueListener{
+		consumer:       client,
+		serviceId:      serviceId,
+		requestMult:    requestMult,
+		requestExec:    requestExec,
+		listenerConfig: conf,
 	}
 
-	ch := make(chan bool, 1)
-
-	return &QueueListener{
-		mConn:       client,
-		serviceUuid: s.ServiceUuid,
-		serviceName: s.Name,
-		serviceHost: s.ServiceUri,
-		c:           ch,
-		state:       false,
-		gConn:       conn,
-		gClient:     gc,
-		hClient:     hc,
-		routes:      routes,
-		queue:       s.ListQueue,
-		exchange:    s.Exchange,
-		grpcTimeout: t,
-	}, nil
-}
-func (q *QueueListener) declareQueueTopology() {
-
-	log.Debugf("[%s]: Starting listener routine.", q.serviceName)
-	/* Validate routes */ // TODO: Update ParseRoutesList implementation
-	routes, err := mb.ParseRouteList(q.routes)
+	err = q.declareQueueTopology(queueUri)
 	if err != nil {
-		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
+		return nil, errors.Wrap(err, "error declaring queue topology")
 	}
 
-	/* Subscribe to exchange for the routes */
-	err = q.mConn.SubscribeToServiceQueue(q.serviceName, q.exchange,
-		routes, q.serviceUuid, q.incomingMessageHandler)
+	return q, nil
+}
+
+
+func (q *QueueListener) declareQueueTopology(queueUri string) error {
+	conn, err := amqp.Dial(queueUri)
 	if err != nil {
-		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
-		log.Errorf("[%s] Shutting down listener.", q.serviceName)
-		q.mConn.Close()
-		q.state = false
-		return
+		return errors.Wrap(err, "error connecting to queue")
 	}
 
-	q.state = true
-	log.Infof("[%s] Queue listener started on %v routes", q.serviceName, q.routes)
-	/* Waiting for stop */
-	<-q.c
+	defer conn.Close()
 
-	log.Infof("[%s] Shutting down queue listener", q.serviceName)
-	q.mConn.Close()
-	q.state = false
-}
-
-func (q *QueueListener) StartQueueListening() {
-	/* If we have routes to listen on */
-	if len(q.routes) > 0 {
-		go q.declareQueueTopology()
+	ch, err := conn.Channel()
+	if err != nil {
+		return errors.Wrap(err, "error creating amqp channel")
 	}
-}
+	defer ch.Close()
 
-func (q *QueueListener) stopQueueListening() {
-	if q.state {
-		log.Infof("Stopping queue listener routine for service %s on %v routes", q.serviceName, q.routes)
-		q.c <- true
+	err = ch.ExchangeDeclare(deadLetterExchangeName, amqp.ExchangeFanout, true, false, false, false, nil)
+	if err != nil {
+		return errors.Wrap(err, "error declaring dead letter exchange")
 	}
+
+	waitingQueue, err := q.createWaitingQueue(ch)
+	if err != nil {
+		if err.(*amqp.Error).Code == amqp.PreconditionFailed {
+			log.Warnf("Did you change waiting queue message TTL? If so then delete queue manually")
+		}
+
+		return errors.Wrap(err, errorCreatingWaitingQueueErr)
+	}
+
+	err = ch.QueueBind(waitingQueue.Name, "*", deadLetterExchangeName, false, nil)
+	if err != nil {
+		return errors.Wrap(err, "error binding waiting-queue")
+	}
+
+	// data feeder queue
+	dataFeederQueue, err := ch.QueueDeclare(
+		"device-feeder", // name
+		true,            // durable
+		false,           // delete when unused
+		false,           // exclusive
+		false,           // no-wait
+		map[string]interface{}{
+			deadLetterExchangeHeaderName:   deadLetterExchangeName,
+			deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+		}, // arguments
+	)
+	if err != nil {
+		return errors.Wrap(err, errorCreatingWaitingQueueErr)
+	}
+	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.DeviceFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
+
+	if err != nil {
+		return errors.Wrap(err, errorCreatingWaitingQueueErr)
+	}
+
+	return nil
 }
-
-
-func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
-	defer cancel()
-
-	q.processEventMsg(ctx, delivery)
-
-	done <- true
-}
-
 
 func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error) {
 
 	// TODO: set TTL via policy
 	waitingQueue, err := ch.QueueDeclare(
-		"node-feeder.waiting-queue", // name
+		"device-feeder.waiting-queue", // name
 		true,                          // durable
 		false,                         // delete when unused
 		false,                         // exclusive
@@ -186,10 +141,49 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 	return waitingQueue, err
 }
 
+func (q *QueueListener) StartQueueListening() (err error) {
+    // queueArgs := map[string]interface{}{
+    //     deadLetterExchangeHeaderName:   deadLetterExchangeName,
+    //     deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+    // }
+
+    err = q.consumer.SubscribeToQueue(global.QueueName, q.serviceId, q.incomingMessageHandler )
+    if err != nil {
+        log.Errorf("Error subscribing for queue messages. Error: %+v", err)
+        return err
+    }
+
+    quitChannel := make(chan os.Signal, 1)
+    signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
+    <-quitChannel
+    return nil
+}
 
 
 
-func (q *QueueListener) isRetryLimitReached(delivery rabbitmq.Delivery) bool {
+func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
+    if q.isRetryLimitReached(delivery) {
+        metrics.RecordFailedRequestMetric()
+        done <- true
+        return
+    }
+
+    err := q.processRequest(delivery)
+    if err != nil {
+        log.Errorf("Error processing request. Error: %+v", err)
+        metrics.RecordFailedRequestMetric()
+        done <- false
+        return
+    }
+    metrics.RecordSuccessfulRequestMetric()
+
+    done <- true
+}
+
+
+
+
+func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	const deathHeader = "x-death"
 	if delivery.Headers[deathHeader] == nil {
 		return false
@@ -218,48 +212,34 @@ func (q *QueueListener) isRetryLimitReached(delivery rabbitmq.Delivery) bool {
 	return false
 }
 
-
-
-func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
-	// Read Db for the key and find the services which we need to post message to.
-	log.Debugf("Raw message: %+v", d)
-
-	evtAny := new(anypb.Any)
-	err := proto.Unmarshal(d.Body, evtAny)
+// return error only if it could be fixed by retry
+// malformed request should not be considered as error
+func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
+	request := &DevicesUpdateRequest{}
+	err := json.Unmarshal(delivery.Body, request)
 	if err != nil {
-		log.Errorf("Failed to parse message with key %s. Error %s", d.RoutingKey, err.Error())
-		return
-	}
-	e := &pb.Event{
-		RoutingKey: d.RoutingKey,
-		Msg:        evtAny,
+		log.Errorf("Error unmarshaling message. Error %v", err)
+		return nil
 	}
 
-	log.Infof("Received a message: %+v", e)
-
-	if q.gConn == nil {
-		if err := q.reConnect(ctx); err != nil {
-			return
-		}
-	}
-
-	_, err = q.gClient.EventNotification(ctx, e)
-	if err != nil {
-		log.Errorf("Failed to send message to %s with key %s. Error %s", q.serviceHost, d.RoutingKey, err.Error())
-	}
-
-}
-func (q *QueueListener) reConnect(ctx context.Context) error {
-
-	conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		log.Errorf("Could not connect to %s. Error %s", q.serviceHost, err.Error())
+	log.Infof("Received request: %+v", request)
+	if strings.HasSuffix(request.Target, "*") {
+		log.Infof("Wildcarded target: %s", request.Target)
+		err = q.requestMult.Process(request)
 		return err
 	} else {
-		q.gClient = pb.NewEventNotificationServiceClient(conn)
-		q.hClient = hpb.NewHealthClient(conn)
-	}
-	q.gConn = conn
+		log.Infof("Direct node target: %s", request.Target)
+		err = q.requestExec.Execute(request)
 
-	return nil
+		if err != nil {
+			if dErr, ok := err.(Device4xxServerError); ok {
+				log.Warningf("Request failed but won't be retried. Error %v", dErr)
+				return nil
+			}
+		}
+
+		return err
+	}
 }
+
+

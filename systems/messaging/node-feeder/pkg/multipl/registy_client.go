@@ -34,7 +34,7 @@ func NewRegistryClient(registryHost string, timeoutSecond int) (*registryClient,
 		registryClient: nodepb.NewNodeServiceClient(conn)}, nil
 }
 
-func (r registryClient) GetNodesList(orgName string) (nodes []*nodepb.Node, err error) {
+func (r registryClient) GetNodesList() (nodes []*nodepb.Node, err error) {
 	log.Info("Getting device list")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
