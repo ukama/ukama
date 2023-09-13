@@ -29,6 +29,7 @@ func TestWorkflow_UserStories(t *testing.T) {
 
 	w.RegisterTestCase(Story_add_user)
 	// w.RegisterTestCase(Story_add_org)
+	w.RegisterTestCase(Story_add_network)
 
 	/* Run */
 	err := w.Run(t, context.Background())
