@@ -12,6 +12,32 @@ type NetworkClient struct {
 	mock.Mock
 }
 
+// Add provides a mock function with given fields: req
+func (_m *NetworkClient) Add(req client.AddNetworkRequest) (*client.NetworkInfo, error) {
+	ret := _m.Called(req)
+
+	var r0 *client.NetworkInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(client.AddNetworkRequest) (*client.NetworkInfo, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(client.AddNetworkRequest) *client.NetworkInfo); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.NetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(client.AddNetworkRequest) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: Id
 func (_m *NetworkClient) Get(Id string) (*client.NetworkInfo, error) {
 	ret := _m.Called(Id)

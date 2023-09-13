@@ -31,6 +31,7 @@ type AddNetworkRequest struct {
 
 type NetworkClient interface {
 	Get(Id string) (*NetworkInfo, error)
+	Add(req AddNetworkRequest) (*NetworkInfo, error)
 }
 
 type networkClient struct {
