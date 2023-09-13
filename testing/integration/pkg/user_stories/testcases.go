@@ -229,6 +229,14 @@ var Story_add_org = &test.TestCase{
 		log.Debugf("Setting up watcher for %s", tc.Name)
 		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.nucleus.org.create"})
 
+		a.reqGetUser = napi.GetUserRequest{
+			UserId: a.UserId,
+		}
+
+		res, err := a.NucleusClient.GetUser(a.reqGetUser)
+		a.UserId = res.User.Id
+		a.UserAuthId = res.User.AuthId
+
 		a.reqAddOrg = napi.AddOrgRequest{
 			Owner:       a.UserId,
 			OrgName:     strings.ToLower(faker.FirstName()) + "-org",
