@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/db"
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -19,13 +18,13 @@ type Client interface {
 
 type clients struct {
 	resRepo db.ResourceRepo
-	network *networkClient
+	network NetworkClient
 }
 
-func NewClientsSet(resRepo db.ResourceRepo, endpoints *pkg.HttpEndpoints) Client {
-	c := &clients{resRepo: resRepo}
-
-	c.network = NewNetworkClient(endpoints.Network)
+func NewClientsSet(resRepo db.ResourceRepo, network NetworkClient) Client {
+	c := &clients{
+		resRepo: resRepo,
+		network: network}
 
 	return c
 }
@@ -45,6 +44,8 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 		return nil, err
 	}
 
+	// TODO: IsSynced should be added to upstream resource in order to remove all this intermediary
+	// resource state management.
 	res, err := c.resRepo.Get(net.Id)
 	if err != nil {
 		log.Errorf("inconsistent state. failed to get network resource status: %s",
@@ -56,8 +57,6 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 		}
 	}
 
-	// TODO: IsComplete should be added to upstream resource in order to remove all this intermediary
-	// resource state management.
 	switch res.Status {
 	case db.ResourceStatusPending:
 		log.Warn("partial content. request is still ongoing")
