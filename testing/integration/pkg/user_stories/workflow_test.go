@@ -1,0 +1,39 @@
+package subscriber
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ukama/ukama/testing/integration/pkg/test"
+)
+
+func init() {
+	log.SetLevel(log.TraceLevel)
+	log.SetOutput(os.Stderr)
+}
+
+func TestWorkflow_UserStories(t *testing.T) {
+	w := test.NewWorkflow("user_stories_workflow", "User Stories Workflow")
+
+	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
+		log.Tracef("Initilizing Data for %s.", w.String())
+		w.Data = InitializeData()
+
+		log.Tracef("Workflow Data : %+v", w.Data)
+		return nil
+	}
+
+	w.RegisterTestCase(Story_add_user)
+	// w.RegisterTestCase(Story_add_org)
+
+	/* Run */
+	err := w.Run(t, context.Background())
+	assert.NoError(t, err)
+
+	w.Status()
+
+}

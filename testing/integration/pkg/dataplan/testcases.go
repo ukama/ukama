@@ -8,7 +8,6 @@ import (
 
 	"github.com/bxcodec/faker/v4"
 	log "github.com/sirupsen/logrus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	api "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
@@ -57,7 +56,7 @@ type InitData struct {
 
 }
 
-func InitializeData(org *string, owner *string) *InitData {
+func InitializeData() *InitData {
 
 	config = pkg.NewConfig()
 
@@ -66,23 +65,13 @@ func InitializeData(org *string, owner *string) *InitData {
 	d.MbHost = config.System.MessageBus
 	d.Sys = NewDataplanClient(d.Host)
 	d.SimType = "test"
+	d.OrgId = config.OrgId
+	d.OwnerId = config.OrgOwnerId
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
 		EffectiveAt: utils.GenerateFutureDate(5 * time.Hour),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
 		EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
 		SimType:     d.SimType,
-	}
-
-	if owner == nil {
-		d.OwnerId = uuid.NewV4().String()
-	} else {
-		d.OwnerId = *owner
-	}
-
-	if org == nil {
-		d.OrgId = uuid.NewV4().String()
-	} else {
-		d.OrgId = *org
 	}
 
 	d.BaseRateId = make([]string, 8)

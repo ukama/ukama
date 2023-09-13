@@ -22,7 +22,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 
 	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
 		log.Tracef("Initilizing Data for %s.", w.String())
-		w.Data = InitializeData(nil, nil)
+		w.Data = InitializeData()
 
 		log.Tracef("Workflow Data : %+v", w.Data)
 		return nil

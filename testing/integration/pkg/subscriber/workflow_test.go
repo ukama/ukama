@@ -67,7 +67,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 			dp.SetUpFxn = func(t *testing.T, ctx context.Context, dp *test.Workflow) error {
 				log.Tracef("Initializing Data for %s.", dp.String())
-				dp.Data = dataplan.InitializeData(&org, &owner)
+				dp.Data = dataplan.InitializeData()
 
 				log.Tracef("Workflow Data : %+v", dp.Data)
 				return nil
