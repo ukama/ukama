@@ -217,6 +217,8 @@ func CreateSimPool(count int, id *[]string) []byte {
 	return pool
 }
 
+// SIM POOL
+
 var TC_simpool_upload = &test.TestCase{
 	Name:        "Add Sims to sim-pool",
 	Description: "Add sims to sim-pool from the base64 encoded file",
@@ -349,6 +351,8 @@ var TC_simpool_get_stats = &test.TestCase{
 	},
 }
 
+// SUBSCRIBER
+
 var TC_registry_add_subscriber = &test.TestCase{
 	Name:        "Add Subscriber",
 	Description: "Add subscriber to registry",
@@ -408,6 +412,52 @@ var TC_registry_add_subscriber = &test.TestCase{
 		return nil
 	},
 }
+
+var TC_registry_get_subscriber = &test.TestCase{
+	Name:        "Get Subscriber ",
+	Description: "Get subscriber",
+	Data:        &rpb.GetSubscriberResponse{},
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqSubscriberGetReq.SubscriberId = a.SubscriberId
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberRegistryGetSusbscriber(a.reqSubscriberGetReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*rpb.GetSubscriberResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSubscriberGetReq.SubscriberId == resp.Subscriber.SubscriberId {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+// SIM MANAGER
 
 var TC_manager_allocate_sim = &test.TestCase{
 	Name:        "Allocate sim",
@@ -476,50 +526,6 @@ var TC_manager_allocate_sim = &test.TestCase{
 
 		tc.Watcher.Stop()
 		return nil
-	},
-}
-
-var TC_registry_get_subscriber = &test.TestCase{
-	Name:        "Get Subscriber ",
-	Description: "Get subscriber",
-	Data:        &rpb.GetSubscriberResponse{},
-
-	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
-		a := tc.GetWorkflowData().(*InitData)
-		a.reqSubscriberGetReq.SubscriberId = a.SubscriberId
-		tc.SaveWorkflowData(a)
-		return nil
-	},
-
-	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
-		var err error
-		a, ok := tc.GetWorkflowData().(*InitData)
-		if ok {
-			tc.Data, err = a.Sys.SubscriberRegistryGetSusbscriber(a.reqSubscriberGetReq)
-		} else {
-			log.Errorf("Invalid data type for Workflow data.")
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
-		return err
-	},
-
-	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
-		check := false
-
-		resp := tc.GetData().(*rpb.GetSubscriberResponse)
-		if resp != nil {
-			data := tc.GetWorkflowData().(*InitData)
-			if data.reqSubscriberGetReq.SubscriberId == resp.Subscriber.SubscriberId {
-				check = true
-			}
-		}
-
-		return check, nil
 	},
 }
 

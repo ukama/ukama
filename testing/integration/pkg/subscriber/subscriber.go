@@ -31,6 +31,8 @@ func NewSubscriberClient(h string) *SubscriberClient {
 
 }
 
+// SIM POOL
+
 func (s *SubscriberClient) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimReq) (*pPb.UploadResponse, error) {
 	url := s.u.String() + VERSION + SIMPOOL + "upload"
 	rsp := &pPb.UploadResponse{}
@@ -63,6 +65,8 @@ func (s *SubscriberClient) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq)
 
 	return rsp, nil
 }
+
+// SUBSCRIBER
 
 func (s *SubscriberClient) SubscriberRegistryGetSusbscriber(req api.SubscriberGetReq) (*rPb.GetSubscriberResponse, error) {
 	url := s.u.String() + VERSION + SUBSCRIBER + req.SubscriberId
@@ -107,6 +111,8 @@ func (s *SubscriberClient) SubscriberRegistryUpdateSusbscriber(req api.Subscribe
 
 	return rsp, nil
 }
+
+// SIM MANAGER
 
 func (s *SubscriberClient) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResponse, error) {
 	url := s.u.String() + VERSION + SIM + req.SimId
