@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 
 	cmocks "github.com/ukama/ukama/systems/api/api-gateway/mocks"
@@ -41,12 +39,10 @@ var testClientSet client.Client
 
 func init() {
 	resRepo := &mocks.ResourceRepo{}
+	netClient := &mocks.NetworkClient{}
 
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(resRepo, &pkg.HttpEndpoints{
-		Timeout: 1 * time.Second,
-		Network: "http://localhost:9093",
-	})
+	testClientSet = client.NewClientsSet(resRepo, netClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {

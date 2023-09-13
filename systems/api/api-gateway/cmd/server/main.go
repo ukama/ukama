@@ -24,7 +24,9 @@ func main() {
 
 	resDB := initDb()
 
-	clientSet := client.NewClientsSet(db.NewResourceRepo(resDB), &svcConf.HttpServices)
+	clientSet := client.NewClientsSet(db.NewResourceRepo(resDB),
+		client.NewNetworkClient(svcConf.HttpServices.Network))
+
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to create auth client: %v", err)
