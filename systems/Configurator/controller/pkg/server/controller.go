@@ -18,20 +18,20 @@ import (
 
 type ControllerServer struct {
 	pb.UnimplementedControllerServiceServer
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	msgbus          mb.MsgBusServiceClient
-	registrySystem  providers.RegistryProvider
-	debug           bool
-	orgName         string
+	msgbus               mb.MsgBusServiceClient
+	registrySystem       providers.RegistryProvider
+	controllerRoutingKey msgbus.RoutingKeyBuilder
+	debug                bool
+	orgName              string
 }
 
 func NewControllerServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, debug bool, orgName string) *ControllerServer {
 	return &ControllerServer{
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:          msgBus,
-		registrySystem:  registry,
-		debug:           pkg.IsDebugMode,
-		orgName:         orgName,
+		controllerRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:               msgBus,
+		registrySystem:       registry,
+		debug:                pkg.IsDebugMode,
+		orgName:              orgName,
 	}
 }
 
@@ -51,11 +51,11 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateSite(netId.String(), req.SiteName,c.orgName); err != nil {
+	if err := c.registrySystem.ValidateSite(netId.String(), req.SiteName, c.orgName); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid site or network ID: %s", err.Error())
 	}
 
-	route := c.baseRoutingKey.SetAction("restart").SetObject("site").MustBuild()
+	route := c.controllerRoutingKey.SetAction("restart").SetObject("site").MustBuild()
 	err = c.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -75,11 +75,11 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateNode(nodeId.String(),c.orgName); err != nil {
+	if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
 	}
 
-	route := c.baseRoutingKey.SetAction("restart").SetObject("node").MustBuild()
+	route := c.controllerRoutingKey.SetAction("restart").SetObject("node").MustBuild()
 	err = c.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
