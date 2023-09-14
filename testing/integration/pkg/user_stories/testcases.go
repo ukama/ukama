@@ -24,6 +24,7 @@ import (
 	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
 var config *pkg.Config
@@ -43,6 +44,10 @@ type UserStoriesData struct {
 	UserId     string
 	UserAuthId string
 	NetworkId  string
+	SiteId     string
+	NodeId     string
+	lNodeId    string
+	rNodeId    string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -58,16 +63,18 @@ type UserStoriesData struct {
 	reqGetNetwork  rapi.GetNetworkRequest
 	reqGetNetworks rapi.GetNetworksRequest
 	reqGetSites    rapi.GetNetworkRequest
+	reqAddSite     rapi.AddSiteRequest
 
-	reqAddNode         rapi.AddNodeRequest
-	reqUpdateNode      rapi.UpdateNodeRequest
-	reqUpdateNodeState rapi.UpdateNodeStateRequest
-	reqAttachNode      rapi.AttachNodesRequest
-	reqDetachNode      rapi.DetachNodeRequest
-	reqAddNodeToSite   rapi.AddNodeToSiteRequest
-	reqGetNodes        rapi.GetNodesRequest
-	reqGetNode         rapi.GetNodeRequest
-	reqGetNodeForSite  rapi.GetSiteNodesRequest
+	reqAddNode           rapi.AddNodeRequest
+	reqUpdateNode        rapi.UpdateNodeRequest
+	reqUpdateNodeState   rapi.UpdateNodeStateRequest
+	reqAttachNode        rapi.AttachNodesRequest
+	reqDetachNode        rapi.DetachNodeRequest
+	reqAddNodeToSite     rapi.AddNodeToSiteRequest
+	reqGetNodes          rapi.GetNodesRequest
+	reqGetNode           rapi.GetNodeRequest
+	reqGetNodeForSite    rapi.GetSiteNodesRequest
+	reqGetNodesByNetwork rapi.GetNetworkNodesRequest
 }
 
 func init() {
@@ -511,134 +518,361 @@ var Story_add_network = &test.TestCase{
 	},
 }
 
-var Story_add_node = &test.TestCase{
-	Name:        "Add node",
-	Description: "Add node",
-	Data:        &netpb.AddResponse{},
-	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		// Prepare the data for the test case
-		a, err := getWorkflowData(tc)
-		if err != nil {
-			return err
-		}
-
-		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add"})
-
-		a.reqGetOrg = napi.GetOrgRequest{
-			OrgName: a.OrgName,
-		}
-		orgResp, err := a.NucleusClient.GetOrg(a.reqGetOrg)
-		if err != nil {
-			return err
-		}
-
-		if err != nil {
-			a.reqAddNode = rapi.AddNodeRequest{
-				NodeId: utils.RandomGetNodeId("tnode"),
-				Name:  strings.ToLower(faker.FirstName()) + "-node",
-				OrgId: orgResp.Org.Id,
-				State: "onboarded",
+func Story_add_node(typ string) *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add node",
+		Description: "Add node",
+		Data:        &nodepb.AddNodeResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
 			}
-		} else {
-			return fmt.Errorf("user is not an owner or admin of the org")
-		}
 
-		return nil
-	},
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add"})
 
-	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Test Case
-		var err error
-		a, ok := getWorkflowData(tc)
-		if ok != nil {
-			return ok
-		}
-		tc.Data, err = a.RegistryClient.AddNetwork(a.reqAddNetwork)
-		return err
-	},
+			a.reqGetOrg = napi.GetOrgRequest{
+				OrgName: a.OrgName,
+			}
+			orgResp, err := a.NucleusClient.GetOrg(a.reqGetOrg)
+			if err != nil {
+				return err
+			}
 
-	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		// Check for possible failures during user stories
-		check1, check2, check3 := false, false, false
+			if err != nil {
+				return err
+			} else {
+				var nId = ""
+				if typ == "parent" {
+					nId = utils.RandomGetNodeId("tnode")
+				} else if typ == "left" || typ == "right" {
+					nId = utils.RandomGetNodeId("anode")
+				}
+				a.reqAddNode = rapi.AddNodeRequest{
+					NodeId: nId,
+					Name:   strings.ToLower(faker.FirstName()) + "-node",
+					OrgId:  orgResp.Org.Id,
+					State:  "onboarded",
+				}
+			}
 
-		resp := tc.GetData().(*netpb.AddResponse)
+			return nil
+		},
 
-		if resp != nil {
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
 			a, ok := getWorkflowData(tc)
 			if ok != nil {
-				return false, ok
+				return ok
 			}
+			tc.Data, err = a.RegistryClient.AddNode(a.reqAddNode)
+			return err
+		},
 
-			a.reqGetNetwork = rapi.GetNetworkRequest{
-				NetworkId: resp.Network.Id,
-			}
-			a.reqGetNetworks = rapi.GetNetworksRequest{
-				OrgUuid: a.OrgId,
-			}
-			a.reqGetSites = rapi.GetNetworkRequest{
-				NetworkId: resp.Network.Id,
-			}
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1, check2 := false, false
 
-			tc1, err := a.RegistryClient.GetNetwork(a.reqGetNetwork)
-			if err != nil {
-				return check1, fmt.Errorf("add network story failed on getNetwork. Error %v", err)
-			} else if tc1.Network.Id == resp.Network.Id {
-				check1 = true
-			}
+			resp := tc.GetData().(*nodepb.AddNodeResponse)
 
-			tc2, err := a.RegistryClient.GetNetworks(a.reqGetNetworks)
-			if err != nil {
-				return check2, fmt.Errorf("add network story failed on getNetworks. Error %v", err)
-			} else if tc2.OrgId == a.OrgId {
-				for _, network := range tc2.Networks {
-					if network.Id == resp.Network.Id {
-						check2 = true
-						break
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetNode = rapi.GetNodeRequest{
+					NodeId: resp.Node.Id,
+				}
+				a.reqGetNodes = rapi.GetNodesRequest{
+					Free: true,
+				}
+
+				tc1, err := a.RegistryClient.GetNode(a.reqGetNode)
+				if err != nil {
+					return check1, fmt.Errorf("add node story failed on getNode. Error %v", err)
+				} else if tc1.Node.Id == resp.Node.Id {
+					check1 = true
+				}
+
+				tc2, err := a.RegistryClient.GetNodes(a.reqGetNodes)
+				if err != nil {
+					return check2, fmt.Errorf("add node story failed on getNodes. Error %v", err)
+				} else {
+					for _, node := range tc2.Node {
+						if node.Id == resp.Node.Id {
+							check2 = true
+							break
+						}
 					}
 				}
 			}
 
-			tc3, err := a.RegistryClient.GetSites(a.reqGetSites)
-			if err != nil {
-				return check3, fmt.Errorf("add network story failed on getNetworks. Error %v", err)
-			} else if tc3.NetworkId == resp.Network.Id && len(tc3.Sites) == 0 {
-				check3 = true
+			if check1 && check2 {
+				return check1 && check2, nil
+			} else {
+				return false, fmt.Errorf("add node story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*nodepb.AddNodeResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-		}
+			a, ok := tc.GetWorkflowData().(*UserStoriesData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
 
-		if check1 && check2 && check3 {
-			return check1 && check2 && check3, nil
-		} else {
-			return false, fmt.Errorf("add network story failed. %v", nil)
-		}
-	},
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
 
-	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Here we save any data required to be saved from the
-		// test case Cleanup any test specific data
+			if typ == "parent" {
+				a.NodeId = resp.Node.Id
+			} else if typ == "left" {
+				a.lNodeId = resp.Node.Id
+			} else if typ == "right" {
+				a.rNodeId = resp.Node.Id
+			}
 
-		resp, ok := tc.GetData().(*netpb.AddResponse)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+			return nil
+		},
+	}
+}
 
-		a, ok := tc.GetWorkflowData().(*UserStoriesData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
+func Story_add_node_to_site() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add node to site",
+		Description: "Add node to site",
+		Data:        &nodepb.AddNodeToSiteResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
 
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.attach"})
 
-		a.NetworkId = resp.Network.Id
+			a.reqAddSite = rapi.AddSiteRequest{
+				NetworkId: a.NetworkId,
+				SiteName:  strings.ToLower(faker.FirstName()) + "-site",
+			}
+			resp, err := a.RegistryClient.AddSite(a.reqAddSite)
+			if err != nil {
+				return err
+			}
 
-		tc.SaveWorkflowData(a)
-		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-		tc.Watcher.Stop()
+			a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
+				NodeId:    a.NodeId,
+				SiteId:    resp.Site.Id,
+				NetworkId: resp.Site.NetworkId,
+			}
 
-		return nil
-	},
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.RegistryClient.AddToSite(a.reqAddNodeToSite)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1 := false
+
+			resp := tc.GetData().(*nodepb.AddNodeToSiteResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetNode = rapi.GetNodeRequest{
+					NodeId: a.NodeId,
+				}
+
+				a.reqGetNodeForSite = rapi.GetSiteNodesRequest{
+					SiteId: a.SiteId,
+				}
+
+				a.reqGetNodesByNetwork = rapi.GetNetworkNodesRequest{
+					NetworkId: a.NetworkId,
+				}
+
+				tc1, err := a.RegistryClient.GetNode(a.reqGetNode)
+				if err != nil {
+					return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
+				} else if tc1.Node.Site.SiteId == a.SiteId {
+					check1 = true
+				}
+
+				// tc2, err := a.RegistryClient.GetNetworkNodesRequest(a.reqGetNode)
+				// if err != nil {
+				// 	return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
+				// } else if tc1.Node.Site.SiteId == a.SiteId {
+				// 	check1 = true
+				// }
+			}
+
+			if check1 {
+				return check1, nil
+			} else {
+				return false, fmt.Errorf("attach node story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*nodepb.AddNodeToSiteResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*UserStoriesData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_attach_node() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Attach nodes",
+		Description: "Attch amplifier nodes with tower node",
+		Data:        &nodepb.AttachNodesResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.attach"})
+
+			a.reqAddSite = rapi.AddSiteRequest{
+				NetworkId: a.NetworkId,
+				SiteName:  strings.ToLower(faker.FirstName()) + "-site",
+			}
+
+			a.reqAttachNode = rapi.AttachNodesRequest{
+				ParentNode: a.NodeId,
+				AmpNodeL:   a.lNodeId,
+				AmpNodeR:   a.rNodeId,
+			}
+
+			a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
+				NodeId: a.NodeId,
+			}
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.RegistryClient.AttachNode(a.reqAttachNode)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1 := false
+
+			resp := tc.GetData().(*nodepb.AttachNodesResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetNode = rapi.GetNodeRequest{
+					NodeId: a.NodeId,
+				}
+
+				tc1, err := a.RegistryClient.GetNode(a.reqGetNode)
+				if err != nil {
+					return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
+				} else if tc1.Node.Id == a.NodeId {
+					for i, node := range tc1.Node.Attached {
+						if (node.Id == a.lNodeId || node.Id == a.rNodeId) && len(tc1.Node.Attached)-1 == i {
+							check1 = true
+							break
+						}
+					}
+				}
+			}
+
+			if check1 {
+				return check1, nil
+			} else {
+				return false, fmt.Errorf("attach node story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*nodepb.AttachNodesResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*UserStoriesData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
 }

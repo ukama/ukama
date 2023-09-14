@@ -806,7 +806,6 @@ var TC_registry_get_invites = &test.TestCase{
 
 func TC_registry_add_node(typ string) *test.TestCase {
 	return &test.TestCase{
-
 		Name:        "Add node",
 		Description: "Add Node",
 		Data:        &nodepb.AddNodeResponse{},
