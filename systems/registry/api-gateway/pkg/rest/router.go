@@ -162,7 +162,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Invitation routes
 		const inv = "/invitations"
 		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
-		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
+		invitations.POST("/:org", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
