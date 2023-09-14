@@ -63,7 +63,6 @@ func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 	ntwk := Network{}
 
 	resp, err := n.R.Post(n.u.String()+NetworkEndpoint, b)
-
 	if err != nil {
 		log.Errorf("AddNetwork failure. error: %s", err.Error())
 

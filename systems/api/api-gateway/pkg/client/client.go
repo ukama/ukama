@@ -24,7 +24,8 @@ type clients struct {
 func NewClientsSet(resRepo db.ResourceRepo, network NetworkClient) Client {
 	c := &clients{
 		resRepo: resRepo,
-		network: network}
+		network: network,
+	}
 
 	return c
 }
