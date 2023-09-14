@@ -509,6 +509,16 @@ var Story_add_network = &test.TestCase{
 		}
 
 		a.NetworkId = resp.Network.Id
+		a.reqAddSite = rapi.AddSiteRequest{
+			NetworkId: a.NetworkId,
+			SiteName:  strings.ToLower(faker.FirstName()) + "-site",
+		}
+		res, er := a.RegistryClient.AddSite(a.reqAddSite)
+		if er != nil {
+			return er
+		} else {
+			a.SiteId = res.Site.Id
+		}
 
 		tc.SaveWorkflowData(a)
 		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
@@ -668,28 +678,18 @@ func Story_add_node_to_site(typ string) *test.TestCase {
 			log.Debugf("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add.site"})
 
-			a.reqAddSite = rapi.AddSiteRequest{
-				NetworkId: a.NetworkId,
-				SiteName:  strings.ToLower(faker.FirstName()) + "-site",
+			var nId = ""
+			if typ == "parent" {
+				nId = a.NodeId
+			} else if typ == "left" {
+				nId = a.lNodeId
+			} else if typ == "right" {
+				nId = a.rNodeId
 			}
-			resp, err := a.RegistryClient.AddSite(a.reqAddSite)
-			if err != nil {
-				return err
-			} else {
-				a.SiteId = resp.Site.Id
-				var nId = ""
-				if typ == "parent" {
-					nId = a.NodeId
-				} else if typ == "left" {
-					nId = a.lNodeId
-				} else if typ == "right" {
-					nId = a.rNodeId
-				}
-				a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
-					NodeId:    nId,
-					SiteId:    resp.Site.Id,
-					NetworkId: resp.Site.NetworkId,
-				}
+			a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
+				NodeId:    nId,
+				SiteId:    a.SiteId,
+				NetworkId: a.NetworkId,
 			}
 
 			return nil
@@ -708,7 +708,7 @@ func Story_add_node_to_site(typ string) *test.TestCase {
 
 		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
 			// Check for possible failures during user stories
-			check1, check2 := false, false
+			check1, check2, check3 := false, false, false
 
 			resp := tc.GetData().(*nodepb.AddNodeToSiteResponse)
 
@@ -751,9 +751,16 @@ func Story_add_node_to_site(typ string) *test.TestCase {
 				} else if tc2.SiteId == a.SiteId {
 					check2 = true
 				}
+
+				tc3, err := a.RegistryClient.GetNodesByNetwork(a.reqGetNodesByNetwork)
+				if err != nil {
+					return check3, fmt.Errorf("add node to site story failed on getNodesByNetwork. Error %v", err)
+				} else if tc3.NetworkId == a.NetworkId {
+					check3 = true
+				}
 			}
 
-			if check1 && check2 {
+			if check1 && check2 && check3 {
 				return true, nil
 			} else {
 				return false, fmt.Errorf("add node to site story failed. %v", nil)

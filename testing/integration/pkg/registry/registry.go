@@ -227,6 +227,16 @@ func (s *RegistryClient) GetNodes(req api.GetNodesRequest) (*nodepb.GetNodesResp
 	return rsp, nil
 }
 
+func (s *RegistryClient) GetNodesByNetwork(req api.GetNetworkNodesRequest) (*nodepb.GetByNetworkResponse, error) {
+	url := s.u.String() + VERSION + NODES + "networks/" + req.NetworkId
+	rsp := &nodepb.GetByNetworkResponse{}
+	if err := s.r.SendRequest(http.MethodGet, url, req, rsp); err != nil {
+		return nil, err
+	}
+
+	return rsp, nil
+}
+
 func (s *RegistryClient) GetNode(req api.GetNodeRequest) (*nodepb.GetNodeResponse, error) {
 	url := s.u.String() + VERSION + NODES + req.NodeId
 	rsp := &nodepb.GetNodeResponse{}

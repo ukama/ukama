@@ -70,7 +70,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
-		TemplateName: "member-invitation",
+		TemplateName: "test-template",
 		Values: map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK":       link,
