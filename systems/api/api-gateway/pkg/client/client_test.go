@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -151,6 +152,74 @@ func TestCient_GetNetwork(t *testing.T) {
 		assert.IsType(t, err, rest.HttpError{})
 		assert.Contains(t, err.Error(), "inconsistent")
 
+		assert.Nil(t, netInfo)
+	})
+}
+
+func TestCient_AddNetwork(t *testing.T) {
+	resRepo := &mocks.ResourceRepo{}
+	netClient := &mocks.NetworkClient{}
+
+	netId := uuid.NewV4()
+	netName := "net-1"
+	orgName := "org-A"
+
+	c := client.NewClientsSet(resRepo, netClient)
+
+	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
+		netClient.On("Add", client.AddNetworkRequest{
+			OrgName: orgName,
+			NetName: netName}).Return(&client.NetworkInfo{
+			Id:   netId,
+			Name: netName,
+		}, nil).Once()
+
+		res := &db.Resource{
+			Id:     netId,
+			Status: db.ParseStatus("pending"),
+		}
+
+		resRepo.On("Add", res).
+			Return(nil).Once()
+
+		netInfo, err := c.CreateNetwork(orgName, netName)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, netInfo.Id, netId)
+		assert.Equal(t, netInfo.Name, netName)
+	})
+
+	t.Run("NetworkCreatedAndStatusNotUpdated", func(t *testing.T) {
+		netClient.On("Add", client.AddNetworkRequest{
+			OrgName: orgName,
+			NetName: netName}).Return(&client.NetworkInfo{
+			Id:   netId,
+			Name: netName,
+		}, nil).Once()
+
+		res := &db.Resource{
+			Id:     netId,
+			Status: db.ParseStatus("pending"),
+		}
+
+		resRepo.On("Add", res).
+			Return(errors.New("some unexpected error")).Once()
+
+		netInfo, err := c.CreateNetwork(orgName, netName)
+
+		assert.Contains(t, err.Error(), "error")
+		assert.Nil(t, netInfo)
+	})
+
+	t.Run("NetworkNotCreated", func(t *testing.T) {
+		netClient.On("Add", client.AddNetworkRequest{
+			OrgName: orgName,
+			NetName: netName}).Return(nil, errors.New("some error")).Once()
+
+		netInfo, err := c.CreateNetwork(orgName, netName)
+
+		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, netInfo)
 	})
 }

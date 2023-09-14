@@ -96,7 +96,6 @@ func (c *clients) CreateNetwork(orgName, NetworkName string) (*NetworkInfo, erro
 	if err != nil {
 		return nil,
 			fmt.Errorf("inconsistent state. failed to update network resource status: %w", err)
-
 	}
 
 	return net, nil

@@ -92,7 +92,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		// network routes
 		network := auth.Group("/networks", "Network", "Networks")
-		network.POST("", formatDoc("Creste Network", "Create a new network"), tonic.Handler(r.postNetwork, http.StatusCreated))
+		network.POST("", formatDoc("Creste Network", "Create a new network"), tonic.Handler(r.postNetwork, http.StatusPartialContent))
 		network.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetwork, http.StatusOK))
 	}
 }
