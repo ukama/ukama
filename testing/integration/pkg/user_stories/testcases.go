@@ -58,6 +58,16 @@ type UserStoriesData struct {
 	reqGetNetwork  rapi.GetNetworkRequest
 	reqGetNetworks rapi.GetNetworksRequest
 	reqGetSites    rapi.GetNetworkRequest
+
+	reqAddNode         rapi.AddNodeRequest
+	reqUpdateNode      rapi.UpdateNodeRequest
+	reqUpdateNodeState rapi.UpdateNodeStateRequest
+	reqAttachNode      rapi.AttachNodesRequest
+	reqDetachNode      rapi.DetachNodeRequest
+	reqAddNodeToSite   rapi.AddNodeToSiteRequest
+	reqGetNodes        rapi.GetNodesRequest
+	reqGetNode         rapi.GetNodeRequest
+	reqGetNodeForSite  rapi.GetSiteNodesRequest
 }
 
 func init() {
@@ -397,6 +407,138 @@ var Story_add_network = &test.TestCase{
 			a.reqAddNetwork = rapi.AddNetworkRequest{
 				OrgName: orgResp.Org.Name,
 				NetName: strings.ToLower(faker.FirstName()) + "-network",
+			}
+		} else {
+			return fmt.Errorf("user is not an owner or admin of the org")
+		}
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+		a, ok := getWorkflowData(tc)
+		if ok != nil {
+			return ok
+		}
+		tc.Data, err = a.RegistryClient.AddNetwork(a.reqAddNetwork)
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during user stories
+		check1, check2, check3 := false, false, false
+
+		resp := tc.GetData().(*netpb.AddResponse)
+
+		if resp != nil {
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return false, ok
+			}
+
+			a.reqGetNetwork = rapi.GetNetworkRequest{
+				NetworkId: resp.Network.Id,
+			}
+			a.reqGetNetworks = rapi.GetNetworksRequest{
+				OrgUuid: a.OrgId,
+			}
+			a.reqGetSites = rapi.GetNetworkRequest{
+				NetworkId: resp.Network.Id,
+			}
+
+			tc1, err := a.RegistryClient.GetNetwork(a.reqGetNetwork)
+			if err != nil {
+				return check1, fmt.Errorf("add network story failed on getNetwork. Error %v", err)
+			} else if tc1.Network.Id == resp.Network.Id {
+				check1 = true
+			}
+
+			tc2, err := a.RegistryClient.GetNetworks(a.reqGetNetworks)
+			if err != nil {
+				return check2, fmt.Errorf("add network story failed on getNetworks. Error %v", err)
+			} else if tc2.OrgId == a.OrgId {
+				for _, network := range tc2.Networks {
+					if network.Id == resp.Network.Id {
+						check2 = true
+						break
+					}
+				}
+			}
+
+			tc3, err := a.RegistryClient.GetSites(a.reqGetSites)
+			if err != nil {
+				return check3, fmt.Errorf("add network story failed on getNetworks. Error %v", err)
+			} else if tc3.NetworkId == resp.Network.Id && len(tc3.Sites) == 0 {
+				check3 = true
+			}
+
+		}
+
+		if check1 && check2 && check3 {
+			return check1 && check2 && check3, nil
+		} else {
+			return false, fmt.Errorf("add network story failed. %v", nil)
+		}
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Here we save any data required to be saved from the
+		// test case Cleanup any test specific data
+
+		resp, ok := tc.GetData().(*netpb.AddResponse)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a, ok := tc.GetWorkflowData().(*UserStoriesData)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a.NetworkId = resp.Network.Id
+
+		tc.SaveWorkflowData(a)
+		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+		tc.Watcher.Stop()
+
+		return nil
+	},
+}
+
+var Story_add_node = &test.TestCase{
+	Name:        "Add node",
+	Description: "Add node",
+	Data:        &netpb.AddResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Prepare the data for the test case
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
+		}
+
+		log.Debugf("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add"})
+
+		a.reqGetOrg = napi.GetOrgRequest{
+			OrgName: a.OrgName,
+		}
+		orgResp, err := a.NucleusClient.GetOrg(a.reqGetOrg)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			a.reqAddNode = rapi.AddNodeRequest{
+				NodeId: utils.RandomGetNodeId("tnode"),
+				Name:  strings.ToLower(faker.FirstName()) + "-node",
+				OrgId: orgResp.Org.Id,
+				State: "onboarded",
 			}
 		} else {
 			return fmt.Errorf("user is not an owner or admin of the org")
