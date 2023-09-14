@@ -666,7 +666,7 @@ func Story_add_node_to_site() *test.TestCase {
 			}
 
 			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.attach"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add.site"})
 
 			a.reqAddSite = rapi.AddSiteRequest{
 				NetworkId: a.NetworkId,
@@ -675,12 +675,13 @@ func Story_add_node_to_site() *test.TestCase {
 			resp, err := a.RegistryClient.AddSite(a.reqAddSite)
 			if err != nil {
 				return err
-			}
-
-			a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
-				NodeId:    a.NodeId,
-				SiteId:    resp.Site.Id,
-				NetworkId: resp.Site.NetworkId,
+			} else {
+				a.SiteId = resp.Site.Id
+				a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
+					NodeId:    a.NodeId,
+					SiteId:    resp.Site.Id,
+					NetworkId: resp.Site.NetworkId,
+				}
 			}
 
 			return nil
@@ -699,7 +700,7 @@ func Story_add_node_to_site() *test.TestCase {
 
 		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
 			// Check for possible failures during user stories
-			check1 := false
+			check1, check2 := false, false
 
 			resp := tc.GetData().(*nodepb.AddNodeToSiteResponse)
 
@@ -723,20 +724,20 @@ func Story_add_node_to_site() *test.TestCase {
 
 				tc1, err := a.RegistryClient.GetNode(a.reqGetNode)
 				if err != nil {
-					return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
+					return check1, fmt.Errorf("add node to site story failed on getNode. Error %v", err)
 				} else if tc1.Node.Site.SiteId == a.SiteId {
 					check1 = true
 				}
 
-				// tc2, err := a.RegistryClient.GetNetworkNodesRequest(a.reqGetNode)
-				// if err != nil {
-				// 	return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
-				// } else if tc1.Node.Site.SiteId == a.SiteId {
-				// 	check1 = true
-				// }
+				tc2, err := a.RegistryClient.GetNodesForSite(a.reqGetNodeForSite)
+				if err != nil {
+					return check2, fmt.Errorf("add node to site story failed on getNodesForSite. Error %v", err)
+				} else if tc2.SiteId == a.SiteId {
+					check2 = true
+				}
 			}
 
-			if check1 {
+			if check1 && check2 {
 				return check1, nil
 			} else {
 				return false, fmt.Errorf("attach node story failed. %v", nil)
@@ -785,19 +786,10 @@ func Story_attach_node() *test.TestCase {
 			log.Debugf("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.attach"})
 
-			a.reqAddSite = rapi.AddSiteRequest{
-				NetworkId: a.NetworkId,
-				SiteName:  strings.ToLower(faker.FirstName()) + "-site",
-			}
-
 			a.reqAttachNode = rapi.AttachNodesRequest{
 				ParentNode: a.NodeId,
 				AmpNodeL:   a.lNodeId,
 				AmpNodeR:   a.rNodeId,
-			}
-
-			a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
-				NodeId: a.NodeId,
 			}
 
 			return nil
