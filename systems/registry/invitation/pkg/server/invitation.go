@@ -61,11 +61,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
-	if err != nil {
-		return nil, err
-	}
-
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
 		TemplateName: "member-invitation",
@@ -79,6 +74,11 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		},
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
 	if err != nil {
 		return nil, err
 	}
