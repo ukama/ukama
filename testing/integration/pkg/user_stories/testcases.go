@@ -653,7 +653,7 @@ func Story_add_node(typ string) *test.TestCase {
 	}
 }
 
-func Story_add_node_to_site() *test.TestCase {
+func Story_add_node_to_site(typ string) *test.TestCase {
 	return &test.TestCase{
 		Name:        "Add node to site",
 		Description: "Add node to site",
@@ -677,8 +677,16 @@ func Story_add_node_to_site() *test.TestCase {
 				return err
 			} else {
 				a.SiteId = resp.Site.Id
+				var nId = ""
+				if typ == "parent" {
+					nId = a.NodeId
+				} else if typ == "left" {
+					nId = a.lNodeId
+				} else if typ == "right" {
+					nId = a.rNodeId
+				}
 				a.reqAddNodeToSite = rapi.AddNodeToSiteRequest{
-					NodeId:    a.NodeId,
+					NodeId:    nId,
 					SiteId:    resp.Site.Id,
 					NetworkId: resp.Site.NetworkId,
 				}
@@ -709,9 +717,17 @@ func Story_add_node_to_site() *test.TestCase {
 				if ok != nil {
 					return false, ok
 				}
+				var nId = ""
+				if typ == "parent" {
+					nId = a.NodeId
+				} else if typ == "left" {
+					nId = a.lNodeId
+				} else if typ == "right" {
+					nId = a.rNodeId
+				}
 
 				a.reqGetNode = rapi.GetNodeRequest{
-					NodeId: a.NodeId,
+					NodeId: nId,
 				}
 
 				a.reqGetNodeForSite = rapi.GetSiteNodesRequest{
@@ -738,9 +754,9 @@ func Story_add_node_to_site() *test.TestCase {
 			}
 
 			if check1 && check2 {
-				return check1, nil
+				return true, nil
 			} else {
-				return false, fmt.Errorf("attach node story failed. %v", nil)
+				return false, fmt.Errorf("add node to site story failed. %v", nil)
 			}
 		},
 

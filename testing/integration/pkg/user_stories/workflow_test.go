@@ -33,8 +33,10 @@ func TestWorkflow_UserStories(t *testing.T) {
 	w.RegisterTestCase(Story_add_node("parent"))
 	w.RegisterTestCase(Story_add_node("left"))
 	w.RegisterTestCase(Story_add_node("right"))
-	w.RegisterTestCase(Story_add_node_to_site())
-	// w.RegisterTestCase(Story_attach_node())
+	w.RegisterTestCase(Story_add_node_to_site("parent"))
+	w.RegisterTestCase(Story_add_node_to_site("left"))
+	w.RegisterTestCase(Story_add_node_to_site("right"))
+	w.RegisterTestCase(Story_attach_node())
 
 	/* Run */
 	err := w.Run(t, context.Background())

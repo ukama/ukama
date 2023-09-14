@@ -26,12 +26,12 @@ type InvitationServer struct {
 	notification         providers.NotificationClient
 	invitationExpiryTime time.Time
 	authLoginbaseURL     string
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	msgbus          mb.MsgBusServiceClient
-	orgName         string
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
+	orgName              string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider,msgBus mb.MsgBusServiceClient,orgName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
@@ -40,7 +40,7 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time
 		authLoginbaseURL:     authLoginbaseURL,
 		nucleusSystem:        nucleusSystem,
 		msgbus:               msgBus,
-		orgName:         orgName,
+		orgName:              orgName,
 	}
 }
 
@@ -129,7 +129,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 			UserId:   userInfo.User.Id,
 			ExpireAt: timestamppb.New(i.invitationExpiryTime),
 		},
-
 	}, nil
 }
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
