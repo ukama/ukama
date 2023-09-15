@@ -58,25 +58,27 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	res, err := i.nucleusSystem.GetOrgByName(req.GetOrg())
-	if err != nil {
-		return nil, err
-	}
+	// res, err := i.nucleusSystem.GetOrgByName(req.GetOrg())
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	remoteUserResp, err := i.nucleusSystem.GetUserById(res.Org.Owner)
-	if err != nil {
-		return nil, err
-	}
+	// remoteUserResp, err := i.nucleusSystem.GetUserById(res.Org.Owner)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
-		TemplateName: "member-invitation",
+		TemplateName: "test-template",
 		Values: map[string]interface{}{
-			"INVITATION": invitationId.String(),
-			"LINK":       link,
-			"OWNER":      remoteUserResp.User.Name,
-			"ORG":        res.Org.Name,
-			"ROLE":       req.GetRole().String(),
+			// "INVITATION": invitationId.String(),
+			// "LINK":       link,
+			// "OWNER":      remoteUserResp.User.Name,
+			"MESSAGE":"Brackley",
+			// "ORGD":"Ukama-test",
+			// "ORG":        res.Org.Name,
+			// "ROLE":       req.GetRole().String(),
 			"NAME":       req.GetName(),
 		},
 	})
@@ -84,15 +86,15 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
-	route := i.baseRoutingKey.SetAction("add").SetObject("invitation").MustBuild()
-	err = i.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
-	if err != nil {
-		return nil, err
-	}
+	// route := i.baseRoutingKey.SetAction("add").SetObject("invitation").MustBuild()
+	// err = i.msgbus.PublishRequest(route, req)
+	// if err != nil {
+	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
+	// userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	existingInvitation, _ := i.iRepo.GetInvitationByEmail(req.GetEmail())
 
@@ -107,7 +109,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 				Role:      pbRoleTypeToDb(req.GetRole()),
 				ExpiresAt: i.invitationExpiryTime,
 				Status:    db.Pending,
-				UserId:    userInfo.User.Id,
+				// UserId:    userInfo.User.Id,
+				UserId:   "72e665ed-2e43-4bc0-966b-b065eeef7ae7",
 			},
 			nil,
 		)
@@ -126,7 +129,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 			Role:     req.GetRole(),
 			Name:     req.GetName(),
 			Status:   pb.StatusType_Pending,
-			UserId:   userInfo.User.Id,
+			// UserId:   userInfo.User.Id,
+			UserId:  "72e665ed-2e43-4bc0-966b-b065eeef7ae7",
 			ExpireAt: timestamppb.New(i.invitationExpiryTime),
 		},
 
