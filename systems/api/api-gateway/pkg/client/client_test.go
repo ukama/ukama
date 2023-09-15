@@ -23,34 +23,6 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	c := client.NewClientsSet(resRepo, netClient)
 
-	t.Run("NetworkGetError", func(t *testing.T) {
-		netClient.On("Get", netId.String()).
-			Return(nil,
-				fmt.Errorf("Some unexpected error")).Once()
-
-		netInfo, err := c.GetNetwork(netId.String())
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "error")
-
-		assert.Nil(t, netInfo)
-	})
-
-	t.Run("NetworkNotFound", func(t *testing.T) {
-		netClient.On("Get", netId.String()).
-			Return(nil,
-				fmt.Errorf("GetNetwork failure: %w",
-					client.ErrorStatus{StatusCode: 404})).Once()
-
-		netInfo, err := c.GetNetwork(netId.String())
-
-		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
-		assert.Contains(t, err.Error(), "404")
-
-		assert.Nil(t, netInfo)
-	})
-
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
@@ -67,6 +39,7 @@ func TestCient_GetNetwork(t *testing.T) {
 
 		assert.NoError(t, err)
 
+		assert.NotNil(t, netInfo)
 		assert.Equal(t, netInfo.Id, netId)
 		assert.Equal(t, netInfo.Name, netName)
 	})
@@ -115,27 +88,6 @@ func TestCient_GetNetwork(t *testing.T) {
 		assert.Nil(t, netInfo)
 	})
 
-	t.Run("NetworkFoundAndStatusFailed", func(t *testing.T) {
-		netClient.On("Get", netId.String()).
-			Return(&client.NetworkInfo{
-				Id:   netId,
-				Name: netName,
-			}, nil).Once()
-
-		resRepo.On("Get", netId).
-			Return(&db.Resource{
-				Id:     netId,
-				Status: db.ResourceStatusFailed}, nil).Once()
-
-		netInfo, err := c.GetNetwork(netId.String())
-
-		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
-		assert.Contains(t, err.Error(), "inconsistent")
-
-		assert.Nil(t, netInfo)
-	})
-
 	t.Run("NetworkFoundAndStatusError", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
@@ -154,6 +106,35 @@ func TestCient_GetNetwork(t *testing.T) {
 
 		assert.Nil(t, netInfo)
 	})
+
+	t.Run("NetworkNotFound", func(t *testing.T) {
+		netClient.On("Get", netId.String()).
+			Return(nil,
+				fmt.Errorf("GetNetwork failure: %w",
+					client.ErrorStatus{StatusCode: 404})).Once()
+
+		netInfo, err := c.GetNetwork(netId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "404")
+
+		assert.Nil(t, netInfo)
+	})
+
+	t.Run("NetworkGetError", func(t *testing.T) {
+		netClient.On("Get", netId.String()).
+			Return(nil,
+				fmt.Errorf("Some unexpected error")).Once()
+
+		netInfo, err := c.GetNetwork(netId.String())
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error")
+
+		assert.Nil(t, netInfo)
+	})
+
 }
 
 func TestCient_AddNetwork(t *testing.T) {

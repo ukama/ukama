@@ -196,6 +196,8 @@ func TestResourceRepo_Delete(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), resourceId).
 			WillReturnError(sql.ErrNoRows)
 
+		mock.ExpectRollback()
+
 		r := db.NewResourceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
