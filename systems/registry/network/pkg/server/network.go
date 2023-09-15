@@ -302,6 +302,7 @@ func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 		Name:          ntwk.Name,
 		OrgId:         ntwk.OrgId.String(),
 		IsDeactivated: ntwk.Deactivated,
+		IsSynced:      ntwk.Synced,
 		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
 	}
 }
