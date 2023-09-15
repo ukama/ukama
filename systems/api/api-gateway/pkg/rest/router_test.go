@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -174,6 +176,75 @@ func TestRouter_GetNetwork(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_CreateNetwork(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
+		netId := uuid.NewV4()
+		netName := "net-1"
+		orgName := "org-A"
+
+		var ntwk = AddNetworkReq{
+			OrgName: orgName,
+			NetName: netName,
+		}
+
+		netInfo := &client.NetworkInfo{
+			Id:   netId,
+			Name: netName,
+		}
+
+		body, err := json.Marshal(ntwk)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
+		}
+
+		c.On("CreateNetwork", orgName, netName).Return(netInfo, nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusPartialContent, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NetworkCreatedAndStatusFailed", func(t *testing.T) {
+		netName := "net-2"
+		orgName := "org-B"
+
+		var ntwk = AddNetworkReq{
+			OrgName: orgName,
+			NetName: netName,
+		}
+		body, err := json.Marshal(ntwk)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
+		}
+
+		c.On("CreateNetwork", orgName, netName).Return(nil,
+			errors.New("some unexpected error occured"))
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
 
 		// act
 		r.ServeHTTP(w, req)
