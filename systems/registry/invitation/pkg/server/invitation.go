@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -85,37 +86,35 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
-	route := i.baseRoutingKey.SetAction("add").SetObject("invitation").MustBuild()
-	err = i.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+
 	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
 	if err != nil {
-		return nil, err
+		log.Errorf("Failed to get user info. Error %s", err.Error())
 	}
+	userId := ""
+	if userInfo != nil && !reflect.DeepEqual(userInfo.User, reflect.Zero(reflect.TypeOf(userInfo.User)).Interface()) {
+		userId = userInfo.User.Id
 
-	existingInvitation, _ := i.iRepo.GetInvitationByEmail(req.GetEmail())
+	} else {
+		userId = "00000000-0000-0000-0000-000000000000"
+	}
+	err = i.iRepo.Add(
+		&db.Invitation{
+			Id:        invitationId,
+			Org:       req.GetOrg(),
+			Name:      req.GetName(),
+			Link:      link,
+			Email:     req.GetEmail(),
+			Role:      pbRoleTypeToDb(req.GetRole()),
+			ExpiresAt: i.invitationExpiryTime,
+			Status:    db.Pending,
+			UserId:    userId,
+		},
+		nil,
+	)
 
-	if existingInvitation == nil {
-		err = i.iRepo.Add(
-			&db.Invitation{
-				Id:        invitationId,
-				Org:       req.GetOrg(),
-				Name:      req.GetName(),
-				Link:      link,
-				Email:     req.GetEmail(),
-				Role:      pbRoleTypeToDb(req.GetRole()),
-				ExpiresAt: i.invitationExpiryTime,
-				Status:    db.Pending,
-				UserId:    userInfo.User.Id,
-			},
-			nil,
-		)
-
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "invitation")
-		}
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
 	return &pb.AddInvitationResponse{
