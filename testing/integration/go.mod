@@ -70,7 +70,7 @@ require (
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-20230901201642-9a3a2df2672b
 	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	github.com/wagslane/go-rabbitmq v0.12.4
 	google.golang.org/protobuf v1.31.0

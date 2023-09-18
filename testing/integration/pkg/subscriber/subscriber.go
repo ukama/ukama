@@ -44,7 +44,7 @@ func (s *SubscriberClient) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimR
 	return rsp, nil
 }
 
-func (s *SubscriberClient) SubscriberSimpoolGetSimStats(req api.SimPoolStatByTypeReq) (*pPb.GetStatsResponse, error) {
+func (s *SubscriberClient) SubscriberSimpoolGetSimStats(req api.SimPoolTypeReq) (*pPb.GetStatsResponse, error) {
 	url := s.u.String() + VERSION + SIMPOOL + "stats/" + req.SimType
 	rsp := &pPb.GetStatsResponse{}
 
