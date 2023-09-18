@@ -292,7 +292,6 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	_package := &db.Package{
 		Name:   req.GetName(),
 		Active: req.Active,
-		
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())

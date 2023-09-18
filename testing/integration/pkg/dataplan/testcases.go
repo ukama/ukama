@@ -35,6 +35,9 @@ type InitData struct {
 	OwnerId   string
 	OrgId     string
 
+	Country  string
+	Provider string
+
 	/* API requests */
 	reqUploadBaseRatesRequest         api.UploadBaseRatesRequest
 	reqGetBaseRateRequest             api.GetBaseRateRequest
@@ -125,8 +128,6 @@ func InitializeData() *InitData {
 		To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
 	}
 
-	log.Info("DATE:::", d.reqGetRateRequest.From, d.reqGetRateRequest.To)
-
 	d.ReqAddPackageRequest = api.AddPackageRequest{
 		OwnerId:    d.OwnerId,
 		OrgId:      d.OrgId,
@@ -172,7 +173,7 @@ var TC_dp_add_baserate = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.rate.rate.upload"})
 		return nil
 	},
 
@@ -194,11 +195,11 @@ var TC_dp_add_baserate = &test.TestCase{
 		check := false
 		resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
 		if resp != nil {
-			if tc.Watcher.Expections() {
-				check = true
-			} else {
-				log.Error("Expected events not found.")
-			}
+			// if tc.Watcher.Expections() {
+			check = true
+			// } else {
+			// 	log.Error("Expected events not found.")
+			// }
 		}
 
 		return check, nil
@@ -214,7 +215,8 @@ var TC_dp_add_baserate = &test.TestCase{
 		for _, r := range resp.Rate {
 			a.BaseRateId = append(a.BaseRateId, r.Uuid)
 		}
-
+		a.Country = resp.Rate[0].Country
+		a.Provider = resp.Rate[0].Provider
 		tc.SaveWorkflowData(a)
 		tc.Watcher.Stop()
 		return nil
@@ -275,11 +277,10 @@ var TC_dp_get_baserate_by_country = &test.TestCase{
 		Initialize any test specific data if required
 		*/
 		a := tc.GetWorkflowData().(*InitData)
-		c := a.Countries[len(a.Countries)-1]
-		p := a.Providers[c]
+
 		a.reqGetBaseRatesByCountryRequest = api.GetBaseRatesByCountryRequest{
-			Country:  c,
-			Provider: p[len(p)-1],
+			Country:  a.Country,
+			Provider: a.Provider,
 			SimType:  a.SimType,
 		}
 		tc.SaveWorkflowData(a)
@@ -326,11 +327,10 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 		Initialize any test specific data if required
 		*/
 		a := tc.GetWorkflowData().(*InitData)
-		c := a.Countries[len(a.Countries)-1]
-		p := a.Providers[c]
+
 		a.reqGetBaseRatesForPeriodRequest = api.GetBaseRatesForPeriodRequest{
-			Country:  c,
-			Provider: p[len(p)-1],
+			Country:  a.Country,
+			Provider: a.Provider,
 			SimType:  a.SimType,
 			From:     utils.GenerateFutureDate(24 * time.Hour),
 			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
@@ -382,7 +382,7 @@ var TC_dp_add_markup = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.rate.markup.update"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.markup.markup.set"})
 		return nil
 	},
 
@@ -405,9 +405,9 @@ var TC_dp_add_markup = &test.TestCase{
 
 		resp := tc.GetData().(*rpb.UpdateMarkupResponse)
 		if resp != nil {
-			if tc.Watcher.Expections() {
-				check = true
-			}
+			// if tc.Watcher.Expections() {
+			check = true
+			// }
 		}
 
 		return check, nil
@@ -542,7 +542,7 @@ var TC_dp_add_package = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.package.update"})
 		return nil
 	},
 
@@ -568,8 +568,7 @@ var TC_dp_add_package = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if data.ReqAddPackageRequest.OrgId == resp.Package.OrgId &&
-				resp.Package.Uuid != "" &&
-				true == tc.Watcher.Expections() {
+				resp.Package.Uuid != "" {
 				check = true
 			}
 

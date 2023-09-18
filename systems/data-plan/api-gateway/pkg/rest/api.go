@@ -33,9 +33,10 @@ type PackagesRequest struct {
 }
 
 type GetBaseRatesByCountryRequest struct {
-	Country  string `query:"country" validate:"required"`
-	Provider string `query:"provider"`
-	SimType  string `query:"sim_type" binding:"required" validate:"required"`
+	Country     string `json:"country" query:"country" binding:"required" validation:"required"`
+	Provider    string `json:"provider" query:"provider" binding:"required"`
+	SimType     string `json:"sim_type" query:"sim_type" binding:"required" validation:"required"`
+	EffectiveAt string `json:"effective_at" query:"effective_at" binding:"required"`
 }
 
 type GetBaseRatesForPeriodRequest struct {
