@@ -29,9 +29,10 @@ type InvitationServer struct {
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
 	orgName              string
+	TemplateName         string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
@@ -41,6 +42,7 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time
 		nucleusSystem:        nucleusSystem,
 		msgbus:               msgBus,
 		orgName:              orgName,
+		TemplateName:         TemplateName,
 	}
 }
 
@@ -70,14 +72,13 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
-		TemplateName: "test-template",
+		TemplateName: i.TemplateName,
 		Values: map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK":       link,
 			"OWNER":      remoteUserResp.User.Name,
 			"ORG":        res.Org.Name,
 			"ROLE":       req.GetRole().String(),
-			"NAME":       req.GetName(),
 		},
 	})
 

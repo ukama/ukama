@@ -20,6 +20,7 @@ type Config struct {
 	NotificationHost     string `default:"http://192.168.1.81:8089"`
 	AuthLoginbaseURL     string `default:"http://localhost:4455/auth/login"`
 	OrgName              string
+	TemplateName         string `default:"member-invite"`
 }
 
 func NewConfig(name string) *Config {

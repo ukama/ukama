@@ -75,7 +75,7 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
 		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
-		notificationClient, nucleusP, mbClient, serviceConfig.OrgName)
+		notificationClient, nucleusP, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterInvitationServiceServer(s, invitationServer)
