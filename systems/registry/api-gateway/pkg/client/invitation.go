@@ -110,11 +110,10 @@ func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateInvi
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	invitation := &pb.UpdateInvitationStatusRequest{
+	res, err := r.client.UpdateStatus(ctx, &pb.UpdateInvitationStatusRequest{
 		Id:     id,
 		Status: pb.StatusType(pb.StatusType_value[status]),
-	}
-	res, err := r.client.UpdateStatus(ctx, invitation)
+	})
 
 	if err != nil {
 		return nil, err

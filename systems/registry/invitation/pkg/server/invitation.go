@@ -142,7 +142,7 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationR
 		Id: req.GetId(),
 	}, nil
 }
-func (i *InvitationServer) Update(ctx context.Context, req *pb.UpdateInvitationStatusRequest) (*pb.UpdateInvitationStatusResponse, error) {
+func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvitationStatusRequest) (*pb.UpdateInvitationStatusResponse, error) {
 	log.Infof("Updating invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -151,18 +151,18 @@ func (i *InvitationServer) Update(ctx context.Context, req *pb.UpdateInvitationS
 			"invalid format of invitation uuid. Error %s", err.Error())
 	}
 
-	if req.GetStatus() != pb.StatusType_Unknown {
+	if req.GetStatus() == pb.StatusType_Unknown {
 		return nil, status.Errorf(codes.InvalidArgument, "Status is required")
 	}
 
-	err = i.iRepo.UpdateStatus(iuuid, req.GetStatus().String())
+	err = i.iRepo.UpdateStatus(iuuid, uint8(req.GetStatus().Number()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
 	return &pb.UpdateInvitationStatusResponse{
 		Id:     req.GetId(),
-		Status: req.GetStatus(),
+		Status: *req.GetStatus().Enum(),
 	}, nil
 }
 func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {

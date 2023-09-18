@@ -10,7 +10,7 @@ type InvitationRepo interface {
 	Add(invitation *Invitation, nestedFunc func(*Invitation, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invitation, error)
 	GetByOrg(org string) ([]*Invitation, error)
-	UpdateStatus(id uuid.UUID, status string) error
+	UpdateStatus(id uuid.UUID, status uint8) error
 	Delete(id uuid.UUID, nestedFunc func(string, string) error) error
 	GetInvitationByEmail(email string) (*Invitation, error)
 }
@@ -90,7 +90,7 @@ func (r *invitationRepo) Delete(id uuid.UUID, nestedFunc func(string, string) er
 	return err
 }
 
-func (r *invitationRepo) UpdateStatus(id uuid.UUID, status string) error {
+func (r *invitationRepo) UpdateStatus(id uuid.UUID, status uint8) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&Invitation{}).Where("id = ?", id).Update("status", status).Error; err != nil {
 			return err

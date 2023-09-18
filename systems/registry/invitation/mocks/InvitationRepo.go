@@ -123,11 +123,11 @@ func (_m *InvitationRepo) GetInvitationByEmail(email string) (*db.Invitation, er
 }
 
 // UpdateStatus provides a mock function with given fields: id, status
-func (_m *InvitationRepo) UpdateStatus(id uuid.UUID, status string) error {
+func (_m *InvitationRepo) UpdateStatus(id uuid.UUID, status uint8) error {
 	ret := _m.Called(id, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, string) error); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uint8) error); ok {
 		r0 = rf(id, status)
 	} else {
 		r0 = ret.Error(0)
