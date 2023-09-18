@@ -77,7 +77,6 @@ func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResp
 func (r *InvitationRegistry) AddInvitation(org, name, email, role string) (*pb.AddInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-
 	res, err := r.client.Add(ctx, &pb.AddInvitationRequest{
 		Org:   org,
 		Name:  name,

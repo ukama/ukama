@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/invitation/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -15,11 +17,11 @@ type InvitationRepo struct {
 }
 
 // Add provides a mock function with given fields: invitation, nestedFunc
-func (_m *InvitationRepo) Add(invitation *db.Invitation, nestedFunc func(string, string) error) error {
+func (_m *InvitationRepo) Add(invitation *db.Invitation, nestedFunc func(*db.Invitation, *gorm.DB) error) error {
 	ret := _m.Called(invitation, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Invitation, func(string, string) error) error); ok {
+	if rf, ok := ret.Get(0).(func(*db.Invitation, func(*db.Invitation, *gorm.DB) error) error); ok {
 		r0 = rf(invitation, nestedFunc)
 	} else {
 		r0 = ret.Error(0)

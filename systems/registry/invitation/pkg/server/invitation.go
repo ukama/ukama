@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -25,7 +26,7 @@ type InvitationServer struct {
 	iRepo                db.InvitationRepo
 	nucleusSystem        providers.NucleusClientProvider
 	notification         providers.NotificationClient
-	invitationExpiryTime time.Time
+	invitationExpiryTime uint
 	authLoginbaseURL     string
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
@@ -33,7 +34,7 @@ type InvitationServer struct {
 	TemplateName         string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
@@ -54,9 +55,9 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if req.GetOrg() == "" || req.GetEmail() == "" || req.GetName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
 	}
-
+	expiry := time.Now().Add(time.Hour * time.Duration(i.invitationExpiryTime))
 	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(),
-		i.invitationExpiryTime)
+		expiry)
 	if err != nil {
 		return nil, err
 	}
@@ -98,37 +99,29 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	} else {
 		userId = "00000000-0000-0000-0000-000000000000"
 	}
-	err = i.iRepo.Add(
-		&db.Invitation{
-			Id:        invitationId,
-			Org:       req.GetOrg(),
-			Name:      req.GetName(),
-			Link:      link,
-			Email:     req.GetEmail(),
-			Role:      pbRoleTypeToDb(req.GetRole()),
-			ExpiresAt: i.invitationExpiryTime,
-			Status:    db.Pending,
-			UserId:    userId,
-		},
-		nil,
-	)
+	invite := &db.Invitation{
+		Id:        invitationId,
+		Org:       req.GetOrg(),
+		Name:      req.GetName(),
+		Link:      link,
+		Email:     req.GetEmail(),
+		Role:      db.RoleType(req.Role),
+		ExpiresAt: expiry,
+		Status:    db.Pending,
+		UserId:    userId,
+	}
 
+	err = i.iRepo.Add(invite, func(inv *db.Invitation, tx *gorm.DB) error {
+		log.Infof("Adding invite %s in db", inv.Id)
+		invite = inv
+
+		return nil
+	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
-
 	return &pb.AddInvitationResponse{
-		Invitation: &pb.Invitation{
-			Id:       invitationId.String(),
-			Org:      req.GetOrg(),
-			Link:     link,
-			Email:    req.GetEmail(),
-			Role:     req.GetRole(),
-			Name:     req.GetName(),
-			Status:   pb.StatusType_Pending,
-			UserId:   userInfo.User.Id,
-			ExpireAt: timestamppb.New(i.invitationExpiryTime),
-		},
+		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
@@ -225,15 +218,15 @@ func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationBy
 
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	switch role {
-	case pb.RoleType_Admin:
+	case pb.RoleType_ADMIN:
 		return db.Admin
-	case pb.RoleType_Vendor:
+	case pb.RoleType_VENDOR:
 		return db.Vendor
-	case pb.RoleType_Users:
+	case pb.RoleType_USERS:
 		return db.Users
-	case pb.RoleType_Owner:
+	case pb.RoleType_OWNER:
 		return db.Owner
-	case pb.RoleType_Employee:
+	case pb.RoleType_EMPLOYEE:
 		return db.Employee
 	default:
 		return db.Users

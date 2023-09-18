@@ -41,7 +41,7 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:    3 * time.Second,
+			Timeout:    10 * time.Second,
 			Network:    "network:9090",
 			Member:     "member:9090",
 			Node:       "node:9090",

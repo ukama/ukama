@@ -16,7 +16,7 @@ type Config struct {
 	MsgClient            *config.MsgClient `default:"{}"`
 	OrgRegistryHost      string            `default:"http://org:8080"`
 	Service              *uconf.Service
-	InvitationExpiryTime time.Time
+	InvitationExpiryTime uint   `default:"24"`
 	NotificationHost     string `default:"http://192.168.1.81:8089"`
 	AuthLoginbaseURL     string `default:"http://localhost:4455/auth/login"`
 	OrgName              string

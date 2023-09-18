@@ -51,10 +51,10 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout: 1 * time.Second,
-		Network: "network:9090",
-		Member:  "member:9090",
-		Node:    "node:9090",
+		Timeout:    1 * time.Second,
+		Network:    "network:9090",
+		Member:     "member:9090",
+		Node:       "node:9090",
 		Invitation: "invitation:9090",
 	})
 }
@@ -108,68 +108,68 @@ func TestGetMembers(t *testing.T) {
 
 func TestGetInvitation_NotFound(t *testing.T) {
 	// arrange
-		invId := uuid.NewV4()
+	invId := uuid.NewV4()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/invitations/"+invId.String(), nil)
 	arc := &providers.AuthRestClient{}
 
-inv := &imocks.InvitationServiceClient{}
+	inv := &imocks.InvitationServiceClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
 	inv.On("Get", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "invitation not found"))
 
 	r := NewRouter(&Clients{
-		
-		Invitation:   client.NewInvitationRegistryFromClient(inv),
-		Network: client.NewNetworkRegistryFromClient(net),
-		Node:   client.NewNodeFromClient(node),
-		Member: client.NewRegistryFromClient(mem),
+
+		Invitation: client.NewInvitationRegistryFromClient(inv),
+		Network:    client.NewNetworkRegistryFromClient(net),
+		Node:       client.NewNodeFromClient(node),
+		Member:     client.NewRegistryFromClient(mem),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
 
 	// assert
-	
+
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
 }
 func TestGetInvitation_Found(t *testing.T) {
-    // arrange
-    invId := "f24bf990-9f69-460d-938c-68ce3c8d40b3"
+	// arrange
+	invId := "f24bf990-9f69-460d-938c-68ce3c8d40b3"
 
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("GET", "/v1/invitations/"+invId, nil)
-    arc := &providers.AuthRestClient{}
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/invitations/"+invId, nil)
+	arc := &providers.AuthRestClient{}
 
-    inv := &imocks.InvitationServiceClient{}
-    net := &netmocks.NetworkServiceClient{}
-    node := &nmocks.NodeServiceClient{}
-    mem := &mmocks.MemberServiceClient{}
-    inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
-        Invitation: &invpb.Invitation{
-            Id:invId ,
-            Org: "ukama",
-            Link:"http://dev.ukama.com",
-            Name: "ukama",
-            Email: "test@ukama.com",
-        },
-    }, nil)
-    r := NewRouter(&Clients{
-        Invitation:   client.NewInvitationRegistryFromClient(inv),
-        Network: client.NewNetworkRegistryFromClient(net),
-        Node:   client.NewNodeFromClient(node),
-        Member: client.NewRegistryFromClient(mem),
-    }, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	inv := &imocks.InvitationServiceClient{}
+	net := &netmocks.NetworkServiceClient{}
+	node := &nmocks.NodeServiceClient{}
+	mem := &mmocks.MemberServiceClient{}
+	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
+		Invitation: &invpb.Invitation{
+			Id:    invId,
+			Org:   "ukama",
+			Link:  "http://dev.ukama.com",
+			Name:  "ukama",
+			Email: "test@ukama.com",
+		},
+	}, nil)
+	r := NewRouter(&Clients{
+		Invitation: client.NewInvitationRegistryFromClient(inv),
+		Network:    client.NewNetworkRegistryFromClient(net),
+		Node:       client.NewNodeFromClient(node),
+		Member:     client.NewRegistryFromClient(mem),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-    r.ServeHTTP(w, req)
+	r.ServeHTTP(w, req)
 
-    // assert
-    assert.Equal(t, http.StatusOK, w.Code)
-    inv.AssertExpectations(t)
-    assert.Contains(t, w.Body.String(), "\"id\":\"f24bf990-9f69-460d-938c-68ce3c8d40b3\"")
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	inv.AssertExpectations(t)
+	assert.Contains(t, w.Body.String(), "\"id\":\"f24bf990-9f69-460d-938c-68ce3c8d40b3\"")
 }
 
 func TestGetInvitationByOrg(t *testing.T) {
@@ -185,21 +185,21 @@ func TestGetInvitationByOrg(t *testing.T) {
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
 
-	inv.On("GetByOrg", mock.Anything,mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
+	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
 		Invitations: []*invpb.Invitation{{
 			Id:     invId.String(),
 			Org:    "ukama",
 			Name:   "ukama",
 			Email:  "test@ukama.com",
-			Role:   invpb.RoleType_Users,
+			Role:   invpb.RoleType_USERS,
 			Status: invpb.StatusType_Pending,
 		}},
 	}, nil)
 
 	r := NewRouter(&Clients{
-		Node:    client.NewNodeFromClient(node),
-		Member:  client.NewRegistryFromClient(mem),
-		Network: client.NewNetworkRegistryFromClient(net),
+		Node:       client.NewNodeFromClient(node),
+		Member:     client.NewRegistryFromClient(mem),
+		Network:    client.NewNetworkRegistryFromClient(net),
 		Invitation: client.NewInvitationRegistryFromClient(inv),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -208,5 +208,4 @@ func TestGetInvitationByOrg(t *testing.T) {
 	inv.AssertExpectations(t)
 	assert.Equal(t, 200, w.Code)
 
-	
 }

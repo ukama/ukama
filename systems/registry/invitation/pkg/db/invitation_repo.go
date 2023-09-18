@@ -7,7 +7,7 @@ import (
 )
 
 type InvitationRepo interface {
-	Add(invitation *Invitation, nestedFunc func(string, string) error) error
+	Add(invitation *Invitation, nestedFunc func(*Invitation, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invitation, error)
 	GetByOrg(org string) ([]*Invitation, error)
 	UpdateStatus(id uuid.UUID, status string) error
@@ -34,10 +34,10 @@ func (r *invitationRepo) GetInvitationByEmail(email string) (*Invitation, error)
 	return &invitation, nil
 }
 
-func (r *invitationRepo) Add(invitation *Invitation, nestedFunc func(string, string) error) error {
+func (r *invitationRepo) Add(invitation *Invitation, nestedFunc func(*Invitation, *gorm.DB) error) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
-			nestErr := nestedFunc("", "")
+			nestErr := nestedFunc(invitation, tx)
 			if nestErr != nil {
 				return nestErr
 			}

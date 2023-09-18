@@ -94,9 +94,9 @@ message Invitation {
     Unknown   = 3;
   }
   enum RoleType {
-    Owner     = 0;
-	Admin     = 1;
-	Employee  = 2;
-	Vendor    = 3;
-	Users     = 4;
-  }
+    OWNER = 0;
+    ADMIN = 1;
+    EMPLOYEE = 2;
+    VENDOR = 3;
+    USERS = 4;
+}
