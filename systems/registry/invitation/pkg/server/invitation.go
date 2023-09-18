@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
@@ -24,9 +26,13 @@ type InvitationServer struct {
 	notification         providers.NotificationClient
 	invitationExpiryTime time.Time
 	authLoginbaseURL     string
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
+	orgName              string
+	TemplateName         string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
@@ -34,6 +40,9 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime time.Time
 		invitationExpiryTime: invitationExpiryTime,
 		authLoginbaseURL:     authLoginbaseURL,
 		nucleusSystem:        nucleusSystem,
+		msgbus:               msgBus,
+		orgName:              orgName,
+		TemplateName:         TemplateName,
 	}
 }
 
@@ -60,32 +69,32 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
-	if err != nil {
-		return nil, err
-	}
-
 	err = i.notification.SendEmail(providers.SendEmailReq{
 		To:           []string{req.GetEmail()},
-		TemplateName: "member-invitation",
+		TemplateName: i.TemplateName,
 		Values: map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK":       link,
 			"OWNER":      remoteUserResp.User.Name,
 			"ORG":        res.Org.Name,
 			"ROLE":       req.GetRole().String(),
-			"NAME":       req.GetName(),
 		},
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
-	existingInvitation, err := i.iRepo.GetInvitationByEmail(req.GetEmail())
+	route := i.baseRoutingKey.SetAction("add").SetObject("invitation").MustBuild()
+	err = i.msgbus.PublishRequest(route, req)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
+	if err != nil {
+		return nil, err
+	}
+
+	existingInvitation, _ := i.iRepo.GetInvitationByEmail(req.GetEmail())
 
 	if existingInvitation == nil {
 		err = i.iRepo.Add(

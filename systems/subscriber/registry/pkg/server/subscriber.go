@@ -9,11 +9,11 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-	utils "github.com/ukama/ukama/systems/subscriber/registry/pkg/util"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,7 +54,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	dob, err := utils.ValidateDOB(req.GetDob())
+	dob, err := validate.ValidateDate(req.GetDob())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -78,14 +78,23 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		DOB:                   dob,
 		IdSerial:              req.GetIdSerial(),
 	}
+
 	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
+	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
+
+	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, subscriberPb)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
+	}
+
 	return &pb.AddSubscriberResponse{
-		Subscriber: dbSubscriberToPbSubscriber(subscriber, nil),
+		Subscriber: subscriberPb,
 	}, nil
 
 }
@@ -230,12 +239,21 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
 		IdSerial:              req.GetIdSerial(),
+		SubscriberId:          subscriberId,
 	}
 
 	err = s.subscriberRepo.Update(subscriberId, *subscriber)
 	if err != nil {
 		logrus.Errorf("error while updating subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
+
+	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, subscriberPb)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
 	}
 
 	return &pb.UpdateSubscriberResponse{}, nil

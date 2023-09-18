@@ -591,6 +591,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		var packageID = uuid.NewV4()
 		var simID = uuid.NewV4()
 
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
 

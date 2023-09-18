@@ -14,6 +14,7 @@ type UserRepo interface {
 	Update(user *User, nestedFunc func(*User, *gorm.DB) error) error
 	Delete(id uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	GetUserCount() (int64, int64, error)
+	GetByEmail(email string) (*User, error)
 }
 
 type userRepo struct {
@@ -132,4 +133,15 @@ func (u *userRepo) GetUserCount() (int64, int64, error) {
 	}
 
 	return userCount, deactiveUserCount, nil
+}
+
+func (u *userRepo) GetByEmail(email string) (*User, error) {
+	var user User
+
+	result := u.Db.GetGormDb().Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &user, nil
 }

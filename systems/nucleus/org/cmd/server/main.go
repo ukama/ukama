@@ -110,7 +110,7 @@ func runGrpcServer(gormdb sql.Db) {
 func initOrgDB(orgDB *gorm.DB) {
 	if orgDB.Migrator().HasTable(&db.Org{}) {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Info("Iniiialzing orgs table")
+			log.Info("Initializing orgs table")
 
 			var OwnerUUID, OrgUUID uuid.UUID
 			var err error

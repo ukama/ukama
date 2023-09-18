@@ -1003,13 +1003,6 @@ func (x *Package) GetOwnerId() string {
 	return ""
 }
 
-func (x *Package) GetAmount() float64 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
 type PackageRates struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

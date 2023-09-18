@@ -91,7 +91,15 @@ func TestRouter_GetRates(t *testing.T) {
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("POST", "/v1/rates/users/"+ownerId+"/rate", bytes.NewReader(jReq))
+
+	hreq, _ := http.NewRequest("GET", "/v1/rates/users/"+ownerId+"/rate", bytes.NewReader(jReq))
+	q := hreq.URL.Query()
+	q.Add("country", req.Country)
+	q.Add("provider", req.Provider)
+	q.Add("to", req.To)
+	q.Add("from", req.From)
+	q.Add("sim_type", req.SimType)
+	hreq.URL.RawQuery = q.Encode()
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -506,11 +514,13 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			SimType:  "ukama_data",
 		}
 
-		jreq, err := json.Marshal(&ureq)
-		assert.NoError(t, err)
-
 		w := httptest.NewRecorder()
-		hreq, _ := http.NewRequest("POST", "/v1/baserates/country/"+ureq.Country, bytes.NewReader(jreq))
+		hreq, _ := http.NewRequest("GET", "/v1/baserates", nil)
+		q := hreq.URL.Query()
+		q.Add("country", ureq.Country)
+		q.Add("provider", ureq.Provider)
+		q.Add("sim_type", ureq.SimType)
+		hreq.URL.RawQuery = q.Encode()
 
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
@@ -552,11 +562,13 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			SimType:  "ukama_data",
 		}
 
-		jreq, err := json.Marshal(&ureq)
-		assert.NoError(t, err)
-
 		w := httptest.NewRecorder()
-		hreq, _ := http.NewRequest("POST", "/v1/baserates/country/"+ureq.Country+"/history", bytes.NewReader(jreq))
+		hreq, _ := http.NewRequest("GET", "/v1/baserates/history", nil)
+		q := hreq.URL.Query()
+		q.Add("country", ureq.Country)
+		q.Add("provider", ureq.Provider)
+		q.Add("sim_type", ureq.SimType)
+		hreq.URL.RawQuery = q.Encode()
 
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
@@ -600,11 +612,15 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			From:     "2022-10-12T07:20:50.52Z",
 		}
 
-		jreq, err := json.Marshal(&ureq)
-		assert.NoError(t, err)
-
 		w := httptest.NewRecorder()
-		hreq, _ := http.NewRequest("POST", "/v1/baserates/country/"+ureq.Country+"/period", bytes.NewReader(jreq))
+		hreq, _ := http.NewRequest("GET", "/v1/baserates/period", nil)
+		q := hreq.URL.Query()
+		q.Add("country", ureq.Country)
+		q.Add("provider", ureq.Provider)
+		q.Add("sim_type", ureq.SimType)
+		q.Add("to", ureq.To)
+		q.Add("from", ureq.From)
+		hreq.URL.RawQuery = q.Encode()
 
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
@@ -724,7 +740,7 @@ func TestRouter_Package(t *testing.T) {
 		}
 
 		w := httptest.NewRecorder()
-		hreq, _ := http.NewRequest("GET", "/v1/packages/org/"+ureq.OrgId, nil)
+		hreq, _ := http.NewRequest("GET", "/v1/packages/orgs/"+ureq.OrgId, nil)
 
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}

@@ -28,6 +28,16 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
 		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
 
+func TestBillingCollectorEventServer_HandleSimUsageEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.cdr.sim.usage"
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simUsage := epb.SimUsage{
@@ -83,6 +93,14 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 }
 
 func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.registry.subscriber.create"
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
 	t.Run("CreateCustomerEventSent", func(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
 		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create")
@@ -143,6 +161,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		billingClient := &mocks.BillingClient{}
 		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update")
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("UpdateCustomerEventSent", func(t *testing.T) {
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
@@ -198,6 +222,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		billingClient := &mocks.BillingClient{}
 		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete")
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("DeleteCustomerEventSent", func(t *testing.T) {
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
@@ -250,18 +280,20 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		billingClient := &mocks.BillingClient{}
 		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate")
 
-		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("AllocateSimEventSent", func(t *testing.T) {
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		pkg := &simpb.Package{
-			// PlanId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
-			StartDate: timestamppb.New(time.Now()),
-		}
+		planId := "f1ad4204-ab9e-4574-b6bb-bffcc104f8f9"
 
-		sim := simpb.Sim{
+		sim := epb.SimAllocation{
 			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-			Package:      pkg,
+			DataPlanId:   planId,
 		}
 
 		anyE, err := anypb.New(&sim)
