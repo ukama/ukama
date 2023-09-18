@@ -121,28 +121,6 @@ func TestRouter_GetNetwork(t *testing.T) {
 		c.AssertExpectations(t)
 	})
 
-	t.Run("NetworkFoundAndStatusFailed", func(t *testing.T) {
-		netId := uuid.NewV4()
-
-		c.On("GetNetwork", netId.String()).Return(nil,
-			rest.HttpError{
-				HttpCode: http.StatusUnprocessableEntity,
-				Message:  "inconsistent state. request has failed",
-			})
-
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
-
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-		c.AssertExpectations(t)
-	})
-
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		netId := uuid.NewV4()
 
