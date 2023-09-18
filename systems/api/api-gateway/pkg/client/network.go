@@ -17,6 +17,7 @@ type NetworkInfo struct {
 	Name          string    `json:"name,omitempty"`
 	OrgId         string    `json:"org_id,omitempty"`
 	IsDeactivated bool      `json:"is_deactivated,omitempty"`
+	IsSynced      bool      `json:"is_synced,omitempty"`
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 

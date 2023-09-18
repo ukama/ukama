@@ -43,11 +43,10 @@ var routerConfig = &RouterConfig{
 var testClientSet client.Client
 
 func init() {
-	resRepo := &mocks.ResourceRepo{}
 	netClient := &mocks.NetworkClient{}
 
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(resRepo, netClient)
+	testClientSet = client.NewClientsSet(netClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {
