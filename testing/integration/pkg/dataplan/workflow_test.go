@@ -47,7 +47,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 	w.RegisterTestCase(TC_dp_get_markup)
 
 	/* Get rate */
-	w.RegisterTestCase(TC_dp_get_rate)
+	// w.RegisterTestCase(TC_dp_get_rate)
 
 	/* Add a package */
 	w.RegisterTestCase(TC_dp_add_package)

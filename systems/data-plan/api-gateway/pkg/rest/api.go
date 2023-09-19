@@ -62,12 +62,12 @@ type UploadBaseRatesRequest struct {
 }
 
 type GetRateRequest struct {
-	OwnerId  string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
-	Country  string `json:"country" binding:"required" validate:"required"`
-	Provider string `json:"provider" binding:"required" validate:"required"`
-	To       string `json:"to" binding:"required" validate:"required"`
-	From     string `json:"from" binding:"required" validate:"required"`
-	SimType  string `json:"sim_type" binding:"required" validate:"required"`
+	UserId   string `example:"{{UserUUID}}" json:"user_id" path:"user_id"`
+	Country  string `json:"country" path:"country"`
+	Provider string `json:"provider" path:"provider"`
+	To       string `json:"to" path:"to"`
+	From     string `json:"from" path:"from"`
+	SimType  string `json:"sim_type" path:"sim_type"`
 }
 
 type DeleteMarkupRequest struct {

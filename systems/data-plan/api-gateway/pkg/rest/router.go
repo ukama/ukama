@@ -346,7 +346,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 
 func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRateResponse, error) {
 	resp, err := r.clients.r.GetRate(&rpb.GetRateRequest{
-		OwnerId:  req.OwnerId,
+		OwnerId:  req.UserId,
 		Country:  req.Country,
 		Provider: req.Provider,
 		To:       req.To,
@@ -354,7 +354,7 @@ func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRa
 		SimType:  req.SimType,
 	})
 	if err != nil {
-		logrus.Errorf("Failed to get rate for user %s.Error %s", req.OwnerId, err.Error())
+		logrus.Errorf("Failed to get rate for user %s.Error %s", req.UserId, err.Error())
 		return nil, err
 	}
 

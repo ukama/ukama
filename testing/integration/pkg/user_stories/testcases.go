@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v4"
 	log "github.com/sirupsen/logrus"
@@ -17,9 +18,11 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
+	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -48,6 +51,8 @@ type UserStoriesData struct {
 	NodeId     string
 	lNodeId    string
 	rNodeId    string
+	simType    string
+	country    string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -75,6 +80,9 @@ type UserStoriesData struct {
 	reqGetNode           rapi.GetNodeRequest
 	reqGetNodeForSite    rapi.GetSiteNodesRequest
 	reqGetNodesByNetwork rapi.GetNetworkNodesRequest
+
+	reqUploadBaseRates dapi.UploadBaseRatesRequest
+	reqGetBaseRates    dapi.GetBaseRatesByCountryRequest
 }
 
 func init() {
@@ -91,6 +99,8 @@ func InitializeData() *UserStoriesData {
 	d.SubscriberClient = subscriber.NewSubscriberClient(config.System.Subscriber)
 	d.DataplanClient = dataplan.NewDataplanClient(config.System.Dataplan)
 	d.MbHost = config.System.MessageBus
+	d.simType = "test"
+	d.country = "The lunar maria"
 
 	return d
 }
@@ -175,31 +185,32 @@ var Story_add_user = &test.TestCase{
 			}
 
 			tc1, err := a.NucleusClient.GetUser(a.reqGetUser)
-			if err != nil {
-				return check1, fmt.Errorf("add user story failed on getUser. Error %v", err)
-			} else if tc1.User.Id == resp.User.Id {
+
+			if err == nil && tc1.User.Id == resp.User.Id {
 				check1 = true
+			} else if err != nil {
+				return check1, fmt.Errorf("add user story failed on getUser. Error %v", err)
 			}
 
 			tc2, err := a.NucleusClient.GetUserByAuthId(a.reqGetUserByAuth)
-			if err != nil {
-				return check2, fmt.Errorf("add user story failed on getUserByAuth. Error %v", err)
-			} else if tc2.User.Id == resp.User.Id {
+			if err == nil && tc2.User.Id == resp.User.Id {
 				check2 = true
+			} else if err != nil {
+				return check2, fmt.Errorf("add user story failed on getUserByAuth. Error %v", err)
 			}
 
 			tc3, err := a.NucleusClient.Whoami(a.reqWhoami)
-			if err != nil {
-				return check3, fmt.Errorf("add user story failed on whoami. Error %v", err)
-			} else if tc3.MemberOf[0].Id == a.OrgId {
+			if err == nil && tc3.MemberOf[0].Id == a.OrgId {
 				check3 = true
+			} else if err != nil {
+				return check3, fmt.Errorf("add user story failed on whoami. Error %v", err)
 			}
 
 			tc4, err := a.RegistryClient.GetMember(a.reqGetMember)
-			if err != nil {
-				return check4, fmt.Errorf("add user story failed on getMember. Error %v", err)
-			} else if tc4.Member.OrgId == a.OrgId {
+			if err == nil && tc4.Member.OrgId == a.OrgId {
 				check4 = true
+			} else if err != nil {
+				return check4, fmt.Errorf("add user story failed on getMember. Error %v", err)
 			}
 		}
 
@@ -221,11 +232,9 @@ var Story_add_user = &test.TestCase{
 			return fmt.Errorf("invalid data type for Workflow data")
 		}
 
-		a, ok := tc.GetWorkflowData().(*UserStoriesData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
-
-			return fmt.Errorf("invalid data type for Workflow data")
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
 		}
 
 		a.UserId = resp.User.Id
@@ -304,9 +313,9 @@ var Story_add_org = &test.TestCase{
 			}
 
 			tc1, err := a.NucleusClient.GetOrg(a.reqGetOrg)
-			if err != nil {
+			if err == nil && tc1.Org.Id == resp.Org.Id {
 				return check1, fmt.Errorf("add org story failed on getOrg. Error %v", err)
-			} else if tc1.Org.Id == resp.Org.Id {
+			} else if err != nil {
 				check1 = true
 			}
 
@@ -319,6 +328,9 @@ var Story_add_org = &test.TestCase{
 						check2 = true
 						break
 					}
+				}
+				if !check2 {
+					return check2, fmt.Errorf("add org story failed on whoami. Error %v", err)
 				}
 			}
 
@@ -360,11 +372,9 @@ var Story_add_org = &test.TestCase{
 			return fmt.Errorf("invalid data type for Workflow data")
 		}
 
-		a, ok := tc.GetWorkflowData().(*UserStoriesData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
-
-			return fmt.Errorf("invalid data type for Workflow data")
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
 		}
 
 		a.OrgId = resp.Org.Id
@@ -501,11 +511,9 @@ var Story_add_network = &test.TestCase{
 			return fmt.Errorf("invalid data type for Workflow data")
 		}
 
-		a, ok := tc.GetWorkflowData().(*UserStoriesData)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
-
-			return fmt.Errorf("invalid data type for Workflow data")
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
 		}
 
 		a.NetworkId = resp.Network.Id
@@ -639,11 +647,9 @@ func Story_add_node(typ string) *test.TestCase {
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-			a, ok := tc.GetWorkflowData().(*UserStoriesData)
-			if !ok {
-				log.Errorf("Invalid data type for Workflow data.")
-
-				return fmt.Errorf("invalid data type for Workflow data")
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
 			}
 
 			if typ == "parent" {
@@ -778,11 +784,9 @@ func Story_add_node_to_site(typ string) *test.TestCase {
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-			a, ok := tc.GetWorkflowData().(*UserStoriesData)
-			if !ok {
-				log.Errorf("Invalid data type for Workflow data.")
-
-				return fmt.Errorf("invalid data type for Workflow data")
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
 			}
 
 			tc.SaveWorkflowData(a)
@@ -876,11 +880,107 @@ func Story_attach_node() *test.TestCase {
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
-			a, ok := tc.GetWorkflowData().(*UserStoriesData)
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_upload_dataplan() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Adding base rate",
+		Description: "Add base rate provided by third parties",
+		Data:        &bpb.UploadBaseRatesResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
+
+			a.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
+				EffectiveAt: utils.GenerateFutureDate(5 * time.Hour),
+				FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
+				EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
+				SimType:     "test",
+			}
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.DataplanClient.DataPlanBaseRateUpload(a.reqUploadBaseRates)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1 := true
+
+			// resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
+
+			// if resp != nil {
+			// 	a, ok := getWorkflowData(tc)
+			// 	if ok != nil {
+			// 		return false, ok
+			// 	}
+
+			// 	a.reqGetBaseRates = dapi.GetBaseRatesByCountryRequest{
+			// 		Provider: "",
+			// 		Country:  a.country,
+			// 		SimType:  a.simType,
+			// 	}
+
+			// 	tc1, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaseRates)
+			// 	if err != nil {
+			// 		return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
+			// 	} else {
+			// 		for _, rate := range tc1.Rates {
+			// 			if rate.Country == a.country && rate.SimType == a.simType {
+			// 				check1 = true
+			// 			} else {
+			// 				check1 = false
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			if check1 {
+				return check1, nil
+			} else {
+				return false, fmt.Errorf("attach node story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			resp, ok := tc.GetData().(*bpb.UploadBaseRatesResponse)
 			if !ok {
 				log.Errorf("Invalid data type for Workflow data.")
 
 				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
 			}
 
 			tc.SaveWorkflowData(a)

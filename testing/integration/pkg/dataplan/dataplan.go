@@ -191,7 +191,7 @@ func (s *DataplanClient) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateRe
 
 	rsp := &rPb.GetRateResponse{}
 
-	url := fmt.Sprintf("%s/v1/rates/users/%s/rate", s.u.String(), req.OwnerId)
+	url := fmt.Sprintf("%s/v1/rates/users/%s/rate", s.u.String(), req.UserId)
 	q := fmt.Sprintf("country=%s&sim_type=%s&provider=%s&from=%s&to=%s", req.Country, req.SimType, req.Provider, req.From, req.To)
 	resp, err := s.r.GetWithQuery(url, q)
 

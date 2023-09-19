@@ -37,6 +37,7 @@ func TestWorkflow_UserStories(t *testing.T) {
 	w.RegisterTestCase(Story_add_node_to_site("left"))
 	w.RegisterTestCase(Story_add_node_to_site("right"))
 	w.RegisterTestCase(Story_attach_node())
+	// w.RegisterTestCase(Story_upload_dataplan())
 
 	/* Run */
 	err := w.Run(t, context.Background())

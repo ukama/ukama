@@ -79,7 +79,7 @@ func TestRouter_PingRoute(t *testing.T) {
 func TestRouter_GetRates(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := GetRateRequest{
-		OwnerId:  ownerId,
+		UserId:   ownerId,
 		Country:  "USA",
 		Provider: "ABC",
 		To:       time.Now().UTC().Format(time.RFC3339),
@@ -106,7 +106,7 @@ func TestRouter_GetRates(t *testing.T) {
 	b := &bmocks.BaseRatesServiceClient{}
 	arc := &providers.AuthRestClient{}
 	pReq := &rpb.GetRateRequest{
-		OwnerId:  req.OwnerId,
+		OwnerId:  req.UserId,
 		Country:  req.Country,
 		Provider: req.Provider,
 		To:       req.To,

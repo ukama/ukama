@@ -30,13 +30,13 @@ type InitData struct {
 	PackageId    string
 
 	// This data is taken from the https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv */
-	Providers map[string][]string
-	Countries []string
-	OwnerId   string
-	OrgId     string
-
-	Country  string
-	Provider string
+	Providers  map[string][]string
+	Countries  []string
+	OwnerId    string
+	OrgId      string
+	BaserateId string
+	Country    string
+	Provider   string
 
 	/* API requests */
 	reqUploadBaseRatesRequest         api.UploadBaseRatesRequest
@@ -53,7 +53,7 @@ type InitData struct {
 	reqGetPackageByOrgRequest         api.GetPackageByOrgRequest
 	reqPackagesRequest                api.PackagesRequest
 	reqUpdatePackageRequest           api.UpdatePackageRequest
-	ReqAddPackageRequest              api.AddPackageRequest
+	reqAddPackageRequest              api.AddPackageRequest
 
 	/* API Responses */
 
@@ -117,32 +117,6 @@ func InitializeData() *InitData {
 	}
 	d.reqGetMarkupHistoryRequest = api.GetMarkupHistoryRequest{
 		OwnerId: d.OwnerId,
-	}
-
-	d.reqGetRateRequest = api.GetRateRequest{
-		OwnerId:  d.OwnerId,
-		Country:  c,
-		Provider: p[utils.RandomInt(len(p)-1)],
-		SimType:  d.SimType,
-		From:     utils.GenerateFutureDate(24 * time.Hour),
-		To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
-	}
-
-	d.ReqAddPackageRequest = api.AddPackageRequest{
-		OwnerId:    d.OwnerId,
-		OrgId:      d.OrgId,
-		Name:       faker.FirstName() + "-monthly-pack",
-		SimType:    d.SimType,
-		From:       utils.GenerateFutureDate(24 * time.Hour),
-		To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
-		BaserateId: "",
-		SmsVolume:  100,
-		DataVolume: 1024,
-		DataUnit:   "MegaBytes",
-		Type:       "postpaid",
-		Active:     true,
-		Flatrate:   false,
-		Apn:        "ukama.tel",
 	}
 
 	d.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
@@ -217,6 +191,7 @@ var TC_dp_add_baserate = &test.TestCase{
 		}
 		a.Country = resp.Rate[0].Country
 		a.Provider = resp.Rate[0].Provider
+		a.BaserateId = resp.Rate[0].Uuid
 		tc.SaveWorkflowData(a)
 		tc.Watcher.Stop()
 		return nil
@@ -462,22 +437,20 @@ var TC_dp_get_rate = &test.TestCase{
 	Name:        "Get rate for Owner's org",
 	Description: "Get rate for a Owner's org",
 	Data:        &rpb.GetRateResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
 		a := tc.GetWorkflowData().(*InitData)
-		c := a.Countries[len(a.Countries)-1]
-		p := a.Providers[c]
 		a.reqGetRateRequest = api.GetRateRequest{
-			OwnerId:  a.OwnerId,
-			Country:  c,
-			Provider: p[len(p)-1],
+			UserId:   a.OwnerId,
+			Country:  a.Country,
+			Provider: a.Provider,
 			SimType:  a.SimType,
 			From:     utils.GenerateFutureDate(24 * time.Hour),
 			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
 		}
+
 		tc.SaveWorkflowData(a)
 		return nil
 	},
@@ -522,7 +495,7 @@ var TC_dp_get_rate = &test.TestCase{
 
 			a := tc.GetWorkflowData().(*InitData)
 			if len(resp.Rates) > 0 {
-				a.ReqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
+				a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
 			}
 
 			tc.SaveWorkflowData(a)
@@ -542,6 +515,24 @@ var TC_dp_add_package = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
+
+		a.reqAddPackageRequest = api.AddPackageRequest{
+			OwnerId:    a.OwnerId,
+			OrgId:      a.OrgId,
+			Name:       faker.FirstName() + "-monthly-pack",
+			SimType:    a.SimType,
+			From:       utils.GenerateFutureDate(24 * time.Hour),
+			To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
+			BaserateId: a.BaserateId,
+			SmsVolume:  100,
+			DataVolume: 1024,
+			DataUnit:   "MegaBytes",
+			Type:       "postpaid",
+			Active:     true,
+			Flatrate:   false,
+			Apn:        "ukama.tel",
+		}
+
 		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.package.update"})
 		return nil
 	},
@@ -552,7 +543,7 @@ var TC_dp_add_package = &test.TestCase{
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
 
-			tc.Data, err = a.Sys.DataPlanPackageAdd(a.ReqAddPackageRequest)
+			tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
 		} else {
 			log.Errorf("Invalid data type for Workflow data.")
 			return fmt.Errorf("invalid data type for Workflow data")
@@ -567,7 +558,7 @@ var TC_dp_add_package = &test.TestCase{
 		resp := tc.GetData().(*ppb.AddPackageResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
-			if data.ReqAddPackageRequest.OrgId == resp.Package.OrgId &&
+			if data.reqAddPackageRequest.OrgId == resp.Package.OrgId &&
 				resp.Package.Uuid != "" {
 				check = true
 			}
