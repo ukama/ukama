@@ -24,6 +24,9 @@ services=(
     "notification/node-gateway"
     "notification/notify"
     "notification/api-gateway"
+    "init/lookup"
+    "init/node-gateway"
+    "init/api-gateway"
     "metrics/api-gateway"
     )
 
