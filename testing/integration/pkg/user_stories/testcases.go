@@ -973,7 +973,7 @@ func Story_invite_add() *test.TestCase {
 					tc1.Invitation.Status == invpb.StatusType_Pending &&
 					tc1.Invitation.Org == a.OrgName {
 					check1 = true
-				} else if err != nil {
+				} else {
 					return check1, fmt.Errorf("add invite story failed on getInvite. Error %v", err)
 				}
 
@@ -988,7 +988,7 @@ func Story_invite_add() *test.TestCase {
 							check2 = false
 						}
 					}
-				} else if err != nil {
+				} else {
 					return check1, fmt.Errorf("add invite story failed on getInvitations. Error %v", err)
 				}
 			}
@@ -1091,13 +1091,12 @@ func Story_invite_status_update() *test.TestCase {
 					if err == nil && tc2.User.Email == tc1.Invitation.Email {
 						a.invitedUserId = tc2.User.Id
 						check2 = true
-					} else if err != nil {
+					} else {
 						return check2, fmt.Errorf("update invitation status story failed on addUser. Error %v", err)
 					}
-				} else if err != nil {
+				} else {
 					return check1, fmt.Errorf("update invitation status story failed on getInvite. Error %v", err)
 				}
-
 			}
 
 			if check1 && check2 {
@@ -1183,7 +1182,7 @@ func Story_member_add() *test.TestCase {
 				if err == nil && tc1.Member.UserId == resp.Member.UserId &&
 					tc1.Member.OrgId == a.OrgId {
 					check1 = true
-				} else if err != nil {
+				} else {
 					return check1, fmt.Errorf("add member story failed on getMember. Error %v", err)
 				}
 
@@ -1196,7 +1195,7 @@ func Story_member_add() *test.TestCase {
 							break
 						}
 					}
-				} else if err != nil {
+				} else {
 					return check2, fmt.Errorf("add member story failed on getMembers. Error %v", err)
 				}
 			}
