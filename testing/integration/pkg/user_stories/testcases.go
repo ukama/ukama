@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
+	"github.com/ukama/ukama/systems/common/validation"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
@@ -25,6 +26,7 @@ import (
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
+	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
@@ -41,18 +43,21 @@ type UserStoriesData struct {
 	MbHost string
 	w      *test.Workflow
 
-	OrgId      string
-	OrgName    string
-	OrgOwnerId string
-	UserId     string
-	UserAuthId string
-	NetworkId  string
-	SiteId     string
-	NodeId     string
-	lNodeId    string
-	rNodeId    string
-	simType    string
-	country    string
+	OrgId         string
+	OrgName       string
+	OrgOwnerId    string
+	UserId        string
+	UserAuthId    string
+	NetworkId     string
+	SiteId        string
+	NodeId        string
+	lNodeId       string
+	rNodeId       string
+	simType       string
+	country       string
+	invitationId  string
+	invitedUserId string
+	memberId      string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -62,7 +67,9 @@ type UserStoriesData struct {
 	reqWhoami        napi.GetUserRequest
 	reqGetUserByAuth napi.GetUserByAuthIdRequest
 
-	reqGetMember rapi.GetMemberRequest
+	reqGetMember  rapi.GetMemberRequest
+	reqAddMember  rapi.MemberRequest
+	reqGetMembers rapi.GetMembersRequest
 
 	reqAddNetwork  rapi.AddNetworkRequest
 	reqGetNetwork  rapi.GetNetworkRequest
@@ -80,6 +87,11 @@ type UserStoriesData struct {
 	reqGetNode           rapi.GetNodeRequest
 	reqGetNodeForSite    rapi.GetSiteNodesRequest
 	reqGetNodesByNetwork rapi.GetNetworkNodesRequest
+
+	reqAddInvite        rapi.AddInvitationRequest
+	reqUpdateInvitation rapi.UpdateInvitationRequest
+	reqGetInvite        rapi.GetInvitationRequest
+	reqGetInvites       rapi.GetInvitationByOrgRequest
 
 	reqUploadBaseRates dapi.UploadBaseRatesRequest
 	reqGetBaseRates    dapi.GetBaseRatesByCountryRequest
@@ -101,6 +113,8 @@ func InitializeData() *UserStoriesData {
 	d.MbHost = config.System.MessageBus
 	d.simType = "test"
 	d.country = "The lunar maria"
+	d.OrgId = config.OrgId
+	d.OrgName = config.OrgName
 
 	return d
 }
@@ -885,6 +899,327 @@ func Story_attach_node() *test.TestCase {
 				return err
 			}
 
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_invite_add() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add invite",
+		Description: "Invite user to org",
+		Data:        &invpb.AddInvitationResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.invitation.add"})
+
+			a.reqAddInvite = rapi.AddInvitationRequest{
+				Org:   a.OrgName,
+				Name:  strings.ToLower(faker.FirstName()) + "-invite",
+				Email: faker.Email(),
+				Role:  "USERS",
+			}
+
+			tc.SaveWorkflowData(a)
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.RegistryClient.AddInvitations(a.reqAddInvite)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1, check2 := false, false
+
+			resp := tc.GetData().(*invpb.AddInvitationResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetInvite = rapi.GetInvitationRequest{
+					InvitationId: resp.Invitation.Id,
+				}
+				a.reqGetInvites = rapi.GetInvitationByOrgRequest{
+					Org: a.OrgName,
+				}
+
+				tc1, err := a.RegistryClient.GetInvitation(a.reqGetInvite)
+				timeObj := time.Unix(int64(tc1.Invitation.ExpireAt.Seconds), 0)
+				expiry := timeObj.Format(time.RFC3339)
+				if err == nil && tc1.Invitation.Id == resp.Invitation.Id &&
+					tc1.Invitation.Role == resp.Invitation.Role &&
+					validation.IsFutureDate(expiry) == nil &&
+					tc1.Invitation.Status == invpb.StatusType_Pending &&
+					tc1.Invitation.Org == a.OrgName {
+					check1 = true
+				} else if err != nil {
+					return check1, fmt.Errorf("add invite story failed on getInvite. Error %v", err)
+				}
+
+				tc2, err := a.RegistryClient.GetInvitationByOrg(a.reqGetInvites)
+				if err == nil {
+					for i, invite := range tc2.Invitations {
+						if invite.Id == resp.Invitation.Id && invite.Org == a.OrgName {
+							check2 = true
+							break
+						}
+						if len(tc2.Invitations)-1 == i {
+							check2 = false
+						}
+					}
+				} else if err != nil {
+					return check1, fmt.Errorf("add invite story failed on getInvitations. Error %v", err)
+				}
+			}
+
+			if check1 && check2 {
+				return check1 && check2, nil
+			} else {
+				return false, fmt.Errorf("add invite story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*invpb.AddInvitationResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+			a.invitationId = resp.Invitation.Id
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_invite_status_update() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Update invite",
+		Description: "Update invite status",
+		Data:        &invpb.UpdateInvitationStatusResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.invitation.status.update"})
+
+			a.reqUpdateInvitation = rapi.UpdateInvitationRequest{
+				InvitationId: a.invitationId,
+				Status:       invpb.StatusType_name[int32(invpb.StatusType_Accepted)],
+			}
+
+			tc.SaveWorkflowData(a)
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.RegistryClient.UpdateInvitations(a.reqUpdateInvitation)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1, check2 := false, false
+
+			resp := tc.GetData().(*invpb.UpdateInvitationStatusResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetInvite = rapi.GetInvitationRequest{
+					InvitationId: a.invitationId,
+				}
+
+				tc1, err := a.RegistryClient.GetInvitation(a.reqGetInvite)
+				timeObj := time.Unix(int64(tc1.Invitation.ExpireAt.Seconds), 0)
+				expiry := timeObj.Format(time.RFC3339)
+				if err == nil && tc1.Invitation.Id == resp.Id &&
+					validation.IsFutureDate(expiry) == nil &&
+					tc1.Invitation.Status == invpb.StatusType_Accepted {
+
+					a.reqAddUser = napi.AddUserRequest{
+						Name:   tc1.Invitation.Name,
+						Email:  strings.ToLower(tc1.Invitation.Email),
+						AuthId: faker.UUIDHyphenated(),
+						Phone:  strings.ToLower(faker.Phonenumber()),
+					}
+					check1 = true
+					tc2, err := a.NucleusClient.AddUser(a.reqAddUser)
+					if err == nil && tc2.User.Email == tc1.Invitation.Email {
+						a.invitedUserId = tc2.User.Id
+						check2 = true
+					} else if err != nil {
+						return check2, fmt.Errorf("update invitation status story failed on addUser. Error %v", err)
+					}
+				} else if err != nil {
+					return check1, fmt.Errorf("update invitation status story failed on getInvite. Error %v", err)
+				}
+
+			}
+
+			if check1 && check2 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("update invitation status story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*invpb.UpdateInvitationStatusResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_member_add() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add member",
+		Description: "Add member to org",
+		Data:        &mempb.MemberResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			// Prepare the data for the test case
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.member.add"})
+
+			a.reqAddMember = rapi.MemberRequest{
+				UserUuid: a.invitedUserId,
+			}
+
+			tc.SaveWorkflowData(a)
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.RegistryClient.AddMember(a.reqAddMember)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during user stories
+			check1, check2 := false, false
+
+			resp := tc.GetData().(*mempb.MemberResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetMember = rapi.GetMemberRequest{
+					UserUuid: a.invitedUserId,
+				}
+
+				tc1, err := a.RegistryClient.GetMember(a.reqGetMember)
+				if err == nil && tc1.Member.UserId == resp.Member.UserId &&
+					tc1.Member.OrgId == a.OrgId {
+					check1 = true
+				} else if err != nil {
+					return check1, fmt.Errorf("add member story failed on getMember. Error %v", err)
+				}
+
+				tc2, err := a.RegistryClient.GetMembers()
+
+				if err == nil {
+					for _, member := range tc2.Members {
+						if member.UserId == a.invitedUserId && member.OrgId == a.OrgId {
+							check2 = true
+							break
+						}
+					}
+				} else if err != nil {
+					return check2, fmt.Errorf("add member story failed on getMembers. Error %v", err)
+				}
+			}
+
+			if check1 && check2 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("add member story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*mempb.MemberResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 			tc.Watcher.Stop()

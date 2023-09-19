@@ -53,7 +53,7 @@ type InitData struct {
 	reqGetPackageByOrgRequest         api.GetPackageByOrgRequest
 	reqPackagesRequest                api.PackagesRequest
 	reqUpdatePackageRequest           api.UpdatePackageRequest
-	reqAddPackageRequest              api.AddPackageRequest
+	ReqAddPackageRequest              api.AddPackageRequest
 
 	/* API Responses */
 
@@ -495,7 +495,7 @@ var TC_dp_get_rate = &test.TestCase{
 
 			a := tc.GetWorkflowData().(*InitData)
 			if len(resp.Rates) > 0 {
-				a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
+				a.ReqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
 			}
 
 			tc.SaveWorkflowData(a)
@@ -516,7 +516,7 @@ var TC_dp_add_package = &test.TestCase{
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
 
-		a.reqAddPackageRequest = api.AddPackageRequest{
+		a.ReqAddPackageRequest = api.AddPackageRequest{
 			OwnerId:    a.OwnerId,
 			OrgId:      a.OrgId,
 			Name:       faker.FirstName() + "-monthly-pack",
@@ -543,7 +543,7 @@ var TC_dp_add_package = &test.TestCase{
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
 
-			tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
+			tc.Data, err = a.Sys.DataPlanPackageAdd(a.ReqAddPackageRequest)
 		} else {
 			log.Errorf("Invalid data type for Workflow data.")
 			return fmt.Errorf("invalid data type for Workflow data")
@@ -558,7 +558,7 @@ var TC_dp_add_package = &test.TestCase{
 		resp := tc.GetData().(*ppb.AddPackageResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
-			if data.reqAddPackageRequest.OrgId == resp.Package.OrgId &&
+			if data.ReqAddPackageRequest.OrgId == resp.Package.OrgId &&
 				resp.Package.Uuid != "" {
 				check = true
 			}

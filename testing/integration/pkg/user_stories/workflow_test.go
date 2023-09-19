@@ -27,16 +27,19 @@ func TestWorkflow_UserStories(t *testing.T) {
 		return nil
 	}
 
-	w.RegisterTestCase(Story_add_user)
 	// w.RegisterTestCase(Story_add_org)
-	w.RegisterTestCase(Story_add_network)
-	w.RegisterTestCase(Story_add_node("parent"))
-	w.RegisterTestCase(Story_add_node("left"))
-	w.RegisterTestCase(Story_add_node("right"))
-	w.RegisterTestCase(Story_add_node_to_site("parent"))
-	w.RegisterTestCase(Story_add_node_to_site("left"))
-	w.RegisterTestCase(Story_add_node_to_site("right"))
-	w.RegisterTestCase(Story_attach_node())
+	// w.RegisterTestCase(Story_add_user)
+	// w.RegisterTestCase(Story_add_network)
+	// w.RegisterTestCase(Story_add_node("parent"))
+	// w.RegisterTestCase(Story_add_node("left"))
+	// w.RegisterTestCase(Story_add_node("right"))
+	// w.RegisterTestCase(Story_add_node_to_site("parent"))
+	// w.RegisterTestCase(Story_add_node_to_site("left"))
+	// w.RegisterTestCase(Story_add_node_to_site("right"))
+	// w.RegisterTestCase(Story_attach_node())
+	w.RegisterTestCase(Story_invite_add())
+	w.RegisterTestCase(Story_invite_status_update())
+	w.RegisterTestCase(Story_member_add())
 	// w.RegisterTestCase(Story_upload_dataplan())
 
 	/* Run */

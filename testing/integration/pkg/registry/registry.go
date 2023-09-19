@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -260,7 +261,8 @@ func (s *RegistryClient) GetNodesForSite(req api.GetSiteNodesRequest) (*nodepb.G
 }
 
 func (s *RegistryClient) AddInvitations(req api.AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
-	url := s.u.String() + VERSION + INVITATIONS
+	url := s.u.String() + VERSION + INVITATIONS + req.Org
+	fmt.Println("AddInvitations: ", url)
 	rsp := &invpb.AddInvitationResponse{}
 
 	if err := s.r.SendRequest(http.MethodPost, url, req, rsp); err != nil {
@@ -271,10 +273,10 @@ func (s *RegistryClient) AddInvitations(req api.AddInvitationRequest) (*invpb.Ad
 }
 
 func (s *RegistryClient) UpdateInvitations(req api.UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
-	url := s.u.String() + VERSION + INVITATIONS
+	url := s.u.String() + VERSION + INVITATIONS + req.InvitationId
 	rsp := &invpb.UpdateInvitationStatusResponse{}
 
-	if err := s.r.SendRequest(http.MethodPost, url, req, rsp); err != nil {
+	if err := s.r.SendRequest(http.MethodPatch, url, req, rsp); err != nil {
 		return nil, err
 	}
 
@@ -282,7 +284,7 @@ func (s *RegistryClient) UpdateInvitations(req api.UpdateInvitationRequest) (*in
 }
 
 func (s *RegistryClient) GetInvitationByOrg(req api.GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
-	url := s.u.String() + VERSION + INVITATIONS + "orgs/" + req.Org
+	url := s.u.String() + VERSION + INVITATIONS + "org/" + req.Org
 	rsp := &invpb.GetInvitationByOrgResponse{}
 
 	if err := s.r.SendRequest(http.MethodGet, url, req, rsp); err != nil {
