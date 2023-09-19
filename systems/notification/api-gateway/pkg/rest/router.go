@@ -161,7 +161,7 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.
 
 // getEmailByIdHandler handles the get email by ID API endpoint.
 func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mailerpb.GetEmailByIdResponse, error) {
-	mailerId:=req.MailerId
+	mailerId := req.MailerId
 	res, err := r.clients.m.GetEmailById(mailerId)
 	if err != nil {
 		return nil, err

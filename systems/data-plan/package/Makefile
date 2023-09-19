@@ -18,8 +18,8 @@ integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 	
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
- 			   package.proto
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep  -I ../base-rate/pb --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
+		package.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 

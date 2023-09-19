@@ -17,7 +17,7 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.52.0
@@ -94,7 +94,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect

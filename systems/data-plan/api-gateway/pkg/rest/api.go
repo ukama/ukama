@@ -11,6 +11,7 @@ type AddPackageRequest struct {
 	DataVolume  int64   `example:"1024" json:"data_volume" validation:"required"`
 	DataUnit    string  `example:"MegaBytes" json:"data_unit" validation:"required"`
 	VoiceUnit   string  `example:"seconds" json:"voice_unit" validation:"required"`
+	Duration    uint64  `example:"1" json:"duration" validation:"required"`
 	Type        string  `example:"postpaid" json:"type" validation:"required"`
 	Flatrate    bool    `example:"false" json:"flat_rate" default:"false"`
 	Amount      float64 `example:"0" json:"amount" default:"0.00"`
@@ -60,12 +61,12 @@ type UploadBaseRatesRequest struct {
 }
 
 type GetRateRequest struct {
-	OwnerId     string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
-	Country     string `json:"country" binding:"required" validate:"required"`
-	Provider    string `json:"provider" binding:"required" validate:"required"`
-	To          string `json:"to" binding:"required" validate:"required"`
-	From        string `json:"from" binding:"required" validate:"required"`
-	SimType     string `json:"sim_type" binding:"required" validate:"required"`
+	OwnerId  string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
+	Country  string `json:"country" binding:"required" validate:"required"`
+	Provider string `json:"provider" binding:"required" validate:"required"`
+	To       string `json:"to" binding:"required" validate:"required"`
+	From     string `json:"from" binding:"required" validate:"required"`
+	SimType  string `json:"sim_type" binding:"required" validate:"required"`
 }
 
 type DeleteMarkupRequest struct {

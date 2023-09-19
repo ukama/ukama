@@ -40,7 +40,6 @@ func NewAuthManager(serverUrl string, timeout time.Duration, ketoClientUrl strin
 			URL: serverUrl,
 		},
 	}
-
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
 	oc.GetConfig().HTTPClient = &http.Client{
@@ -188,6 +187,19 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 
 	if err != nil {
+		if r.StatusCode == http.StatusBadRequest {
+			u := UIErrorResp{}
+			buf := &bytes.Buffer{}
+			_, e := buf.ReadFrom(r.Body)
+			if e != nil {
+				return nil, e
+			}
+			e = json.Unmarshal(buf.Bytes(), &u)
+			if e != nil {
+				return nil, e
+			}
+			return nil, fmt.Errorf("%v", u.Ui.Messages[0].Text)
+		}
 		return nil, err
 	}
 	if r.StatusCode == http.StatusUnauthorized {

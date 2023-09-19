@@ -50,7 +50,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if err != nil {
 		return nil, err
 	}
-
 	res, err := i.nucleusSystem.GetOrgByName(req.GetOrg())
 	if err != nil {
 		return nil, err
@@ -121,7 +120,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 			UserId:   userInfo.User.Id,
 			ExpireAt: timestamppb.New(i.invitationExpiryTime),
 		},
-
 	}, nil
 }
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
