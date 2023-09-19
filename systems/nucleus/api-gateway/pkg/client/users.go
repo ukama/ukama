@@ -72,7 +72,6 @@ func (r *Users) GetByAuthId(authId string) (*pbusers.GetResponse, error) {
 func (r *Users) AddUser(user *pbusers.User) (*pbusers.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-
 	return r.client.Add(ctx, &pbusers.AddRequest{User: user})
 }
 

@@ -2,7 +2,7 @@ name: bff
 on:
   push:
     paths:
-        - "systems/bff/**"
+        - "systems/console-bff/**"
         - ".github/workflows/bff.yaml"
  
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
         name: build and test
         runs-on: ubuntu-latest
         env:
-          working-directory: systems/bff
+          working-directory: systems/console-bff
         steps:
             - uses: actions/checkout@v2
               # init vars required for tag generation
@@ -80,19 +80,19 @@ jobs:
             #   run: |
             #       env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
 
-            - name: OCI Push bff-api test
-              working-directory: "systems/bff/bff_integration"
-              env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
-                  UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+            # - name: OCI Push bff-api test
+            #   working-directory: "systems/bff/bff_integration"
+            #   env:
+            #       REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
+            #       UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
-              run: |
-                  buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test \
-                      -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
-                      -t $REGISTRY\:latest-test . && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
-                  buildah push $REGISTRY\:latest-test
+            #   run: |
+            #       buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test \
+            #           -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+            #           -t $REGISTRY\:latest-test . && \
+            #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+            #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
+            #       buildah push $REGISTRY\:latest-test
             - name: SonarCloud Scan
               uses: sonarsource/sonarcloud-github-action@v1.6
               env:
@@ -111,7 +111,7 @@ jobs:
         name: lint
         runs-on: ubuntu-latest
         env:
-          working-directory: systems/bff
+          working-directory: systems/console-bff
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v2
@@ -119,7 +119,7 @@ jobs:
             - name: Set up Node.js
               uses: actions/setup-node@v1
               with:
-                  node-version: 12
+                  node-version: 16
 
             # ESLint and Prettier must be in `package.json`
             - name: Install Node.js dependencies
@@ -136,7 +136,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         env:
-          working-directory: systems/bff
+          working-directory: systems/console-bff
         steps:
             # init vars required for tag generation
             - uses: actions/checkout@v3
