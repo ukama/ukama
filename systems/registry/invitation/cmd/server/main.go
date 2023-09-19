@@ -31,8 +31,8 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	networkDb := initDb()
-	runGrpcServer(networkDb)
+	invitationDb := initDb()
+	runGrpcServer(invitationDb)
 }
 func initConfig() {
 
