@@ -1,8 +1,10 @@
-module github.com/ukama/ukama/systems/configurator/controller
+module github.com/ukama/ukama/systems/configurator/software-manager
 
 go 1.20
 
 replace github.com/ukama/ukama/systems/common => ../../common
+
+replace github.com/ukama/ukama/systems/configurator/software-manager => ./
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
@@ -17,6 +19,7 @@ require (
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
+	gorm.io/gorm v1.24.3
 )
 
 require (
@@ -94,5 +97,4 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.3.5 // indirect
-	gorm.io/gorm v1.24.3 // indirect
 )

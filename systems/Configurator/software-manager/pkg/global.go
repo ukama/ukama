@@ -1,6 +1,6 @@
 package pkg
 
-const ServiceName = "software-manager"
+const ServiceName = "softwaremanager"
 const SystemName = "configurator"
 
 var IsDebugMode bool = false
