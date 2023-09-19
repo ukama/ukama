@@ -12,25 +12,25 @@ type network struct {
 	mock.Mock
 }
 
-// AddNetwork provides a mock function with given fields: orgName, netName
-func (_m *network) AddNetwork(orgName string, netName string) (*gen.AddResponse, error) {
-	ret := _m.Called(orgName, netName)
+// AddNetwork provides a mock function with given fields: orgName, netName, allowedCountries, allowedNetworks, paymentLinks
+func (_m *network) AddNetwork(orgName string, netName string, allowedCountries []string, allowedNetworks []string, paymentLinks bool) (*gen.AddResponse, error) {
+	ret := _m.Called(orgName, netName, allowedCountries, allowedNetworks, paymentLinks)
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.AddResponse, error)); ok {
-		return rf(orgName, netName)
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) (*gen.AddResponse, error)); ok {
+		return rf(orgName, netName, allowedCountries, allowedNetworks, paymentLinks)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.AddResponse); ok {
-		r0 = rf(orgName, netName)
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) *gen.AddResponse); ok {
+		r0 = rf(orgName, netName, allowedCountries, allowedNetworks, paymentLinks)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(orgName, netName)
+	if rf, ok := ret.Get(1).(func(string, string, []string, []string, bool) error); ok {
+		r1 = rf(orgName, netName, allowedCountries, allowedNetworks, paymentLinks)
 	} else {
 		r1 = ret.Error(1)
 	}
