@@ -17,6 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -121,9 +122,20 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 	route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
 
-	err = n.msgbus.PublishRequest(route, req)
+	evt := &epb.NetworkCreatedEvent{
+		Id:               network.Id.String(),
+		Name:             network.Name,
+		OrgId:            network.OrgId.String(),
+		AllowedCountries: network.AllowedCountries,
+		AllowedNetworks:  network.AllowedNetworks,
+		PaymentLinks:     network.PaymentLinks,
+		IsDeactivated:    network.Deactivated,
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	n.pushNetworkCount(org.Id)
