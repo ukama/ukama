@@ -19,6 +19,11 @@ service UserService {
     rpc Deactivate(DeactivateRequest) returns (DeactivateResponse);
     rpc Delete (DeleteRequest) returns (DeleteResponse);
     rpc Whoami (GetRequest) returns (WhoamiResponse);
+    rpc GetByEmail (GetByEmailRequest) returns (GetResponse);
+}
+
+message GetByEmailRequest {
+    string email = 1 [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
 }
 
 message AddRequest{

@@ -55,6 +55,13 @@ func (r *Users) Get(userId string) (*pbusers.GetResponse, error) {
 	return r.client.Get(ctx, &pbusers.GetRequest{UserId: userId})
 }
 
+func (r *Users) GetByEmail(email string) (*pbusers.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	return r.client.GetByEmail(ctx, &pbusers.GetByEmailRequest{Email: email})
+}
+
 func (r *Users) GetByAuthId(authId string) (*pbusers.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
