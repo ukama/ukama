@@ -3,12 +3,9 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
@@ -17,6 +14,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -298,12 +298,15 @@ func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesB
 
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
-		Id:            ntwk.Id.String(),
-		Name:          ntwk.Name,
-		OrgId:         ntwk.OrgId.String(),
-		IsDeactivated: ntwk.Deactivated,
-		IsSynced:      ntwk.Synced,
-		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
+		Id:               ntwk.Id.String(),
+		Name:             ntwk.Name,
+		OrgId:            ntwk.OrgId.String(),
+		AllowedCountries: ntwk.AllowedCountries,
+		AllowedNetworks:  ntwk.AllowedNetworks,
+		PaymentLinks:     ntwk.PaymentLinks,
+		IsDeactivated:    ntwk.Deactivated,
+		IsSynced:         ntwk.Synced,
+		CreatedAt:        timestamppb.New(ntwk.CreatedAt),
 	}
 }
 
