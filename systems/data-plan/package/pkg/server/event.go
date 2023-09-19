@@ -26,7 +26,7 @@ func NewPackageEventServer(orgName string, packageRepo db.PackageRepo) *PackageE
 func (p *PackageEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(p.orgName, "event.cloud.local.{{ .Org}}.dataplan.rate.rate.upload"):
+	case msgbus.PrepareRoute(p.orgName, "event.cloud.local.{{ .Org }}.dataplan.baserate.rate.upload"):
 		break
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)

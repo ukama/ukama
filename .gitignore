@@ -21,5 +21,6 @@ node_modules
 .env
 
 systems/data-plan/base-rate/cover.
+systems/console-bff/.cache/*
 systems/testing/integration/pkg/user_stories/coverage.out
 systems/console-bff/.cache/*

@@ -61,7 +61,7 @@ type InitData struct {
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
-	reqSimPoolStatByTypeReq      api.SimPoolStatByTypeReq
+	reqSimPoolStatByTypeReq      api.SimPoolTypeReq
 	reqSimByIccidReq             api.SimByIccidReq
 	reqSubscriberGetReq          api.SubscriberGetReq
 	reqSubscriberAddReq          api.SubscriberAddReq
@@ -121,7 +121,7 @@ func InitializeData() *InitData {
 		Data:    string(CreateSimPool(MAX_POOL, &d.ICCID)),
 	}
 
-	d.reqSimPoolStatByTypeReq = api.SimPoolStatByTypeReq{
+	d.reqSimPoolStatByTypeReq = api.SimPoolTypeReq{
 		SimType: d.SimType,
 	}
 
