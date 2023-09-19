@@ -31,6 +31,9 @@ service NetworkService {
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
     string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
+    repeated string allowedCountries = 3 [json_name = "allowed_countries"];
+    repeated string allowedNetworks = 4 [json_name = "allowed_networks"];
+    bool paymentLinks = 5 [json_name = "payment_links"];
 }
 
 message AddResponse{

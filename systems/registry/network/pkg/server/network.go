@@ -52,6 +52,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	// Get the Org locally
 	orgName := req.GetOrgName()
 	networkName := req.GetName()
+
 	org, err := n.orgRepo.GetByName(orgName)
 	if err != nil {
 		log.Infof("lookup for org %s remotely", orgName)
@@ -93,6 +94,18 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	network := &db.Network{
 		Name:  networkName,
 		OrgId: org.Id,
+	}
+
+	if req.AllowedCountries != nil {
+		network.AllowedCountries = req.AllowedCountries
+	}
+
+	if req.AllowedNetworks != nil {
+		network.AllowedNetworks = req.AllowedNetworks
+	}
+
+	if req.PaymentLinks {
+		network.PaymentLinks = req.PaymentLinks
 	}
 
 	log.Infof("Adding network %s", networkName)
