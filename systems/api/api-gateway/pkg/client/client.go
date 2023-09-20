@@ -12,15 +12,20 @@ import (
 type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
 	CreateNetwork(string, string, []string, []string, bool) (*NetworkInfo, error)
+
+	GetSim(string) (*SimInfo, error)
+	ConfigureSim(string, string, string, string, string) (*SimInfo, error)
 }
 
 type clients struct {
 	network NetworkClient
+	sim     SimClient
 }
 
-func NewClientsSet(network NetworkClient) Client {
+func NewClientsSet(network NetworkClient, sim SimClient) Client {
 	c := &clients{
 		network: network,
+		sim:     sim,
 	}
 
 	return c
@@ -67,4 +72,47 @@ func (c *clients) CreateNetwork(orgName, NetworkName string,
 	}
 
 	return net, nil
+}
+
+func (c *clients) GetSim(id string) (*SimInfo, error) {
+	sim, err := c.sim.Get(id)
+	if err != nil {
+		e := ErrorStatus{}
+
+		if errors.As(err, &e) {
+			return nil, rest.HttpError{
+				HttpCode: e.StatusCode,
+				Message:  err.Error(),
+			}
+		}
+
+		return nil, err
+	}
+
+	if !sim.IsSynced {
+		log.Warn("partial content. request is still ongoing")
+
+		return sim, rest.HttpError{
+			HttpCode: http.StatusPartialContent,
+			Message:  "partial content. request is still ongoing",
+		}
+	}
+
+	return sim, nil
+}
+
+func (c *clients) ConfigureSim(subscriberId, networkId, packageId,
+	simType, simToken string) (*SimInfo, error) {
+	sim, err := c.sim.Add(AddSimRequest{
+		SubscriberId: subscriberId,
+		NetworkId:    networkId,
+		PackageId:    packageId,
+		SimType:      simType,
+		SimToken:     simToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return sim, nil
 }
