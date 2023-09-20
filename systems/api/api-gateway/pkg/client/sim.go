@@ -33,10 +33,10 @@ type Sim struct {
 
 type AddSimRequest struct {
 	SubscriberId string `json:"subscriber_id" validate:"required"`
-	SimToken     string `json:"sim_token"`
-	PackageId    string `json:"package_id" validate:"required"`
 	NetworkId    string `json:"network_id" validate:"required"`
-	SimType      string `json:"sim_type" validate:"required"`
+	PackageId    string `json:"package_id" validate:"required"`
+	SimType      string `json:"sim_type"`
+	SimToken     string `json:"sim_token"`
 }
 
 type SimClient interface {
@@ -72,7 +72,7 @@ func (s *simClient) Add(req AddSimRequest) (*SimInfo, error) {
 
 	sim := Sim{}
 
-	resp, err := s.R.Post(s.u.String()+NetworkEndpoint, b)
+	resp, err := s.R.Post(s.u.String()+SimEndpoint, b)
 	if err != nil {
 		log.Errorf("AddSim failure. error: %s", err.Error())
 
