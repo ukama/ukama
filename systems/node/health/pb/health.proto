@@ -1,0 +1,43 @@
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/node/health/pb/gen";
+package ukama.node.health.v1;
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+service healhtService {
+    rpc GetRunningApps (GetRunningAppsRequest) returns (GetRunningAppsResponse);
+    rpc StoreRunningAppsInfo (StoreRunningAppsInfoRequest) returns (StoreRunningAppsInfoResponse);
+}
+
+message GetRunningAppsRequest {
+    string nodeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "node_id"];
+}
+
+message GetRunningAppsResponse {
+    repeated App running_apps = 1;
+
+}
+
+
+message StoreRunningAppsInfoRequest {
+    string nodeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "node_id"];;
+    repeated App running_apps = 2;
+}
+
+message App {
+    string id = 1;
+    string nodeId = 2;
+    string name = 3;
+    string version = 4;
+    Status status = 5;
+    string timestamp = 6;
+}
+
+message StoreRunningAppsInfoResponse {
+}
+
+enum Status {
+    UNKNOWN = 0;
+    RUNNING = 1;
+    FAILURE = 2;
+}
