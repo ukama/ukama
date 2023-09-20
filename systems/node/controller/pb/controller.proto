@@ -1,6 +1,6 @@
 syntax = "proto3";
-package ukama.configurator.controller.v1;
-option go_package = "github.com/ukama/ukama/systems/configurator/controller/pb/gen";
+package ukama.node.controller.v1;
+option go_package = "github.com/ukama/ukama/systems/node/controller/pb/gen";
 
 import "validator.proto";
 

@@ -1,27 +1,26 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/num30/config"
 
-	"github.com/ukama/ukama/systems/configurator/controller/pkg/providers"
-	"github.com/ukama/ukama/systems/configurator/controller/pkg/server"
+	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
+	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/configurator/controller/pkg"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/configurator/controller/cmd/version"
-
-	pb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
 
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/controller/cmd/version"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -31,11 +30,13 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 	logrus.Infof("Starting %s", pkg.ServiceName)
+	runGrpcServer()
 }
 
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	fmt.Println("serviceConfig", serviceConfig)
 	if err != nil {
 		logrus.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
@@ -48,29 +49,26 @@ func initConfig() {
 }
 
 func runGrpcServer() {
+
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	registry := providers.NewRegistryProvider(serviceConfig.InitClientHost, serviceConfig.DebugMode)
+	reg := providers.NewRegistryProvider(serviceConfig.RegistryHost, serviceConfig.DebugMode)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	controllerServer := server.NewControllerServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName)
 
-	controlleSrv := server.NewControllerServer(
-		mbClient,
-		registry,
-		serviceConfig.DebugMode,
-		serviceConfig.OrgName,
-	)
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pb.RegisterControllerServiceServer(s, controlleSrv)
+		pb.RegisterControllerServiceServer(s, controllerServer)
 	})
 
-	grpcServer.StartServer()
+	go grpcServer.StartServer()
+
 	go msgBusListener(mbClient)
 
 	waitForExit()

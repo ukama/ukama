@@ -10,10 +10,10 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
-	"github.com/ukama/ukama/systems/configurator/controller/pkg"
-	"github.com/ukama/ukama/systems/configurator/controller/pkg/providers"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
+	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 )
 
 type ControllerServer struct {

@@ -11,12 +11,9 @@ import (
 const RegistryVersion = "/v1/"
 const SystemName = "registry"
 
-
-
 type RegistryProvider interface {
-	ValidateNode(nodeId string,orgName string) error
-	ValidateSite(networkId string ,siteName string,orgName string) error
-
+	ValidateNode(nodeId string, orgName string) error
+	ValidateSite(networkId string, siteName string, orgName string) error
 }
 
 type registryProvider struct {
@@ -24,8 +21,6 @@ type registryProvider struct {
 	debug  bool
 	icHost string
 }
-
-
 
 type ValidateNodeReq struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
@@ -47,17 +42,17 @@ func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) 
 	return rc, nil
 }
 
-func NewRegistryProvider(icHost string, debug bool) *registryProvider {
+func NewRegistryProvider(Host string, debug bool) *registryProvider {
 
 	r := &registryProvider{
 		debug:  debug,
-		icHost: icHost,
+		icHost: Host,
 	}
 
 	return r
 }
 
-func (r *registryProvider) ValidateNode(nodeId string, orgName string ) error {
+func (r *registryProvider) ValidateNode(nodeId string, orgName string) error {
 
 	var err error
 
@@ -75,7 +70,7 @@ func (r *registryProvider) ValidateNode(nodeId string, orgName string ) error {
 	resp, err := r.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Get(r.R.URL.String() + RegistryVersion + "nodes/"+nodeId)
+		Get(r.R.URL.String() + RegistryVersion + "nodes/" + nodeId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
@@ -89,7 +84,7 @@ func (r *registryProvider) ValidateNode(nodeId string, orgName string ) error {
 
 	return nil
 }
-func (r *registryProvider) ValidateSite(siteName string, orgName string ,networkId string) error {
+func (r *registryProvider) ValidateSite(siteName string, orgName string, networkId string) error {
 
 	var err error
 
@@ -102,14 +97,13 @@ func (r *registryProvider) ValidateSite(siteName string, orgName string ,network
 	errStatus := &rest.ErrorMessage{}
 	req := ValidateSiteReq{
 		NetworkId: networkId,
-		SiteName: siteName,
-	
+		SiteName:  siteName,
 	}
 
 	resp, err := r.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Get(r.R.URL.String() + RegistryVersion + "/"+networkId+"/sites/"+siteName)
+		Get(r.R.URL.String() + RegistryVersion + "/" + networkId + "/sites/" + siteName)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
