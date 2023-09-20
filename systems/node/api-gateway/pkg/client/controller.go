@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"google.golang.org/grpc"
 )
 

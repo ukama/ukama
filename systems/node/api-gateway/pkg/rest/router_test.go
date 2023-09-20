@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg/client"
-	cpb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
-	nmocks "github.com/ukama/ukama/systems/configurator/controller/pb/gen/mocks"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
+	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -113,7 +113,7 @@ func Test_RestarteNode(t *testing.T) {
 // 		}
 
 // 		w := httptest.NewRecorder()
-// 		req, _ := http.NewRequest("POST", configuratorApiEndpoint, bytes.NewReader(body))
+// 		req, _ := http.NewRequest("POST", nodeApiEndpoint, bytes.NewReader(body))
 
 // 		controllerReq := &cpb.RestartNodeRequest{
 // 			NodeId: cr.NodeId,

@@ -8,17 +8,17 @@ import (
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
-	contPb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
 
 type Router struct {
@@ -85,7 +85,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "API gateway", "Configurator system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "API gateway", "node system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 			return
