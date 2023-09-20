@@ -13,12 +13,15 @@ import (
 const NetworkEndpoint = "/v1/networks"
 
 type NetworkInfo struct {
-	Id            uuid.UUID `json:"id,omitempty"`
-	Name          string    `json:"name,omitempty"`
-	OrgId         string    `json:"org_id,omitempty"`
-	IsDeactivated bool      `json:"is_deactivated,omitempty"`
-	IsSynced      bool      `json:"is_synced,omitempty"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
+	Id               uuid.UUID `json:"id,omitempty"`
+	Name             string    `json:"name,omitempty"`
+	OrgId            string    `json:"org_id,omitempty"`
+	IsDeactivated    bool      `json:"is_deactivated,omitempty"`
+	AllowedCountries []string  `json:"allowed_countries"`
+	AllowedNetworks  []string  `json:"allowed_networks"`
+	PaymentLinks     bool      `json:"payment_links"`
+	IsSynced         bool      `json:"is_synced,omitempty"`
+	CreatedAt        time.Time `json:"created_at,omitempty"`
 }
 
 type Network struct {
@@ -26,8 +29,11 @@ type Network struct {
 }
 
 type AddNetworkRequest struct {
-	OrgName string `json:"org" validate:"required"`
-	NetName string `json:"network_name" validate:"required"`
+	OrgName          string   `json:"org" validate:"required"`
+	NetName          string   `json:"network_name" validate:"required"`
+	AllowedCountries []string `json:"allowed_countries"`
+	AllowedNetworks  []string `json:"allowed_networks"`
+	PaymentLinks     bool     `json:"payment_links"`
 }
 
 type NetworkClient interface {
