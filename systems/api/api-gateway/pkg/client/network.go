@@ -6,8 +6,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const NetworkEndpoint = "/v1/networks"
