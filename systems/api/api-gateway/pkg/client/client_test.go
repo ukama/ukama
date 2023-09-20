@@ -92,19 +92,29 @@ func TestCient_AddNetwork(t *testing.T) {
 	netId := uuid.NewV4()
 	netName := "net-1"
 	orgName := "org-A"
+	networks := []string{"Verizon"}
+	countries := []string{"USA"}
+	paymentLinks := false
 
 	c := client.NewClientsSet(netClient)
 
 	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
 		netClient.On("Add", client.AddNetworkRequest{
-			OrgName: orgName,
-			NetName: netName}).Return(&client.NetworkInfo{
-			Id:       netId,
-			Name:     netName,
-			IsSynced: false,
+			OrgName:          orgName,
+			NetName:          netName,
+			AllowedCountries: countries,
+			AllowedNetworks:  networks,
+			PaymentLinks:     paymentLinks,
+		}).Return(&client.NetworkInfo{
+			Id:               netId,
+			Name:             netName,
+			AllowedCountries: countries,
+			AllowedNetworks:  networks,
+			PaymentLinks:     paymentLinks,
+			IsSynced:         false,
 		}, nil).Once()
 
-		netInfo, err := c.CreateNetwork(orgName, netName)
+		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, paymentLinks)
 
 		assert.NoError(t, err)
 
@@ -114,10 +124,14 @@ func TestCient_AddNetwork(t *testing.T) {
 
 	t.Run("NetworkNotCreated", func(t *testing.T) {
 		netClient.On("Add", client.AddNetworkRequest{
-			OrgName: orgName,
-			NetName: netName}).Return(nil, errors.New("some error")).Once()
+			OrgName:          orgName,
+			NetName:          netName,
+			AllowedCountries: countries,
+			AllowedNetworks:  networks,
+			PaymentLinks:     paymentLinks,
+		}).Return(nil, errors.New("some error")).Once()
 
-		netInfo, err := c.CreateNetwork(orgName, netName)
+		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, paymentLinks)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, netInfo)

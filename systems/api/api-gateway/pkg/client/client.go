@@ -11,7 +11,7 @@ import (
 
 type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
-	CreateNetwork(string, string) (*NetworkInfo, error)
+	CreateNetwork(string, string, []string, []string, bool) (*NetworkInfo, error)
 }
 
 type clients struct {
@@ -53,10 +53,15 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	return net, nil
 }
 
-func (c *clients) CreateNetwork(orgName, NetworkName string) (*NetworkInfo, error) {
+func (c *clients) CreateNetwork(orgName, NetworkName string,
+	allowedCountries, allowedNetworks []string, paymentLinks bool) (*NetworkInfo, error) {
 	net, err := c.network.Add(AddNetworkRequest{
-		OrgName: orgName,
-		NetName: NetworkName})
+		OrgName:          orgName,
+		NetName:          NetworkName,
+		AllowedCountries: allowedCountries,
+		AllowedNetworks:  allowedNetworks,
+		PaymentLinks:     paymentLinks,
+	})
 	if err != nil {
 		return nil, err
 	}

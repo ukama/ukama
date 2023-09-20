@@ -171,10 +171,16 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		netId := uuid.NewV4()
 		netName := "net-1"
 		orgName := "org-A"
+		networks := []string{"Verizon"}
+		countries := []string{"USA"}
+		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
-			OrgName: orgName,
-			NetName: netName,
+			OrgName:          orgName,
+			NetName:          netName,
+			AllowedCountries: countries,
+			AllowedNetworks:  networks,
+			PaymentLinks:     paymentLinks,
 		}
 
 		netInfo := &client.NetworkInfo{
@@ -187,7 +193,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName).Return(netInfo, nil)
+		c.On("CreateNetwork", orgName, netName, countries, networks, paymentLinks).Return(netInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -205,17 +211,24 @@ func TestRouter_CreateNetwork(t *testing.T) {
 	t.Run("NetworkCreatedAndStatusFailed", func(t *testing.T) {
 		netName := "net-2"
 		orgName := "org-B"
+		networks := []string{"Verizon"}
+		countries := []string{"USA"}
+		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
-			OrgName: orgName,
-			NetName: netName,
+			OrgName:          orgName,
+			NetName:          netName,
+			AllowedCountries: countries,
+			AllowedNetworks:  networks,
+			PaymentLinks:     paymentLinks,
 		}
+
 		body, err := json.Marshal(ntwk)
 		if err != nil {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName).Return(nil,
+		c.On("CreateNetwork", orgName, netName, countries, networks, paymentLinks).Return(nil,
 			errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
