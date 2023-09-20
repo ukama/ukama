@@ -70,12 +70,6 @@ func GenerateFutureDate(a time.Duration) string {
 	return tmp
 }
 
-func GenerateDate() string {
-	t := time.Now()
-	tmp := t.Format(time.RFC3339)
-	return tmp
-}
-
 func RandomIPv4() string {
 	return faker.IPv4()
 }
@@ -94,4 +88,23 @@ func RandomString(n int) string {
 func RandomBase64String(n int) string {
 
 	return b64.StdEncoding.EncodeToString(RandomBytes(n))
+}
+
+func GenerateRandomUTCPastDate(year int) string {
+	t := time.Date(RandomIntInRange(1900, year), time.Month(RandomInt(12)), RandomInt(28), RandomInt(24), RandomInt(59), 16, 0, time.UTC).UTC()
+	tmp := t.Format(time.RFC3339)
+	return tmp
+}
+
+func GenerateUTCFutureDate(a time.Duration) string {
+	t := time.Now().UTC()
+	f := t.Add(a)
+	tmp := f.Format(time.RFC3339)
+	return tmp
+}
+
+func GenerateUTCDate() string {
+	t := time.Now().UTC()
+	tmp := t.Format(time.RFC3339)
+	return tmp
 }

@@ -104,7 +104,7 @@ func (s *DataplanClient) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPe
 	rsp := &bPb.GetBaseRatesResponse{}
 
 	q := fmt.Sprintf("country=%s&sim_type=%s&provider=%s&from=%s&to=%s", req.Country, req.SimType, req.Provider, req.From, req.To)
-	resp, err := s.r.GetWithQuery(s.u.String()+"/package", q)
+	resp, err := s.r.GetWithQuery(s.u.String()+BASE_RATE+"/package", q)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())

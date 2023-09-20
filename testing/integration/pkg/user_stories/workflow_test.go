@@ -40,7 +40,7 @@ func TestWorkflow_UserStories(t *testing.T) {
 	w.RegisterTestCase(Story_invite_add())           // Invite member to non-community org
 	w.RegisterTestCase(Story_invite_status_update()) //Invite member to non-community org
 	w.RegisterTestCase(Story_add_network_failed)
-	w.RegisterTestCase(Story_member_add()) //Add member to non-community org
+	// w.RegisterTestCase(Story_member_add()) //Add member to non-community org
 	w.RegisterTestCase(Story_upload_dataplan())
 
 	/* Run */

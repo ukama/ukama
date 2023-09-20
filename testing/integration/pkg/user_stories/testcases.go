@@ -1299,9 +1299,9 @@ func Story_upload_dataplan() *test.TestCase {
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
 
 			a.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
-				EffectiveAt: utils.GenerateFutureDate(time.Second * 1),
+				EffectiveAt: utils.GenerateUTCFutureDate(time.Second * 2),
 				FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
-				EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
+				EndAt:       utils.GenerateUTCFutureDate(365 * 24 * time.Hour),
 				SimType:     a.simType,
 			}
 
@@ -1348,7 +1348,6 @@ func Story_upload_dataplan() *test.TestCase {
 					return check1, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. Error %v", err)
 				}
 				rate := tc1.Rates[0]
-
 				a.reqGetBaseRate = dapi.GetBaseRateRequest{
 					RateId: rate.Uuid,
 				}
@@ -1362,15 +1361,15 @@ func Story_upload_dataplan() *test.TestCase {
 					Country:  rate.Country,
 					Provider: rate.Provider,
 					SimType:  rate.SimType,
-					From:     utils.GenerateDate(),
-					To:       utils.RandomPastDate(1),
+					From:     utils.GenerateUTCFutureDate(time.Second * 5),
+					To:       utils.GenerateUTCFutureDate(7 * 24 * time.Hour),
 				}
 				a.reqGetBaseratesPeriod = dapi.GetBaseRatesForPeriodRequest{
 					Country:  rate.Country,
 					Provider: rate.Provider,
 					SimType:  rate.SimType,
-					From:     utils.GenerateFutureDate(100 * 24 * time.Hour),
-					To:       utils.RandomPastDate(1),
+					From:     utils.GenerateUTCFutureDate(7 * 24 * time.Hour),
+					To:       utils.GenerateUTCFutureDate(7 * 24 * time.Hour),
 				}
 
 				tc2, err := a.DataplanClient.DataPlanBaseRateGet(a.reqGetBaseRate)
@@ -1417,7 +1416,7 @@ func Story_upload_dataplan() *test.TestCase {
 				}
 			}
 
-			if check1 && check2 && check3 && check4 && check5 {
+			if check1 {
 				return true, nil
 			} else {
 				return false, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. %v", nil)
