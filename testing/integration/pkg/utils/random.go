@@ -8,8 +8,6 @@ import (
 
 	"github.com/bxcodec/faker/v4"
 	"github.com/goombaio/namegenerator"
-
-	"github.com/ukama/ukama/systems/common/validation"
 )
 
 var node_type = []string{"hnode", "tnode", "anode"}
@@ -61,14 +59,20 @@ func RandomBytes(n int) []byte {
 
 func RandomPastDate(year int) string {
 	t := time.Date(RandomIntInRange(1900, year), time.Month(RandomInt(12)), RandomInt(28), RandomInt(24), RandomInt(59), 16, 0, time.UTC)
-	tmp := t.Format(time.RFC1123)
+	tmp := t.Format(time.RFC3339)
 	return tmp
 }
 
 func GenerateFutureDate(a time.Duration) string {
 	t := time.Now()
 	f := t.Add(a)
-	tmp := f.Format(validation.DateLayout)
+	tmp := f.Format(time.RFC3339)
+	return tmp
+}
+
+func GenerateDate() string {
+	t := time.Now()
+	tmp := t.Format(time.RFC3339)
 	return tmp
 }
 

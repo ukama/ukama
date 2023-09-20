@@ -55,6 +55,7 @@ type UserStoriesData struct {
 	rNodeId       string
 	simType       string
 	country       string
+	provider      string
 	invitationId  string
 	invitedUserId string
 	memberId      string
@@ -93,8 +94,12 @@ type UserStoriesData struct {
 	reqGetInvite        rapi.GetInvitationRequest
 	reqGetInvites       rapi.GetInvitationByOrgRequest
 
-	reqUploadBaseRates dapi.UploadBaseRatesRequest
-	reqGetBaseRates    dapi.GetBaseRatesByCountryRequest
+	reqUploadBaseRates    dapi.UploadBaseRatesRequest
+	reqGetBaseRates       dapi.GetBaseRatesByCountryRequest
+	reqGetBaseRate        dapi.GetBaseRateRequest
+	reqGetBaseratePackage dapi.GetBaseRatesForPeriodRequest
+	reqGetBaserateHistory dapi.GetBaseRatesByCountryRequest
+	reqGetBaseratesPeriod dapi.GetBaseRatesForPeriodRequest
 }
 
 func init() {
@@ -113,6 +118,7 @@ func InitializeData() *UserStoriesData {
 	d.MbHost = config.System.MessageBus
 	d.simType = "test"
 	d.country = "The lunar maria"
+	d.provider = "ABC Tel"
 	d.OrgId = config.OrgId
 	d.OrgName = config.OrgName
 
@@ -126,140 +132,6 @@ func getWorkflowData(tc *test.TestCase) (*UserStoriesData, error) {
 		return nil, fmt.Errorf("invalid data type for Workflow data")
 	}
 	return a, nil
-}
-
-var Story_add_user = &test.TestCase{
-	Name:        "Add User",
-	Description: "After successful signup, addUser will be called to add the user to the system",
-	Data:        &userpb.AddResponse{},
-	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		// Prepare the data for the test case
-		a, err := getWorkflowData(tc)
-		if err != nil {
-			return err
-		}
-
-		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost,
-			[]string{"event.cloud.users.user.add"})
-
-		a.reqGetOrg = napi.GetOrgRequest{
-			OrgName: config.OrgName,
-		}
-
-		res, err := a.NucleusClient.GetOrg(a.reqGetOrg)
-		a.OrgId = res.Org.Id
-		a.OrgName = res.Org.Name
-		a.OrgOwnerId = res.Org.Owner
-
-		a.reqAddUser = napi.AddUserRequest{
-			Email:  strings.ToLower(faker.Email()),
-			Name:   strings.ToLower(faker.FirstName()),
-			Phone:  strings.ToLower(faker.Phonenumber()),
-			AuthId: strings.ToLower(faker.UUIDHyphenated()),
-		}
-
-		return err
-	},
-
-	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Test Case
-		var err error
-		a, ok := getWorkflowData(tc)
-		if ok != nil {
-			return ok
-		}
-		tc.Data, err = a.NucleusClient.AddUser(a.reqAddUser)
-		return err
-	},
-
-	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		// Check for possible failures during user stories
-		check1, check2, check3, check4 := false, false, false, false
-
-		resp := tc.GetData().(*userpb.AddResponse)
-
-		if resp != nil {
-			a, ok := getWorkflowData(tc)
-			if ok != nil {
-				return false, ok
-			}
-
-			a.reqGetUser = napi.GetUserRequest{
-				UserId: resp.User.Id,
-			}
-			a.reqGetUserByAuth = napi.GetUserByAuthIdRequest{
-				AuthId: resp.User.AuthId,
-			}
-			a.reqWhoami = napi.GetUserRequest{
-				UserId: resp.User.Id,
-			}
-			a.reqGetMember = rapi.GetMemberRequest{
-				UserUuid: resp.User.Id,
-			}
-
-			tc1, err := a.NucleusClient.GetUser(a.reqGetUser)
-
-			if err == nil && tc1.User.Id == resp.User.Id {
-				check1 = true
-			} else if err != nil {
-				return check1, fmt.Errorf("add user story failed on getUser. Error %v", err)
-			}
-
-			tc2, err := a.NucleusClient.GetUserByAuthId(a.reqGetUserByAuth)
-			if err == nil && tc2.User.Id == resp.User.Id {
-				check2 = true
-			} else if err != nil {
-				return check2, fmt.Errorf("add user story failed on getUserByAuth. Error %v", err)
-			}
-
-			tc3, err := a.NucleusClient.Whoami(a.reqWhoami)
-			if err == nil && tc3.MemberOf[0].Id == a.OrgId {
-				check3 = true
-			} else if err != nil {
-				return check3, fmt.Errorf("add user story failed on whoami. Error %v", err)
-			}
-
-			tc4, err := a.RegistryClient.GetMember(a.reqGetMember)
-			if err == nil && tc4.Member.OrgId == a.OrgId {
-				check4 = true
-			} else if err != nil {
-				return check4, fmt.Errorf("add user story failed on getMember. Error %v", err)
-			}
-		}
-
-		if check1 && check2 && check3 && check4 {
-			return check1 && check2 && check3 && check4, nil
-		} else {
-			return false, fmt.Errorf("add user story failed. %v", nil)
-		}
-	},
-
-	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		// Here we save any data required to be saved from the
-		// test case Cleanup any test specific data
-
-		resp, ok := tc.GetData().(*userpb.AddResponse)
-		if !ok {
-			log.Errorf("Invalid data type for Workflow data.")
-
-			return fmt.Errorf("invalid data type for Workflow data")
-		}
-
-		a, err := getWorkflowData(tc)
-		if err != nil {
-			return err
-		}
-
-		a.UserId = resp.User.Id
-		a.UserAuthId = resp.User.AuthId
-
-		tc.SaveWorkflowData(a)
-		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-		tc.Watcher.Stop()
-
-		return nil
-	},
 }
 
 var Story_add_org = &test.TestCase{
@@ -403,8 +275,142 @@ var Story_add_org = &test.TestCase{
 	},
 }
 
+var Story_add_user = &test.TestCase{
+	Name:        "Add User",
+	Description: "After successful signup, addUser will be called to add the user to the system",
+	Data:        &userpb.AddResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Prepare the data for the test case
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
+		}
+
+		log.Debugf("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			[]string{"event.cloud.users.user.add"})
+
+		a.reqGetOrg = napi.GetOrgRequest{
+			OrgName: config.OrgName,
+		}
+
+		res, err := a.NucleusClient.GetOrg(a.reqGetOrg)
+		a.OrgId = res.Org.Id
+		a.OrgName = res.Org.Name
+		a.OrgOwnerId = res.Org.Owner
+
+		a.reqAddUser = napi.AddUserRequest{
+			Email:  strings.ToLower(faker.Email()),
+			Name:   strings.ToLower(faker.FirstName()),
+			Phone:  strings.ToLower(faker.Phonenumber()),
+			AuthId: strings.ToLower(faker.UUIDHyphenated()),
+		}
+
+		return err
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		var err error
+		a, ok := getWorkflowData(tc)
+		if ok != nil {
+			return ok
+		}
+		tc.Data, err = a.NucleusClient.AddUser(a.reqAddUser)
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		// Check for possible failures during user stories
+		check1, check2, check3, check4 := false, false, false, false
+
+		resp := tc.GetData().(*userpb.AddResponse)
+
+		if resp != nil {
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return false, ok
+			}
+
+			a.reqGetUser = napi.GetUserRequest{
+				UserId: resp.User.Id,
+			}
+			a.reqGetUserByAuth = napi.GetUserByAuthIdRequest{
+				AuthId: resp.User.AuthId,
+			}
+			a.reqWhoami = napi.GetUserRequest{
+				UserId: resp.User.Id,
+			}
+			a.reqGetMember = rapi.GetMemberRequest{
+				UserUuid: resp.User.Id,
+			}
+
+			tc1, err := a.NucleusClient.GetUser(a.reqGetUser)
+
+			if err == nil && tc1.User.Id == resp.User.Id {
+				check1 = true
+			} else if err != nil {
+				return check1, fmt.Errorf("add user story failed on getUser. Error %v", err)
+			}
+
+			tc2, err := a.NucleusClient.GetUserByAuthId(a.reqGetUserByAuth)
+			if err == nil && tc2.User.Id == resp.User.Id {
+				check2 = true
+			} else if err != nil {
+				return check2, fmt.Errorf("add user story failed on getUserByAuth. Error %v", err)
+			}
+
+			tc3, err := a.NucleusClient.Whoami(a.reqWhoami)
+			if err == nil && tc3.MemberOf[0].Id == a.OrgId {
+				check3 = true
+			} else if err != nil {
+				return check3, fmt.Errorf("add user story failed on whoami. Error %v", err)
+			}
+
+			tc4, err := a.RegistryClient.GetMember(a.reqGetMember)
+			if err == nil && tc4.Member.OrgId == a.OrgId {
+				check4 = true
+			} else if err != nil {
+				return check4, fmt.Errorf("add user story failed on getMember. Error %v", err)
+			}
+		}
+
+		if check1 && check2 && check3 && check4 {
+			return check1 && check2 && check3 && check4, nil
+		} else {
+			return false, fmt.Errorf("add user story failed. %v", nil)
+		}
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Here we save any data required to be saved from the
+		// test case Cleanup any test specific data
+
+		resp, ok := tc.GetData().(*userpb.AddResponse)
+		if !ok {
+			log.Errorf("Invalid data type for Workflow data.")
+
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
+		}
+
+		a.UserId = resp.User.Id
+		a.UserAuthId = resp.User.AuthId
+
+		tc.SaveWorkflowData(a)
+		log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+		tc.Watcher.Stop()
+
+		return nil
+	},
+}
+
 var Story_add_network = &test.TestCase{
-	Name:        "Add network",
+	Name:        "Add network success case",
 	Description: "Add network to org",
 	Data:        &netpb.AddResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
@@ -421,7 +427,7 @@ var Story_add_network = &test.TestCase{
 			OrgName: a.OrgName,
 		}
 		a.reqGetMember = rapi.GetMemberRequest{
-			UserUuid: a.UserId,
+			UserUuid: a.OrgOwnerId,
 		}
 
 		orgResp, err := a.NucleusClient.GetOrg(a.reqGetOrg)
@@ -433,7 +439,6 @@ var Story_add_network = &test.TestCase{
 		if err != nil {
 			return err
 		}
-
 		if orgResp.Org.Id == memResp.Member.OrgId && (memResp.Member.Role == mempb.RoleType_OWNER || memResp.Member.Role == mempb.RoleType_ADMIN) {
 			a.reqAddNetwork = rapi.AddNetworkRequest{
 				OrgName: orgResp.Org.Name,
@@ -547,6 +552,57 @@ var Story_add_network = &test.TestCase{
 		tc.Watcher.Stop()
 
 		return nil
+	},
+}
+
+var Story_add_network_failed = &test.TestCase{
+	Name:        "Add network failed case",
+	Description: "Scenarios: Network name already exists",
+	Data:        &netpb.AddResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		// Prepare the data for the test case
+		a, err := getWorkflowData(tc)
+		if err != nil {
+			return err
+		}
+
+		log.Debugf("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.network.create"})
+
+		a.reqGetNetworks = rapi.GetNetworksRequest{
+			OrgUuid: a.OrgId,
+		}
+
+		netResp, err := a.RegistryClient.GetNetworks(a.reqGetNetworks)
+		if err != nil {
+			return err
+		}
+
+		if netResp != nil && len(netResp.Networks) > 0 {
+			netName := netResp.Networks[0].Name
+			a.reqAddNetwork = rapi.AddNetworkRequest{
+				OrgName: a.OrgName,
+				NetName: netName,
+			}
+		} else {
+			return fmt.Errorf("user is not an owner or admin of the org")
+		}
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		// Test Case
+		a, ok := getWorkflowData(tc)
+		if ok != nil {
+			return ok
+		}
+		_, err := a.RegistryClient.AddNetwork(a.reqAddNetwork)
+
+		if err != nil && strings.Contains(err.Error(), "duplicate key value") {
+			return nil
+		}
+		return fmt.Errorf("add network story duplicate name test failed. %v", nil)
 	},
 }
 
@@ -926,7 +982,7 @@ func Story_invite_add() *test.TestCase {
 			a.reqAddInvite = rapi.AddInvitationRequest{
 				Org:   a.OrgName,
 				Name:  strings.ToLower(faker.FirstName()) + "-invite",
-				Email: faker.Email(),
+				Email: strings.ToLower(faker.Email()),
 				Role:  "USERS",
 			}
 
@@ -1090,6 +1146,7 @@ func Story_invite_status_update() *test.TestCase {
 					tc2, err := a.NucleusClient.AddUser(a.reqAddUser)
 					if err == nil && tc2.User.Email == tc1.Invitation.Email {
 						a.invitedUserId = tc2.User.Id
+
 						check2 = true
 					} else {
 						return check2, fmt.Errorf("update invitation status story failed on addUser. Error %v", err)
@@ -1242,10 +1299,10 @@ func Story_upload_dataplan() *test.TestCase {
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
 
 			a.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
-				EffectiveAt: utils.GenerateFutureDate(5 * time.Hour),
+				EffectiveAt: utils.GenerateFutureDate(time.Second * 1),
 				FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
 				EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
-				SimType:     "test",
+				SimType:     a.simType,
 			}
 
 			return nil
@@ -1263,48 +1320,111 @@ func Story_upload_dataplan() *test.TestCase {
 		},
 
 		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			// Check for possible failures during user stories
-			check1 := true
+			check1, check2, check3, check4, check5 := false, false, false, false, false
 
-			// resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
+			resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
 
-			// if resp != nil {
-			// 	a, ok := getWorkflowData(tc)
-			// 	if ok != nil {
-			// 		return false, ok
-			// 	}
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
 
-			// 	a.reqGetBaseRates = dapi.GetBaseRatesByCountryRequest{
-			// 		Provider: "",
-			// 		Country:  a.country,
-			// 		SimType:  a.simType,
-			// 	}
+				a.reqGetBaseRates = dapi.GetBaseRatesByCountryRequest{
+					Provider: a.provider,
+					Country:  a.country,
+					SimType:  a.simType,
+				}
 
-			// 	tc1, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaseRates)
-			// 	if err != nil {
-			// 		return check1, fmt.Errorf("attach node story failed on getNode. Error %v", err)
-			// 	} else {
-			// 		for _, rate := range tc1.Rates {
-			// 			if rate.Country == a.country && rate.SimType == a.simType {
-			// 				check1 = true
-			// 			} else {
-			// 				check1 = false
-			// 			}
-			// 		}
-			// 	}
-			// }
+				tc1, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaseRates)
+				if err == nil {
+					for _, rate := range tc1.Rates {
+						if rate.Country == a.country && rate.SimType == a.simType {
+							check1 = true
+							break
+						}
+					}
+				} else {
+					return check1, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. Error %v", err)
+				}
+				rate := tc1.Rates[0]
 
-			if check1 {
-				return check1, nil
+				a.reqGetBaseRate = dapi.GetBaseRateRequest{
+					RateId: rate.Uuid,
+				}
+				a.reqGetBaserateHistory = dapi.GetBaseRatesByCountryRequest{
+					Country:     rate.Country,
+					Provider:    rate.Provider,
+					SimType:     rate.SimType,
+					EffectiveAt: rate.EffectiveAt,
+				}
+				a.reqGetBaseratePackage = dapi.GetBaseRatesForPeriodRequest{
+					Country:  rate.Country,
+					Provider: rate.Provider,
+					SimType:  rate.SimType,
+					From:     utils.GenerateDate(),
+					To:       utils.RandomPastDate(1),
+				}
+				a.reqGetBaseratesPeriod = dapi.GetBaseRatesForPeriodRequest{
+					Country:  rate.Country,
+					Provider: rate.Provider,
+					SimType:  rate.SimType,
+					From:     utils.GenerateFutureDate(100 * 24 * time.Hour),
+					To:       utils.RandomPastDate(1),
+				}
+
+				tc2, err := a.DataplanClient.DataPlanBaseRateGet(a.reqGetBaseRate)
+				if err == nil && tc2.Rate.Uuid == rate.Uuid {
+					check2 = true
+				} else {
+					return check2, fmt.Errorf("uploade dataplan story failed on GetBaserate. Error %v", err)
+				}
+
+				tc3, err := a.DataplanClient.DataPlanBaseRateGetForPackage(a.reqGetBaseratePackage)
+				if err == nil {
+					for _, r := range tc3.Rates {
+						if r.Uuid == rate.Uuid {
+							check3 = true
+							break
+						}
+					}
+				} else {
+					return check3, fmt.Errorf("uploade dataplan story failed on GetBaserateHistory. Error %v", err)
+				}
+
+				tc4, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaserateHistory)
+				if err == nil {
+					for _, r := range tc4.Rates {
+						if r.Uuid == rate.Uuid {
+							check4 = true
+							break
+						}
+					}
+				} else {
+					return check4, fmt.Errorf("uploade dataplan story failed on GetBaserateForPackage. Error %v", err)
+				}
+
+				tc5, err := a.DataplanClient.DataPlanBaseRateGetByPeriod(a.reqGetBaseratesPeriod)
+				if err == nil {
+					for _, r := range tc5.Rates {
+						if r.Uuid == rate.Uuid {
+							check5 = true
+							break
+						}
+					}
+				} else {
+					return check5, fmt.Errorf("uploade dataplan story failed on GetBaserateForPeriod. Error %v", err)
+				}
+			}
+
+			if check1 && check2 && check3 && check4 && check5 {
+				return true, nil
 			} else {
-				return false, fmt.Errorf("attach node story failed. %v", nil)
+				return false, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. %v", nil)
 			}
 		},
 
 		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Here we save any data required to be saved from the test case
-			Cleanup any test specific data
-			*/
 			resp, ok := tc.GetData().(*bpb.UploadBaseRatesResponse)
 			if !ok {
 				log.Errorf("Invalid data type for Workflow data.")

@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-var DateLayout = "2006-01-02T15:04:05Z"
-
 func IsFutureDate(date string) error {
 	t, err := time.Parse(time.RFC3339, date)
 	if err != nil {
