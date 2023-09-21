@@ -24,6 +24,7 @@ import (
 )
 
 const netEndpoint = "/v1/networks"
+const simEndpoint = "/v1/sims"
 
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
@@ -236,6 +237,189 @@ func TestRouter_CreateNetwork(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_GetSim(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	subscriberId := uuid.NewV4()
+
+	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
+		simId := uuid.NewV4()
+
+		simInfo := &client.SimInfo{
+			Id:           simId,
+			SubscriberId: subscriberId,
+		}
+
+		c.On("GetSim", simId.String()).Return(simInfo, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
+		simId := uuid.NewV4()
+
+		simInfo := &client.SimInfo{
+			Id:           simId,
+			SubscriberId: subscriberId,
+		}
+
+		c.On("GetSim", simId.String()).Return(simInfo,
+			rest.HttpError{
+				HttpCode: http.StatusPartialContent,
+				Message:  "partial content. request is still ongoing",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusPartialContent, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("SimNotFound", func(t *testing.T) {
+		simId := uuid.NewV4()
+
+		c.On("GetSim", simId.String()).Return(nil,
+			rest.HttpError{
+				HttpCode: http.StatusNotFound,
+				Message:  "GetSim failure",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("GetSimError", func(t *testing.T) {
+		simId := uuid.NewV4()
+
+		c.On("GetSim", simId.String()).Return(nil,
+			errors.New("some unexpected error"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_ConfigureSim(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("SimConfiguredAndStatusUpdated", func(t *testing.T) {
+		simId := uuid.NewV4()
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		simType := "some-sim-type"
+		simToken := "some-sim-token"
+
+		var sim = AddSimReq{
+			SubscriberId: subscriberId.String(),
+			NetworkId:    networkId.String(),
+			PackageId:    packageId.String(),
+			SimType:      simType,
+			SimToken:     simToken,
+		}
+
+		simInfo := &client.SimInfo{
+			Id:           simId,
+			SubscriberId: subscriberId,
+		}
+
+		body, err := json.Marshal(sim)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
+		}
+
+		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
+			packageId.String(), simType, simToken).
+			Return(simInfo, nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusPartialContent, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("SimconfiguredAndStatusFailed", func(t *testing.T) {
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		simType := "some-sim-type"
+		simToken := "some-sim-token"
+
+		var sim = AddSimReq{
+			SubscriberId: subscriberId.String(),
+			NetworkId:    networkId.String(),
+			PackageId:    packageId.String(),
+			SimType:      simType,
+			SimToken:     simToken,
+		}
+
+		body, err := json.Marshal(sim)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
+		}
+
+		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
+			packageId.String(), simType, simToken).
+			Return(nil, errors.New("some unexpected error occured"))
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
 
 		// act
 		r.ServeHTTP(w, req)
