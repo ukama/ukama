@@ -135,6 +135,12 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 	}
 
 	return &pb.GetRunningAppsResponse{
-		RunningApps: []*pb.App{app}, // Return a single app in an array
+		RunningApps: &pb.App{
+			Id:        app.Id,
+			NodeId:    app.NodeId,
+			Timestamp: app.Timestamp,
+			System:    app.System,
+			Capps:     app.Capps,
+		},
 	}, nil
 }

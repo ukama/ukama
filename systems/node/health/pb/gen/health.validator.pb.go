@@ -31,11 +31,9 @@ func (this *GetRunningAppsRequest) Validate() error {
 	return nil
 }
 func (this *GetRunningAppsResponse) Validate() error {
-	for _, item := range this.RunningApps {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("RunningApps", err)
-			}
+	if this.RunningApps != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.RunningApps); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("RunningApps", err)
 		}
 	}
 	return nil

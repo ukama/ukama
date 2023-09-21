@@ -14,7 +14,7 @@ message GetRunningAppsRequest {
 }
 
 message GetRunningAppsResponse {
-    repeated App running_apps = 1;
+     App running_apps = 1;
 
 }
 
