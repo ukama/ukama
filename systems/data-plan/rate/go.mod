@@ -29,7 +29,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.4.6
-	gorm.io/gorm v1.24.3
+	gorm.io/gorm v1.25.4
 )
 
 require (

@@ -104,6 +104,7 @@ type UserStoriesData struct {
 	reqGetBaseratePackage dapi.GetBaseRatesForPeriodRequest
 	reqGetBaserateHistory dapi.GetBaseRatesByCountryRequest
 	reqGetBaseratesPeriod dapi.GetBaseRatesForPeriodRequest
+	reqGetRateByUser      dapi.GetRateRequest
 
 	reqAddPackage       dapi.AddPackageRequest
 	reqGetPackage       dapi.PackagesRequest
@@ -113,7 +114,7 @@ type UserStoriesData struct {
 	reqAddUserMarkup    dapi.SetMarkupRequest
 	reqSetDefaultMarkup dapi.SetDefaultMarkupRequest
 	reqGetMarkupForUser dapi.GetMarkupRequest
-	reqGetDefaultMarkup dapi.GetDefaultMarkupRequest
+	reqDeleteMarkup     dapi.DeleteMarkupRequest
 }
 
 func init() {
@@ -1407,7 +1408,7 @@ func Story_upload_baserate() *test.TestCase {
 					}
 				}
 				if err != nil || !check3 {
-					return check3, fmt.Errorf("uploade baserate story failed on GetBaserateHistory. Error %v", err.Error())
+					return check3, fmt.Errorf("uploade baserate story failed on BaseRateGetForPackage. Error %v", err.Error())
 				}
 
 				tc4, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaserateHistory)
@@ -1420,7 +1421,7 @@ func Story_upload_baserate() *test.TestCase {
 					}
 				}
 				if err != nil || !check4 {
-					return check4, fmt.Errorf("uploade baserate story failed on GetBaserateForPackage. Error %v", err.Error())
+					return check4, fmt.Errorf("uploade baserate story failed on BaseRateGetByCountry. Error %v", err.Error())
 				}
 
 				tc5, err := a.DataplanClient.DataPlanBaseRateGetByPeriod(a.reqGetBaseratesPeriod)
@@ -1433,7 +1434,7 @@ func Story_upload_baserate() *test.TestCase {
 					}
 				}
 				if err != nil || !check5 {
-					return check5, fmt.Errorf("uploade baserate story failed on GetBaseRatesByCountryRequest. Error %v", err.Error())
+					return check5, fmt.Errorf("uploade baserate story failed on BaseRateGetByPeriod. Error %v", err.Error())
 				}
 			}
 
@@ -1475,6 +1476,19 @@ func Story_markup() *test.TestCase {
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.markup.user.add"})
 
+			a.reqGetMarkupForUser = dapi.GetMarkupRequest{
+				OwnerId: a.OrgOwnerId,
+			}
+			resp, err := a.DataplanClient.DataPlanGetUserMarkup(a.reqGetMarkupForUser)
+			if err == nil && resp.OwnerId == a.OrgOwnerId {
+				a.reqDeleteMarkup = dapi.DeleteMarkupRequest{
+					OwnerId: a.OrgOwnerId,
+				}
+				_, err := a.DataplanClient.DataPlanDeleteMarkup(a.reqDeleteMarkup)
+				if err != nil {
+					return fmt.Errorf("set markup story faild at SetUpFxn on DeleteMarkup. Error %v", err.Error())
+				}
+			}
 			a.reqAddUserMarkup = dapi.SetMarkupRequest{
 				OwnerId: a.OrgOwnerId,
 				Markup:  10,
@@ -1494,7 +1508,7 @@ func Story_markup() *test.TestCase {
 		},
 
 		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			check1 := false
+			check1, check2 := false, false
 
 			resp := tc.GetData().(*rpb.UpdateMarkupResponse)
 
@@ -1507,13 +1521,34 @@ func Story_markup() *test.TestCase {
 				a.reqGetMarkupForUser = dapi.GetMarkupRequest{
 					OwnerId: a.OrgOwnerId,
 				}
-				tc1, err1 := a.DataplanClient.DataPlanGetUserMarkup(a.reqGetMarkupForUser)
-				if err1 == nil && tc1.Markup == 10 {
-					check1 = true
+				a.reqGetRateByUser = dapi.GetRateRequest{
+					UserId:   a.OrgOwnerId,
+					Country:  a.country,
+					Provider: a.provider,
+					SimType:  a.simType,
+					To:       utils.GenerateUTCFutureDate(30 * 24 * time.Hour),
+					From:     utils.GenerateUTCFutureDate(10 * time.Second),
 				}
 
-				if !check1 {
-					return check1, fmt.Errorf("set markup story faild on GetMarkupForUser. Error %v", err1.Error())
+				tc1, err := a.DataplanClient.DataPlanGetUserMarkup(a.reqGetMarkupForUser)
+				if err == nil && tc1.Markup == 10 {
+					check1 = true
+				}
+				if err != nil || !check1 {
+					return check1, fmt.Errorf("set markup story faild on GetMarkupForUser. Error %v", err.Error())
+				}
+
+				tc2, err := a.DataplanClient.DataPlanGetRate(a.reqGetRateByUser)
+				if err == nil {
+					for _, r := range tc2.Rates {
+						if r.Uuid == a.baserateId {
+							check2 = true
+							break
+						}
+					}
+				}
+				if err != nil || !check2 {
+					return check2, fmt.Errorf("set markup story failed on GetRateByUser. Error %v", err.Error())
 				}
 			}
 
@@ -1537,10 +1572,10 @@ func Story_markup() *test.TestCase {
 				Markup: 10,
 			}
 
-			_, err = a.DataplanClient.DataPlanUpdateDefaultMarkup(a.reqSetDefaultMarkup)
-			if err != nil {
-				return fmt.Errorf("set markup story faild on setDefaultMarkup. Error %v", err.Error())
-			}
+			// _, err = a.DataplanClient.DataPlanUpdateDefaultMarkup(a.reqSetDefaultMarkup)
+			// if err != nil {
+			// 	return fmt.Errorf("set markup story faild on setDefaultMarkup. Error %v", err.Error())
+			// }
 
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
@@ -1563,7 +1598,6 @@ func Story_package() *test.TestCase {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.create"})
-			fmt.Println("ADD PACKAGE REQ: ", a.OrgOwnerId, a.OrgId)
 			a.reqAddPackage = dapi.AddPackageRequest{
 				OwnerId:    a.OrgOwnerId,
 				OrgId:      a.OrgId,

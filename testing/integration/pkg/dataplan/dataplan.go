@@ -188,6 +188,17 @@ func (s *DataplanClient) DataPlanGetMarkupHistory(req api.GetMarkupHistoryReques
 	return rsp, nil
 }
 
+func (s *DataplanClient) DataPlanDeleteMarkup(req api.DeleteMarkupRequest) (*rPb.DeleteMarkupResponse, error) {
+	url := s.u.String() + RATE + "/users/" + req.OwnerId
+	rsp := &rPb.DeleteMarkupResponse{}
+
+	if err := s.r.SendRequest(http.MethodDelete, url, req, rsp); err != nil {
+		return nil, err
+	}
+
+	return rsp, nil
+}
+
 func (s *DataplanClient) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateResponse, error) {
 
 	log.Tracef("GetRate request: %+v", req)

@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -262,7 +261,6 @@ func (s *RegistryClient) GetNodesForSite(req api.GetSiteNodesRequest) (*nodepb.G
 
 func (s *RegistryClient) AddInvitations(req api.AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
 	url := s.u.String() + VERSION + INVITATIONS + req.Org
-	fmt.Println("AddInvitations: ", url)
 	rsp := &invpb.AddInvitationResponse{}
 
 	if err := s.r.SendRequest(http.MethodPost, url, req, rsp); err != nil {
