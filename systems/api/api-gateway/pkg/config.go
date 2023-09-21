@@ -22,6 +22,7 @@ type Config struct {
 type HttpEndpoints struct {
 	Timeout     time.Duration
 	Network     string
+	Sim         string
 	NodeMetrics string
 }
 
@@ -59,6 +60,7 @@ func NewConfig(name string) *Config {
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
 			Network:     "http://localhost",
+			Sim:         "http://localhost",
 			NodeMetrics: "http://localhost",
 		},
 

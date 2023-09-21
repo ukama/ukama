@@ -20,7 +20,10 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	clientSet := client.NewClientsSet(client.NewNetworkClient(svcConf.HttpServices.Network))
+	clientSet := client.NewClientsSet(
+		client.NewNetworkClient(svcConf.HttpServices.Network),
+		client.NewSimClient(svcConf.HttpServices.Sim),
+	)
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
