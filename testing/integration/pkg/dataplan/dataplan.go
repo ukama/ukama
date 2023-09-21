@@ -70,6 +70,7 @@ func (s *DataplanClient) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCoun
 	}
 
 	err = pjson.Unmarshal(resp.Body(), rsp)
+	defer resp.RawResponse.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -92,6 +93,7 @@ func (s *DataplanClient) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeri
 	}
 
 	err = pjson.Unmarshal(resp.Body(), rsp)
+	defer resp.RawResponse.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -112,6 +114,7 @@ func (s *DataplanClient) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPe
 	}
 
 	err = pjson.Unmarshal(resp.Body(), rsp)
+	defer resp.RawResponse.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -120,7 +123,7 @@ func (s *DataplanClient) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPe
 }
 
 func (s *DataplanClient) DataPlanUpdateDefaultMarkup(req api.SetDefaultMarkupRequest) (*rPb.UpdateDefaultMarkupResponse, error) {
-	url := fmt.Sprintf("%s/%f/%s", s.u.String()+RATE, req.Markup, "/default")
+	url := fmt.Sprintf("%s/%f/%s", s.u.String()+RATE, req.Markup, "default")
 	rsp := &rPb.UpdateDefaultMarkupResponse{}
 
 	if err := s.r.SendRequest(http.MethodPost, url, nil, rsp); err != nil {
@@ -201,6 +204,7 @@ func (s *DataplanClient) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateRe
 	}
 
 	err = pjson.Unmarshal(resp.Body(), rsp)
+	defer resp.RawResponse.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}

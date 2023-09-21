@@ -24,6 +24,8 @@ import (
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userpb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -59,6 +61,8 @@ type UserStoriesData struct {
 	invitationId  string
 	invitedUserId string
 	memberId      string
+	baserateId    string
+	packageId     string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -100,6 +104,16 @@ type UserStoriesData struct {
 	reqGetBaseratePackage dapi.GetBaseRatesForPeriodRequest
 	reqGetBaserateHistory dapi.GetBaseRatesByCountryRequest
 	reqGetBaseratesPeriod dapi.GetBaseRatesForPeriodRequest
+
+	reqAddPackage       dapi.AddPackageRequest
+	reqGetPackage       dapi.PackagesRequest
+	reqGetPackageDetail dapi.PackagesRequest
+	reqGetPackageForOrg dapi.GetPackageByOrgRequest
+
+	reqAddUserMarkup    dapi.SetMarkupRequest
+	reqSetDefaultMarkup dapi.SetDefaultMarkupRequest
+	reqGetMarkupForUser dapi.GetMarkupRequest
+	reqGetDefaultMarkup dapi.GetDefaultMarkupRequest
 }
 
 func init() {
@@ -121,6 +135,7 @@ func InitializeData() *UserStoriesData {
 	d.provider = "ABC Tel"
 	d.OrgId = config.OrgId
 	d.OrgName = config.OrgName
+	d.OrgOwnerId = config.OrgOwnerId
 
 	return d
 }
@@ -1285,7 +1300,7 @@ func Story_member_add() *test.TestCase {
 	}
 }
 
-func Story_upload_dataplan() *test.TestCase {
+func Story_upload_baserate() *test.TestCase {
 	return &test.TestCase{
 		Name:        "Adding base rate",
 		Description: "Add base rate provided by third parties",
@@ -1344,10 +1359,13 @@ func Story_upload_dataplan() *test.TestCase {
 							break
 						}
 					}
-				} else {
-					return check1, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. Error %v", err)
 				}
+				if err != nil || !check1 {
+					return check1, fmt.Errorf("uploade baserate story failed on GetBaseRatesByCountryRequest. Error %v", err.Error())
+				}
+
 				rate := tc1.Rates[0]
+				a.baserateId = rate.Uuid
 				a.reqGetBaseRate = dapi.GetBaseRateRequest{
 					RateId: rate.Uuid,
 				}
@@ -1376,7 +1394,7 @@ func Story_upload_dataplan() *test.TestCase {
 				if err == nil && tc2.Rate.Uuid == rate.Uuid {
 					check2 = true
 				} else {
-					return check2, fmt.Errorf("uploade dataplan story failed on GetBaserate. Error %v", err)
+					return check2, fmt.Errorf("uploade baserate story failed on GetBaserate. Error %v", err.Error())
 				}
 
 				tc3, err := a.DataplanClient.DataPlanBaseRateGetForPackage(a.reqGetBaseratePackage)
@@ -1387,8 +1405,9 @@ func Story_upload_dataplan() *test.TestCase {
 							break
 						}
 					}
-				} else {
-					return check3, fmt.Errorf("uploade dataplan story failed on GetBaserateHistory. Error %v", err)
+				}
+				if err != nil || !check3 {
+					return check3, fmt.Errorf("uploade baserate story failed on GetBaserateHistory. Error %v", err.Error())
 				}
 
 				tc4, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaserateHistory)
@@ -1399,8 +1418,9 @@ func Story_upload_dataplan() *test.TestCase {
 							break
 						}
 					}
-				} else {
-					return check4, fmt.Errorf("uploade dataplan story failed on GetBaserateForPackage. Error %v", err)
+				}
+				if err != nil || !check4 {
+					return check4, fmt.Errorf("uploade baserate story failed on GetBaserateForPackage. Error %v", err.Error())
 				}
 
 				tc5, err := a.DataplanClient.DataPlanBaseRateGetByPeriod(a.reqGetBaseratesPeriod)
@@ -1411,16 +1431,13 @@ func Story_upload_dataplan() *test.TestCase {
 							break
 						}
 					}
-				} else {
-					return check5, fmt.Errorf("uploade dataplan story failed on GetBaserateForPeriod. Error %v", err)
+				}
+				if err != nil || !check5 {
+					return check5, fmt.Errorf("uploade baserate story failed on GetBaseRatesByCountryRequest. Error %v", err.Error())
 				}
 			}
 
-			if check1 {
-				return true, nil
-			} else {
-				return false, fmt.Errorf("uploade dataplan story failed on GetBaseRatesByCountryRequest. %v", nil)
-			}
+			return true, nil
 		},
 
 		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
@@ -1436,6 +1453,217 @@ func Story_upload_dataplan() *test.TestCase {
 				return err
 			}
 
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_markup() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add markup",
+		Description: "Set default markup percentage, Set user markup percentage",
+		Data:        &rpb.UpdateMarkupResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.markup.user.add"})
+
+			a.reqAddUserMarkup = dapi.SetMarkupRequest{
+				OwnerId: a.OrgOwnerId,
+				Markup:  10,
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.DataplanClient.DataPlanUpdateMarkup(a.reqAddUserMarkup)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1 := false
+
+			resp := tc.GetData().(*rpb.UpdateMarkupResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetMarkupForUser = dapi.GetMarkupRequest{
+					OwnerId: a.OrgOwnerId,
+				}
+				tc1, err1 := a.DataplanClient.DataPlanGetUserMarkup(a.reqGetMarkupForUser)
+				if err1 == nil && tc1.Markup == 10 {
+					check1 = true
+				}
+
+				if !check1 {
+					return check1, fmt.Errorf("set markup story faild on GetMarkupForUser. Error %v", err1.Error())
+				}
+			}
+
+			return true, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*rpb.UpdateMarkupResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
+			a.reqSetDefaultMarkup = dapi.SetDefaultMarkupRequest{
+				Markup: 10,
+			}
+
+			_, err = a.DataplanClient.DataPlanUpdateDefaultMarkup(a.reqSetDefaultMarkup)
+			if err != nil {
+				return fmt.Errorf("set markup story faild on setDefaultMarkup. Error %v", err.Error())
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_package() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add package",
+		Description: "Add package in an org",
+		Data:        &ppb.AddPackageResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.create"})
+			fmt.Println("ADD PACKAGE REQ: ", a.OrgOwnerId, a.OrgId)
+			a.reqAddPackage = dapi.AddPackageRequest{
+				OwnerId:    a.OrgOwnerId,
+				OrgId:      a.OrgId,
+				Name:       faker.FirstName() + "-monthly-pack",
+				SimType:    a.simType,
+				From:       utils.GenerateUTCFutureDate(24 * time.Hour),
+				To:         utils.GenerateUTCFutureDate(30 * 24 * time.Hour),
+				BaserateId: a.baserateId,
+				SmsVolume:  100,
+				DataVolume: 1024,
+				DataUnit:   "MegaBytes",
+				Type:       "postpaid",
+				Active:     true,
+				Flatrate:   false,
+				Apn:        "ukama.tel",
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.DataplanClient.DataPlanPackageAdd(a.reqAddPackage)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1, check2, check3 := false, false, false
+
+			resp := tc.GetData().(*ppb.AddPackageResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetPackage = dapi.PackagesRequest{
+					Uuid: resp.Package.Uuid,
+				}
+
+				a.reqGetPackageDetail = dapi.PackagesRequest{
+					Uuid: resp.Package.Uuid,
+				}
+
+				a.reqGetPackageForOrg = dapi.GetPackageByOrgRequest{
+					OrgId: a.OrgId,
+				}
+
+				tc1, err := a.DataplanClient.DataPlanPackageGetById(a.reqGetPackage)
+				if err == nil && tc1.Package.Uuid == resp.Package.Uuid {
+					check1 = true
+				} else {
+					return check1, fmt.Errorf("add package story failed on getPackage. Error %v", err)
+				}
+
+				tc2, err := a.DataplanClient.DataPlanPackageDetails(a.reqGetPackageDetail)
+				if err == nil && tc2.Package.Uuid == tc2.Package.Uuid && tc2.Package.OrgId == a.OrgId {
+					check2 = true
+				} else {
+					return check2, fmt.Errorf("add package story failed on getPackageDetatil. Error %v", err)
+				}
+
+				tc3, err := a.DataplanClient.DataPlanPackageGetByOrg(a.reqGetPackageForOrg)
+				if err == nil {
+					for _, p := range tc3.Packages {
+						if p.Uuid == resp.Package.Uuid && p.OrgId == a.OrgId {
+							check3 = true
+							break
+						}
+					}
+				} else {
+					return check3, fmt.Errorf("add package story failed on getPackageForOrg. Error %v", err)
+				}
+			}
+
+			if check1 && check2 && check3 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("add package story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*ppb.AddPackageResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+			a.packageId = resp.Package.Uuid
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 			tc.Watcher.Stop()

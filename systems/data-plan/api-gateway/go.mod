@@ -102,5 +102,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.4.6 // indirect
-	gorm.io/gorm v1.24.3 // indirect
+	gorm.io/gorm v1.25.4 // indirect
 )

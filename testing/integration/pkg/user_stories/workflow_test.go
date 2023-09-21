@@ -41,7 +41,9 @@ func TestWorkflow_UserStories(t *testing.T) {
 	w.RegisterTestCase(Story_invite_status_update()) //Invite member to non-community org
 	w.RegisterTestCase(Story_add_network_failed)
 	// w.RegisterTestCase(Story_member_add()) //Add member to non-community org
-	w.RegisterTestCase(Story_upload_dataplan())
+	w.RegisterTestCase(Story_upload_baserate())
+	w.RegisterTestCase(Story_markup())
+	w.RegisterTestCase(Story_package())
 
 	/* Run */
 	err := w.Run(t, context.Background())
