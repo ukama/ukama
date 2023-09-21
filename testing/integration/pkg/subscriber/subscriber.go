@@ -66,6 +66,17 @@ func (s *SubscriberClient) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq)
 	return rsp, nil
 }
 
+func (s *SubscriberClient) SubscriberSimpoolGetSims(req api.SimPoolTypeReq) (*pPb.GetSimsResponse, error) {
+	url := s.u.String() + VERSION + SIMPOOL + "sims/" + req.SimType
+	rsp := &pPb.GetSimsResponse{}
+
+	if err := s.r.SendRequest(http.MethodGet, url, req, rsp); err != nil {
+		return nil, err
+	}
+
+	return rsp, nil
+}
+
 // SUBSCRIBER
 
 func (s *SubscriberClient) SubscriberRegistryGetSusbscriber(req api.SubscriberGetReq) (*rPb.GetSubscriberResponse, error) {

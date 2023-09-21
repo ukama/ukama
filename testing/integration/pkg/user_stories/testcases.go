@@ -22,6 +22,7 @@ import (
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
@@ -32,9 +33,12 @@ import (
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	sppb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
 var config *pkg.Config
+
+const MAX_POOL = 5
 
 type UserStoriesData struct {
 	SubscriberClient *subscriber.SubscriberClient
@@ -63,6 +67,7 @@ type UserStoriesData struct {
 	memberId      string
 	baserateId    string
 	packageId     string
+	ICCID         []string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -115,6 +120,11 @@ type UserStoriesData struct {
 	reqSetDefaultMarkup dapi.SetDefaultMarkupRequest
 	reqGetMarkupForUser dapi.GetMarkupRequest
 	reqDeleteMarkup     dapi.DeleteMarkupRequest
+
+	reqSimPoolUploadSimReq  sapi.SimPoolUploadSimReq
+	reqSimPoolStatByTypeReq sapi.SimPoolTypeReq
+	reqSimByIccidReq        sapi.SimByIccidReq
+	reqGetSimsByTypeReq     sapi.SimPoolTypeReq
 }
 
 func init() {
@@ -124,13 +134,13 @@ func init() {
 
 func InitializeData() *UserStoriesData {
 	config = pkg.NewConfig()
-
 	d := &UserStoriesData{}
 	d.NucleusClient = nucleus.NewNucleusClient(config.System.Nucleus)
 	d.RegistryClient = registry.NewRegistryClient(config.System.Registry)
 	d.SubscriberClient = subscriber.NewSubscriberClient(config.System.Subscriber)
 	d.DataplanClient = dataplan.NewDataplanClient(config.System.Dataplan)
 	d.MbHost = config.System.MessageBus
+	d.ICCID = make([]string, MAX_POOL)
 	d.simType = "test"
 	d.country = "The lunar maria"
 	d.provider = "ABC Tel"
@@ -1408,7 +1418,7 @@ func Story_upload_baserate() *test.TestCase {
 					}
 				}
 				if err != nil || !check3 {
-					return check3, fmt.Errorf("uploade baserate story failed on BaseRateGetForPackage. Error %v", err.Error())
+					return check3, fmt.Errorf("uploade baserate story failed on BaseRateGetForPackage. Error %v", nil)
 				}
 
 				tc4, err := a.DataplanClient.DataPlanBaseRateGetByCountry(a.reqGetBaserateHistory)
@@ -1698,6 +1708,117 @@ func Story_package() *test.TestCase {
 				return err
 			}
 			a.packageId = resp.Package.Uuid
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_Simpool() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add sim pool",
+		Description: "Add sim pool in an org",
+		Data:        &sppb.UploadResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simpool.upload"})
+			a.reqSimPoolUploadSimReq = sapi.SimPoolUploadSimReq{
+				SimType: a.simType,
+				Data:    string(subscriber.CreateSimPool(MAX_POOL, &a.ICCID)),
+			}
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.SubscriberClient.SubscriberSimpoolUploadSims(a.reqSimPoolUploadSimReq)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1, check2, check3 := false, false, false
+
+			resp := tc.GetData().(*sppb.UploadResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqSimByIccidReq = sapi.SimByIccidReq{
+					Iccid: resp.Iccid[0],
+				}
+
+				a.reqSimPoolStatByTypeReq = sapi.SimPoolTypeReq{
+					SimType: a.simType,
+				}
+
+				a.reqGetSimsByTypeReq = sapi.SimPoolTypeReq{
+					SimType: a.simType,
+				}
+
+				tc1, err := a.SubscriberClient.SubscriberSimpoolGetSimByICCID(a.reqSimByIccidReq)
+				if err == nil {
+					for _, id := range resp.Iccid {
+						if tc1.Sim.Iccid == id {
+							check1 = true
+							break
+						}
+					}
+				} else {
+					return check1, fmt.Errorf("upload sims story failed on getSimByIccid. Error %v", err)
+				}
+
+				tc2, err := a.SubscriberClient.SubscriberSimpoolGetSimStats(a.reqSimPoolStatByTypeReq)
+				if err == nil && int(tc2.Total) >= len(resp.Iccid) {
+					check2 = true
+				} else {
+					return check2, fmt.Errorf("upload sims story failed on getSimsStatsByType. Error %v", err)
+				}
+
+				tc3, err := a.SubscriberClient.SubscriberSimpoolGetSims(a.reqGetSimsByTypeReq)
+				if err == nil {
+					for _, sim := range tc3.Sims {
+						if utils.Contains(resp.Iccid, sim.Iccid) {
+							check3 = true
+							break
+						}
+					}
+				} else {
+					return check3, fmt.Errorf("upload sims story failed on getSimsByType. Error %v", err)
+				}
+			}
+
+			if check1 && check2 && check3 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("upload sims story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*sppb.UploadResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 			tc.Watcher.Stop()

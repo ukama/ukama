@@ -108,3 +108,13 @@ func GenerateUTCDate() string {
 	tmp := t.Format(time.RFC3339)
 	return tmp
 }
+
+
+func Contains(elems []string, v string) bool {
+    for _, s := range elems {
+        if v == s {
+            return true
+        }
+    }
+    return false
+}
