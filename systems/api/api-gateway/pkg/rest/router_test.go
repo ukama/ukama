@@ -11,13 +11,13 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -44,9 +44,10 @@ var testClientSet client.Client
 
 func init() {
 	netClient := &mocks.NetworkClient{}
+	simClient := &mocks.SimClient{}
 
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(netClient)
+	testClientSet = client.NewClientsSet(netClient, simClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {

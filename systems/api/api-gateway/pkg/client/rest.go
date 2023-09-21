@@ -16,7 +16,8 @@ type Resty struct {
 
 func NewResty() *Resty {
 	c := resty.New()
-	c.SetDebug(true)
+
+	c.SetDebug(false)
 
 	return &Resty{
 		C: c,
@@ -26,7 +27,7 @@ func NewResty() *Resty {
 func NewRestyWithBearer(key string) *Resty {
 	c := resty.New()
 
-	c.SetDebug(true).SetHeader("Authorization", "Bearer "+key)
+	c.SetDebug(false).SetHeader("Authorization", "Bearer "+key)
 
 	return &Resty{
 		C: c,
@@ -166,7 +167,6 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 	errStatus := rest.ErrorMessage{}
 
 	resp, err := r.C.R().SetError(&errStatus).Delete(url)
-
 	if err != nil {
 		log.Errorf("Failed to send api request. error: %s", err.Error())
 		log.Infof("errorStatus: %v", errStatus)

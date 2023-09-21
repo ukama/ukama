@@ -90,10 +90,20 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	auth.Use()
 	{
-		// network routes
-		network := auth.Group("/networks", "Network", "Networks")
-		network.POST("", formatDoc("Creste Network", "Create a new network"), tonic.Handler(r.postNetwork, http.StatusPartialContent))
-		network.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetwork, http.StatusOK))
+		// networks routes
+		networks := auth.Group("/networks", "Network", "Networks")
+		networks.POST("", formatDoc("Creste Network", "Create a new network"), tonic.Handler(r.postNetwork, http.StatusPartialContent))
+		networks.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetwork, http.StatusOK))
+
+		// package routes
+		packages := auth.Group("/packages", "Package", "Packages")
+		packages.POST("", formatDoc("Creste Package", "Create a new package"), tonic.Handler(r.postPackage, http.StatusPartialContent))
+		packages.GET("/:package_id", formatDoc("Get Package", "Get a specific package"), tonic.Handler(r.getPackage, http.StatusOK))
+
+		// sims routes
+		sims := auth.Group("/sims", "Sim", "sims")
+		sims.POST("", formatDoc("Configure Sim", "configure a new sim"), tonic.Handler(r.postSim, http.StatusPartialContent))
+		sims.GET("/:iccid", formatDoc("Get Sim", "Get a specific sim"), tonic.Handler(r.getSim, http.StatusOK))
 	}
 }
 
@@ -104,6 +114,26 @@ func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.Networ
 
 func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.NetworkInfo, error) {
 	return r.clients.GetNetwork(req.NetworkId)
+}
+
+func (r *Router) postPackage(c *gin.Context, req *AddPackageReq) (*client.NetworkInfo, error) {
+	// return r.clients.CreatePackage(req.OrgName, req.NetName,
+	// req.AllowedCountries, req.AllowedNetworks, req.PaymentLinks)
+	return nil, nil
+}
+
+func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*client.NetworkInfo, error) {
+	// return r.clients.GetPackage(req.PackageId)
+	return nil, nil
+}
+
+func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*client.SimInfo, error) {
+	return r.clients.ConfigureSim(req.SubscriberId, req.NetworkId,
+		req.PackageId, req.SimType, req.SimToken)
+}
+
+func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*client.SimInfo, error) {
+	return r.clients.GetSim(req.Iccid)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
