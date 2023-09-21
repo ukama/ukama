@@ -20,18 +20,44 @@ message GetRunningAppsResponse {
 
 
 message StoreRunningAppsInfoRequest {
-    string nodeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "node_id"];;
-    repeated App running_apps = 2;
+    string nodeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "node_id"];
+    string timestamp = 5;
+	repeated System system = 3;
+	repeated Capps  capps = 6;
 }
 
+
 message App {
-    string id = 1;
+    string id = 1 ;
     string nodeId = 2;
-    string name = 3;
-    string version = 4;
-    Status status = 5;
-    string timestamp = 6;
+    string timestamp = 5;
+	repeated System system = 3;
+	repeated Capps capps = 6;
 }
+
+message Capps {
+    string id = 1;
+    string name = 3;
+    string tag = 4;
+    Status status = 5;
+    repeated Resource resources = 6;
+}
+
+
+message System {
+    string id = 1;
+    string healthId = 2;
+    string name = 3;
+    string value = 4;
+}
+
+message Resource {
+    string id = 1;
+    string cappId = 2;
+    string name = 3;
+    string value = 4;
+}
+
 
 message StoreRunningAppsInfoResponse {
 }

@@ -8,14 +8,35 @@ import (
 
 type Health struct {
 	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	NodeId    uuid.UUID  `gorm:"type:uuid"`
-	Name      string     `gorm:"not null"`
-	Version   string     `gorm:"not null"`
-	Status    Status     `gorm:"not null"`
+	NodeID    uuid.UUID  `gorm:"type:uuid"`
 	Timestamp string     `gorm:"not null"`
+	System    []System   `gorm:"foreignKey:HealthID"`
+	Capps     []Capp     `gorm:"foreignKey:HealthID"`
 	CreatedAt time.Time  `gorm:"not null"`
 	UpdatedAt time.Time  `gorm:"not null"`
 	DeletedAt *time.Time `gorm:"index"`
+}
+type System struct {
+	Id       uuid.UUID `gorm:"primaryKey;type:uuid"`
+	HealthID uuid.UUID `gorm:"type:uuid"`
+	Name     string    `gorm:"not null"`
+	Value    string    `gorm:"not null"`
+}
+
+type Capp struct {
+	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
+	HealthID  uuid.UUID  `gorm:"type:uuid"`
+	Name      string     `gorm:"not null"`
+	Tag       string     `gorm:"not null"`
+	Status    Status     `gorm:"not null"`
+	Resources []Resource `gorm:"foreignKey:CappID"`
+}
+
+type Resource struct {
+	Id     uuid.UUID `gorm:"primaryKey;type:uuid"`
+	CappID uuid.UUID `gorm:"type:uuid"` // Foreign key to associate with Capp
+	Name   string    `gorm:"not null"`
+	Value  string    `gorm:"not null"` // "value" field from the JSON payload
 }
 
 type Status uint8

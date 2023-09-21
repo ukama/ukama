@@ -2,12 +2,13 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
 type HealthRepo interface {
 	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
-	GetRunningAppsInfo() ([]*Health, error)
+	GetRunningAppsInfo(nodeId uuid.UUID) (*Health, error)
 }
 type healthRepo struct {
 	Db sql.Db
@@ -34,8 +35,12 @@ func (r *healthRepo) StoreRunningAppsInfo(health *Health, nestedFunc func(string
 	return err
 }
 
-func (r *healthRepo) GetRunningAppsInfo() ([]*Health, error) {
-	var healths []*Health
-	err := r.Db.GetGormDb().Find(&healths).Error
-	return healths, err
+func (r *healthRepo) GetRunningAppsInfo(nodeId uuid.UUID) (*Health, error) {
+	var healths Health
+	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).First(&healths)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &healths, nil
 }
