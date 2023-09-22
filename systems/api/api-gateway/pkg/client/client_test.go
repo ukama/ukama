@@ -18,7 +18,7 @@ func TestCient_GetNetwork(t *testing.T) {
 	netId := uuid.NewV4()
 	netName := "net-1"
 
-	c := client.NewClientsSet(netClient, nil, nil)
+	c := client.NewClientsSet(netClient, nil, nil, nil)
 
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
@@ -96,7 +96,7 @@ func TestCient_AddNetwork(t *testing.T) {
 	countries := []string{"USA"}
 	paymentLinks := false
 
-	c := client.NewClientsSet(netClient, nil, nil)
+	c := client.NewClientsSet(netClient, nil, nil, nil)
 
 	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
 		netClient.On("Add", client.AddNetworkRequest{
@@ -138,13 +138,86 @@ func TestCient_AddNetwork(t *testing.T) {
 	})
 }
 
+func TestCient_GetPackage(t *testing.T) {
+	packageClient := &mocks.PackageClient{}
+
+	packageId := uuid.NewV4()
+	pkgName := "Monthly Data"
+
+	c := client.NewClientsSet(nil, packageClient, nil, nil)
+
+	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
+		packageClient.On("Get", packageId.String()).
+			Return(&client.PackageInfo{
+				Id:       packageId,
+				Name:     pkgName,
+				IsSynced: true,
+			}, nil).Once()
+
+		pkgInfo, err := c.GetPackage(packageId.String())
+
+		assert.NoError(t, err)
+
+		assert.NotNil(t, pkgInfo)
+		assert.Equal(t, pkgInfo.Id, packageId)
+		assert.Equal(t, pkgInfo.Name, pkgName)
+	})
+
+	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
+		packageClient.On("Get", packageId.String()).
+			Return(&client.PackageInfo{
+				Id:       packageId,
+				Name:     pkgName,
+				IsSynced: false,
+			}, nil).Once()
+
+		pkgInfo, err := c.GetPackage(packageId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "partial")
+
+		assert.NotNil(t, pkgInfo)
+		assert.Equal(t, pkgInfo.Id, packageId)
+		assert.Equal(t, pkgInfo.Name, pkgName)
+	})
+
+	t.Run("PackageNotFound", func(t *testing.T) {
+		packageClient.On("Get", packageId.String()).
+			Return(nil,
+				fmt.Errorf("GetNetwork failure: %w",
+					client.ErrorStatus{StatusCode: 404})).Once()
+
+		pkgInfo, err := c.GetPackage(packageId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "404")
+
+		assert.Nil(t, pkgInfo)
+	})
+
+	t.Run("PackageGetError", func(t *testing.T) {
+		packageClient.On("Get", packageId.String()).
+			Return(nil,
+				fmt.Errorf("Some unexpected error")).Once()
+
+		pkgInfo, err := c.GetPackage(packageId.String())
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error")
+
+		assert.Nil(t, pkgInfo)
+	})
+}
+
 func TestCient_GetSim(t *testing.T) {
 	simClient := &mocks.SimClient{}
 
 	simId := uuid.NewV4()
 	subscriberId := uuid.NewV4()
 
-	c := client.NewClientsSet(nil, nil, simClient)
+	c := client.NewClientsSet(nil, nil, nil, simClient)
 
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
@@ -221,7 +294,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	simType := "some-sim-type"
 	simToken := "some-sim-token"
 
-	c := client.NewClientsSet(nil, nil, simClient)
+	c := client.NewClientsSet(nil, nil, nil, simClient)
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
 		simClient.On("Add", client.AddSimRequest{
@@ -249,7 +322,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		assert.Equal(t, simInfo.SubscriberId, subscriberId)
 	})
 
-	t.Run("NetworkNotCreated", func(t *testing.T) {
+	t.Run("SimNotCreated", func(t *testing.T) {
 		simClient.On("Add", client.AddSimRequest{
 			SubscriberId: subscriberId.String(),
 			NetworkId:    networkId.String(),
