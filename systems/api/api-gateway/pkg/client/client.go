@@ -18,14 +18,16 @@ type Client interface {
 }
 
 type clients struct {
-	network NetworkClient
-	sim     SimClient
+	network    NetworkClient
+	subscriber SubscriberClient
+	sim        SimClient
 }
 
-func NewClientsSet(network NetworkClient, sim SimClient) Client {
+func NewClientsSet(network NetworkClient, subscriber SubscriberClient, sim SimClient) Client {
 	c := &clients{
-		network: network,
-		sim:     sim,
+		network:    network,
+		subscriber: subscriber,
+		sim:        sim,
 	}
 
 	return c

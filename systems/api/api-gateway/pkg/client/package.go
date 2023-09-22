@@ -10,6 +10,19 @@ import (
 
 const PackageEndpoint = "/v1/packages"
 
+type PackageInfo struct {
+	Id       string `json:"uuid"`
+	Name     string `json:"name"`
+	OrgId    string `json:"org_id"`
+	SimType  string `json:"sim_type"`
+	IsActive bool   `json:"active"`
+	Duration uint   `json:"duration,string"`
+}
+
+type Package struct {
+	PackageInfo *PackageInfo `json:"package"`
+}
+
 type PackageClient interface {
 	Get(Id string) (*PackageInfo, error)
 }
@@ -30,19 +43,6 @@ func NewPackageClient(h string) *packageClient {
 		u: u,
 		R: NewResty(),
 	}
-}
-
-type Package struct {
-	PackageInfo *PackageInfo `json:"package"`
-}
-
-type PackageInfo struct {
-	Id       string `json:"uuid"`
-	Name     string `json:"name"`
-	OrgId    string `json:"org_id"`
-	SimType  string `json:"sim_type"`
-	IsActive bool   `json:"active"`
-	Duration uint   `json:"duration,string"`
 }
 
 func (p *packageClient) Get(id string) (*PackageInfo, error) {

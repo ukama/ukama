@@ -59,10 +59,10 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Get(testUuid)
+		s, err := testSimClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -81,10 +81,10 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Get(testUuid)
+		s, err := testSimClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -98,10 +98,10 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Get(testUuid)
+		s, err := testSimClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 }
 
@@ -133,14 +133,14 @@ func TestSimClient_Add(t *testing.T) {
 		// so that the test stays a unit test e.g no server/network call.
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Add(
+		s, err := testSimClient.Add(
 			client.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, n.Id.String())
+		assert.Equal(tt, testUuid, s.Id.String())
 	})
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
@@ -159,14 +159,14 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Add(
+		s, err := testSimClient.Add(
 			client.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -185,14 +185,14 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Add(
+		s, err := testSimClient.Add(
 			client.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -206,13 +206,13 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSimClient.Add(
+		s, err := testSimClient.Add(
 			client.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 }

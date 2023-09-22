@@ -18,7 +18,7 @@ func TestCient_GetNetwork(t *testing.T) {
 	netId := uuid.NewV4()
 	netName := "net-1"
 
-	c := client.NewClientsSet(netClient, nil)
+	c := client.NewClientsSet(netClient, nil, nil)
 
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
@@ -96,7 +96,7 @@ func TestCient_AddNetwork(t *testing.T) {
 	countries := []string{"USA"}
 	paymentLinks := false
 
-	c := client.NewClientsSet(netClient, nil)
+	c := client.NewClientsSet(netClient, nil, nil)
 
 	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
 		netClient.On("Add", client.AddNetworkRequest{
@@ -144,7 +144,7 @@ func TestCient_GetSim(t *testing.T) {
 	simId := uuid.NewV4()
 	subscriberId := uuid.NewV4()
 
-	c := client.NewClientsSet(nil, simClient)
+	c := client.NewClientsSet(nil, nil, simClient)
 
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
@@ -221,7 +221,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	simType := "some-sim-type"
 	simToken := "some-sim-token"
 
-	c := client.NewClientsSet(nil, simClient)
+	c := client.NewClientsSet(nil, nil, simClient)
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
 		simClient.On("Add", client.AddSimRequest{
