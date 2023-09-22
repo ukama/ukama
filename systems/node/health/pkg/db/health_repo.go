@@ -35,9 +35,14 @@ func (r *healthRepo) StoreRunningAppsInfo(health *Health, nestedFunc func(string
 	return err
 }
 
+
+
 func (r *healthRepo) GetRunningAppsInfo(nodeId uuid.UUID) (*Health, error) {
 	var healths Health
-	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).First(&healths)
+	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).
+		Preload("System").
+		Preload("Capps.Resources").
+		First(&healths)
 	if result.Error != nil {
 		return nil, result.Error
 	}

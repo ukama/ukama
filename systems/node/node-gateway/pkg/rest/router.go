@@ -124,10 +124,33 @@ func (r *Router) postNodeInfosHandler(c *gin.Context, req *StoreRunningAppsInfoR
         }
         genSystems = append(genSystems, genSystem)
     }
+
+	var genCapps []*gen.Capps
+	for _, capp := range req.Capps {
+		var genResources []*gen.Resource
+		for _, resource := range capp.Resources {
+			genResource := &gen.Resource{
+				Name:  resource.Name,
+				Value: resource.Value,
+			}
+			genResources = append(genResources, genResource)
+		}
+		genCapp := &gen.Capps{
+			Name:      capp.Name,
+			Tag:       capp.Tag,
+			// Status:    gen.Status(capp.Status),
+			Resources: genResources,
+		}
+		genCapps = append(genCapps, genCapp)
+	}
+
+
+
     return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
         NodeId:    req.NodeId,
         Timestamp: req.Timestamp,
         System:    genSystems,
+		Capps:     genCapps,
     })
 }
 

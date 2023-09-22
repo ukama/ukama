@@ -106,7 +106,7 @@ func waitForExit() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Health{})
+	err := d.Init(&db.Health{}, &db.System{}, &db.Capp{}, &db.Resource{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
