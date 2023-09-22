@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	log "github.com/sirupsen/logrus"
 )
 
 const PackageEndpoint = "/v1/packages"
 
 type PackageInfo struct {
-	Id       string `json:"uuid"`
-	Name     string `json:"name"`
-	OrgId    string `json:"org_id"`
-	SimType  string `json:"sim_type"`
-	IsActive bool   `json:"active"`
-	Duration uint   `json:"duration,string"`
-	IsSynced bool   `json:"is_synced,omitempty"`
+	Id       uuid.UUID `json:"uuid"`
+	Name     string    `json:"name"`
+	OrgId    string    `json:"org_id"`
+	SimType  string    `json:"sim_type"`
+	IsActive bool      `json:"active"`
+	Duration uint      `json:"duration,string"`
+	IsSynced bool      `json:"is_synced,omitempty"`
 }
 
 type Package struct {
@@ -32,16 +34,16 @@ type AddPackageRequest struct {
 	OwnerId     string  `json:"owner_id" validation:"required"`
 	SimType     string  `json:"sim_type" validation:"required"`
 	SmsVolume   int64   `json:"sms_volume" validation:"required"`
+	VoiceVolume int64   `json:"voice_volume" default:"0"`
 	DataVolume  int64   `json:"data_volume" validation:"required"`
-	DataUnit    string  `json:"data_unit" validation:"required"`
 	VoiceUnit   string  `json:"voice_unit" validation:"required"`
+	DataUnit    string  `json:"data_unit" validation:"required"`
 	Type        string  `json:"type" validation:"required"`
 	Flatrate    bool    `json:"flat_rate" default:"false"`
 	Amount      float64 `json:"amount" default:"0.00"`
 	Markup      float64 `json:"markup" default:"0.00"`
 	Apn         string  `json:"apn" default:"ukama.tel"`
 	Active      bool    `json:"active" validation:"required"`
-	VoiceVolume int64   `json:"voice_volume" default:"0"`
 	BaserateId  string  `json:"baserate_id" validation:"required"`
 }
 
