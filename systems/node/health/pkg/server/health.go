@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -41,10 +42,11 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node uuid. Error %s", err.Error())
 	}
+	healthUUID := uuid.NewV4()
 
 	// Create a Health instance
 	health := db.Health{
-		Id:        uuid.NewV4(),
+		Id:        healthUUID,
 		NodeID:    nodeUUID,
 		Timestamp: req.GetTimestamp(),
 	}
@@ -53,6 +55,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	for _, sys := range req.GetSystem() {
 		health.System = append(health.System, db.System{
 			Id:    uuid.NewV4(),
+			HealthID: healthUUID,
 			Name:  sys.GetName(),
 			Value: sys.GetValue(),
 		})
@@ -61,6 +64,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	for _, capp := range req.GetCapps() {
 		health.Capps = append(health.Capps, db.Capp{
 			Id:     uuid.NewV4(),
+			HealthID: healthUUID,
 			Name:   capp.GetName(),
 			Tag:    capp.GetTag(),
 			Status: db.Status(capp.GetStatus()),
@@ -69,6 +73,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 		for _, resource := range capp.GetResources() {
 			health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
 				Id:    uuid.NewV4(),
+				CappID: health.Capps[len(health.Capps)-1].Id,
 				Name:  resource.GetName(),
 				Value: resource.GetValue(),
 			})
@@ -85,7 +90,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningAppsRequest) (*pb.GetRunningAppsResponse, error) {
 	log.Infof("GetRunningAppsInfo: %v", req)
-
+fmt.Println("NODEID", req)
 	nodeUUID, err := uuid.FromString(req.GetNodeId())
 
 	if err != nil {
