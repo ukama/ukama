@@ -13,8 +13,9 @@ type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
 	CreateNetwork(string, string, []string, []string, bool) (*NetworkInfo, error)
 
-	GetPackage(string) (*NetworkInfo, error)
-	AddPackage(string, string, []string, []string, bool) (*NetworkInfo, error)
+	GetPackage(string) (*PackageInfo, error)
+	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64,
+		int64, string, string, string, string, string, float64, float64) (*PackageInfo, error)
 
 	GetSim(string) (*SimInfo, error)
 	ConfigureSim(string, string, string, string, string) (*SimInfo, error)
@@ -22,13 +23,15 @@ type Client interface {
 
 type clients struct {
 	network    NetworkClient
+	pkg        PackageClient
 	subscriber SubscriberClient
 	sim        SimClient
 }
 
-func NewClientsSet(network NetworkClient, subscriber SubscriberClient, sim SimClient) Client {
+func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber SubscriberClient, sim SimClient) Client {
 	c := &clients{
 		network:    network,
+		pkg:        pkg,
 		subscriber: subscriber,
 		sim:        sim,
 	}
@@ -79,8 +82,8 @@ func (c *clients) CreateNetwork(orgName, NetworkName string,
 	return net, nil
 }
 
-func (c *clients) GetPackage(id string) (*NetworkInfo, error) {
-	net, err := c.network.Get(id)
+func (c *clients) GetPackage(id string) (*PackageInfo, error) {
+	pkg, err := c.pkg.Get(id)
 	if err != nil {
 		e := ErrorStatus{}
 
@@ -94,32 +97,47 @@ func (c *clients) GetPackage(id string) (*NetworkInfo, error) {
 		return nil, err
 	}
 
-	if !net.IsSynced {
+	if !pkg.IsSynced {
 		log.Warn("partial content. request is still ongoing")
 
-		return net, rest.HttpError{
+		return pkg, rest.HttpError{
 			HttpCode: http.StatusPartialContent,
 			Message:  "partial content. request is still ongoing",
 		}
 	}
 
-	return net, nil
+	return pkg, nil
 }
 
-func (c *clients) AddPackage(orgName, NetworkName string,
-	allowedCountries, allowedNetworks []string, paymentLinks bool) (*NetworkInfo, error) {
-	net, err := c.network.Add(AddNetworkRequest{
-		OrgName:          orgName,
-		NetName:          NetworkName,
-		AllowedCountries: allowedCountries,
-		AllowedNetworks:  allowedNetworks,
-		PaymentLinks:     paymentLinks,
+func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
+	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
+	simType, apn, pType string, markup, amount float64) (*PackageInfo, error) {
+
+	pkg, err := c.pkg.Add(AddPackageRequest{
+		Name:        name,
+		OrgId:       orgId,
+		OwnerId:     ownerId,
+		From:        from,
+		To:          to,
+		BaserateId:  baserateId,
+		Active:      isActive,
+		SmsVolume:   smsVolume,
+		VoiceVolume: voiceVolume,
+		DataVolume:  dataVolume,
+		VoiceUnit:   voiceUnit,
+		DataUnit:    dataUnit,
+		SimType:     simType,
+		Apn:         apn,
+		Markup:      markup,
+		Type:        pType,
+		Flatrate:    flatRate,
+		Amount:      amount,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return net, nil
+	return pkg, nil
 }
 
 func (c *clients) GetSim(id string) (*SimInfo, error) {

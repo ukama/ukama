@@ -12,25 +12,25 @@ type Client struct {
 	mock.Mock
 }
 
-// AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4
-func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 []string, _a3 []string, _a4 bool) (*client.NetworkInfo, error) {
-	ret := _m.Called(_a0, _a1, _a2, _a3, _a4)
+// AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17
+func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 int64, _a9 int64, _a10 int64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 float64, _a17 float64) (*client.PackageInfo, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
 
-	var r0 *client.NetworkInfo
+	var r0 *client.PackageInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) (*client.NetworkInfo, error)); ok {
-		return rf(_a0, _a1, _a2, _a3, _a4)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64) (*client.PackageInfo, error)); ok {
+		return rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) *client.NetworkInfo); ok {
-		r0 = rf(_a0, _a1, _a2, _a3, _a4)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64) *client.PackageInfo); ok {
+		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.NetworkInfo)
+			r0 = ret.Get(0).(*client.PackageInfo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, []string, []string, bool) error); ok {
-		r1 = rf(_a0, _a1, _a2, _a3, _a4)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -117,19 +117,19 @@ func (_m *Client) GetNetwork(_a0 string) (*client.NetworkInfo, error) {
 }
 
 // GetPackage provides a mock function with given fields: _a0
-func (_m *Client) GetPackage(_a0 string) (*client.NetworkInfo, error) {
+func (_m *Client) GetPackage(_a0 string) (*client.PackageInfo, error) {
 	ret := _m.Called(_a0)
 
-	var r0 *client.NetworkInfo
+	var r0 *client.PackageInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*client.NetworkInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*client.PackageInfo, error)); ok {
 		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(string) *client.NetworkInfo); ok {
+	if rf, ok := ret.Get(0).(func(string) *client.PackageInfo); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.NetworkInfo)
+			r0 = ret.Get(0).(*client.PackageInfo)
 		}
 	}
 
