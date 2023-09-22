@@ -86,7 +86,7 @@ func TestCient_GetNetwork(t *testing.T) {
 
 }
 
-func TestCient_AddNetwork(t *testing.T) {
+func TestCient_CreateNetwork(t *testing.T) {
 	netClient := &mocks.NetworkClient{}
 
 	netId := uuid.NewV4()
@@ -207,6 +207,115 @@ func TestCient_GetPackage(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error")
 
+		assert.Nil(t, pkgInfo)
+	})
+}
+
+func TestCient_AddPackage(t *testing.T) {
+	pkgClient := &mocks.PackageClient{}
+
+	pkgId := uuid.NewV4()
+	pkgName := "Monthly Data"
+	orgId := uuid.NewV4().String()
+	ownerId := uuid.NewV4().String()
+	from := "2023-04-01T00:00:00Z"
+	to := "2023-04-01T00:00:00Z"
+	baserateId := uuid.NewV4().String()
+	voiceVolume := int64(0)
+	isActive := true
+	dataVolume := int64(1024)
+	smsVolume := int64(0)
+	dataUnit := "MegaBytes"
+	voiceUnit := "seconds"
+	simType := "test"
+	apn := "ukama.tel"
+	markup := float64(0)
+	pType := "postpaid"
+	flatRate := false
+	amount := float64(0)
+
+	c := client.NewClientsSet(nil, pkgClient, nil, nil)
+
+	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
+		pkgClient.On("Add", client.AddPackageRequest{
+			Name:        pkgName,
+			OrgId:       orgId,
+			OwnerId:     ownerId,
+			From:        from,
+			To:          to,
+			BaserateId:  baserateId,
+			Active:      isActive,
+			SmsVolume:   smsVolume,
+			VoiceVolume: voiceVolume,
+			DataVolume:  dataVolume,
+			VoiceUnit:   voiceUnit,
+			DataUnit:    dataUnit,
+			SimType:     simType,
+			Apn:         apn,
+			Markup:      markup,
+			Type:        pType,
+			Flatrate:    flatRate,
+			Amount:      amount,
+		}).Return(&client.PackageInfo{
+			Id:          pkgId,
+			Name:        pkgName,
+			OrgId:       orgId,
+			OwnerId:     ownerId,
+			From:        from,
+			To:          to,
+			BaserateId:  baserateId,
+			IsActive:    isActive,
+			SmsVolume:   smsVolume,
+			VoiceVolume: voiceVolume,
+			DataVolume:  dataVolume,
+			VoiceUnit:   voiceUnit,
+			DataUnit:    dataUnit,
+			SimType:     simType,
+			Apn:         apn,
+			Markup:      markup,
+			Type:        pType,
+			Flatrate:    flatRate,
+			Amount:      amount,
+			IsSynced:    false,
+		}, nil).Once()
+
+		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
+			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
+			simType, apn, pType, markup, amount)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, pkgInfo.Id, pkgId)
+		assert.Equal(t, pkgInfo.Name, pkgName)
+	})
+
+	t.Run("PackageNotCreated", func(t *testing.T) {
+		pkgClient.On("Add", client.AddPackageRequest{
+			Name:        pkgName,
+			OrgId:       orgId,
+			OwnerId:     ownerId,
+			From:        from,
+			To:          to,
+			BaserateId:  baserateId,
+			Active:      isActive,
+			SmsVolume:   smsVolume,
+			VoiceVolume: voiceVolume,
+			DataVolume:  dataVolume,
+			VoiceUnit:   voiceUnit,
+			DataUnit:    dataUnit,
+			SimType:     simType,
+			Apn:         apn,
+			Markup:      markup,
+			Type:        pType,
+			Flatrate:    flatRate,
+			Amount:      amount,
+		}).Return(nil, errors.New("some error")).Once()
+
+		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
+			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
+			simType, apn, pType, markup, amount)
+
+		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, pkgInfo)
 	})
 }
