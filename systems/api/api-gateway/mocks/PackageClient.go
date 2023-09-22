@@ -12,6 +12,32 @@ type PackageClient struct {
 	mock.Mock
 }
 
+// Add provides a mock function with given fields: req
+func (_m *PackageClient) Add(req client.AddPackageRequest) (*client.PackageInfo, error) {
+	ret := _m.Called(req)
+
+	var r0 *client.PackageInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(client.AddPackageRequest) (*client.PackageInfo, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(client.AddPackageRequest) *client.PackageInfo); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.PackageInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(client.AddPackageRequest) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: Id
 func (_m *PackageClient) Get(Id string) (*client.PackageInfo, error) {
 	ret := _m.Called(Id)
