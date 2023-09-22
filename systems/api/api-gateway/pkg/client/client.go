@@ -13,6 +13,9 @@ type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
 	CreateNetwork(string, string, []string, []string, bool) (*NetworkInfo, error)
 
+	GetPackage(string) (*NetworkInfo, error)
+	AddPackage(string, string, []string, []string, bool) (*NetworkInfo, error)
+
 	GetSim(string) (*SimInfo, error)
 	ConfigureSim(string, string, string, string, string) (*SimInfo, error)
 }
@@ -61,6 +64,49 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 }
 
 func (c *clients) CreateNetwork(orgName, NetworkName string,
+	allowedCountries, allowedNetworks []string, paymentLinks bool) (*NetworkInfo, error) {
+	net, err := c.network.Add(AddNetworkRequest{
+		OrgName:          orgName,
+		NetName:          NetworkName,
+		AllowedCountries: allowedCountries,
+		AllowedNetworks:  allowedNetworks,
+		PaymentLinks:     paymentLinks,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return net, nil
+}
+
+func (c *clients) GetPackage(id string) (*NetworkInfo, error) {
+	net, err := c.network.Get(id)
+	if err != nil {
+		e := ErrorStatus{}
+
+		if errors.As(err, &e) {
+			return nil, rest.HttpError{
+				HttpCode: e.StatusCode,
+				Message:  err.Error(),
+			}
+		}
+
+		return nil, err
+	}
+
+	if !net.IsSynced {
+		log.Warn("partial content. request is still ongoing")
+
+		return net, rest.HttpError{
+			HttpCode: http.StatusPartialContent,
+			Message:  "partial content. request is still ongoing",
+		}
+	}
+
+	return net, nil
+}
+
+func (c *clients) AddPackage(orgName, NetworkName string,
 	allowedCountries, allowedNetworks []string, paymentLinks bool) (*NetworkInfo, error) {
 	net, err := c.network.Add(AddNetworkRequest{
 		OrgName:          orgName,

@@ -12,6 +12,32 @@ type Client struct {
 	mock.Mock
 }
 
+// AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4
+func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 []string, _a3 []string, _a4 bool) (*client.NetworkInfo, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3, _a4)
+
+	var r0 *client.NetworkInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) (*client.NetworkInfo, error)); ok {
+		return rf(_a0, _a1, _a2, _a3, _a4)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, bool) *client.NetworkInfo); ok {
+		r0 = rf(_a0, _a1, _a2, _a3, _a4)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.NetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, []string, []string, bool) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3, _a4)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ConfigureSim provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4
 func (_m *Client) ConfigureSim(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string) (*client.SimInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4)
@@ -66,6 +92,32 @@ func (_m *Client) CreateNetwork(_a0 string, _a1 string, _a2 []string, _a3 []stri
 
 // GetNetwork provides a mock function with given fields: _a0
 func (_m *Client) GetNetwork(_a0 string) (*client.NetworkInfo, error) {
+	ret := _m.Called(_a0)
+
+	var r0 *client.NetworkInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*client.NetworkInfo, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(string) *client.NetworkInfo); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.NetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPackage provides a mock function with given fields: _a0
+func (_m *Client) GetPackage(_a0 string) (*client.NetworkInfo, error) {
 	ret := _m.Called(_a0)
 
 	var r0 *client.NetworkInfo
