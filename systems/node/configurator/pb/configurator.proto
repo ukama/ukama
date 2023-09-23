@@ -1,0 +1,19 @@
+syntax = "proto3";
+package ukama.node.configurator.v1;
+option go_package = "github.com/ukama/ukama/systems/node/configurator/pb/gen";
+
+
+
+// Defines the service for configurator operations
+service ConfiguratorService {
+  rpc ConfigEvent(ConfigStoreEvent) returns (ConfigStoreEventResponse);
+}
+
+
+message ConfigStoreEvent {
+}
+
+message ConfigStoreEventResponse {
+}
+
+
