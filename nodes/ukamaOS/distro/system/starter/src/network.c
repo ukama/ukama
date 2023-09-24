@@ -45,6 +45,10 @@ static void setup_webservice_endpoints(Config *config,
                                API_RES_EP("status/:space/:name"), 0,
                                &web_service_cb_get_status, config);
 
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("status"), 0,
+                               &web_service_cb_get_all_capps_status, config);
+
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("terminate/:space/:name"), 0,
                                &web_service_cb_post_terminate, config);
