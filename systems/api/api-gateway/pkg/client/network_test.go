@@ -159,8 +159,10 @@ func TestNetworkClient_Add(t *testing.T) {
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{NetName: "net-1",
-				OrgName: "Ukama"},
+			client.AddNetworkRequest{
+				NetName: "net-1",
+				OrgName: "Ukama",
+			},
 		)
 
 		assert.Error(tt, err)
@@ -184,8 +186,10 @@ func TestNetworkClient_Add(t *testing.T) {
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{NetName: "net-1",
-				OrgName: "Ukama"},
+			client.AddNetworkRequest{
+				NetName: "net-1",
+				OrgName: "Ukama",
+			},
 		)
 
 		assert.Error(tt, err)
@@ -204,8 +208,10 @@ func TestNetworkClient_Add(t *testing.T) {
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{NetName: "net-1",
-				OrgName: "Ukama"},
+			client.AddNetworkRequest{
+				NetName: "net-1",
+				OrgName: "Ukama",
+			},
 		)
 
 		assert.Error(tt, err)
