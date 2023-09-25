@@ -18,7 +18,8 @@ type Client interface {
 		string, string, string, string, float64, float64, float64, uint, []string) (*PackageInfo, error)
 
 	GetSim(string) (*SimInfo, error)
-	ConfigureSim(string, string, string, string, string, uint) (*SimInfo, error)
+	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
+		string, string, string, string, uint) (*SimInfo, error)
 }
 
 type clients struct {
@@ -28,7 +29,8 @@ type clients struct {
 	sim        SimClient
 }
 
-func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber SubscriberClient, sim SimClient) Client {
+func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber SubscriberClient,
+	sim SimClient) Client {
 	c := &clients{
 		network:    network,
 		pkg:        pkg,
@@ -148,8 +150,32 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 	return sim, nil
 }
 
-func (c *clients) ConfigureSim(subscriberId, networkId, packageId,
-	simType, simToken string, trafficPolicy uint) (*SimInfo, error) {
+func (c *clients) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
+	email, phoneNumber, address, dob, proofOfID, idSerial, packageId, simType,
+	simToken string, trafficPolicy uint) (*SimInfo, error) {
+	if subscriberId == "" {
+		subscriber, err := c.subscriber.Add(
+			AddSubscriberRequest{
+				OrgId:                 orgId,
+				NetworkId:             networkId,
+				FirstName:             firstName,
+				LastName:              lastName,
+				Email:                 email,
+				PhoneNumber:           phoneNumber,
+				Address:               address,
+				Dob:                   dob,
+				ProofOfIdentification: proofOfID,
+				IdSerial:              idSerial,
+			})
+		if err != nil {
+			log.Error("Failed to create new subscriber while configuring sim")
+
+			return nil, err
+		}
+
+		subscriberId = subscriber.SubscriberId.String()
+	}
+
 	sim, err := c.sim.Add(AddSimRequest{
 		SubscriberId:  subscriberId,
 		NetworkId:     networkId,

@@ -423,12 +423,43 @@ func TestCient_ConfigureSim(t *testing.T) {
 	simToken := "some-sim-token"
 	trafficPolicy := uint(0)
 
+	orgId := uuid.NewV4()
+	firstName := "John"
+	lastName := "Doe"
+	email := "johndoe@example.com"
+	phoneNumber := "0123456789"
+	address := "2 Rivers"
+	dob := "2023/09/01"
+	proofOfID := "passport"
+	idSerial := "987654321"
+
 	c := client.NewClientsSet(nil, nil, subscriberClient, simClient)
 
-	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
-		subscriberClient.On("Get", subscriberId.String()).
+	t.Run("SimAndSubscriberCreatedAndStatusUpdated", func(t *testing.T) {
+		subscriberClient.On("Add", client.AddSubscriberRequest{
+			OrgId:                 orgId.String(),
+			NetworkId:             networkId.String(),
+			FirstName:             firstName,
+			LastName:              lastName,
+			Email:                 email,
+			PhoneNumber:           phoneNumber,
+			Address:               address,
+			Dob:                   dob,
+			ProofOfIdentification: proofOfID,
+			IdSerial:              idSerial,
+		}).
 			Return(&client.SubscriberInfo{
-				SubscriberId: subscriberId,
+				SubscriberId:          subscriberId,
+				OrgId:                 orgId,
+				NetworkId:             networkId,
+				FirstName:             firstName,
+				LastName:              lastName,
+				Email:                 email,
+				PhoneNumber:           phoneNumber,
+				Address:               address,
+				Dob:                   dob,
+				ProofOfIdentification: proofOfID,
+				IdSerial:              idSerial,
 			}, nil).Once()
 
 		simClient.On("Add", client.AddSimRequest{
@@ -449,13 +480,81 @@ func TestCient_ConfigureSim(t *testing.T) {
 				IsSynced:      false,
 			}, nil).Once()
 
-		simInfo, err := c.ConfigureSim(subscriberId.String(),
-			networkId.String(), packageId.String(), simType, simToken, trafficPolicy)
+		simInfo, err := c.ConfigureSim("", orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.NoError(t, err)
 
 		assert.Equal(t, simInfo.Id, simId)
 		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+	})
+
+	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
+		subscriberClient.On("Get", subscriberId.String()).
+			Return(&client.SubscriberInfo{
+				SubscriberId:          subscriberId,
+				OrgId:                 orgId,
+				NetworkId:             networkId,
+				FirstName:             firstName,
+				LastName:              lastName,
+				Email:                 email,
+				PhoneNumber:           phoneNumber,
+				Address:               address,
+				Dob:                   dob,
+				ProofOfIdentification: proofOfID,
+				IdSerial:              idSerial,
+			}, nil).Once()
+
+		simClient.On("Add", client.AddSimRequest{
+			SubscriberId:  subscriberId.String(),
+			NetworkId:     networkId.String(),
+			PackageId:     packageId.String(),
+			SimType:       simType,
+			SimToken:      simToken,
+			TrafficPolicy: trafficPolicy}).
+			Return(&client.SimInfo{
+				Id:           simId,
+				SubscriberId: subscriberId,
+				NetworkId:    networkId,
+				// PackageId:     packageId,
+				SimType: simType,
+				// SimToken:      simToken,
+				TrafficPolicy: trafficPolicy,
+				IsSynced:      false,
+			}, nil).Once()
+
+		simInfo, err := c.ConfigureSim(subscriberId.String(), orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, simInfo.Id, simId)
+		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+	})
+
+	t.Run("SubscriberNotCreated", func(t *testing.T) {
+		subscriberClient.On("Add", client.AddSubscriberRequest{
+			OrgId:                 orgId.String(),
+			NetworkId:             networkId.String(),
+			FirstName:             firstName,
+			LastName:              lastName,
+			Email:                 email,
+			PhoneNumber:           phoneNumber,
+			Address:               address,
+			Dob:                   dob,
+			ProofOfIdentification: proofOfID,
+			IdSerial:              idSerial,
+		}).Return(nil, errors.New("some error")).Once()
+
+		simInfo, err := c.ConfigureSim("", orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error")
+		assert.Nil(t, simInfo)
 	})
 
 	t.Run("SimNotCreated", func(t *testing.T) {
@@ -470,9 +569,11 @@ func TestCient_ConfigureSim(t *testing.T) {
 			SimToken:     simToken,
 		}).Return(nil, errors.New("some error")).Once()
 
-		simInfo, err := c.ConfigureSim(subscriberId.String(),
-			networkId.String(), packageId.String(), simType, simToken, trafficPolicy)
+		simInfo, err := c.ConfigureSim(subscriberId.String(), orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, simInfo)
 	})
