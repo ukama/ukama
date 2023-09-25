@@ -17,12 +17,14 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/subscriber"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/validation"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
+	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
@@ -34,6 +36,7 @@ import (
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	srpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	smpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sppb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
@@ -68,7 +71,9 @@ type UserStoriesData struct {
 	subscriberId  string
 	baserateId    string
 	packageId     string
+	spackageId    string
 	ICCID         []string
+	SimId         string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -129,6 +134,14 @@ type UserStoriesData struct {
 
 	reqAddSubscriber sapi.SubscriberAddReq
 	reqGetSubscriber sapi.SubscriberGetReq
+
+	reqAllocateSim       sapi.AllocateSimReq
+	reqAddpackageToSub   sapi.AddPkgToSimReq
+	reqGetPackagesForSim sapi.SimReq
+	reqGetSubscriberSims sapi.GetSimsBySubReq
+	reqGetSimById        sapi.GetSimsBySubReq
+	reqToggleSimState    sapi.ActivateDeactivateSimReq
+	reqSetActivePackage  sapi.SetActivePackageForSimReq
 }
 
 func init() {
@@ -151,6 +164,9 @@ func InitializeData() *UserStoriesData {
 	d.OrgId = config.OrgId
 	d.OrgName = config.OrgName
 	d.OrgOwnerId = config.OrgOwnerId
+
+	d.packageId = "29c7485b-cb87-43ed-8619-30c891cdd197"
+	d.NetworkId = "eaa6b6e0-0ef4-4bd6-bb58-39964183a9b0"
 
 	return d
 }
@@ -1420,8 +1436,7 @@ func Story_upload_baserate() *test.TestCase {
 							break
 						}
 					}
-				}
-				if err != nil || !check3 {
+				} else {
 					return check3, fmt.Errorf("uploade baserate story failed on BaseRateGetForPackage. Error %v", nil)
 				}
 
@@ -1869,7 +1884,7 @@ func Story_Subscriber() *test.TestCase {
 		},
 
 		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			check1 := false
+			check1, check2 := false, false
 
 			resp := tc.GetData().(*srpb.AddSubscriberResponse)
 
@@ -1890,9 +1905,18 @@ func Story_Subscriber() *test.TestCase {
 					return check1, fmt.Errorf("add subscriber story failed on getSubscriber. Error %v", err)
 				}
 
+				a.reqGetSimById = sapi.GetSimsBySubReq{
+					SubscriberId: resp.Subscriber.SubscriberId,
+				}
+				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSimById)
+				if err == nil && len(tc2.Sims) == 0 {
+					check2 = true
+				} else {
+					return check1, fmt.Errorf("allocate sim story failed on getSubscriberSims. Error %v", err)
+				}
 			}
 
-			if check1 {
+			if check1 && check2 {
 				return true, nil
 			} else {
 				return false, fmt.Errorf("add subscriber story failed. %v", nil)
@@ -1912,6 +1936,215 @@ func Story_Subscriber() *test.TestCase {
 				return err
 			}
 			a.subscriberId = resp.Subscriber.SubscriberId
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_Sim_Allocate() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Allocate sim to subscriber",
+		Description: "Allocate sim to subscriber in an org",
+		Data:        &smpb.AllocateSimResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.allocate"})
+
+			token, err := smutil.GenerateTokenFromIccid(a.ICCID[0], config.Key)
+			if err != nil {
+				return fmt.Errorf("failed to generate token from iccid %v", err)
+			}
+			a.reqAllocateSim = sapi.AllocateSimReq{
+				SubscriberId: a.subscriberId,
+				SimToken:     token,
+				PackageId:    a.packageId,
+				NetworkId:    a.NetworkId,
+				SimType:      a.simType,
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.SubscriberClient.SubscriberManagerAllocateSim(a.reqAllocateSim)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1, check2 := false, false
+
+			resp := tc.GetData().(*smpb.AllocateSimResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetSubscriber = sapi.SubscriberGetReq{
+					SubscriberId: resp.Sim.SubscriberId,
+				}
+
+				tc1, err := a.SubscriberClient.SubscriberRegistryGetSusbscriber(a.reqGetSubscriber)
+				if err == nil && tc1.Subscriber.OrgId == a.OrgId {
+					for _, sim := range tc1.Subscriber.Sim {
+						if sim.Iccid == a.ICCID[0] {
+							check1 = true
+							break
+						}
+					}
+				} else {
+					return check1, fmt.Errorf("allocate sim story failed on getSubscriber. Error %v", err)
+				}
+
+				a.reqGetSimById = sapi.GetSimsBySubReq{
+					SubscriberId: resp.Sim.SubscriberId,
+				}
+				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSimById)
+				if err == nil {
+					for _, sim := range tc2.Sims {
+						if sim.Iccid == a.ICCID[0] {
+							check2 = true
+							break
+						}
+					}
+				} else {
+					return check1, fmt.Errorf("allocate sim story failed on getSubscriberSims. Error %v", err)
+				}
+			}
+
+			if check1 && check2 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("allocate sim story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*smpb.AllocateSimResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+			a.SimId = resp.Sim.Id
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_add_sim_package() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add new package to sim",
+		Description: "add new package to user sim",
+		Data:        &smpb.AddPackageResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.add"})
+
+			a.reqAddPackage = dapi.AddPackageRequest{
+				OwnerId:    a.OrgOwnerId,
+				OrgId:      a.OrgId,
+				Name:       faker.FirstName() + "-monthly-pack",
+				SimType:    a.simType,
+				From:       utils.GenerateUTCFutureDate(24 * time.Hour),
+				To:         utils.GenerateUTCFutureDate(30 * 24 * time.Hour),
+				BaserateId: a.baserateId,
+				SmsVolume:  100,
+				DataVolume: 1024,
+				DataUnit:   "MegaBytes",
+				Type:       "postpaid",
+				Active:     true,
+				Flatrate:   false,
+				Apn:        "ukama.tel",
+			}
+
+			resp, err := a.DataplanClient.DataPlanPackageAdd(a.reqAddPackage)
+			if err != nil {
+				return fmt.Errorf("add package story failed at addSimPkg. Error %v", err)
+			}
+			a.spackageId = resp.Package.Uuid
+
+			a.reqAddpackageToSub = sapi.AddPkgToSimReq{
+				SimId:     a.SimId,
+				PackageId: resp.Package.Uuid,
+				StartDate: timestamppb.New(time.Now().UTC().AddDate(0, 0, 1)),
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			err = a.SubscriberClient.SubscriberManagerAddPackage(a.reqAddpackageToSub)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1 := false
+
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return false, ok
+			}
+
+			a.reqGetPackagesForSim = sapi.SimReq{
+				SimId: a.SimId,
+			}
+
+			tc1, err := a.SubscriberClient.SubscriberManagerGetPackageForSim(a.reqGetPackagesForSim)
+			if err == nil {
+				for _, p := range tc1.Packages {
+					if p.PackageId == a.spackageId {
+						check1 = true
+						break
+					}
+				}
+			} else {
+				return check1, fmt.Errorf("add package for sim story failed on getSimPackages. Error %v", err)
+			}
+
+			if check1 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("add package for sim story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*smpb.AddPackageResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 			tc.Watcher.Stop()

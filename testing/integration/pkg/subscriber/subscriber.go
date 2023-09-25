@@ -137,7 +137,7 @@ func (s *SubscriberClient) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimR
 }
 
 func (s *SubscriberClient) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubReq) (*sPb.GetSimsBySubscriberResponse, error) {
-	url := s.u.String() + VERSION + SIM + SUBSCRIBER + req.SubscriberId
+	url := s.u.String() + VERSION + SIM + "subscriber/" + req.SubscriberId
 	rsp := &sPb.GetSimsBySubscriberResponse{}
 
 	if err := s.r.SendRequest(http.MethodGet, url, req, rsp); err != nil {
@@ -160,8 +160,9 @@ func (s *SubscriberClient) SubscriberManagerGetPackageForSim(req api.SimReq) (*s
 
 func (s *SubscriberClient) SubscriberManagerAddPackage(req api.AddPkgToSimReq) error {
 	url := s.u.String() + VERSION + SIM + "package"
+	err := s.r.SendRequest(http.MethodPost, url, req, nil)
 
-	if err := s.r.SendRequest(http.MethodPost, url, req, nil); err != nil {
+	if err != nil {
 		return err
 	}
 

@@ -71,8 +71,8 @@ services:
    - SIMMANAGER_SERVICE_PORT=9090
    - NOTIFICATIONHOST=http://${LOCAL_HOST_IP}:8058
    - DATAPLAN=http://${LOCAL_HOST_IP}:8074
-   - NETWORKHOST=http://${LOCAL_HOST_IP}::8075
-   - ORGHOST=http://${LOCAL_HOST_IP}::8060
+   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
+   - ORGHOST=http://${LOCAL_HOST_IP}:8060
    - ORGNAME=ukama-test-org
   restart: always
   networks:

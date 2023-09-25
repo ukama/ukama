@@ -285,6 +285,12 @@ func (r *Resty) SendRequest(method string, url string, body interface{}, respons
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	if string(bodyBytes) == "" && (resp.StatusCode == http.StatusAccepted ||
+		resp.StatusCode == http.StatusOK ||
+		resp.StatusCode == http.StatusCreated) {
+		return nil
+	}
+
 	err = jsonpb.Unmarshal(bodyBytes, response)
 	if err != nil {
 		return fmt.Errorf("response unmarshal error: %w", err)
