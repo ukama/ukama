@@ -45,6 +45,7 @@ func TestWorkflow_UserStories(t *testing.T) {
 	w.RegisterTestCase(Story_markup())
 	w.RegisterTestCase(Story_package())
 	w.RegisterTestCase(Story_Simpool())
+	w.RegisterTestCase(Story_Subscriber())
 
 	/* Run */
 	err := w.Run(t, context.Background())

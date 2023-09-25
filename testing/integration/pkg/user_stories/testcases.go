@@ -33,6 +33,7 @@ import (
 	mempb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	srpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	sppb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
@@ -64,7 +65,7 @@ type UserStoriesData struct {
 	provider      string
 	invitationId  string
 	invitedUserId string
-	memberId      string
+	subscriberId  string
 	baserateId    string
 	packageId     string
 	ICCID         []string
@@ -125,6 +126,9 @@ type UserStoriesData struct {
 	reqSimPoolStatByTypeReq sapi.SimPoolTypeReq
 	reqSimByIccidReq        sapi.SimByIccidReq
 	reqGetSimsByTypeReq     sapi.SimPoolTypeReq
+
+	reqAddSubscriber sapi.SubscriberAddReq
+	reqGetSubscriber sapi.SubscriberGetReq
 }
 
 func init() {
@@ -1819,6 +1823,95 @@ func Story_Simpool() *test.TestCase {
 				return err
 			}
 
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_Subscriber() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Add subscriber",
+		Description: "Add subscriber in an org",
+		Data:        &srpb.AddSubscriberResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.registry.add"})
+			a.reqAddSubscriber = sapi.SubscriberAddReq{
+				Dob:                   utils.GenerateRandomUTCPastDate(2005),
+				Phone:                 strings.ToLower(faker.Phonenumber()),
+				Email:                 strings.ToLower(faker.Email()),
+				IdSerial:              faker.UUIDDigit(),
+				FirstName:             faker.FirstName(),
+				LastName:              faker.LastName(),
+				Gender:                faker.Gender(),
+				Address:               faker.Name(),
+				NetworkId:             a.NetworkId,
+				ProofOfIdentification: "passport",
+				OrgId:                 a.OrgId,
+			}
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.SubscriberClient.SubscriberRegistryAddSusbscriber(a.reqAddSubscriber)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1 := false
+
+			resp := tc.GetData().(*srpb.AddSubscriberResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetSubscriber = sapi.SubscriberGetReq{
+					SubscriberId: resp.Subscriber.SubscriberId,
+				}
+
+				tc1, err := a.SubscriberClient.SubscriberRegistryGetSusbscriber(a.reqGetSubscriber)
+				if err == nil && tc1.Subscriber.OrgId == a.OrgId {
+					check1 = true
+				} else {
+					return check1, fmt.Errorf("add subscriber story failed on getSubscriber. Error %v", err)
+				}
+
+			}
+
+			if check1 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("add subscriber story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*srpb.AddSubscriberResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+			a.subscriberId = resp.Subscriber.SubscriberId
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
 			tc.Watcher.Stop()
