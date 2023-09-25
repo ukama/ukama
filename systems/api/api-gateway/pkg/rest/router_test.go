@@ -45,11 +45,12 @@ var testClientSet client.Client
 
 func init() {
 	netClient := &mocks.NetworkClient{}
+	packageClient := &mocks.PackageClient{}
 	subscriberClient := &mocks.SubscriberClient{}
 	simClient := &mocks.SimClient{}
 
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(netClient, subscriberClient, simClient)
+	testClientSet = client.NewClientsSet(netClient, packageClient, subscriberClient, simClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {

@@ -22,6 +22,7 @@ func main() {
 
 	clientSet := client.NewClientsSet(
 		client.NewNetworkClient(svcConf.HttpServices.Network),
+		client.NewPackageClient(svcConf.HttpServices.Package),
 		client.NewSubscriberClient(svcConf.HttpServices.Subscriber),
 		client.NewSimClient(svcConf.HttpServices.Sim),
 	)
