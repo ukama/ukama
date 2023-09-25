@@ -33,7 +33,6 @@ type Subscriber struct {
 }
 
 type AddSubscriberRequest struct {
-	SubscriberId          string `json:"subscriber_id" validate:"required"`
 	OrgId                 string `json:"org_id" validate:"required"`
 	NetworkId             string `json:"network_id" validate:"required"`
 	FirstName             string `json:"first_name,omitempty"`
