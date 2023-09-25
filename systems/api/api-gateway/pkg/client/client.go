@@ -42,16 +42,7 @@ func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber Subscrib
 func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	net, err := c.network.Get(id)
 	if err != nil {
-		e := ErrorStatus{}
-
-		if errors.As(err, &e) {
-			return nil, rest.HttpError{
-				HttpCode: e.StatusCode,
-				Message:  err.Error(),
-			}
-		}
-
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	if !net.IsSynced {
@@ -80,7 +71,7 @@ func (c *clients) CreateNetwork(orgName, NetworkName string, allowedCountries,
 		PaymentLinks:     paymentLinks,
 	})
 	if err != nil {
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	return net, nil
@@ -89,16 +80,7 @@ func (c *clients) CreateNetwork(orgName, NetworkName string, allowedCountries,
 func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 	pkg, err := c.pkg.Get(id)
 	if err != nil {
-		e := ErrorStatus{}
-
-		if errors.As(err, &e) {
-			return nil, rest.HttpError{
-				HttpCode: e.StatusCode,
-				Message:  err.Error(),
-			}
-		}
-
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	if !pkg.IsSynced {
@@ -142,7 +124,7 @@ func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 		Networks:      networks,
 	})
 	if err != nil {
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	return pkg, nil
@@ -151,16 +133,7 @@ func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 func (c *clients) GetSim(id string) (*SimInfo, error) {
 	sim, err := c.sim.Get(id)
 	if err != nil {
-		e := ErrorStatus{}
-
-		if errors.As(err, &e) {
-			return nil, rest.HttpError{
-				HttpCode: e.StatusCode,
-				Message:  err.Error(),
-			}
-		}
-
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	if !sim.IsSynced {
@@ -186,8 +159,21 @@ func (c *clients) ConfigureSim(subscriberId, networkId, packageId,
 		TrafficPolicy: trafficPolicy,
 	})
 	if err != nil {
-		return nil, err
+		return nil, handleRestErrorStatus(err)
 	}
 
 	return sim, nil
+}
+
+func handleRestErrorStatus(err error) error {
+	e := ErrorStatus{}
+
+	if errors.As(err, &e) {
+		return rest.HttpError{
+			HttpCode: e.StatusCode,
+			Message:  err.Error(),
+		}
+	}
+
+	return err
 }

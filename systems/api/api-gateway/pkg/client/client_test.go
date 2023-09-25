@@ -413,6 +413,7 @@ func TestCient_GetSim(t *testing.T) {
 
 func TestCient_ConfigureSim(t *testing.T) {
 	simClient := &mocks.SimClient{}
+	subscriberClient := &mocks.SubscriberClient{}
 
 	simId := uuid.NewV4()
 	subscriberId := uuid.NewV4()
@@ -422,26 +423,31 @@ func TestCient_ConfigureSim(t *testing.T) {
 	simToken := "some-sim-token"
 	trafficPolicy := uint(0)
 
-	c := client.NewClientsSet(nil, nil, nil, simClient)
+	c := client.NewClientsSet(nil, nil, subscriberClient, simClient)
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
+		subscriberClient.On("Get", subscriberId.String()).
+			Return(&client.SubscriberInfo{
+				SubscriberId: subscriberId,
+			}, nil).Once()
+
 		simClient.On("Add", client.AddSimRequest{
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			PackageId:     packageId.String(),
 			SimType:       simType,
 			SimToken:      simToken,
-			TrafficPolicy: trafficPolicy,
-		}).Return(&client.SimInfo{
-			Id:           simId,
-			SubscriberId: subscriberId,
-			NetworkId:    networkId,
-			// PackageId:     packageId,
-			SimType: simType,
-			// SimToken:      simToken,
-			TrafficPolicy: trafficPolicy,
-			IsSynced:      false,
-		}, nil).Once()
+			TrafficPolicy: trafficPolicy}).
+			Return(&client.SimInfo{
+				Id:           simId,
+				SubscriberId: subscriberId,
+				NetworkId:    networkId,
+				// PackageId:     packageId,
+				SimType: simType,
+				// SimToken:      simToken,
+				TrafficPolicy: trafficPolicy,
+				IsSynced:      false,
+			}, nil).Once()
 
 		simInfo, err := c.ConfigureSim(subscriberId.String(),
 			networkId.String(), packageId.String(), simType, simToken, trafficPolicy)
@@ -453,6 +459,9 @@ func TestCient_ConfigureSim(t *testing.T) {
 	})
 
 	t.Run("SimNotCreated", func(t *testing.T) {
+		subscriberClient.On("Get", subscriberId.String()).
+			Return(nil, nil).Once()
+
 		simClient.On("Add", client.AddSimRequest{
 			SubscriberId: subscriberId.String(),
 			NetworkId:    networkId.String(),
