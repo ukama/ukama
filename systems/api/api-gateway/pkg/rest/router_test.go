@@ -635,21 +635,23 @@ func TestRouter_GetSim(t *testing.T) {
 func TestRouter_ConfigureSim(t *testing.T) {
 	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
+	networkId := uuid.NewV4()
+	packageId := uuid.NewV4()
+	simType := "some-sim-type"
+	simToken := "some-sim-token"
+	trafficPolicy := uint(0)
 
 	t.Run("SimConfiguredAndStatusUpdated", func(t *testing.T) {
 		simId := uuid.NewV4()
 		subscriberId := uuid.NewV4()
-		networkId := uuid.NewV4()
-		packageId := uuid.NewV4()
-		simType := "some-sim-type"
-		simToken := "some-sim-token"
 
 		var sim = AddSimReq{
-			SubscriberId: subscriberId.String(),
-			NetworkId:    networkId.String(),
-			PackageId:    packageId.String(),
-			SimType:      simType,
-			SimToken:     simToken,
+			SubscriberId:  subscriberId.String(),
+			NetworkId:     networkId.String(),
+			PackageId:     packageId.String(),
+			SimType:       simType,
+			SimToken:      simToken,
+			TrafficPolicy: trafficPolicy,
 		}
 
 		simInfo := &client.SimInfo{
@@ -663,7 +665,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		}
 
 		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
-			packageId.String(), simType, simToken).
+			packageId.String(), simType, simToken, trafficPolicy).
 			Return(simInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
@@ -681,17 +683,14 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 	t.Run("SimconfiguredAndStatusFailed", func(t *testing.T) {
 		subscriberId := uuid.NewV4()
-		networkId := uuid.NewV4()
-		packageId := uuid.NewV4()
-		simType := "some-sim-type"
-		simToken := "some-sim-token"
 
 		var sim = AddSimReq{
-			SubscriberId: subscriberId.String(),
-			NetworkId:    networkId.String(),
-			PackageId:    packageId.String(),
-			SimType:      simType,
-			SimToken:     simToken,
+			SubscriberId:  subscriberId.String(),
+			NetworkId:     networkId.String(),
+			PackageId:     packageId.String(),
+			SimType:       simType,
+			SimToken:      simToken,
+			TrafficPolicy: trafficPolicy,
 		}
 
 		body, err := json.Marshal(sim)
@@ -700,7 +699,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		}
 
 		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
-			packageId.String(), simType, simToken).
+			packageId.String(), simType, simToken, trafficPolicy).
 			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()

@@ -14,17 +14,18 @@ import (
 const SimEndpoint = "/v1/sims"
 
 type SimInfo struct {
-	Id           uuid.UUID `json:"id,omitempty"`
-	NetworkId    uuid.UUID `json:"network_id,omitempty"`
-	SubscriberId uuid.UUID `json:"subscriber_id,omitempty"`
-	Iccid        string    `json:"iccid,omitempty"`
-	Msisdn       string    `json:"msisdn,omitempty"`
-	Imsi         string    `json:"imsi,omitempty"`
-	Status       string    `json:"status,omitempty"`
-	SimType      string    `json:"sim_type,omitempty"`
-	IsPhysical   bool      `json:"is_physical,omitempty"`
-	IsSynced     bool      `json:"is_synced,omitempty"`
-	AllocatedAt  time.Time `json:"allocated_at,omitempty"`
+	Id            uuid.UUID `json:"id,omitempty"`
+	NetworkId     uuid.UUID `json:"network_id,omitempty"`
+	SubscriberId  uuid.UUID `json:"subscriber_id,omitempty"`
+	Iccid         string    `json:"iccid,omitempty"`
+	Msisdn        string    `json:"msisdn,omitempty"`
+	Imsi          string    `json:"imsi,omitempty"`
+	Status        string    `json:"status,omitempty"`
+	SimType       string    `json:"sim_type,omitempty"`
+	IsPhysical    bool      `json:"is_physical,omitempty"`
+	TrafficPolicy uint      `json:"traffic_policy"`
+	IsSynced      bool      `json:"is_synced,omitempty"`
+	AllocatedAt   time.Time `json:"allocated_at,omitempty"`
 }
 
 type Sim struct {
@@ -32,11 +33,12 @@ type Sim struct {
 }
 
 type AddSimRequest struct {
-	SubscriberId string `json:"subscriber_id" validate:"required"`
-	NetworkId    string `json:"network_id" validate:"required"`
-	PackageId    string `json:"package_id" validate:"required"`
-	SimType      string `json:"sim_type"`
-	SimToken     string `json:"sim_token"`
+	SubscriberId  string `json:"subscriber_id" validate:"required"`
+	NetworkId     string `json:"network_id" validate:"required"`
+	PackageId     string `json:"package_id" validate:"required"`
+	SimType       string `json:"sim_type"`
+	SimToken      string `json:"sim_token"`
+	TrafficPolicy uint   `json:"traffic_policy"`
 }
 
 type SimClient interface {

@@ -18,7 +18,7 @@ type Client interface {
 		string, string, string, string, float64, float64, float64, uint, []string) (*PackageInfo, error)
 
 	GetSim(string) (*SimInfo, error)
-	ConfigureSim(string, string, string, string, string) (*SimInfo, error)
+	ConfigureSim(string, string, string, string, string, uint) (*SimInfo, error)
 }
 
 type clients struct {
@@ -176,13 +176,14 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 }
 
 func (c *clients) ConfigureSim(subscriberId, networkId, packageId,
-	simType, simToken string) (*SimInfo, error) {
+	simType, simToken string, trafficPolicy uint) (*SimInfo, error) {
 	sim, err := c.sim.Add(AddSimRequest{
-		SubscriberId: subscriberId,
-		NetworkId:    networkId,
-		PackageId:    packageId,
-		SimType:      simType,
-		SimToken:     simToken,
+		SubscriberId:  subscriberId,
+		NetworkId:     networkId,
+		PackageId:     packageId,
+		SimType:       simType,
+		SimToken:      simToken,
+		TrafficPolicy: trafficPolicy,
 	})
 	if err != nil {
 		return nil, err

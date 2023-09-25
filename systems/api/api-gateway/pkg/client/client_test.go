@@ -419,28 +419,31 @@ func TestCient_ConfigureSim(t *testing.T) {
 	packageId := uuid.NewV4()
 	simType := "some-sim-type"
 	simToken := "some-sim-token"
+	trafficPolicy := uint(0)
 
 	c := client.NewClientsSet(nil, nil, nil, simClient)
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
 		simClient.On("Add", client.AddSimRequest{
-			SubscriberId: subscriberId.String(),
-			NetworkId:    networkId.String(),
-			PackageId:    packageId.String(),
-			SimType:      simType,
-			SimToken:     simToken,
+			SubscriberId:  subscriberId.String(),
+			NetworkId:     networkId.String(),
+			PackageId:     packageId.String(),
+			SimType:       simType,
+			SimToken:      simToken,
+			TrafficPolicy: trafficPolicy,
 		}).Return(&client.SimInfo{
 			Id:           simId,
 			SubscriberId: subscriberId,
 			NetworkId:    networkId,
-			// PackageId:    packageId,
+			// PackageId:     packageId,
 			SimType: simType,
-			// simToken: simToken,
-			IsSynced: false,
+			// SimToken:      simToken,
+			TrafficPolicy: trafficPolicy,
+			IsSynced:      false,
 		}, nil).Once()
 
 		simInfo, err := c.ConfigureSim(subscriberId.String(),
-			networkId.String(), packageId.String(), simType, simToken)
+			networkId.String(), packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.NoError(t, err)
 
@@ -458,7 +461,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		}).Return(nil, errors.New("some error")).Once()
 
 		simInfo, err := c.ConfigureSim(subscriberId.String(),
-			networkId.String(), packageId.String(), simType, simToken)
+			networkId.String(), packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, simInfo)

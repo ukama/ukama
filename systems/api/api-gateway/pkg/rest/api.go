@@ -48,9 +48,10 @@ type GetSimReq struct {
 }
 
 type AddSimReq struct {
-	SubscriberId string `json:"subscriber_id" validate:"required"`
-	NetworkId    string `json:"network_id" validate:"required"`
-	PackageId    string `json:"package_id" validate:"required"`
-	SimType      string `json:"sim_type"`
-	SimToken     string `json:"sim_token"`
+	SubscriberId  string `json:"subscriber_id" validate:"required"`
+	NetworkId     string `json:"network_id" validate:"required"`
+	PackageId     string `json:"package_id" validate:"required"`
+	SimType       string `json:"sim_type"`
+	SimToken      string `json:"sim_token"`
+	TrafficPolicy uint   `json:"traffic_policy"`
 }
