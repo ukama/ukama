@@ -115,6 +115,7 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
     for _, sys := range health.System {
         system := &pb.System{
             Id:    sys.Id.String(),
+			HealthId: health.Id.String(),
             Name:  sys.Name,
             Value: sys.Value,
         }
@@ -133,9 +134,11 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
         // Extract and format Resource data from Capps
         for _, resource := range capp.Resources {
             res := &pb.Resource{
+
                 Id:    resource.Id.String(),
                 Name:  resource.Name,
                 Value: resource.Value,
+				CappId: capp.Id.String(),
             }
             capps.Resources = append(capps.Resources, res)
         }
