@@ -108,8 +108,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*client.NetworkInfo, error) {
-	return r.clients.CreateNetwork(req.OrgName, req.NetName,
-		req.AllowedCountries, req.AllowedNetworks, req.PaymentLinks)
+	return r.clients.CreateNetwork(req.OrgName, req.NetName, req.AllowedCountries,
+		req.AllowedNetworks, req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
 func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.NetworkInfo, error) {

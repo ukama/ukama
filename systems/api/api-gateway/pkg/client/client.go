@@ -11,7 +11,7 @@ import (
 
 type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
-	CreateNetwork(string, string, []string, []string, bool) (*NetworkInfo, error)
+	CreateNetwork(string, string, []string, []string, float64, float64, uint, bool) (*NetworkInfo, error)
 
 	GetPackage(string) (*PackageInfo, error)
 	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64,
@@ -66,13 +66,17 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	return net, nil
 }
 
-func (c *clients) CreateNetwork(orgName, NetworkName string,
-	allowedCountries, allowedNetworks []string, paymentLinks bool) (*NetworkInfo, error) {
+func (c *clients) CreateNetwork(orgName, NetworkName string, allowedCountries,
+	allowedNetworks []string, budget, overdraft float64, trafficPolicy uint,
+	paymentLinks bool) (*NetworkInfo, error) {
 	net, err := c.network.Add(AddNetworkRequest{
 		OrgName:          orgName,
 		NetName:          NetworkName,
 		AllowedCountries: allowedCountries,
 		AllowedNetworks:  allowedNetworks,
+		Budget:           budget,
+		Overdraft:        overdraft,
+		TrafficPolicy:    trafficPolicy,
 		PaymentLinks:     paymentLinks,
 	})
 	if err != nil {

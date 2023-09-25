@@ -9,6 +9,9 @@ type AddNetworkReq struct {
 	NetName          string   `example:"mesh-network" json:"network_name" validate:"required"`
 	AllowedCountries []string `json:"allowed_countries"`
 	AllowedNetworks  []string `json:"allowed_networks"`
+	Budget           float64  `json:"budget"`
+	Overdraft        float64  `json:"overdraft"`
+	TrafficPolicy    uint     `json:"traffic_policy"`
 	PaymentLinks     bool     `example:"true" json:"payment_links"`
 }
 

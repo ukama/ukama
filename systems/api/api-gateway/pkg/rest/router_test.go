@@ -178,6 +178,9 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		orgName := "org-A"
 		networks := []string{"Verizon"}
 		countries := []string{"USA"}
+		budget := float64(0)
+		overdraft := float64(0)
+		trafficPolicy := uint(0)
 		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
@@ -185,6 +188,9 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			NetName:          netName,
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
+			Budget:           budget,
+			Overdraft:        overdraft,
+			TrafficPolicy:    trafficPolicy,
 			PaymentLinks:     paymentLinks,
 		}
 
@@ -198,7 +204,8 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName, countries, networks, paymentLinks).Return(netInfo, nil)
+		c.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
+			Return(netInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -218,6 +225,9 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		orgName := "org-B"
 		networks := []string{"Verizon"}
 		countries := []string{"USA"}
+		budget := float64(0)
+		overdraft := float64(0)
+		trafficPolicy := uint(0)
 		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
@@ -225,6 +235,9 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			NetName:          netName,
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
+			Budget:           budget,
+			Overdraft:        overdraft,
+			TrafficPolicy:    trafficPolicy,
 			PaymentLinks:     paymentLinks,
 		}
 
@@ -233,8 +246,8 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName, countries, networks, paymentLinks).Return(nil,
-			errors.New("some unexpected error occured"))
+		c.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
+			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
 

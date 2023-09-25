@@ -20,6 +20,9 @@ type NetworkInfo struct {
 	IsDeactivated    bool      `json:"is_deactivated,omitempty"`
 	AllowedCountries []string  `json:"allowed_countries"`
 	AllowedNetworks  []string  `json:"allowed_networks"`
+	Budget           float64   `json:"budget"`
+	Overdraft        float64   `json:"overdraft"`
+	TrafficPolicy    uint      `json:"traffic_policy"`
 	PaymentLinks     bool      `json:"payment_links"`
 	IsSynced         bool      `json:"is_synced,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
@@ -34,6 +37,9 @@ type AddNetworkRequest struct {
 	NetName          string   `json:"network_name" validate:"required"`
 	AllowedCountries []string `json:"allowed_countries"`
 	AllowedNetworks  []string `json:"allowed_networks"`
+	Budget           float64  `json:"budget"`
+	Overdraft        float64  `json:"overdraft"`
+	TrafficPolicy    uint     `json:"traffic_policy"`
 	PaymentLinks     bool     `json:"payment_links"`
 }
 

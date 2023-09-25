@@ -94,6 +94,9 @@ func TestCient_CreateNetwork(t *testing.T) {
 	orgName := "org-A"
 	networks := []string{"Verizon"}
 	countries := []string{"USA"}
+	budget := float64(0)
+	overdraft := float64(0)
+	trafficPolicy := uint(0)
 	paymentLinks := false
 
 	c := client.NewClientsSet(netClient, nil, nil, nil)
@@ -114,7 +117,8 @@ func TestCient_CreateNetwork(t *testing.T) {
 			IsSynced:         false,
 		}, nil).Once()
 
-		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, paymentLinks)
+		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, budget,
+			overdraft, trafficPolicy, paymentLinks)
 
 		assert.NoError(t, err)
 
@@ -131,7 +135,8 @@ func TestCient_CreateNetwork(t *testing.T) {
 			PaymentLinks:     paymentLinks,
 		}).Return(nil, errors.New("some error")).Once()
 
-		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, paymentLinks)
+		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, budget,
+			overdraft, trafficPolicy, paymentLinks)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, netInfo)
