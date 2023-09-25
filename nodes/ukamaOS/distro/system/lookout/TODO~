@@ -1,0 +1,48 @@
+Software:
+
+1. Get list of all running software, their version and current status.
+
+static: one from manifest.json
+dynamic: from console
+
+Hardware:
+
+1. Temperature (list)
+2. Radio (ON or OFF)
+3. TRX   (ON or OFF)
+
+Steps:
+-----
+1. GET /status on starter.d and find all running apps (name, verion, status, pid)
+3. For each app, using the pid, find their resource usage (disk, memory, cpu)
+4. Gather various temp sensors (from noded) and radio status (via the device.d)
+5. Last known controlled reboot (via device.d)
+
+
+http://localhost:8080/v1/health/{nodeID}
+{
+  "time": "12345678",
+  "system": [
+    {
+      "name": "radio",
+      "value": "off"
+    }
+  ],
+  "capps": [
+    {
+      "name": "bootstrap",
+      "tag": "0.0.1",
+      "status": "run",
+      "resources": [
+        {
+          "name": "disk",
+          "value": "3456"
+        },
+        {
+          "name": "memory",
+          "value": "12345"
+        }
+      ]
+    }
+  ]
+}
