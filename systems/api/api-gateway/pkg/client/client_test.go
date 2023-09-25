@@ -238,55 +238,64 @@ func TestCient_AddPackage(t *testing.T) {
 	pType := "postpaid"
 	flatRate := false
 	amount := float64(0)
+	overdraft := float64(0)
+	trafficPolicy := uint(0)
+	networks := []string{""}
 
 	c := client.NewClientsSet(nil, pkgClient, nil, nil)
 
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
 		pkgClient.On("Add", client.AddPackageRequest{
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			Active:      isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			Active:        isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
 		}).Return(&client.PackageInfo{
-			Id:          pkgId,
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			IsActive:    isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
-			IsSynced:    false,
+			Id:            pkgId,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			IsActive:      isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
+			IsSynced:      false,
 		}, nil).Once()
 
 		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount)
+			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks)
 
 		assert.NoError(t, err)
 
@@ -296,29 +305,32 @@ func TestCient_AddPackage(t *testing.T) {
 
 	t.Run("PackageNotCreated", func(t *testing.T) {
 		pkgClient.On("Add", client.AddPackageRequest{
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			Active:      isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			Active:        isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
 		}).Return(nil, errors.New("some error")).Once()
 
 		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount)
+			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, pkgInfo)

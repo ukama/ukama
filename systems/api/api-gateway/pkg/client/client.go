@@ -14,8 +14,8 @@ type Client interface {
 	CreateNetwork(string, string, []string, []string, float64, float64, uint, bool) (*NetworkInfo, error)
 
 	GetPackage(string) (*PackageInfo, error)
-	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64,
-		int64, string, string, string, string, string, float64, float64) (*PackageInfo, error)
+	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
+		string, string, string, string, float64, float64, float64, uint, []string) (*PackageInfo, error)
 
 	GetSim(string) (*SimInfo, error)
 	ConfigureSim(string, string, string, string, string) (*SimInfo, error)
@@ -115,27 +115,31 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 
 func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
-	simType, apn, pType string, markup, amount float64) (*PackageInfo, error) {
+	simType, apn, pType string, markup, amount, overdraft float64, trafficPolicy uint,
+	networks []string) (*PackageInfo, error) {
 
 	pkg, err := c.pkg.Add(AddPackageRequest{
-		Name:        name,
-		OrgId:       orgId,
-		OwnerId:     ownerId,
-		From:        from,
-		To:          to,
-		BaserateId:  baserateId,
-		Active:      isActive,
-		SmsVolume:   smsVolume,
-		VoiceVolume: voiceVolume,
-		DataVolume:  dataVolume,
-		VoiceUnit:   voiceUnit,
-		DataUnit:    dataUnit,
-		SimType:     simType,
-		Apn:         apn,
-		Markup:      markup,
-		Type:        pType,
-		Flatrate:    flatRate,
-		Amount:      amount,
+		Name:          name,
+		OrgId:         orgId,
+		OwnerId:       ownerId,
+		From:          from,
+		To:            to,
+		BaserateId:    baserateId,
+		Active:        isActive,
+		SmsVolume:     smsVolume,
+		VoiceVolume:   voiceVolume,
+		DataVolume:    dataVolume,
+		VoiceUnit:     voiceUnit,
+		DataUnit:      dataUnit,
+		SimType:       simType,
+		Apn:           apn,
+		Markup:        markup,
+		Type:          pType,
+		Flatrate:      flatRate,
+		Amount:        amount,
+		Overdraft:     overdraft,
+		TrafficPolicy: trafficPolicy,
+		Networks:      networks,
 	})
 	if err != nil {
 		return nil, err

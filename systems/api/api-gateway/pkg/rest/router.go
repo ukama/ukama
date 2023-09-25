@@ -119,7 +119,7 @@ func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*client.Network
 func (r *Router) postPackage(c *gin.Context, req *AddPackageReq) (*client.PackageInfo, error) {
 	return r.clients.AddPackage(req.Name, req.OrgId, req.OwnerId, req.From, req.To, req.BaserateId,
 		req.Active, req.Flatrate, req.SmsVolume, req.VoiceVolume, req.DataVolume, req.VoiceUnit, req.DataUnit,
-		req.SimType, req.Apn, req.Type, req.Markup, req.Amount)
+		req.SimType, req.Apn, req.Type, req.Markup, req.Amount, req.Overdraft, req.TrafficPolicy, req.Networks)
 }
 
 func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*client.PackageInfo, error) {

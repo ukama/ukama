@@ -365,69 +365,79 @@ func TestRouter_AddPackage(t *testing.T) {
 	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
+	pkgName := "Monthly Data"
+	orgId := uuid.NewV4().String()
+	ownerId := uuid.NewV4().String()
+	from := "2023-04-01T00:00:00Z"
+	to := "2023-04-01T00:00:00Z"
+	baserateId := uuid.NewV4().String()
+	voiceVolume := int64(0)
+	isActive := true
+	dataVolume := int64(1024)
+	smsVolume := int64(0)
+	dataUnit := "MegaBytes"
+	voiceUnit := "seconds"
+	simType := "test"
+	apn := "ukama.tel"
+	markup := float64(0)
+	pType := "postpaid"
+	flatRate := false
+	amount := float64(0)
+	overdraft := float64(0)
+	trafficPolicy := uint(0)
+	networks := []string{""}
+
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
 		pkgId := uuid.NewV4()
-		pkgName := "Monthly Data"
-		orgId := uuid.NewV4().String()
-		ownerId := uuid.NewV4().String()
-		from := "2023-04-01T00:00:00Z"
-		to := "2023-04-01T00:00:00Z"
-		baserateId := uuid.NewV4().String()
-		voiceVolume := int64(0)
-		isActive := true
-		dataVolume := int64(1024)
-		smsVolume := int64(0)
-		dataUnit := "MegaBytes"
-		voiceUnit := "seconds"
-		simType := "test"
-		apn := "ukama.tel"
-		markup := float64(0)
-		pType := "postpaid"
-		flatRate := false
-		amount := float64(0)
 
 		var pkg = AddPackageReq{
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			Active:      isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			Active:        isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
 		}
 
 		pkgInfo := &client.PackageInfo{
-			Id:          pkgId,
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			IsActive:    isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
-			IsSynced:    false,
+			Id:            pkgId,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			IsActive:      isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
+			IsSynced:      false,
 		}
 
 		body, err := json.Marshal(pkg)
@@ -437,7 +447,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount).
+			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks).
 			Return(pkgInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
@@ -472,26 +482,32 @@ func TestRouter_AddPackage(t *testing.T) {
 		pType := "postpaid"
 		flatRate := false
 		amount := float64(0)
+		overdraft := float64(0)
+		trafficPolicy := uint(0)
+		networks := []string{""}
 
 		var pkg = AddPackageReq{
-			Name:        pkgName,
-			OrgId:       orgId,
-			OwnerId:     ownerId,
-			From:        from,
-			To:          to,
-			BaserateId:  baserateId,
-			Active:      isActive,
-			SmsVolume:   smsVolume,
-			VoiceVolume: voiceVolume,
-			DataVolume:  dataVolume,
-			VoiceUnit:   voiceUnit,
-			DataUnit:    dataUnit,
-			SimType:     simType,
-			Apn:         apn,
-			Markup:      markup,
-			Type:        pType,
-			Flatrate:    flatRate,
-			Amount:      amount,
+			Name:          pkgName,
+			OrgId:         orgId,
+			OwnerId:       ownerId,
+			From:          from,
+			To:            to,
+			BaserateId:    baserateId,
+			Active:        isActive,
+			SmsVolume:     smsVolume,
+			VoiceVolume:   voiceVolume,
+			DataVolume:    dataVolume,
+			VoiceUnit:     voiceUnit,
+			DataUnit:      dataUnit,
+			SimType:       simType,
+			Apn:           apn,
+			Markup:        markup,
+			Type:          pType,
+			Flatrate:      flatRate,
+			Amount:        amount,
+			Overdraft:     overdraft,
+			TrafficPolicy: trafficPolicy,
+			Networks:      networks,
 		}
 
 		body, err := json.Marshal(pkg)
@@ -501,7 +517,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount).
+			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks).
 			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
