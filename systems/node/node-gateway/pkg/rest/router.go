@@ -41,7 +41,6 @@ type Clients struct {
 	Health health
 }
 
-
 type health interface {
 	StoreRunningAppsInfo(req *healthPb.StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error)
 	GetRunningAppsInfo(nodeId string) (*healthPb.GetRunningAppsResponse, error)
@@ -106,24 +105,22 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-
 		const heal = "/health"
 		health := auth.Group(heal, "health", "Operations on health")
-		 health.POST("/:node_id", formatDoc("Store running sofwtare infos", ""), tonic.Handler(r.postNodeInfosHandler, http.StatusCreated))
-		health.GET("/:node_id", formatDoc("Get running sofwtare infos", ""), tonic.Handler(r.getNodeInfosHandler, http.StatusOK))
+		health.POST("/:node_id/apps", formatDoc("Store running software information", ""), tonic.Handler(r.postSoftwareInfoHandler, http.StatusCreated))
+		health.GET("/:node_id/apps", formatDoc("Get running software information", ""), tonic.Handler(r.getSoftwareInfoHandler, http.StatusOK))
 	}
 }
 
-
-func (r *Router) postNodeInfosHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
-    var genSystems []*gen.System
-    for _, sys := range req.System {
-        genSystem := &gen.System{
-            Name:  sys.Name,
-            Value: sys.Value,
-        }
-        genSystems = append(genSystems, genSystem)
-    }
+func (r *Router) postSoftwareInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
+	var genSystems []*gen.System
+	for _, sys := range req.System {
+		genSystem := &gen.System{
+			Name:  sys.Name,
+			Value: sys.Value,
+		}
+		genSystems = append(genSystems, genSystem)
+	}
 
 	var genCapps []*gen.Capps
 	for _, capp := range req.Capps {
@@ -138,28 +135,22 @@ func (r *Router) postNodeInfosHandler(c *gin.Context, req *StoreRunningAppsInfoR
 		genCapp := &gen.Capps{
 			Name:      capp.Name,
 			Tag:       capp.Tag,
-			// Status:    gen.Status(capp.Status),
+			Status:    gen.Status(gen.Status_value[capp.Status]),
 			Resources: genResources,
 		}
 		genCapps = append(genCapps, genCapp)
 	}
 
-
-
-    return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
-        NodeId:    req.NodeId,
-        Timestamp: req.Timestamp,
-        System:    genSystems,
+	return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
+		NodeId:    req.NodeId,
+		Timestamp: req.Timestamp,
+		System:    genSystems,
 		Capps:     genCapps,
-    })
+	})
 }
 
-
-
-
-func (r *Router) getNodeInfosHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
+func (r *Router) getSoftwareInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
 	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
-	
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -173,4 +164,3 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
-

@@ -19,7 +19,6 @@ type Health struct {
 	host    string
 }
 
-
 func NewHealth(healthHost string, timeout time.Duration) *Health {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -51,54 +50,51 @@ func (r *Health) Close() {
 	r.conn.Close()
 }
 
-
-
 func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
 
-    genSystems := make([]*pb.System, len(request.System))
-    for i, system := range request.System {
-        genSystems[i] = &pb.System{
-            Name:     system.Name,
-            Value:    system.Value,
-        }
-    }
+	genSystems := make([]*pb.System, len(request.System))
+	for i, system := range request.System {
+		genSystems[i] = &pb.System{
+			Name:  system.Name,
+			Value: system.Value,
+		}
+	}
 
-    genCapps := make([]*pb.Capps, len(request.Capps))
-    for i, capp := range request.Capps {
-        genResources := make([]*pb.Resource, len(capp.Resources))
-        for j, resource := range capp.Resources {
-            genResources[j] = &pb.Resource{
-                Name:   resource.Name,
-                Value:  resource.Value,
-            }
-        }
-        genCapps[i] = &pb.Capps{
-            Name:     capp.Name,
-            Tag:      capp.Tag,
-            Status:   capp.Status,
-            Resources: genResources,
-        }
-    }
+	genCapps := make([]*pb.Capps, len(request.Capps))
+	for i, capp := range request.Capps {
+		genResources := make([]*pb.Resource, len(capp.Resources))
+		for j, resource := range capp.Resources {
+			genResources[j] = &pb.Resource{
+				Name:  resource.Name,
+				Value: resource.Value,
+			}
+		}
+		genCapps[i] = &pb.Capps{
+			Name:      capp.Name,
+			Tag:       capp.Tag,
+			Status:    capp.Status,
+			Resources: genResources,
+		}
+	}
 	fmt.Println("genSystems", genSystems)
 	fmt.Println("genCapps", genCapps)
 	fmt.Println("request.NodeId", request.NodeId)
 
-    res, err := r.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
-        NodeId:    request.NodeId,
-        Timestamp: request.Timestamp,
-        System:    genSystems,
-        Capps:     genCapps,
-    })
+	res, err := r.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
+		NodeId:    request.NodeId,
+		Timestamp: request.Timestamp,
+		System:    genSystems,
+		Capps:     genCapps,
+	})
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return res, nil
+	return res, nil
 }
-
 
 func (h *Health) GetRunningAppsInfo(nodeId string) (*pb.GetRunningAppsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
