@@ -20,7 +20,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
-	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
 const netEndpoint = "/v1/networks"
@@ -32,7 +31,7 @@ var defaultCors = cors.Config{
 }
 
 var routerConfig = &RouterConfig{
-	serverConf: &crest.HttpConfig{
+	serverConf: &rest.HttpConfig{
 		Cors: defaultCors,
 	},
 	auth: &cconfig.Auth{
@@ -366,11 +365,8 @@ func TestRouter_AddPackage(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	pkgName := "Monthly Data"
-	orgId := uuid.NewV4().String()
-	ownerId := uuid.NewV4().String()
 	from := "2023-04-01T00:00:00Z"
 	to := "2023-04-01T00:00:00Z"
-	baserateId := uuid.NewV4().String()
 	voiceVolume := int64(0)
 	isActive := true
 	dataVolume := int64(1024)
@@ -389,6 +385,9 @@ func TestRouter_AddPackage(t *testing.T) {
 
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
 		pkgId := uuid.NewV4()
+		orgId := uuid.NewV4().String()
+		ownerId := uuid.NewV4().String()
+		baserateId := uuid.NewV4().String()
 
 		var pkg = AddPackageReq{
 			Name:          pkgName,
@@ -464,27 +463,9 @@ func TestRouter_AddPackage(t *testing.T) {
 	})
 
 	t.Run("PackageCreatedAndStatusFailed", func(t *testing.T) {
-		pkgName := "Monthly Data"
 		orgId := uuid.NewV4().String()
 		ownerId := uuid.NewV4().String()
-		from := "2023-04-01T00:00:00Z"
-		to := "2023-04-01T00:00:00Z"
 		baserateId := uuid.NewV4().String()
-		voiceVolume := int64(0)
-		isActive := true
-		dataVolume := int64(1024)
-		smsVolume := int64(0)
-		dataUnit := "MegaBytes"
-		voiceUnit := "seconds"
-		simType := "test"
-		apn := "ukama.tel"
-		markup := float64(0)
-		pType := "postpaid"
-		flatRate := false
-		amount := float64(0)
-		overdraft := float64(0)
-		trafficPolicy := uint(0)
-		networks := []string{""}
 
 		var pkg = AddPackageReq{
 			Name:          pkgName,
