@@ -123,6 +123,9 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		OrgId:            network.OrgId.String(),
 		AllowedCountries: network.AllowedCountries,
 		AllowedNetworks:  network.AllowedNetworks,
+		Budget:           network.Budget,
+		Overdraft:        network.Overdraft,
+		TrafficPolicy:    network.TrafficPolicy,
 		PaymentLinks:     network.PaymentLinks,
 		IsDeactivated:    network.Deactivated,
 	}
