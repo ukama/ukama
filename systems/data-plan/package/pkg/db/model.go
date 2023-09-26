@@ -33,6 +33,9 @@ type Package struct {
 	To             time.Time `gorm:"not null"`
 	Country        string    `gorm:"not null;type:string"`
 	Provider       string    `gorm:"not null;type:string"`
+	Overdraft      float64
+	TrafficPolicy  uint32
+	Synced         bool
 }
 
 type PackageDetails struct {
