@@ -9,6 +9,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -93,20 +94,14 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	network := &db.Network{
-		Name:  networkName,
-		OrgId: org.Id,
-	}
-
-	if req.AllowedCountries != nil {
-		network.AllowedCountries = req.AllowedCountries
-	}
-
-	if req.AllowedNetworks != nil {
-		network.AllowedNetworks = req.AllowedNetworks
-	}
-
-	if req.PaymentLinks {
-		network.PaymentLinks = req.PaymentLinks
+		Name:             networkName,
+		OrgId:            org.Id,
+		AllowedCountries: req.AllowedCountries,
+		AllowedNetworks:  req.AllowedNetworks,
+		Budget:           req.Budget,
+		Overdraft:        req.Overdraft,
+		TrafficPolicy:    req.TrafficPolicy,
+		PaymentLinks:     req.PaymentLinks,
 	}
 
 	log.Infof("Adding network %s", networkName)
@@ -328,6 +323,9 @@ func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 		OrgId:            ntwk.OrgId.String(),
 		AllowedCountries: ntwk.AllowedCountries,
 		AllowedNetworks:  ntwk.AllowedNetworks,
+		Budget:           ntwk.Budget,
+		Overdraft:        ntwk.Overdraft,
+		TrafficPolicy:    ntwk.TrafficPolicy,
 		PaymentLinks:     ntwk.PaymentLinks,
 		IsDeactivated:    ntwk.Deactivated,
 		IsSynced:         ntwk.Synced,

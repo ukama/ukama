@@ -4,8 +4,9 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Org struct {

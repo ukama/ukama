@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lib/pq"
-	"github.com/stretchr/testify/mock"
-	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/mocks"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
+
+	"github.com/lib/pq"
+	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 	"gorm.io/gorm"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
