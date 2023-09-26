@@ -32,7 +32,7 @@ type PackageInfo struct {
 	Apn           string    `json:"apn" default:"ukama.tel"`
 	BaserateId    string    `json:"baserate_id" validation:"required"`
 	IsActive      bool      `json:"active"`
-	Duration      uint      `json:"duration,string"`
+	Duration      uint64    `json:"duration,string"`
 	Overdraft     float64   `json:"overdraft"`
 	TrafficPolicy uint32    `json:"traffic_policy"`
 	Networks      []string  `json:"networks"`
@@ -55,6 +55,7 @@ type AddPackageRequest struct {
 	DataVolume    int64    `json:"data_volume" validation:"required"`
 	VoiceUnit     string   `json:"voice_unit" validation:"required"`
 	DataUnit      string   `json:"data_unit" validation:"required"`
+	Duration      uint64   `json:"duration" validation:"required"`
 	Type          string   `json:"type" validation:"required"`
 	Flatrate      bool     `json:"flat_rate" default:"false"`
 	Amount        float64  `json:"amount" default:"0.00"`

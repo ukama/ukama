@@ -15,7 +15,7 @@ type Client interface {
 
 	GetPackage(string) (*PackageInfo, error)
 	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
-		string, string, string, string, float64, float64, float64, uint32, []string) (*PackageInfo, error)
+		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*PackageInfo, error)
 
 	GetSim(string) (*SimInfo, error)
 	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
@@ -99,7 +99,7 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 
 func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
-	simType, apn, pType string, markup, amount, overdraft float64, trafficPolicy uint32,
+	simType, apn, pType string, duration uint64, markup, amount, overdraft float64, trafficPolicy uint32,
 	networks []string) (*PackageInfo, error) {
 
 	pkg, err := c.pkg.Add(AddPackageRequest{

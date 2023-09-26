@@ -377,6 +377,7 @@ func TestRouter_AddPackage(t *testing.T) {
 	apn := "ukama.tel"
 	markup := float64(0)
 	pType := "postpaid"
+	duration := uint64(30)
 	flatRate := false
 	amount := float64(0)
 	overdraft := float64(0)
@@ -406,6 +407,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -431,6 +433,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -446,7 +449,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks).
+			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
 			Return(pkgInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
@@ -484,6 +487,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -498,7 +502,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks).
+			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
 			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()

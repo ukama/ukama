@@ -237,6 +237,7 @@ func TestCient_AddPackage(t *testing.T) {
 	apn := "ukama.tel"
 	markup := float64(0)
 	pType := "postpaid"
+	duration := uint64(0)
 	flatRate := false
 	amount := float64(0)
 	overdraft := float64(0)
@@ -263,6 +264,7 @@ func TestCient_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -286,6 +288,7 @@ func TestCient_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -296,7 +299,7 @@ func TestCient_AddPackage(t *testing.T) {
 
 		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks)
+			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks)
 
 		assert.NoError(t, err)
 
@@ -322,6 +325,7 @@ func TestCient_AddPackage(t *testing.T) {
 			Apn:           apn,
 			Markup:        markup,
 			Type:          pType,
+			Duration:      duration,
 			Flatrate:      flatRate,
 			Amount:        amount,
 			Overdraft:     overdraft,
@@ -331,7 +335,7 @@ func TestCient_AddPackage(t *testing.T) {
 
 		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, markup, amount, overdraft, trafficPolicy, networks)
+			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, pkgInfo)
