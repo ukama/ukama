@@ -622,18 +622,39 @@ func TestRouter_ConfigureSim(t *testing.T) {
 	simToken := "some-sim-token"
 	trafficPolicy := uint(0)
 
+	orgId := uuid.NewV4()
+	firstName := "John"
+	lastName := "Doe"
+	email := "johndoe@example.com"
+	phoneNumber := "0123456789"
+	address := "2 Rivers"
+	dob := "2023/09/01"
+	proofOfID := "passport"
+	idSerial := "987654321"
+
+	var sim = AddSimReq{
+		// SubscriberId:          subscriberId.String(),
+		NetworkId:             networkId.String(),
+		PackageId:             packageId.String(),
+		OrgId:                 orgId.String(),
+		FirstName:             firstName,
+		LastName:              lastName,
+		Email:                 email,
+		PhoneNumber:           phoneNumber,
+		Address:               address,
+		Dob:                   dob,
+		ProofOfIdentification: proofOfID,
+		IdSerial:              idSerial,
+		SimType:               simType,
+		SimToken:              simToken,
+		TrafficPolicy:         trafficPolicy,
+	}
+
 	t.Run("SimConfiguredAndStatusUpdated", func(t *testing.T) {
 		simId := uuid.NewV4()
 		subscriberId := uuid.NewV4()
 
-		var sim = AddSimReq{
-			SubscriberId:  subscriberId.String(),
-			NetworkId:     networkId.String(),
-			PackageId:     packageId.String(),
-			SimType:       simType,
-			SimToken:      simToken,
-			TrafficPolicy: trafficPolicy,
-		}
+		sim.SubscriberId = subscriberId.String()
 
 		simInfo := &client.SimInfo{
 			Id:           simId,
@@ -645,8 +666,9 @@ func TestRouter_ConfigureSim(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
 		}
 
-		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
-			packageId.String(), simType, simToken, trafficPolicy).
+		c.On("ConfigureSim", subscriberId.String(), orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(simInfo, nil)
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
@@ -665,22 +687,16 @@ func TestRouter_ConfigureSim(t *testing.T) {
 	t.Run("SimconfiguredAndStatusFailed", func(t *testing.T) {
 		subscriberId := uuid.NewV4()
 
-		var sim = AddSimReq{
-			SubscriberId:  subscriberId.String(),
-			NetworkId:     networkId.String(),
-			PackageId:     packageId.String(),
-			SimType:       simType,
-			SimToken:      simToken,
-			TrafficPolicy: trafficPolicy,
-		}
+		sim.SubscriberId = subscriberId.String()
 
 		body, err := json.Marshal(sim)
 		if err != nil {
 			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
 		}
 
-		c.On("ConfigureSim", subscriberId.String(), networkId.String(),
-			packageId.String(), simType, simToken, trafficPolicy).
+		c.On("ConfigureSim", subscriberId.String(), orgId.String(),
+			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()

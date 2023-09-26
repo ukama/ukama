@@ -127,8 +127,9 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*client.Package
 }
 
 func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*client.SimInfo, error) {
-	return r.clients.ConfigureSim(req.SubscriberId, req.NetworkId,
-		req.PackageId, req.SimType, req.SimToken, req.TrafficPolicy)
+	return r.clients.ConfigureSim(req.SubscriberId, req.OrgId, req.NetworkId, req.FirstName,
+		req.LastName, req.Email, req.PhoneNumber, req.Address, req.Dob, req.ProofOfIdentification,
+		req.IdSerial, req.PackageId, req.SimType, req.SimToken, req.TrafficPolicy)
 }
 
 func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*client.SimInfo, error) {
