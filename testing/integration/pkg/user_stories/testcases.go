@@ -74,6 +74,7 @@ type UserStoriesData struct {
 	spackageId    string
 	ICCID         []string
 	SimId         string
+	SimPackageId  string
 
 	reqGetOrg napi.GetOrgRequest
 	reqAddOrg napi.AddOrgRequest
@@ -139,7 +140,7 @@ type UserStoriesData struct {
 	reqAddpackageToSub   sapi.AddPkgToSimReq
 	reqGetPackagesForSim sapi.SimReq
 	reqGetSubscriberSims sapi.GetSimsBySubReq
-	reqGetSimById        sapi.GetSimsBySubReq
+	reqGetSimById        sapi.SimReq
 	reqToggleSimState    sapi.ActivateDeactivateSimReq
 	reqSetActivePackage  sapi.SetActivePackageForSimReq
 }
@@ -1905,10 +1906,10 @@ func Story_Subscriber() *test.TestCase {
 					return check1, fmt.Errorf("add subscriber story failed on getSubscriber. Error %v", err)
 				}
 
-				a.reqGetSimById = sapi.GetSimsBySubReq{
+				a.reqGetSubscriberSims = sapi.GetSimsBySubReq{
 					SubscriberId: resp.Subscriber.SubscriberId,
 				}
-				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSimById)
+				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSubscriberSims)
 				if err == nil && len(tc2.Sims) == 0 {
 					check2 = true
 				} else {
@@ -2006,10 +2007,10 @@ func Story_Sim_Allocate() *test.TestCase {
 					return check1, fmt.Errorf("allocate sim story failed on getSubscriber. Error %v", err)
 				}
 
-				a.reqGetSimById = sapi.GetSimsBySubReq{
+				a.reqGetSubscriberSims = sapi.GetSimsBySubReq{
 					SubscriberId: resp.Sim.SubscriberId,
 				}
-				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSimById)
+				tc2, err := a.SubscriberClient.SubscriberManagerGetSubscriberSims(a.reqGetSubscriberSims)
 				if err == nil {
 					for _, sim := range tc2.Sims {
 						if sim.Iccid == a.ICCID[0] {
@@ -2118,6 +2119,7 @@ func Story_add_sim_package() *test.TestCase {
 			if err == nil {
 				for _, p := range tc1.Packages {
 					if p.PackageId == a.spackageId {
+						a.SimPackageId = p.Id
 						check1 = true
 						break
 					}
@@ -2150,6 +2152,160 @@ func Story_add_sim_package() *test.TestCase {
 			tc.Watcher.Stop()
 
 			return nil
+		},
+	}
+}
+
+func Story_activate_sim() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Active package for sim",
+		Description: "activate sim package failed case",
+		Data:        &smpb.ToggleSimStatusResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.active"})
+
+			a.reqSetActivePackage = sapi.SetActivePackageForSimReq{
+				SimId:     a.SimId,
+				PackageId: a.SimPackageId,
+			}
+			a.reqToggleSimState = sapi.ActivateDeactivateSimReq{
+				SimId:  a.SimId,
+				Status: "active",
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			_, err = a.SubscriberClient.SubscriberManagerActivatePackage(a.reqSetActivePackage)
+			if err != nil && strings.Contains(err.Error(), "sim's status is is inactive") {
+				tc.Data, err = a.SubscriberClient.SubscriberManagerUpdateSim(a.reqToggleSimState)
+				if err != nil {
+					return err
+				}
+			} else {
+				return fmt.Errorf("activate sim story failed at reqSetActivePackage. %v", nil)
+			}
+			return nil
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1 := false
+
+			resp := tc.GetData().(*smpb.ToggleSimStatusResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetSimById = sapi.SimReq{
+					SimId: a.SimId,
+				}
+
+				tc1, err := a.SubscriberClient.SubscriberManagerGetSim(a.reqGetSimById)
+				if err == nil && tc1.Sim.Status == "active" {
+					check1 = true
+				} else {
+					return check1, fmt.Errorf("activate sim story failed on getSimById. Error %v", err)
+				}
+			}
+
+			if check1 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("activate sim story failed. %v", nil)
+			}
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			resp, ok := tc.GetData().(*smpb.ToggleSimStatusResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, err := getWorkflowData(tc)
+			if err != nil {
+				return err
+			}
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	}
+}
+
+func Story_active_sim_package() *test.TestCase {
+	return &test.TestCase{
+		Name:        "Active package for sim",
+		Description: "activate sim package",
+		Data:        &smpb.SetActivePackageResponse{},
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			a := tc.GetWorkflowData().(*UserStoriesData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.active"})
+
+			a.reqSetActivePackage = sapi.SetActivePackageForSimReq{
+				SimId:     a.SimId,
+				PackageId: a.spackageId,
+			}
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			var err error
+			a, ok := getWorkflowData(tc)
+			if ok != nil {
+				return ok
+			}
+			tc.Data, err = a.SubscriberClient.SubscriberManagerActivatePackage(a.reqSetActivePackage)
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			check1 := false
+
+			resp := tc.GetData().(*smpb.SetActivePackageResponse)
+
+			if resp != nil {
+				a, ok := getWorkflowData(tc)
+				if ok != nil {
+					return false, ok
+				}
+
+				a.reqGetPackagesForSim = sapi.SimReq{
+					SimId: a.SimId,
+				}
+
+				tc1, err := a.SubscriberClient.SubscriberManagerGetPackageForSim(a.reqGetPackagesForSim)
+				if err == nil {
+					for _, p := range tc1.Packages {
+						if p.PackageId == a.spackageId {
+							check1 = true
+							break
+						}
+					}
+				} else {
+					return check1, fmt.Errorf("activate sim package story failed on getSimPackages. Error %v", err)
+				}
+			}
+
+			if check1 {
+				return true, nil
+			} else {
+				return false, fmt.Errorf("activate sim package story failed. %v", nil)
+			}
 		},
 	}
 }
