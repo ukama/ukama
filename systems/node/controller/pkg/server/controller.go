@@ -61,7 +61,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RestartSiteResponse{
-		Status: pb.RestartStatus_RESTART_STATUS_SUCCESS,
+		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
 }
 
@@ -85,6 +85,6 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RestartNodeResponse{
-		Status: pb.RestartStatus_RESTART_STATUS_SUCCESS,
+		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
 }

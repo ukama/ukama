@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ControllerService_RestartSite_FullMethodName = "/ukama.node.controller.v1.ControllerService/RestartSite"
-	ControllerService_RestartNode_FullMethodName = "/ukama.node.controller.v1.ControllerService/RestartNode"
+	ControllerService_RestartSite_FullMethodName  = "/ukama.node.controller.v1.ControllerService/RestartSite"
+	ControllerService_RestartNode_FullMethodName  = "/ukama.node.controller.v1.ControllerService/RestartNode"
+	ControllerService_RestartNodes_FullMethodName = "/ukama.node.controller.v1.ControllerService/RestartNodes"
 )
 
 // ControllerServiceClient is the client API for ControllerService service.
@@ -29,6 +30,7 @@ const (
 type ControllerServiceClient interface {
 	RestartSite(ctx context.Context, in *RestartSiteRequest, opts ...grpc.CallOption) (*RestartSiteResponse, error)
 	RestartNode(ctx context.Context, in *RestartNodeRequest, opts ...grpc.CallOption) (*RestartNodeResponse, error)
+	RestartNodes(ctx context.Context, in *RestartNodesRequest, opts ...grpc.CallOption) (*RestartNodesResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -57,12 +59,22 @@ func (c *controllerServiceClient) RestartNode(ctx context.Context, in *RestartNo
 	return out, nil
 }
 
+func (c *controllerServiceClient) RestartNodes(ctx context.Context, in *RestartNodesRequest, opts ...grpc.CallOption) (*RestartNodesResponse, error) {
+	out := new(RestartNodesResponse)
+	err := c.cc.Invoke(ctx, ControllerService_RestartNodes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControllerServiceServer is the server API for ControllerService service.
 // All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility
 type ControllerServiceServer interface {
 	RestartSite(context.Context, *RestartSiteRequest) (*RestartSiteResponse, error)
 	RestartNode(context.Context, *RestartNodeRequest) (*RestartNodeResponse, error)
+	RestartNodes(context.Context, *RestartNodesRequest) (*RestartNodesResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedControllerServiceServer) RestartSite(context.Context, *Restar
 }
 func (UnimplementedControllerServiceServer) RestartNode(context.Context, *RestartNodeRequest) (*RestartNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RestartNode not implemented")
+}
+func (UnimplementedControllerServiceServer) RestartNodes(context.Context, *RestartNodesRequest) (*RestartNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RestartNodes not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 
@@ -125,6 +140,24 @@ func _ControllerService_RestartNode_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerService_RestartNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestartNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).RestartNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerService_RestartNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).RestartNodes(ctx, req.(*RestartNodesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RestartNode",
 			Handler:    _ControllerService_RestartNode_Handler,
+		},
+		{
+			MethodName: "RestartNodes",
+			Handler:    _ControllerService_RestartNodes_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

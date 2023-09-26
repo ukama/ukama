@@ -3,6 +3,7 @@ package rest
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -61,18 +62,17 @@ func TestPingRoute(t *testing.T) {
 func Test_RestarteNode(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controllers", nil)
+	req, _ := http.NewRequest("POST", "/v1/controllers/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
 	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{
-		Status: cpb.RestartStatus_RESTART_STATUS_SUCCESS},
+		Status: cpb.RestartStatus_ACCEPTED},
 		nil)
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
 	// act
 	r.ServeHTTP(w, req)
 
@@ -81,56 +81,62 @@ func Test_RestarteNode(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-// func TestRouter_PingRoute(t *testing.T) {
-// 	var c = &nmocks.ControllerServiceClient{}
-// 	var arc = &providers.AuthRestClient{}
 
-// 	// arrange
-// 	w := httptest.NewRecorder()
-// 	req, _ := http.NewRequest("GET", "/ping", nil)
+func Test_RestarteNodes(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	// Create a JSON payload with the necessary data.
+	jsonPayload := `{"node_ids":["60285a2a-fe1d-4261-a868-5be480075b8f"]}`
 
-// 	r := NewRouter(&Clients{
-// 		Controller: client.NewControllerFromClient(c),
-// 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	req, _ := http.NewRequest("POST", "/v1/controllers/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json") 
+	arc := &providers.AuthRestClient{}
+	c := &nmocks.ControllerServiceClient{}
 
-// 	r.ServeHTTP(w, req)
+	restartNodeReq := &cpb.RestartNodesRequest{
+		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4", 
+		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"}, 
+	}
 
-// 	assert.Equal(t, 200, w.Code)
-// 	assert.Contains(t, w.Body.String(), "pong")
-// }
+	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
+		Status: cpb.RestartStatus_ACCEPTED,
+	}, nil)
 
-// func TestRouter_RestartNode(t *testing.T) {
-// 	var c = &nmocks.ControllerServiceClient{}
-// 	var arc = &providers.AuthRestClient{}
-// 	var cr = RestartNodeRequest{
-// 		NodeId: uuid.NewV4().String(),
-// 	}
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	// act
+	r.ServeHTTP(w, req)
 
-// 	t.Run("NodeHasRestared", func(t *testing.T) {
-// 		body, err := json.Marshal(cr)
-// 		if err != nil {
-// 			t.Errorf("fail to marshal request data: %v. Error: %v", cr, err)
-// 		}
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
 
-// 		w := httptest.NewRecorder()
-// 		req, _ := http.NewRequest("POST", nodeApiEndpoint, bytes.NewReader(body))
 
-// 		controllerReq := &cpb.RestartNodeRequest{
-// 			NodeId: cr.NodeId,
-// 		}
+func Test_RestarteSite(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	 req, _ := http.NewRequest("POST", "/v1/controllers/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
+	arc := &providers.AuthRestClient{}
+	c := &nmocks.ControllerServiceClient{}
 
-// 		c.On("RestartNode", controllerReq).Return(&cpb.RestartNodeResponse{Status: cpb.RestartStatus_RESTART_STATUS_SUCCESS}, nil)
+	RestartSiteRequest := &cpb.RestartSiteRequest{
+		SiteName:  "pamoja",
+		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
+	}
 
-// 		r := NewRouter(&Clients{
-// 			Controller: client.NewControllerFromClient(c),
-// 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	c.On("RestartSite" ,mock.Anything,RestartSiteRequest).Return(&cpb.RestartSiteResponse{
+		Status: cpb.RestartStatus_ACCEPTED},
+		nil)
 
-// 		// act
-// 		r.ServeHTTP(w, req)
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	// act
+	r.ServeHTTP(w, req)
 
-// 		// assert
-// 		assert.Equal(t, http.StatusCreated, w.Code)
-// 		c.AssertExpectations(t)
-// 	})
-
-// }
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
