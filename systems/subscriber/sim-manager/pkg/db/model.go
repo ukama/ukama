@@ -25,9 +25,11 @@ type Sim struct {
 	DeactivationsCount uint64 `gorm:"default:0"`
 	FirstActivatedOn   time.Time
 	LastActivatedOn    time.Time
+	TrafficPolicy      uint32
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
 	TerminatedAt       gorm.DeletedAt `gorm:"index"`
+	Synced             bool
 }
 
 type Package struct {
