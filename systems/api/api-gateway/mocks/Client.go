@@ -13,15 +13,15 @@ type Client struct {
 }
 
 // AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20
-func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 int64, _a9 int64, _a10 int64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 float64, _a17 float64, _a18 float64, _a19 uint, _a20 []string) (*client.PackageInfo, error) {
+func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 int64, _a9 int64, _a10 int64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 float64, _a17 float64, _a18 float64, _a19 uint32, _a20 []string) (*client.PackageInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
 
 	var r0 *client.PackageInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint, []string) (*client.PackageInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint32, []string) (*client.PackageInfo, error)); ok {
 		return rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint, []string) *client.PackageInfo); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint32, []string) *client.PackageInfo); ok {
 		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
 	} else {
 		if ret.Get(0) != nil {
@@ -29,7 +29,7 @@ func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, float64, float64, float64, uint32, []string) error); ok {
 		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
 	} else {
 		r1 = ret.Error(1)
@@ -39,15 +39,15 @@ func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4
 }
 
 // ConfigureSim provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14
-func (_m *Client) ConfigureSim(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 string, _a7 string, _a8 string, _a9 string, _a10 string, _a11 string, _a12 string, _a13 string, _a14 uint) (*client.SimInfo, error) {
+func (_m *Client) ConfigureSim(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 string, _a7 string, _a8 string, _a9 string, _a10 string, _a11 string, _a12 string, _a13 string, _a14 uint32) (*client.SimInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
 
 	var r0 *client.SimInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint) (*client.SimInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint32) (*client.SimInfo, error)); ok {
 		return rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint) *client.SimInfo); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint32) *client.SimInfo); ok {
 		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
 	} else {
 		if ret.Get(0) != nil {
@@ -55,7 +55,7 @@ func (_m *Client) ConfigureSim(_a0 string, _a1 string, _a2 string, _a3 string, _
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, string, string, string, string, string, string, string, string, uint32) error); ok {
 		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
 	} else {
 		r1 = ret.Error(1)
@@ -65,15 +65,15 @@ func (_m *Client) ConfigureSim(_a0 string, _a1 string, _a2 string, _a3 string, _
 }
 
 // CreateNetwork provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7
-func (_m *Client) CreateNetwork(_a0 string, _a1 string, _a2 []string, _a3 []string, _a4 float64, _a5 float64, _a6 uint, _a7 bool) (*client.NetworkInfo, error) {
+func (_m *Client) CreateNetwork(_a0 string, _a1 string, _a2 []string, _a3 []string, _a4 float64, _a5 float64, _a6 uint32, _a7 bool) (*client.NetworkInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7)
 
 	var r0 *client.NetworkInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint, bool) (*client.NetworkInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) (*client.NetworkInfo, error)); ok {
 		return rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint, bool) *client.NetworkInfo); ok {
+	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) *client.NetworkInfo); ok {
 		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7)
 	} else {
 		if ret.Get(0) != nil {
@@ -81,7 +81,7 @@ func (_m *Client) CreateNetwork(_a0 string, _a1 string, _a2 []string, _a3 []stri
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, []string, []string, float64, float64, uint, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, []string, []string, float64, float64, uint32, bool) error); ok {
 		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7)
 	} else {
 		r1 = ret.Error(1)

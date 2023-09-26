@@ -34,7 +34,7 @@ type PackageInfo struct {
 	IsActive      bool      `json:"active"`
 	Duration      uint      `json:"duration,string"`
 	Overdraft     float64   `json:"overdraft"`
-	TrafficPolicy uint      `json:"traffic_policy"`
+	TrafficPolicy uint32    `json:"traffic_policy"`
 	Networks      []string  `json:"networks"`
 	IsSynced      bool      `json:"is_synced,omitempty"`
 }
@@ -63,7 +63,7 @@ type AddPackageRequest struct {
 	Active        bool     `json:"active" validation:"required"`
 	BaserateId    string   `json:"baserate_id" validation:"required"`
 	Overdraft     float64  `json:"overdraft"`
-	TrafficPolicy uint     `json:"traffic_policy"`
+	TrafficPolicy uint32   `json:"traffic_policy"`
 	Networks      []string `json:"networks"`
 }
 

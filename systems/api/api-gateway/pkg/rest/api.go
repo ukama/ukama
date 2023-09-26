@@ -11,7 +11,7 @@ type AddNetworkReq struct {
 	AllowedNetworks  []string `json:"allowed_networks"`
 	Budget           float64  `json:"budget"`
 	Overdraft        float64  `json:"overdraft"`
-	TrafficPolicy    uint     `json:"traffic_policy"`
+	TrafficPolicy    uint32   `json:"traffic_policy"`
 	PaymentLinks     bool     `example:"true" json:"payment_links"`
 }
 
@@ -39,7 +39,7 @@ type AddPackageReq struct {
 	VoiceVolume   int64    `example:"0" json:"voice_volume" default:"0"`
 	BaserateId    string   `example:"{{baserate}}" json:"baserate_id" validation:"required"`
 	Overdraft     float64  `json:"overdraft"`
-	TrafficPolicy uint     `json:"traffic_policy"`
+	TrafficPolicy uint32   `json:"traffic_policy"`
 	Networks      []string `json:"networks"`
 }
 
@@ -62,5 +62,5 @@ type AddSimReq struct {
 	PackageId             string `json:"package_id" validate:"required"`
 	SimType               string `json:"sim_type"`
 	SimToken              string `json:"sim_token"`
-	TrafficPolicy         uint   `json:"traffic_policy"`
+	TrafficPolicy         uint32 `json:"traffic_policy"`
 }

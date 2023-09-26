@@ -179,7 +179,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		countries := []string{"USA"}
 		budget := float64(0)
 		overdraft := float64(0)
-		trafficPolicy := uint(0)
+		trafficPolicy := uint32(0)
 		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
@@ -226,7 +226,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		countries := []string{"USA"}
 		budget := float64(0)
 		overdraft := float64(0)
-		trafficPolicy := uint(0)
+		trafficPolicy := uint32(0)
 		paymentLinks := false
 
 		var ntwk = AddNetworkReq{
@@ -380,7 +380,7 @@ func TestRouter_AddPackage(t *testing.T) {
 	flatRate := false
 	amount := float64(0)
 	overdraft := float64(0)
-	trafficPolicy := uint(0)
+	trafficPolicy := uint32(0)
 	networks := []string{""}
 
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
@@ -620,7 +620,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 	packageId := uuid.NewV4()
 	simType := "some-sim-type"
 	simToken := "some-sim-token"
-	trafficPolicy := uint(0)
+	trafficPolicy := uint32(0)
 
 	orgId := uuid.NewV4()
 	firstName := "John"

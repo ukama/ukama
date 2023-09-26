@@ -23,7 +23,7 @@ type SimInfo struct {
 	Status        string    `json:"status,omitempty"`
 	SimType       string    `json:"sim_type,omitempty"`
 	IsPhysical    bool      `json:"is_physical,omitempty"`
-	TrafficPolicy uint      `json:"traffic_policy"`
+	TrafficPolicy uint32    `json:"traffic_policy"`
 	IsSynced      bool      `json:"is_synced,omitempty"`
 	AllocatedAt   time.Time `json:"allocated_at,omitempty"`
 }
@@ -38,7 +38,7 @@ type AddSimRequest struct {
 	PackageId     string `json:"package_id" validate:"required"`
 	SimType       string `json:"sim_type"`
 	SimToken      string `json:"sim_token"`
-	TrafficPolicy uint   `json:"traffic_policy"`
+	TrafficPolicy uint32 `json:"traffic_policy"`
 }
 
 type SimClient interface {

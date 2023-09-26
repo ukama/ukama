@@ -22,7 +22,7 @@ type NetworkInfo struct {
 	AllowedNetworks  []string  `json:"allowed_networks"`
 	Budget           float64   `json:"budget"`
 	Overdraft        float64   `json:"overdraft"`
-	TrafficPolicy    uint      `json:"traffic_policy"`
+	TrafficPolicy    uint32    `json:"traffic_policy"`
 	PaymentLinks     bool      `json:"payment_links"`
 	IsSynced         bool      `json:"is_synced,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
@@ -39,7 +39,7 @@ type AddNetworkRequest struct {
 	AllowedNetworks  []string `json:"allowed_networks"`
 	Budget           float64  `json:"budget"`
 	Overdraft        float64  `json:"overdraft"`
-	TrafficPolicy    uint     `json:"traffic_policy"`
+	TrafficPolicy    uint32   `json:"traffic_policy"`
 	PaymentLinks     bool     `json:"payment_links"`
 }
 
