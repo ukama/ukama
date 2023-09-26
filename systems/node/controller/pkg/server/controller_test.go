@@ -42,3 +42,50 @@ func TestControllerServer_RestartSite(t *testing.T) {
 	assert.NoError(t, err)
 
 }
+func TestControllerServer_RestartNode(t *testing.T) {
+	// Arrange
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+	RegRepo := &mocks.RegistryProvider{}
+
+	nodeId := uuid.NewV4()
+
+	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName)
+
+	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
+		NodeId: nodeId.String(),
+	}).Return(nil).Once()
+	// Act
+	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
+		NodeId: nodeId.String(),
+	})
+	// Assert
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+
+}
+
+func TestControllerServer_RestartNodes(t *testing.T) {
+	// Arrange
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+	RegRepo := &mocks.RegistryProvider{}
+
+	nodeId := uuid.NewV4()
+
+	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName)
+
+	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
+		NodeId: nodeId.String(),
+	}).Return(nil).Once()
+	// Act
+	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
+		NodeId: nodeId.String(),
+	})
+	// Assert
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+
+}

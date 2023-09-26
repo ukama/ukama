@@ -88,3 +88,29 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
 }
+
+func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
+	if len(req.NodeIds) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "node IDs cannot be empty")
+	}
+
+	for _, nodeId := range req.NodeIds {
+		nodeId, err := uuid.FromString(nodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
+		}
+
+		if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
+		}
+	}
+
+	route := c.controllerRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
+	err := c.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	return &pb.RestartNodesResponse{
+		Status: pb.RestartStatus_ACCEPTED,
+	}, nil
+}
