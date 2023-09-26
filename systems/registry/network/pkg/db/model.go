@@ -27,7 +27,7 @@ type Network struct {
 	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`
 	Budget           float64
 	Overdraft        float64
-	TrafficPolicy    uint
+	TrafficPolicy    uint32
 	PaymentLinks     bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
