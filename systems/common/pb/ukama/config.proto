@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
+
+package ukama.config.v1;
+
+import "validator.proto";
+import "google/protobuf/any.proto";
+
+message Config {
+    string routingKey = 1 [(validator.field) = {string_not_empty: true}];
+    string filename = 2;
+    string app = 3;
+    google.protobuf.Any Data = 4;
+}
