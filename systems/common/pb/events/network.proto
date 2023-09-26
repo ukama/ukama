@@ -10,6 +10,9 @@ message NetworkCreatedEvent {
     string orgId = 3;
     repeated string allowedCountries = 4;
     repeated string allowedNetworks = 5;
-    bool isDeactivated = 6;
-    bool paymentLinks = 7;
+    double budget = 6;
+    double overdraft = 7;
+    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
+    bool isDeactivated = 9;
+    bool paymentLinks = 10;
 }
