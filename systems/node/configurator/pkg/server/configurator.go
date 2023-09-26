@@ -34,6 +34,6 @@ func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.Reg
 
 func (c *ConfiguratorServer) ConfigEvent(ctx context.Context, req *pb.ConfigStoreEvent) (*pb.ConfigStoreEventResponse, error) {
 	log.Infof("Received a event from config store %v", req)
-
+	
 	return &pb.ConfigStoreEventResponse{}, nil
 }
