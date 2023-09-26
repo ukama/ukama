@@ -5,13 +5,14 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
