@@ -4,22 +4,24 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
-	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
-	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
 type PackageServer struct {
@@ -48,11 +50,11 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	logrus.Infof("GetPackage : %v ", packageID)
+	log.Infof("GetPackage : %v ", packageID)
 	_package, err := p.packageRepo.Get(packageID)
 
 	if err != nil {
-		logrus.Error("error getting a package" + err.Error())
+		log.Error("error getting a package" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
@@ -69,11 +71,11 @@ func (p *PackageServer) GetDetails(ctx context.Context, req *pb.GetPackageReques
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	logrus.Infof("GetPackageDetails : %v ", packageID)
+	log.Infof("GetPackageDetails : %v ", packageID)
 	_package, err := p.packageRepo.GetDetails(packageID)
 
 	if err != nil {
-		logrus.Error("error getting a package" + err.Error())
+		log.Error("error getting a package" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
@@ -84,7 +86,7 @@ func (p *PackageServer) GetDetails(ctx context.Context, req *pb.GetPackageReques
 }
 
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
-	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
+	log.Infof("GetPackage by Org: %v ", req.GetOrgId())
 
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
@@ -94,7 +96,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 
 	packages, err := p.packageRepo.GetByOrg(orgId)
 	if err != nil {
-		logrus.Error("error while getting package by Org" + err.Error())
+		log.Error("error while getting package by Org" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
@@ -107,7 +109,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 
-	logrus.Infof("Adding package %v", req)
+	log.Infof("Adding package %v", req)
 
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
@@ -186,6 +188,9 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		PackageDetails: db.PackageDetails{
 			Apn: req.Apn,
 		},
+		Overdraft:     req.Overdraft,
+		TrafficPolicy: req.TrafficPolicy,
+		Networks:      req.Networks,
 	}
 
 	// Request rate
@@ -194,7 +199,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		BaseRate: req.BaserateId,
 	})
 	if err != nil {
-		logrus.Errorf("Failed to get base rate for package. Error: %s", err.Error())
+		log.Errorf("Failed to get base rate for package. Error: %s", err.Error())
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid base id. Error %s", err.Error())
 	}
@@ -217,7 +222,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	err = p.packageRepo.Add(&pr)
 	if err != nil {
 
-		logrus.Error("Error while adding a package. " + err.Error())
+		log.Error("Error while adding a package. " + err.Error())
 		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
 	}
 
@@ -247,7 +252,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		}
 		err = p.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 
 	}
@@ -261,11 +266,11 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	logrus.Infof("Delete Packages packageId: %v", req.GetUuid())
+	log.Infof("Delete Packages packageId: %v", req.GetUuid())
 
 	err = p.packageRepo.Delete(packageID)
 	if err != nil {
-		logrus.Error("error while deleting package" + err.Error())
+		log.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
@@ -277,7 +282,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		route := p.baseRoutingKey.SetActionDelete().SetObject("package").MustBuild()
 		err = p.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -287,12 +292,11 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	logrus.Infof("Update Package Uuid: %v, Name: %v,Active: %v",
+	log.Infof("Update Package Uuid: %v, Name: %v,Active: %v",
 		req.Uuid, req.Name, req.Active)
 	_package := &db.Package{
 		Name:   req.GetName(),
 		Active: req.Active,
-		
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -303,7 +307,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 
 	err = p.packageRepo.Update(packageID, _package)
 	if err != nil {
-		logrus.Error("error while getting updating a package" + err.Error())
+		log.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
@@ -314,7 +318,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	}
 	err = p.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
 	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(_package)}, nil
@@ -358,15 +362,19 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 			Baserate: p.PackageMarkup.BaseRateId.String(),
 			Markup:   p.PackageMarkup.Markup,
 		},
-		Provider:    p.Provider,
-		Type:        p.Type.String(),
-		MessageUnit: p.MessageUnits.String(),
-		VoiceUnit:   p.VoiceUnits.String(),
-		DataUnit:    p.DataUnits.String(),
-		Country:     p.Country,
-		Currency:    p.Currency,
-		Apn:         p.PackageDetails.Apn,
-		Flatrate:    p.Flatrate,
+		Provider:      p.Provider,
+		Type:          p.Type.String(),
+		MessageUnit:   p.MessageUnits.String(),
+		VoiceUnit:     p.VoiceUnits.String(),
+		DataUnit:      p.DataUnits.String(),
+		Country:       p.Country,
+		Currency:      p.Currency,
+		Apn:           p.PackageDetails.Apn,
+		Flatrate:      p.Flatrate,
+		Overdraft:     p.Overdraft,
+		TrafficPolicy: p.TrafficPolicy,
+		Networks:      p.Networks,
+		IsSynced:      p.Synced,
 	}
 }
 

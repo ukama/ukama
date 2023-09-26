@@ -3,9 +3,12 @@ package db
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/ukama/ukama/systems/common/ukama"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"gorm.io/gorm"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Package struct {
@@ -35,6 +38,7 @@ type Package struct {
 	Provider       string    `gorm:"not null;type:string"`
 	Overdraft      float64
 	TrafficPolicy  uint32
+	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
 	Synced         bool
 }
 
