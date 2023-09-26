@@ -25,6 +25,9 @@ type Network struct {
 	Deactivated      bool
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
 	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`
+	Budget           float64
+	Overdraft        float64
+	TrafficPolicy    uint
 	PaymentLinks     bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
