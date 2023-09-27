@@ -20,3 +20,15 @@ func (this *ConfigStoreEvent) Validate() error {
 func (this *ConfigStoreEventResponse) Validate() error {
 	return nil
 }
+func (this *ApplyConfigRequest) Validate() error {
+	return nil
+}
+func (this *ApplyConfigResponse) Validate() error {
+	return nil
+}
+func (this *ConfigVersionRequest) Validate() error {
+	return nil
+}
+func (this *ConfigVersionResponse) Validate() error {
+	return nil
+}

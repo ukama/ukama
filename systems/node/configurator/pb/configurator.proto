@@ -7,6 +7,8 @@ option go_package = "github.com/ukama/ukama/systems/node/configurator/pb/gen";
 // Defines the service for configurator operations
 service ConfiguratorService {
   rpc ConfigEvent(ConfigStoreEvent) returns (ConfigStoreEventResponse);
+  rpc ApplyConfig(ApplyConfigRequest) returns (ApplyConfigResponse);
+  rpc GetConfigVersion(ConfigVersionRequest) returns (ConfigVersionResponse);
 }
 
 
@@ -16,4 +18,23 @@ message ConfigStoreEvent {
 message ConfigStoreEventResponse {
 }
 
+message ApplyConfigRequest {
+  string Hash = 1;
+}
+
+message ApplyConfigResponse {
+
+}
+
+message ConfigVersionRequest {
+  string NodeId = 1;
+}
+
+message ConfigVersionResponse {
+  string NodeId = 1;
+  string Status = 2;
+  string Commit = 3;
+  string LastStatus = 4;
+  string LastCommit = 5;
+}
 

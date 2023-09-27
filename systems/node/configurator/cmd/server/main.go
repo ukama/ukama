@@ -73,7 +73,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	reg := providers.NewRegistryProvider(serviceConfig.RegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	configuratorServer := server.NewConfiguratorServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName)
+	configuratorServer := server.NewConfiguratorServer(mbClient, reg, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), serviceConfig.OrgName, serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout, pkg.IsDebugMode)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

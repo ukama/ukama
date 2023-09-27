@@ -23,6 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConfiguratorServiceClient interface {
 	ConfigEvent(ctx context.Context, in *ConfigStoreEvent, opts ...grpc.CallOption) (*ConfigStoreEventResponse, error)
+	ApplyConfig(ctx context.Context, in *ApplyConfigRequest, opts ...grpc.CallOption) (*ApplyConfigResponse, error)
+	GetConfigVersion(ctx context.Context, in *ConfigVersionRequest, opts ...grpc.CallOption) (*ConfigVersionResponse, error)
 }
 
 type configuratorServiceClient struct {
@@ -42,11 +44,31 @@ func (c *configuratorServiceClient) ConfigEvent(ctx context.Context, in *ConfigS
 	return out, nil
 }
 
+func (c *configuratorServiceClient) ApplyConfig(ctx context.Context, in *ApplyConfigRequest, opts ...grpc.CallOption) (*ApplyConfigResponse, error) {
+	out := new(ApplyConfigResponse)
+	err := c.cc.Invoke(ctx, "/ukama.node.configurator.v1.ConfiguratorService/ApplyConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configuratorServiceClient) GetConfigVersion(ctx context.Context, in *ConfigVersionRequest, opts ...grpc.CallOption) (*ConfigVersionResponse, error) {
+	out := new(ConfigVersionResponse)
+	err := c.cc.Invoke(ctx, "/ukama.node.configurator.v1.ConfiguratorService/GetConfigVersion", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfiguratorServiceServer is the server API for ConfiguratorService service.
 // All implementations must embed UnimplementedConfiguratorServiceServer
 // for forward compatibility
 type ConfiguratorServiceServer interface {
 	ConfigEvent(context.Context, *ConfigStoreEvent) (*ConfigStoreEventResponse, error)
+	ApplyConfig(context.Context, *ApplyConfigRequest) (*ApplyConfigResponse, error)
+	GetConfigVersion(context.Context, *ConfigVersionRequest) (*ConfigVersionResponse, error)
 	mustEmbedUnimplementedConfiguratorServiceServer()
 }
 
@@ -56,6 +78,12 @@ type UnimplementedConfiguratorServiceServer struct {
 
 func (UnimplementedConfiguratorServiceServer) ConfigEvent(context.Context, *ConfigStoreEvent) (*ConfigStoreEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfigEvent not implemented")
+}
+func (UnimplementedConfiguratorServiceServer) ApplyConfig(context.Context, *ApplyConfigRequest) (*ApplyConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyConfig not implemented")
+}
+func (UnimplementedConfiguratorServiceServer) GetConfigVersion(context.Context, *ConfigVersionRequest) (*ConfigVersionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigVersion not implemented")
 }
 func (UnimplementedConfiguratorServiceServer) mustEmbedUnimplementedConfiguratorServiceServer() {}
 
@@ -88,6 +116,42 @@ func _ConfiguratorService_ConfigEvent_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfiguratorService_ApplyConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfiguratorServiceServer).ApplyConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.node.configurator.v1.ConfiguratorService/ApplyConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfiguratorServiceServer).ApplyConfig(ctx, req.(*ApplyConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfiguratorService_GetConfigVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigVersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfiguratorServiceServer).GetConfigVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.node.configurator.v1.ConfiguratorService/GetConfigVersion",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfiguratorServiceServer).GetConfigVersion(ctx, req.(*ConfigVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfiguratorService_ServiceDesc is the grpc.ServiceDesc for ConfiguratorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +162,14 @@ var ConfiguratorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfigEvent",
 			Handler:    _ConfiguratorService_ConfigEvent_Handler,
+		},
+		{
+			MethodName: "ApplyConfig",
+			Handler:    _ConfiguratorService_ApplyConfig_Handler,
+		},
+		{
+			MethodName: "GetConfigVersion",
+			Handler:    _ConfiguratorService_GetConfigVersion_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

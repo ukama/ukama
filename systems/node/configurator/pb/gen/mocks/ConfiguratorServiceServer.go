@@ -14,6 +14,32 @@ type ConfiguratorServiceServer struct {
 	mock.Mock
 }
 
+// ApplyConfig provides a mock function with given fields: _a0, _a1
+func (_m *ConfiguratorServiceServer) ApplyConfig(_a0 context.Context, _a1 *gen.ApplyConfigRequest) (*gen.ApplyConfigResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.ApplyConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ApplyConfigRequest) (*gen.ApplyConfigResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ApplyConfigRequest) *gen.ApplyConfigResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ApplyConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ApplyConfigRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ConfigEvent provides a mock function with given fields: _a0, _a1
 func (_m *ConfiguratorServiceServer) ConfigEvent(_a0 context.Context, _a1 *gen.ConfigStoreEvent) (*gen.ConfigStoreEventResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -32,6 +58,32 @@ func (_m *ConfiguratorServiceServer) ConfigEvent(_a0 context.Context, _a1 *gen.C
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ConfigStoreEvent) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetConfigVersion provides a mock function with given fields: _a0, _a1
+func (_m *ConfiguratorServiceServer) GetConfigVersion(_a0 context.Context, _a1 *gen.ConfigVersionRequest) (*gen.ConfigVersionResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.ConfigVersionResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigVersionRequest) (*gen.ConfigVersionResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigVersionRequest) *gen.ConfigVersionResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ConfigVersionResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ConfigVersionRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

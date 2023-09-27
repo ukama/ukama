@@ -16,6 +16,39 @@ type ConfiguratorServiceClient struct {
 	mock.Mock
 }
 
+// ApplyConfig provides a mock function with given fields: ctx, in, opts
+func (_m *ConfiguratorServiceClient) ApplyConfig(ctx context.Context, in *gen.ApplyConfigRequest, opts ...grpc.CallOption) (*gen.ApplyConfigResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.ApplyConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ApplyConfigRequest, ...grpc.CallOption) (*gen.ApplyConfigResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ApplyConfigRequest, ...grpc.CallOption) *gen.ApplyConfigResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ApplyConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ApplyConfigRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ConfigEvent provides a mock function with given fields: ctx, in, opts
 func (_m *ConfiguratorServiceClient) ConfigEvent(ctx context.Context, in *gen.ConfigStoreEvent, opts ...grpc.CallOption) (*gen.ConfigStoreEventResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -41,6 +74,39 @@ func (_m *ConfiguratorServiceClient) ConfigEvent(ctx context.Context, in *gen.Co
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ConfigStoreEvent, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetConfigVersion provides a mock function with given fields: ctx, in, opts
+func (_m *ConfiguratorServiceClient) GetConfigVersion(ctx context.Context, in *gen.ConfigVersionRequest, opts ...grpc.CallOption) (*gen.ConfigVersionResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.ConfigVersionResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigVersionRequest, ...grpc.CallOption) (*gen.ConfigVersionResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigVersionRequest, ...grpc.CallOption) *gen.ConfigVersionResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ConfigVersionResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ConfigVersionRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

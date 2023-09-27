@@ -17,6 +17,9 @@ type Config struct {
 	OrgName          string           `default:"ukama"`
 	RegistryHost     string           `default:"registry"`
 	LatestConfigHash string
+	StoreUser        string
+	StoreUrl         string
+	AccessToken      string
 }
 
 func NewConfig(name string) *Config {
