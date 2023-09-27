@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+
+
 // CopyDir recursively copies a directory and its contents to a destination directory.
 func CopyDir(srcDir, destDir string) error {
 	err := filepath.Walk(srcDir, func(srcPath string, info os.FileInfo, err error) error {
@@ -51,3 +53,4 @@ func RemoveDir(path string) error {
 func CreateDir(path string, perm fs.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
+

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-	"ukama/ukama/systems/node/configurator/pkg/utils"
+
+	"github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
