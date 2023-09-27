@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -78,10 +77,6 @@ func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (
 			Resources: genResources,
 		}
 	}
-	fmt.Println("genSystems", genSystems)
-	fmt.Println("genCapps", genCapps)
-	fmt.Println("request.NodeId", request.NodeId)
-
 	res, err := r.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
 		NodeId:    request.NodeId,
 		Timestamp: request.Timestamp,

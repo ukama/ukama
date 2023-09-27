@@ -15,7 +15,6 @@ message GetRunningAppsRequest {
 
 message GetRunningAppsResponse {
      App running_apps = 1;
-
 }
 
 

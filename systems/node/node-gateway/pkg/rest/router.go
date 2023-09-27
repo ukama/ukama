@@ -107,8 +107,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		const heal = "/health"
 		health := auth.Group(heal, "health", "Operations on health")
-		health.POST("/:node_id/apps", formatDoc("Store running software information", ""), tonic.Handler(r.postSoftwareInfoHandler, http.StatusCreated))
-		health.GET("/:node_id/apps", formatDoc("Get running software information", ""), tonic.Handler(r.getSoftwareInfoHandler, http.StatusOK))
+		health.POST("/nodes/:node_id/apps", formatDoc("Create running software information", ""), tonic.Handler(r.postSoftwareInfoHandler, http.StatusCreated))
+		health.GET("/nodes/:node_id/apps", formatDoc("Get running software information", ""), tonic.Handler(r.getSoftwareInfoHandler, http.StatusOK))
 	}
 }
 

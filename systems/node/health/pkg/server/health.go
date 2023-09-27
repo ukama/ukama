@@ -34,119 +34,124 @@ func NewHealthServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, 
 }
 
 func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
-    log.Infof("StoreRunningAppsInfo: %v", req)
+	log.Infof("StoreRunningAppsInfo: %v", req)
 
-    nodeUUID, err := uuid.FromString(req.GetNodeId())
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument,
-            "invalid format of node uuid. Error %s", err.Error())
-    }
-	healthID :=uuid.NewV4()
+	nodeUUID, err := uuid.FromString(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node uuid. Error %s", err.Error())
+	}
+	healthID := uuid.NewV4()
 	cappID := uuid.NewV4()
 
-    // Create a Health instance
-    health := db.Health{
-        Id:        healthID,
-        NodeID:    nodeUUID,
-        Timestamp: req.GetTimestamp(),
-    }
+	// Create a Health instance
+	health := db.Health{
+		Id:        healthID,
+		NodeID:    nodeUUID,
+		Timestamp: req.GetTimestamp(),
+	}
 
-    // Populate the System array from the request
-    for _, sys := range req.GetSystem() {
-        health.System = append(health.System, db.System{
-            Id:    uuid.NewV4(),
-            HealthID: healthID,
-            Name:  sys.GetName(),
-            Value: sys.GetValue(),
-        })
-    }
+	// Populate the System array from the request
+	for _, sys := range req.GetSystem() {
+		health.System = append(health.System, db.System{
+			Id:       uuid.NewV4(),
+			HealthID: healthID,
+			Name:     sys.GetName(),
+			Value:    sys.GetValue(),
+		})
+	}
 
-    for _, capp := range req.GetCapps() {
-        health.Capps = append(health.Capps, db.Capp{
-            Id:     cappID,
-            HealthID: healthID,
-            Name:   capp.GetName(),
-            Tag:    capp.GetTag(),
-            Status: db.Status(capp.GetStatus()),
-        })
+	for _, capp := range req.GetCapps() {
+		health.Capps = append(health.Capps, db.Capp{
+			Id:       cappID,
+			HealthID: healthID,
+			Name:     capp.GetName(),
+			Tag:      capp.GetTag(),
+			Status:   db.Status(capp.GetStatus()),
+		})
 
-        for _, resource := range capp.GetResources() {
-            health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
-                Id:    uuid.NewV4(),
-                CappID: cappID,
-                Name:  resource.GetName(),
-                Value: resource.GetValue(),
-            })
-        }
-    }
+		for _, resource := range capp.GetResources() {
+			health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
+				Id:     uuid.NewV4(),
+				CappID: cappID,
+				Name:   resource.GetName(),
+				Value:  resource.GetValue(),
+			})
+		}
+	}
 
-    err = h.sRepo.StoreRunningAppsInfo(&health, nil)
-    if err != nil {
-        return nil, err
-    }
+	err = h.sRepo.StoreRunningAppsInfo(&health, nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return &pb.StoreRunningAppsInfoResponse{}, nil
+	// Publish the message to the message bus
+	route := h.baseRoutingKey.SetActionCreate().SetObject("apps").MustBuild()
+	err = h.msgBus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	return &pb.StoreRunningAppsInfoResponse{}, nil
 }
 
-
-
 func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningAppsRequest) (*pb.GetRunningAppsResponse, error) {
-    log.Infof("GetRunningAppsInfo: %v", req)
-    nodeUUID, err := uuid.FromString(req.GetNodeId())
+	log.Infof("GetRunningAppsInfo: %v", req)
+	nodeUUID, err := uuid.FromString(req.GetNodeId())
 
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument,
-            "invalid format of node uuid. Error %s", err.Error())
-    }
-    health, err := h.sRepo.GetRunningAppsInfo(nodeUUID)
-    if err != nil {
-        return nil, grpc.SqlErrorToGrpc(err, "health")
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node uuid. Error %s", err.Error())
+	}
+	health, err := h.sRepo.GetRunningAppsInfo(nodeUUID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "health")
 
-    }
+	}
 
-    app := &pb.App{
-        Id:        health.Id.String(),
-        NodeId:    health.NodeID.String(),
-        Timestamp: health.Timestamp,
-        System:    []*pb.System{}, // Initialize System and Capps slices
-        Capps:     []*pb.Capps{},
-    }
+	app := &pb.App{
+		Id:        health.Id.String(),
+		NodeId:    health.NodeID.String(),
+		Timestamp: health.Timestamp,
+		System:    []*pb.System{}, // Initialize System and Capps slices
+		Capps:     []*pb.Capps{},
+	}
 
-    for _, sys := range health.System {
-        system := &pb.System{
-            Id:    sys.Id.String(),
+	for _, sys := range health.System {
+		system := &pb.System{
+			Id:       sys.Id.String(),
 			HealthId: health.Id.String(),
-            Name:  sys.Name,
-            Value: sys.Value,
-        }
-        app.System = append(app.System, system)
-    }
+			Name:     sys.Name,
+			Value:    sys.Value,
+		}
+		app.System = append(app.System, system)
+	}
 
-    for _, capp := range health.Capps {
-        capps := &pb.Capps{
-            Id:     capp.Id.String(),
-            Name:   capp.Name,
-            Tag:    capp.Tag,
-            Status: pb.Status(capp.Status), // Convert Status enum to string
-            Resources: []*pb.Resource{},   // Initialize Resources slice
-        }
+	for _, capp := range health.Capps {
+		capps := &pb.Capps{
+			Id:        capp.Id.String(),
+			Name:      capp.Name,
+			Tag:       capp.Tag,
+			Status:    pb.Status(capp.Status), // Convert Status enum to string
+			Resources: []*pb.Resource{},       // Initialize Resources slice
+		}
 
-        // Extract and format Resource data from Capps
-        for _, resource := range capp.Resources {
-            res := &pb.Resource{
+		// Extract and format Resource data from Capps
+		for _, resource := range capp.Resources {
+			res := &pb.Resource{
 
-                Id:    resource.Id.String(),
-                Name:  resource.Name,
-                Value: resource.Value,
+				Id:     resource.Id.String(),
+				Name:   resource.Name,
+				Value:  resource.Value,
 				CappId: capp.Id.String(),
-            }
-            capps.Resources = append(capps.Resources, res)
-        }
+			}
+			capps.Resources = append(capps.Resources, res)
+		}
 
-        app.Capps = append(app.Capps, capps)
-    }
+		app.Capps = append(app.Capps, capps)
+	}
 
-    return &pb.GetRunningAppsResponse{
-        RunningApps: app, // Include the populated app in the response
-    }, nil
+	return &pb.GetRunningAppsResponse{
+		RunningApps: app, // Include the populated app in the response
+	}, nil
 }
