@@ -10,6 +10,7 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 
 require (
 	github.com/cloudflare/cfssl v1.6.4
+	github.com/go-git/go-git v4.7.0+incompatible
 	github.com/go-git/go-git/v5 v5.9.0
 	github.com/golang/protobuf v1.5.3
 	github.com/num30/config v0.0.7
@@ -117,6 +118,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.5.2 // indirect

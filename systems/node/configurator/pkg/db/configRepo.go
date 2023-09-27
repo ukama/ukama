@@ -33,18 +33,18 @@ func (n *configRepo) Add(node string) error {
 		LastStatus: Undefined,
 	}
 
-	err := n.Db.GetGormDb().Clauses(clause.OnConflict{
+	r := n.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "node_id"}},
 		DoNothing: true,
 	}).Create(&config)
 
-	return err
+	return r.Error
 }
 
 func (n *configRepo) Get(id string) (*Configuration, error) {
 	var config Configuration
 
-	result := n.Db.GetGormDb().First(&config, "node_id=?", id.StringLowercase())
+	result := n.Db.GetGormDb().First(&config, "node_id=?", id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -77,10 +77,10 @@ func (n *configRepo) Delete(id string) error {
 // Update updated node with `id`. Only fields that are not nil are updated, eg name and state.
 func (n *configRepo) Update(c Configuration) error {
 
-	result := n.Db.GetGormDb().Where("node_id=?", c.NodeId).Update(&c)
+	result := n.Db.GetGormDb().Where("node_id=?", c.NodeId).Updates(&c)
 	if result.Error != nil {
 		return result.Error
 	}
 
-	return err
+	return result.Error
 }

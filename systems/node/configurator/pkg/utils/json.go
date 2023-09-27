@@ -31,7 +31,7 @@ func JsonDiff(srcFile string, targetFile string) ([]string, bool, error) {
 	var changedValues []string
 	for _, op := range patch {
 		fmt.Printf("%s\n", op)
-		changedValues = append(changedValues, op)
+		changedValues = append(changedValues, op.String())
 		change = true
 	}
 

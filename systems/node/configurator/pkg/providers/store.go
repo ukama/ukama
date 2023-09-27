@@ -7,6 +7,7 @@ import (
 
 	"github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
+	"github.com/go-git/go-git/plumbing/object"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	log "github.com/sirupsen/logrus"
@@ -111,7 +112,7 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 	// 	hash = plumbing.NewHash(arg2)
 	// }
 
-	hash = plumbing.NewHash(curHash)
+	hash = plumbing.NewHash(curSha)
 	prevHash := plumbing.NewHash(prevSha)
 
 	prevCommit, err := repo.CommitObject(prevHash)
