@@ -1,6 +1,7 @@
 package db
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 
 	"gorm.io/gorm/clause"
@@ -12,6 +13,8 @@ type ConfigRepo interface {
 	GetAll() ([]Configuration, error)
 	Delete(id string) error
 	Update(c Configuration) error
+	UpdateCurrentCommit(c Configuration, hash string) error
+	UpdateLastCommit(c Configuration, hash string) error
 }
 
 type configRepo struct {
@@ -28,8 +31,6 @@ func (n *configRepo) Add(node string) error {
 	config := Configuration{
 		NodeId:     node,
 		Status:     Default,
-		Commit:     "default",
-		LastCommit: "",
 		LastStatus: Undefined,
 	}
 
@@ -44,7 +45,7 @@ func (n *configRepo) Add(node string) error {
 func (n *configRepo) Get(id string) (*Configuration, error) {
 	var config Configuration
 
-	result := n.Db.GetGormDb().First(&config, "node_id=?", id)
+	result := n.Db.GetGormDb().Preload("Commit").First(&config, "node_id=?", id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -55,7 +56,7 @@ func (n *configRepo) Get(id string) (*Configuration, error) {
 func (n *configRepo) GetAll() ([]Configuration, error) {
 	var configs []Configuration
 
-	result := n.Db.GetGormDb().Find(&configs)
+	result := n.Db.GetGormDb().Preload("Commit").Find(&configs)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -83,4 +84,22 @@ func (n *configRepo) Update(c Configuration) error {
 	}
 
 	return result.Error
+}
+
+func (n *configRepo) UpdateLastCommit(c Configuration, hash string) error {
+	err := n.Db.GetGormDb().Model(&c).Association("LastCommit").Replace(&Commit{Hash: hash})
+	if err != nil {
+		log.Errorf("Failed to cuurent commit: %v", err)
+	}
+
+	return err
+}
+
+func (n *configRepo) UpdateCurrentCommit(c Configuration, hash string) error {
+	err := n.Db.GetGormDb().Model(&c).Association("Commit").Replace(&Commit{Hash: hash})
+	if err != nil {
+		log.Errorf("Failed to cuurent commit: %v", err)
+	}
+
+	return err
 }

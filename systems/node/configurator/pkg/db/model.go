@@ -7,12 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type Commit struct {
+	gorm.Model
+	Hash string `gorm:"type:string;not null"`
+}
 type Configuration struct {
 	gorm.Model
 	NodeId     string      `gorm:"type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
 	Status     CommitState `gorm:"type:uint;not null"`
-	Commit     string
-	LastCommit string
+	Commit     *Commit
+	LastCommit *Commit
 	LastStatus CommitState `gorm:"type:uint;not null"`
 }
 

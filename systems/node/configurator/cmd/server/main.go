@@ -1,23 +1,26 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/num30/config"
+	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/server"
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/configurator/cmd/version"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
@@ -29,8 +32,19 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	logrus.Infof("Starting %s", pkg.ServiceName)
-	runGrpcServer()
+	mDb := initDb()
+	log.Infof("Starting %s", pkg.ServiceName)
+	runGrpcServer(mDb)
+}
+
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.Commit{}, &db.Configuration{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
 }
 
 func initConfig() {
@@ -38,17 +52,17 @@ func initConfig() {
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	fmt.Println("serviceConfig", serviceConfig)
 	if err != nil {
-		logrus.Fatal("Error reading config ", err)
+		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func runGrpcServer() {
+func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -61,7 +75,7 @@ func runGrpcServer() {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	configuratorServer := server.NewConfiguratorServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName)
 
-	logrus.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterConfiguratorServiceServer(s, configuratorServer)
@@ -70,6 +84,8 @@ func runGrpcServer() {
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
+
+	initCommitDB(gormdb)
 
 	waitForExit()
 }
@@ -98,4 +114,29 @@ func waitForExit() {
 	log.Debug("awaiting terminate/interrrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
+}
+
+func initCommitDB(d sql.Db) {
+	mDB := d.GetGormDb()
+	if mDB.Migrator().HasTable(&db.Commit{}) {
+		if err := mDB.First(&db.Commit{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Initializing commit table for configurator")
+
+			/* TODO: validate the Hash */
+			commit := &db.Commit{
+				Hash: serviceConfig.LatestConfigHash,
+			}
+
+			if err := mDB.Transaction(func(tx *gorm.DB) error {
+
+				if err := tx.Create(commit).Error; err != nil {
+					return err
+				}
+				return nil
+
+			}); err != nil {
+				log.Fatalf("Database initialization failed, invalid initial state. Error: %v", err)
+			}
+		}
+	}
 }

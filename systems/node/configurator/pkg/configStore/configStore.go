@@ -12,6 +12,7 @@ import (
 	"github.com/ukama/orchestrator/constructor/pkg"
 	"github.com/ukama/ukama/systems/common/msgbus"
 
+	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 
 	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
@@ -28,6 +29,8 @@ type ConfigStore struct {
 	msgbus               mb.MsgBusServiceClient
 	registrySystem       providers.RegistryProvider
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
+	configRepo           db.ConfigRepo
+	commitRepo           db.CommitRepo
 	OrgName              string
 }
 
@@ -40,7 +43,7 @@ type ConfigMetaData struct {
 	fileName string
 }
 
-func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, orgName string, url string, user string, pat string, t time.Duration) *ConfigStore {
+func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration) *ConfigStore {
 	s, err := providers.NewStoreClient(url, user, pat, t)
 	if err != nil {
 		return nil
@@ -52,6 +55,8 @@ func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProv
 		msgbus:               msgB,
 		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		OrgName:              orgName,
+		configRepo:           cfgDb,
+		commitRepo:           cmtDb,
 	}
 }
 
@@ -59,23 +64,68 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	log.Infof("HandleConfigStoreEvent")
 
 	// Get latest remote version
-	lv, err := c.Store.GetLatestRemoteConfigs()
+	lVer, err := c.Store.GetLatestRemoteConfigs()
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
 	}
 
-	/* TODO: Get current commit */
-	currentCommit := ""
+	/* Get current commit */
+	cVerRec, err := c.commitRepo.GetLatest()
+	if err != nil {
+		log.Errorf("Failed to get latest commit: %v", err)
+		return err
+	}
 
 	// Get current commited version
-	err = c.Store.GetRemoteConfigVersion(currentCommit)
+	err = c.Store.GetRemoteConfigVersion(cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
 	}
 
-	filesUpdated, err := c.Store.GetDiff(currentCommit, lv, providers.LATEST_DIR_NAME)
+	if lVer == cVerRec.Hash {
+		log.Infof("HandleConfigStoreEvent remote config and current commit are same %s", cVerRec.Hash)
+		return nil
+	}
+
+	return c.ProcessConfigStoreEvent(cVerRec.Hash, lVer)
+}
+
+func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) error {
+	log.Infof("HandleConfigCommitReq")
+
+	// Get latest remote version
+	err := c.Store.GetRemoteConfigVersion(rVer)
+	if err != nil {
+		log.Errorf("Failed to get latest remote configs: %v", err)
+		return err
+	}
+
+	cVerRec, err := c.commitRepo.GetLatest()
+	if err != nil {
+		log.Errorf("Failed to get latest commit: %v", err)
+		return err
+	}
+
+	// Get current commited version
+	err = c.Store.GetRemoteConfigVersion(cVerRec.Hash)
+	if err != nil {
+		log.Errorf("Failed to get latest remote configs: %v", err)
+		return err
+	}
+
+	if rVer == cVerRec.Hash {
+		log.Infof("HandleConfigCommitReq remote config and requested commit are same %s", cVerRec.Hash)
+		return nil
+	}
+
+	return c.ProcessConfigStoreEvent(cVerRec.Hash, rVer)
+}
+
+func (c *ConfigStore) ProcessConfigStoreEvent(cVer string, rVer string) error {
+
+	filesUpdated, err := c.Store.GetDiff(cVer, rVer, providers.LATEST_DIR_NAME)
 	if err != nil {
 		log.Errorf("Failed to get diff remote configs: %v", err)
 		return err
@@ -92,35 +142,41 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		}
 	}
 
-	prepCommit := make(map[string]*pb.Config, len(filesToUpdate))
-	for _, file := range filesUpdated {
-		/* Get the meta information about config from the path of the filename
-		  ukama/networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
-			Org:ukama
-			Network: networkABC
-			Site:site123
-			Node: uk-sa1000-HNODE-2145
-			App: epc
-		*/
-		cMetaData, err := ParseConfigStoreFilePath(file)
+	if len(filesToUpdate) > 0 {
+		cMetaData := &ConfigMetaData{}
+		prepCommit := make(map[string]*pb.Config, len(filesToUpdate))
+		prepNodeCommit := make(map[string][]string)
+		for _, file := range filesUpdated {
+			/* Get the meta information about config from the path of the filename
+			  ukama/networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
+				Org:ukama
+				Network: networkABC
+				Site:site123
+				Node: uk-sa1000-HNODE-2145
+				App: epc
+			*/
+			cMetaData, err = ParseConfigStoreFilePath(file)
+			if err != nil {
+				return err
+			}
+
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, file)
+			if err != nil {
+				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
+				return err
+			}
+			prepCommit[file] = configToCommit
+			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file)
+		}
+
+		err = c.CommitConfig(prepCommit, prepNodeCommit, rVer)
 		if err != nil {
 			return err
 		}
 
-		configToCommit, err := c.PrepareConfigCommit(cMetaData, file)
-		if err != nil {
-			log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
-			return err
-		}
-		prepCommit[file] = configToCommit
+	} else {
+		log.Info("No changes to commit.")
 	}
-
-	err = c.CommitConfig(prepCommit)
-	if err != nil {
-		return err
-	}
-
-	/* Update the version for commited config */
 
 	return nil
 }
@@ -224,17 +280,33 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*pb.Config) error {
+func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, commit string) error {
 	route := c.NodeFeederRoutingKey.SetActionUpdate().SetObject("config").MustBuild()
 
-	for _, d := range m {
-		err := c.msgbus.PublishRequest(route, d)
+	for n, files := range nodes {
+		log.Infof("Pushing configs %+v for node %s", files, n)
+
+		for _, f := range files {
+			err := c.msgbus.PublishRequest(route, m[f])
+			if err != nil {
+				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
+				return err
+			}
+			log.Infof("Published config %s on route %s for node %s ", m[f], route, n)
+		}
+
+		/* Update the version for commited config on node */
+		cRec, err := c.configRepo.Get(n)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", d, route, err.Error())
+			log.Errorf("Failed to get last config for node %s.Error: %v", n, err)
 			return err
 		}
-		log.Infof("Published commit for route %s and config %s", route, d.Filename)
 
+		err = c.configRepo.UpdateLastCommit(*cRec, commit)
+		if err != nil {
+			log.Errorf("Failed to get latest commit: %v", err)
+			return err
+		}
 	}
 
 	return nil

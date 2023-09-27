@@ -19,6 +19,7 @@ require (
 	github.com/ukama/orchestrator/constructor v0.0.0-20230831054113-43091ff3bd1b
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/wI2L/jsondiff v0.4.0
+	google.golang.org/appengine v1.6.7
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
