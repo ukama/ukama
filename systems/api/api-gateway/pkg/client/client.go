@@ -20,6 +20,14 @@ type Client interface {
 	GetSim(string) (*SimInfo, error)
 	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
 		string, string, string, string, uint32) (*SimInfo, error)
+
+	GetNode(string) (*NodeInfo, error)
+	RegisterNode(string, string, string, string) (*NodeInfo, error)
+	AttachNode(string, string, string) error
+	DetachNode(string) error
+	AddNodeToSite(string, string, string) error
+	RemoveNodeFromSite(string) error
+	DeleteNode(string) error
 }
 
 type clients struct {
@@ -27,15 +35,17 @@ type clients struct {
 	pkg        PackageClient
 	subscriber SubscriberClient
 	sim        SimClient
+	node       NodeClient
 }
 
 func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber SubscriberClient,
-	sim SimClient) Client {
+	sim SimClient, node NodeClient) Client {
 	c := &clients{
 		network:    network,
 		pkg:        pkg,
 		subscriber: subscriber,
 		sim:        sim,
+		node:       node,
 	}
 
 	return c
@@ -189,6 +199,80 @@ func (c *clients) ConfigureSim(subscriberId, orgId, networkId, firstName, lastNa
 	}
 
 	return sim, nil
+}
+
+func (c *clients) GetNode(id string) (*NodeInfo, error) {
+	node, err := c.node.Get(id)
+	if err != nil {
+		return nil, handleRestErrorStatus(err)
+	}
+
+	return node, nil
+}
+
+func (c *clients) RegisterNode(nodeId, nodeName, orgId, state string) (*NodeInfo, error) {
+	node, err := c.node.Add(AddNodeRequest{
+		NodeId: nodeId,
+		Name:   nodeName,
+		OrgId:  orgId,
+		State:  state,
+	})
+	if err != nil {
+		return nil, handleRestErrorStatus(err)
+	}
+
+	return node, nil
+}
+
+func (c *clients) AttachNode(id, left, right string) error {
+	err := c.node.Attach(id, AttachNodesRequest{
+		AmpNodeL: left,
+		AmpNodeR: right,
+	})
+	if err != nil {
+		return handleRestErrorStatus(err)
+	}
+
+	return nil
+}
+
+func (c *clients) DetachNode(id string) error {
+	err := c.node.Detach(id)
+	if err != nil {
+		return handleRestErrorStatus(err)
+	}
+
+	return nil
+}
+
+func (c *clients) AddNodeToSite(id, networkId, siteId string) error {
+	err := c.node.AddToSite(id, AddToSiteRequest{
+		NetworkId: networkId,
+		SiteId:    siteId,
+	})
+	if err != nil {
+		return handleRestErrorStatus(err)
+	}
+
+	return nil
+}
+
+func (c *clients) RemoveNodeFromSite(id string) error {
+	err := c.node.RemoveFromSite(id)
+	if err != nil {
+		return handleRestErrorStatus(err)
+	}
+
+	return nil
+}
+
+func (c *clients) DeleteNode(id string) error {
+	err := c.node.Delete(id)
+	if err != nil {
+		return handleRestErrorStatus(err)
+	}
+
+	return nil
 }
 
 func handleRestErrorStatus(err error) error {

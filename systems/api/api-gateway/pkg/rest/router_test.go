@@ -25,6 +25,7 @@ import (
 const netEndpoint = "/v1/networks"
 const pkgEndpoint = "/v1/packages"
 const simEndpoint = "/v1/sims"
+const nodeEndpoint = "/v1/nodes"
 
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
@@ -48,9 +49,10 @@ func init() {
 	packageClient := &mocks.PackageClient{}
 	subscriberClient := &mocks.SubscriberClient{}
 	simClient := &mocks.SimClient{}
+	nodeClient := &mocks.NodeClient{}
 
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(netClient, packageClient, subscriberClient, simClient)
+	testClientSet = client.NewClientsSet(netClient, packageClient, subscriberClient, simClient, nodeClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {
@@ -707,6 +709,471 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_GetNode(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	nodeName := "node-1"
+
+	t.Run("NodeFound", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+
+		nodeInfo := &client.NodeInfo{
+			Id:   nodeId,
+			Name: nodeName,
+		}
+
+		c.On("GetNode", nodeId).Return(nodeInfo, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		c.On("GetNode", nodeId).Return(nil,
+			rest.HttpError{
+				HttpCode: http.StatusNotFound,
+				Message:  "GetNode failure",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("GetNodeError", func(t *testing.T) {
+		nodeId := "uk-sa2341-anode-v0-a1a0"
+
+		c.On("GetNode", nodeId).Return(nil,
+			errors.New("some unexpected error"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_RegisterNode(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("NodeRegistered", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+		nodeName := "node-1"
+		orgId := uuid.NewV4()
+		state := "pending"
+
+		var node = AddNodeRequest{
+			NodeId: nodeId,
+			Name:   nodeName,
+			OrgId:  orgId.String(),
+			State:  state,
+		}
+
+		nodeInfo := &client.NodeInfo{
+			Id:    nodeId,
+			Name:  nodeName,
+			OrgId: orgId.String(),
+			State: state,
+		}
+
+		body, err := json.Marshal(node)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", node, err)
+		}
+
+		c.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
+			Return(nodeInfo, nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusCreated, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotRegistered", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+		nodeName := "node-1"
+		orgId := uuid.NewV4()
+		state := "pending"
+
+		var node = AddNodeRequest{
+			NodeId: nodeId,
+			Name:   nodeName,
+			OrgId:  orgId.String(),
+			State:  state,
+		}
+
+		body, err := json.Marshal(node)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", node, err)
+		}
+
+		c.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
+			Return(nil, errors.New("some unexpected error occured"))
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_AttachNode(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	ampNodeL := "uk-sa2341-anode-v0-a1a0"
+	ampNodeR := "uk-sa2341-anode-v0-a1a1"
+
+	var nodes = AttachNodesRequest{
+		AmpNodeL: ampNodeL,
+		AmpNodeR: ampNodeR,
+	}
+
+	t.Run("NodeAttached", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		body, err := json.Marshal(nodes)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", nodes, err)
+		}
+
+		c.On("AttachNode", nodeId, ampNodeL, ampNodeR).
+			Return(nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusCreated, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotAttached", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a1"
+
+		body, err := json.Marshal(nodes)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", nodes, err)
+		}
+
+		c.On("AttachNode", nodeId, ampNodeL, ampNodeR).
+			Return(errors.New("some unexpected error occured"))
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_DetachNode(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("NodeDetached", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+
+		c.On("DetachNode", nodeId).Return(nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		c.On("DetachNode", nodeId).Return(
+			rest.HttpError{
+				HttpCode: http.StatusNotFound,
+				Message:  "DeleteNode failure",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("DetachNodeError", func(t *testing.T) {
+		nodeId := "uk-sa2341-anode-v0-a1a0"
+
+		c.On("DetachNode", nodeId).Return(
+			errors.New("some unexpected error"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_AddNodeToSite(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	networkId := uuid.NewV4().String()
+	siteId := uuid.NewV4().String()
+
+	var req = AddNodeToSiteRequest{
+		NetworkId: networkId,
+		SiteId:    siteId,
+	}
+
+	t.Run("NodeAdded", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		body, err := json.Marshal(req)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", req, err)
+		}
+
+		c.On("AddNodeToSite", nodeId, networkId, siteId).
+			Return(nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusCreated, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotAdded", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a1"
+
+		body, err := json.Marshal(req)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", req, err)
+		}
+
+		c.On("AddNodeToSite", nodeId, networkId, siteId).
+			Return(errors.New("some unexpected error occured"))
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_RemoveNodeFromSite(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("NodeRemoved", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+
+		c.On("RemoveNodeFromSite", nodeId).Return(nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		c.On("RemoveNodeFromSite", nodeId).Return(
+			rest.HttpError{
+				HttpCode: http.StatusNotFound,
+				Message:  "DeleteNode failure",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("RemoveNodeError", func(t *testing.T) {
+		nodeId := "uk-sa2341-anode-v0-a1a0"
+
+		c.On("RemoveNodeFromSite", nodeId).Return(
+			errors.New("some unexpected error"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		c.AssertExpectations(t)
+	})
+}
+
+func TestRouter_DeleteNode(t *testing.T) {
+	c := &mocks.Client{}
+	arc := &providers.AuthRestClient{}
+
+	t.Run("NodeDeleted", func(t *testing.T) {
+		nodeId := "uk-sa2341-hnode-v0-a1a0"
+
+		c.On("DeleteNode", nodeId).Return(nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		nodeId := "uk-sa2341-tnode-v0-a1a0"
+
+		c.On("DeleteNode", nodeId).Return(
+			rest.HttpError{
+				HttpCode: http.StatusNotFound,
+				Message:  "DeleteNode failure",
+			})
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		c.AssertExpectations(t)
+	})
+
+	t.Run("NodeDeleteError", func(t *testing.T) {
+		nodeId := "uk-sa2341-anode-v0-a1a0"
+
+		c.On("DeleteNode", nodeId).Return(
+			errors.New("some unexpected error"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
+
+		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)

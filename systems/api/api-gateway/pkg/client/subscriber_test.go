@@ -16,7 +16,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint+"/"+testUuid)
 
-			// fake network info
+			// fake subscriber info
 			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
 
 			// Send mock response
@@ -111,7 +111,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint)
 
-			// fake network info
+			// fake subscriber info
 			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
 
 			// Send mock response

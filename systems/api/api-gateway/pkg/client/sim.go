@@ -62,6 +62,7 @@ func NewSimClient(h string) *simClient {
 	}
 }
 
+// TODO check upstream returns payload
 func (s *simClient) Add(req AddSimRequest) (*SimInfo, error) {
 	log.Debugf("Adding sim: %v", req)
 

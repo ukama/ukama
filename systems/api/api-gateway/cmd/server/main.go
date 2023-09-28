@@ -25,6 +25,7 @@ func main() {
 		client.NewPackageClient(svcConf.HttpServices.Package),
 		client.NewSubscriberClient(svcConf.HttpServices.Subscriber),
 		client.NewSimClient(svcConf.HttpServices.Sim),
+		client.NewNodeClient(svcConf.HttpServices.Node),
 	)
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)

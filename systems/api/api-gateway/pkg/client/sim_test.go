@@ -17,7 +17,7 @@ func TestSimClient_Get(t *testing.T) {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.SimEndpoint+"/"+testUuid)
 
-			// fake network info
+			// fake sim info
 			sim := `{"sim":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_physical": false}}`
 
 			// Send mock response
@@ -112,7 +112,7 @@ func TestSimClient_Add(t *testing.T) {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.SimEndpoint)
 
-			// fake network info
+			// fake sim info
 			sim := `{"sim":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_physical": false}}`
 
 			// Send mock response

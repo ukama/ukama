@@ -64,6 +64,7 @@ func NewNetworkClient(h string) *networkClient {
 	}
 }
 
+// TODO check upstream returns payload
 func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 	log.Debugf("Adding network: %v", req)
 

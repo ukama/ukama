@@ -65,3 +65,28 @@ type AddSimReq struct {
 	SimToken              string `json:"sim_token"`
 	TrafficPolicy         uint32 `json:"traffic_policy"`
 }
+
+type GetNodeRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+}
+
+type AddNodeRequest struct {
+	NodeId string `json:"node_id" validate:"required"`
+	Name   string `json:"name"`
+	OrgId  string `json:"org_id" validate:"required"`
+	State  string `json:"state" validate:"required"`
+}
+
+type AttachNodesRequest struct {
+	ParentNode string `json:"node_id" path:"node_id" validate:"required"`
+	AmpNodeL   string `json:"anodel"`
+	AmpNodeR   string `json:"anoder"`
+}
+
+type AddNodeToSiteRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+
+	// TODO: update RPC handlers for missing site_id (default site for network)
+	SiteId    string `json:"site_id"`
+	NetworkId string `json:"net_id" validate:"required"`
+}

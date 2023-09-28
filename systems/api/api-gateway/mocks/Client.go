@@ -12,6 +12,20 @@ type Client struct {
 	mock.Mock
 }
 
+// AddNodeToSite provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Client) AddNodeToSite(_a0 string, _a1 string, _a2 string) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21
 func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 int64, _a9 int64, _a10 int64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 uint64, _a17 float64, _a18 float64, _a19 float64, _a20 uint32, _a21 []string) (*client.PackageInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
@@ -36,6 +50,20 @@ func (_m *Client) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4
 	}
 
 	return r0, r1
+}
+
+// AttachNode provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Client) AttachNode(_a0 string, _a1 string, _a2 string) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // ConfigureSim provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14
@@ -90,6 +118,34 @@ func (_m *Client) CreateNetwork(_a0 string, _a1 string, _a2 []string, _a3 []stri
 	return r0, r1
 }
 
+// DeleteNode provides a mock function with given fields: _a0
+func (_m *Client) DeleteNode(_a0 string) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DetachNode provides a mock function with given fields: _a0
+func (_m *Client) DetachNode(_a0 string) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetNetwork provides a mock function with given fields: _a0
 func (_m *Client) GetNetwork(_a0 string) (*client.NetworkInfo, error) {
 	ret := _m.Called(_a0)
@@ -104,6 +160,32 @@ func (_m *Client) GetNetwork(_a0 string) (*client.NetworkInfo, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.NetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNode provides a mock function with given fields: _a0
+func (_m *Client) GetNode(_a0 string) (*client.NodeInfo, error) {
+	ret := _m.Called(_a0)
+
+	var r0 *client.NodeInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*client.NodeInfo, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(string) *client.NodeInfo); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.NodeInfo)
 		}
 	}
 
@@ -166,6 +248,46 @@ func (_m *Client) GetSim(_a0 string) (*client.SimInfo, error) {
 	}
 
 	return r0, r1
+}
+
+// RegisterNode provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *Client) RegisterNode(_a0 string, _a1 string, _a2 string, _a3 string) (*client.NodeInfo, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
+
+	var r0 *client.NodeInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*client.NodeInfo, error)); ok {
+		return rf(_a0, _a1, _a2, _a3)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *client.NodeInfo); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.NodeInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveNodeFromSite provides a mock function with given fields: _a0
+func (_m *Client) RemoveNodeFromSite(_a0 string) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 type mockConstructorTestingTNewClient interface {

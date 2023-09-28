@@ -68,6 +68,7 @@ func NewSubscriberClient(h string) *subscriberClient {
 	}
 }
 
+// TODO check upstream returns payload
 func (s *subscriberClient) Add(req AddSubscriberRequest) (*SubscriberInfo, error) {
 	log.Debugf("Adding subscriber: %v", req)
 

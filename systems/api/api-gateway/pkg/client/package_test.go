@@ -12,14 +12,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
-const testUuid = "03cb753f-5e03-4c97-8e47-625115476c72"
-
-type RoundTripFunc func(req *http.Request) *http.Response
-
-func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return r(req), nil
-}
-
 func TestPackageClient_Get(t *testing.T) {
 	t.Run("PackageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
@@ -118,7 +110,7 @@ func TestPackageClient_Add(t *testing.T) {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), client.PackageEndpoint)
 
-			// fake network info
+			// fake package info
 			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true}}`
 
 			// Send mock response

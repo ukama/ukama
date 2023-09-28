@@ -25,6 +25,7 @@ type HttpEndpoints struct {
 	Package     string
 	Subscriber  string
 	Sim         string
+	Node        string
 	NodeMetrics string
 }
 
@@ -65,6 +66,7 @@ func NewConfig(name string) *Config {
 			Package:     "http://localhost",
 			Subscriber:  "http://localhost",
 			Sim:         "http://localhost",
+			Node:        "http://localhost",
 			NodeMetrics: "http://localhost",
 		},
 

@@ -88,6 +88,8 @@ func NewPackageClient(h string) *packageClient {
 		R: NewResty(),
 	}
 }
+
+// TODO check upstream returns payload
 func (p *packageClient) Add(req AddPackageRequest) (*PackageInfo, error) {
 	log.Debugf("Adding package: %v", req)
 
