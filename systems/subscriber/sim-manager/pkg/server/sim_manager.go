@@ -5,27 +5,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/grpc"
-	pmetric "github.com/ukama/ukama/systems/common/metrics"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
-
+	log "github.com/sirupsen/logrus"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	simpoolpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
@@ -41,12 +39,12 @@ type SimManagerServer struct {
 	key                       string
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
+	org                       string
+	orgName                   string
+	pushMetricHost            string
+	notificationClient        providers.NotificationClient
+	networkClient             providers.NetworkClientProvider
 	pb.UnimplementedSimManagerServiceServer
-	org                string
-	orgName            string
-	pushMetricHost     string
-	notificationClient providers.NotificationClient
-	networkClient      providers.NetworkClientProvider
 }
 
 func NewSimManagerServer(
@@ -172,6 +170,11 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of subscriber's network uuid. Error %s", err.Error())
 	}
 
+	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	}
+
 	orgID, err := uuid.FromString(remoteSubResp.Subscriber.OrgId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
@@ -189,15 +192,27 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
+	var trafficPolicy uint32
+
+	// zero value traffic policy means pick the traffic policy of the upper layer
+	if req.TrafficPolicy != 0 {
+		trafficPolicy = req.TrafficPolicy
+	} else if packageInfo.TrafficPolicy != 0 {
+		trafficPolicy = packageInfo.TrafficPolicy
+	} else {
+		trafficPolicy = netInfo.TrafficPolicy
+	}
+
 	sim := &sims.Sim{
-		SubscriberId: subscriberID,
-		NetworkId:    networkID,
-		OrgId:        orgID,
-		Iccid:        poolSim.Iccid,
-		Msisdn:       poolSim.Msisdn,
-		Type:         simType,
-		Status:       sims.SimStatusInactive,
-		IsPhysical:   poolSim.IsPhysical,
+		SubscriberId:  subscriberID,
+		NetworkId:     networkID,
+		OrgId:         orgID,
+		Iccid:         poolSim.Iccid,
+		Msisdn:        poolSim.Msisdn,
+		Type:          simType,
+		Status:        sims.SimStatusInactive,
+		IsPhysical:    poolSim.IsPhysical,
+		TrafficPolicy: trafficPolicy,
 	}
 
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
@@ -238,11 +253,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
@@ -505,7 +515,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.AddPackageResponse{}, nil
@@ -599,7 +609,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 		err = s.msgbus.PublishRequest(route, req)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
 		return nil
 	})
@@ -636,7 +646,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RemovePackageResponse{}, nil
 }
@@ -699,7 +709,8 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		log.Errorf("Failed to get activated Sims counts: %s", err.Error())
 	}
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": s.org}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
+		float64(activeCount), map[string]string{"org": s.org}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing activateCount metric to pushgateway %s", err.Error())
 	}
@@ -777,8 +788,10 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		Type:               sim.Type.String(),
 		Status:             sim.Status.String(),
 		IsPhysical:         sim.IsPhysical,
+		TrafficPolicy:      sim.TrafficPolicy,
 		ActivationsCount:   sim.ActivationsCount,
 		DeactivationsCount: sim.DeactivationsCount,
+		IsSynced:           sim.Synced,
 	}
 
 	if sim.Package.Id != uuid.Nil {

@@ -19,12 +19,12 @@ type nucleusInfoClient struct {
 	R *rest.RestClient
 }
 
-
-
 type Network struct {
 	Id            string    `json:"id,omitempty"`
 	Name          string    `json:"name,omitempty"`
 	OrgId         string    `json:"org_id,omitempty"`
+	Overdraft     float64   `json:"overdraft"`
+	TrafficPolicy uint32    `json:"traffic_policy"`
 	IsDeactivated bool      `json:"is_deactivated,omitempty"`
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
