@@ -30,6 +30,7 @@ static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
     { "noded-port",    required_argument, 0, 'd' },
     { "starter-port",  required_argument, 0, 's' },
+    { "system-port",   required_argument, 0, 'S' },
     { "help",          no_argument, 0, 'h' },
     { "version",       no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
@@ -58,6 +59,7 @@ void usage() {
     usys_puts("-p, --port <port>             Local listening port");
     usys_puts("-d, --noded-port    <port>    Node.d port");
     usys_puts("-s, --starter-port  <port>    Starter.d port");
+    usys_puts("-S, --system-port   <port>    Node system port");
     usys_puts("-v, --version                 Software version");
 }
 
@@ -67,7 +69,8 @@ int main(int argc, char **argv) {
     char *debug        = DEF_LOG_LEVEL;
     char *port         = DEF_SERVICE_PORT;
     char *nodedPort    = DEF_NODED_PORT;
-    char *starterPort  = DEF_STARTER_PORT;
+    char *starterPort  = DEF_STARTERD_PORT;
+    char *systemPort   = DEF_NODE_SYSTEM_PORT;
     UInst  serviceInst; 
     Config serviceConfig = {0};
 
@@ -77,7 +80,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:m:p:l:n:d:w", longOptions,
+        opt = usys_getopt_long(argc, argv, "vh:p:l:n:s:S", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -123,6 +126,14 @@ int main(int argc, char **argv) {
             }
             break;
 
+        case 'S':
+            systemPort = optarg;
+            if (!systemPort) {
+                usage();
+                usys_exit(0);
+            }
+            break;
+
         default:
             usage();
             usys_exit(0);
@@ -130,10 +141,11 @@ int main(int argc, char **argv) {
     }
 
     /* Service config update */
-    serviceConfig.servicePort  = usys_atoi(port);
-    serviceConfig.nodedPort    = usys_atoi(nodedPort);
-    serviceConfig.starterPort  = usys_atoi(starterPort);
-    serviceConfig.nodeID       = NULL;
+    serviceConfig.servicePort    = usys_atoi(port);
+    serviceConfig.nodedPort      = usys_atoi(nodedPort);
+    serviceConfig.starterdPort   = usys_atoi(starterPort);
+    serviceConfig.nodeSystemPort = usys_atoi(systemPort);
+    serviceConfig.nodeID         = NULL;
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 
@@ -157,9 +169,16 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    
-    pause();
-    
+    /* until interrupted by SIG */
+    while (USYS_TRUE) {
+        if (send_health_report(&serviceConfig) == USYS_FALSE) {
+            usys_log_error("Failed to send health report to system at %s:%d",
+                           DEF_NODE_SYSTEM_HOST,
+                           serviceConfig.nodeSystemPort);
+        }
+        sleep(DEF_REPORT_INTERVAL);
+    }
+
 done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
@@ -167,7 +186,6 @@ done:
     usys_free(serviceConfig.nodeID);
 
     usys_log_debug("Exiting %s ...", SERVICE_NAME);
-    
+
     return USYS_TRUE;
 }
-

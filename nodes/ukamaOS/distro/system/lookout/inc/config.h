@@ -15,7 +15,8 @@ typedef struct {
 
     int   servicePort;
     int   nodedPort;
-    int   starterPort;
+    int   starterdPort;
+    int   nodeSystemPort;
     char  *nodeID;
 } Config;
 
