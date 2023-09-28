@@ -6,6 +6,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/validation"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
@@ -191,6 +192,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
+		SyncStatus:    types.SyncStatusPending,
 	}
 
 	// Request rate
@@ -374,7 +376,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		Overdraft:     p.Overdraft,
 		TrafficPolicy: p.TrafficPolicy,
 		Networks:      p.Networks,
-		IsSynced:      p.Synced,
+		SyncStatus:    p.SyncStatus.String(),
 	}
 }
 

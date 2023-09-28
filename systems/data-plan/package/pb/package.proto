@@ -124,7 +124,7 @@ message Package {
     double overdraft = 30;
     uint32 trafficPolicy = 31 [json_name = "traffic_policy"];;
     repeated string networks = 32 [json_name = "networks"];
-    bool isSynced = 33 [json_name = "is_synced"];
+    string syncStatus = 33 [json_name = "sync_status"];
 }
 
 message PackageRates{ 
