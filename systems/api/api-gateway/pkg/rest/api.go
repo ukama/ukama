@@ -45,7 +45,7 @@ type AddPackageReq struct {
 }
 
 type GetSimReq struct {
-	Iccid string `json:"iccid" path:"iccid" validate:"required"`
+	Id string `json:"id" path:"id" validate:"required"`
 }
 
 type AddSimReq struct {

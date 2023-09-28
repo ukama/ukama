@@ -103,7 +103,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// sims routes
 		sims := auth.Group("/sims", "Sim", "sims")
 		sims.POST("", formatDoc("Configure Sim", "Configure a new sim"), tonic.Handler(r.postSim, http.StatusPartialContent))
-		sims.GET("/:iccid", formatDoc("Get Sim", "Get a specific sim"), tonic.Handler(r.getSim, http.StatusOK))
+		sims.GET("/:id", formatDoc("Get Sim", "Get a specific sim"), tonic.Handler(r.getSim, http.StatusOK))
 	}
 }
 
@@ -133,7 +133,7 @@ func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*client.SimInfo, error
 }
 
 func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*client.SimInfo, error) {
-	return r.clients.GetSim(req.Iccid)
+	return r.clients.GetSim(req.Id)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
