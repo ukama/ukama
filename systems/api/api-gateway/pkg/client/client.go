@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -57,7 +58,16 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if !net.IsSynced {
+	if net.SyncStatus == types.SyncStatusUnknown.String() || net.SyncStatus == types.SyncStatusFailed.String() {
+		log.Warn("invalid content. request has failed")
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusUnprocessableEntity,
+			Message:  "invalid content. request has failed",
+		}
+	}
+
+	if net.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn("partial content. request is still ongoing")
 
 		return net, rest.HttpError{
@@ -95,7 +105,16 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if !pkg.IsSynced {
+	if pkg.SyncStatus == types.SyncStatusUnknown.String() || pkg.SyncStatus == types.SyncStatusFailed.String() {
+		log.Warn("invalid content. request has failed")
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusUnprocessableEntity,
+			Message:  "invalid content. request has failed",
+		}
+	}
+
+	if pkg.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn("partial content. request is still ongoing")
 
 		return pkg, rest.HttpError{
@@ -148,7 +167,16 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if !sim.IsSynced {
+	if sim.SyncStatus == types.SyncStatusUnknown.String() || sim.SyncStatus == types.SyncStatusFailed.String() {
+		log.Warn("invalid content. request has failed")
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusUnprocessableEntity,
+			Message:  "invalid content. request has failed",
+		}
+	}
+
+	if sim.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn("partial content. request is still ongoing")
 
 		return sim, rest.HttpError{

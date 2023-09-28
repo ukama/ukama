@@ -22,7 +22,7 @@ type SimInfo struct {
 	SimType       string    `json:"sim_type,omitempty"`
 	IsPhysical    bool      `json:"is_physical,omitempty"`
 	TrafficPolicy uint32    `json:"traffic_policy"`
-	IsSynced      bool      `json:"is_synced,omitempty"`
+	SyncStatus    string    `json:"sync_status,omitempty"`
 	AllocatedAt   time.Time `json:"allocated_at,omitempty"`
 }
 

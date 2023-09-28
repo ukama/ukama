@@ -441,7 +441,6 @@ func TestRouter_AddPackage(t *testing.T) {
 			Overdraft:     overdraft,
 			TrafficPolicy: trafficPolicy,
 			Networks:      networks,
-			IsSynced:      false,
 		}
 
 		body, err := json.Marshal(pkg)

@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -36,9 +37,9 @@ func TestCient_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
-				Id:       netId.String(),
-				Name:     netName,
-				IsSynced: true,
+				Id:         netId.String(),
+				Name:       netName,
+				SyncStatus: types.SyncStatusCompleted.String(),
 			}, nil).Once()
 
 		netInfo, err := c.GetNetwork(netId.String())
@@ -53,9 +54,9 @@ func TestCient_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
-				Id:       netId.String(),
-				Name:     netName,
-				IsSynced: false,
+				Id:         netId.String(),
+				Name:       netName,
+				SyncStatus: types.SyncStatusPending.String(),
 			}, nil).Once()
 
 		netInfo, err := c.GetNetwork(netId.String())
@@ -67,6 +68,23 @@ func TestCient_GetNetwork(t *testing.T) {
 		assert.NotNil(t, netInfo)
 		assert.Equal(t, netInfo.Id, netId.String())
 		assert.Equal(t, netInfo.Name, netName)
+	})
+
+	t.Run("NetworkFoundAndStatusFailed", func(t *testing.T) {
+		netClient.On("Get", netId.String()).
+			Return(&client.NetworkInfo{
+				Id:         netId.String(),
+				Name:       netName,
+				SyncStatus: types.SyncStatusFailed.String(),
+			}, nil).Once()
+
+		netInfo, err := c.GetNetwork(netId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "invalid")
+
+		assert.Nil(t, netInfo)
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
@@ -113,7 +131,7 @@ func TestCient_CreateNetwork(t *testing.T) {
 
 	c := client.NewClientsSet(netClient, nil, nil, nil, nil)
 
-	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
+	t.Run("NetworkCreated", func(t *testing.T) {
 		netClient.On("Add", client.AddNetworkRequest{
 			OrgName:          orgName,
 			NetName:          netName,
@@ -126,7 +144,6 @@ func TestCient_CreateNetwork(t *testing.T) {
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
 			PaymentLinks:     paymentLinks,
-			IsSynced:         false,
 		}, nil).Once()
 
 		netInfo, err := c.CreateNetwork(orgName, netName, countries, networks, budget,
@@ -166,9 +183,9 @@ func TestCient_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(&client.PackageInfo{
-				Id:       packageId.String(),
-				Name:     pkgName,
-				IsSynced: true,
+				Id:         packageId.String(),
+				Name:       pkgName,
+				SyncStatus: types.SyncStatusCompleted.String(),
 			}, nil).Once()
 
 		pkgInfo, err := c.GetPackage(packageId.String())
@@ -183,9 +200,9 @@ func TestCient_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(&client.PackageInfo{
-				Id:       packageId.String(),
-				Name:     pkgName,
-				IsSynced: false,
+				Id:         packageId.String(),
+				Name:       pkgName,
+				SyncStatus: types.SyncStatusPending.String(),
 			}, nil).Once()
 
 		pkgInfo, err := c.GetPackage(packageId.String())
@@ -197,6 +214,23 @@ func TestCient_GetPackage(t *testing.T) {
 		assert.NotNil(t, pkgInfo)
 		assert.Equal(t, pkgInfo.Id, packageId.String())
 		assert.Equal(t, pkgInfo.Name, pkgName)
+	})
+
+	t.Run("PackageFoundAndStatusFailed", func(t *testing.T) {
+		packageClient.On("Get", packageId.String()).
+			Return(&client.PackageInfo{
+				Id:         packageId.String(),
+				Name:       pkgName,
+				SyncStatus: types.SyncStatusFailed.String(),
+			}, nil).Once()
+
+		pkgInfo, err := c.GetPackage(packageId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "invalid")
+
+		assert.Nil(t, pkgInfo)
 	})
 
 	t.Run("PackageNotFound", func(t *testing.T) {
@@ -305,7 +339,6 @@ func TestCient_AddPackage(t *testing.T) {
 			Overdraft:     overdraft,
 			TrafficPolicy: trafficPolicy,
 			Networks:      networks,
-			IsSynced:      false,
 		}, nil).Once()
 
 		pkgInfo, err := c.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
@@ -366,7 +399,7 @@ func TestCient_GetSim(t *testing.T) {
 			Return(&client.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
-				IsSynced:     true,
+				SyncStatus:   types.SyncStatusCompleted.String(),
 			}, nil).Once()
 
 		simInfo, err := c.GetSim(simId.String())
@@ -383,7 +416,7 @@ func TestCient_GetSim(t *testing.T) {
 			Return(&client.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
-				IsSynced:     false,
+				SyncStatus:   types.SyncStatusPending.String(),
 			}, nil).Once()
 
 		simInfo, err := c.GetSim(simId.String())
@@ -395,6 +428,23 @@ func TestCient_GetSim(t *testing.T) {
 		assert.NotNil(t, simInfo)
 		assert.Equal(t, simInfo.Id, simId.String())
 		assert.Equal(t, simInfo.SubscriberId, subscriberId.String())
+	})
+
+	t.Run("SimFoundAndStatusFailed", func(t *testing.T) {
+		simClient.On("Get", simId.String()).
+			Return(&client.SimInfo{
+				Id:           simId.String(),
+				SubscriberId: subscriberId.String(),
+				SyncStatus:   types.SyncStatusFailed.String(),
+			}, nil).Once()
+
+		simInfo, err := c.GetSim(simId.String())
+
+		assert.Error(t, err)
+		assert.IsType(t, err, rest.HttpError{})
+		assert.Contains(t, err.Error(), "invalid")
+
+		assert.Nil(t, simInfo)
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -492,7 +542,6 @@ func TestCient_ConfigureSim(t *testing.T) {
 				SimType: simType,
 				// SimToken:      simToken,
 				TrafficPolicy: trafficPolicy,
-				IsSynced:      false,
 			}, nil).Once()
 
 		simInfo, err := c.ConfigureSim("", orgId.String(),
@@ -536,7 +585,6 @@ func TestCient_ConfigureSim(t *testing.T) {
 				SimType: simType,
 				// SimToken:      simToken,
 				TrafficPolicy: trafficPolicy,
-				IsSynced:      false,
 			}, nil).Once()
 
 		simInfo, err := c.ConfigureSim(subscriberId.String(), orgId.String(),

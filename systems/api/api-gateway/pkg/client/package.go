@@ -34,7 +34,7 @@ type PackageInfo struct {
 	Overdraft     float64  `json:"overdraft"`
 	TrafficPolicy uint32   `json:"traffic_policy"`
 	Networks      []string `json:"networks"`
-	IsSynced      bool     `json:"is_synced,omitempty"`
+	SyncStatus    string   `json:"sync_status,omitempty"`
 }
 
 type Package struct {

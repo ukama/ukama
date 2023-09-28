@@ -22,7 +22,7 @@ type NetworkInfo struct {
 	Overdraft        float64   `json:"overdraft"`
 	TrafficPolicy    uint32    `json:"traffic_policy"`
 	PaymentLinks     bool      `json:"payment_links"`
-	IsSynced         bool      `json:"is_synced,omitempty"`
+	SyncStatus       string    `json:"sync_status,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
 }
 
