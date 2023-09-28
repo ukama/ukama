@@ -84,7 +84,6 @@ func TestCient_GetNetwork(t *testing.T) {
 
 		assert.Nil(t, netInfo)
 	})
-
 }
 
 func TestCient_CreateNetwork(t *testing.T) {
