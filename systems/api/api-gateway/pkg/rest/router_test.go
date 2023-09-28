@@ -79,7 +79,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		netId := uuid.NewV4()
 
 		netInfo := &client.NetworkInfo{
-			Id:   netId,
+			Id:   netId.String(),
 			Name: netName,
 		}
 
@@ -102,7 +102,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		netId := uuid.NewV4()
 
 		netInfo := &client.NetworkInfo{
-			Id:   netId,
+			Id:   netId.String(),
 			Name: netName,
 		}
 
@@ -194,7 +194,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		}
 
 		netInfo := &client.NetworkInfo{
-			Id:   netId,
+			Id:   netId.String(),
 			Name: netName,
 		}
 
@@ -272,7 +272,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		pkgId := uuid.NewV4()
 
 		pkgInfo := &client.PackageInfo{
-			Id:   pkgId,
+			Id:   pkgId.String(),
 			Name: pkgName,
 		}
 
@@ -295,7 +295,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		pkgId := uuid.NewV4()
 
 		pkgInfo := &client.PackageInfo{
-			Id:   pkgId,
+			Id:   pkgId.String(),
 			Name: pkgName,
 		}
 
@@ -416,7 +416,7 @@ func TestRouter_AddPackage(t *testing.T) {
 		}
 
 		pkgInfo := &client.PackageInfo{
-			Id:            pkgId,
+			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,
@@ -529,8 +529,8 @@ func TestRouter_GetSim(t *testing.T) {
 		simId := uuid.NewV4()
 
 		simInfo := &client.SimInfo{
-			Id:           simId,
-			SubscriberId: subscriberId,
+			Id:           simId.String(),
+			SubscriberId: subscriberId.String(),
 		}
 
 		c.On("GetSim", simId.String()).Return(simInfo, nil)
@@ -552,8 +552,8 @@ func TestRouter_GetSim(t *testing.T) {
 		simId := uuid.NewV4()
 
 		simInfo := &client.SimInfo{
-			Id:           simId,
-			SubscriberId: subscriberId,
+			Id:           simId.String(),
+			SubscriberId: subscriberId.String(),
 		}
 
 		c.On("GetSim", simId.String()).Return(simInfo,
@@ -661,8 +661,8 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		sim.SubscriberId = subscriberId.String()
 
 		simInfo := &client.SimInfo{
-			Id:           simId,
-			SubscriberId: subscriberId,
+			Id:           simId.String(),
+			SubscriberId: subscriberId.String(),
 		}
 
 		body, err := json.Marshal(sim)

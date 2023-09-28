@@ -50,7 +50,7 @@ func TestPackageClient_Get(t *testing.T) {
 		p, err := testPackageClient.Get(testUuid)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, p.Id.String())
+		assert.Equal(tt, testUuid, p.Id)
 	})
 
 	t.Run("PackageNotFound", func(tt *testing.T) {
@@ -164,7 +164,7 @@ func TestPackageClient_Add(t *testing.T) {
 		)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, p.Id.String())
+		assert.Equal(tt, testUuid, p.Id)
 	})
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {

@@ -42,7 +42,7 @@ func TestSimClient_Get(t *testing.T) {
 		s, err := testSimClient.Get(testUuid)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, s.Id.String())
+		assert.Equal(tt, testUuid, s.Id)
 	})
 
 	t.Run("SimNotFound", func(tt *testing.T) {
@@ -141,7 +141,7 @@ func TestSimClient_Add(t *testing.T) {
 		)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, s.Id.String())
+		assert.Equal(tt, testUuid, s.Id)
 	})
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {

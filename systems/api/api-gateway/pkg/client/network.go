@@ -6,15 +6,13 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	log "github.com/sirupsen/logrus"
 )
 
 const NetworkEndpoint = "/v1/networks"
 
 type NetworkInfo struct {
-	Id               uuid.UUID `json:"id,omitempty"`
+	Id               string    `json:"id,omitempty"`
 	Name             string    `json:"name,omitempty"`
 	OrgId            string    `json:"org_id,omitempty"`
 	IsDeactivated    bool      `json:"is_deactivated,omitempty"`

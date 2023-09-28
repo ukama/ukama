@@ -6,17 +6,15 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	log "github.com/sirupsen/logrus"
 )
 
 const SimEndpoint = "/v1/sims"
 
 type SimInfo struct {
-	Id            uuid.UUID `json:"id,omitempty"`
-	NetworkId     uuid.UUID `json:"network_id,omitempty"`
-	SubscriberId  uuid.UUID `json:"subscriber_id,omitempty"`
+	Id            string    `json:"id,omitempty"`
+	NetworkId     string    `json:"network_id,omitempty"`
+	SubscriberId  string    `json:"subscriber_id,omitempty"`
 	Iccid         string    `json:"iccid,omitempty"`
 	Msisdn        string    `json:"msisdn,omitempty"`
 	Imsi          string    `json:"imsi,omitempty"`

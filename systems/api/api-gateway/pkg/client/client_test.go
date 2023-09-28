@@ -24,7 +24,7 @@ func TestCient_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
-				Id:       netId,
+				Id:       netId.String(),
 				Name:     netName,
 				IsSynced: true,
 			}, nil).Once()
@@ -34,14 +34,14 @@ func TestCient_GetNetwork(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotNil(t, netInfo)
-		assert.Equal(t, netInfo.Id, netId)
+		assert.Equal(t, netInfo.Id, netId.String())
 		assert.Equal(t, netInfo.Name, netName)
 	})
 
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(&client.NetworkInfo{
-				Id:       netId,
+				Id:       netId.String(),
 				Name:     netName,
 				IsSynced: false,
 			}, nil).Once()
@@ -53,7 +53,7 @@ func TestCient_GetNetwork(t *testing.T) {
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, netInfo)
-		assert.Equal(t, netInfo.Id, netId)
+		assert.Equal(t, netInfo.Id, netId.String())
 		assert.Equal(t, netInfo.Name, netName)
 	})
 
@@ -109,7 +109,7 @@ func TestCient_CreateNetwork(t *testing.T) {
 			AllowedNetworks:  networks,
 			PaymentLinks:     paymentLinks,
 		}).Return(&client.NetworkInfo{
-			Id:               netId,
+			Id:               netId.String(),
 			Name:             netName,
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
@@ -122,7 +122,7 @@ func TestCient_CreateNetwork(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, netInfo.Id, netId)
+		assert.Equal(t, netInfo.Id, netId.String())
 		assert.Equal(t, netInfo.Name, netName)
 	})
 
@@ -154,7 +154,7 @@ func TestCient_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(&client.PackageInfo{
-				Id:       packageId,
+				Id:       packageId.String(),
 				Name:     pkgName,
 				IsSynced: true,
 			}, nil).Once()
@@ -164,14 +164,14 @@ func TestCient_GetPackage(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotNil(t, pkgInfo)
-		assert.Equal(t, pkgInfo.Id, packageId)
+		assert.Equal(t, pkgInfo.Id, packageId.String())
 		assert.Equal(t, pkgInfo.Name, pkgName)
 	})
 
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(&client.PackageInfo{
-				Id:       packageId,
+				Id:       packageId.String(),
 				Name:     pkgName,
 				IsSynced: false,
 			}, nil).Once()
@@ -183,7 +183,7 @@ func TestCient_GetPackage(t *testing.T) {
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, pkgInfo)
-		assert.Equal(t, pkgInfo.Id, packageId)
+		assert.Equal(t, pkgInfo.Id, packageId.String())
 		assert.Equal(t, pkgInfo.Name, pkgName)
 	})
 
@@ -270,7 +270,7 @@ func TestCient_AddPackage(t *testing.T) {
 			TrafficPolicy: trafficPolicy,
 			Networks:      networks,
 		}).Return(&client.PackageInfo{
-			Id:            pkgId,
+			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,
@@ -302,7 +302,7 @@ func TestCient_AddPackage(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, pkgInfo.Id, pkgId)
+		assert.Equal(t, pkgInfo.Id, pkgId.String())
 		assert.Equal(t, pkgInfo.Name, pkgName)
 	})
 
@@ -352,8 +352,8 @@ func TestCient_GetSim(t *testing.T) {
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
 			Return(&client.SimInfo{
-				Id:           simId,
-				SubscriberId: subscriberId,
+				Id:           simId.String(),
+				SubscriberId: subscriberId.String(),
 				IsSynced:     true,
 			}, nil).Once()
 
@@ -362,15 +362,15 @@ func TestCient_GetSim(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotNil(t, simInfo)
-		assert.Equal(t, simInfo.Id, simId)
-		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+		assert.Equal(t, simInfo.Id, simId.String())
+		assert.Equal(t, simInfo.SubscriberId, subscriberId.String())
 	})
 
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
 			Return(&client.SimInfo{
-				Id:           simId,
-				SubscriberId: subscriberId,
+				Id:           simId.String(),
+				SubscriberId: subscriberId.String(),
 				IsSynced:     false,
 			}, nil).Once()
 
@@ -381,8 +381,8 @@ func TestCient_GetSim(t *testing.T) {
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, simInfo)
-		assert.Equal(t, simInfo.Id, simId)
-		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+		assert.Equal(t, simInfo.Id, simId.String())
+		assert.Equal(t, simInfo.SubscriberId, subscriberId.String())
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -473,9 +473,9 @@ func TestCient_ConfigureSim(t *testing.T) {
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
 			Return(&client.SimInfo{
-				Id:           simId,
-				SubscriberId: subscriberId,
-				NetworkId:    networkId,
+				Id:           simId.String(),
+				SubscriberId: subscriberId.String(),
+				NetworkId:    networkId.String(),
 				// PackageId:     packageId,
 				SimType: simType,
 				// SimToken:      simToken,
@@ -489,8 +489,8 @@ func TestCient_ConfigureSim(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, simInfo.Id, simId)
-		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+		assert.Equal(t, simInfo.Id, simId.String())
+		assert.Equal(t, simInfo.SubscriberId, subscriberId.String())
 	})
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
@@ -517,9 +517,9 @@ func TestCient_ConfigureSim(t *testing.T) {
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
 			Return(&client.SimInfo{
-				Id:           simId,
-				SubscriberId: subscriberId,
-				NetworkId:    networkId,
+				Id:           simId.String(),
+				SubscriberId: subscriberId.String(),
+				NetworkId:    networkId.String(),
 				// PackageId:     packageId,
 				SimType: simType,
 				// SimToken:      simToken,
@@ -533,8 +533,8 @@ func TestCient_ConfigureSim(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, simInfo.Id, simId)
-		assert.Equal(t, simInfo.SubscriberId, subscriberId)
+		assert.Equal(t, simInfo.Id, simId.String())
+		assert.Equal(t, simInfo.SubscriberId, subscriberId.String())
 	})
 
 	t.Run("SubscriberNotCreated", func(t *testing.T) {
