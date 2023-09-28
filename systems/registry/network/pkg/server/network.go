@@ -5,6 +5,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -102,6 +103,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Overdraft:        req.Overdraft,
 		TrafficPolicy:    req.TrafficPolicy,
 		PaymentLinks:     req.PaymentLinks,
+		SyncStatus:       types.SyncStatusPending,
 	}
 
 	log.Infof("Adding network %s", networkName)
@@ -331,7 +333,7 @@ func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 		TrafficPolicy:    ntwk.TrafficPolicy,
 		PaymentLinks:     ntwk.PaymentLinks,
 		IsDeactivated:    ntwk.Deactivated,
-		IsSynced:         ntwk.Synced,
+		SyncStatus:       ntwk.SyncStatus.String(),
 		CreatedAt:        timestamppb.New(ntwk.CreatedAt),
 	}
 }

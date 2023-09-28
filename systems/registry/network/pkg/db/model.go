@@ -6,7 +6,8 @@ import (
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Org struct {
@@ -33,7 +34,7 @@ type Network struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
-	Synced           bool
+	SyncStatus       types.SyncStatus
 }
 
 type Site struct {

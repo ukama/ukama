@@ -123,7 +123,7 @@ message Network {
     bool isDeactivated = 9 [json_name = "is_deactivated"];
     bool paymentLinks = 10 [json_name = "payment_links"];
     google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
-    bool isSynced = 12 [json_name = "is_synced"];
+    string syncStatus = 12 [json_name = "sync_status"];
 }
 
 message Site {
