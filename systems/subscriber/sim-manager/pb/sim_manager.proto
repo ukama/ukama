@@ -158,5 +158,5 @@ message Sim {
     uint64 activationsCount = 15;
     uint64 deactivationsCount = 16;
     google.protobuf.Timestamp allocatedAt = 17 [json_name = "allocated_at"];
-    bool isSynced = 18 [json_name = "is_synced"];
+    string syncStatus = 18 [json_name = "sync_status"];
 }

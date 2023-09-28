@@ -12,6 +12,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
@@ -214,6 +215,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		Status:        sims.SimStatusInactive,
 		IsPhysical:    poolSim.IsPhysical,
 		TrafficPolicy: trafficPolicy,
+		SyncStatus:    types.SyncStatusPending,
 	}
 
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
@@ -808,7 +810,7 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		TrafficPolicy:      sim.TrafficPolicy,
 		ActivationsCount:   sim.ActivationsCount,
 		DeactivationsCount: sim.DeactivationsCount,
-		IsSynced:           sim.Synced,
+		SyncStatus:         sim.SyncStatus.String(),
 	}
 
 	if sim.Package.Id != uuid.Nil {
