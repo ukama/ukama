@@ -19,7 +19,7 @@ message SimUsage {
     string type = 6;
     uint64 bytesUsed = 7;
     string sessionId = 8;
-    int64   startTime = 9;
+    int64 startTime = 9;
     int64 endTime = 10;
 }
 
@@ -36,6 +36,7 @@ message SimAllocation {
     string type = 9;
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
+    uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
 }
 
 
