@@ -21,6 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -250,9 +251,25 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, resp.Sim)
+	evt := &epb.SimAllocation{
+		Id:            sim.Id.String(),
+		SubscriberId:  sim.SubscriberId.String(),
+		OrgId:         sim.OrgId.String(),
+		NetworkId:     sim.NetworkId.String(),
+		DataPlanId:    sim.Package.PackageId.String(),
+		Iccid:         sim.Iccid,
+		Msisdn:        sim.Msisdn,
+		Imsi:          sim.Imsi,
+		Type:          sim.Type.String(),
+		Status:        sim.Status.String(),
+		TrafficPolicy: sim.TrafficPolicy,
+		IsPhysical:    sim.IsPhysical,
+	}
+
+	err = s.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
