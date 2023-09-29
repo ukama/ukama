@@ -210,6 +210,7 @@ int web_service_cb_get_all_capps_status(const URequest *request,
     char      *jStr     = NULL;
     int       pid       = 0;
 
+    json = json_object();
     json_object_set_new(json, JTAG_CAPPS, json_array());
     if (json == NULL) {
         ulfius_set_string_body_response(response,
@@ -242,11 +243,11 @@ int web_service_cb_get_all_capps_status(const URequest *request,
         }
     }
 
-    if (json_array_size(json) == 0 || jStr == NULL) {
+    jStr = json_dumps(json, 0);
+    if (jStr == NULL) {
         ulfius_set_string_body_response(response, HttpStatus_NotFound,
                                         HttpStatusStr(HttpStatus_NotFound));
     } else {
-        jStr = json_dumps(json, 0);
         ulfius_set_string_body_response(response, HttpStatus_OK, jStr);
     }
 
