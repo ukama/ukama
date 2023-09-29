@@ -31,16 +31,16 @@ static char *capp_status_str(int status) {
 
     switch(status) {
     case CAPP_RUNTIME_NO_EXEC:
-        str = "Not running";
+        str = "Pending";
         break;
     case CAPP_RUNTIME_EXEC:
-        str = "Running";
+        str = "Active";
         break;
     case CAPP_RUNTIME_DONE:
         str = "Done";
         break;
     default:
-        str = "Uknown";
+        str = "Unknown";
         break;
     }
 
