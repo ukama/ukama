@@ -106,13 +106,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		const heal = "/health"
-		health := auth.Group(heal, "health", "Operations on health")
-		health.POST("/nodes/:node_id/apps", formatDoc("Create running software information", ""), tonic.Handler(r.postSoftwareInfoHandler, http.StatusCreated))
-		health.GET("/nodes/:node_id/apps", formatDoc("Get running software information", ""), tonic.Handler(r.getSoftwareInfoHandler, http.StatusOK))
+		health := auth.Group(heal, "health", "Operations on system performance")
+		health.POST("/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
+		health.GET("/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
 	}
+	
 }
 
-func (r *Router) postSoftwareInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
+func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
 	var genSystems []*gen.System
 	for _, sys := range req.System {
 		genSystem := &gen.System{
@@ -149,7 +150,7 @@ func (r *Router) postSoftwareInfoHandler(c *gin.Context, req *StoreRunningAppsIn
 	})
 }
 
-func (r *Router) getSoftwareInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
+func (r *Router) getSystemPerformanceInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
 	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
 	if err != nil {
 		logrus.Error(err)

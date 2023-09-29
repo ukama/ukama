@@ -50,7 +50,7 @@ func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.Create
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
-		Version:     req.Version,
+		Tag:     req.Version,
 		Description: req.Description,
 		Size:        req.Size,
 		ReleaseDate: releaseDate,
@@ -159,7 +159,7 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 	return &pb.SoftwareUpdate{
 		Id:          software.Id.String(),
 		Name:        software.Name,
-		Version:     software.Version,
+		Version:     software.Tag,
 		Description: software.Description,
 		Size:        software.Size,
 		ReleaseDate: software.ReleaseDate.String(),

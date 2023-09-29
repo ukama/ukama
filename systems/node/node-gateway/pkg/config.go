@@ -38,7 +38,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Health:  "localhost:9090",
+			Health:  "health:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,

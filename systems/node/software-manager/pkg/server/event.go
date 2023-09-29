@@ -39,7 +39,7 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		err = l.sRepo.CreateSoftware(&db.Software{
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
-			Version:     msg.Version,
+			Tag:     msg.Version,
 			Description: msg.Description,
 			Size:        msg.Size,
 			ReleaseDate: time.Now(),

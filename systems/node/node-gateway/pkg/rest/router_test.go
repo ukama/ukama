@@ -67,7 +67,7 @@ func TestPingRoute(t *testing.T) {
 func Test_GetRunningsApps(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/apps", nil)
+	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.HealhtServiceClient{}
 	getRunningAppsReq := &hpb.GetRunningAppsRequest{
@@ -203,7 +203,7 @@ func Test_StoreRunningApps(t *testing.T){
 	// Create the final JSON payload
 	
 
-		req, _ := http.NewRequest("POST", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/apps", strings.NewReader(jsonData))
+		req, _ := http.NewRequest("POST", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", strings.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json") 
 
 		arc := &providers.AuthRestClient{}
