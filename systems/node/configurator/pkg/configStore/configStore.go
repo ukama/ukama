@@ -310,7 +310,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 }
 
 func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, commit string) error {
-	route := c.NodeFeederRoutingKey.SetActionUpdate().SetObject("config").MustBuild()
+	route := "request.cloud.node-feeder"
 
 	for n, files := range nodes {
 		log.Infof("Pushing configs %+v for node %s", files, n)
