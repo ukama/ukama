@@ -66,7 +66,7 @@ func TestHealthRepo_GetRunningAppsInfo(t *testing.T) {
 					Id:     uuid.NewV4(),
 					Name:   "test",
 					Tag:    "test",
-					Status: db.Running, // Assuming db.Running represents the Running status
+					Status: db.Active, // Assuming db.Running represents the Running status
 					Resources: []db.Resource{
 						{
 							Id:    uuid.NewV4(),

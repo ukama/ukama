@@ -42,9 +42,10 @@ type Resource struct {
 type Status uint8
 
 const (
-	Unknown Status = 0
-	Running Status = 1
-	Failure Status = 2
+	Pending Status =0
+	Active Status =1
+	Done Status =2
+	Unknown Status =3
 )
 
 func (e *Status) Scan(value interface{}) error {

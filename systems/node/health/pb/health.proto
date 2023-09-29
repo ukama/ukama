@@ -62,7 +62,8 @@ message StoreRunningAppsInfoResponse {
 }
 
 enum Status {
-    UNKNOWN = 0;
-    RUNNING = 1;
-    FAILURE = 2;
+    PENDING =0;
+    ACTIVE=1;
+    DONE=2;
+    UNKNOWN=3;
 }
