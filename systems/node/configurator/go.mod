@@ -14,7 +14,6 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
-	github.com/ukama/orchestrator/constructor v0.0.0-20230831054113-43091ff3bd1b
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/wI2L/jsondiff v0.4.0
 	google.golang.org/grpc v1.56.2

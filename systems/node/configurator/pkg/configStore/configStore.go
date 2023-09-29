@@ -8,16 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
-
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
@@ -53,7 +53,7 @@ func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProv
 		Store:                s,
 		registrySystem:       registry,
 		msgbus:               msgB,
-		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
 		OrgName:              orgName,
 		configRepo:           cfgDb,
 		commitRepo:           cmtDb,
@@ -181,6 +181,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 		cMetaData := &ConfigMetaData{}
 		prepCommit := make(map[string]*pb.Config, len(filesToUpdate))
 		prepNodeCommit := make(map[string][]string)
+		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
 			  networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
@@ -194,6 +195,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 			if err != nil {
 				return err
 			}
+			prepMetaData[file] = cMetaData
 
 			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file)
 			if err != nil {
@@ -204,7 +206,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file)
 		}
 
-		err = c.CommitConfig(prepCommit, prepNodeCommit, rVer)
+		err = c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
 		if err != nil {
 			return err
 		}
@@ -309,19 +311,40 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, commit string) error {
-	route := "request.cloud.node-feeder"
+func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
+
+	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 
 	for n, files := range nodes {
-		log.Infof("Pushing configs %+v for node %s", files, n)
+		/* Check if node existes in configuration db */
+		_, err := c.configRepo.Get(n)
+		if err != nil {
+			log.Errorf("Failed to get configuration data for node %s: %v", n, err)
+			continue
+		}
 
+		log.Infof("Pushing configs %+v for node %s", files, n)
 		for _, f := range files {
-			err := c.msgbus.PublishRequest(route, m[f])
+
+			meteData := md[f]
+			anyMsg, err := anypb.New(m[f])
+			if err != nil {
+				return err
+			}
+
+			msg := &pb.NodeUpdateRequest{
+				Target:     c.OrgName + "." + meteData.network + "." + meteData.site + "." + n,
+				HTTPMethod: "POST",
+				Path:       "/v1/configd/config",
+				Msg:        anyMsg,
+			}
+
+			err = c.msgbus.PublishRequest(route, msg)
 			if err != nil {
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
 				return err
 			}
-			log.Infof("Published config %s on route %s for node %s ", m[f], route, n)
+			log.Infof("Published config %s on route %s for node %s ", msg, route, n)
 		}
 
 		/* Update the version for commited config on node */
