@@ -14,8 +14,6 @@ import (
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 
 	"github.com/tj/assert"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
 	crest "github.com/ukama/ukama/systems/common/rest"
 	nmocks "github.com/ukama/ukama/systems/node/health/pb/gen/mocks"
 
@@ -31,11 +29,7 @@ var routerConfig = &RouterConfig{
 	serverConf: &crest.HttpConfig{
 		Cors: defaultCors,
 	},
-	auth: &cconfig.Auth{
-		AuthAppUrl:    "http://localhost:4455",
-		AuthServerUrl: "http://localhost:4434",
-		AuthAPIGW:     "http://localhost:8080",
-	},
+	
 }
 
 var testClientSet *Clients
@@ -50,9 +44,8 @@ func init() {
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	arc := &providers.AuthRestClient{}
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -68,7 +61,6 @@ func Test_GetRunningsApps(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", nil)
-	arc := &providers.AuthRestClient{}
 	c := &nmocks.HealhtServiceClient{}
 	getRunningAppsReq := &hpb.GetRunningAppsRequest{
 		NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f",
@@ -89,7 +81,7 @@ func Test_GetRunningsApps(t *testing.T) {
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{
 		Health: client.NewHealthFromClient(c),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -206,7 +198,6 @@ func Test_StoreRunningApps(t *testing.T){
 		req, _ := http.NewRequest("POST", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", strings.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json") 
 
-		arc := &providers.AuthRestClient{}
 		c := &nmocks.HealhtServiceClient{}
 	
 	
@@ -217,7 +208,7 @@ func Test_StoreRunningApps(t *testing.T){
 		// Create a new router with the mock client.
 		r := NewRouter(&Clients{
 			Health: client.NewHealthFromClient(c),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		}, routerConfig).f.Engine()
 	
 		// act
 		r.ServeHTTP(w, req)

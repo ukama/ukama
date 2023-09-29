@@ -34,7 +34,6 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
-	auth          *config.Auth
 }
 
 type Clients struct {
@@ -53,18 +52,18 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
-	r := &Router{
-		clients: clients,
-		config:  config,
-	}
+func NewRouter(clients *Clients, config *RouterConfig) *Router {
+    r := &Router{
+        clients: clients,
+        config:  config,
+    }
 
-	if !config.debugMode {
-		gin.SetMode(gin.ReleaseMode)
-	}
+    if !config.debugMode {
+        gin.SetMode(gin.ReleaseMode)
+    }
 
-	r.init(authfunc)
-	return r
+    r.init() // Remove the authfunc parameter
+    return r
 }
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
@@ -73,7 +72,6 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
-		auth:          svcConf.Auth,
 	}
 }
 
@@ -85,32 +83,13 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init(f func(*gin.Context, string) error) {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "API gateway", "node system version v1", func(ctx *gin.Context) {
-		if r.config.auth.BypassAuthMode {
-			log.Info("Bypassing auth")
-			return
-		}
-		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
-		ctx.Request.Header.Set("Meta", s)
-		err := f(ctx, r.config.auth.AuthAPIGW)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
-		}
-	})
-	auth.Use()
-	{
-		const heal = "/health"
-		health := auth.Group(heal, "health", "Operations on system performance")
-		health.POST("/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
-		health.GET("/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
-	}
-	
+func (r *Router) init() {
+    r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode,"")
+    
+    endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
+
+    endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
+    endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
 }
 
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {

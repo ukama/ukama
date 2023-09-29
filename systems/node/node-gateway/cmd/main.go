@@ -3,9 +3,7 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/providers"
 
 	"github.com/ukama/ukama/systems/node/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg"
@@ -22,13 +20,10 @@ func main() {
 	initConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
-	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to create auth client: %v", err)
-	}
+	
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
 	r.Run()
 }
 
