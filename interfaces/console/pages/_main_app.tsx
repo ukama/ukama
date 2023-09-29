@@ -8,9 +8,10 @@ import {
   user,
 } from '@/app-recoil';
 import {
+  useGetMemberLazyQuery,
   useGetNetworksLazyQuery,
   useGetOrgsLazyQuery,
-  useGetUserLazyQuery,
+  useGetUserLazyQuery
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
@@ -25,7 +26,6 @@ const Layout = dynamic(() => import('@/ui/layout'), {
 
 const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
-
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [_user, _setUser] = useRecoilState<TUser>(user);
   const [page, setPage] = useRecoilState(pageName);
@@ -38,6 +38,16 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
 
+  const [getMember] = useGetMemberLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      _setUser({
+        ..._user,
+        role: data.getMember.role
+      });
+    },
+  });
+
   const [getUser] = useGetUserLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -48,6 +58,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         name: data.getUser.name,
         email: data.getUser.email,
       });
+      getMember({variables:{
+        memberId: data.getUser.uuid
+      }})
     },
   });
 

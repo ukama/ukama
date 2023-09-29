@@ -3,9 +3,9 @@ import "reflect-metadata";
 
 import { parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { ORG_PORT } from "./../common/configs";
+import { MEMBER_PORT } from "./../common/configs";
 import { logger } from "./../common/logger";
-import OrgAPI from "./datasource/org_api";
+import MemberAPI from "./datasource/member_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
@@ -15,15 +15,15 @@ const runServer = async () => {
       return {
         headers: parseGatewayHeaders(req.headers),
         dataSources: {
-          dataSource: new OrgAPI(),
+          dataSource: new MemberAPI(),
         },
       };
     },
-    listen: { port: ORG_PORT },
+    listen: { port: MEMBER_PORT },
   });
 
   logger.info(
-    `🚀 Ukama Org service running at http://localhost:${ORG_PORT}/graphql`
+    `🚀 Ukama Member service running at http://localhost:${MEMBER_PORT}/graphql`
   );
 };
 

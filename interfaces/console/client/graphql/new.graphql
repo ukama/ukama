@@ -74,6 +74,52 @@ mutation UpdateNode($data: UpdateNodeInput!) {
 }
 ### End Node ###
 
+### Member Start ###
+
+
+fragment member on MemberDto {
+  role
+  orgId
+  userId
+  isDeactivated
+  memberSince
+}
+
+query GetMembers {
+  getMembers {
+    members {
+      ...member
+    }
+  }
+}
+
+query GetMember($memberId: String!) {
+  getMember(id: $memberId) {
+      ...member
+  }
+}
+
+mutation addMember($data: AddMemberInputDto!) {
+  addMember(data: $data) {
+    ...member
+  }
+}
+
+mutation removeMember($memberId: String!) {
+  removeMember(id: $memberId) {
+    success
+  }
+}
+
+mutation updateMember($memberId: String!, $data: UpdateMemberInputDto!) {
+  updateMember(memberId: $memberId, data: $data) {
+    success
+  }
+}
+
+### End Member ###
+
+
 ### Org Start ###
 
 fragment Org on OrgDto {
@@ -83,39 +129,6 @@ fragment Org on OrgDto {
   certificate
   isDeactivated
   createdAt
-}
-
-fragment OrgUser on UserResDto {
-  name
-  email
-  uuid
-  phone
-  isDeactivated
-  registeredSince
-}
-fragment Member on MemberObj {
-  uuid
-  userId
-  orgId
-  role
-  isDeactivated
-  memberSince
-}
-query getOrgMember {
-  getOrgMembers {
-    org
-    members {
-      ...Member
-      user {
-        ...OrgUser
-      }
-    }
-  }
-}
-mutation addMember($data: AddMemberInputDto!) {
-  addMember(data: $data) {
-    ...Member
-  }
 }
 
 query getOrgs {

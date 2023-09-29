@@ -45,12 +45,6 @@ export type AddNodeToSiteInput = {
   siteId: Scalars['String']['input'];
 };
 
-export type AddOrgInputDto = {
-  certificate: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  owner_uuid: Scalars['String']['input'];
-};
-
 export type AddPackageInputDto = {
   amount: Scalars['Float']['input'];
   dataUnit: Scalars['String']['input'];
@@ -218,31 +212,28 @@ export type LocationInput = {
   lng: Scalars['String']['input'];
 };
 
-export type MemberInputDto = {
-  memberId: Scalars['Boolean']['input'];
-  orgName: Scalars['Boolean']['input'];
-};
-
-export type MemberObj = {
-  __typename?: 'MemberObj';
+export type MemberDto = {
+  __typename?: 'MemberDto';
   isDeactivated: Scalars['Boolean']['output'];
   memberSince?: Maybe<Scalars['String']['output']>;
   orgId: Scalars['String']['output'];
   role: Scalars['String']['output'];
-  user: UserResDto;
   userId: Scalars['String']['output'];
-  uuid: Scalars['String']['output'];
+};
+
+export type MembersResDto = {
+  __typename?: 'MembersResDto';
+  members: Array<MemberDto>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
   addLink: Draft;
-  addMember: MemberObj;
+  addMember: MemberDto;
   addNetwork: NetworkDto;
   addNode: Node;
   addNodeToSite: CBooleanResponse;
-  addOrg: OrgDto;
   addPackage: PackageDto;
   addSite: Draft;
   addSubscriber: SubscriberDto;
@@ -306,11 +297,6 @@ export type MutationAddNodeArgs = {
 
 export type MutationAddNodeToSiteArgs = {
   data: AddNodeToSiteInput;
-};
-
-
-export type MutationAddOrgArgs = {
-  data: AddOrgInputDto;
 };
 
 
@@ -404,7 +390,7 @@ export type MutationReleaseNodeFromSiteArgs = {
 
 
 export type MutationRemoveMemberArgs = {
-  data: MemberInputDto;
+  id: Scalars['String']['input'];
 };
 
 
@@ -548,12 +534,6 @@ export type OrgDto = {
   owner: Scalars['String']['output'];
 };
 
-export type OrgMembersResDto = {
-  __typename?: 'OrgMembersResDto';
-  members: Array<MemberObj>;
-  org: Scalars['String']['output'];
-};
-
 export type OrgsResDto = {
   __typename?: 'OrgsResDto';
   memberOf: Array<OrgDto>;
@@ -623,12 +603,13 @@ export type Query = {
   getDrafts: Array<Draft>;
   getInvitation: InvitationDto;
   getInvitationsByOrg: GetInvitationByOrgResDto;
+  getMember: MemberDto;
+  getMembers: MembersResDto;
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodes: GetNodes;
   getOrg: OrgDto;
-  getOrgMembers: OrgMembersResDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
   getPackages: PackagesResDto;
@@ -667,6 +648,11 @@ export type QueryGetDraftsArgs = {
 
 
 export type QueryGetInvitationArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetMemberArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -931,7 +917,6 @@ export type UpdateInvitationResDto = {
 
 export type UpdateMemberInputDto = {
   isDeactivated: Scalars['Boolean']['input'];
-  orgName: Scalars['String']['input'];
   role: Scalars['String']['input'];
 };
 
@@ -1070,23 +1055,43 @@ export type UpdateNodeMutationVariables = Exact<{
 
 export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
+export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
-export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
-
-export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
-
-export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
+export type GetMembersQuery = { __typename?: 'Query', getMembers: { __typename?: 'MembersResDto', members: Array<{ __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null }> } };
+
+export type GetMemberQueryVariables = Exact<{
+  memberId: Scalars['String']['input'];
+}>;
+
+
+export type GetMemberQuery = { __typename?: 'Query', getMember: { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null } };
 
 export type AddMemberMutationVariables = Exact<{
   data: AddMemberInputDto;
 }>;
 
 
-export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
+export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null } };
+
+export type RemoveMemberMutationVariables = Exact<{
+  memberId: Scalars['String']['input'];
+}>;
+
+
+export type RemoveMemberMutation = { __typename?: 'Mutation', removeMember: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type UpdateMemberMutationVariables = Exact<{
+  memberId: Scalars['String']['input'];
+  data: UpdateMemberInputDto;
+}>;
+
+
+export type UpdateMemberMutation = { __typename?: 'Mutation', updateMember: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
 
 export type GetOrgsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1350,6 +1355,15 @@ export const NodeFragmentDoc = gql`
   }
 }
     `;
+export const MemberFragmentDoc = gql`
+    fragment member on MemberDto {
+  role
+  orgId
+  userId
+  isDeactivated
+  memberSince
+}
+    `;
 export const OrgFragmentDoc = gql`
     fragment Org on OrgDto {
   id
@@ -1358,26 +1372,6 @@ export const OrgFragmentDoc = gql`
   certificate
   isDeactivated
   createdAt
-}
-    `;
-export const OrgUserFragmentDoc = gql`
-    fragment OrgUser on UserResDto {
-  name
-  email
-  uuid
-  phone
-  isDeactivated
-  registeredSince
-}
-    `;
-export const MemberFragmentDoc = gql`
-    fragment Member on MemberObj {
-  uuid
-  userId
-  orgId
-  role
-  isDeactivated
-  memberSince
 }
     `;
 export const PackageRateFragmentDoc = gql`
@@ -1896,51 +1890,81 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
-export const GetOrgMemberDocument = gql`
-    query getOrgMember {
-  getOrgMembers {
-    org
+export const GetMembersDocument = gql`
+    query GetMembers {
+  getMembers {
     members {
-      ...Member
-      user {
-        ...OrgUser
-      }
+      ...member
     }
   }
 }
-    ${MemberFragmentDoc}
-${OrgUserFragmentDoc}`;
+    ${MemberFragmentDoc}`;
 
 /**
- * __useGetOrgMemberQuery__
+ * __useGetMembersQuery__
  *
- * To run a query within a React component, call `useGetOrgMemberQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetOrgMemberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetMembersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMembersQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetOrgMemberQuery({
+ * const { data, loading, error } = useGetMembersQuery({
  *   variables: {
  *   },
  * });
  */
-export function useGetOrgMemberQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
+export function useGetMembersQuery(baseOptions?: Apollo.QueryHookOptions<GetMembersQuery, GetMembersQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
+        return Apollo.useQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
       }
-export function useGetOrgMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
+export function useGetMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
+          return Apollo.useLazyQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
         }
-export type GetOrgMemberQueryHookResult = ReturnType<typeof useGetOrgMemberQuery>;
-export type GetOrgMemberLazyQueryHookResult = ReturnType<typeof useGetOrgMemberLazyQuery>;
-export type GetOrgMemberQueryResult = Apollo.QueryResult<GetOrgMemberQuery, GetOrgMemberQueryVariables>;
+export type GetMembersQueryHookResult = ReturnType<typeof useGetMembersQuery>;
+export type GetMembersLazyQueryHookResult = ReturnType<typeof useGetMembersLazyQuery>;
+export type GetMembersQueryResult = Apollo.QueryResult<GetMembersQuery, GetMembersQueryVariables>;
+export const GetMemberDocument = gql`
+    query GetMember($memberId: String!) {
+  getMember(id: $memberId) {
+    ...member
+  }
+}
+    ${MemberFragmentDoc}`;
+
+/**
+ * __useGetMemberQuery__
+ *
+ * To run a query within a React component, call `useGetMemberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemberQuery({
+ *   variables: {
+ *      memberId: // value for 'memberId'
+ *   },
+ * });
+ */
+export function useGetMemberQuery(baseOptions: Apollo.QueryHookOptions<GetMemberQuery, GetMemberQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
+      }
+export function useGetMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
+        }
+export type GetMemberQueryHookResult = ReturnType<typeof useGetMemberQuery>;
+export type GetMemberLazyQueryHookResult = ReturnType<typeof useGetMemberLazyQuery>;
+export type GetMemberQueryResult = Apollo.QueryResult<GetMemberQuery, GetMemberQueryVariables>;
 export const AddMemberDocument = gql`
     mutation addMember($data: AddMemberInputDto!) {
   addMember(data: $data) {
-    ...Member
+    ...member
   }
 }
     ${MemberFragmentDoc}`;
@@ -1970,6 +1994,73 @@ export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<Ad
 export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
 export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
 export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
+export const RemoveMemberDocument = gql`
+    mutation removeMember($memberId: String!) {
+  removeMember(id: $memberId) {
+    success
+  }
+}
+    `;
+export type RemoveMemberMutationFn = Apollo.MutationFunction<RemoveMemberMutation, RemoveMemberMutationVariables>;
+
+/**
+ * __useRemoveMemberMutation__
+ *
+ * To run a mutation, you first call `useRemoveMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeMemberMutation, { data, loading, error }] = useRemoveMemberMutation({
+ *   variables: {
+ *      memberId: // value for 'memberId'
+ *   },
+ * });
+ */
+export function useRemoveMemberMutation(baseOptions?: Apollo.MutationHookOptions<RemoveMemberMutation, RemoveMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveMemberMutation, RemoveMemberMutationVariables>(RemoveMemberDocument, options);
+      }
+export type RemoveMemberMutationHookResult = ReturnType<typeof useRemoveMemberMutation>;
+export type RemoveMemberMutationResult = Apollo.MutationResult<RemoveMemberMutation>;
+export type RemoveMemberMutationOptions = Apollo.BaseMutationOptions<RemoveMemberMutation, RemoveMemberMutationVariables>;
+export const UpdateMemberDocument = gql`
+    mutation updateMember($memberId: String!, $data: UpdateMemberInputDto!) {
+  updateMember(memberId: $memberId, data: $data) {
+    success
+  }
+}
+    `;
+export type UpdateMemberMutationFn = Apollo.MutationFunction<UpdateMemberMutation, UpdateMemberMutationVariables>;
+
+/**
+ * __useUpdateMemberMutation__
+ *
+ * To run a mutation, you first call `useUpdateMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateMemberMutation, { data, loading, error }] = useUpdateMemberMutation({
+ *   variables: {
+ *      memberId: // value for 'memberId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateMemberMutation(baseOptions?: Apollo.MutationHookOptions<UpdateMemberMutation, UpdateMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateMemberMutation, UpdateMemberMutationVariables>(UpdateMemberDocument, options);
+      }
+export type UpdateMemberMutationHookResult = ReturnType<typeof useUpdateMemberMutation>;
+export type UpdateMemberMutationResult = Apollo.MutationResult<UpdateMemberMutation>;
+export type UpdateMemberMutationOptions = Apollo.BaseMutationOptions<UpdateMemberMutation, UpdateMemberMutationVariables>;
 export const GetOrgsDocument = gql`
     query getOrgs {
   getOrgs {
