@@ -1,3 +1,5 @@
+import { GraphQLError } from "graphql";
+
 import { asyncRestCall } from "../../common/axiosClient";
 import { METRIC_API_GW } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
@@ -29,7 +31,11 @@ const getMetricRange = async (
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${METRIC_API_GW}/v1/range/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
-  }).then(res => parseMetricRes(res.data, args.type));
+  })
+    .then(res => parseMetricRes(res.data, args.type))
+    .catch(err => {
+      throw new GraphQLError(err);
+    });
 };
 
 const getNodeRangeMetric = async (
@@ -39,7 +45,11 @@ const getNodeRangeMetric = async (
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${METRIC_API_GW}/v1/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
-  }).then(res => parseNodeMetricRes(res.data, args.type));
+  })
+    .then(res => parseNodeMetricRes(res.data, args.type))
+    .catch(err => {
+      throw new GraphQLError(err);
+    });
 };
 
 export { getLatestMetric, getMetricRange, getNodeRangeMetric };

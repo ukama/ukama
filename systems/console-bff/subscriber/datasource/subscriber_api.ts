@@ -1,4 +1,5 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { SUBSCRIBER_API_GW } from "../../common/configs";
 import {
@@ -19,7 +20,11 @@ class SubscriberApi extends RESTDataSource {
   addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
     return this.put(``, {
       body: { ...req },
-    }).then(res => dtoToSubscriberResDto(res));
+    })
+      .then(res => dtoToSubscriberResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   updateSubscriber = async (
@@ -28,19 +33,27 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<CBooleanResponse> => {
     return this.patch(`/${subscriberId}`, {
       body: { ...req },
-    }).then(() => {
-      return { success: true };
-    });
+    })
+      .then(() => {
+        return { success: true };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   deleteSubscriber = async (
     subscriberId: string
   ): Promise<CBooleanResponse> => {
-    return this.delete(`/${subscriberId}`).then(() => {
-      return {
-        success: true,
-      };
-    });
+    return this.delete(`/${subscriberId}`)
+      .then(() => {
+        return {
+          success: true,
+        };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
@@ -59,9 +72,11 @@ class SubscriberApi extends RESTDataSource {
   getSubscribersByNetwork = async (
     networkId: string
   ): Promise<SubscribersResDto> => {
-    return this.get(`s/networks/${networkId}`).then(res =>
-      dtoToSubscribersResDto(res)
-    );
+    return this.get(`s/networks/${networkId}`)
+      .then(res => dtoToSubscribersResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 

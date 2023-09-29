@@ -1,4 +1,5 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
@@ -15,11 +16,19 @@ const version = "/v1/packages";
 class PackageApi extends RESTDataSource {
   baseURL = DATA_API_GW + version;
   getPackage = async (packageId: string): Promise<PackageDto> => {
-    return this.get(`/${packageId}`, {}).then(res => dtoToPackageDto(res));
+    return this.get(`/${packageId}`, {})
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/org/${headers.orgId}`).then(res => dtoToPackagesDto(res));
+    return this.get(`/org/${headers.orgId}`)
+      .then(res => dtoToPackagesDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   addPackage = async (
@@ -46,15 +55,23 @@ class PackageApi extends RESTDataSource {
         voice_unit: "seconds",
         voice_volume: 0,
       },
-    }).then(res => dtoToPackageDto(res));
+    })
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   deletePackage = async (packageId: string): Promise<IdResponse> => {
-    return this.delete(`/${packageId}`).then(() => {
-      return {
-        uuid: packageId,
-      };
-    });
+    return this.delete(`/${packageId}`)
+      .then(() => {
+        return {
+          uuid: packageId,
+        };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   updatePackage = async (
@@ -63,7 +80,11 @@ class PackageApi extends RESTDataSource {
   ): Promise<PackageDto> => {
     return this.patch(`/${packageId}`, {
       body: req,
-    }).then(res => dtoToPackageDto(res));
+    })
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 

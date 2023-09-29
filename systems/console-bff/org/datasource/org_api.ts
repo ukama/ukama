@@ -1,4 +1,5 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { NUCLEUS_API_GW, VERSION } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
@@ -22,25 +23,33 @@ import {
 class OrgApi extends RESTDataSource {
   baseURL = NUCLEUS_API_GW;
   getOrgMembers = async (orgName: string): Promise<OrgMembersResDto> => {
-    return this.get(`/${VERSION}/orgs/${orgName}/members`).then(res =>
-      dtoToMembersResDto(res)
-    );
+    return this.get(`/${VERSION}/orgs/${orgName}/members`)
+      .then(res => dtoToMembersResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getOrgMember = async (data: MemberInputDto): Promise<MemberObj> => {
-    return this.get(
-      `/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`
-    ).then(res => dtoToMemberResDto(res));
+    return this.get(`/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`)
+      .then(res => dtoToMemberResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   removeMember = async (data: MemberInputDto): Promise<CBooleanResponse> => {
     return this.delete(
       `/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`
-    ).then(() => {
-      return {
-        success: true,
-      };
-    });
+    )
+      .then(() => {
+        return {
+          success: true,
+        };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
@@ -48,13 +57,19 @@ class OrgApi extends RESTDataSource {
       params: {
         user_uuid: userId,
       },
-    }).then(res => dtoToOrgsResDto(res));
+    })
+      .then(res => dtoToOrgsResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
-      dtoToOrgResDto(res)
-    );
+    return this.get(`/${VERSION}/orgs/${orgName}`)
+      .then(res => dtoToOrgResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   addOrg = async (req: AddOrgInputDto): Promise<OrgDto> => {
@@ -62,7 +77,11 @@ class OrgApi extends RESTDataSource {
       body: {
         ...req,
       },
-    }).then(res => dtoToOrgResDto(res));
+    })
+      .then(res => dtoToOrgResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   addMember = async (
@@ -71,7 +90,11 @@ class OrgApi extends RESTDataSource {
   ): Promise<MemberObj> => {
     return this.post(`/${VERSION}/orgs/${orgName}/members`, {
       body: { user_uuid: data.userId, role: data.role },
-    }).then(res => dtoToMemberResDto(res));
+    })
+      .then(res => dtoToMemberResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   updateMember = async (
@@ -83,11 +106,15 @@ class OrgApi extends RESTDataSource {
         isDeactivated: req.isDeactivated,
         role: req.role,
       },
-    }).then(() => {
-      return {
-        success: true,
-      };
-    });
+    })
+      .then(() => {
+        return {
+          success: true,
+        };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 
