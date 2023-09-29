@@ -36,7 +36,7 @@
 #define DEF_NODE_SYSTEM_PORT   "7001"
 #define DEF_NODE_SYSTEM_EP     "v1/nodes/%s/status"
 #define DEF_NODED_EP           "noded/v1/nodeinfo"
-#define DEF_STARTERD_EP        "status"
+#define DEF_STARTERD_EP        "v1/status"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define ENV_LOOKOUT_DEBUG_MODE "LOOKOUT_DEBUG_MODE"
 

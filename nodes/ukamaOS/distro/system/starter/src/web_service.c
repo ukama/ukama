@@ -248,7 +248,7 @@ int web_service_cb_get_all_capps_status(const URequest *request,
         ulfius_set_string_body_response(response, HttpStatus_NotFound,
                                         HttpStatusStr(HttpStatus_NotFound));
     } else {
-        ulfius_set_string_body_response(response, HttpStatus_OK, jStr);
+        ulfius_set_json_body_response(response, HttpStatus_OK, json);
     }
 
     usys_free(jStr);

@@ -220,14 +220,14 @@ int send_health_report(Config *config) {
     char *report = NULL;
 
     /* Get capps from starterd; for each get its resource usage */
-    if (get_capps_from_starterd(config, &cappList)) {
+    if (get_capps_from_starterd(config, &cappList) == STATUS_OK) {
         for (ptr = cappList; ptr; ptr = ptr->next) {
 
             runtime         = ptr->capp->runtime;
 
             runtime->memory = get_memory_usage(runtime->pid);
             runtime->disk   = get_disk_usage(runtime->pid);
-            runtime->cpu    = get_cpu_usage(runtime->cpu);
+            runtime->cpu    = get_cpu_usage(runtime->pid);
         }
     } else {
         usys_log_error("Unable to get capp status");

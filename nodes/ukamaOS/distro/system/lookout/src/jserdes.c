@@ -35,12 +35,12 @@ static void add_capp_to_list(CappList **list,
                              const char *name,
                              const char *tag,
                              const char *status,
-                             const char *pid) {
+                             int pid) {
 
     CappList *ptr=NULL;
 
     if (name == NULL || tag == NULL ||
-        status == NULL || pid == NULL) return;
+        status == NULL) return;
 
     if (*list == NULL) { /* First entry */
         *list = (CappList *)calloc(1, sizeof(CappList));
@@ -58,7 +58,7 @@ static void add_capp_to_list(CappList **list,
     ptr->capp->name            = strdup(name);
     ptr->capp->tag             = strdup(tag);
     ptr->capp->runtime->status = strdup(status);
-    ptr->capp->runtime->pid    = atoi(pid);
+    ptr->capp->runtime->pid    = pid;
     ptr->capp->runtime->memory = -1;
     ptr->capp->runtime->disk   = -1;
     ptr->capp->runtime->memory = -1;
@@ -172,11 +172,11 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
         return USYS_FALSE;
     }
 
-    count = json_array_size(json);
+    count = json_array_size(jArray);
     if (count == 0) return USYS_FALSE;
 
     for (i=0; i<count; i++) {
-        jCapp = json_array_get(jCapp, i);
+        jCapp = json_array_get(jArray, i);
 
         if (jCapp == NULL) continue;
 
@@ -190,7 +190,7 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
                              json_string_value(jName),
                              json_string_value(jTag),
                              json_string_value(jStatus),
-                             json_string_value(jPid));
+                             json_integer_value(jPid));
         }
     }
 
