@@ -11,5 +11,5 @@ message NodeUpdateRequest {
     string Target = 1;
     string HTTPMethod  = 2;
     string Path = 3;
-    google.protobuf.Any msg = 4; /// could be any protobuf msg based on need like config for node config
+    google.protobuf.Any msg = 4 ; /// could be any protobuf msg based on need like config for node config
 }
