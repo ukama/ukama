@@ -3,11 +3,29 @@ package utils
 import (
 	"io"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"time"
 )
 
+const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func RandomDirName() string {
+	return StringWithCharset(10, charset)
+}
 
 // CopyDir recursively copies a directory and its contents to a destination directory.
 func CopyDir(srcDir, destDir string) error {
@@ -53,4 +71,3 @@ func RemoveDir(path string) error {
 func CreateDir(path string, perm fs.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
-

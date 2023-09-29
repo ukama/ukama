@@ -31,6 +31,7 @@ type ConfiguratorServer struct {
 func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration, debug bool) *ConfiguratorServer {
 	configStore := configstore.NewConfigStore(msgBus, registry, cfgDb, cmtDb, orgName, url, user, pat, t)
 
+	log.Infof("Config store created: %+v", configStore)
 	return &ConfiguratorServer{
 		configuratorRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:                 msgBus,
@@ -69,10 +70,10 @@ func (c *ConfiguratorServer) GetConfigVersion(ctx context.Context, req *pb.Confi
 	}
 
 	return &pb.ConfigVersionResponse{
-		NodeId:     req.NodeId,
-		Status:     cfg.Status.String(),
-		Commit:     cfg.Commit.Hash,
-		LastStatus: cfg.LastStatus.String(),
-		LastCommit: cfg.LastCommit.Hash,
+		NodeId: req.NodeId,
+		Status: cfg.Status.String(),
+		Commit: cfg.Commit.Hash,
+		// LastStatus: cfg.LastStatus.String(),
+		// LastCommit: cfg.LastCommit.Hash,
 	}, err
 }

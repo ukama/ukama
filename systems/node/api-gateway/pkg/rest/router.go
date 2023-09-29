@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -109,6 +110,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
 		controller.POST("/restartNode", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
 
+		const cfg = "/configurator"
+		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
+		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigStoreEventHandler, http.StatusOK))
+
 	}
 }
 
@@ -118,6 +123,12 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
 	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
+}
+
+func (r *Router) postConfigStoreEventHandler(c *gin.Context) error {
+	body, _ := io.ReadAll(c.Request.Body)
+	log.Infof("received config store event with %+v", string(body))
+	return nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

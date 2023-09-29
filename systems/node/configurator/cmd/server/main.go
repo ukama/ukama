@@ -40,7 +40,7 @@ func main() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Commit{}, &db.Configuration{})
+	err := d.Init(&db.Configuration{}, &db.Commit{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}

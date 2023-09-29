@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/ukama/orchestrator/constructor/pkg"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/node/configurator/pkg"
 
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
@@ -20,8 +19,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ConfigStore struct {
@@ -43,6 +40,9 @@ type ConfigMetaData struct {
 	fileName string
 }
 
+const DIR_PREFIX = "/tmp/configstore/"
+const PERM = 0755
+
 func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration) *ConfigStore {
 	s, err := providers.NewStoreClient(url, user, pat, t)
 	if err != nil {
@@ -63,8 +63,22 @@ func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProv
 func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	log.Infof("HandleConfigStoreEvent")
 
+	dir := DIR_PREFIX + utils.RandomDirName()
+
+	err := utils.CreateDir(dir, PERM)
+	if err != nil {
+		return fmt.Errorf("error creating directory: %v", err)
+	}
+
+	// defer func() {
+	// 	err := utils.RemoveDir(dir)
+	// 	if err != nil {
+	// 		log.Errorf("error removing directory: %v", err)
+	// 	}
+	// }()
+
 	// Get latest remote version
-	lVer, err := c.Store.GetLatestRemoteConfigs()
+	lVer, err := c.Store.GetLatestRemoteConfigs(dir)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
@@ -78,7 +92,7 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	}
 
 	// Get current commited version
-	err = c.Store.GetRemoteConfigVersion(cVerRec.Hash)
+	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
@@ -89,14 +103,28 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return nil
 	}
 
-	return c.ProcessConfigStoreEvent(cVerRec.Hash, lVer)
+	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, lVer)
 }
 
 func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) error {
 	log.Infof("HandleConfigCommitReq")
 
+	dir := DIR_PREFIX + utils.RandomDirName()
+
+	err := utils.CreateDir(dir, PERM)
+	if err != nil {
+		return fmt.Errorf("error creating directory: %v", err)
+	}
+
+	defer func() {
+		err := utils.RemoveDir(dir)
+		if err != nil {
+			log.Errorf("error removing directory: %v", err)
+		}
+	}()
+
 	// Get latest remote version
-	err := c.Store.GetRemoteConfigVersion(rVer)
+	err = c.Store.GetRemoteConfigVersion(dir, rVer)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
@@ -109,7 +137,7 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 	}
 
 	// Get current commited version
-	err = c.Store.GetRemoteConfigVersion(cVerRec.Hash)
+	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
 		return err
@@ -120,35 +148,42 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return nil
 	}
 
-	return c.ProcessConfigStoreEvent(cVerRec.Hash, rVer)
+	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, rVer)
 }
 
-func (c *ConfigStore) ProcessConfigStoreEvent(cVer string, rVer string) error {
+func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer string) error {
 
-	filesUpdated, err := c.Store.GetDiff(cVer, rVer, providers.LATEST_DIR_NAME)
+	log.Infof("Looking for changes in config")
+
+	filesUpdated, err := c.Store.GetDiff(cVer, rVer, dir+providers.LATEST_DIR_NAME)
 	if err != nil {
 		log.Errorf("Failed to get diff remote configs: %v", err)
 		return err
 	}
 
 	var filesToUpdate []string
+	cfPrefix := dir + providers.COMMIT_DIR_NAME + "/"
+	lfPrefix := dir + providers.LATEST_DIR_NAME + "/"
 	for _, file := range filesUpdated {
-		_, change, err := utils.JsonDiff(providers.COMMIT_DIR_NAME+file, providers.COMMIT_DIR_NAME+file)
+		_, change, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
 		if err != nil {
-			log.Errorf("Failed to get diff between %s and %s: %v", providers.COMMIT_DIR_NAME+file, providers.COMMIT_DIR_NAME+file, err)
+			log.Errorf("Failed to get json diff between %s and %s: %v", cfPrefix+file, lfPrefix+file, err)
+			return err
 		}
+
 		if change {
 			filesToUpdate = append(filesToUpdate, file)
 		}
 	}
 
+	log.Infof("Files to be updated %+v", filesToUpdate)
 	if len(filesToUpdate) > 0 {
 		cMetaData := &ConfigMetaData{}
 		prepCommit := make(map[string]*pb.Config, len(filesToUpdate))
 		prepNodeCommit := make(map[string][]string)
-		for _, file := range filesUpdated {
+		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
-			  ukama/networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
+			  networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
 				Org:ukama
 				Network: networkABC
 				Site:site123
@@ -160,7 +195,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(cVer string, rVer string) error {
 				return err
 			}
 
-			configToCommit, err := c.PrepareConfigCommit(cMetaData, file)
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file)
 			if err != nil {
 				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
 				return err
@@ -183,9 +218,17 @@ func (c *ConfigStore) ProcessConfigStoreEvent(cVer string, rVer string) error {
 
 /* Parse ukama/networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json */
 func ParseConfigStoreFilePath(path string) (*ConfigMetaData, error) {
+
 	c := &ConfigMetaData{}
 	p := strings.Split(path, "/")
+	log.Infof("Creating metadata for file path %s {%+v}", path, p)
 	fnPos := len(p) - 1
+
+	if fnPos > 5 {
+		log.Errorf("Invalid path length %s", path)
+		return nil, fmt.Errorf("invalid path length %s", path)
+	}
+
 	fn := p[fnPos]
 	if !IfFileName(fn) {
 		log.Errorf("Invalid path for config %s", path)
@@ -195,19 +238,17 @@ func ParseConfigStoreFilePath(path string) (*ConfigMetaData, error) {
 	for i, pe := range p {
 		switch i {
 		case 0:
-			c.org = pe
-		case 1:
 			c.network = pe
-		case 2:
+		case 1:
 			c.site = pe
-		case 3:
+		case 2:
 			c.node = pe
+		case 3:
+			c.app = pe
 		case 4:
-			c.app = pe
-		case 5:
-			c.app = pe
+			c.fileName = pe
 		default:
-			return nil, fmt.Errorf("invalid path element %s", path)
+			return nil, fmt.Errorf("invalid path element at %d of %s", i, path)
 		}
 	}
 
@@ -220,7 +261,7 @@ var ExpectedConfigExt = []string{"json"}
 func IfFileName(f string) bool {
 	fileName := false
 	fp := strings.Split(f, ".")
-	fe := fp[len(f)-1]
+	fe := fp[len(fp)-1]
 	for _, e := range ExpectedConfigExt {
 		if fe == e {
 			fileName = true
@@ -232,38 +273,26 @@ func IfFileName(f string) bool {
 
 func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.Config, error) {
 
-	log.Infof("Sending config %s to node %+v", file, c)
-	var netId uuid.UUID
-	var err error
-	if d.network == "" {
-		d.network = "*"
-	} else {
+	log.Infof("Preparing commit config %s for node %+v", file, d)
+	// var netId uuid.UUID
+	// var err error
 
-		netId, err = uuid.FromString(d.network)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
-		}
+	// netId, err = uuid.FromString(d.network)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
+	// }
 
-		if err := c.registrySystem.ValidateNetwork(netId.String(), d.org); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %s", err.Error())
-		}
-	}
+	// if err := c.registrySystem.ValidateNetwork(netId.String(), d.org); err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %s", err.Error())
+	// }
 
-	if d.site == "" {
-		d.site = "*"
-	} else {
-		if err := c.registrySystem.ValidateSite(d.network, d.site, d.org); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid site %s", err.Error())
-		}
-	}
+	// if err := c.registrySystem.ValidateSite(d.network, d.site, d.org); err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid site %s", err.Error())
+	// }
 
-	if d.node == "" {
-		d.node = "*"
-	} else {
-		if err := c.registrySystem.ValidateNode(d.node, d.org); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid node: %s", err.Error())
-		}
-	}
+	// if err := c.registrySystem.ValidateNode(d.node, d.org); err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid node: %s", err.Error())
+	// }
 
 	data, err := os.ReadFile(file)
 	if err != nil {
@@ -272,7 +301,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	}
 
 	configReq := &pb.Config{
-		Filename: file, /* filename with path */
+		Filename: filepath.Base(file), /* filename with path */
 		App:      d.app,
 		Data:     data,
 	}

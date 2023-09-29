@@ -2,20 +2,20 @@ package providers
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
-	"github.com/go-git/go-git/plumbing/object"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 )
 
 type StoreProvider interface {
-	GetLatestRemoteConfigs() (string, error)
-	GetRemoteConfigVersion(version string) error
+	GetLatestRemoteConfigs(dir string) (string, error)
+	GetRemoteConfigVersion(dir string, version string) error
 	GetDiff(prevSha string, curSha string, dir string) ([]string, error)
 }
 
@@ -25,18 +25,22 @@ type gitClient struct {
 	pat  string
 }
 
-const LATEST_DIR_NAME = "/tmp/configstore/latest"
-const COMMIT_DIR_NAME = "/tmp/configstore/commit"
+const LATEST_DIR_NAME = "/latest"
+const COMMIT_DIR_NAME = "/commit"
 const PERM = 0755
 
-func (g *gitClient) GetLatestRemoteConfigs() (string, error) {
+func (g *gitClient) GetLatestRemoteConfigs(dirPrefix string) (string, error) {
 
-	err := utils.CreateDir(LATEST_DIR_NAME, PERM)
+	err := utils.CreateDir(dirPrefix+LATEST_DIR_NAME, PERM)
 	if err != nil {
 		return "", fmt.Errorf("error creating directory: %v", err)
 	}
 
-	r, err := git.PlainClone(LATEST_DIR_NAME, false, &git.CloneOptions{
+	r, err := git.PlainClone(dirPrefix+LATEST_DIR_NAME, false, &git.CloneOptions{
+		Auth: &http.BasicAuth{
+			Username: g.user, // yes, this can be anything except an empty string
+			Password: g.pat,  //
+		},
 		URL: g.url,
 	})
 
@@ -54,14 +58,18 @@ func (g *gitClient) GetLatestRemoteConfigs() (string, error) {
 	return hash.String(), nil
 }
 
-func (g *gitClient) GetRemoteConfigVersion(ver string) error {
+func (g *gitClient) GetRemoteConfigVersion(dirPrefix string, ver string) error {
 
-	err := utils.CreateDir(COMMIT_DIR_NAME, PERM)
+	err := utils.CreateDir(dirPrefix+COMMIT_DIR_NAME, PERM)
 	if err != nil {
 		return fmt.Errorf("error creating directory: %v", err)
 	}
 
-	r, err := git.PlainClone(COMMIT_DIR_NAME, false, &git.CloneOptions{
+	r, err := git.PlainClone(dirPrefix+COMMIT_DIR_NAME, false, &git.CloneOptions{
+		Auth: &http.BasicAuth{
+			Username: g.user, // yes, this can be anything except an empty string
+			Password: g.pat,  //
+		},
 		URL: g.url,
 	})
 
@@ -85,7 +93,7 @@ func (g *gitClient) GetRemoteConfigVersion(ver string) error {
 
 func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string, error) {
 
-	//fmt.Println("git ")
+	//log.Println("git ")
 	//CheckArgs("<revision1>")
 
 	var hash plumbing.Hash
@@ -127,7 +135,7 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 		return nil, err
 	}
 
-	fmt.Println("Comparing from:" + prevCommit.Hash.String() + " to:" + commit.Hash.String())
+	log.Infof("Comparing from:" + prevCommit.Hash.String() + " to:" + commit.Hash.String())
 
 	isAncestor, err := commit.IsAncestor(prevCommit)
 	if err != nil {
@@ -135,7 +143,7 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 		return nil, err
 	}
 
-	fmt.Printf("Is the prevCommit an ancestor of commit? : %v %v\n", isAncestor)
+	log.Infof("Is the prevCommit an ancestor of commit? : %v %v\n", commit, isAncestor)
 
 	currentTree, err := commit.Tree()
 	if err != nil {
@@ -155,11 +163,11 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 		return nil, err
 	}
 
-	fmt.Println("Got here" + strconv.Itoa(len(patch.Stats())))
+	log.Infof("Got %d changes", len(patch.Stats()))
 
 	var changedFiles []string
 	for _, fileStat := range patch.Stats() {
-		fmt.Println(fileStat.Name)
+		log.Println(fileStat.Name)
 		changedFiles = append(changedFiles, fileStat.Name)
 	}
 
@@ -177,13 +185,13 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 	// 		return err
 	// 	}
 	// 	if action == merkletrie.Delete {
-	// 		//fmt.Println("Skipping delete")
+	// 		//log.Println("Skipping delete")
 	// 		continue
 	// 	}
 
 	// 	// Get list of involved files
 	// 	name := getChangeName(change)
-	// 	fmt.Println(name)
+	// 	log.Println(name)
 	// }
 
 	return changedFiles, nil

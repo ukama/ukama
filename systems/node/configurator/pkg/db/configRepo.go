@@ -29,9 +29,8 @@ func NewConfigRepo(db sql.Db) ConfigRepo {
 
 func (n *configRepo) Add(node string) error {
 	config := Configuration{
-		NodeId:     node,
-		Status:     Default,
-		LastStatus: Undefined,
+		NodeId: node,
+		Status: Default,
 	}
 
 	r := n.Db.GetGormDb().Clauses(clause.OnConflict{

@@ -16,7 +16,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 	RegistryHost     string           `default:"registry"`
-	LatestConfigHash string
+	LatestConfigHash string 
 	StoreUser        string
 	StoreUrl         string
 	AccessToken      string
