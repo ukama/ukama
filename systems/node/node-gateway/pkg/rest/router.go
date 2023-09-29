@@ -87,9 +87,10 @@ func (r *Router) init() {
     r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode,"")
     
     endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
-
+    endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
     endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
     endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
+	
 }
 
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
@@ -143,4 +144,17 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+
+
+func (r *Router) pingHandler(c *gin.Context) error {
+    response := make(map[string]string)
+
+    response["status"] = pkg.SystemName+" is running"
+    response["version"] = version.Version
+
+    c.JSON(http.StatusOK, response)
+
+    return nil
 }
