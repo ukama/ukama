@@ -20,6 +20,12 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
+/* define in resources.c */
+extern int get_memory_usage(int pid);
+extern int get_disk_usage(int pid);
+extern double get_cpu_usage(int pid);
+extern char *get_radio_status(void);
+
 void json_log(json_t *json) {
 
     char *str = NULL;
@@ -242,6 +248,29 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     json_array_append_new(jArray, jCpu);
 }
 
+static void json_add_system_info_to_report(JsonObj **json) {
+
+    JsonObj *jArray = NULL;
+    JsonObj *jRadio = NULL;
+
+    jRadio = json_object();
+
+    /* system */
+    json_object_set_new(*json, JTAG_SYSTEM, json_array());
+    jArray = json_object_get(*json, JTAG_SYSTEM);
+    if (jArray == NULL) return;
+
+    /* radio */
+    json_object_set_new(jRadio,
+                        JTAG_NAME,
+                        json_string("radio"));
+    json_object_set_new(jRadio,
+                        JTAG_VALUE,
+                        json_string(get_radio_status()));
+
+    json_array_append_new(jArray, jRadio);
+}
+
 /*
 http://localhost:8080/v1/health/{nodeID}
 {
@@ -322,6 +351,7 @@ bool json_serialize_health_report(JsonObj **json,
     }
 
     /* system */
+    json_add_system_info_to_report(json);
 
     return USYS_TRUE;
 }

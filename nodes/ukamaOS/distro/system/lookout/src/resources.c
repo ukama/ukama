@@ -115,3 +115,8 @@ double get_cpu_usage(int pid) {
 
     return (double)100.0 * ( utime + stime + cutime + cstime) / sysconf(_SC_CLK_TCK);
 }
+
+char *get_radio_status(void) {
+
+    return "on";
+}

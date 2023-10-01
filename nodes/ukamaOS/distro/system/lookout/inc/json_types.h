@@ -21,5 +21,6 @@
 #define JTAG_UUID       "UUID"
 #define JTAG_TIMESTAMP  "timestamp"
 #define JTAG_RESOURCES  "resources"
+#define JTAG_SYSTEM     "system"
 
 #endif /* JSON_TYPES_H_ */
