@@ -29,7 +29,7 @@ int get_memory_usage(int pid) {
     file = fopen(filename, "r");
     if (!file) {
         usys_log_error("Failed to open status file: %s", filename);
-        return -1;
+        return 0;
     }
 
     while (fgets(line, sizeof(line), file)) {
@@ -56,7 +56,7 @@ int get_disk_usage(int pid) {
     file = fopen(filename, "r");
     if (!file) {
         usys_log_error("Failed to open status file: %s", filename);
-        return -1;
+        return 0;
     }
 
     while (fgets(line, sizeof(line), file)) {
@@ -104,7 +104,7 @@ double get_cpu_usage(int pid) {
     file = fopen(filename, "r");
     if (!file) {
         usys_log_error("Failed to open status file: %s", filename);
-        return -1;
+        return 0;
     }
 
     fscanf(file, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %ld %llu",

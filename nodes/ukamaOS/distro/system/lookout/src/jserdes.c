@@ -205,7 +205,7 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     JsonObj *jArray = NULL;
     JsonObj *jMemory = NULL, *jDisk = NULL, *jCpu = NULL;
 
-    json_object_set_new(*json, JTAG_RESOURCES, json_object());
+    json_object_set_new(*json, JTAG_RESOURCES, json_array());
     jArray = json_object_get(*json, JTAG_RESOURCES);
     if (jArray == NULL) return;
 
@@ -245,6 +245,7 @@ static void json_add_resources_to_capp_report(JsonObj **json,
 /*
 http://localhost:8080/v1/health/{nodeID}
 {
+  "nodeID" : "ukma-xx-xxx-xxxx-xxx"
   "timestamp": "12345678",
   "system": [
     {
@@ -272,6 +273,7 @@ http://localhost:8080/v1/health/{nodeID}
 }
 */
 bool json_serialize_health_report(JsonObj **json,
+                                  char *nodeID,
                                   CappList *list) {
 
     JsonObj *jArray     = NULL;
@@ -283,13 +285,18 @@ bool json_serialize_health_report(JsonObj **json,
     *json = json_object();
     if (*json == NULL) return USYS_FALSE;
 
+    /* nodeID */
+    json_object_set_new(*json,
+                        JTAG_NODE_ID,
+                        json_string(nodeID));
+
     /* time-stamp */
     json_object_set_new(*json,
                         JTAG_TIMESTAMP,
                         json_integer(time(NULL)));
 
     /* capps */
-    json_object_set_new(*json, JTAG_CAPPS, json_object());
+    json_object_set_new(*json, JTAG_CAPPS, json_array());
     jArray = json_object_get(*json, JTAG_CAPPS);
     if (jArray == NULL) return USYS_FALSE;
 
@@ -315,6 +322,8 @@ bool json_serialize_health_report(JsonObj **json,
     }
 
     /* system */
+
+    return USYS_TRUE;
 }
 
 void json_free(JsonObj** json) {

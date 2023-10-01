@@ -234,7 +234,9 @@ int send_health_report(Config *config) {
         return USYS_FALSE;
     }
 
-    if (!json_serialize_health_report(&json, cappList)) {
+    if (!json_serialize_health_report(&json,
+                                      config->nodeID,
+                                      cappList)) {
         usys_log_error("Error serializing health report. Ignoring");
         return USYS_FALSE;
     }
@@ -244,6 +246,9 @@ int send_health_report(Config *config) {
             config->nodeSystemPort,
             config->nodeID);
     report = json_dumps(json, 0);
+
+    usys_log_debug("Sending to URL: %s the health report %s",
+                   url, report);
 
     if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
         usys_log_error("failed to parse response from local service");

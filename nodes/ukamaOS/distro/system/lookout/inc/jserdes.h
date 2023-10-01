@@ -28,6 +28,8 @@ void json_log(json_t *json);
 void json_free(JsonObj** json);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
 bool json_deserialize_capps(CappList **cappList, JsonObj *json);
-bool json_serialize_health_report(JsonObj **json, CappList *list);
+bool json_serialize_health_report(JsonObj **json,
+                                  char *nodeID,
+                                  CappList *list);
 
 #endif /* JSERDES_H_ */
