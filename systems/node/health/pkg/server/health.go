@@ -7,6 +7,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/health/pkg"
@@ -36,18 +37,19 @@ func NewHealthServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, 
 func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
 	log.Infof("StoreRunningAppsInfo: %v", req)
 
-	nodeUUID, err := uuid.FromString(req.GetNodeId())
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node uuid. Error %s", err.Error())
+			"invalid format of node id. Error %s", err.Error())
 	}
+
 	healthID := uuid.NewV4()
 	cappID := uuid.NewV4()
 
 	// Create a Health instance
 	health := db.Health{
 		Id:        healthID,
-		NodeID:    nodeUUID,
+		NodeID:    nId.StringLowercase(),
 		Timestamp: req.GetTimestamp(),
 	}
 
@@ -97,13 +99,17 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningAppsRequest) (*pb.GetRunningAppsResponse, error) {
 	log.Infof("GetRunningAppsInfo: %v", req)
-	nodeUUID, err := uuid.FromString(req.GetNodeId())
+	nId, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node uuid. Error %s", err.Error())
 	}
-	health, err := h.sRepo.GetRunningAppsInfo(nodeUUID)
+	health, err := h.sRepo.GetRunningAppsInfo(nId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 
@@ -111,7 +117,7 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 
 	app := &pb.App{
 		Id:        health.Id.String(),
-		NodeId:    health.NodeID.String(),
+		NodeId:    health.NodeID,
 		Timestamp: health.Timestamp,
 		System:    []*pb.System{}, // Initialize System and Capps slices
 		Capps:     []*pb.Capps{},

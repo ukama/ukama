@@ -9,6 +9,7 @@ import (
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/tj/assert"
@@ -48,11 +49,13 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestHealthRepo_GetRunningAppsInfo(t *testing.T) {
+	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
 	t.Run("HealthExist", func(t *testing.T) {
 		// Arrange
 		health := db.Health{
 			Id:        uuid.NewV4(),
-			NodeID:    uuid.NewV4(),
+			NodeID:   nodeId.String(),
 			Timestamp: time.Now().String(),
 			System: []db.System{
 				{
@@ -114,7 +117,7 @@ func TestHealthRepo_GetRunningAppsInfo(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rm, err := r.GetRunningAppsInfo(health.NodeID)
+		rm, err := r.GetRunningAppsInfo(nodeId)
 
 		// Assert
 		assert.NoError(t, err)

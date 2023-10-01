@@ -8,7 +8,7 @@ import (
 
 type Health struct {
 	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	NodeID    uuid.UUID  `gorm:"type:uuid"`
+	NodeID    string    `gorm:"not null"`
 	Timestamp string     `gorm:"not null"`
 	System    []System   `gorm:"foreignKey:HealthID"`
 	Capps     []Capp     `gorm:"foreignKey:HealthID"`
