@@ -11,12 +11,19 @@
 
 #include "web_service.h"
 #include "http_status.h"
+#include "json_types.h"
 #include "config.h"
 
 #include "starter.h"
 #include "usys_log.h"
 
 extern SpaceList *gSpaceList;
+extern void json_free(JsonObj** json);
+extern bool json_serialize_add_capp_to_array(JsonObj **json,
+                                             char *name,
+                                             char *tag,
+                                             char *status,
+                                             int  pid);
 
 static char *capp_status_str(int status) {
 
@@ -24,16 +31,16 @@ static char *capp_status_str(int status) {
 
     switch(status) {
     case CAPP_RUNTIME_NO_EXEC:
-        str = "Not running";
+        str = "Pending";
         break;
     case CAPP_RUNTIME_EXEC:
-        str = "Running";
+        str = "Active";
         break;
     case CAPP_RUNTIME_DONE:
         str = "Done";
         break;
     default:
-        str = "Uknown";
+        str = "Unknown";
         break;
     }
 
@@ -188,6 +195,64 @@ int web_service_cb_get_status(const URequest *request,
         ulfius_set_string_body_response(response, HttpStatus_OK,
                                         capp_status_str(status));
     }
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_all_capps_status(const URequest *request,
+                                        UResponse *response,
+                                        void *epConfig) {
+
+    SpaceList *spacePtr = NULL;
+    CappList  *cappList = NULL;
+    JsonObj   *json     = NULL;
+    char      *status   = NULL;
+    char      *jStr     = NULL;
+    int       pid       = 0;
+
+    json = json_object();
+    json_object_set_new(json, JTAG_CAPPS, json_array());
+    if (json == NULL) {
+        ulfius_set_string_body_response(response,
+                               HttpStatus_InternalServerError,
+                               HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    for (spacePtr = gSpaceList;
+         spacePtr;
+         spacePtr = spacePtr->next) {
+
+        /* for each space find all the capps */
+        for (cappList=spacePtr->space->cappList;
+             cappList;
+             cappList=cappList->next) {
+
+            if (cappList->capp->runtime) {
+                status = capp_status_str(cappList->capp->runtime);
+                pid    = cappList->capp->runtime->pid;
+            } else {
+                status = capp_status_str(CAPP_RUNTIME_NO_EXEC);
+                pid    = 0;
+            }
+
+            json_serialize_add_capp_to_array(&json,
+                                             cappList->capp->name,
+                                             cappList->capp->tag,
+                                             status, pid);
+        }
+    }
+
+    jStr = json_dumps(json, 0);
+    if (jStr == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+    } else {
+        ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    }
+
+    usys_free(jStr);
+    json_free(&json);
 
     return U_CALLBACK_CONTINUE;
 }

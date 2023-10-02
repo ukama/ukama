@@ -206,7 +206,6 @@ bool process_capp_config_file(CappConfig **config, char *fileName) {
     }
 
     ret = deserialize_capp_config_file(config, json);
-    json_decref(json);
 
     if (ret == USYS_TRUE) {
         log_capp_config(*config);
