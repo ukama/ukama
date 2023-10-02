@@ -153,11 +153,6 @@ export type GetInvitationByOrgResDto = {
   invitations: Array<InvitationDto>;
 };
 
-export type GetNodes = {
-  __typename?: 'GetNodes';
-  nodes: Array<Node>;
-};
-
 export type GetNodesInput = {
   isFree: Scalars['Boolean']['input'];
 };
@@ -490,15 +485,25 @@ export type NetworksResDto = {
 
 export type Node = {
   __typename?: 'Node';
+  attached: Array<Node>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
+  site?: Maybe<NodeSite>;
   status: NodeStatus;
   type: NodeTypeEnum;
 };
 
 export type NodeInput = {
   id: Scalars['String']['input'];
+};
+
+export type NodeSite = {
+  __typename?: 'NodeSite';
+  addedAt: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
 };
 
 export type NodeStatus = {
@@ -523,6 +528,11 @@ export enum NodeTypeEnum {
   Hnode = 'hnode',
   Tnode = 'tnode'
 }
+
+export type Nodes = {
+  __typename?: 'Nodes';
+  nodes: Array<Node>;
+};
 
 export type OrgDto = {
   __typename?: 'OrgDto';
@@ -608,7 +618,8 @@ export type Query = {
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
-  getNodes: GetNodes;
+  getNodes: Nodes;
+  getNodesByNetwork: Nodes;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -669,6 +680,11 @@ export type QueryGetNodeArgs = {
 
 export type QueryGetNodesArgs = {
   data: GetNodesInput;
+};
+
+
+export type QueryGetNodesByNetworkArgs = {
+  networkId: Scalars['String']['input'];
 };
 
 
@@ -983,21 +999,28 @@ export type WhoamiDto = {
   user: UserResDto;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
+
+export type GetNodesByNetworkQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1025,7 +1048,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -1046,14 +1069,14 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -1349,9 +1372,31 @@ export const NodeFragmentDoc = gql`
   name
   orgId
   type
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
   status {
     connectivity
     state
+  }
+  attached {
+    id
+    name
+    orgId
+    type
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
   }
 }
     `;
@@ -1626,6 +1671,43 @@ export function useGetNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
 export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
 export type GetNodesLazyQueryHookResult = ReturnType<typeof useGetNodesLazyQuery>;
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
+export const GetNodesByNetworkDocument = gql`
+    query getNodesByNetwork($networkId: String!) {
+  getNodesByNetwork(networkId: $networkId) {
+    nodes {
+      ...node
+    }
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodesByNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetNodesByNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesByNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetNodesByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
+      }
+export function useGetNodesByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
+        }
+export type GetNodesByNetworkQueryHookResult = ReturnType<typeof useGetNodesByNetworkQuery>;
+export type GetNodesByNetworkLazyQueryHookResult = ReturnType<typeof useGetNodesByNetworkLazyQuery>;
+export type GetNodesByNetworkQueryResult = Apollo.QueryResult<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {

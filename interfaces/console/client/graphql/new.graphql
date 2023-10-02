@@ -5,9 +5,31 @@ fragment node on Node {
   name
   orgId
   type
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
   status {
     connectivity
     state
+  }
+  attached {
+    id
+    name
+    orgId
+    type
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
   }
 }
 
@@ -19,6 +41,14 @@ query getNode($data: NodeInput!) {
 
 query getNodes($data: GetNodesInput!) {
   getNodes(data: $data) {
+    nodes {
+      ...node
+    }
+  }
+}
+
+query getNodesByNetwork($networkId: String!) {
+  getNodesByNetwork(networkId: $networkId) {
     nodes {
       ...node
     }
@@ -76,7 +106,6 @@ mutation UpdateNode($data: UpdateNodeInput!) {
 
 ### Member Start ###
 
-
 fragment member on MemberDto {
   role
   orgId
@@ -95,7 +124,7 @@ query GetMembers {
 
 query GetMember($memberId: String!) {
   getMember(id: $memberId) {
-      ...member
+    ...member
   }
 }
 
@@ -118,7 +147,6 @@ mutation updateMember($memberId: String!, $data: UpdateMemberInputDto!) {
 }
 
 ### End Member ###
-
 
 ### Org Start ###
 

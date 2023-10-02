@@ -1,4 +1,4 @@
-import { Node, Nodes, Site } from "../resolvers/types";
+import { Node, NodeSite, Nodes } from "../resolvers/types";
 
 export const parseNodesRes = (res: any): Nodes => {
   const nodes = res.nodes.map((node: any) => {
@@ -17,7 +17,7 @@ const parseAttached = (res: any): Node[] => {
     : [];
 };
 
-const parseSite = (res: any): Site | undefined => {
+const parseSite = (res: any): NodeSite | undefined => {
   return res.site
     ? {
         nodeId: res.site.nodeId,

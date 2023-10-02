@@ -13,7 +13,7 @@ export class NodeStatus {
 }
 
 @ObjectType()
-export class Site {
+export class NodeSite {
   @Field()
   nodeId: string;
 
@@ -43,8 +43,8 @@ export class Node {
   @Field(() => [Node])
   attached: Node[];
 
-  @Field(() => Site, { nullable: true })
-  site?: Site;
+  @Field(() => NodeSite, { nullable: true })
+  site?: NodeSite;
 
   @Field(() => NodeStatus)
   status: NodeStatus;
