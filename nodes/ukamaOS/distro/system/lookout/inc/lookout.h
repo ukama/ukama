@@ -33,7 +33,7 @@
 #define DEF_NODE_SYSTEM_HOST   "localhost"
 #define DEF_NODED_PORT         "8095"
 #define DEF_STARTERD_PORT      "8086"
-#define DEF_NODE_SYSTEM_PORT   "7001"
+#define DEF_NODE_SYSTEM_PORT   "8075"
 #define DEF_NODE_SYSTEM_EP     "v1/nodes/%s/status"
 #define DEF_NODED_EP           "noded/v1/nodeinfo"
 #define DEF_STARTERD_EP        "v1/status"

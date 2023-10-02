@@ -11,6 +11,7 @@
 #include "web_client.h"
 #include "jserdes.h"
 #include "json_types.h"
+#include "http_status.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -107,7 +108,8 @@ static int wc_send_request(char *url,
         goto cleanup;
     }
 
-    if (httpResp->status == 200) {
+    if (httpResp->status == HttpStatus_OK ||
+        httpResp->status == HttpStatus_Created) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
             *buffer = json_dumps(json, 0);
@@ -241,7 +243,7 @@ int send_health_report(Config *config) {
         return USYS_FALSE;
     }
 
-    sprintf(url,"http://%s:%d/v1/nodes/%s/status",
+    sprintf(url,"http://%s:%d/v1/health/nodes/%s/performance",
             DEF_NODE_SYSTEM_HOST,
             config->nodeSystemPort,
             config->nodeID);

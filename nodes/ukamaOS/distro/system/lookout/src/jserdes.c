@@ -211,6 +211,8 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     JsonObj *jArray = NULL;
     JsonObj *jMemory = NULL, *jDisk = NULL, *jCpu = NULL;
 
+    char buffer[MAX_BUFFER] = {0};
+
     json_object_set_new(*json, JTAG_RESOURCES, json_array());
     jArray = json_object_get(*json, JTAG_RESOURCES);
     if (jArray == NULL) return;
@@ -220,28 +222,31 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     jCpu    = json_object();
 
     /* memory */
+    sprintf(buffer, "%d", runtime->memory);
     json_object_set_new(jMemory,
                         JTAG_NAME,
                         json_string("memory"));
     json_object_set_new(jMemory,
                         JTAG_VALUE,
-                        json_integer(runtime->memory));
+                        json_string(buffer));
 
     /* disk */
+    sprintf(buffer, "%d", runtime->disk);
     json_object_set_new(jDisk,
                         JTAG_NAME,
                         json_string("disk"));
     json_object_set_new(jDisk,
                         JTAG_VALUE,
-                        json_integer(runtime->memory));
+                        json_string(buffer));
 
     /* cpu */
+    sprintf(buffer, "%f", runtime->cpu);
     json_object_set_new(jCpu,
                         JTAG_NAME,
                         json_string("cpu"));
     json_object_set_new(jCpu,
                         JTAG_VALUE,
-                        json_real(runtime->memory));
+                        json_string(buffer));
 
     json_array_append_new(jArray, jMemory);
     json_array_append_new(jArray, jDisk);
@@ -310,6 +315,8 @@ bool json_serialize_health_report(JsonObj **json,
     JsonObj *jResources = NULL;
     CappList *ptr       = NULL;
     Capp     *capp      = NULL;
+    char     buffer[MAX_BUFFER] = {0};
+    time_t   currTime;
 
     *json = json_object();
     if (*json == NULL) return USYS_FALSE;
@@ -320,9 +327,11 @@ bool json_serialize_health_report(JsonObj **json,
                         json_string(nodeID));
 
     /* time-stamp */
+    time(&currTime);
+    sprintf(buffer, "%ld", (long)currTime);
     json_object_set_new(*json,
                         JTAG_TIMESTAMP,
-                        json_integer(time(NULL)));
+                        json_string(buffer));
 
     /* capps */
     json_object_set_new(*json, JTAG_CAPPS, json_array());
