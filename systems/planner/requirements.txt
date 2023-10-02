@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv
+GDAL
+numpy
+gunicorn
+pytest
+haversine
+networkx
+pytest-asyncio
+callee
+requests
