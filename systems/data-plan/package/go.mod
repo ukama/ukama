@@ -4,7 +4,11 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/data-plan/rate => ../rate
+
+replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
+
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -13,12 +17,34 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-20221101065518-a25964290acc
-	google.golang.org/grpc v1.51.0
-	google.golang.org/protobuf v1.28.1
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
+	google.golang.org/grpc v1.52.0
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
-	gorm.io/driver/postgres v1.4.5
+	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.3
+)
+
+require (
+	github.com/gin-contrib/cors v1.3.0 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/loopfz/gadgeto v0.9.0 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/penglongli/gin-metrics v0.1.9 // indirect
+	github.com/ugorji/go/codec v1.2.6 // indirect
+	github.com/wI2L/fizz v0.22.0 // indirect
+	github.com/willf/bitset v1.1.11 // indirect
+	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 )
 
 require (
@@ -40,9 +66,8 @@ require (
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.12.0 // indirect
-	github.com/jackc/pgx/v4 v4.17.2 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.2.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -59,7 +84,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -69,13 +94,13 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
+	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
+	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

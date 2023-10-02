@@ -1,0 +1,36 @@
+version: "3.2"
+services:
+    rabbitmq:
+      build: 
+        context: ./rabbitmq
+        dockerfile: Dockerfile
+      ports:
+          - 5672:5672
+          - 15672:15672
+      networks:
+        - dev-net
+      volumes:
+                  - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
+        #  - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
+    
+    pg4admin:
+      image: dpage/pgadmin4
+      restart: always
+      environment:
+        PGADMIN_DEFAULT_EMAIL: user@domain.com
+        PGADMIN_DEFAULT_PASSWORD: SuperSecret
+      ports:
+        - "8090:80"     
+      networks:
+        - dev-net
+
+networks:
+  dev-net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.0.0/24
+            
+volumes:
+  postgress-data:
+  rabbitmq-data:

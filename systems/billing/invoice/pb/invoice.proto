@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+// import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.billing.invoice.v1;
+
+service InvoiceService {
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
+    // Update
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+
+message AddRequest{
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    google.protobuf.Timestamp period = 2;
+    string rawInvoice = 3 [json_name = "raw_invoice"];
+}
+
+message AddResponse{
+    Invoice invoice = 2;
+}
+
+
+message GetRequest{
+    string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
+    bool asPdf = 2 [json_name = "as_pdf"];
+}
+
+message GetResponse{
+    Invoice invoice = 1;
+}
+
+
+message GetBySubscriberRequest{
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    bool asPdf = 2 [json_name = "as_pdf"];
+}
+
+message GetBySubscriberResponse{
+    string subscriberId = 1 [json_name = "subscriber_id"];
+    repeated Invoice invoices = 2;
+}
+
+message DeleteRequest{
+    string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
+}
+
+message DeleteResponse{
+}
+
+
+message Invoice {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    google.protobuf.Timestamp period = 3;
+    RawInvoice rawInvoice = 4 [json_name = "raw_invoice"];
+    bool isPaid = 5 [json_name = "is_paid"];
+    google.protobuf.Timestamp createdAt = 6 [json_name = "created_at"];
+}
+
+
+message RawInvoice {
+    string issuingDate = 1 [json_name = "issuing_date"];
+    string status = 2 [json_name = "status"];
+    string paymentStatus = 3 [json_name = "payment_status"];
+    int64 amountCents = 4 [json_name = "amount_cents"];
+    string amountCurrency = 5 [json_name = "amount_currency"];
+    int64 vatAmountCents = 6 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 7 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 8 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 9 [json_name = "total_amount_currency"];
+    string fileURL = 10 [json_name = "file_url"];
+    Customer customer = 11 [json_name = "customer"];
+    repeated Subscription subscriptions = 12 [json_name = "subscriptions"];
+    repeated Fee fees = 13 [json_name = "fees"];
+}
+
+message Subscription {
+    string externalCustomerId = 1 [json_name = "external_customer_id"];
+    string externalId = 2 [json_name = "external_id"];
+    string planCode = 3 [json_name = "plan_code"];
+    string status = 4 [json_name = "status"];
+    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
+    google.protobuf.Timestamp startedAt = 6 [json_name = "started_at"];
+    google.protobuf.Timestamp canceldAt = 7 [json_name = "canceled_at"];
+    google.protobuf.Timestamp terminatedAt = 8 [json_name = "terminated_at"];
+}
+
+
+message Customer {
+    string externalId = 1 [json_name = "external_id"];
+    string name = 2 [json_name = "name"];
+    string email = 3 [json_name = "email"];
+    string AddressLine1 = 4 [json_name = "address_line1"];
+    string legalName = 5 [json_name = "legal_name"];
+    string legalNumber = 6 [json_name = "legal_number"];
+    string phone = 7 [json_name = "phone"];
+    double vatRate = 8 [json_name = "vat_rate"];
+    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
+}
+
+message Fee {
+    int64 amountCents = 1 [json_name = "amount_cents"];
+    string amountCurrency = 2 [json_name = "amount_currency"];
+    int64 vatAmountCents = 3 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 4 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 5 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 6 [json_name = "total_amount_currency"];
+    int64 eventsCount = 7 [json_name = "events_count"];
+    double units = 8 [json_name = "units"];
+    FeeItem item = 9 [json_name = "item"];
+}
+
+message FeeItem {
+    string type = 1 [json_name = "type"];
+    string code = 2 [json_name = "code"];
+    string name = 3 [json_name = "name"];
+}

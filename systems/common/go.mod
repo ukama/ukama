@@ -1,10 +1,10 @@
 module github.com/ukama/ukama/systems/common
 
-go 1.18
+go 1.20
 
 replace github.com/ukama/ukama/systems/common => ./
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../messaging/msgClient
+//replace github.com/ukama/ukama/systems/services/msgClient => ../services/msgClient
 
 require (
 	github.com/gin-contrib/cors v1.3.0
@@ -30,10 +30,9 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.12.2
-	github.com/wI2L/fizz v0.18.1
-	github.com/wagslane/go-rabbitmq v0.8.1
+	github.com/wI2L/fizz v0.22.0
+	github.com/wagslane/go-rabbitmq v0.12.4
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/postgres v1.3.5
@@ -78,7 +77,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -88,6 +87,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect

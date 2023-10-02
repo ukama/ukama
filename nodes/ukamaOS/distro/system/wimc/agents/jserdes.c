@@ -14,14 +14,22 @@
 #include "agent.h"
 #include "wimc.h"
 #include "jserdes.h"
-
 #include "utils.h"
-
 #include "agent/jserdes.h"
 
-static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
+#include "usys_mem.h"
+#include "usys_log.h"
 
-/* JSON (de)-serialization functions. */
+static void json_log(json_t *json) {
+
+    char *str = NULL;
+
+    str = json_dumps(json, 0);
+    if (str) {
+        usys_log_debug("json str: %s", str);
+        usys_free(str);
+    }
+}
 
 /*
  * serialize_agent_request -- Serialize Agent request.
@@ -52,51 +60,6 @@ static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
  */
 
 /*
- * serialize_agent_request --
- *
- */
-
-int serialize_agent_request(AgentReq *request, json_t **json) {
-
-  int ret=FALSE;
-  json_t *req=NULL;
-
-  *json = json_object();
-  if (*json == NULL) {
-    return ret;
-  }
-  
-  json_object_set_new(*json, JSON_AGENT_REQUEST, json_object());
-  req = json_object_get(*json, JSON_AGENT_REQUEST);
-
-  if (req==NULL) {
-    return ret;
-  }
-  
-  if (request->type == (ReqType)REQ_REG) {
-    ret = serialize_agent_request_register(request, &req);
-  } else if (request->type == (ReqType)REQ_UPDATE) {
-    ret = serialize_agent_request_update(request, &req);
-  } else if (request->type == (ReqType)REQ_UNREG) {
-    ret = serialize_agent_request_unregister(request, &req);
-  }
-
-  if (ret) {
-    
-    char *str;
-    str = json_dumps(*json, 0);
-
-    if (str) {
-      log_debug("Agent request str: %s", str);
-      free(str);
-    }
-    ret = TRUE;
-  }
-
-  return ret;
-}
-
-/*
  * agent_request -> { type: "register",
  *              type_register: {
  *                      method: "ftp",
@@ -105,31 +68,23 @@ int serialize_agent_request(AgentReq *request, json_t **json) {
  *              }
  */
 
-/*
- * serialize_agent_request_register -- register agent into WIMC.d
- *
- */
-int serialize_agent_request_register(AgentReq *req, json_t **json) {
+bool serialize_agent_register_request(char *method,
+                                      char *url,
+                                      json_t **json) {
 
-  json_t *jreg;
-  Register *reg;
+    json_t   *jreg;
+    Register *reg;
 
-  if (req==NULL && req->reg==NULL) {
-    return FALSE;
-  }
+    *json = json_object();
+    if (*json == NULL) {
+        usys_log_error("Unable to initialize json object");
+        return USYS_FALSE;
+    }
+  
+    json_object_set_new(*json, JSON_METHOD, json_string(method));
+    json_object_set_new(*json, JSON_URL,    json_string(url));
 
-  reg = req->reg;
-
-  json_object_set_new(*json, JSON_TYPE, json_string(AGENT_REQ_TYPE_REG));
-
-  /* Add register object */
-  json_object_set_new(*json, JSON_TYPE_REGISTER, json_object());
-  jreg = json_object_get(*json, JSON_TYPE_REGISTER);
-
-  json_object_set_new(jreg, JSON_METHOD, json_string(reg->method));
-  json_object_set_new(jreg, JSON_AGENT_URL, json_string(reg->url));
-
-  return TRUE;
+    return USYS_TRUE;
 }
 
 /*
@@ -220,104 +175,93 @@ int serialize_agent_request_unregister(AgentReq *req, json_t **json) {
   return TRUE;
 }
 
-/*
- * deserialize_wimc_request --
- *
- */
-int deserialize_wimc_request(WimcReq **request, json_t *json) {
+int serialize_agent_request(AgentReq *request, json_t **json) {
 
-  int ret=FALSE;
-  json_t *jreq=NULL, *jtype=NULL;
+    int ret=FALSE;
+    json_t *req=NULL;
 
-  WimcReq *req = *request;
-
-  /* sanity check. */
-  if (!json) {
-    return FALSE;
-  }
-
-  if (json) {
-    char *str;
-
-    str = json_dumps(json, 0);
-    if (str) {
-      log_debug("Deserializeing JSON: %s", str);
-      free(str);
+    *json = json_object();
+    if (*json == NULL) {
+        return ret;
     }
-  }
   
-  jreq = json_object_get(json, JSON_WIMC_REQUEST);
-  if (jreq == NULL) {
-    return FALSE;
-  }
-    
-  jtype = json_object_get(jreq, JSON_TYPE);
-  if (jtype==NULL) {
-    return FALSE;
-  }
+    json_object_set_new(*json, JSON_AGENT_REQUEST, json_object());
+    req = json_object_get(*json, JSON_AGENT_REQUEST);
 
-  req->type = convert_str_to_type(json_string_value(jtype));
+    if (req==NULL) {
+        return ret;
+    }
+#if 0  
+    if (request->type == (ReqType)REQ_REG) {
+        ret = serialize_agent_request_register(request, &req);
+    } else if (request->type == (ReqType)REQ_UPDATE) {
+        ret = serialize_agent_request_update(request, &req);
+    } else if (request->type == (ReqType)REQ_UNREG) {
+        ret = serialize_agent_request_unregister(request, &req);
+    }
+#endif 
+    json_log(*json);
 
-  if (req->type == (WReqType)WREQ_FETCH) {
-    ret = deserialize_wimc_request_fetch(&req->fetch, jreq);
-  } else if (req->type == (WReqType)WREQ_UPDATE) {
-
-  }
-
-  return ret;
+    return ret;
 }
 
-/*
- * deserialize_wimc_request_fetch --
- *
- */
-static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
+static bool deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
 
-  json_t *jfetch=NULL, *jcontent=NULL, *jObj=NULL;
+    json_t *jfetch   = NULL;
+    json_t *jcontent = NULL;
+    json_t *jObj     = NULL;
 
-  jfetch = json_object_get(json, JSON_TYPE_FETCH);
-  if (jfetch == NULL) {
-    return FALSE;
-  }
+    jfetch = json_object_get(json, JSON_TYPE_FETCH);
+    if (jfetch == NULL) return USYS_FALSE;
 
-  *fetch = (WFetch *)calloc(1, sizeof(WFetch));
-  if (*fetch == NULL) {
-    return FALSE;
-  }
+    *fetch = (WFetch *)calloc(1, sizeof(WFetch));
+    if (*fetch == NULL) return USYS_FALSE;
 
-  jObj = json_object_get(jfetch, JSON_ID);
-  uuid_parse(json_string_value(jObj), (*fetch)->uuid);
+    jObj = json_object_get(jfetch, JSON_ID);
+    uuid_parse(json_string_value(jObj), (*fetch)->uuid);
 
-  jObj = json_object_get(jfetch, JSON_UPDATE_INTERVAL);
-  (*fetch)->interval = json_integer_value(jObj);
+    jObj = json_object_get(jfetch, JSON_UPDATE_INTERVAL);
+    (*fetch)->interval = json_integer_value(jObj);
 
-  jObj = json_object_get(jfetch, JSON_CALLBACK_URL);
-  (*fetch)->cbURL = strdup(json_string_value(jObj));
+    jcontent = json_object_get(jfetch, JSON_CONTENT);
+    if (jcontent == NULL) return USYS_FALSE;
 
-  jcontent = json_object_get(jfetch, JSON_CONTENT);
-  if (jcontent == NULL) {
-    return FALSE;
-  }
-
-  (*fetch)->content = (WContent *)calloc(1, sizeof(WContent));
+    (*fetch)->content = (WContent *)calloc(1, sizeof(WContent));
   
-  jObj = json_object_get(jcontent, JSON_NAME);
-  (*fetch)->content->name = strdup(json_string_value(jObj));
+    jObj = json_object_get(jcontent, JSON_NAME);
+    (*fetch)->content->name = strdup(json_string_value(jObj));
   
-  jObj = json_object_get(jcontent, JSON_TAG);
-  (*fetch)->content->tag = strdup(json_string_value(jObj));
+    jObj = json_object_get(jcontent, JSON_TAG);
+    (*fetch)->content->tag = strdup(json_string_value(jObj));
   
-  jObj = json_object_get(jcontent, JSON_PROVIDER_URL);
-  (*fetch)->content->providerURL = strdup(json_string_value(jObj));
+    jObj = json_object_get(jcontent, JSON_METHOD);
+    (*fetch)->content->method = strdup(json_string_value(jObj));
 
-  jObj = json_object_get(jcontent, JSON_METHOD);
-  (*fetch)->content->method = strdup(json_string_value(jObj));
+    jObj = json_object_get(jcontent, JSON_INDEX_URL);
+    (*fetch)->content->indexURL = strdup(json_string_value(jObj));
 
-  jObj = json_object_get(jcontent, JSON_INDEX_URL);
-  (*fetch)->content->indexURL = strdup(json_string_value(jObj));
+    jObj = json_object_get(jcontent, JSON_STORE_URL);
+    (*fetch)->content->storeURL = strdup(json_string_value(jObj));
 
-  jObj = json_object_get(jcontent, JSON_STORE_URL);
-  (*fetch)->content->storeURL = strdup(json_string_value(jObj));
+    return USYS_TRUE;
+}
 
-  return TRUE;
+bool deserialize_wimc_request(WimcReq **request, json_t *json) {
+
+    json_t *jreq  = NULL;
+    json_t *jtype = NULL;
+
+    if (!json) return USYS_FALSE;
+
+    jreq = json_object_get(json, JSON_WIMC_REQUEST);
+    if (jreq == NULL) return USYS_FALSE;
+
+    jtype = json_object_get(jreq, JSON_TYPE);
+    if (jtype == NULL) return USYS_FALSE;
+
+    if (strcmp(json_string_value(jtype), "fetch") == 0) {
+        return deserialize_wimc_request_fetch(&(*request)->fetch, jreq);
+    }
+
+    return USYS_FALSE;
 }

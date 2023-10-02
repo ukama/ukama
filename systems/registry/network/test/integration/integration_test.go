@@ -4,10 +4,10 @@
 package integration
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 
 	rconf "github.com/num30/config"
-	"github.com/sirupsen/logrus"
 )
 
 var tConfig *TestConfig
@@ -20,11 +20,11 @@ func init() {
 
 	err := reader.Read(tConfig)
 	if err != nil {
-		logrus.Fatalf("Failed to read config: %v", err)
+		log.Fatalf("Failed to read config: %v", err)
 	}
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("Config: %+v\n", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("Config: %+v\n", tConfig)
 }
 
 type TestConfig struct {
@@ -40,7 +40,7 @@ type TestConfig struct {
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 // defer cancel()
 
-// logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+// log.Infoln("Connecting to network ", tConfig.ServiceHost)
 
 // conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 // if err != nil {
@@ -213,7 +213,7 @@ type TestConfig struct {
 // }
 
 // func CreateNetworkClient() (*grpc.ClientConn, pb.NetworkServiceClient, error) {
-// logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+// log.Infoln("Connecting to network ", tConfig.ServiceHost)
 
 // context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 // defer cancel()
@@ -245,7 +245,7 @@ type TestConfig struct {
 // func deleteNetworks(t *testing.T, c pb.NetworkServiceClient, org string, network string) {
 // t.Helper()
 
-// logrus.Infoln("Deleting network ", network)
+// log.Infoln("Deleting network ", network)
 
 // ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 // defer cancel()

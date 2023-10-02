@@ -10,13 +10,8 @@
 #ifndef WIMC_NETWORK_H
 #define WIMC_NETWORK_H
 
-int init_frameworks(struct _u_instance *adminInst,
-		    struct _u_instance *clientInst, int adminPort,
-		    int clientPort);
-void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance);
-void setup_client_endpoints(WimcCfg *cfg, struct _u_instance *instance);
-int start_framework(struct _u_instance *instance);
-int start_web_services(WimcCfg *cfg, struct _u_instance *adminInst,
-		       struct _u_instance *clientInst);
+#include "wimc.h"
+
+int start_web_service(Config *config, UInst *serviceInst);
 
 #endif /* WIMC_NETWORK_H */

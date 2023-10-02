@@ -14,17 +14,20 @@ import (
 )
 
 type SimPoolServer struct {
+	orgName        string
 	simRepo        db.SimRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimServiceServer
 }
 
-func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
+func NewSimPoolServer(orgName string, simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{
+		orgName:        orgName,
 		simRepo:        simRepo,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
 }
 
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -63,6 +66,22 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 	resp := utils.PoolStats(sim)
 
 	return resp, nil
+}
+
+func (p *SimPoolServer) GetSims(ctx context.Context, req *pb.GetSimsRequest) (*pb.GetSimsResponse, error) {
+	logrus.Infof("GetSims : %v ", req.GetSimType())
+
+	sims, err := p.simRepo.GetSims(db.ParseType(req.SimType))
+	if err != nil {
+		logrus.Error("error getting a sim pool stats" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+	}
+	resp := dbSimsToPbSim(sims)
+
+	return &pb.GetSimsResponse{
+		Sims: resp,
+	}, nil
 }
 
 func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
@@ -132,5 +151,6 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		UpdatedAt:      p.UpdatedAt.String(),
 		IsPhysical:     p.IsPhysical,
 		QrCode:         p.QrCode,
+		IsFailed:       p.IsFailed,
 	}
 }

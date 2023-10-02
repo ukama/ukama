@@ -62,7 +62,7 @@ type SimByIccidReq struct {
 	Iccid string `example:"8910300000003540855" path:"iccid" validate:"required"`
 }
 
-type SimPoolStatByTypeReq struct {
+type SimPoolTypeReq struct {
 	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
 }
 

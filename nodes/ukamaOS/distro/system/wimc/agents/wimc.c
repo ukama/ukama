@@ -17,69 +17,21 @@
 
 #include "wimc.h"
 #include "err.h"
+#include "http_status.h"
 #include "common/utils.h"
 #include "agent/jserdes.h"
 
-#define AGENT_EP "container/"
-#define WIMC_EP  "admin/agent/"
+#include "usys_types.h"
+#include "usys_log.h"
+
+#define AGENT_CB_EP "capp/"
+#define WIMC_EP     "v1/agents"
 
 struct Response {
-  char *buffer;
-  size_t size;
+    char *buffer;
+    size_t size;
 };
 
-/* Function def. */
-static char *create_cb_url(char *port);
-static char *create_wimc_url(char *url);
-static void cleanup_agent_request(AgentReq *request);
-static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      uuid_t *uuid, TStats *stats);
-static size_t response_callback(void *contents, size_t size, size_t nmemb,
-				void *userp);
-static void process_response_from_wimc(ReqType reqType, long statusCode,
-				       void *resp, uuid_t *uuid);
-static long send_request_to_wimc(ReqType reqType, char *wimcURL, json_t *json,
-				 uuid_t *uuid);
-
-/*
- * create_cb_url --
- */
-static char *create_cb_url(char *port) {
-
-  char *cbURL=NULL;
-  
-  if (port==NULL) {
-    return NULL;
-  }
-
-  cbURL = (char *)malloc(WIMC_MAX_URL_LEN);
-  if (cbURL) {
-    sprintf(cbURL, "http://localhost:%s/%s", port, AGENT_EP);
-  }
-
-  return cbURL;
-}
-
-static char *create_wimc_url(char *url) {
-
-  char *wimcURL=NULL;
-
-  if (!url) {
-    return wimcURL;
-  }
-
-  wimcURL = (char *)malloc(WIMC_MAX_URL_LEN);
-  if (wimcURL) {
-    sprintf(wimcURL, "%s/%s", url, WIMC_EP);
-  }
-	    
-  return wimcURL;
-}
-
-/* 
- * cleanup_agent_request --
- *
- */
 static void cleanup_agent_request(AgentReq *request) {
 
   if (request->reg) {
@@ -107,11 +59,6 @@ static void cleanup_agent_request(AgentReq *request) {
   free(request);
 }
 
-/*
- * get_task_status --
- *
- */
-
 static int get_task_status(TaskStatus state) {
 
   if (state == (TaskStatus)WSTATUS_PEND) {
@@ -126,100 +73,89 @@ static int get_task_status(TaskStatus state) {
   }
 }
 
-/*
- * create_agent_request --
- *
- */
-static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      uuid_t *uuid, TStats *stats) {
+#if 0
+static AgentReq *create_agent_request(ReqType type,
+                                      int method,
+                                      char *cbURL,
+                                      uuid_t *uuid,
+                                      TStats *stats) {
 
-  AgentReq *request=NULL;
-  Register *reg=NULL;
-  UnRegister *unreg=NULL;
-  Update *update=NULL;
+    AgentReq   *request=NULL;
+    Register   *reg=NULL;
+    UnRegister *unreg=NULL;
+    Update     *update=NULL;
   
-  request = (AgentReq *)calloc(1, sizeof(AgentReq));
-  if (request==NULL) {
-    goto done;
-  }
-
-  if (type == (ReqType)REQ_REG) {
-    
-    reg = (Register *)malloc(sizeof(Register));
-    if (!reg) {
-      goto done;
+    request = (AgentReq *)calloc(1, sizeof(AgentReq));
+    if (request == NULL) {
+        usys_log_error("Unable to allocate memory: %ld", sizeof(AgentReq));
+        return NULL;
     }
-    
-    request->type = REQ_REG;
-    
-    reg->method = strdup(convert_method_to_str(method));
-    reg->url = strdup(cbURL);
-    
-    /* Sanity check. */
-    if (!strlen(reg->method) || reg->url==NULL) {
-      goto done;
-    }
-    
-    request->reg = reg;
-  } else if (type == (ReqType)REQ_UNREG) {
 
-    unreg = (UnRegister *)malloc(sizeof(UnRegister));
-    if (!unreg) {
-      goto done;
-    }	 
+    if (type == (ReqType)REQ_REG) {
+    
+        reg = (Register *)malloc(sizeof(Register));
+        if (reg == NULL) {
+            usys_log_error("Unable to allocate memory: %ld", sizeof(Register));
+            goto done;
+        }
 
-    uuid_copy(unreg->uuid, *uuid);
+        request->type = REQ_REG;
+        reg->method   = strdup(convert_method_to_str(method));
+        reg->url      = strdup(cbURL);
 
-    request->type = REQ_UNREG;
-    request->unReg = unreg;
+        request->reg = reg;
+    } else if (type == (ReqType)REQ_UNREG) {
+
+        unreg = (UnRegister *)malloc(sizeof(UnRegister));
+        if (unreg == NULL) {
+           usys_log_error("Unable to allocate memory: %ld", sizeof(UnRegister));
+           goto done;
+        }
+
+        request->type = REQ_UNREG;
+        uuid_copy(unreg->uuid, *uuid);
+
+        request->unReg = unreg;
   } else if (type == (ReqType)REQ_UPDATE) {
 
-    update = (Update *)calloc(1, sizeof(Update));
-    if (!update) {
-      goto done;
+        update = (Update *)calloc(1, sizeof(Update));
+        if (update == NULL) {
+            usys_log_error("Unable to allocate memory: %ld", sizeof(Update));
+            goto done;
+        }
+
+        request->type = REQ_UPDATE;
+       
+        uuid_copy(update->uuid, *uuid);
+        update->totalKB       = stats->total_bytes / 1024; /* in kilobytes */
+        update->transferKB    = stats->total_bytes / 1024;
+        update->transferState = get_task_status(stats->status);
+
+        if (stats->stop == TRUE) {
+            update->voidStr = strdup(stats->statusStr);
+        } else {
+            update->voidStr = strdup("");
+        }
+
+        request->update = update;
     }
 
-    uuid_copy(update->uuid, *uuid);
-    update->totalKB = stats->total_bytes / 1024; /* in kilobytes */
-    update->transferKB = stats->total_bytes / 1024;
-    update->transferState = get_task_status(stats->status);
-
-    if (stats->stop == TRUE) {
-      update->voidStr = strdup(stats->statusStr);
-    } else {
-      update->voidStr = strdup("");
+    return request;
+  
+done:
+    if (reg) {
+        usys_free(reg->url);
+        usys_free(reg->method);
+        usys_free(reg);
     }
 
-    request->type = REQ_UPDATE;
-    request->update = update;
-  }
-
-  return request;
-  
- done:
- if (reg) {
-   free(reg->url);
-   free(reg->method);
-   free(reg);
- }
-
- if (unreg) {
-   free(unreg);
- }
-  
- if (request) {
-   free(request);
- }
-
-
+    usys_free(unreq);
+    usys_free(request);
  
- return NULL;
+    return NULL;
 }
+#endif
 
-/*
- * response_callback --
- *
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp) {
 
@@ -241,164 +177,149 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
   return realsize;
 }
 
-/*
- * process_response_from_wimc --
- *
- */
-static void process_response_from_wimc(ReqType reqType, long statusCode,
-				       void *resp, uuid_t *uuid) {
+static long send_request_to_wimc(int reqType,
+                                 char *wimcURL,
+                                 json_t *json) {
 
-  struct Response *response;
-
-  response = (struct Response *)resp;
-  
-  if (reqType == (ReqType)REQ_REG) {
-    if (statusCode == 200) { /* Success, response has ID. */
-      uuid_parse(response->buffer, *uuid);
-      log_debug("Registration successful. Status code: 200 Recevied ID: %s",
-		response->buffer);
-    } else if (statusCode == 400) { /* Failure. Report. */
-      log_debug("Registration unsuccessful. Status Code: 400 Response: %s",
-		response->buffer);
-    }
-  } else if (reqType == (ReqType)REQ_UNREG) {
+    long code=0;
+    char *jsonStr = NULL;
+    CURL *curl = NULL;
+    CURLcode res;
     
-  }
-
-
-  return;
-}
-
-/*
- * send_request_to_wimc -- 
- *
- */
-static long send_request_to_wimc(ReqType reqType, char *wimcURL,
-				 json_t *json, uuid_t *uuid) {
-
-  long code=0;
-  CURL *curl=NULL;
-  CURLcode res;
-  char *json_str;
-  struct curl_slist *headers=NULL;
-  struct Response response;
+    struct curl_slist *headers=NULL;
+    struct Response response;
   
-  curl_global_init(CURL_GLOBAL_ALL);
-  curl = curl_easy_init();
-  if (curl == NULL) {
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    if (curl == NULL) return 0;
+
+    response.buffer = malloc(1);
+    response.size   = 0;
+    if (json) jsonStr = json_dumps(json, 0);
+  
+    /* Add to the header. */
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charset: utf-8");
+
+    curl_easy_setopt(curl, CURLOPT_URL, wimcURL);
+
+    if (reqType == REQUEST_UPDATE) {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+    } else if (reqType == REQUEST_UNREGISTER) {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+    } else if (reqType == REQUEST_REGISTER) {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+    }
+
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    if (jsonStr) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonStr);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "agent/0.1");
+
+    res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        usys_log_error("Error sending request to WIMC at URL %s: %s",
+                       wimcURL,
+                       curl_easy_strerror(res));
+    } else {
+        /* get status code. */
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    }
+
+    usys_free(jsonStr);
+    usys_free(response.buffer);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+    
     return code;
-  }
-
-  response.buffer = malloc(1);
-  response.size   = 0;
-  json_str = json_dumps(json, 0);
-  
-  /* Add to the header. */
-  headers = curl_slist_append(headers, "Accept: application/json");
-  headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers = curl_slist_append(headers, "charset: utf-8");
-
-  curl_easy_setopt(curl, CURLOPT_URL, wimcURL);
-
-  if (reqType == REQ_UPDATE) {
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-  } else {
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-  }
-
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "agent/0.1");
-
-  res = curl_easy_perform(curl);
-
-  if (res != CURLE_OK) {
-    log_error("Error sending request to WIMC at URL %s: %s", wimcURL,
-	      curl_easy_strerror(res));
-  } else {
-    /* get status code. */
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    process_response_from_wimc(reqType, code, &response, uuid);
-  }
-
-  free(json_str);
-  free(response.buffer);
-  curl_slist_free_all(headers);
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
-
-  return code;
 }
 
-/*
- * communicate_with_wimc -- Function agent uses to communicate with the wimc.d
- *
- */
+long communicate_with_wimc(int reqType,
+                           char *wimcURL,
+                           char *cbURL,
+                           void *data) {
 
-long communicate_with_wimc(ReqType reqType, char *url, char *port,
-			   int method, uuid_t *uuid, void *data) {
+    int ret;
+    long code=0;
 
-  int ret;
-  long code=0;
-  char *cbURL=NULL, *wimcURL=NULL;
-  AgentReq *request=NULL;
-  json_t *json=NULL;
-  TStats *stats=NULL;
+    json_t   *json=NULL;
+    TStats   *stats=NULL;
+    char     *method = NULL;
 
-  /* Sanity check. Method can be NULL; only for REQ_REG */
-  if (reqType == (ReqType)REQ_UPDATE) {
-    if (!url && !data) {
-      return code;
+    if (reqType == REQUEST_UPDATE) {
+        stats = (TStats *)data;
+    } else if (reqType == REQUEST_REGISTER) {
+        method = (char *)data;
+
+        if (!serialize_agent_register_request(method, cbURL, &json)) {
+            usys_log_error("Unable to serialize register request");
+            return USYS_FALSE;
+        }
     }
 
-    wimcURL = strdup(url);
-    stats = (TStats *)data;
-  } else if (reqType == (ReqType)REQ_REG) {
-    if (!url && !port) {
-      return code;
+    code = send_request_to_wimc(reqType, wimcURL, json);
+    if (code == HttpStatus_OK) {
+        usys_log_debug("Communication with wimc: %s code: %d", 
+                       wimcURL, code);
+    } else {
+        usys_log_error("Communication with WIMC %s: failed. Code: %d",
+                       wimcURL, code);
     }
 
-    cbURL   = create_cb_url(port);
-    wimcURL = create_wimc_url(url);
+    if (json) json_decref(json);
+    
+    return code;
+}
 
-    if (!cbURL || !wimcURL) {
-      goto done;
+int register_agent_with_wimc(char *url,
+                             char *servicePort,
+                             char *agentMethod,
+                             uuid_t uuid) {
+
+    char idStr[36+1]               = {0};
+    char cbURL[WIMC_MAX_URL_LEN]   = {0};
+    char wimcURL[WIMC_MAX_URL_LEN] = {0};
+
+    uuid_unparse(uuid, &idStr[0]);
+
+    /* setup cbURL and wimcURL EP */
+    sprintf(cbURL,   "http://localhost:%s/v1/%s", servicePort, AGENT_CB_EP);
+    sprintf(wimcURL, "%s/%s/%s", url, WIMC_EP, idStr);
+
+    if (communicate_with_wimc(REQUEST_REGISTER,
+                              wimcURL,
+                              cbURL,
+                              agentMethod) != HttpStatus_OK) {
+        usys_log_error("Error registering agent with WIMC");
+        return USYS_FALSE;
     }
-  }
 
-  request = create_agent_request(reqType, method, cbURL, uuid, stats);
-  if (!request) {
-    goto done;
-  }
+    usys_log_debug("Agent registerd");
+    return USYS_TRUE;
+}
 
-  ret = serialize_agent_request(request, &json);
-  if (!ret) {
-    goto done;
-  }
+int unregister_agent_with_wimc(char *url,
+                               uuid_t uuid) {
 
-  code = send_request_to_wimc(reqType, wimcURL, json, uuid);
-  if (code == 200) {
-    log_debug("WIMC.d %s: success. URL: %s Return code: %d", 
-	      convert_type_to_str(reqType), wimcURL, code);
-  } else {
-    log_error("WIMC.d %s: failed. URL: %s Return code: %d",
-	      convert_type_to_str(reqType), wimcURL, code);
-  }
+    char idStr[36+1]               = {0};
+    char wimcURL[WIMC_MAX_URL_LEN] = {0};
 
- done:
+    uuid_unparse(uuid, &idStr[0]);
+    sprintf(wimcURL, "%s/%s/%s", url, WIMC_EP, idStr);
 
-  json_decref(json);
-  cleanup_agent_request(request);
-  if (cbURL) {
-    free(cbURL);
-  }
+    if (communicate_with_wimc(REQUEST_UNREGISTER,
+                              wimcURL,
+                              NULL,
+                              NULL) != HttpStatus_OK) {
+        usys_log_error("Error un-registering agent with WIMC");
+        return USYS_FALSE;
+    }
 
-  if (wimcURL) {
-    free(wimcURL);
-  }
-
-  return code;
+    usys_log_debug("Agent de-registerd");
+    return USYS_TRUE;
 }

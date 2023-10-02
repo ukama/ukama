@@ -9,7 +9,7 @@
 
 syntax = "proto2";
 
-option go_package = "pb/gen/ukamaos/mesh";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukamaos/mesh";
 
 message Link {
         required string nodeId = 1; // NodeID of the device.

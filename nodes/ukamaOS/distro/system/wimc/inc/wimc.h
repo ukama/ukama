@@ -17,6 +17,28 @@
 
 #include "agent.h"
 
+#define SERVICE_NAME       "wimc.d"
+#define WIMC_VERSION       "0.0.1"
+
+#define EP_BS              "/"
+#define REST_API_VERSION   "v1"
+#define URL_PREFIX         EP_BS REST_API_VERSION
+#define API_RES_EP(RES)    EP_BS RES
+
+#define ENV_CLIENT_PORT "WIMC_CLIENT_PORT"
+#define ENV_ADMIN_PORT  "WMIN_ADMIN_PORT"
+#define ENV_DB_FILE     "WIMC_DB"
+#define ENV_UKAMA_HUB   "WIMC_UKAMA_HUB"
+#define DEF_LOG_LEVEL   "TRACE"
+
+#define WIMC_FLAG_CREATE_DB 1
+
+#define DEF_HUB_URL       "http://localhost:8001/"
+#define DEF_DB_FILE       "test.db"
+#define DEF_SERVICE_PORT  "8087"
+#define DEF_LOG_LEVEL     "TRACE"
+
+
 #define WIMC_REQ_TYPE_FETCH  "fetch"
 #define WIMC_REQ_TYPE_UPDATE "update"
 #define WIMC_REQ_TYPE_CANCEL "cancel"
@@ -51,10 +73,9 @@
 #define WIMC_EP_CLIENT   "/content/containers/*"
 #define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_TASKS    "/content/tasks"
-#define WIMC_EP_ADMIN    "/admin"
-#define WIMC_EP_AGENT    "/admin/agent"
-#define WIMC_EP_HUB_CAPPS    "capps"
-#define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
+
+#define WIMC_EP_HUB_CAPPS    "v1/capps"
+#define WIMC_EP_AGENT_UPDATE "v1/agents"
 
 #define WIMC_MAX_NAME_LEN   256
 #define WIMC_MAX_PATH_LEN   256
@@ -72,7 +93,7 @@
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
 #define WIMC_REQ_TYPE_PROVIDER_STR "provider"
 
-#define MAX_AGENTS 20
+#define MAX_AGENTS       10
 #define DEFAULT_INTERVAL 10 /* 10 seconds. */
 
 #define TRUE 1
@@ -170,7 +191,6 @@ typedef struct {
   char *name;        /* to fetch. */
   char *tag;         /* to fetch. */
   char *method;      /* Method to use with provider. */
-  char *providerURL; /* service provider URL. */
   char *indexURL;    /* index URL for CA */
   char *storeURL;    /* chunk store */
 } WContent;
@@ -250,14 +270,20 @@ typedef struct tStats {
 
 typedef struct {
 
-  char    *clientPort;
+  char    *servicePort;
   char    *dbFile;
-  char    *adminPort;
   char    *hubURL;     /* Hub URL */
   sqlite3 *db;         /* SQLite3 db for various stats */
   int     maxAgents;   /* Max. number of agents allowed. */
   Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
   WTasks  **tasks;     /* Ptr to Tasks, mostly for http cb */
-} WimcCfg;
+} Config;
+
+typedef struct _u_instance  UInst;
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+typedef json_t              JsonObj;
+typedef json_error_t        JsonErrObj;
 
 #endif /* WIMC_H */

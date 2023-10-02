@@ -29,7 +29,6 @@ void clear_tasks(WTasks **tasks) {
       free(content->name);
       free(content->tag);
       free(content->method);
-      free(content->providerURL);
     }
 
     free(curr->content);
@@ -61,7 +60,6 @@ static void copy_contents(WContent *src, WContent *dest) {
   dest->name        = strndup(src->name, strlen(src->name));
   dest->tag         = strndup(src->tag, strlen(src->tag));
   dest->method      = strndup(src->method, strlen(src->method));
-  dest->providerURL = strndup(src->providerURL, strlen(src->providerURL));
 }
 
 /*
@@ -148,7 +146,6 @@ static void free_task_element(WTasks *task) {
     free(content->name);
     free(content->tag);
     free(content->method);
-    free(content->providerURL);
   }
 
   free(task->content);

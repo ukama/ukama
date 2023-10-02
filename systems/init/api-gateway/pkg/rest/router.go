@@ -31,6 +31,7 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
@@ -56,8 +57,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
-
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -67,7 +67,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -77,6 +77,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
@@ -88,27 +89,44 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
-	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "API gateway", "Init system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
+		orgs := auth.Group(org, "Orgs", "looking for orgs credentials")
+		orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
+		orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+		orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
 
-	orgs := v1.Group(org, "Orgs", "looking for orgs credentials")
-	orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
-	orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
-	orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
+		nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
+		nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nodes.PUT("/:node", formatDoc("Add Node to Org", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+		nodes.DELETE("/:node", formatDoc("Delete Node from Org", ""), tonic.Handler(r.deleteNodeHandler, http.StatusOK))
 
-	nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
-	nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-	nodes.PUT("/:node", formatDoc("Add Node to Org", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
-	nodes.DELETE("/:node", formatDoc("Delete Node from Org", ""), tonic.Handler(r.deleteNodeHandler, http.StatusOK))
-
-	systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
-	systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
-	systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
-	systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
-	systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
+		systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
+		systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
+		systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
+		systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
+		systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -119,18 +137,15 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pb.GetOrgResponse, error) {
-	org := c.Param("org")
-
 	return r.clients.l.GetOrg(&pb.GetOrgRequest{
-		OrgName: org,
+		OrgName: req.OrgName,
 	})
 }
 
 func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgResponse, error) {
-	org := c.Param("org")
-
 	return r.clients.l.AddOrg(&pb.AddOrgRequest{
-		OrgName:     org,
+		OrgName:     req.OrgName,
+		OrgId:       req.OrgId,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 	})
@@ -138,52 +153,40 @@ func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgRe
 }
 
 func (r *Router) patchOrgHandler(c *gin.Context, req *UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
-	org := c.Param("org")
 
 	return r.clients.l.UpdateOrg(&pb.UpdateOrgRequest{
-		OrgName:     org,
+		OrgName:     req.OrgName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 	})
 }
 
 func (r *Router) putNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.AddNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
-
 	return r.clients.l.AddNodeForOrg(&pb.AddNodeRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
-
 	return r.clients.l.GetNodeForOrg(&pb.GetNodeForOrgRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
 
 	return r.clients.l.DeleteNodeForOrg(&pb.DeleteNodeRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.AddSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
-
 	return r.clients.l.AddSystemForOrg(&pb.AddSystemRequest{
-		OrgName:     org,
-		SystemName:  sys,
+		OrgName:     req.OrgName,
+		SystemName:  req.SysName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 		Port:        req.Port,
@@ -192,12 +195,10 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 }
 
 func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
 
 	return r.clients.l.UpdateSystemForOrg(&pb.UpdateSystemRequest{
-		OrgName:     org,
-		SystemName:  sys,
+		OrgName:     req.OrgName,
+		SystemName:  req.SysName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 		Port:        req.Port,
@@ -205,21 +206,16 @@ func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*
 }
 
 func (r *Router) getSystemHandler(c *gin.Context, req *GetSystemRequest) (*pb.GetSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
-
 	return r.clients.l.GetSystemForOrg(&pb.GetSystemRequest{
-		OrgName:    org,
-		SystemName: sys,
+		OrgName:    req.OrgName,
+		SystemName: req.SysName,
 	})
 }
 
 func (r *Router) deleteSystemHandler(c *gin.Context, req *DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
 
 	return r.clients.l.DeleteSystemForOrg(&pb.DeleteSystemRequest{
-		OrgName:    org,
-		SystemName: sys,
+		OrgName:    req.OrgName,
+		SystemName: req.SysName,
 	})
 }

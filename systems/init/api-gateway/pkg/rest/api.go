@@ -2,6 +2,7 @@ package rest
 
 type AddOrgRequest struct {
 	OrgName     string `path:"org" validate:"required"`
+	OrgId       string `json:"org_id" validate:"required"`
 	Ip          string `json:"ip" validate:"required"`
 	Certificate string `json:"certificate" validate:"required"`
 }

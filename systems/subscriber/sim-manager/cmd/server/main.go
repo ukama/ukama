@@ -23,6 +23,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -88,7 +89,7 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -102,8 +103,15 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
 	}
+	nucleusP := providers.NewNetworkClientProvider(serviceConfig.NetworkHost, serviceConfig.DebugMode)
 
+
+	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
+	if err != nil {
+		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
+	}
 	simManagerServer := server.NewSimManagerServer(
+		serviceConfig.OrgName,
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
 		adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent, serviceConfig.Timeout, pkg.IsDebugMode),
@@ -112,9 +120,13 @@ func runGrpcServer(gormDB sql.Db) {
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
 		serviceConfig.Key,
 		mbClient,
+		serviceConfig.Org,
+		serviceConfig.PushMetricHost,
+		notificationClient,
+		nucleusP,
 	)
 
-	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)
+	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 

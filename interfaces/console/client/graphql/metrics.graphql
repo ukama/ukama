@@ -1,0 +1,49 @@
+# Metrics Query
+
+query GetLatestMetric($data: GetLatestMetricInput!) {
+  getLatestMetric(data: $data) {
+    env
+    nodeid
+    type
+    value
+  }
+}
+
+query GetMetricRange($data: GetMetricRangeInput!) {
+  getMetricRange(data: $data) {
+    env
+    nodeid
+    type
+    values
+  }
+}
+
+query GetNodeRangeMetric($data: GetMetricRangeInput!) {
+  getNodeRangeMetric(data: $data) {
+    env
+    type
+    nodeid
+    values
+  }
+}
+
+subscription MetricRange(
+  $nodeId: String!
+  $orgId: String!
+  $type: String!
+  $userId: String!
+  $from: Float!
+) {
+  getMetricRangeSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    env
+    nodeid
+    type
+    value
+  }
+}

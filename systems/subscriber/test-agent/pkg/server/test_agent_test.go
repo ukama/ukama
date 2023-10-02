@@ -12,6 +12,115 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 )
 
+func TestTestAgentServer_BindSim(t *testing.T) {
+	t.Run("SimFound", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			iccid  = "b8f04217beabf6a19e7eb5b3"
+			imsi   = "eabf6a19e7eb5b3"
+			status = "inactive"
+		)
+
+		store := &mocks.Storage{}
+
+		store.On("Get", iccid).Return(
+			&storage.SimInfo{
+				Iccid:  iccid,
+				Imsi:   imsi,
+				Status: status,
+			}, nil).Once()
+
+		s := server.NewTestAgentServer(store)
+
+		resp, err := s.BindSim(context.TODO(), &pb.BindSimRequest{
+			Iccid: iccid})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		store.AssertExpectations(t)
+	})
+
+	t.Run("SimUnknownErrorOnGet", func(t *testing.T) {
+		t.Parallel()
+
+		const iccid = "b8f04217beabf6a19e7eb5b3"
+
+		store := &mocks.Storage{}
+
+		store.On("Get", iccid).Return(nil, storage.ErrInternal).Once()
+
+		s := server.NewTestAgentServer(store)
+
+		resp, err := s.BindSim(context.TODO(), &pb.BindSimRequest{
+			Iccid: iccid})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		store.AssertExpectations(t)
+	})
+
+	t.Run("SimNotFoundAndNoErrorOnCreate", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			iccid  = "b8f04217beabf6a19e7eb5b3"
+			imsi   = "eabf6a19e7eb5b3"
+			status = "inactive"
+		)
+
+		store := &mocks.Storage{}
+
+		sim := &storage.SimInfo{
+			Iccid:  iccid,
+			Imsi:   imsi,
+			Status: status,
+		}
+
+		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
+		store.On("Put", iccid, sim).Return(nil).Once()
+
+		s := server.NewTestAgentServer(store)
+
+		resp, err := s.BindSim(context.TODO(), &pb.BindSimRequest{
+			Iccid: iccid})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		store.AssertExpectations(t)
+	})
+
+	t.Run("SimNotFoundAndErrorOnCreate", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			iccid  = "b8f04217beabf6a19e7eb5b3"
+			imsi   = "eabf6a19e7eb5b3"
+			status = "inactive"
+		)
+
+		store := &mocks.Storage{}
+
+		sim := &storage.SimInfo{
+			Iccid:  iccid,
+			Imsi:   imsi,
+			Status: status,
+		}
+
+		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
+		store.On("Put", iccid, sim).Return(storage.ErrInternal).Once()
+
+		s := server.NewTestAgentServer(store)
+
+		resp, err := s.BindSim(context.TODO(), &pb.BindSimRequest{
+			Iccid: iccid})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		store.AssertExpectations(t)
+	})
+}
+
 func TestTestAgentServer_GetSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		t.Parallel()

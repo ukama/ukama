@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 
 	"google.golang.org/grpc/codes"
@@ -19,23 +20,43 @@ import (
 	"google.golang.org/grpc"
 )
 
-func TestUploadBaseRates(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+type TestConfig struct {
+	ServiceHost string        `default:"localhost:9090"`
+	Queue       *config.Queue `default:"{}"`
+}
+
+var tConfig *TestConfig
+
+func CreateBaseRateClient() (*grpc.ClientConn, pb.BaseRatesServiceClient, error) {
+	log.Infoln("Connecting to BaseRate service ", tConfig.ServiceHost)
+	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	c := pb.NewBaseRatesServiceClient(conn)
+	return conn, c, nil
+}
+
+func Test_UploadBaseRate(t *testing.T) {
+
+	// connect to Grpc service
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	// set up connection to server
-	conn, err := grpc.DialContext(ctx, "localhost:9090", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-
-	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
-	}
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
+	conn, c, err := CreateBaseRateClient()
 	defer conn.Close()
-
-	client := pb.NewBaseRatesServiceClient(conn)
+	if err != nil {
+		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+		return
+	}
 
 	// test data
 	fileURL := "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv"
-	effectiveAt := "2023-03-01T00:00:00Z"
+	effectiveAt := "2023-04-11T07:20:50.52Z"
 	simType := "ukama_data"
 
 	// create request
@@ -44,7 +65,8 @@ func TestUploadBaseRates(t *testing.T) {
 		EffectiveAt: effectiveAt,
 		SimType:     simType,
 	}
-	res, err := client.UploadBaseRates(ctx, req)
+
+	res, err := c.UploadBaseRates(ctx, req)
 	if err != nil {
 		s, ok := status.FromError(err)
 		if ok && s.Code() == codes.InvalidArgument {

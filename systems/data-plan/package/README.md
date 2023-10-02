@@ -1,92 +1,47 @@
 # Protocol Documentation
-
 <a name="top"></a>
 
 ## Table of Contents
 
-- [PackagesService](#ukama.data_plan.package.v1.PackagesService)
+
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
-- [pb/package.proto](#pb/package.proto)
-  - [AddPackageRequest Messages](#ukama.data_plan.package.v1.AddPackageRequest)
-  - [AddPackageResponse Messages](#ukama.data_plan.package.v1.AddPackageResponse)
-  - [DeletePackageRequest Messages](#ukama.data_plan.package.v1.DeletePackageRequest)
-  - [DeletePackageResponse Messages](#ukama.data_plan.package.v1.DeletePackageResponse)
-  - [GetByOrgPackageRequest Messages](#ukama.data_plan.package.v1.GetByOrgPackageRequest)
-  - [GetByOrgPackageResponse Messages](#ukama.data_plan.package.v1.GetByOrgPackageResponse)
-  - [GetPackageRequest Messages](#ukama.data_plan.package.v1.GetPackageRequest)
-  - [GetPackageResponse Messages](#ukama.data_plan.package.v1.GetPackageResponse)
-  - [Package Messages](#ukama.data_plan.package.v1.Package)
-  - [UpdatePackageRequest Messages](#ukama.data_plan.package.v1.UpdatePackageRequest)
-  - [UpdatePackageResponse Messages](#ukama.data_plan.package.v1.UpdatePackageResponse)
+ - [](#)
+  
+
+ - [PackagesService](#ukama.data_plan.package.v1.PackagesService)
+- [Directory structure](#directory-structure)
+- [How to use?](#how-to)
+ - [package.proto](#package.proto)
+   - [AddPackageRequest Messages](#ukama.data_plan.package.v1.AddPackageRequest)
+   - [AddPackageResponse Messages](#ukama.data_plan.package.v1.AddPackageResponse)
+   - [DeletePackageRequest Messages](#ukama.data_plan.package.v1.DeletePackageRequest)
+   - [DeletePackageResponse Messages](#ukama.data_plan.package.v1.DeletePackageResponse)
+   - [GetByOrgPackageRequest Messages](#ukama.data_plan.package.v1.GetByOrgPackageRequest)
+   - [GetByOrgPackageResponse Messages](#ukama.data_plan.package.v1.GetByOrgPackageResponse)
+   - [GetPackageRequest Messages](#ukama.data_plan.package.v1.GetPackageRequest)
+   - [GetPackageResponse Messages](#ukama.data_plan.package.v1.GetPackageResponse)
+   - [Package Messages](#ukama.data_plan.package.v1.Package)
+   - [PackageMarkup Messages](#ukama.data_plan.package.v1.PackageMarkup)
+   - [PackageRates Messages](#ukama.data_plan.package.v1.PackageRates)
+   - [UpdatePackageRequest Messages](#ukama.data_plan.package.v1.UpdatePackageRequest)
+   - [UpdatePackageResponse Messages](#ukama.data_plan.package.v1.UpdatePackageResponse)
   
 - [Scalar Value Types](#scalar-value-types)
 
-<a name="pb/package.proto"></a>
+
+
+<a name=""></a>
 <p align="right"><a href="#top">Top</a></p>
 
-<a name="ukama.data_plan.package.v1.PackagesService"></a>
 
-# PackagesService
 
-Defines the service for packages  operations
-
-## RPC Functions
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| Get | [GetPackageRequest](#ukama.data_plan.package.v1.GetPackageRequest) | [GetPackageResponse](#ukama.data_plan.package.v1.GetPackageRequest) |  |
-| Add | [AddPackageRequest](#ukama.data_plan.package.v1.AddPackageRequest) | [AddPackageResponse](#ukama.data_plan.package.v1.AddPackageRequest) |  |
-| Delete | [DeletePackageRequest](#ukama.data_plan.package.v1.DeletePackageRequest) | [DeletePackageResponse](#ukama.data_plan.package.v1.DeletePackageRequest) |  |
-| Update | [UpdatePackageRequest](#ukama.data_plan.package.v1.UpdatePackageRequest) | [UpdatePackageResponse](#ukama.data_plan.package.v1.UpdatePackageRequest) |  |
-| GetByOrg | [GetByOrgPackageRequest](#ukama.data_plan.package.v1.GetByOrgPackageRequest) | [GetByOrgPackageResponse](#ukama.data_plan.package.v1.GetByOrgPackageRequest) |  |
 
 <a name="#directory-structure"></a>
 
 ## Directory structure
 
-      ├── Dockerfile
-      ├── Int.Dockerfile
-      ├── Makefile
-      ├── bin
-      │      ├── integration
-      │      ├── package
-      ├── cmd
-      │      ├── server
-      │      │      ├── main.go
-      │      ├── version
-      │      │      ├── version.go
-      ├── go.mod
-      ├── go.sum
-      ├── mocks
-      │      ├── PackageRepo.go
-      ├── pb
-      │      ├── gen
-      │      │      ├── mocks
-      │      │      │      ├── PackagesServiceClient.go
-      │      │      │      ├── PackagesServiceServer.go
-      │      │      │      ├── UnsafeEventNotificationServiceServer.go
-      │      │      │      ├── UnsafePackagesServiceServer.go
-      │      │      ├── package.pb.go
-      │      │      ├── package.validator.pb.go
-      │      │      ├── package_grpc.pb.go
-      │      ├── package.proto
-      ├── pkg
-      │      ├── config.go
-      │      ├── db
-      │      │      ├── model.go
-      │      │      ├── package_repo.go
-      │      │      ├── package_repo_test.go
-      │      ├── global.go
-      │      ├── server
-      │      │      ├── package.go
-      │      │      ├── package_test.go
-      │      ├── validations
-      │      │      ├── validations.go
-      │      │      ├── validations_test.go
-      ├── test
-      │      ├── integration
-      │      │      ├── package_test.go
+
 
 - **cmd**: Contains the server and system/sub-system version. Purpose of this file is to initialize the DB and start server. We use `make server` command to run this file.
 - **mocks**: This directory contains the auto generated file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
@@ -115,7 +70,7 @@ For unit tests run below commands:
 make test
 ```
 
-This command will run unit tests under all pb/package.proto directories.
+This command will run unit tests under all  directories.
 
 **To Generate PB file**
 
@@ -123,7 +78,7 @@ This command will run unit tests under all pb/package.proto directories.
 make gen
 ```
 
-This command will generate protobuf files from pb/package.proto.
+This command will generate protobuf files from .
 
 **To Run Server & Test RPC**
 
@@ -147,131 +102,351 @@ show rpc
 
 This command will show all the available RPC calls under base-rate sub-system. To call any RPC function run `call FUNCATION_NAME`.
 
-## pb/package.proto
+## 
+
+
+
+
+
+
+ 
+
+
+
+
+
+<a name="package.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+
+<a name="ukama.data_plan.package.v1.PackagesService"></a>
+
+# PackagesService
+
+
+## RPC Functions
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Get | [GetPackageRequest](#ukama.data_plan.package.v1.GetPackageRequest) | [GetPackageResponse](#ukama.data_plan.package.v1.GetPackageRequest) |  |
+| GetDetails | [GetPackageRequest](#ukama.data_plan.package.v1.GetPackageRequest) | [GetPackageResponse](#ukama.data_plan.package.v1.GetPackageRequest) |  |
+| Add | [AddPackageRequest](#ukama.data_plan.package.v1.AddPackageRequest) | [AddPackageResponse](#ukama.data_plan.package.v1.AddPackageRequest) |  |
+| Delete | [DeletePackageRequest](#ukama.data_plan.package.v1.DeletePackageRequest) | [DeletePackageResponse](#ukama.data_plan.package.v1.DeletePackageRequest) |  |
+| Update | [UpdatePackageRequest](#ukama.data_plan.package.v1.UpdatePackageRequest) | [UpdatePackageResponse](#ukama.data_plan.package.v1.UpdatePackageRequest) |  |
+| GetByOrg | [GetByOrgPackageRequest](#ukama.data_plan.package.v1.GetByOrgPackageRequest) | [GetByOrgPackageResponse](#ukama.data_plan.package.v1.GetByOrgPackageRequest) |  |
+
+
+
+
+<a name="#directory-structure"></a>
+
+## Directory structure
+
+
+
+- **cmd**: Contains the server and system/sub-system version. Purpose of this file is to initialize the DB and start server. We use `make server` command to run this file.
+- **mocks**: This directory contains the auto generated file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
+- **pb**: This directory contains the `*.proto` file. In proto file we define service with all the rpc's and messages.
+- **pkg/db**: DB directory under pkg contains 2 files.
+  `model.go` file contains the db model structure/s.
+  `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
+- **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
+
+<a name="#how-to"></a>
+
+## How to use?
+
+Before using the repo make sure below tools are installed:
+
+- Go 1.18
+- PostgreSQL
+- gRPC client
+Then navigate into base-rate directory and run below command:
+
+**To Test**
+
+For unit tests run below commands:
+
+```
+make test
+```
+
+This command will run unit tests under all package.proto directories.
+
+**To Generate PB file**
+
+```
+make gen
+```
+
+This command will generate protobuf files from package.proto.
+
+**To Run Server & Test RPC**
+
+```
+make server
+```
+
+This command will run the server on port `9090`. It'll also create the database and table under it.
+
+Server is running, Now we can use any gRPC client to interact with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans). Run below command in new terminal tab:
+
+```
+evans --path /path/to --path . --proto pb/*.proto --host localhost --port 9090
+```
+
+Next run:
+
+```
+show rpc
+```
+
+This command will show all the available RPC calls under base-rate sub-system. To call any RPC function run `call FUNCATION_NAME`.
+
+## package.proto
+
+
 
 <a name="ukama.data_plan.package.v1.AddPackageRequest"></a>
 
 ### AddPackageRequest
 
+
+
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | The name of the package being added |
-| orgId | [string](#string) |  | The ID of the organization the package belongs to |
-| active | [bool](#bool) |  | Whether or not the package is currently active |
-| duration | [uint64](#uint64) |  | The duration of the package in days |
-| simType | [string](#string) |  | The type of SIM card required for the package |
-| smsVolume | [int64](#int64) |  | The volume of SMS messages included in the package |
-| dataVolume | [int64](#int64) |  | The volume of data included in the package |
-| voiceVolume | [int64](#int64) |  | The volume of voice minutes included in the package |
-| orgRatesID | [uint64](#uint64) |  | The ID of the organization's rate plan |
+| uuid | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
+| active | [bool](#bool) |  |  |
+| duration | [uint64](#uint64) |  |  |
+| simType | [string](#string) |  |  |
+| smsVolume | [int64](#int64) |  |  |
+| dataVolume | [int64](#int64) |  |  |
+| voiceVolume | [int64](#int64) |  |  |
+| dlbr | [int64](#int64) |  |  |
+| ulbr | [int64](#int64) |  |  |
+| markup | [double](#double) |  |  |
+| type | [string](#string) |  |  |
+| dataUnit | [string](#string) |  |  |
+| voiceUnit | [string](#string) |  |  |
+| messageunit | [string](#string) |  |  |
+| flatrate | [bool](#bool) |  |  |
+| amount | [double](#double) |  |  |
+| effectiveAt | [string](#string) |  |  |
+| endAt | [string](#string) |  |  |
+| country | [string](#string) |  |  |
+| provider | [string](#string) |  |  |
+| apn | [string](#string) |  |  |
+| baserate | [string](#string) |  |  |
+| ownerId | [string](#string) |  |  |
+| from | [string](#string) |  |  |
+| to | [string](#string) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.AddPackageResponse"></a>
 
 ### AddPackageResponse
 
+
+
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| package | [Package](#ukama.data_plan.package.v1.Package) |  | The response message for the Add RPC that returns the added package |
+| package | [Package](#ukama.data_plan.package.v1.Package) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.DeletePackageRequest"></a>
 
 ### DeletePackageRequest
 
-define a message named DeletePackageRequest
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| packageID | [string](#string) |  | define a string field named packageID with a tag for field validation and JSON name |
+| uuid | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.DeletePackageResponse"></a>
 
 ### DeletePackageResponse
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| uuid | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
+
+
+
+
 <a name="ukama.data_plan.package.v1.GetByOrgPackageRequest"></a>
 
 ### GetByOrgPackageRequest
 
-define a message named GetByOrgPackageRequest
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| orgId | [string](#string) |  | define a string field named orgId with a tag for field validation and JSON name |
+| orgId | [string](#string) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.GetByOrgPackageResponse"></a>
 
 ### GetByOrgPackageResponse
 
-define a message named GetByOrgPackageResponse
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| packages | [Package](#ukama.data_plan.package.v1.Package) | repeated | define a repeated field of type Package named packages |
+| packages | [Package](#ukama.data_plan.package.v1.Package) | repeated |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.GetPackageRequest"></a>
 
 ### GetPackageRequest
 
-define a message named GetPackageRequest
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| packageID | [string](#string) |  | define a string field named packageID with a tag for field validation and JSON name |
+| uuid | [string](#string) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.GetPackageResponse"></a>
 
 ### GetPackageResponse
 
-define a message named GetPackageResponse
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| package | [Package](#ukama.data_plan.package.v1.Package) |  | define a field of type Package named package |
+| package | [Package](#ukama.data_plan.package.v1.Package) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.Package"></a>
 
 ### Package
 
+
+
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| packageID | [string](#string) |  | The unique ID of the package |
-| name | [string](#string) |  | The name of the package |
-| orgId | [string](#string) |  | The ID of the organization the package belongs to |
-| active | [bool](#bool) |  | Whether or not the package is currently active |
-| duration | [uint64](#uint64) |  | The duration of the package in days |
-| simType | [string](#string) |  | The type of SIM card required for the package |
-| createdAt | [string](#string) |  | The date and time the package was created |
-| deletedAt | [string](#string) |  | The date and time the package was deleted, if applicable |
-| updatedAt | [string](#string) |  | The date and time the package was last updated |
-| smsVolume | [int64](#int64) |  | The volume of SMS messages included in the package |
-| dataVolume | [int64](#int64) |  | The volume of data included in the package |
-| voiceVolume | [int64](#int64) |  | The volume of voice minutes included in the package |
-| orgRatesID | [uint64](#uint64) |  | The ID of the organization's rate plan |
+| uuid | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
+| active | [bool](#bool) |  |  |
+| duration | [uint64](#uint64) |  |  |
+| simType | [string](#string) |  |  |
+| createdAt | [string](#string) |  |  |
+| deletedAt | [string](#string) |  |  |
+| updatedAt | [string](#string) |  |  |
+| smsVolume | [int64](#int64) |  |  |
+| dataVolume | [int64](#int64) |  |  |
+| voiceVolume | [int64](#int64) |  |  |
+| dlbr | [int64](#int64) |  |  |
+| ulbr | [int64](#int64) |  |  |
+| rate | [PackageRates](#ukama.data_plan.package.v1.PackageRates) |  |  |
+| markup | [PackageMarkup](#ukama.data_plan.package.v1.PackageMarkup) |  |  |
+| type | [string](#string) |  |  |
+| dataUnit | [string](#string) |  |  |
+| voiceUnit | [string](#string) |  |  |
+| messageunit | [string](#string) |  |  |
+| flatrate | [bool](#bool) |  |  |
+| currency | [string](#string) |  |  |
+| from | [string](#string) |  |  |
+| to | [string](#string) |  |  |
+| country | [string](#string) |  |  |
+| provider | [string](#string) |  |  |
+| apn | [string](#string) |  |  |
+| OwnerId | [string](#string) |  |  |
+| amount | [double](#double) |  |  |
+
+
+
+
+<a name="ukama.data_plan.package.v1.PackageMarkup"></a>
+
+### PackageMarkup
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| baserate | [string](#string) |  |  |
+| markup | [double](#double) |  |  |
+
+
+
+
+<a name="ukama.data_plan.package.v1.PackageRates"></a>
+
+### PackageRates
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| SmsMo | [double](#double) |  |  |
+| SmsMt | [double](#double) |  |  |
+| Data | [double](#double) |  |  |
+| Amount | [double](#double) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.UpdatePackageRequest"></a>
 
 ### UpdatePackageRequest
 
-define a message named UpdatePackageRequest
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| packageID | [string](#string) |  | define a string field named packageID with a tag for field validation and JSON name |
-| name | [string](#string) |  | define a string field named name |
-| active | [bool](#bool) |  | define a boolean field named active |
-| duration | [uint64](#uint64) |  | define a uint64 field named duration |
-| simType | [string](#string) |  | define a string field named simType |
-| smsVolume | [int64](#int64) |  | define a int64 field named smsVolume |
-| dataVolume | [int64](#int64) |  | define a int64 field named dataVolume |
-| voiceVolume | [int64](#int64) |  | define a int64 field named voiceVolume |
-| orgRatesID | [uint64](#uint64) |  | define a uint64 field named |
+| uuid | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| active | [bool](#bool) |  |  |
+
+
+
 
 <a name="ukama.data_plan.package.v1.UpdatePackageResponse"></a>
 
 ### UpdatePackageResponse
 
+
+
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| package | [Package](#ukama.data_plan.package.v1.Package) |  | The response message for the Update RPC that returns the updated package |
+| package | [Package](#ukama.data_plan.package.v1.Package) |  |  |
+
+
+
+
+
+
+
+ 
+
+
+
+
 
 ## Scalar Value Types
 

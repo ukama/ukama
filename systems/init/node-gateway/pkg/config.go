@@ -14,6 +14,7 @@ type Config struct {
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
@@ -30,7 +31,7 @@ func NewConfig() *Config {
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
 	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
-	
+
 	return &Config{
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
@@ -52,5 +53,6 @@ func NewConfig() *Config {
 		},
 
 		Metrics: *config.DefaultMetrics(),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }

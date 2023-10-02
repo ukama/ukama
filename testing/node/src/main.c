@@ -34,8 +34,9 @@
 #define CMD_DELETE  "delete"
 #define CMD_VERIFY  "verify"
 
-#define ENV_VNODE_ID       "VNODE_ID"
-#define ENV_VNODE_METADATA "VNODE_METADATA"
+#define ENV_VNODE_ID         "VNODE_ID"
+#define ENV_VNODE_METADATA   "VNODE_METADATA"
+#define ENV_VNODE_RUN_TARGET "VNODE_RUN_TARGET"
 
 enum {
 	VNODE_CMD_NONE=0,
@@ -118,6 +119,7 @@ int main (int argc, char *argv[]) {
 	char *debug=DEF_LOG_LEVEL;
 	char *envVNodeMetaData=NULL;
 	char *envNodeID=NULL;
+	char *envVNodeRunTarget=NULL;
 	char *target=NULL;
 	Configs *configs=NULL, *ptr=NULL;
 	Node *node=NULL;
@@ -199,6 +201,22 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+	envVNodeRunTarget = getenv(ENV_VNODE_RUN_TARGET);
+	if (envVNodeRunTarget == NULL) {
+		log_error("Env variable: %s not set. Options are local or remote\n.",
+				  ENV_VNODE_RUN_TARGET);
+		log_error("Exiting.");
+		exit(1);
+	} else {
+		if (strcasecmp(envVNodeRunTarget, RUN_TARGET_LOCAL) != 0 &&
+			strcasecmp(envVNodeRunTarget, RUN_TARGET_REMOTE) != 0) {
+			log_error("%s allowable values are only 'local' or 'remote'",
+					  ENV_VNODE_RUN_TARGET);
+			log_error("Exiting");
+			exit(1);
+		}
+	}
+
 	jNode = json_loads(envVNodeMetaData, JSON_DECODE_ANY, NULL);
 	if (!jNode) {
 		log_error("Invalid JSON passed in for the node meta data: %s\n Exiting",
@@ -253,7 +271,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	/* create the image for the virtual node. */
-	if (!create_vnode_image(target, configs, node)) {
+	if (!create_vnode_image(target, configs, node, envVNodeRunTarget)) {
 		log_error("Unable to create image for virtual node");
 		purge_vnode_image(node);
 		exit(1);

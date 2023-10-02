@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb/gen/events";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
 

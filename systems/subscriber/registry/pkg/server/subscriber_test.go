@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const OrgName = "testorg"
+
 func TestAdd(t *testing.T) {
 	// Test case 1: Add subscriber successfully
 	t.Run("Add subscriber successfully", func(t *testing.T) {
@@ -26,7 +28,7 @@ func TestAdd(t *testing.T) {
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		network.On("ValidateNetwork", mock.Anything, mock.Anything).Return(nil)
 
-		s := NewSubscriberServer(subscriberRepo, msgBus, simManagerService, network)
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, network)
 
 		req := &pb.AddSubscriberRequest{
 			OrgId:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
@@ -63,7 +65,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo.On("Get", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId.String()})
 
@@ -77,7 +79,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId})
 
@@ -95,7 +97,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId.String()})
 
@@ -109,7 +111,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId})
 

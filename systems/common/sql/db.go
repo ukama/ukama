@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -65,7 +66,10 @@ func (d *db) initDbConn() error {
 	err := d.Connect()
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "3D000" {
+		s := errors.As(err, &pgErr)
+		logrus.Infof("Error connecting to database %+v %t %+v", err, s, pgErr)
+		//if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.InvalidCatalogName {
+		if strings.Contains(err.Error(), "(SQLSTATE 3D000)") {
 			logrus.Info("Database does not exist")
 			err = d.createDb()
 			if err != nil {

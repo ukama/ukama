@@ -27,9 +27,13 @@
 #include "work.h"
 #include "jserdes.h"
 #include "map.h"
+#include "httpStatus.h"
 
 extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *ClientTable;
+extern pthread_mutex_t mutex;
+extern pthread_cond_t hasData;
+extern char *queue;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -41,36 +45,22 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
 							   void *data);
 
 /*
- *
- */
-static int is_valid_request(URequest *request) {
-
-	return TRUE;
-}
-
-/*
  * Ulfius main callback function, calls the websocket manager and closes.
  */
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
 	int ret;
-	char *idStr=NULL;
+	char *nodeID=NULL;
 	Config *config = (Config *)data;
-	uuid_t uuid;
 
-	idStr = u_map_get(request->map_header, "User-Agent");
-	if (idStr == NULL) {
-		log_error("Missing UUID as User-Agent");
-		return U_CALLBACK_ERROR;
-	}
-
-	if (uuid_parse(idStr, uuid)==-1) {
-		log_error("Error parsing the UUID into binary: %s", idStr);
+	nodeID = u_map_get(request->map_header, "User-Agent");
+	if (nodeID == NULL) {
+		log_error("Missing NodeID as User-Agent");
 		return U_CALLBACK_ERROR;
 	}
 
 	if (config->deviceInfo) {
-		if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
+		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
 			/* Only accept one device at a time until the socket is closed. */
 			log_error("Only accept one device at a time. Ignoring");
 			return U_CALLBACK_ERROR;
@@ -79,10 +69,10 @@ int callback_websocket (const URequest *request, UResponse *response,
 		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 		if (config->deviceInfo == NULL) {
 			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-			free(idStr);
+            free(nodeID);
 			return U_CALLBACK_ERROR;
 		}
-		uuid_copy(config->deviceInfo->uuid, uuid);
+        config->deviceInfo->nodeID = strdup(nodeID);
 	}
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
@@ -133,93 +123,80 @@ int callback_default_webservice(const URequest *request, UResponse *response,
 }
 
 /*
+ * split_strings --
+ *
+ */
+static void split_strings(char *input, char **str1, char **str2,
+                          char *delimiter) {
+
+    char *token=NULL;
+
+    token = strtok(input, delimiter);
+
+    if (token != NULL && str1) {
+        *str1 = strdup(token);
+
+        token = strtok(NULL, delimiter);
+        if (token != NULL && str2) {
+            *str2 = strdup(token);
+        }
+    }
+}
+
+/*
  * callback_webservice --
  *
  */
 int callback_webservice(const URequest *request, UResponse *response,
 						void *data) {
 
-	json_t *jReq=NULL;
-	Config *config;
 	int ret, statusCode=200;
-	char *str;
-	char ip[INET_ADDRSTRLEN];
-	unsigned short port;
-	MapItem *map=NULL;
-	struct sockaddr_in *sin;
+	char *destHost=NULL, *destPort=NULL, *service=NULL;
+    char *requestStr=NULL, *url=NULL;
+    char ip[INET_ADDRSTRLEN]={0}, sourcePort[MAX_BUFFER]={0};
+    struct sockaddr_in *sin=NULL;
+    MapItem *map=NULL;
 
-	config = (Config *)data;
-  
-	/* For every incoming request, do following:
-	 *
-	 * 1. Sanity check.
-	 * 2. Convert request into JSON.
-	 * 3. Send request to Ukama proxy via websocket.
-	 * 4. Process websocket response.
-	 * 5. Wait for the response from server.
-	 * 6. Process response.
-	 * 7. Send response back to the client.
-	 * 8. Done
-	 */
+    sin = (struct sockaddr_in *)request->client_address;
+    inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
+    sprintf(sourcePort, "%d",sin->sin_port);
 
-	if (is_valid_request(request)==FALSE) {
-		statusCode=400;
-		goto done;
-	}
+    url      = u_map_get(request->map_header, "Host");
+    service  = u_map_get(request->map_header, "User-Agent");
+    split_strings(url, &destHost, &destPort, ":");
+    if (destHost == NULL || destPort == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
 
-	sin = (struct sockaddr_in *)request->client_address;
-	inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
-	port = sin->sin_port;
-
-	map = add_map_to_table(&IDTable, &ip[0], port);
-	if (map == NULL) {
-		statusCode = 500;
-		goto done;
-	}
-
-	ret = serialize_forward_request(request, &jReq, config, map->uuid);
-	if (ret == FALSE && jReq == NULL) {
+    ret = serialize_websocket_message(&requestStr, request, destHost, destPort,
+                                      service, sourcePort);
+	if (ret == FALSE && requestStr == NULL) {
 		log_error("Failed to convert request to JSON");
 		statusCode = 400;
 		goto done;
 	} else {
-		str = json_dumps(jReq, 0);
-		log_debug("Forward request JSON: %s", str);
-		free(str);
+		log_debug("Forward request JSON: %s", requestStr);
 	}
+
+    /* map it */
+    map = add_map_to_table(&ClientTable, service, sourcePort);
 
 	/* Add work for the websocket for transmission. */
-	if (jReq != NULL) {
-		/* No pre/post transmission func. This will block. */
-		add_work_to_queue(&Transmit, (Packet)jReq, NULL, 0, NULL, 0);
-	}
+    add_work_to_queue(&Transmit, requestStr, NULL, 0, NULL, 0);
 
 	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&(map->mutex));
+	pthread_mutex_lock(&map->mutex);
 	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&(map->hasResp), &(map->mutex));
-	pthread_mutex_unlock(&(map->mutex));
+	pthread_cond_wait(&map->hasResp, &map->mutex);
+	pthread_mutex_unlock(&map->mutex);
 
-	log_debug("Got response back from server. Len: %d Response: %s",
-			  map->size, (char *)map->data);
+    log_debug("Response from System Code: %d len: %d Data: %s",
+              map->code, map->size, map->data);
 
-	/* Send response back. */
-	if (map->size == 0) {
-		statusCode = 402;
-		goto done;
-	}
-  
  done:
-	/* Send response back to the callee */
-	if (statusCode != 200) {
-		ulfius_set_string_body_response(response, statusCode,
-									  "Something went wrong! What you up to?");
-	} else {
-		ulfius_set_string_body_response(response, statusCode, map->data);
-	}
-
-	if (map->size)
-		free(map->data);
+    ulfius_set_string_body_response(response, map->code, (char *)map->data);
 
 	return U_CALLBACK_CONTINUE;
 }

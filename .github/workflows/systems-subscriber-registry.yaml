@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-subscriber-registry
+name: build-systems-subscriber-registry
 on:  
   push:   
     paths:
@@ -32,7 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
-    needs: [build]
+    needs: build
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/subscriber/registry
@@ -78,7 +78,7 @@ jobs:
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/subscriber-helmfile.yaml"
-            key: "subscriberregistryImageTag"
+            key: "registryImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"

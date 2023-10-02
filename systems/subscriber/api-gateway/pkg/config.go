@@ -14,10 +14,7 @@ type Config struct {
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
-}
-
-type Kratos struct {
-	Url string
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
@@ -44,9 +41,9 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:    3 * time.Second,
-			SimPool:    "sim:9090",
+			SimPool:    "sims:9090",
 			Registry:   "registry:9090",
-			SimManager: "simmanager:9090",
+			SimManager: "sim-manager:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
@@ -58,5 +55,6 @@ func NewConfig() *Config {
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }

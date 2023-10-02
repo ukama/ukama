@@ -52,4 +52,6 @@
 [submodule "systems/planner/Signal-Server"]
         path = systems/planner/Signal-Server
         url = https://github.com/Cloud-RF/Signal-Server.git
-
+[submodule "nodes/ukamaOS/distro/vendor/libunistring"]
+	path = nodes/ukamaOS/distro/vendor/libunistring
+	url = https://github.com/ukama/libunistring.git

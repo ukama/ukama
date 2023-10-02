@@ -139,8 +139,8 @@ int deserialize_node_info(NodeInfo **nodeInfo, json_t *json) {
  * deserialize_server_info --
  *
  * {
- *   "node": "uk-sa2220-hnode-v0-dcf4",
- *   "org": "test",
+ *   "nodeId": "uk-sa2220-hnode-v0-dcf4",
+ *   "orgName": "test",
  *   "ip": "192.168.0.1",
  *   "certificate": "aGVscG1lCg=="
  * }

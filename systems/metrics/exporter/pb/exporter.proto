@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.metrics.exporter.v1;
+
+/* 
+  Exporter service exposes the metrics collected from msgbus which is sent by the various systems 
+  as events.
+  Exporter service listnes to events and pull the metrics from these events and create a endpoint for promethues to scrape.enum
+*/
+
+message DummyParameter{}
+
+service ExporterService {
+    rpc Dummy(DummyParameter) returns (DummyParameter);
+}
+
+

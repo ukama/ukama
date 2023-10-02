@@ -14,16 +14,14 @@ type Config struct {
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
-}
-
-type Kratos struct {
-	Url string
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
-	Package string
-	Rate    string
+	Timeout  time.Duration
+	Package  string
+	Baserate string
+	Rate     string
 }
 
 type HttpEndpoints struct {
@@ -41,12 +39,13 @@ func NewConfig() *Config {
 			DebugMode: false,
 		},
 		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
-			Package: "package:9090",
-			Rate:    "rate:9090",
+			Timeout:  5 * time.Second,
+			Package:  "package:9090",
+			Baserate: "baserate:9090",
+			Rate:     "rate:9090",
 		},
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout:     5 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
 		Server: rest.HttpConfig{
@@ -54,5 +53,6 @@ func NewConfig() *Config {
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }

@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: pr-release-test-agent
+name: pr-release-subscriber-test-agent
 on:  
   workflow_dispatch:
 

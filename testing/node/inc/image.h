@@ -32,6 +32,7 @@
 #define CF_FROM    "FROM %s\n"
 #define CF_RUN_APK "RUN apk --update add %s\n"
 #define CF_RUN_APT "RUN apt-get update && apt-get install %s -y \n"
+#define CF_RUN_YUM "RUN yum update -y && yum install %s -y \n"
 #define CF_COPY    "COPY %s %s\n"
 #define CF_ADD     "ADD %s %s\n"
 #define CF_CMD     "CMD [%s]\n"
@@ -46,10 +47,15 @@
 
 #define TARGET_ALPINE "alpine"
 #define TARGET_UBUNTU "ubuntu"
+#define TARGET_FEDORA "fedora"
+
+#define RUN_TARGET_LOCAL  "local"
+#define RUN_TARGET_REMOTE "remote"
 
 #define SUPERVISOR_CMD "\"/usr/bin/supervisord\",\"-c\",\"/etc/supervisor.conf\""
 
-int create_vnode_image(char *target, Configs *config, Node *node);
+int create_vnode_image(char *target, Configs *config, Node *node,
+					   char *runTarget);
 void purge_vnode_image(Node *node);
 
 #endif /* IMAGE_H */

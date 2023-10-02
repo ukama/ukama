@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
@@ -10,11 +10,19 @@ import "google/protobuf/wrappers.proto";
 package ukama.subscriber.test_agent.v1;
 
 service TestAgentService {
+    rpc BindSim(BindSimRequest) returns (BindSimResponse);
     rpc GetSim(GetSimRequest) returns (GetSimResponse);
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
     rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 }
+
+
+message BindSimRequest {
+    string iccid = 1 ;
+}
+
+message BindSimResponse{}
 
 message ActivateSimRequest {
     string iccid = 1 ;

@@ -26,8 +26,8 @@
 #define JSON_ASSEMBLY_DATE  "assemblyDate"
 
 /* serverInfo */
-#define JSON_NODE        "node"
-#define JSON_ORG         "org"
+#define JSON_NODE        "nodeId"
+#define JSON_ORG         "orgName"
 #define JSON_IP          "ip"
 #define JSON_CERTIFICATE "certificate"
 
