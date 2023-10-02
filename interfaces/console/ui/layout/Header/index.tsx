@@ -2,7 +2,6 @@ import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ManageAccountsIcon from '@mui/icons-material/ManageAccountsSharp';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
@@ -82,12 +81,12 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
               <Logo width={'100%'} height={'28px'} color={colors.white} />
             </IconButton>
             <Stack direction={'row'} spacing={1.75}>
-              <IconButton
+              {/* <IconButton
                 onClick={() => onNavigate('Manage', '/manage')}
                 sx={{ ...IconStyle }}
               >
                 <ManageAccountsIcon />
-              </IconButton>
+              </IconButton> */}
               <IconButton
                 onClick={() => onNavigate('Settings', '/settings')}
                 sx={{ ...IconStyle }}

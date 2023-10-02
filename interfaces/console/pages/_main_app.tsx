@@ -11,7 +11,7 @@ import {
   useGetMemberLazyQuery,
   useGetNetworksLazyQuery,
   useGetOrgsLazyQuery,
-  useGetUserLazyQuery
+  useGetUserLazyQuery,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
@@ -43,7 +43,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     onCompleted: (data) => {
       _setUser({
         ..._user,
-        role: data.getMember.role
+        role: data.getMember.role,
       });
     },
   });
@@ -58,9 +58,11 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         name: data.getUser.name,
         email: data.getUser.email,
       });
-      getMember({variables:{
-        memberId: data.getUser.uuid
-      }})
+      getMember({
+        variables: {
+          memberId: data.getUser.uuid,
+        },
+      });
     },
   });
 
@@ -121,7 +123,12 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
             '404',
       );
       setPage(getTitleFromPath(route.pathname, route.query['id'] as string));
-      if (getTitleFromPath(route.pathname, '') === '404') route.replace('/404');
+      if (
+        getTitleFromPath(route.pathname, '') === '404' &&
+        route.pathname !== '/404'
+      ) {
+        route.replace('/404');
+      }
     }
   }, [route]);
 

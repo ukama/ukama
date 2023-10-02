@@ -12,13 +12,14 @@ import {
 import { CBooleanResponse } from "./../../common/types";
 import { dtoToSubscriberResDto, dtoToSubscribersResDto } from "./mapper";
 
-const version = "/v1/subscriber";
+const VERSION = "v1";
+const SUBSCRIBER = "subscriber";
 
 class SubscriberApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW + version;
+  baseURL = SUBSCRIBER_API_GW;
 
   addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
-    return this.put(``, {
+    return this.put(`/${VERSION}/${SUBSCRIBER}`, {
       body: { ...req },
     })
       .then(res => dtoToSubscriberResDto(res))
@@ -31,7 +32,7 @@ class SubscriberApi extends RESTDataSource {
     subscriberId: string,
     req: UpdateSubscriberInputDto
   ): Promise<CBooleanResponse> => {
-    return this.patch(`/${subscriberId}`, {
+    return this.patch(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`, {
       body: { ...req },
     })
       .then(() => {
@@ -45,7 +46,7 @@ class SubscriberApi extends RESTDataSource {
   deleteSubscriber = async (
     subscriberId: string
   ): Promise<CBooleanResponse> => {
-    return this.delete(`/${subscriberId}`)
+    return this.delete(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`)
       .then(() => {
         return {
           success: true,
@@ -57,7 +58,9 @@ class SubscriberApi extends RESTDataSource {
   };
 
   getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
-    return this.get(`/${subscriberId}`).then(res => dtoToSubscriberResDto(res));
+    return this.get(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(res =>
+      dtoToSubscriberResDto(res)
+    );
   };
 
   getSubMetricsByNetwork = async (): Promise<SubscriberMetricsByNetworkDto> => {
@@ -72,7 +75,7 @@ class SubscriberApi extends RESTDataSource {
   getSubscribersByNetwork = async (
     networkId: string
   ): Promise<SubscribersResDto> => {
-    return this.get(`s/networks/${networkId}`)
+    return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
       .then(res => dtoToSubscribersResDto(res))
       .catch(err => {
         throw new GraphQLError(err);

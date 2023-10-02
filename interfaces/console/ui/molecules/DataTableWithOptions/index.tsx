@@ -38,7 +38,7 @@ const CellValueByType = ({
   switch (type) {
     case 'name':
       return (
-        <Link href={`node/${row['id']}`} unselectable="on">
+        <Link href={`nodes/${row['id']}`} unselectable="on">
           {row[type]}
         </Link>
       );
