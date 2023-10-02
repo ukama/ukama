@@ -2,6 +2,7 @@ import { commonData, snackbarMessage } from '@/app-recoil';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import {
   SubscribersResDto,
+  useGetPackagesQuery,
   useGetSubscribersByNetworkQuery,
 } from '@/generated';
 import {
@@ -12,10 +13,12 @@ import {
 import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
+import EmptyView from '@/ui/molecules/EmptyView';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
+import PlanCard from '@/ui/molecules/PlanCard';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
-import { AlertColor } from '@mui/material';
+import { AlertColor, Grid, Stack, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
@@ -40,6 +43,18 @@ const Page = () => {
     onError: (error) => {
       setSnackbarMessage({
         id: 'subscriber-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const { data: dataPlanData, loading: dataPlanLoading } = useGetPackagesQuery({
+    fetchPolicy: 'cache-and-network',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'data-plan-err-msg',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -83,38 +98,104 @@ const Page = () => {
   );
 
   return (
-    <LoadingWrapper
-      radius="small"
-      width={'100%'}
-      isLoading={loading}
-      cstyle={{
-        backgroundColor: loading ? colors.white : 'transparent',
-      }}
-    >
-      <PageContainer>
-        <PageContainerHeader
-          title={'My subscribers'}
-          subtitle={`${subscriber.subscribers.length}`}
-          buttonTitle={'Add Subscriber'}
-          handleButtonAction={()=>{}}
-          onSearchChange={(e: string) => setSearch(e)}
-          search={search}
-        />
-
-        <VerticalContainer>
-          <ContainerMax mt={4.5}>
-            <DataTableWithOptions
-              icon={SubscriberIcon}
-              columns={SUBSCRIBER_TABLE_COLUMNS}
-              dataset={structureData(subscriber)}
-              menuOptions={SUBSCRIBER_TABLE_MENU}
-              onMenuItemClick={onTableMenuItem}
-              emptyViewLabel={'No subscribers yet!'}
-            />
-          </ContainerMax>
-        </VerticalContainer>
-      </PageContainer>
-    </LoadingWrapper>
+    <Stack direction={'column'}>
+      <LoadingWrapper
+        radius="small"
+        width={'100%'}
+        isLoading={loading}
+        cstyle={{
+          backgroundColor: loading ? colors.white : 'transparent',
+        }}
+      >
+        <PageContainer
+          sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
+        >
+          <PageContainerHeader
+            search={search}
+            title={'My subscribers'}
+            buttonTitle={'Add Subscriber'}
+            handleButtonAction={() => {}}
+            subtitle={`${subscriber.subscribers.length}`}
+            onSearchChange={(e: string) => setSearch(e)}
+          />
+          <VerticalContainer>
+            <ContainerMax mt={4.5}>
+              <DataTableWithOptions
+                icon={SubscriberIcon}
+                isRowClickable={false}
+                columns={SUBSCRIBER_TABLE_COLUMNS}
+                dataset={structureData(subscriber)}
+                menuOptions={SUBSCRIBER_TABLE_MENU}
+                onMenuItemClick={onTableMenuItem}
+                emptyViewLabel={'No subscribers yet!'}
+              />
+            </ContainerMax>
+          </VerticalContainer>
+        </PageContainer>
+      </LoadingWrapper>
+      <LoadingWrapper
+        radius="small"
+        width={'100%'}
+        isLoading={dataPlanLoading}
+        cstyle={{
+          backgroundColor: dataPlanLoading ? colors.white : 'transparent',
+        }}
+      >
+        <PageContainer
+          sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 550px)' }}
+        >
+          <Stack direction={'row'} alignItems={'center'}>
+            <Typography variant="h6" mr={1}>
+              Data plans
+            </Typography>
+            <Typography variant="subtitle2">
+              <i>(view only)</i>
+            </Typography>
+          </Stack>
+          <Stack my={4}>
+            {dataPlanData?.getPackages &&
+            dataPlanData?.getPackages?.packages?.length > 0 ? (
+              <Grid container rowSpacing={2} columnSpacing={2}>
+                {dataPlanData?.getPackages?.packages.map(
+                  ({
+                    uuid,
+                    name,
+                    duration,
+                    users,
+                    currency,
+                    dataVolume,
+                    dataUnit,
+                    amount,
+                  }: any) => (
+                    <Grid item xs={12} sm={6} md={4} key={uuid}>
+                      <PlanCard
+                        uuid={uuid}
+                        name={name}
+                        users={users}
+                        amount={amount}
+                        dataUnit={dataUnit}
+                        duration={duration}
+                        currency={currency}
+                        dataVolume={dataVolume}
+                        isOptions={false}
+                      />
+                    </Grid>
+                  ),
+                )}
+              </Grid>
+            ) : (
+              <EmptyView
+                size="medium"
+                title={
+                  'No data plans yet! Go to “Manage data plans” in your organization settings to add one'
+                }
+                icon={SubscriberIcon}
+              />
+            )}
+          </Stack>
+        </PageContainer>
+      </LoadingWrapper>
+    </Stack>
   );
 };
 

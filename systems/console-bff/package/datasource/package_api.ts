@@ -11,12 +11,13 @@ import {
 } from "../resolver/types";
 import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
 
-const version = "/v1/packages";
+const VERSION = "v1";
+const PACKAGES = "packages";
 
 class PackageApi extends RESTDataSource {
-  baseURL = DATA_API_GW + version;
+  baseURL = DATA_API_GW;
   getPackage = async (packageId: string): Promise<PackageDto> => {
-    return this.get(`/${packageId}`, {})
+    return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {})
       .then(res => dtoToPackageDto(res))
       .catch(err => {
         throw new GraphQLError(err);
@@ -24,7 +25,7 @@ class PackageApi extends RESTDataSource {
   };
 
   getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/org/${headers.orgId}`)
+    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`)
       .then(res => dtoToPackagesDto(res))
       .catch(err => {
         throw new GraphQLError(err);
@@ -35,7 +36,7 @@ class PackageApi extends RESTDataSource {
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
-    return this.post("", {
+    return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
         duration: req.duration,
         active: true,
@@ -63,7 +64,7 @@ class PackageApi extends RESTDataSource {
   };
 
   deletePackage = async (packageId: string): Promise<IdResponse> => {
-    return this.delete(`/${packageId}`)
+    return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`)
       .then(() => {
         return {
           uuid: packageId,
@@ -78,7 +79,7 @@ class PackageApi extends RESTDataSource {
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
-    return this.patch(`/${packageId}`, {
+    return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
       body: req,
     })
       .then(res => dtoToPackageDto(res))

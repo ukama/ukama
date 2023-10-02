@@ -446,8 +446,19 @@ const getUnixTime = (): number => {
   return Math.floor(Date.now() / 1000);
 };
 
+const convertToWeeksOrMonths = (number: number): string => {
+  if (number >= 4) {
+    const months = Math.floor(number / 4);
+    return `${months <= 1 ? 'Month' : 'Months'} `;
+  } else {
+    const weeks = Math.floor(number);
+    return ` ${weeks <= 1 ? 'Week' : 'Weeks'} `;
+  }
+};
+
 export {
   calculateCenterLatLng,
+  convertToWeeksOrMonths,
   doesHttpOnlyCookieExist,
   fileToBase64,
   formatBytes,
