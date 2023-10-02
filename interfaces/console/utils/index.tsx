@@ -1,6 +1,6 @@
 import { NodeTypeEnum } from '@/generated';
 import colors from '@/styles/theme/colors';
-import { TObject } from '@/types';
+import { TNodeSiteTree, TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
 const getTitleFromPath = (path: string, id: string) => {
@@ -456,6 +456,25 @@ const convertToWeeksOrMonths = (number: number): string => {
   }
 };
 
+const structureNodeSiteDate = (data: any) => {
+  let count = 1;
+  const t: TNodeSiteTree[] = [];
+
+  data.forEach((node: any) => {
+    if (node.type === NodeTypeEnum.Tnode) {
+      t.push({
+        id: node.site?.siteId || '',
+        name: `Site ${count++}`,
+        nodeId: node.id,
+        nodeType: node.type,
+        nodeName: node.name,
+      });
+    }
+  });
+
+  return t;
+};
+
 export {
   calculateCenterLatLng,
   convertToWeeksOrMonths,
@@ -483,5 +502,6 @@ export {
   parseObjectInNameValue,
   secToHoursNMints,
   secondsToDuration,
+  structureNodeSiteDate,
   uniqueObjectsArray,
 };
