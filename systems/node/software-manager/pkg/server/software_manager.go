@@ -35,9 +35,9 @@ func NewSoftwareManagerServer(msgBus mb.MsgBusServiceClient, debug bool, orgName
 }
 
 func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.CreateSoftwareUpdateRequest) (*pb.CreateSoftwareUpdateResponse, error) {
-	if req.Name == "" || req.Version == "" || req.Description == "" || req.Size == 0 || req.ReleaseDate == "" || req.NodeId == "" {
+	if req.Name == "" || req.Version == "" || req.Description == "" || req.ReleaseDate == "" || req.NodeId == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
-			" Name, Version, Description, Size, ReleaseDate, Status, NodeId are required")
+			" Name, Version, Description, ReleaseDate, Status, NodeId are required")
 	}
 
 	releaseDate, err := time.Parse("2006-01-02", req.ReleaseDate)
@@ -50,9 +50,8 @@ func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.Create
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
-		Tag:     req.Version,
+		Tag:         req.Version,
 		Description: req.Description,
-		Size:        req.Size,
 		ReleaseDate: releaseDate,
 		Status:      db.Status(req.Status),
 	}
@@ -122,38 +121,6 @@ func (s *SoftwaManagerServer) GetLatestSoftware(ctx context.Context, req *pb.Get
 	}, nil
 
 }
-func (s *SoftwaManagerServer) GetSoftwareByVersion(ctx context.Context, req *pb.GetLatestSoftwareUpdateByVersionRequest) (*pb.GetLatestSoftwareUpdateByVersionResponse, error) {
-	log.Infof("Getting latest software update by version")
-
-	softwareUpdate, err := s.sRepo.GetSoftwareByVersion(req.Version)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "Failed to get latest software update by version")
-	}
-
-	return &pb.GetLatestSoftwareUpdateByVersionResponse{
-		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
-	}, nil
-
-}
-func (s *SoftwaManagerServer) GetSoftwareByAppName(ctx context.Context, req *pb.GetSoftwareUodateByAppNameRequest) (*pb.GetSoftwareUodateByAppNameResponse, error) {
-
-	log.Infof("Getting software update by app name")
-
-	if req.Name == "" {
-		return nil, status.Errorf(codes.InvalidArgument,
-			" Name is required")
-	}
-
-	softwareUpdate, err := s.sRepo.GetSoftwareByAppName(req.GetName())
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "Failed to get software update by app name")
-	}
-
-	return &pb.GetSoftwareUodateByAppNameResponse{
-		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
-	}, nil
-
-}
 
 func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 	return &pb.SoftwareUpdate{
@@ -161,7 +128,6 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Name:        software.Name,
 		Version:     software.Tag,
 		Description: software.Description,
-		Size:        software.Size,
 		ReleaseDate: software.ReleaseDate.String(),
 		Status:      pb.Status(software.Status),
 	}

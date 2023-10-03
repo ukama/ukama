@@ -9,12 +9,11 @@ import (
 type Software struct {
 	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string
-	NodeId      uuid.UUID `gorm:"type:uuid"`
-	Tag     string
+	NodeId      string
+	Tag         string
 	Description string
 	Status      Status `gorm:"type:smallint" default:"0"`
 	ReleaseDate time.Time
-	Size        int64
 	CreatedAt   time.Time  `gorm:"not null"`
 	UpdatedAt   time.Time  `gorm:"not null"`
 	DeletedAt   *time.Time `gorm:"index"`

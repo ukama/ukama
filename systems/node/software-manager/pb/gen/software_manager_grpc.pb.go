@@ -19,12 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SoftwareManagerService_CreateSoftwareUpdate_FullMethodName             = "/ukama.node.software_manager.v1.SoftwareManagerService/CreateSoftwareUpdate"
-	SoftwareManagerService_ReadSoftwareUpdate_FullMethodName               = "/ukama.node.software_manager.v1.SoftwareManagerService/ReadSoftwareUpdate"
-	SoftwareManagerService_ListSoftwareUpdates_FullMethodName              = "/ukama.node.software_manager.v1.SoftwareManagerService/ListSoftwareUpdates"
-	SoftwareManagerService_GetLatestSoftwareUpdate_FullMethodName          = "/ukama.node.software_manager.v1.SoftwareManagerService/GetLatestSoftwareUpdate"
-	SoftwareManagerService_GetLatestSoftwareUpdateByVersion_FullMethodName = "/ukama.node.software_manager.v1.SoftwareManagerService/GetLatestSoftwareUpdateByVersion"
-	SoftwareManagerService_GetSoftwareUodateByAppName_FullMethodName       = "/ukama.node.software_manager.v1.SoftwareManagerService/GetSoftwareUodateByAppName"
+	SoftwareManagerService_CreateSoftwareUpdate_FullMethodName      = "/ukama.node.software_manager.v1.SoftwareManagerService/CreateSoftwareUpdate"
+	SoftwareManagerService_ReadSoftwareUpdate_FullMethodName        = "/ukama.node.software_manager.v1.SoftwareManagerService/ReadSoftwareUpdate"
+	SoftwareManagerService_ListSoftwareUpdates_FullMethodName       = "/ukama.node.software_manager.v1.SoftwareManagerService/ListSoftwareUpdates"
+	SoftwareManagerService_GetLatestSoftwareUpdate_FullMethodName   = "/ukama.node.software_manager.v1.SoftwareManagerService/GetLatestSoftwareUpdate"
+	SoftwareManagerService_GetSoftwareUpdateByNodeId_FullMethodName = "/ukama.node.software_manager.v1.SoftwareManagerService/GetSoftwareUpdateByNodeId"
 )
 
 // SoftwareManagerServiceClient is the client API for SoftwareManagerService service.
@@ -35,8 +34,7 @@ type SoftwareManagerServiceClient interface {
 	ReadSoftwareUpdate(ctx context.Context, in *ReadSoftwareUpdateRequest, opts ...grpc.CallOption) (*ReadSoftwareUpdateResponse, error)
 	ListSoftwareUpdates(ctx context.Context, in *ListSoftwareUpdatesRequest, opts ...grpc.CallOption) (*ListSoftwareUpdatesResponse, error)
 	GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error)
-	GetLatestSoftwareUpdateByVersion(ctx context.Context, in *GetLatestSoftwareUpdateByVersionRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateByVersionResponse, error)
-	GetSoftwareUodateByAppName(ctx context.Context, in *GetSoftwareUodateByAppNameRequest, opts ...grpc.CallOption) (*GetSoftwareUodateByAppNameResponse, error)
+	GetSoftwareUpdateByNodeId(ctx context.Context, in *GetSoftwareUpdateByNodeIdRequest, opts ...grpc.CallOption) (*GetSoftwareUpdateByNodeIdResponse, error)
 }
 
 type softwareManagerServiceClient struct {
@@ -83,18 +81,9 @@ func (c *softwareManagerServiceClient) GetLatestSoftwareUpdate(ctx context.Conte
 	return out, nil
 }
 
-func (c *softwareManagerServiceClient) GetLatestSoftwareUpdateByVersion(ctx context.Context, in *GetLatestSoftwareUpdateByVersionRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateByVersionResponse, error) {
-	out := new(GetLatestSoftwareUpdateByVersionResponse)
-	err := c.cc.Invoke(ctx, SoftwareManagerService_GetLatestSoftwareUpdateByVersion_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *softwareManagerServiceClient) GetSoftwareUodateByAppName(ctx context.Context, in *GetSoftwareUodateByAppNameRequest, opts ...grpc.CallOption) (*GetSoftwareUodateByAppNameResponse, error) {
-	out := new(GetSoftwareUodateByAppNameResponse)
-	err := c.cc.Invoke(ctx, SoftwareManagerService_GetSoftwareUodateByAppName_FullMethodName, in, out, opts...)
+func (c *softwareManagerServiceClient) GetSoftwareUpdateByNodeId(ctx context.Context, in *GetSoftwareUpdateByNodeIdRequest, opts ...grpc.CallOption) (*GetSoftwareUpdateByNodeIdResponse, error) {
+	out := new(GetSoftwareUpdateByNodeIdResponse)
+	err := c.cc.Invoke(ctx, SoftwareManagerService_GetSoftwareUpdateByNodeId_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +98,7 @@ type SoftwareManagerServiceServer interface {
 	ReadSoftwareUpdate(context.Context, *ReadSoftwareUpdateRequest) (*ReadSoftwareUpdateResponse, error)
 	ListSoftwareUpdates(context.Context, *ListSoftwareUpdatesRequest) (*ListSoftwareUpdatesResponse, error)
 	GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error)
-	GetLatestSoftwareUpdateByVersion(context.Context, *GetLatestSoftwareUpdateByVersionRequest) (*GetLatestSoftwareUpdateByVersionResponse, error)
-	GetSoftwareUodateByAppName(context.Context, *GetSoftwareUodateByAppNameRequest) (*GetSoftwareUodateByAppNameResponse, error)
+	GetSoftwareUpdateByNodeId(context.Context, *GetSoftwareUpdateByNodeIdRequest) (*GetSoftwareUpdateByNodeIdResponse, error)
 	mustEmbedUnimplementedSoftwareManagerServiceServer()
 }
 
@@ -130,11 +118,8 @@ func (UnimplementedSoftwareManagerServiceServer) ListSoftwareUpdates(context.Con
 func (UnimplementedSoftwareManagerServiceServer) GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSoftwareUpdate not implemented")
 }
-func (UnimplementedSoftwareManagerServiceServer) GetLatestSoftwareUpdateByVersion(context.Context, *GetLatestSoftwareUpdateByVersionRequest) (*GetLatestSoftwareUpdateByVersionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSoftwareUpdateByVersion not implemented")
-}
-func (UnimplementedSoftwareManagerServiceServer) GetSoftwareUodateByAppName(context.Context, *GetSoftwareUodateByAppNameRequest) (*GetSoftwareUodateByAppNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSoftwareUodateByAppName not implemented")
+func (UnimplementedSoftwareManagerServiceServer) GetSoftwareUpdateByNodeId(context.Context, *GetSoftwareUpdateByNodeIdRequest) (*GetSoftwareUpdateByNodeIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSoftwareUpdateByNodeId not implemented")
 }
 func (UnimplementedSoftwareManagerServiceServer) mustEmbedUnimplementedSoftwareManagerServiceServer() {
 }
@@ -222,38 +207,20 @@ func _SoftwareManagerService_GetLatestSoftwareUpdate_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SoftwareManagerService_GetLatestSoftwareUpdateByVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLatestSoftwareUpdateByVersionRequest)
+func _SoftwareManagerService_GetSoftwareUpdateByNodeId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSoftwareUpdateByNodeIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SoftwareManagerServiceServer).GetLatestSoftwareUpdateByVersion(ctx, in)
+		return srv.(SoftwareManagerServiceServer).GetSoftwareUpdateByNodeId(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SoftwareManagerService_GetLatestSoftwareUpdateByVersion_FullMethodName,
+		FullMethod: SoftwareManagerService_GetSoftwareUpdateByNodeId_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareManagerServiceServer).GetLatestSoftwareUpdateByVersion(ctx, req.(*GetLatestSoftwareUpdateByVersionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SoftwareManagerService_GetSoftwareUodateByAppName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSoftwareUodateByAppNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SoftwareManagerServiceServer).GetSoftwareUodateByAppName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SoftwareManagerService_GetSoftwareUodateByAppName_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareManagerServiceServer).GetSoftwareUodateByAppName(ctx, req.(*GetSoftwareUodateByAppNameRequest))
+		return srv.(SoftwareManagerServiceServer).GetSoftwareUpdateByNodeId(ctx, req.(*GetSoftwareUpdateByNodeIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -282,12 +249,8 @@ var SoftwareManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SoftwareManagerService_GetLatestSoftwareUpdate_Handler,
 		},
 		{
-			MethodName: "GetLatestSoftwareUpdateByVersion",
-			Handler:    _SoftwareManagerService_GetLatestSoftwareUpdateByVersion_Handler,
-		},
-		{
-			MethodName: "GetSoftwareUodateByAppName",
-			Handler:    _SoftwareManagerService_GetSoftwareUodateByAppName_Handler,
+			MethodName: "GetSoftwareUpdateByNodeId",
+			Handler:    _SoftwareManagerService_GetSoftwareUpdateByNodeId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

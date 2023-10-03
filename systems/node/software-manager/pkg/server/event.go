@@ -35,24 +35,19 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		
+
 		err = l.sRepo.CreateSoftware(&db.Software{
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
-			Tag:     msg.Version,
+			Tag:         msg.Version,
 			Description: msg.Description,
-			Size:        msg.Size,
 			ReleaseDate: time.Now(),
-		},nil)
+		}, nil)
 		if err != nil {
 			return nil, err
 
 		}
-	// case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.runningApps"):
-	// 	msg, err := unmarshalSoftwareUpdate(e.Msg)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
@@ -69,6 +64,4 @@ func unmarshalSoftwareUpdate(msg *anypb.Any) (*gen.SoftwareUpdate, error) {
 	}
 	return p, nil
 
-	
 }
-

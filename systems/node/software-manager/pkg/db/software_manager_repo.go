@@ -11,8 +11,6 @@ type SoftwareManagerRepo interface {
 	ReadSoftware(id uuid.UUID) (*Software, error)
 	ListSoftwares() ([]*Software, error)
 	GetLatestSoftware() (*Software, error)
-	GetSoftwareByVersion(version string) (*Software, error)
-	GetSoftwareByAppName(name string) (*Software, error)
 }
 type softwareManagerRepo struct {
 	Db sql.Db
@@ -51,16 +49,5 @@ func (r *softwareManagerRepo) ListSoftwares() ([]*Software, error) {
 func (r *softwareManagerRepo) GetLatestSoftware() (*Software, error) {
 	var Software Software
 	err := r.Db.GetGormDb().Order("release_date desc").First(&Software).Error
-	return &Software, err
-}
-func (r *softwareManagerRepo) GetSoftwareByVersion(version string) (*Software, error) {
-	var Software Software
-	err := r.Db.GetGormDb().Where("version = ?", version).First(&Software).Error
-	return &Software, err
-}
-
-func (r *softwareManagerRepo) GetSoftwareByAppName(name string) (*Software, error) {
-	var Software Software
-	err := r.Db.GetGormDb().Where("name = ?", name).First(&Software).Error
 	return &Software, err
 }

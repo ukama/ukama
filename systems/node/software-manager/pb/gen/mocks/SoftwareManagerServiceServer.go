@@ -66,50 +66,24 @@ func (_m *SoftwareManagerServiceServer) GetLatestSoftwareUpdate(_a0 context.Cont
 	return r0, r1
 }
 
-// GetLatestSoftwareUpdateByVersion provides a mock function with given fields: _a0, _a1
-func (_m *SoftwareManagerServiceServer) GetLatestSoftwareUpdateByVersion(_a0 context.Context, _a1 *gen.GetLatestSoftwareUpdateByVersionRequest) (*gen.GetLatestSoftwareUpdateByVersionResponse, error) {
+// GetSoftwareUpdateByNodeId provides a mock function with given fields: _a0, _a1
+func (_m *SoftwareManagerServiceServer) GetSoftwareUpdateByNodeId(_a0 context.Context, _a1 *gen.GetSoftwareUpdateByNodeIdRequest) (*gen.GetSoftwareUpdateByNodeIdResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetLatestSoftwareUpdateByVersionResponse
+	var r0 *gen.GetSoftwareUpdateByNodeIdResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestSoftwareUpdateByVersionRequest) (*gen.GetLatestSoftwareUpdateByVersionResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSoftwareUpdateByNodeIdRequest) (*gen.GetSoftwareUpdateByNodeIdResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestSoftwareUpdateByVersionRequest) *gen.GetLatestSoftwareUpdateByVersionResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSoftwareUpdateByNodeIdRequest) *gen.GetSoftwareUpdateByNodeIdResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetLatestSoftwareUpdateByVersionResponse)
+			r0 = ret.Get(0).(*gen.GetSoftwareUpdateByNodeIdResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetLatestSoftwareUpdateByVersionRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSoftwareUodateByAppName provides a mock function with given fields: _a0, _a1
-func (_m *SoftwareManagerServiceServer) GetSoftwareUodateByAppName(_a0 context.Context, _a1 *gen.GetSoftwareUodateByAppNameRequest) (*gen.GetSoftwareUodateByAppNameResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.GetSoftwareUodateByAppNameResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSoftwareUodateByAppNameRequest) (*gen.GetSoftwareUodateByAppNameResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSoftwareUodateByAppNameRequest) *gen.GetSoftwareUodateByAppNameResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSoftwareUodateByAppNameResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSoftwareUodateByAppNameRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSoftwareUpdateByNodeIdRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
