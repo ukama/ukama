@@ -3,7 +3,6 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
@@ -14,7 +13,7 @@ type Config struct {
 	Queue            *uconf.Queue    `default:"{}"`
 	Timeout          time.Duration   `default:"20s"`
 	Service          *uconf.Service
-	MsgClient        *config.MsgClient `default:"{}"`
+	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string            `default:"ukama"`
 	InitClientHost   string            `default:"http://ukama.initclient:8080"`
 }
@@ -25,5 +24,8 @@ func NewConfig(name string) *Config {
 			DbName: name,
 		},
 		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout: 5 * time.Second,
+		},
 	}
 }

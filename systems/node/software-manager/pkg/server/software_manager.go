@@ -35,7 +35,7 @@ func NewSoftwareManagerServer(msgBus mb.MsgBusServiceClient, debug bool, orgName
 }
 
 func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.CreateSoftwareUpdateRequest) (*pb.CreateSoftwareUpdateResponse, error) {
-	if req.Name == "" || req.Version == "" || req.Description == "" || req.ReleaseDate == "" || req.NodeId == "" {
+	if req.Name == "" || req.Version == "" || req.ReleaseDate == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
 			" Name, Version, Description, ReleaseDate, Status, NodeId are required")
 	}
@@ -51,7 +51,6 @@ func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.Create
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
 		Tag:         req.Version,
-		Description: req.Description,
 		ReleaseDate: releaseDate,
 		Status:      db.Status(req.Status),
 	}
@@ -61,8 +60,15 @@ func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.Create
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to create software update")
 	}
 
+	capps := &pb.CreateSoftwareUpdateRequest{
+		Name:        req.Name,
+		Version:     req.Version,
+		ReleaseDate: req.ReleaseDate,
+		Status:      req.Status,
+	}
+
 	route := s.baseRoutingKey.SetActionCreate().SetObject("newUpdate").MustBuild()
-	err = s.msgBus.PublishRequest(route, req)
+	err = s.msgBus.PublishRequest(route, capps)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -127,7 +133,6 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Id:          software.Id.String(),
 		Name:        software.Name,
 		Version:     software.Tag,
-		Description: software.Description,
 		ReleaseDate: software.ReleaseDate.String(),
 		Status:      pb.Status(software.Status),
 	}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -40,13 +41,20 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
 			Tag:         msg.Version,
-			Description: msg.Description,
 			ReleaseDate: time.Now(),
 		}, nil)
 		if err != nil {
 			return nil, err
 
 		}
+
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.performance"):
+		msg, err := unmarshalSoftwareUpdate(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println(" recevied from health service :", msg)
 
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)

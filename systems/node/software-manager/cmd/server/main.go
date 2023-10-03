@@ -112,3 +112,4 @@ func initDb() sql.Db {
 	}
 	return d
 }
+

@@ -72,100 +72,6 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return file_software_manager_proto_rawDescGZIP(), []int{0}
 }
 
-type GetSoftwareUpdateByNodeIdRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-}
-
-func (x *GetSoftwareUpdateByNodeIdRequest) Reset() {
-	*x = GetSoftwareUpdateByNodeIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetSoftwareUpdateByNodeIdRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSoftwareUpdateByNodeIdRequest) ProtoMessage() {}
-
-func (x *GetSoftwareUpdateByNodeIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSoftwareUpdateByNodeIdRequest.ProtoReflect.Descriptor instead.
-func (*GetSoftwareUpdateByNodeIdRequest) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *GetSoftwareUpdateByNodeIdRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type GetSoftwareUpdateByNodeIdResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	SoftwareUpdate *SoftwareUpdate `protobuf:"bytes,1,opt,name=software_update,json=softwareUpdate,proto3" json:"software_update,omitempty"`
-}
-
-func (x *GetSoftwareUpdateByNodeIdResponse) Reset() {
-	*x = GetSoftwareUpdateByNodeIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetSoftwareUpdateByNodeIdResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSoftwareUpdateByNodeIdResponse) ProtoMessage() {}
-
-func (x *GetSoftwareUpdateByNodeIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSoftwareUpdateByNodeIdResponse.ProtoReflect.Descriptor instead.
-func (*GetSoftwareUpdateByNodeIdResponse) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetSoftwareUpdateByNodeIdResponse) GetSoftwareUpdate() *SoftwareUpdate {
-	if x != nil {
-		return x.SoftwareUpdate
-	}
-	return nil
-}
-
 type CreateSoftwareUpdateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -173,16 +79,14 @@ type CreateSoftwareUpdateRequest struct {
 
 	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Version     string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	ReleaseDate string `protobuf:"bytes,4,opt,name=release_date,json=releaseDate,proto3" json:"release_date,omitempty"`
 	Status      Status `protobuf:"varint,5,opt,name=status,proto3,enum=ukama.node.software_manager.v1.Status" json:"status,omitempty"`
-	NodeId      string `protobuf:"bytes,6,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
 }
 
 func (x *CreateSoftwareUpdateRequest) Reset() {
 	*x = CreateSoftwareUpdateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[2]
+		mi := &file_software_manager_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -195,7 +99,7 @@ func (x *CreateSoftwareUpdateRequest) String() string {
 func (*CreateSoftwareUpdateRequest) ProtoMessage() {}
 
 func (x *CreateSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[2]
+	mi := &file_software_manager_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -208,7 +112,7 @@ func (x *CreateSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSoftwareUpdateRequest.ProtoReflect.Descriptor instead.
 func (*CreateSoftwareUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{2}
+	return file_software_manager_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreateSoftwareUpdateRequest) GetName() string {
@@ -221,13 +125,6 @@ func (x *CreateSoftwareUpdateRequest) GetName() string {
 func (x *CreateSoftwareUpdateRequest) GetVersion() string {
 	if x != nil {
 		return x.Version
-	}
-	return ""
-}
-
-func (x *CreateSoftwareUpdateRequest) GetDescription() string {
-	if x != nil {
-		return x.Description
 	}
 	return ""
 }
@@ -246,13 +143,6 @@ func (x *CreateSoftwareUpdateRequest) GetStatus() Status {
 	return Status_Stable
 }
 
-func (x *CreateSoftwareUpdateRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
 type CreateSoftwareUpdateResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -264,7 +154,7 @@ type CreateSoftwareUpdateResponse struct {
 func (x *CreateSoftwareUpdateResponse) Reset() {
 	*x = CreateSoftwareUpdateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[3]
+		mi := &file_software_manager_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -277,7 +167,7 @@ func (x *CreateSoftwareUpdateResponse) String() string {
 func (*CreateSoftwareUpdateResponse) ProtoMessage() {}
 
 func (x *CreateSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[3]
+	mi := &file_software_manager_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -290,7 +180,7 @@ func (x *CreateSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSoftwareUpdateResponse.ProtoReflect.Descriptor instead.
 func (*CreateSoftwareUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{3}
+	return file_software_manager_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateSoftwareUpdateResponse) GetSoftwareUpdate() *SoftwareUpdate {
@@ -307,17 +197,15 @@ type SoftwareUpdate struct {
 
 	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Version     string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	ReleaseDate string `protobuf:"bytes,4,opt,name=release_date,json=releaseDate,proto3" json:"release_date,omitempty"`
 	Status      Status `protobuf:"varint,6,opt,name=status,proto3,enum=ukama.node.software_manager.v1.Status" json:"status,omitempty"`
-	NodeId      string `protobuf:"bytes,7,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	Name        string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (x *SoftwareUpdate) Reset() {
 	*x = SoftwareUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[4]
+		mi := &file_software_manager_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -330,7 +218,7 @@ func (x *SoftwareUpdate) String() string {
 func (*SoftwareUpdate) ProtoMessage() {}
 
 func (x *SoftwareUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[4]
+	mi := &file_software_manager_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -343,7 +231,7 @@ func (x *SoftwareUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoftwareUpdate.ProtoReflect.Descriptor instead.
 func (*SoftwareUpdate) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{4}
+	return file_software_manager_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SoftwareUpdate) GetId() string {
@@ -360,13 +248,6 @@ func (x *SoftwareUpdate) GetVersion() string {
 	return ""
 }
 
-func (x *SoftwareUpdate) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
 func (x *SoftwareUpdate) GetReleaseDate() string {
 	if x != nil {
 		return x.ReleaseDate
@@ -379,13 +260,6 @@ func (x *SoftwareUpdate) GetStatus() Status {
 		return x.Status
 	}
 	return Status_Stable
-}
-
-func (x *SoftwareUpdate) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
 }
 
 func (x *SoftwareUpdate) GetName() string {
@@ -406,7 +280,7 @@ type ReadSoftwareUpdateRequest struct {
 func (x *ReadSoftwareUpdateRequest) Reset() {
 	*x = ReadSoftwareUpdateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[5]
+		mi := &file_software_manager_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -419,7 +293,7 @@ func (x *ReadSoftwareUpdateRequest) String() string {
 func (*ReadSoftwareUpdateRequest) ProtoMessage() {}
 
 func (x *ReadSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[5]
+	mi := &file_software_manager_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +306,7 @@ func (x *ReadSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadSoftwareUpdateRequest.ProtoReflect.Descriptor instead.
 func (*ReadSoftwareUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{5}
+	return file_software_manager_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ReadSoftwareUpdateRequest) GetId() string {
@@ -453,7 +327,7 @@ type ReadSoftwareUpdateResponse struct {
 func (x *ReadSoftwareUpdateResponse) Reset() {
 	*x = ReadSoftwareUpdateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[6]
+		mi := &file_software_manager_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -466,7 +340,7 @@ func (x *ReadSoftwareUpdateResponse) String() string {
 func (*ReadSoftwareUpdateResponse) ProtoMessage() {}
 
 func (x *ReadSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[6]
+	mi := &file_software_manager_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -479,7 +353,7 @@ func (x *ReadSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadSoftwareUpdateResponse.ProtoReflect.Descriptor instead.
 func (*ReadSoftwareUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{6}
+	return file_software_manager_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ReadSoftwareUpdateResponse) GetSoftwareUpdate() *SoftwareUpdate {
@@ -498,7 +372,7 @@ type ListSoftwareUpdatesRequest struct {
 func (x *ListSoftwareUpdatesRequest) Reset() {
 	*x = ListSoftwareUpdatesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[7]
+		mi := &file_software_manager_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -511,7 +385,7 @@ func (x *ListSoftwareUpdatesRequest) String() string {
 func (*ListSoftwareUpdatesRequest) ProtoMessage() {}
 
 func (x *ListSoftwareUpdatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[7]
+	mi := &file_software_manager_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,7 +398,7 @@ func (x *ListSoftwareUpdatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSoftwareUpdatesRequest.ProtoReflect.Descriptor instead.
 func (*ListSoftwareUpdatesRequest) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{7}
+	return file_software_manager_proto_rawDescGZIP(), []int{5}
 }
 
 type ListSoftwareUpdatesResponse struct {
@@ -538,7 +412,7 @@ type ListSoftwareUpdatesResponse struct {
 func (x *ListSoftwareUpdatesResponse) Reset() {
 	*x = ListSoftwareUpdatesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[8]
+		mi := &file_software_manager_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -551,7 +425,7 @@ func (x *ListSoftwareUpdatesResponse) String() string {
 func (*ListSoftwareUpdatesResponse) ProtoMessage() {}
 
 func (x *ListSoftwareUpdatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[8]
+	mi := &file_software_manager_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +438,7 @@ func (x *ListSoftwareUpdatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSoftwareUpdatesResponse.ProtoReflect.Descriptor instead.
 func (*ListSoftwareUpdatesResponse) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{8}
+	return file_software_manager_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListSoftwareUpdatesResponse) GetSoftwareUpdates() []*SoftwareUpdate {
@@ -583,7 +457,7 @@ type GetLatestSoftwareUpdateRequest struct {
 func (x *GetLatestSoftwareUpdateRequest) Reset() {
 	*x = GetLatestSoftwareUpdateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[9]
+		mi := &file_software_manager_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -596,7 +470,7 @@ func (x *GetLatestSoftwareUpdateRequest) String() string {
 func (*GetLatestSoftwareUpdateRequest) ProtoMessage() {}
 
 func (x *GetLatestSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[9]
+	mi := &file_software_manager_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -609,7 +483,7 @@ func (x *GetLatestSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLatestSoftwareUpdateRequest.ProtoReflect.Descriptor instead.
 func (*GetLatestSoftwareUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{9}
+	return file_software_manager_proto_rawDescGZIP(), []int{7}
 }
 
 type GetLatestSoftwareUpdateResponse struct {
@@ -623,7 +497,7 @@ type GetLatestSoftwareUpdateResponse struct {
 func (x *GetLatestSoftwareUpdateResponse) Reset() {
 	*x = GetLatestSoftwareUpdateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_software_manager_proto_msgTypes[10]
+		mi := &file_software_manager_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -636,7 +510,7 @@ func (x *GetLatestSoftwareUpdateResponse) String() string {
 func (*GetLatestSoftwareUpdateResponse) ProtoMessage() {}
 
 func (x *GetLatestSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_manager_proto_msgTypes[10]
+	mi := &file_software_manager_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -649,7 +523,7 @@ func (x *GetLatestSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLatestSoftwareUpdateResponse.ProtoReflect.Descriptor instead.
 func (*GetLatestSoftwareUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_software_manager_proto_rawDescGZIP(), []int{10}
+	return file_software_manager_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetLatestSoftwareUpdateResponse) GetSoftwareUpdate() *SoftwareUpdate {
@@ -670,56 +544,36 @@ var file_software_manager_proto_rawDesc = []byte{
 	0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73,
 	0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f, 0x67,
 	0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x77, 0x72, 0x61, 0x70,
-	0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x43, 0x0a, 0x20, 0x47, 0x65,
-	0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x42,
-	0x79, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f,
-	0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06,
-	0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22,
-	0x7c, 0x0a, 0x21, 0x47, 0x65, 0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x42, 0x79, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0f, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
-	0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e,
-	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77,
-	0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53,
-	0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x0e, 0x73,
-	0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x22, 0xf1, 0x01,
-	0x0a, 0x1b, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64,
-	0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a,
-	0x0c, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x65, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65,
-	0x12, 0x3e, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e,
-	0x32, 0x26, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f,
-	0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
-	0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x12, 0x1f, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69,
-	0x64, 0x22, 0x77, 0x0a, 0x1c, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6f, 0x66, 0x74, 0x77,
-	0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x57, 0x0a, 0x0f, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x75, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x75, 0x6b, 0x61,
-	0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
-	0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x6f, 0x66, 0x74,
-	0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x0e, 0x73, 0x6f, 0x66, 0x74,
-	0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x22, 0xf6, 0x01, 0x0a, 0x0e, 0x53,
-	0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x19, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58,
-	0x01, 0x90, 0x01, 0x04, 0x52, 0x02, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73,
-	0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69,
-	0x6f, 0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
-	0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
-	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f,
-	0x64, 0x61, 0x74, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x6c, 0x65,
-	0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x12, 0x3e, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x26, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
-	0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61,
-	0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52,
-	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
-	0x64, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12,
+	0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xae, 0x01, 0x0a, 0x1b, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18,
+	0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x65, 0x6c, 0x65,
+	0x61, 0x73, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x12, 0x3e, 0x0a, 0x06, 0x73,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x26, 0x2e, 0x75, 0x6b,
+	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72,
+	0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x77, 0x0a, 0x1c, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0f, 0x73,
+	0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64,
+	0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x52, 0x0e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x22, 0xbc, 0x01, 0x0a, 0x0e, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72,
+	0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x19, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c,
+	0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x65, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x12,
+	0x3e, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32,
+	0x26, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66,
+	0x74, 0x77, 0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31,
+	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
 	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
 	0x61, 0x6d, 0x65, 0x22, 0x36, 0x0a, 0x19, 0x52, 0x65, 0x61, 0x64, 0x53, 0x6f, 0x66, 0x74, 0x77,
 	0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
@@ -754,7 +608,7 @@ var file_software_manager_proto_rawDesc = []byte{
 	0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x2a, 0x29, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74,
 	0x75, 0x73, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x10, 0x00, 0x12, 0x08,
 	0x0a, 0x04, 0x42, 0x65, 0x74, 0x61, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x41, 0x6c, 0x70, 0x68,
-	0x61, 0x10, 0x02, 0x32, 0x8b, 0x06, 0x0a, 0x16, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
+	0x61, 0x10, 0x02, 0x32, 0xe8, 0x04, 0x0a, 0x16, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
 	0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x91,
 	0x01, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72,
 	0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x3b, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
@@ -792,22 +646,12 @@ var file_software_manager_proto_rawDesc = []byte{
 	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77,
 	0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47,
 	0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0xa0,
-	0x01, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x42, 0x79, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x40, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61,
-	0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
-	0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x42,
-	0x79, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x41,
-	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x73, 0x6f, 0x66, 0x74,
-	0x77, 0x61, 0x72, 0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e,
-	0x47, 0x65, 0x74, 0x53, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x42, 0x79, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x3d, 0x5a, 0x3b, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74,
-	0x65, 0x6d, 0x73, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72,
-	0x65, 0x2d, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2f, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x3d,
+	0x5a, 0x3b, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61,
+	0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73,
+	0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x2f, 0x73, 0x6f, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2f, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -823,44 +667,39 @@ func file_software_manager_proto_rawDescGZIP() []byte {
 }
 
 var file_software_manager_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_software_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_software_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_software_manager_proto_goTypes = []interface{}{
-	(Status)(0),                               // 0: ukama.node.software_manager.v1.Status
-	(*GetSoftwareUpdateByNodeIdRequest)(nil),  // 1: ukama.node.software_manager.v1.GetSoftwareUpdateByNodeIdRequest
-	(*GetSoftwareUpdateByNodeIdResponse)(nil), // 2: ukama.node.software_manager.v1.GetSoftwareUpdateByNodeIdResponse
-	(*CreateSoftwareUpdateRequest)(nil),       // 3: ukama.node.software_manager.v1.CreateSoftwareUpdateRequest
-	(*CreateSoftwareUpdateResponse)(nil),      // 4: ukama.node.software_manager.v1.CreateSoftwareUpdateResponse
-	(*SoftwareUpdate)(nil),                    // 5: ukama.node.software_manager.v1.SoftwareUpdate
-	(*ReadSoftwareUpdateRequest)(nil),         // 6: ukama.node.software_manager.v1.ReadSoftwareUpdateRequest
-	(*ReadSoftwareUpdateResponse)(nil),        // 7: ukama.node.software_manager.v1.ReadSoftwareUpdateResponse
-	(*ListSoftwareUpdatesRequest)(nil),        // 8: ukama.node.software_manager.v1.ListSoftwareUpdatesRequest
-	(*ListSoftwareUpdatesResponse)(nil),       // 9: ukama.node.software_manager.v1.ListSoftwareUpdatesResponse
-	(*GetLatestSoftwareUpdateRequest)(nil),    // 10: ukama.node.software_manager.v1.GetLatestSoftwareUpdateRequest
-	(*GetLatestSoftwareUpdateResponse)(nil),   // 11: ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse
+	(Status)(0),                             // 0: ukama.node.software_manager.v1.Status
+	(*CreateSoftwareUpdateRequest)(nil),     // 1: ukama.node.software_manager.v1.CreateSoftwareUpdateRequest
+	(*CreateSoftwareUpdateResponse)(nil),    // 2: ukama.node.software_manager.v1.CreateSoftwareUpdateResponse
+	(*SoftwareUpdate)(nil),                  // 3: ukama.node.software_manager.v1.SoftwareUpdate
+	(*ReadSoftwareUpdateRequest)(nil),       // 4: ukama.node.software_manager.v1.ReadSoftwareUpdateRequest
+	(*ReadSoftwareUpdateResponse)(nil),      // 5: ukama.node.software_manager.v1.ReadSoftwareUpdateResponse
+	(*ListSoftwareUpdatesRequest)(nil),      // 6: ukama.node.software_manager.v1.ListSoftwareUpdatesRequest
+	(*ListSoftwareUpdatesResponse)(nil),     // 7: ukama.node.software_manager.v1.ListSoftwareUpdatesResponse
+	(*GetLatestSoftwareUpdateRequest)(nil),  // 8: ukama.node.software_manager.v1.GetLatestSoftwareUpdateRequest
+	(*GetLatestSoftwareUpdateResponse)(nil), // 9: ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse
 }
 var file_software_manager_proto_depIdxs = []int32{
-	5,  // 0: ukama.node.software_manager.v1.GetSoftwareUpdateByNodeIdResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
-	0,  // 1: ukama.node.software_manager.v1.CreateSoftwareUpdateRequest.status:type_name -> ukama.node.software_manager.v1.Status
-	5,  // 2: ukama.node.software_manager.v1.CreateSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
-	0,  // 3: ukama.node.software_manager.v1.SoftwareUpdate.status:type_name -> ukama.node.software_manager.v1.Status
-	5,  // 4: ukama.node.software_manager.v1.ReadSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
-	5,  // 5: ukama.node.software_manager.v1.ListSoftwareUpdatesResponse.software_updates:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
-	5,  // 6: ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
-	3,  // 7: ukama.node.software_manager.v1.SoftwareManagerService.CreateSoftwareUpdate:input_type -> ukama.node.software_manager.v1.CreateSoftwareUpdateRequest
-	6,  // 8: ukama.node.software_manager.v1.SoftwareManagerService.ReadSoftwareUpdate:input_type -> ukama.node.software_manager.v1.ReadSoftwareUpdateRequest
-	8,  // 9: ukama.node.software_manager.v1.SoftwareManagerService.ListSoftwareUpdates:input_type -> ukama.node.software_manager.v1.ListSoftwareUpdatesRequest
-	10, // 10: ukama.node.software_manager.v1.SoftwareManagerService.GetLatestSoftwareUpdate:input_type -> ukama.node.software_manager.v1.GetLatestSoftwareUpdateRequest
-	1,  // 11: ukama.node.software_manager.v1.SoftwareManagerService.GetSoftwareUpdateByNodeId:input_type -> ukama.node.software_manager.v1.GetSoftwareUpdateByNodeIdRequest
-	4,  // 12: ukama.node.software_manager.v1.SoftwareManagerService.CreateSoftwareUpdate:output_type -> ukama.node.software_manager.v1.CreateSoftwareUpdateResponse
-	7,  // 13: ukama.node.software_manager.v1.SoftwareManagerService.ReadSoftwareUpdate:output_type -> ukama.node.software_manager.v1.ReadSoftwareUpdateResponse
-	9,  // 14: ukama.node.software_manager.v1.SoftwareManagerService.ListSoftwareUpdates:output_type -> ukama.node.software_manager.v1.ListSoftwareUpdatesResponse
-	11, // 15: ukama.node.software_manager.v1.SoftwareManagerService.GetLatestSoftwareUpdate:output_type -> ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse
-	2,  // 16: ukama.node.software_manager.v1.SoftwareManagerService.GetSoftwareUpdateByNodeId:output_type -> ukama.node.software_manager.v1.GetSoftwareUpdateByNodeIdResponse
-	12, // [12:17] is the sub-list for method output_type
-	7,  // [7:12] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 0: ukama.node.software_manager.v1.CreateSoftwareUpdateRequest.status:type_name -> ukama.node.software_manager.v1.Status
+	3,  // 1: ukama.node.software_manager.v1.CreateSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
+	0,  // 2: ukama.node.software_manager.v1.SoftwareUpdate.status:type_name -> ukama.node.software_manager.v1.Status
+	3,  // 3: ukama.node.software_manager.v1.ReadSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
+	3,  // 4: ukama.node.software_manager.v1.ListSoftwareUpdatesResponse.software_updates:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
+	3,  // 5: ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse.software_update:type_name -> ukama.node.software_manager.v1.SoftwareUpdate
+	1,  // 6: ukama.node.software_manager.v1.SoftwareManagerService.CreateSoftwareUpdate:input_type -> ukama.node.software_manager.v1.CreateSoftwareUpdateRequest
+	4,  // 7: ukama.node.software_manager.v1.SoftwareManagerService.ReadSoftwareUpdate:input_type -> ukama.node.software_manager.v1.ReadSoftwareUpdateRequest
+	6,  // 8: ukama.node.software_manager.v1.SoftwareManagerService.ListSoftwareUpdates:input_type -> ukama.node.software_manager.v1.ListSoftwareUpdatesRequest
+	8,  // 9: ukama.node.software_manager.v1.SoftwareManagerService.GetLatestSoftwareUpdate:input_type -> ukama.node.software_manager.v1.GetLatestSoftwareUpdateRequest
+	2,  // 10: ukama.node.software_manager.v1.SoftwareManagerService.CreateSoftwareUpdate:output_type -> ukama.node.software_manager.v1.CreateSoftwareUpdateResponse
+	5,  // 11: ukama.node.software_manager.v1.SoftwareManagerService.ReadSoftwareUpdate:output_type -> ukama.node.software_manager.v1.ReadSoftwareUpdateResponse
+	7,  // 12: ukama.node.software_manager.v1.SoftwareManagerService.ListSoftwareUpdates:output_type -> ukama.node.software_manager.v1.ListSoftwareUpdatesResponse
+	9,  // 13: ukama.node.software_manager.v1.SoftwareManagerService.GetLatestSoftwareUpdate:output_type -> ukama.node.software_manager.v1.GetLatestSoftwareUpdateResponse
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_software_manager_proto_init() }
@@ -870,30 +709,6 @@ func file_software_manager_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_software_manager_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSoftwareUpdateByNodeIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_software_manager_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSoftwareUpdateByNodeIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_software_manager_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateSoftwareUpdateRequest); i {
 			case 0:
 				return &v.state
@@ -905,7 +720,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateSoftwareUpdateResponse); i {
 			case 0:
 				return &v.state
@@ -917,7 +732,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SoftwareUpdate); i {
 			case 0:
 				return &v.state
@@ -929,7 +744,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReadSoftwareUpdateRequest); i {
 			case 0:
 				return &v.state
@@ -941,7 +756,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReadSoftwareUpdateResponse); i {
 			case 0:
 				return &v.state
@@ -953,7 +768,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListSoftwareUpdatesRequest); i {
 			case 0:
 				return &v.state
@@ -965,7 +780,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListSoftwareUpdatesResponse); i {
 			case 0:
 				return &v.state
@@ -977,7 +792,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetLatestSoftwareUpdateRequest); i {
 			case 0:
 				return &v.state
@@ -989,7 +804,7 @@ func file_software_manager_proto_init() {
 				return nil
 			}
 		}
-		file_software_manager_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_software_manager_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetLatestSoftwareUpdateResponse); i {
 			case 0:
 				return &v.state
@@ -1008,7 +823,7 @@ func file_software_manager_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_software_manager_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

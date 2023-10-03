@@ -54,58 +54,6 @@ func (_m *SoftwareManagerRepo) GetLatestSoftware() (*db.Software, error) {
 	return r0, r1
 }
 
-// GetSoftwareByAppName provides a mock function with given fields: name
-func (_m *SoftwareManagerRepo) GetSoftwareByAppName(name string) (*db.Software, error) {
-	ret := _m.Called(name)
-
-	var r0 *db.Software
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Software, error)); ok {
-		return rf(name)
-	}
-	if rf, ok := ret.Get(0).(func(string) *db.Software); ok {
-		r0 = rf(name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Software)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSoftwareByVersion provides a mock function with given fields: version
-func (_m *SoftwareManagerRepo) GetSoftwareByVersion(version string) (*db.Software, error) {
-	ret := _m.Called(version)
-
-	var r0 *db.Software
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Software, error)); ok {
-		return rf(version)
-	}
-	if rf, ok := ret.Get(0).(func(string) *db.Software); ok {
-		r0 = rf(version)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Software)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(version)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ListSoftwares provides a mock function with given fields:
 func (_m *SoftwareManagerRepo) ListSoftwares() ([]*db.Software, error) {
 	ret := _m.Called()
