@@ -1203,7 +1203,7 @@ var TC_registry_get_nodes = &test.TestCase{
 		resp := tc.GetData().(*nodepb.GetNodesResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*RegistryData)
-			for _, node := range resp.Node {
+			for _, node := range resp.Nodes {
 				check = true
 				if node.Id == data.NodeId {
 					break

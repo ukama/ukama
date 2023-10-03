@@ -105,7 +105,9 @@ services:
    - postgresd-nucleus
 
  initclient-nucleus:
-  image: salman-initclient
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=ukama-test-org
    - ENV_DNS_REFRESH_TIME_PERIOD=30

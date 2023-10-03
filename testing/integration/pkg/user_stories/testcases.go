@@ -737,7 +737,7 @@ func Story_add_node(typ string) *test.TestCase {
 				if err != nil {
 					return check2, fmt.Errorf("add node story failed on getNodes. Error %v", err)
 				} else {
-					for _, node := range tc2.Node {
+					for _, node := range tc2.Nodes {
 						if node.Id == resp.Node.Id {
 							check2 = true
 							break
