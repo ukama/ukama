@@ -43,7 +43,6 @@ type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
-
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
