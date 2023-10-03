@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 
 export const LabelOverlayUI = ({ name }: { name: string }) => {
   return (
@@ -38,6 +39,7 @@ interface ISitesTree {
 }
 
 export const SitesTree = ({ sites }: ISitesTree) => {
+  const router = useRouter();
   return (
     <Box
       sx={{
@@ -71,7 +73,11 @@ export const SitesTree = ({ sites }: ISitesTree) => {
           {sites?.map((site: any) => {
             return (
               <TreeItem key={site.id} nodeId={site.id} label={site.name}>
-                <TreeItem nodeId={site.nodeId} label={site.nodeName} />
+                <TreeItem
+                  nodeId={site.nodeId}
+                  label={site.nodeName}
+                  onClick={() => router.push(`/nodes/${site.nodeId}`)}
+                />
               </TreeItem>
             );
           })}

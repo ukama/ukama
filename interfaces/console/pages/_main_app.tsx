@@ -72,7 +72,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   ] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      if (data.getNetworks.networks.length > 1) {
+      if (
+        data.getNetworks.networks.length >= 1 &&
+        _commonData.networkId === ''
+      ) {
         setCommonData({
           ..._commonData,
           networkId: data.getNetworks.networks[0].id,
