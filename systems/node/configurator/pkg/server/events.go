@@ -26,7 +26,7 @@ func NewConfiguratorEventServer(orgName string, s *ConfiguratorServer) *Configur
 func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.add"):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
 		msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -44,8 +44,8 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 	return &epb.EventResponse{}, nil
 }
 
-func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
-	p := &epb.NodeOnlineEvent{}
+func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
+	p := &epb.NodeCreatedEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
@@ -55,7 +55,7 @@ func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) 
 }
 
 // so, commenting for compiling.
-func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeOnlineEvent) error {
+func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	//TBU
@@ -65,5 +65,10 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 	 Second may be on first successfull health update
 	 in second option we would know what version this node is on and all that
 	*/
+	err := n.s.configRepo.Add(msg.NodeId)
+	if err != nil {
+		log.Errorf("Error adding node %s to configuration repo.Error: %+v", msg.NodeId, err)
+		return err
+	}
 	return nil
 }
