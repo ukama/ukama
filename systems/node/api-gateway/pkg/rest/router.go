@@ -8,17 +8,17 @@ import (
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
-	contPb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
 
 type Router struct {
@@ -42,6 +42,8 @@ type Clients struct {
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
+	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
+
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -85,7 +87,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "API gateway", "Configurator system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "API gateway", "node system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 			return
@@ -103,12 +105,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-
 		const cont = "/controllers"
 		controller := auth.Group(cont, "Controllers", "Operations on controllers")
-		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
-		controller.POST("/restartNode", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
-
+		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
+		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
 	}
 }
 
@@ -119,6 +120,11 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
 	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
 }
+
+func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
+	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
+}
+
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {

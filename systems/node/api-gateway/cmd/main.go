@@ -7,9 +7,9 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/providers"
 
-	"github.com/ukama/ukama/systems/configurator/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/configurator/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/node/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"

@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	gen "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	gen "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	grpc "google.golang.org/grpc"
 
 	mock "github.com/stretchr/testify/mock"
@@ -41,6 +41,39 @@ func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.Rest
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RestartNodes provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.RestartNodesRequest, opts ...grpc.CallOption) (*gen.RestartNodesResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RestartNodesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) (*gen.RestartNodesResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) *gen.RestartNodesResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RestartNodesResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

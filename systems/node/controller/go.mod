@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/configurator/controller
+module github.com/ukama/ukama/systems/node/controller
 
 go 1.20
 

@@ -3,7 +3,7 @@ include ../../config.mk
 .PHONY: integration.test test build lint deps 
 
 build: integration.build 
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/configurator/controller/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/controller cmd/server/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/node/controller/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/controller cmd/server/main.go
 
 lint:
 	golangci-lint run

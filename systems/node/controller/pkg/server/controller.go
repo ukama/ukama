@@ -9,11 +9,12 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/configurator/controller/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
-	"github.com/ukama/ukama/systems/configurator/controller/pkg"
-	"github.com/ukama/ukama/systems/configurator/controller/pkg/providers"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
+	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 )
 
 type ControllerServer struct {
@@ -61,21 +62,24 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RestartSiteResponse{
-		Status: pb.RestartStatus_RESTART_STATUS_SUCCESS,
+		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
+	log.Infof("Restarting node %v", req)
+
 	if req.NodeId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
 	}
 
-	nodeId, err := uuid.FromString(req.GetNodeId())
+	nId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
+	if err := c.registrySystem.ValidateNode(nId.String(), c.orgName); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
 	}
 
@@ -85,6 +89,33 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RestartNodeResponse{
-		Status: pb.RestartStatus_RESTART_STATUS_SUCCESS,
+		Status: pb.RestartStatus_ACCEPTED,
+	}, nil
+}
+
+func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
+	log.Infof("Restarting nodes %v", req)
+
+	if len(req.NodeIds) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "node IDs cannot be empty")
+	}
+	for _, nodeId := range req.NodeIds {
+		nids, err := ukama.ValidateNodeId(nodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of node id. Error %s", err.Error())
+		}
+		if err := c.registrySystem.ValidateNode(nids.String(), c.orgName); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
+		}
+	}
+
+	route := c.controllerRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
+	err := c.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	return &pb.RestartNodesResponse{
+		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
 }

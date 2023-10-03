@@ -1,19 +1,19 @@
-module github.com/ukama/ukama/systems/configurator/api-gateway
+module github.com/ukama/ukama/systems/node/api-gateway
 
 go 1.20
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/configurator/controller => ../controller
+replace github.com/ukama/ukama/systems/node/controller => ../controller
 
-replace github.com/ukama/ukama/systems/configurator/api-gateway => ./
+replace github.com/ukama/ukama/systems/node/api-gateway => ./
 
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/loopfz/gadgeto v0.11.3
-	github.com/ukama/ukama/systems/common v0.0.0-20230830173954-94b66c31118e
-	github.com/ukama/ukama/systems/configurator/controller v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	github.com/ukama/ukama/systems/node/controller v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 )
 
