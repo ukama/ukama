@@ -546,7 +546,7 @@ func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	}
 
 	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNocddes(nodes),
+		Nodes: dbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
