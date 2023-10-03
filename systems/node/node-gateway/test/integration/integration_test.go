@@ -36,11 +36,10 @@ func init() {
 func TestApiGateway_Endpoints(t *testing.T) {
 	client := resty.New()
 	nodeId :=  uuid.NewV4()
-
 	var nt = rest.GetRunningAppsRequest{
 	NodeId:      nodeId.String(),
 }
-	t.Run("GetRunningAppsInfo", func(tt *testing.T) {
+	t.Run("StoreRunningAppsInfo", func(tt *testing.T) {
 		body, err := json.Marshal(nt)
 		if err != nil {
 			t.Errorf("fail to marshal request data: %v. Error: %v", nt, err)
@@ -48,11 +47,21 @@ func TestApiGateway_Endpoints(t *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetBody(bytes.NewReader(body)).
-			Post(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/apps")
+			Post(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/perfomance")
 		assert.NoError(t, err)
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 	})
+
+	t.Run("GetRunningAppsInfo", func(tt *testing.T) {
+
+		resp, err := client.R().
+			EnableTrace().
+			Get(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/perfomance")
+		assert.NoError(t, err)
+		assert.Equal(tt, http.StatusOK, resp.StatusCode())
+		})
 }
 func getApiUrl() string {
-	return "http://localhost:8080"
+	return "http://" + testConf.ServiceHost
 }
+
