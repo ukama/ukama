@@ -1858,18 +1858,19 @@ func Story_Subscriber() *test.TestCase {
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.registry.add"})
 			a.reqAddSubscriber = sapi.SubscriberAddReq{
-				Dob:                   utils.GenerateRandomUTCPastDate(2005),
-				Phone:                 strings.ToLower(faker.Phonenumber()),
-				Email:                 strings.ToLower(faker.Email()),
-				IdSerial:              faker.UUIDDigit(),
-				FirstName:             faker.FirstName(),
-				LastName:              faker.LastName(),
-				Gender:                faker.Gender(),
-				Address:               faker.Name(),
-				NetworkId:             a.NetworkId,
-				ProofOfIdentification: "passport",
-				OrgId:                 a.OrgId,
+				// Dob:                   utils.GenerateRandomUTCPastDate(2005),
+				// Phone:                 strings.ToLower(faker.Phonenumber()),
+				Email: strings.ToLower(faker.Email()),
+				// IdSerial:              faker.UUIDDigit(),
+				FirstName: faker.FirstName(),
+				LastName:  faker.LastName(),
+				// Gender:                faker.Gender(),
+				// Address:               faker.Name(),
+				NetworkId: a.NetworkId,
+				// ProofOfIdentification: "passport",
+				OrgId: a.OrgId,
 			}
+			fmt.Println("ADD SUB BODY: ", a.reqAddSubscriber)
 
 			return nil
 		},

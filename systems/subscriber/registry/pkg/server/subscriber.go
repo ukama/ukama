@@ -42,6 +42,7 @@ func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBu
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
+	var dob string
 	networkId, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -54,10 +55,13 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	dob, err := validate.ValidateDate(req.GetDob())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	if req.GetDob() != "" {
+		dob, err = validate.ValidateDate(req.GetDob())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 	}
+
 	subscriberId := uuid.NewV4()
 	err = s.network.ValidateNetwork(networkId.String(), orgId.String())
 	if err != nil {
