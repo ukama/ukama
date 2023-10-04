@@ -19,7 +19,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/common/sql"
 )
 
 type ConfigStore struct {
@@ -355,28 +354,27 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			return err
 		}
 
-		err = c.commitRepo.Add(strings.ToLower(commit))
+		// err = c.commitRepo.Add(strings.ToLower(commit))
+		// if err != nil {
+		// 	log.Errorf("Failed to add new commit: %v", err)
+		// 	return err
+		// }
+
+		// newCommit, err := c.commitRepo.Get(commit)
+		// if err != nil {
+		// 	log.Errorf("Failed to read from commit repo. %v", err)
+		// 	return err
+
+		// }
+
+		cRec.Commit = db.Commit{Hash: commit}
+		state := db.Published
+		err = c.configRepo.UpdateLastCommit(*cRec, &state)
 		if err != nil {
-			log.Errorf("Failed to add new commit: %v", err)
+			log.Errorf("Failed to update latest commit: %v", err)
 			return err
 		}
 
-		newCommit, err := c.commitRepo.Get(commit)
-		if err != nil {
-			if sql.IsNotFoundError(err) {
-
-			} else {
-				log.Errorf("Failed to read from commit repo. %v", err)
-				return err
-			}
-		}
-
-		cRec.Commit = *newCommit
-		err = c.configRepo.UpdateCurrentCommit(*cRec, commit)
-		if err != nil {
-			log.Errorf("Failed to get latest commit: %v", err)
-			return err
-		}
 	}
 
 	return nil

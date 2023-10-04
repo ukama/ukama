@@ -71,7 +71,7 @@ func (c *ConfiguratorServer) GetConfigVersion(ctx context.Context, req *pb.Confi
 
 	return &pb.ConfigVersionResponse{
 		NodeId: req.NodeId,
-		Status: cfg.Status.String(),
+		Status: cfg.State.String(),
 		Commit: cfg.Commit.Hash,
 		// LastStatus: cfg.LastStatus.String(),
 		// LastCommit: cfg.LastCommit.Hash,

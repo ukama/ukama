@@ -13,10 +13,13 @@ type Commit struct {
 }
 type Configuration struct {
 	gorm.Model
-	NodeId   string      `gorm:"type:string;uniqueIndex:idx_node_id_case_insensitive,where:deleted_at is null;size:23;not null"`
-	Status   CommitState `gorm:"type:uint;not null"`
-	Commit   Commit      `gorm:"foreignKey:CommitId"`
-	CommitId int
+	NodeId          string      `gorm:"type:string;uniqueIndex:idx_node_id_case_insensitive,where:deleted_at is null;size:23;not null"`
+	State           CommitState `gorm:"type:uint;not null"`
+	Commit          Commit      `gorm:"foreignKey:CommitId"` /* Should be updated by health event after receiving update from node */
+	CommitId        int
+	LastCommit      Commit `gorm:"foreignKey:LastCommitId"` /* Should be updated by config store after pushing config to msgclient */
+	LastCommitId    int
+	LastCommitState CommitState `gorm:"type:uint;not null"`
 }
 
 type CommitState uint8
@@ -28,6 +31,7 @@ const (
 	Failed    CommitState = 3 /* After failed  commit */
 	Commited  CommitState = 4 /* After commit is pushed to NodeFeeder but still waiting for confirmation from node */
 	Partial   CommitState = 6 /* After partial commits */
+	Published CommitState = 7 /* After commit is pushed to msgclient.*/
 )
 
 func (e *CommitState) Scan(value interface{}) error {
@@ -48,6 +52,7 @@ func (e CommitState) String() string {
 		Failed:    "failed",
 		Commited:  "commited",
 		Partial:   "partial",
+		Published: "published",
 	}
 
 	return ns[e]
@@ -65,6 +70,8 @@ func ParseCommitState(s string) CommitState {
 		return Failed
 	case "commited":
 		return Commited
+	case "published":
+		return Published
 	default:
 		return Undefined
 	}
