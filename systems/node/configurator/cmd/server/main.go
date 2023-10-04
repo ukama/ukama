@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/num30/config"
@@ -51,7 +50,7 @@ func initDb() sql.Db {
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
-	fmt.Println("serviceConfig", serviceConfig)
+	log.Infof("serviceConfig %+v", serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
@@ -77,7 +76,7 @@ func runGrpcServer(gormdb sql.Db) {
 	configuratorServer := server.NewConfiguratorServer(mbClient, reg, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), serviceConfig.OrgName, serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout, pkg.IsDebugMode)
 	configuratorEventServer := server.NewConfiguratorEventServer(serviceConfig.OrgName, configuratorServer)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client config: %+v Client: %+v", serviceConfig.MsgClient, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterConfiguratorServiceServer(s, configuratorServer)

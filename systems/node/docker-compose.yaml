@@ -43,11 +43,11 @@ services:
    - ORGNAME=ukama-test-org
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-node:9095
-   - MEMBER_SERVICE_HOST=configurator
-   - MEMBER_SERVICE_PORT=9090
+   - CONFIGURATOR_SERVICE_HOST=configurator
+   - CONFIGURATOR_SERVICE_PORT=9090
    - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - ORGREGISTRYHOST=http://${LOCAL_HOST_IP}:8060
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8060
    - LATESTCONFIGHASH=99c95ddcfeb5e49e87020e7cfd7c9c86abf38b03
    - STOREURL=http://192.168.0.26:8088/ukama/ukama-test-org.git
    - STOREUSER=root

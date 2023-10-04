@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -65,7 +66,7 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 	 Second may be on first successfull health update
 	 in second option we would know what version this node is on and all that
 	*/
-	err := n.s.configRepo.Add(msg.NodeId)
+	err := n.s.configRepo.Add(strings.ToLower(msg.NodeId))
 	if err != nil {
 		log.Errorf("Error adding node %s to configuration repo.Error: %+v", msg.NodeId, err)
 		return err

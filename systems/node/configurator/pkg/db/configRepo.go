@@ -86,7 +86,7 @@ func (n *configRepo) Update(c Configuration) error {
 }
 
 func (n *configRepo) UpdateLastCommit(c Configuration, hash string) error {
-	err := n.Db.GetGormDb().Model(&c).Association("LastCommit").Replace(&Commit{Hash: hash})
+	err := n.Db.GetGormDb().Model(&c).Association("Commit").Replace(&Commit{Hash: hash})
 	if err != nil {
 		log.Errorf("Failed to cuurent commit: %v", err)
 	}
@@ -95,7 +95,7 @@ func (n *configRepo) UpdateLastCommit(c Configuration, hash string) error {
 }
 
 func (n *configRepo) UpdateCurrentCommit(c Configuration, hash string) error {
-	err := n.Db.GetGormDb().Model(&c).Association("Commit").Replace(&Commit{Hash: hash})
+	err := n.Db.GetGormDb().Model(&c).Association("Commit").Replace(&(c.Commit))
 	if err != nil {
 		log.Errorf("Failed to cuurent commit: %v", err)
 	}
