@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/member/cmd/version"
 	"github.com/ukama/ukama/systems/registry/member/pkg"
 
+	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 	"github.com/ukama/ukama/systems/registry/member/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/member/pkg/server"
@@ -160,16 +161,13 @@ func initMemberDB(d sql.Db, p providers.NucleusClientProvider) {
 			member := &db.Member{
 				UserId:      OwnerUUID,
 				Deactivated: false,
-				Role:        db.Owner,
+				Role:        db.RoleType(pb.RoleType_OWNER),
 			}
-
 			if err := mDB.Transaction(func(tx *gorm.DB) error {
-
 				err := p.UpdateOrgToUser(o.Org.Id, member.UserId.String())
 				if err != nil {
 					return err
 				}
-
 				if err := tx.Create(member).Error; err != nil {
 					return err
 				}

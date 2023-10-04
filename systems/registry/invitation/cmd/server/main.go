@@ -6,6 +6,10 @@ import (
 	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/registry/invitation/cmd/version"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg"
@@ -27,8 +31,8 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	networkDb := initDb()
-	runGrpcServer(networkDb)
+	invitationDb := initDb()
+	runGrpcServer(invitationDb)
 }
 func initConfig() {
 
@@ -55,6 +59,12 @@ func initDb() sql.Db {
 	return d
 }
 func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst := uuid.NewV4()
+		instanceId = inst.String()
+	}
 
 	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
 	if err != nil {
@@ -62,8 +72,11 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 	nucleusP := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
 
-	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb), serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL, notificationClient, nucleusP)
-
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
+		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
+		notificationClient, nucleusP, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterInvitationServiceServer(s, invitationServer)
 	})
@@ -71,6 +84,16 @@ func runGrpcServer(gormdb sql.Db) {
 	go grpcServer.StartServer()
 
 	waitForExit()
+}
+
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }
 
 func waitForExit() {

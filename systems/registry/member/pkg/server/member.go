@@ -248,6 +248,7 @@ func dbMemberToPbMember(member *db.Member, orgId string) *pb.Member {
 		OrgId:         orgId,
 		UserId:        member.UserId.String(),
 		IsDeactivated: member.Deactivated,
+		Role:          pb.RoleType(member.Role),
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }

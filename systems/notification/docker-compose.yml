@@ -1,0 +1,54 @@
+version: '3.2'
+services:
+ postgresd-notification:
+  image: postgres:13.3
+  ports:
+   - '5406:5432'
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
+ mailer:
+  build: ./mailer
+  ports:
+   - '9058:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-notification
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MAILER_HOST=${MAILER_HOST}
+   - MAILER_PORT=${MAILER_PORT}
+   - MAILER_PASSWORD=${MAILER_PASSWORD}
+   - MAILER_USERNAME=${MAILER_USERNAME}
+   - TEMPLATESPATH=${TEMPLATESPATH}
+   - MAILER_FROM=${MAILER_FROM}
+  restart: always
+  networks:
+   - ukama-net
+
+ api-gateway-notification:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./api-gateway
+  restart: always
+  ports:
+   - '8058:8080'
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+  depends_on:
+   - mailer
+   - postgresd-notification
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net
+volumes:
+ postgress-data:

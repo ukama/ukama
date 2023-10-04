@@ -319,7 +319,7 @@ func TestRouter_Subscriber(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberId+`"`)
 		csp.AssertExpectations(t)
 	})
@@ -494,7 +494,7 @@ func TestRouter_SimManager(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 		csm.AssertExpectations(t)
 
 	})
@@ -529,7 +529,7 @@ func TestRouter_SimManager(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 		csm.AssertExpectations(t)
 	})
 	t.Run("updateSimStatus", func(t *testing.T) {

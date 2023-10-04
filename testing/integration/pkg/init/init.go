@@ -4,38 +4,27 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
 	api "github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
 	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-type InitSys struct {
-	Url *url.URL
-	C   *resty.Client
+type InitClient struct {
+	u *url.URL
+	r utils.Resty
 }
 
-func NewInitSys(host string) *InitSys {
-
-	u, _ := url.Parse(host)
-	c := resty.New()
-	c.SetDebug(true)
-
-	return &InitSys{
-		Url: u,
-		C:   c,
+func NewInitClient(h string) *InitClient {
+	u, _ := url.Parse(h)
+	return &InitClient{
+		u: u,
+		r: *utils.NewResty(),
 	}
+
 }
-
-func (s *InitSys) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error) {
-
-	// req := api.AddOrgRequest{
-	// 	OrgName:     faker.FirstName() + "_org",
-	// 	Ip:          faker.IPv4(),
-	// 	Certificate: util.RandomBase64(2048),
-	// }
+func (s *InitClient) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -43,57 +32,39 @@ func (s *InitSys) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error)
 	}
 	rsp := &lpb.AddOrgResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		SetBody(b).
-		Put(s.Url.String() + "/v1/orgs/" + req.OrgName)
-
+	resp, err := s.r.Put(s.u.String()+"/v1/orgs/"+req.OrgName, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetOrg(req api.GetOrgRequest) (*lpb.GetOrgResponse, error) {
+func (s *InitClient) InitGetOrg(req api.GetOrgRequest) (*lpb.GetOrgResponse, error) {
 
-	// req := api.AddOrgRequest{
-	// 	OrgName:     faker.FirstName() + "_org",
-	// 	Ip:          faker.IPv4(),
-	// 	Certificate: util.RandomBase64(2048),
-	// }
 	rsp := &lpb.GetOrgResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		Get(s.Url.String() + "/v1/orgs/" + req.OrgName)
-
+	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
-func (s *InitSys) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemResponse, error) {
+func (s *InitClient) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -101,52 +72,40 @@ func (s *InitSys) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemRespons
 	}
 	rsp := &lpb.AddSystemResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		SetBody(b).
-		Put(s.Url.String() + "/v1/orgs/" + req.OrgName + "/systems/" + req.SysName)
-
+	resp, err := s.r.Put(s.u.String()+"/v1/orgs/"+req.OrgName+"/systems/"+req.SysName, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetSystem(req api.GetSystemRequest) (*lpb.GetSystemResponse, error) {
+func (s *InitClient) InitGetSystem(req api.GetSystemRequest) (*lpb.GetSystemResponse, error) {
 
 	rsp := &lpb.GetSystemResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		Get(s.Url.String() + "/v1/orgs/" + req.OrgName + "/systems/" + req.SysName)
+	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/systems/" + req.SysName)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
-func (s *InitSys) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, error) {
+func (s *InitClient) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -154,46 +113,33 @@ func (s *InitSys) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, err
 	}
 	rsp := &lpb.AddNodeResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		SetBody(b).
-		Put(s.Url.String() + "/v1/orgs/" + req.OrgName + "/nodes/" + req.NodeId)
-
+	resp, err := s.r.Put(s.u.String()+"/v1/orgs/"+req.OrgName+"/nodes/"+req.NodeId, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetNode(req api.GetNodeRequest) (*lpb.GetNodeResponse, error) {
+func (s *InitClient) InitGetNode(req api.GetNodeRequest) (*lpb.GetNodeResponse, error) {
 
 	rsp := &lpb.GetNodeResponse{}
 
-	errStatus := &rest.ErrorResponse{}
-
-	resp, err := s.C.R().
-		SetError(errStatus).
-		SetResult(rsp).
-		Get(s.Url.String() + "/v1/orgs/" + req.OrgName + "/nodes/" + req.NodeId)
-
+	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/nodes/" + req.NodeId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if !resp.IsSuccess() {
-		log.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
-		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil

@@ -25,6 +25,7 @@ func TestAdd(t *testing.T) {
 		simManagerService := &mocks.SimManagerClientProvider{}
 		network := &mocks.NetworkInfoClient{}
 
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		network.On("ValidateNetwork", mock.Anything, mock.Anything).Return(nil)
 
@@ -38,7 +39,7 @@ func TestAdd(t *testing.T) {
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
-			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC1123),
+			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",

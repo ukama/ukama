@@ -41,9 +41,9 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:    3 * time.Second,
-			SimPool:    "sims:9090",
+			SimPool:    "sim:9090",
 			Registry:   "registry:9090",
-			SimManager: "sim-manager:9090",
+			SimManager: "simmanager:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

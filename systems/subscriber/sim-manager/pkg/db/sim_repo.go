@@ -11,6 +11,7 @@ import (
 type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Get(simID uuid.UUID) (*Sim, error)
+	GetById(simID uuid.UUID) (*Sim, error)
 	GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error)
 	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
@@ -53,6 +54,17 @@ func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	var sim Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &sim, nil
+}
+
+func (s *simRepo) GetById(simID uuid.UUID) (*Sim, error) {
+	var sim Sim
+
+	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package").First(&sim, simID)
 	if result.Error != nil {
 		return nil, result.Error
 	}

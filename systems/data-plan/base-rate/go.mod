@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/data-plan/base-rate
 
-go 1.18
+go 1.20
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -8,25 +8,24 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/golang/protobuf v1.5.2
-	github.com/jszwec/csvutil v1.7.1
+	github.com/golang/protobuf v1.5.3
+	github.com/jszwec/csvutil v1.8.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	google.golang.org/grpc v1.52.0
-	google.golang.org/protobuf v1.30.0
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	google.golang.org/grpc v1.58.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.4.6
-	gorm.io/gorm v1.24.3
+	gorm.io/gorm v1.25.4
 )
-
-require github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -89,11 +88,13 @@ require (
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
-	golang.org/x/crypto v0.4.0 // indirect
-	golang.org/x/net v0.4.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

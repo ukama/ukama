@@ -14,7 +14,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"10s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	SimManagerHost   string `default:"sim-manager:9090"`
+	SimManagerHost   string `default:"simmanager:9090"`
 	NetworkHost      string `default:"http://registry-api-gw:8080"`
 	OrgName          string
 }

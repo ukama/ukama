@@ -239,7 +239,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	
+
 	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
@@ -812,7 +812,9 @@ func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
-		Id: pkg.Id.String(),
+		Id:        pkg.Id.String(),
+		PackageId: pkg.PackageId.String(),
+		IsActive:  pkg.IsActive,
 	}
 
 	if !pkg.EndDate.IsZero() {
@@ -828,7 +830,7 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 
 func dbPackagesToPbPackages(packages []sims.Package) []*pb.Package {
 	res := []*pb.Package{}
-
+	log.Info("packages parsing: ", packages)
 	for _, s := range packages {
 		res = append(res, dbPackageToPbPackage(&s))
 	}

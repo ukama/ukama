@@ -128,8 +128,8 @@ type GetInvitationRequest struct {
 }
 
 type UpdateInvitationRequest struct {
-	InvitationId string `json:"invitation_id" validate:"required" path:"invitation_id" `
-	Status       string `json:"status" validate:"required"`
+	InvitationId string `json:"invitation_id" validate:"required" path:"invitation_id"`
+	Status       string `form:"status" json:"status" validate:"required"`
 }
 
 type RemoveInvitationRequest struct {

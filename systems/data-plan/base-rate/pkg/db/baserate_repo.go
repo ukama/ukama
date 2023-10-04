@@ -51,9 +51,9 @@ func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, provider string, sT
 
 func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType SimType) ([]BaseRate, error) {
 	var rates []BaseRate
+	t := time.Now().Add(time.Second * 1).Format(time.RFC3339)
 	result := b.Db.GetGormDb().Model(BaseRate{}).Where("country = ?", country).Where("provider = ?", provider).
-		Where("sim_type = ?", simType).Where("effective_at <= ?", time.Now()).Order("effective_at desc").Limit(1).Find(&rates)
-
+		Where("sim_type = ?", simType).Where("effective_at <= ?", t).Order("effective_at desc").Limit(1).Find(&rates)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -64,7 +64,7 @@ func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType S
 func (b *baseRateRepo) GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("provider = ?", provider).
-		Where("sim_type = ?", simType).Where("effective_at >= ?", from).Where("effective_at <= ?", to).Find(&rates)
+		Where("sim_type = ?", simType).Where("effective_at <= ?", from).Where("end_at >= ?", to).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error
