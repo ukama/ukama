@@ -10,6 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	failedRequestMsg  = "invalid content. request has failed"
+	pendingRequestMsg = "partial content. request is still ongoing"
+)
+
 type Client interface {
 	GetNetwork(string) (*NetworkInfo, error)
 	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*NetworkInfo, error)
@@ -59,20 +64,20 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	}
 
 	if net.SyncStatus == types.SyncStatusUnknown.String() || net.SyncStatus == types.SyncStatusFailed.String() {
-		log.Warn("invalid content. request has failed")
+		log.Error(failedRequestMsg)
 
 		return nil, rest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
-			Message:  "invalid content. request has failed",
+			Message:  failedRequestMsg,
 		}
 	}
 
 	if net.SyncStatus == types.SyncStatusPending.String() {
-		log.Warn("partial content. request is still ongoing")
+		log.Warn(pendingRequestMsg)
 
 		return net, rest.HttpError{
 			HttpCode: http.StatusPartialContent,
-			Message:  "partial content. request is still ongoing",
+			Message:  pendingRequestMsg,
 		}
 	}
 
@@ -106,20 +111,20 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 	}
 
 	if pkg.SyncStatus == types.SyncStatusUnknown.String() || pkg.SyncStatus == types.SyncStatusFailed.String() {
-		log.Warn("invalid content. request has failed")
+		log.Error(failedRequestMsg)
 
 		return nil, rest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
-			Message:  "invalid content. request has failed",
+			Message:  failedRequestMsg,
 		}
 	}
 
 	if pkg.SyncStatus == types.SyncStatusPending.String() {
-		log.Warn("partial content. request is still ongoing")
+		log.Warn(pendingRequestMsg)
 
 		return pkg, rest.HttpError{
 			HttpCode: http.StatusPartialContent,
-			Message:  "partial content. request is still ongoing",
+			Message:  pendingRequestMsg,
 		}
 	}
 
@@ -168,20 +173,20 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 	}
 
 	if sim.SyncStatus == types.SyncStatusUnknown.String() || sim.SyncStatus == types.SyncStatusFailed.String() {
-		log.Warn("invalid content. request has failed")
+		log.Error(failedRequestMsg)
 
 		return nil, rest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
-			Message:  "invalid content. request has failed",
+			Message:  failedRequestMsg,
 		}
 	}
 
 	if sim.SyncStatus == types.SyncStatusPending.String() {
-		log.Warn("partial content. request is still ongoing")
+		log.Warn(pendingRequestMsg)
 
 		return sim, rest.HttpError{
 			HttpCode: http.StatusPartialContent,
-			Message:  "partial content. request is still ongoing",
+			Message:  pendingRequestMsg,
 		}
 	}
 
