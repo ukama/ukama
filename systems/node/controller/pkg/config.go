@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	DB               *uconf.Database `default:"{}"`
 	uconf.BaseConfig `mapstructure:",squash"`
 	Grpc             *uconf.Grpc   `default:"{}"`
 	Queue            *uconf.Queue  `default:"{}"`

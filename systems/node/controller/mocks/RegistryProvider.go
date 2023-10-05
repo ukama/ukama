@@ -9,6 +9,20 @@ type RegistryProvider struct {
 	mock.Mock
 }
 
+// ValidateNetwork provides a mock function with given fields: networkId, orgName
+func (_m *RegistryProvider) ValidateNetwork(networkId string, orgName string) error {
+	ret := _m.Called(networkId, orgName)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(networkId, orgName)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ValidateNode provides a mock function with given fields: nodeId, orgName
 func (_m *RegistryProvider) ValidateNode(nodeId string, orgName string) error {
 	ret := _m.Called(nodeId, orgName)

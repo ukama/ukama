@@ -25,7 +25,7 @@ func TestControllerServer_RestartSite(t *testing.T) {
 
 	netId := uuid.NewV4()
 
-	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName)
+	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
 
 	RegRepo.On("ValidateSite", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartSiteRequest{
@@ -50,7 +50,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 
 	nodeId := uuid.NewV4()
 
-	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName)
+	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
 
 	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
@@ -74,7 +74,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 
 	nodeId := uuid.NewV4()
 
-	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName)
+	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
 
 	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
