@@ -45,7 +45,7 @@ func NewConfig() *Config {
 		},
 
 		Server: rest.HttpConfig{
-			Port: 8080,
+			Port: 8081,
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),

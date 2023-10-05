@@ -44,7 +44,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	log.Infoln("Connecting to controller ", tConfig.ServiceHost)
+	log.Infoln("Connecting to sw-manager ", tConfig.ServiceHost)
 
 	conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
