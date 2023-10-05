@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type Device5xxServerError struct {
@@ -25,7 +27,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *DevicesUpdateRequest) error
+	Execute(req *NodeUpdateRequest) error
 }
 
 type requestExecutor struct {
@@ -37,7 +39,7 @@ func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetwo
 	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
 }
 
-func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
+func (e *requestExecutor) Execute(req *NodeUpdateRequest) error {
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 2 {
 		return fmt.Errorf("invalid target format")
@@ -70,10 +72,14 @@ func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
 		Timeout: time.Duration(e.deviceNetworkConf.TimeoutSeconds) * time.Second,
 	}
 
+	msgBytes, err := proto.Marshal(req.Msg)
+if err != nil {
+    return errors.Wrap(err, "error marshaling protobuf message")
+}
 	logrus.Infof("sending request to %s", u.String())
 	resp, err := c.Do(&http.Request{
-		Body:   io.NopCloser(strings.NewReader(req.Body)),
-		Method: req.HttpMethod,
+		Body:   io.NopCloser(bytes.NewReader((msgBytes))),
+		Method: req.HTTPMethod,
 		URL:    u,
 	})
 	if err != nil {

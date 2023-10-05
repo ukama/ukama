@@ -23,7 +23,7 @@ type queuePublisher struct {
 
 
 type QueuePublisher interface {
-	Publish(msg pkg.DevicesUpdateRequest) error
+	Publish(msg pkg.NodeUpdateRequest) error
 	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
@@ -57,13 +57,13 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 
 
 
-func (q *queuePublisher) Publish(msg pkg.DevicesUpdateRequest) error {
+func (q *queuePublisher) Publish(msg pkg.NodeUpdateRequest) error {
 
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	err = q.publisher.Publish(b, []string{string(msgbus.DeviceFeederRequestRoutingKey)},
+	err = q.publisher.Publish(b, []string{string(msgbus.NodeFeederRequestRoutingKey)},
 		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
 			global.OptionalTargetHeaderName: msg.Target,
 		}),

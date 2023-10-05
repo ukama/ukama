@@ -13,11 +13,11 @@ type RequestMultiplier struct {
 }
 
 // Process provides a mock function with given fields: body
-func (_m *RequestMultiplier) Process(body *pkg.DevicesUpdateRequest) error {
+func (_m *RequestMultiplier) Process(body *pkg.NodeUpdateRequest) error {
 	ret := _m.Called(body)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*pkg.DevicesUpdateRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(*pkg.NodeUpdateRequest) error); ok {
 		r0 = rf(body)
 	} else {
 		r0 = ret.Error(0)

@@ -20,7 +20,7 @@ func NewRequestMultiplier(registryClient RegistryClient, queue QueuePublisher) p
 	}
 }
 
-func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
+func (r *requestMultiplier) Process(req *pkg.NodeUpdateRequest) error {
 	// "org.nodeId"
 	segments := strings.Split(req.Target, ".")
 	if len(segments) != 2 {
@@ -42,11 +42,11 @@ func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
 	logrus.Infof("Creating requests for %d nodes", len(nodes))
 	counter := 0
 	for _, n := range nodes {
-		err = r.queue.Publish(pkg.DevicesUpdateRequest{
+		err = r.queue.Publish(pkg.NodeUpdateRequest{
 			Target:     orgName + "." + n.Id,
-			HttpMethod: req.HttpMethod,
+			HTTPMethod: req.HTTPMethod,
 			Path:       req.Path,
-			Body:       req.Body,
+			Msg:       req.Msg,
 		})
 
 		if err != nil {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
+	"google.golang.org/protobuf/types/known/anypb"
 
-	//  "github.com/rabbitmq/amqp091-go"
 	amqp "github.com/streadway/amqp"
 
 	log "github.com/sirupsen/logrus"
@@ -34,14 +34,14 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *DevicesUpdateRequest) error
+	Process(body *NodeUpdateRequest) error
 }
 
-type DevicesUpdateRequest struct {
-	Target     string `json:"target"` // Target devices in form of "organization.network.device-id". Device id and network could be wildcarded
-	HttpMethod string `json:"httpMethod"`
+type NodeUpdateRequest struct {
+	Target     string `json:"target"`
+	HTTPMethod string `json:"httpMethod"`
 	Path       string `json:"path"`
-	Body       string `json:"body"`
+	Msg        *anypb.Any `json:"-"`
 }
 func NewQueueListener(queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
 	
@@ -101,20 +101,20 @@ func (q *QueueListener) declareQueueTopology(queueUri string) error {
 
 	// data feeder queue
 	dataFeederQueue, err := ch.QueueDeclare(
-		"device-feeder", // name
+		"node-feeder", // name
 		true,            // durable
 		false,           // delete when unused
 		false,           // exclusive
 		false,           // no-wait
 		map[string]interface{}{
 			deadLetterExchangeHeaderName:   deadLetterExchangeName,
-			deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
 		}, // arguments
 	)
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
 	}
-	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.DeviceFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
+	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.NodeFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
 
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
@@ -127,7 +127,7 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 
 	// TODO: set TTL via policy
 	waitingQueue, err := ch.QueueDeclare(
-		"device-feeder.waiting-queue", // name
+		"node-feeder.waiting-queue", // name
 		true,                          // durable
 		false,                         // delete when unused
 		false,                         // exclusive
@@ -135,18 +135,14 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 		map[string]interface{}{
 			"x-message-ttl":                q.retryPeriodSec * 1000,
 			deadLetterExchangeHeaderName:   msgbus.DefaultExchange,
-			deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
 		},
 	)
 	return waitingQueue, err
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-    // queueArgs := map[string]interface{}{
-    //     deadLetterExchangeHeaderName:   deadLetterExchangeName,
-    //     deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
-    // }
-
+  
     err = q.consumer.SubscribeToQueue(global.QueueName, q.serviceId, q.incomingMessageHandler )
     if err != nil {
         log.Errorf("Error subscribing for queue messages. Error: %+v", err)
@@ -212,10 +208,9 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	return false
 }
 
-// return error only if it could be fixed by retry
-// malformed request should not be considered as error
+//process nodeUpdateRequest msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-	request := &DevicesUpdateRequest{}
+	request := &NodeUpdateRequest{}
 	err := json.Unmarshal(delivery.Body, request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
@@ -240,6 +235,11 @@ func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
 
 		return err
 	}
+
 }
+
+
+
+
 
 

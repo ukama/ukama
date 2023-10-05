@@ -13,11 +13,11 @@ type RequestExecutor struct {
 }
 
 // Execute provides a mock function with given fields: req
-func (_m *RequestExecutor) Execute(req *pkg.DevicesUpdateRequest) error {
+func (_m *RequestExecutor) Execute(req *pkg.NodeUpdateRequest) error {
 	ret := _m.Called(req)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*pkg.DevicesUpdateRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(*pkg.NodeUpdateRequest) error); ok {
 		r0 = rf(req)
 	} else {
 		r0 = ret.Error(0)
