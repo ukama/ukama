@@ -1,7 +1,6 @@
 package rest
 
 // org group
-
 type GetOrgsRequest struct {
 	UserUuid string `example:"{{UserUUID}}" form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
 }

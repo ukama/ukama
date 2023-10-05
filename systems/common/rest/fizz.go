@@ -52,35 +52,30 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	tonic.SetRenderHook(renderHook, jsonContentType[0])
 
 	f := fizz.NewFromEngine(g)
-	f.GET("/ping", nil, tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
+	f.GET("/ping", formatDoc("Ping", "Service health check"), tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
 		return &PingResponse{Message: "pong", Service: fmt.Sprintf("%s@%s", srvName, srvVersion)}, nil
 	}, http.StatusOK))
 
-	f.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{
+	f.Generator().SetServers([]*openapi.Server{
 		{
-			"cookie": {"write", "read"},
+			Description: strings.ToUpper(srvName) + " API V1",
+			URL:         strings.ToUpper(srvName + "_URL"),
 		},
 	})
 
 	f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
-		"cookie": {
+		"x-session-token": {
 			SecurityScheme: &openapi.SecurityScheme{
-				Type: "oauth2",
-				Flows: &openapi.OAuthFlows{
-					Implicit: &openapi.OAuthFlow{
-						Scopes: map[string]string{
-							"write": "write access",
-							"read":  "read access",
-						},
-						AuthorizationURL: redirectUrl,
-					},
-				},
+				Type: "apiKey",
+				In:   "header",
+				Name: "X-Session-Token",
 			},
 		},
 	})
+
 	infos := &openapi.Info{
 		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
-		Description: "To play with API's first you need to login via ukama auth app and get cookie. For that first click on Green Authorize button. On Popup model click on Authorize button again. You'll be redirected to ukama auth app. Login with your credentials. After that you'll be redirected back to this page. Now you can play with API's.",
+		Description: "",
 		Version:     srvVersion,
 	}
 
@@ -88,6 +83,13 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	swagger.AddOpenApiUIHandler(g, "swagger", "/openapi.json")
 
 	return f
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
 
 func errorHook(c *gin.Context, e error) (int, interface{}) {
