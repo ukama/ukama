@@ -30,6 +30,10 @@ type HttpError struct {
 	Message  string
 }
 
+type BaseRequest struct {
+	Session string `header:"X-Session-Token" validate:"required"`
+}
+
 func (g HttpError) Error() string {
 	return g.Message
 }
@@ -63,15 +67,15 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 		},
 	})
 
-	f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
-		"x-session-token": {
-			SecurityScheme: &openapi.SecurityScheme{
-				Type: "apiKey",
-				In:   "header",
-				Name: "X-Session-Token",
-			},
-		},
-	})
+	// f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+	// 	"x-session-token": {
+	// 		SecurityScheme: &openapi.SecurityScheme{
+	// 			Type: "apiKey",
+	// 			In:   "header",
+	// 			Name: "X-Session-Token",
+	// 		},
+	// 	},
+	// })
 
 	infos := &openapi.Info{
 		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
