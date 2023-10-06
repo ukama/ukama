@@ -22,7 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NodeUpdateRequest struct {
+type NodeFeederMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -33,8 +33,8 @@ type NodeUpdateRequest struct {
 	Msg        *anypb.Any `protobuf:"bytes,4,opt,name=msg,proto3" json:"msg,omitempty"` /// could be any protobuf msg based on need like config for node config
 }
 
-func (x *NodeUpdateRequest) Reset() {
-	*x = NodeUpdateRequest{}
+func (x *NodeFeederMessage) Reset() {
+	*x = NodeFeederMessage{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_ukama_node_feeder_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -42,13 +42,13 @@ func (x *NodeUpdateRequest) Reset() {
 	}
 }
 
-func (x *NodeUpdateRequest) String() string {
+func (x *NodeFeederMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NodeUpdateRequest) ProtoMessage() {}
+func (*NodeFeederMessage) ProtoMessage() {}
 
-func (x *NodeUpdateRequest) ProtoReflect() protoreflect.Message {
+func (x *NodeFeederMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_ukama_node_feeder_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,33 +60,33 @@ func (x *NodeUpdateRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NodeUpdateRequest.ProtoReflect.Descriptor instead.
-func (*NodeUpdateRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use NodeFeederMessage.ProtoReflect.Descriptor instead.
+func (*NodeFeederMessage) Descriptor() ([]byte, []int) {
 	return file_ukama_node_feeder_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NodeUpdateRequest) GetTarget() string {
+func (x *NodeFeederMessage) GetTarget() string {
 	if x != nil {
 		return x.Target
 	}
 	return ""
 }
 
-func (x *NodeUpdateRequest) GetHTTPMethod() string {
+func (x *NodeFeederMessage) GetHTTPMethod() string {
 	if x != nil {
 		return x.HTTPMethod
 	}
 	return ""
 }
 
-func (x *NodeUpdateRequest) GetPath() string {
+func (x *NodeFeederMessage) GetPath() string {
 	if x != nil {
 		return x.Path
 	}
 	return ""
 }
 
-func (x *NodeUpdateRequest) GetMsg() *anypb.Any {
+func (x *NodeFeederMessage) GetMsg() *anypb.Any {
 	if x != nil {
 		return x.Msg
 	}
@@ -102,7 +102,7 @@ var file_ukama_node_feeder_proto_rawDesc = []byte{
 	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
 	0x19, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
 	0x2f, 0x61, 0x6e, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x87, 0x01, 0x0a, 0x11, 0x4e,
-	0x6f, 0x64, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x6f, 0x64, 0x65, 0x46, 0x65, 0x65, 0x64, 0x65, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
 	0x12, 0x16, 0x0a, 0x06, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x06, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12, 0x1e, 0x0a, 0x0a, 0x48, 0x54, 0x54, 0x50,
 	0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x48, 0x54,
@@ -131,11 +131,11 @@ func file_ukama_node_feeder_proto_rawDescGZIP() []byte {
 
 var file_ukama_node_feeder_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_ukama_node_feeder_proto_goTypes = []interface{}{
-	(*NodeUpdateRequest)(nil), // 0: ukama.nodefeeder.v1.NodeUpdateRequest
+	(*NodeFeederMessage)(nil), // 0: ukama.nodefeeder.v1.NodeFeederMessage
 	(*anypb.Any)(nil),         // 1: google.protobuf.Any
 }
 var file_ukama_node_feeder_proto_depIdxs = []int32{
-	1, // 0: ukama.nodefeeder.v1.NodeUpdateRequest.msg:type_name -> google.protobuf.Any
+	1, // 0: ukama.nodefeeder.v1.NodeFeederMessage.msg:type_name -> google.protobuf.Any
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -150,7 +150,7 @@ func file_ukama_node_feeder_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_ukama_node_feeder_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeUpdateRequest); i {
+			switch v := v.(*NodeFeederMessage); i {
 			case 0:
 				return &v.state
 			case 1:

@@ -7,7 +7,7 @@ package ukama.nodefeeder.v1;
 import "validator.proto";
 import "google/protobuf/any.proto";
 
-message NodeUpdateRequest {
+message NodeFeederMessage  {
     string Target = 1;
     string HTTPMethod  = 2;
     string Path = 3;
