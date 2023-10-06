@@ -332,7 +332,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 				return err
 			}
 
-			msg := &pb.NodeUpdateRequest{
+			msg := &pb.NodeFeederMessage{
 				Target:     c.OrgName + "." + meteData.network + "." + meteData.site + "." + n,
 				HTTPMethod: "POST",
 				Path:       "/v1/configd/config",
