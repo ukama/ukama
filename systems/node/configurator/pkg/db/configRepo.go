@@ -15,7 +15,7 @@ type ConfigRepo interface {
 	Get(id string) (*Configuration, error)
 	GetAll() ([]Configuration, error)
 	Delete(id string) error
-	Update(c Configuration) error
+	//Update(c Configuration) error
 	UpdateCurrentCommit(c Configuration, state *CommitState) error
 	UpdateLastCommit(c Configuration, state *CommitState) error
 	UpdateLastCommitState(nodeid string, state CommitState) error
@@ -80,16 +80,17 @@ func (n *configRepo) Delete(id string) error {
 }
 
 // Update updated node with `id`. Only fields that are not nil are updated, eg name and state.
-func (n *configRepo) Update(c Configuration) error {
+// func (n *configRepo) Update(c Configuration) error {
 
-	result := n.Db.GetGormDb().Where("node_id=?", strings.ToLower(c.NodeId)).Updates(&c)
-	if result.Error != nil {
-		return result.Error
-	}
+// 	result := n.Db.GetGormDb().Where("node_id=?", strings.ToLower(c.NodeId)).Updates(&c)
+// 	if result.Error != nil {
+// 		return result.Error
+// 	}
 
-	return result.Error
-}
-
+//		return result.Error
+//	}
+//
+// TODO: Check this one.
 func (n *configRepo) UpdateLastCommit(c Configuration, state *CommitState) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(&c).Association("LastCommit").Replace(&(c.Commit))
@@ -101,7 +102,7 @@ func (n *configRepo) UpdateLastCommit(c Configuration, state *CommitState) error
 		if state != nil {
 			res := tx.Model(&Configuration{}).Where("node_id = ?", c.NodeId).Update("last_commit_state", *state)
 			if res.Error != nil {
-				log.Errorf("Failed to update last commit.Error: %v", res.Error)
+				log.Errorf("Failed to update configuration for node %s. Error: %v", c.NodeId, res.Error)
 				return res.Error
 			}
 		}
