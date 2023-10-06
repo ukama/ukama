@@ -4,6 +4,7 @@ import (
 	extsql "database/sql"
 	"errors"
 	"log"
+	"regexp"
 	"testing"
 
 	int_db "github.com/ukama/ukama/systems/node/configurator/pkg/db"
@@ -221,4 +222,56 @@ func TestCommitRepo_Get(t *testing.T) {
 			assert.Equal(t, hash0, commit.Hash)
 		}
 	})
+}
+
+func TestCommitRepo_Add(t *testing.T) {
+
+	t.Run("AddCommit", func(t *testing.T) {
+		// Arrange
+
+		const hash0 = "6b0a48e3d06ae7708b2257321d17b36bd930f670"
+
+		commit := int_db.Commit{
+			Hash: hash0,
+		}
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), commit.Hash).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewCommitRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Add(commit.Hash)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
 }
