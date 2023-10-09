@@ -31,6 +31,11 @@ type ConfigStore struct {
 	OrgName              string
 }
 
+type ConfigStoreProvider interface {
+	HandleConfigStoreEvent(ctx context.Context) error
+	HandleConfigCommitReq(ctx context.Context, rVer string) error
+}
+
 type ConfigMetaData struct {
 	org      string
 	network  string

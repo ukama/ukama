@@ -7,6 +7,7 @@ import (
 	"github.com/num30/config"
 	"gorm.io/gorm"
 
+	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/server"
@@ -73,7 +74,14 @@ func runGrpcServer(gormdb sql.Db) {
 
 	reg := providers.NewRegistryProvider(serviceConfig.RegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	configuratorServer := server.NewConfiguratorServer(mbClient, reg, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), serviceConfig.OrgName, serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout, pkg.IsDebugMode)
+
+	s, err := providers.NewStoreClient(serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to create a config store client. Error %s", err.Error())
+	}
+	configStore := configstore.NewConfigStore(mbClient, reg, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), serviceConfig.OrgName, s, serviceConfig.Timeout)
+
+	configuratorServer := server.NewConfiguratorServer(mbClient, reg, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), configStore, serviceConfig.OrgName, pkg.IsDebugMode)
 	configuratorEventServer := server.NewConfiguratorEventServer(serviceConfig.OrgName, configuratorServer)
 
 	log.Debugf("MessageBus Client config: %+v Client: %+v", serviceConfig.MsgClient, mbClient)

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -23,17 +22,12 @@ type ConfiguratorServer struct {
 	configuratorRoutingKey msgbus.RoutingKeyBuilder
 	debug                  bool
 	orgName                string
-	configStore            *configstore.ConfigStore
+	configStore            configstore.ConfigStoreProvider
 	commitRepo             db.CommitRepo
 	configRepo             db.ConfigRepo
 }
 
-func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration, debug bool) *ConfiguratorServer {
-	s, err := providers.NewStoreClient(url, user, pat, t)
-	if err != nil {
-		return nil
-	}
-	configStore := configstore.NewConfigStore(msgBus, registry, cfgDb, cmtDb, orgName, s, t)
+func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, configStore configstore.ConfigStoreProvider, orgName string, debug bool) *ConfiguratorServer {
 
 	log.Infof("Config store created: %+v", configStore)
 	return &ConfiguratorServer{
@@ -74,10 +68,10 @@ func (c *ConfiguratorServer) GetConfigVersion(ctx context.Context, req *pb.Confi
 	}
 
 	return &pb.ConfigVersionResponse{
-		NodeId: req.NodeId,
-		Status: cfg.State.String(),
-		Commit: cfg.Commit.Hash,
-		// LastStatus: cfg.LastStatus.String(),
-		// LastCommit: cfg.LastCommit.Hash,
+		NodeId:     req.NodeId,
+		Status:     cfg.State.String(),
+		Commit:     cfg.Commit.Hash,
+		LastStatus: cfg.LastCommitState.String(),
+		LastCommit: cfg.LastCommit.Hash,
 	}, err
 }

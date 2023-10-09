@@ -8,7 +8,6 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 )
@@ -93,32 +92,13 @@ func (g *gitClient) GetRemoteConfigVersion(dirPrefix string, ver string) error {
 
 func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string, error) {
 
-	//log.Println("git ")
-	//CheckArgs("<revision1>")
-
 	var hash plumbing.Hash
-
-	//prevSha := os.Args[1] //prevSha
-
-	// dir, err := os.Getwd()
-	// CheckIfError(err)
 
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		log.Errorf("Error: %v", err)
 		return nil, err
 	}
-
-	// if len(os.Args) < 3 {
-	// 	headRef, err := repo.Head()
-	// 	CheckIfError(err)
-	// 	// ... retrieving the head commit object
-	// 	hash = headRef.Hash()
-	// 	CheckIfError(err)
-	// } else {
-	// 	arg2 := os.Args[2] //optional descendent sha
-	// 	hash = plumbing.NewHash(arg2)
-	// }
 
 	hash = plumbing.NewHash(curSha)
 	prevHash := plumbing.NewHash(prevSha)
@@ -170,40 +150,7 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 		log.Println(fileStat.Name)
 		changedFiles = append(changedFiles, fileStat.Name)
 	}
-
-	// changes, err := currentTree.Diff(prevTree)
-	// if err != nil {
-	// 	log.Errorf("Error: %v", err)
-	// 	return nil, err
-	// }
-
-	// for _, change := range changes {
-	// 	// Ignore deleted files
-	// 	action, err := change.Action()
-	// 	if err != nil {
-	// 		log.Errorf("Error: %v", err)
-	// 		return err
-	// 	}
-	// 	if action == merkletrie.Delete {
-	// 		//log.Println("Skipping delete")
-	// 		continue
-	// 	}
-
-	// 	// Get list of involved files
-	// 	name := getChangeName(change)
-	// 	log.Println(name)
-	// }
-
 	return changedFiles, nil
-}
-
-func getChangeName(change *object.Change) string {
-	var empty = object.ChangeEntry{}
-	if change.From != empty {
-		return change.From.Name
-	}
-
-	return change.To.Name
 }
 
 func NewStoreClient(url string, user string, pat string, t time.Duration) (*gitClient, error) {
