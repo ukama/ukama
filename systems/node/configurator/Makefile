@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: 
+build: integration.build
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/node/configurator/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/configurator cmd/server/main.go
 
 lint:
@@ -11,8 +11,10 @@ test:
 	go test -v ./...
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
+
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
