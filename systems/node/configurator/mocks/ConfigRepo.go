@@ -92,13 +92,13 @@ func (_m *ConfigRepo) GetAll() ([]db.Configuration, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: c
-func (_m *ConfigRepo) Update(c db.Configuration) error {
-	ret := _m.Called(c)
+// UpdateCommitState provides a mock function with given fields: nodeid, state
+func (_m *ConfigRepo) UpdateCommitState(nodeid string, state db.CommitState) error {
+	ret := _m.Called(nodeid, state)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(db.Configuration) error); ok {
-		r0 = rf(c)
+	if rf, ok := ret.Get(0).(func(string, db.CommitState) error); ok {
+		r0 = rf(nodeid, state)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -106,13 +106,13 @@ func (_m *ConfigRepo) Update(c db.Configuration) error {
 	return r0
 }
 
-// UpdateCurrentCommit provides a mock function with given fields: c, hash
-func (_m *ConfigRepo) UpdateCurrentCommit(c db.Configuration, hash string) error {
-	ret := _m.Called(c, hash)
+// UpdateCurrentCommit provides a mock function with given fields: c, state
+func (_m *ConfigRepo) UpdateCurrentCommit(c db.Configuration, state *db.CommitState) error {
+	ret := _m.Called(c, state)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(db.Configuration, string) error); ok {
-		r0 = rf(c, hash)
+	if rf, ok := ret.Get(0).(func(db.Configuration, *db.CommitState) error); ok {
+		r0 = rf(c, state)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -120,13 +120,27 @@ func (_m *ConfigRepo) UpdateCurrentCommit(c db.Configuration, hash string) error
 	return r0
 }
 
-// UpdateLastCommit provides a mock function with given fields: c, hash
-func (_m *ConfigRepo) UpdateLastCommit(c db.Configuration, hash string) error {
-	ret := _m.Called(c, hash)
+// UpdateLastCommit provides a mock function with given fields: c, state
+func (_m *ConfigRepo) UpdateLastCommit(c db.Configuration, state *db.CommitState) error {
+	ret := _m.Called(c, state)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(db.Configuration, string) error); ok {
-		r0 = rf(c, hash)
+	if rf, ok := ret.Get(0).(func(db.Configuration, *db.CommitState) error); ok {
+		r0 = rf(c, state)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateLastCommitState provides a mock function with given fields: nodeid, state
+func (_m *ConfigRepo) UpdateLastCommitState(nodeid string, state db.CommitState) error {
+	ret := _m.Called(nodeid, state)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, db.CommitState) error); ok {
+		r0 = rf(nodeid, state)
 	} else {
 		r0 = ret.Error(0)
 	}

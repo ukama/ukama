@@ -29,7 +29,11 @@ type ConfiguratorServer struct {
 }
 
 func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration, debug bool) *ConfiguratorServer {
-	configStore := configstore.NewConfigStore(msgBus, registry, cfgDb, cmtDb, orgName, url, user, pat, t)
+	s, err := providers.NewStoreClient(url, user, pat, t)
+	if err != nil {
+		return nil
+	}
+	configStore := configstore.NewConfigStore(msgBus, registry, cfgDb, cmtDb, orgName, s, t)
 
 	log.Infof("Config store created: %+v", configStore)
 	return &ConfiguratorServer{

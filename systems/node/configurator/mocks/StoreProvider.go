@@ -35,23 +35,23 @@ func (_m *StoreProvider) GetDiff(prevSha string, curSha string, dir string) ([]s
 	return r0, r1
 }
 
-// GetLatestRemoteConfigs provides a mock function with given fields:
-func (_m *StoreProvider) GetLatestRemoteConfigs() (string, error) {
-	ret := _m.Called()
+// GetLatestRemoteConfigs provides a mock function with given fields: dir
+func (_m *StoreProvider) GetLatestRemoteConfigs(dir string) (string, error) {
+	ret := _m.Called(dir)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (string, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(dir)
 	}
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(dir)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(dir)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -59,13 +59,13 @@ func (_m *StoreProvider) GetLatestRemoteConfigs() (string, error) {
 	return r0, r1
 }
 
-// GetRemoteConfigVersion provides a mock function with given fields: version
-func (_m *StoreProvider) GetRemoteConfigVersion(version string) error {
-	ret := _m.Called(version)
+// GetRemoteConfigVersion provides a mock function with given fields: dir, version
+func (_m *StoreProvider) GetRemoteConfigVersion(dir string, version string) error {
+	ret := _m.Called(dir, version)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(version)
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(dir, version)
 	} else {
 		r0 = ret.Error(0)
 	}

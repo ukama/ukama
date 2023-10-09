@@ -43,11 +43,7 @@ type ConfigMetaData struct {
 const DIR_PREFIX = "/tmp/configstore/"
 const PERM = 0755
 
-func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, url string, user string, pat string, t time.Duration) *ConfigStore {
-	s, err := providers.NewStoreClient(url, user, pat, t)
-	if err != nil {
-		return nil
-	}
+func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, s providers.StoreProvider, t time.Duration) *ConfigStore {
 
 	return &ConfigStore{
 		Store:                s,
@@ -70,12 +66,12 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return fmt.Errorf("error creating directory: %v", err)
 	}
 
-	// defer func() {
-	// 	err := utils.RemoveDir(dir)
-	// 	if err != nil {
-	// 		log.Errorf("error removing directory: %v", err)
-	// 	}
-	// }()
+	defer func() {
+		err := utils.RemoveDir(dir)
+		if err != nil {
+			log.Errorf("error removing directory: %v", err)
+		}
+	}()
 
 	// Get latest remote version
 	lVer, err := c.Store.GetLatestRemoteConfigs(dir)
