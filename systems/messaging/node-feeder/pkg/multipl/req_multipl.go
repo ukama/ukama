@@ -44,7 +44,7 @@ import (
 		logrus.Infof("Creating requests for %d nodes", len(nodes))
 		counter := 0
 		for _, n := range nodes {
-			err = r.queue.Publish(cpb.NodeFeederMsg{
+			err = r.queue.Publish(&cpb.NodeFeederMsg{
 				Target:     orgName + "." + n.Id,
 				HTTPMethod: req.HTTPMethod,
 				Path:       req.Path,
