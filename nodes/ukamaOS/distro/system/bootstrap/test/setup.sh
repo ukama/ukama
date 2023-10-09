@@ -29,7 +29,7 @@ build_utils() {
 	mkdir -p ${BUILD_DIR}/utils
 
 	# Build genSchema
-    cd ${NODED_ROOT} && make genSchema
+    	cd ${NODED_ROOT} && make genSchema
 	if [ -f ${NODED_ROOT}/build/genSchema ]; then
 		cp ${NODED_ROOT}/build/genSchema ${BUILD_DIR}/utils/
 	else
@@ -125,7 +125,7 @@ clean_bins() {
 	cd ${BOOTSTRAP_ROOT}/test && make clean
 	cd ${NODED_ROOT} && make clean
 
-    rm -rf ${BUILD_DIR}/bin
+    	rm -rf ${BUILD_DIR}/bin
 	cd ${CWD}
 }
 

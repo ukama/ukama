@@ -40,7 +40,7 @@
 typedef struct {
 
 	char *nodedHost;       /* Host where node.d is running (hostname) */
-	char *nodedPort;       /* Port where node.d is listening */
+	int   nodedPort;       /* Port where node.d is listening */
 	char *meshConfig;      /* Mesh.d configuration file */
 	char *remoteIPFile;    /* file storing the remote server IP */
 	char *bootstrapServer; /* Bootstrap server */
