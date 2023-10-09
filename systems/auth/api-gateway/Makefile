@@ -24,6 +24,9 @@ gen:
 
 clean:
 	rm -rf ./bin/ 
+	
 server:
 	go run cmd/server/main.go
     
+docs:
+	timeout 5s go run cmd/server/main.go

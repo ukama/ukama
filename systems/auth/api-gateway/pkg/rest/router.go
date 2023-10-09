@@ -90,6 +90,7 @@ func (r *Router) init() {
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
 	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
 	v1.PUT("/role", formatDoc("Update user role", ""), tonic.Handler(r.updateRole, http.StatusOK))
+	rest.GenerateSpecDoc(pkg.SystemName, version.Version, "Auth system provides authentication and authorization features", r.f)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

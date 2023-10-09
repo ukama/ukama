@@ -358,3 +358,20 @@ func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 
 // 	return res
 // }
+
+
+func TestGetByEmail(t *testing.T) { // Create a mock UserServiceClient
+	 client := &UserServiceClientMock{} 
+	 // Create the test context 
+	 ctx := context.Background() // Create a GetByEmailRequest 
+	 request := &GetByEmailRequest{ Email: "test@example.com", } 
+	 // Create a GetResponse 
+	 response := &GetResponse{ User: &User{ Name: "John Doe", Email: "test@example.com", Phone: "1234567890", Uuid: "12345678-1234-1234-1234-1234567890", }, } 
+	 // Set the expected behavior of the mock client's GetByEmail method 
+	 client.GetByEmailFunc = func(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*GetResponse, error) { assert.Equal(t, request, in) return response, nil } 
+	 // Make the RPC call 
+	 result, err := client.GetByEmail(ctx, request) 
+	 // Verify the result 
+	 assert.NoError(t, err) 
+	 assert.Equal(t, response, result) 
+	} 
