@@ -107,11 +107,25 @@ build_bins() {
 	cd ${CWD}
 
 	cd ${BOOTSTRAP_ROOT}/test && make clean && make
-	cp ${BOOTSTRAP_ROOT}/test/build/bootstrap_server ${BUILD_DIR}/bin
+	cp ${BOOTSTRAP_ROOT}/test/bootstrap_server ${BUILD_DIR}/bin
 	cd ${CWD}
 
 	cd ${NODED_ROOT} && make clean && make
 	cp ${NODED_ROOT}/build/noded ${BUILD_DIR}/bin
+	cd ${CWD}
+}
+
+#
+# clean noded, bootstrap and mock server
+#
+clean_bins() {
+
+	CWD=`pwd`
+	cd ${BOOTSTRAP_ROOT} && make clean
+	cd ${BOOTSTRAP_ROOT}/test && make clean
+	cd ${NODED_ROOT} && make clean
+
+    rm -rf ${BUILD_DIR}/bin
 	cd ${CWD}
 }
 
@@ -175,6 +189,7 @@ case "$ACTION" in
 		echo "options are: help clean setup run"
 		;;
 	"clean")
+        clean_bins
 		rm -rf ${BUILD_DIR}
 		rm -rf /tmp/sys
 		
