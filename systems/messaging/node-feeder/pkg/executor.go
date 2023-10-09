@@ -27,7 +27,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *NodeUpdateRequest) error
+	Execute(req *NodeFeederMessage) error
 }
 
 type requestExecutor struct {
@@ -39,7 +39,7 @@ func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetwo
 	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
 }
 
-func (e *requestExecutor) Execute(req *NodeUpdateRequest) error {
+func (e *requestExecutor) Execute(req *NodeFeederMessage) error {
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 2 {
 		return fmt.Errorf("invalid target format")

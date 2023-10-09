@@ -30,11 +30,11 @@ func (_m *QueuePublisher) Close() error {
 }
 
 // Publish provides a mock function with given fields: msg
-func (_m *QueuePublisher) Publish(msg pkg.NodeUpdateRequest) error {
+func (_m *QueuePublisher) Publish(msg pkg.NodeFeederMessage) error {
 	ret := _m.Called(msg)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(pkg.NodeUpdateRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(pkg.NodeFeederMessage) error); ok {
 		r0 = rf(msg)
 	} else {
 		r0 = ret.Error(0)

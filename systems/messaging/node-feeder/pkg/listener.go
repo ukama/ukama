@@ -34,10 +34,10 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *NodeUpdateRequest) error
+	Process(body *NodeFeederMessage) error
 }
 
-type NodeUpdateRequest struct {
+type NodeFeederMessage struct {
 	Target     string `json:"target"`
 	HTTPMethod string `json:"httpMethod"`
 	Path       string `json:"path"`
@@ -210,7 +210,7 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 
 //process nodeUpdateRequest msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-	request := &NodeUpdateRequest{}
+	request := &NodeFeederMessage{}
 	err := json.Unmarshal(delivery.Body, request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)

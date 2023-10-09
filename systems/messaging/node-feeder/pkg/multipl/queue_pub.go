@@ -23,7 +23,7 @@ type queuePublisher struct {
 
 
 type QueuePublisher interface {
-	Publish(msg pkg.NodeUpdateRequest) error
+	Publish(msg pkg.NodeFeederMessage) error
 	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
@@ -57,7 +57,7 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 
 
 
-func (q *queuePublisher) Publish(msg pkg.NodeUpdateRequest) error {
+func (q *queuePublisher) Publish(msg pkg.NodeFeederMessage) error {
 
 	b, err := json.Marshal(msg)
 	if err != nil {
