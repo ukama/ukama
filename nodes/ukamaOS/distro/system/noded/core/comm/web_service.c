@@ -1478,12 +1478,12 @@ int web_service_start() {
 
     /* open connection for web_services */
     if (start_framework(&serverInst)) {
-        usys_log_error("Failed to start web_services for cld_ctrl: %d",
-                        WEB_SERVICE_PORT);
+        usys_log_error("Failed to start web_services");
         return STATUS_NOK;
     }
 
-    usys_log_info("Webservice on client port: %d started.", WEB_SERVICE_PORT);
+    usys_log_info("Webservice on client port: %d started.",
+                  find_service_port(SERVICE_NAME));
 
     return STATUS_OK;
 }
