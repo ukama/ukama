@@ -5,7 +5,17 @@ Node Feeder sends HTTP request to list of nodes.
 ## Using Node Feeder
 
 To send request to a group of Nodes send a message to `amq.topic` exchange with routing key `request.cloud.node-feeder`.
-The body should have the following format:
+The message body should follow the Proto Buffers format::
+
+```
+message NodeUpdateRequest {
+  string Target = 1;
+  string HTTPMethod = 2;
+  string Path = 3;
+  google.protobuf.Any msg = 4;
+}
+
+```
 
 ```
 {

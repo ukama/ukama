@@ -5,8 +5,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
+
 	"google.golang.org/protobuf/proto"
 
 	"github.com/wagslane/go-rabbitmq"
@@ -23,7 +24,7 @@ type queuePublisher struct {
 
 
 type QueuePublisher interface {
-	Publish(msg pkg.NodeFeederMessage) error
+	Publish(msg cpb.NodeFeederMsg) error
 	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
@@ -57,7 +58,7 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 
 
 
-func (q *queuePublisher) Publish(msg pkg.NodeFeederMessage) error {
+func (q *queuePublisher) Publish(msg cpb.NodeFeederMsg) error {
 
 	b, err := json.Marshal(msg)
 	if err != nil {

@@ -12,7 +12,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -27,7 +30,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *NodeFeederMessage) error
+	Execute(req *cpb.NodeFeederMsg) error
 }
 
 type requestExecutor struct {
@@ -39,7 +42,7 @@ func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetwo
 	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
 }
 
-func (e *requestExecutor) Execute(req *NodeFeederMessage) error {
+func (e *requestExecutor) Execute(req *cpb.NodeFeederMsg) error {
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 2 {
 		return fmt.Errorf("invalid target format")

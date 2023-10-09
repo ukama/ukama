@@ -1,20 +1,20 @@
 package pkg
 
 import (
-	"encoding/json"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 
 	amqp "github.com/streadway/amqp"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/metrics"
 )
@@ -34,15 +34,9 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *NodeFeederMessage) error
+	Process(body *cpb.NodeFeederMsg) error
 }
 
-type NodeFeederMessage struct {
-	Target     string `json:"target"`
-	HTTPMethod string `json:"httpMethod"`
-	Path       string `json:"path"`
-	Msg        *anypb.Any `json:"-"`
-}
 func NewQueueListener(queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
 	
 	client, err := mb.NewConsumerClient(queueUri)
@@ -208,10 +202,10 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	return false
 }
 
-//process nodeUpdateRequest msg also
+//process node msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-	request := &NodeFeederMessage{}
-	err := json.Unmarshal(delivery.Body, request)
+	request := &cpb.NodeFeederMsg{}
+	err := proto.Unmarshal(delivery.Body, request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return nil
@@ -237,6 +231,11 @@ func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
 	}
 
 }
+
+
+
+
+
 
 
 
