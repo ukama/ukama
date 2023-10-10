@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
+	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
 
@@ -37,7 +38,8 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Controller controller
+	Controller   controller
+	Configurator configurator
 }
 
 type controller interface {
@@ -45,10 +47,16 @@ type controller interface {
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 }
 
+type configurator interface {
+	ConfigEvent(b []byte) (*cfgPb.ConfigStoreEventResponse, error)
+	ApplyConfig(commit string) (*cfgPb.ApplyConfigResponse, error)
+	GetConfigVersion(nodeId string) (*cfgPb.ConfigVersionResponse, error)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
-
+	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
 	return c
 }
 
@@ -107,12 +115,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		const cont = "/controllers"
 		controller := auth.Group(cont, "Controllers", "Operations on controllers")
-		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusCreated))
-		controller.POST("/restartNode", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusCreated))
+		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusAccepted))
+		controller.POST("/restartNode/:node_id", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusAccepted))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
-		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigStoreEventHandler, http.StatusOK))
+		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
+		cfgS.POST("/config/apply/:commit", formatDoc("Apply config version ", "Updated nodes to version"), tonic.Handler(r.postConfigApplyVersionHandler, http.StatusAccepted))
+		cfgS.GET("/config/node/:node_id", formatDoc("Current ruunning config", "Read the cuurrent running version and status"), tonic.Handler(r.getRunningConfigVersionHandler, http.StatusOK))
 
 	}
 }
@@ -125,10 +135,55 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
 }
 
-func (r *Router) postConfigStoreEventHandler(c *gin.Context) error {
-	body, _ := io.ReadAll(c.Request.Body)
-	log.Infof("received config store event with %+v", string(body))
+func (r *Router) postConfigEventHandler(c *gin.Context) error {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Errorf("Failed to decode config event.Error %s", err.Error())
+		return err
+	}
+	log.Infof("received config event with %+v", string(body))
+
+	_, err = r.clients.Configurator.ConfigEvent(body)
+	if err != nil {
+		log.Errorf("Failed to configure nodes.Error %s", err.Error())
+		return err
+	}
+
 	return nil
+}
+
+func (r *Router) postConfigApplyVersionHandler(c *gin.Context, req *ApplyConfigRequest) error {
+
+	log.Infof("received apply config with %+v", req)
+
+	_, err := r.clients.Configurator.ApplyConfig(req.Commit)
+	if err != nil {
+		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
+		return err
+	}
+
+	log.Infof("received apply config with %+v", req)
+
+	_, err = r.clients.Configurator.ApplyConfig(req.Commit)
+	if err != nil {
+		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVersionRequest) (*cfgPb.ConfigVersionResponse, error) {
+
+	log.Infof("Received get running config version.")
+
+	cfg, err := r.clients.Configurator.GetConfigVersion(req.NodeId)
+	if err != nil {
+		log.Errorf("Failed to get config version for node %s.Error %s", req.NodeId, err.Error())
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
