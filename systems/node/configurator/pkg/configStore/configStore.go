@@ -179,9 +179,8 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
 	if len(filesToUpdate) > 0 {
-		cMetaData := &ConfigMetaData{}
-		prepCommit := make(map[string]*pb.Config, len(filesToUpdate))
-		prepNodeCommit := make(map[string][]string)
+		prepCommit := make(map[string]*pb.Config, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
+		prepNodeCommit := make(map[string][]string) /* Map from nodeId to config files*/
 		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
@@ -192,17 +191,21 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 				Node: uk-sa1000-HNODE-2145
 				App: epc
 			*/
-			cMetaData, err = ParseConfigStoreFilePath(file)
+			cMetaData, err := ParseConfigStoreFilePath(file)
 			if err != nil {
-				return err
+				log.Errorf("Failed to parse file %s. Error: %v", file, err)
+				continue
 			}
-			prepMetaData[file] = cMetaData
 
+			/* This will filter out invalid network, site and nodes
+			Also reads the file store the config */
 			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file)
 			if err != nil {
 				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
-				return err
+				continue
 			}
+
+			prepMetaData[file] = cMetaData
 			prepCommit[file] = configToCommit
 			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file)
 		}

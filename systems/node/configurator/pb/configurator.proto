@@ -13,6 +13,7 @@ service ConfiguratorService {
 
 
 message ConfigStoreEvent {
+  bytes data =1;
 }
 
 message ConfigStoreEventResponse {

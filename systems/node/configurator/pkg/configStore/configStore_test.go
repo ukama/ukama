@@ -15,7 +15,8 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
-var testNode = "uk-000000-hnode-0000"
+var testNode1 = "uk-000000-hnode-0000"
+var testNode2 = "uk-000000-hnode-0001"
 var Service = "node/configurator"
 var TestData = "node/configurator/test/integration/data"
 
@@ -65,11 +66,21 @@ func TestConfigStore_ProcessConfigStoreEvent(t *testing.T) {
 	cS := NewConfigStore(msgbusClient, registry, configRepo, commitRepo, OrgName, store, (10 * time.Second))
 
 	t.Run("DifferentVersionWithChanges", func(t *testing.T) {
-		store.On("GetDiff", mock.Anything, mock.Anything, mock.Anything).Return([]string{"networkABC/siteXYZ/uk-000000-hnode-0000/epc/epc.json"}, nil).Once()
-		configRepo.On("Get", testNode).Return(&db.Configuration{NodeId: testNode}, nil)
+		var node string
+		store.On("GetDiff", mock.Anything, mock.Anything, mock.Anything).Return([]string{"networkABC/siteXYZ/uk-000000-hnode-0000/epc/epc.json", "networkABC/siteXYZ/uk-000000-hnode-0000/deviced/deviced.json", "networkABC/siteXYZ/uk-000000-hnode-0001/epc/epc.json"}, nil).Once()
+		configRepo.On("Get", mock.MatchedBy(func(n string) bool {
+			if n == testNode1 {
+				node = testNode1
+				return true
+			} else if n == testNode2 {
+				node = testNode2
+				return true
+			}
+			return false
+		})).Return(&db.Configuration{NodeId: node}, nil)
 
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil).Once()
-		configRepo.On("UpdateLastCommit", mock.Anything, mock.MatchedBy(func(a *db.CommitState) bool { return a != nil && *a == db.Published })).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		configRepo.On("UpdateLastCommit", mock.Anything, mock.MatchedBy(func(a *db.CommitState) bool { return a != nil && *a == db.Published })).Return(nil)
 		err := cS.ProcessConfigStoreEvent(dir, cVer, rVer)
 		assert.NoError(t, err)
 		configRepo.AssertExpectations(t)

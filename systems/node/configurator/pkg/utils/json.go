@@ -13,14 +13,14 @@ func JsonDiff(srcFile string, targetFile string) ([]string, bool, error) {
 	change := false
 	source, err := os.ReadFile(srcFile)
 	if err != nil {
-		log.Errorf("error reading json file %s: %v", srcFile, err)
-		return nil, change, err
+		log.Warningf("File may be added in latest commit. Error reading json file %s.  Error %+v", srcFile, err)
+		source = []byte("{}")
 	}
 
 	target, err := os.ReadFile(targetFile)
 	if err != nil {
-		log.Errorf("error reading json file %s: %v", targetFile, err)
-		return nil, change, err
+		log.Warningf("File may be deleted in latest commit. Error reading json file %s: %v", targetFile, err)
+		return nil, change, nil
 	}
 
 	patch, err := jsondiff.CompareJSON(source, target)
