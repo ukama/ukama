@@ -69,7 +69,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	if err != nil {
 		return nil,err
 	}
-	msg := &cpb.NodeUpdateRequest{
+	msg := &cpb.NodeFeederMsg{
 		Target:     c.orgName + "." + netId.String() + "." + req.SiteName ,
 		HTTPMethod: "POST",
 		Path:       "/v1/node/site/restart",
@@ -109,7 +109,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil,err
 	}
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("node").MustBuild()
-	msg:= &cpb.NodeUpdateRequest{
+	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName + "." + nodeId.String(),
 		HTTPMethod: "POST",
 		Path:       "/v1/node/restart",
@@ -153,7 +153,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 		return nil,err
 	}
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
-	msg:= &cpb.NodeUpdateRequest{
+	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName,
 		HTTPMethod: "POST",
 		Path:       "/v1/node/restart",

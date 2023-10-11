@@ -31,21 +31,10 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	nodeLogDb := initDb()
-	runGrpcServer(nodeLogDb)
+	nodelogDb := initDb()
+	runGrpcServer(nodelogDb)
 	logrus.Infof("Starting %s", pkg.ServiceName)
-	runGrpcServer(nodeLogDb)
 }
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.NodeLog{})
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
-}
-
 
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -61,6 +50,8 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
+
+
 func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
@@ -72,7 +63,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	reg := providers.NewRegistryProvider(serviceConfig.RegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	controllerServer := server.NewControllerServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName,db.NewNodeLogRepo(gormdb) )
+	controllerServer := server.NewControllerServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName, db.NewNodeLogRepo(gormdb))
 	controllerEventServer := server.NewControllerEventServer(serviceConfig.OrgName, controllerServer)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
@@ -113,4 +104,13 @@ func waitForExit() {
 	log.Debug("awaiting terminate/interrrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
+}
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.NodeLog{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
 }
