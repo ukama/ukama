@@ -17,7 +17,7 @@ TARGET=${DEF_TARGET}
 # default rootfs location is ${DEF_BUILD_DIR}
 BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 
-NODE_UUID="ukma-sa3333-tnode-m0-e465"
+NODE_UUID="uk-sa3333-tnode-m0-e465"
 
 #
 # Build needed tools, e.g., genSchema, genInventory, if needed.
@@ -154,7 +154,6 @@ create_bootstrap_config() {
 
 	echo "[config]"                                 >> ${BOOT_CONFIG}
 	echo " noded-host = \"localhost\" "             >> ${BOOT_CONFIG}
-	echo " noded-port = \"8095\" "                  >> ${BOOT_CONFIG}
 	echo " remote-ip-file = \"file\" "              >> ${BOOT_CONFIG}
 	echo " bootstrap-server  = \"localhost:4444\" " >> ${BOOT_CONFIG}
 	echo " mesh-config = \"${BUILD_DIR}/config/mesh_config.toml\" " \
