@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/messaging/node-feeder/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/node-feeder cmd/service/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/messaging/node-feeder/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/node-feeder cmd/server/main.go
 
 test:
 	go test -v ./...
