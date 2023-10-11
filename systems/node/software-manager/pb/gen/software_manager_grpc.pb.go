@@ -20,8 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	SoftwareManagerService_CreateSoftwareUpdate_FullMethodName    = "/ukama.node.software_manager.v1.SoftwareManagerService/CreateSoftwareUpdate"
-	SoftwareManagerService_ReadSoftwareUpdate_FullMethodName      = "/ukama.node.software_manager.v1.SoftwareManagerService/ReadSoftwareUpdate"
-	SoftwareManagerService_ListSoftwareUpdates_FullMethodName     = "/ukama.node.software_manager.v1.SoftwareManagerService/ListSoftwareUpdates"
 	SoftwareManagerService_GetLatestSoftwareUpdate_FullMethodName = "/ukama.node.software_manager.v1.SoftwareManagerService/GetLatestSoftwareUpdate"
 )
 
@@ -30,8 +28,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SoftwareManagerServiceClient interface {
 	CreateSoftwareUpdate(ctx context.Context, in *CreateSoftwareUpdateRequest, opts ...grpc.CallOption) (*CreateSoftwareUpdateResponse, error)
-	ReadSoftwareUpdate(ctx context.Context, in *ReadSoftwareUpdateRequest, opts ...grpc.CallOption) (*ReadSoftwareUpdateResponse, error)
-	ListSoftwareUpdates(ctx context.Context, in *ListSoftwareUpdatesRequest, opts ...grpc.CallOption) (*ListSoftwareUpdatesResponse, error)
 	GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error)
 }
 
@@ -52,24 +48,6 @@ func (c *softwareManagerServiceClient) CreateSoftwareUpdate(ctx context.Context,
 	return out, nil
 }
 
-func (c *softwareManagerServiceClient) ReadSoftwareUpdate(ctx context.Context, in *ReadSoftwareUpdateRequest, opts ...grpc.CallOption) (*ReadSoftwareUpdateResponse, error) {
-	out := new(ReadSoftwareUpdateResponse)
-	err := c.cc.Invoke(ctx, SoftwareManagerService_ReadSoftwareUpdate_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *softwareManagerServiceClient) ListSoftwareUpdates(ctx context.Context, in *ListSoftwareUpdatesRequest, opts ...grpc.CallOption) (*ListSoftwareUpdatesResponse, error) {
-	out := new(ListSoftwareUpdatesResponse)
-	err := c.cc.Invoke(ctx, SoftwareManagerService_ListSoftwareUpdates_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *softwareManagerServiceClient) GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error) {
 	out := new(GetLatestSoftwareUpdateResponse)
 	err := c.cc.Invoke(ctx, SoftwareManagerService_GetLatestSoftwareUpdate_FullMethodName, in, out, opts...)
@@ -84,8 +62,6 @@ func (c *softwareManagerServiceClient) GetLatestSoftwareUpdate(ctx context.Conte
 // for forward compatibility
 type SoftwareManagerServiceServer interface {
 	CreateSoftwareUpdate(context.Context, *CreateSoftwareUpdateRequest) (*CreateSoftwareUpdateResponse, error)
-	ReadSoftwareUpdate(context.Context, *ReadSoftwareUpdateRequest) (*ReadSoftwareUpdateResponse, error)
-	ListSoftwareUpdates(context.Context, *ListSoftwareUpdatesRequest) (*ListSoftwareUpdatesResponse, error)
 	GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error)
 	mustEmbedUnimplementedSoftwareManagerServiceServer()
 }
@@ -96,12 +72,6 @@ type UnimplementedSoftwareManagerServiceServer struct {
 
 func (UnimplementedSoftwareManagerServiceServer) CreateSoftwareUpdate(context.Context, *CreateSoftwareUpdateRequest) (*CreateSoftwareUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSoftwareUpdate not implemented")
-}
-func (UnimplementedSoftwareManagerServiceServer) ReadSoftwareUpdate(context.Context, *ReadSoftwareUpdateRequest) (*ReadSoftwareUpdateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadSoftwareUpdate not implemented")
-}
-func (UnimplementedSoftwareManagerServiceServer) ListSoftwareUpdates(context.Context, *ListSoftwareUpdatesRequest) (*ListSoftwareUpdatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListSoftwareUpdates not implemented")
 }
 func (UnimplementedSoftwareManagerServiceServer) GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSoftwareUpdate not implemented")
@@ -138,42 +108,6 @@ func _SoftwareManagerService_CreateSoftwareUpdate_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SoftwareManagerService_ReadSoftwareUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadSoftwareUpdateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SoftwareManagerServiceServer).ReadSoftwareUpdate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SoftwareManagerService_ReadSoftwareUpdate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareManagerServiceServer).ReadSoftwareUpdate(ctx, req.(*ReadSoftwareUpdateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SoftwareManagerService_ListSoftwareUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListSoftwareUpdatesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SoftwareManagerServiceServer).ListSoftwareUpdates(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SoftwareManagerService_ListSoftwareUpdates_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareManagerServiceServer).ListSoftwareUpdates(ctx, req.(*ListSoftwareUpdatesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SoftwareManagerService_GetLatestSoftwareUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetLatestSoftwareUpdateRequest)
 	if err := dec(in); err != nil {
@@ -202,14 +136,6 @@ var SoftwareManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSoftwareUpdate",
 			Handler:    _SoftwareManagerService_CreateSoftwareUpdate_Handler,
-		},
-		{
-			MethodName: "ReadSoftwareUpdate",
-			Handler:    _SoftwareManagerService_ReadSoftwareUpdate_Handler,
-		},
-		{
-			MethodName: "ListSoftwareUpdates",
-			Handler:    _SoftwareManagerService_ListSoftwareUpdates_Handler,
 		},
 		{
 			MethodName: "GetLatestSoftwareUpdate",

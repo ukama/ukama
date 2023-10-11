@@ -9,6 +9,7 @@ replace github.com/ukama/ukama/systems/node/software-manager => ./
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2

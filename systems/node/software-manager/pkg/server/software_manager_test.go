@@ -1,56 +1,86 @@
 package server
 
-// import (
-// 	"context"
-// 	"testing"
+import (
+	"context"
+	"testing"
 
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/mock"
-// 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-// 	"github.com/ukama/ukama/systems/common/uuid"
-// 	"github.com/ukama/ukama/systems/node/software-manager/mocks"
-// 	pb "github.com/ukama/ukama/systems/node/software-manager/pb/gen"
-// 	"github.com/ukama/ukama/systems/node/software-manager/pkg/db"
-// )
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/software-manager/mocks"
+	"github.com/ukama/ukama/systems/node/software-manager/pb/gen"
+	"github.com/ukama/ukama/systems/node/software-manager/pkg/db"
+)
 
-// const testOrgName = "test-org"
+const testOrgName = "test-org"
 
-// var orgId = uuid.NewV4()
+var orgId = uuid.NewV4()
 
-// func TestMemberServer_AddMember(t *testing.T) {
-// 	// Arrange
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-// 	mRepo := &mocks.SoftwareManagerRepo{}
-// 	nOrg := &mocks.NucleusClientProvider{}
+func Test_CreateSoftwareUpdate(t *testing.T) {
+    ctx := context.Background()
 
-// 	sw := db.Software{
-// 		Id: uuid.NewV4(),
-// 		NodeId: uuid.NewV4(),
-// 		Tag: "0.12",
+    // Create a mock for the SoftwareManagerRepo interface
+    softwareManager := &mocks.SoftwareManagerRepo{}
 
-// 	}
+    // Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
+    softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
+        Return(nil) // You can specify the expected return value here
 
-// 	mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
-// 	// mOrg.On("GetUserById", member.UserId.String()).Return(&providers.UserInfo{
-// 	// 	Id: member.UserId.String(),
-// 	// }, nil).Once()
-// 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddMemberRequest{
-// 		UserUuid: member.UserId.String(),
-// 		Role:     pb.RoleType(db.Users),
-// 	}).Return(nil).Once()
-// 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-// 	s := NewMemberServer(testOrgName, mRepo, nOrg, msgclientRepo, "", orgId)
+    // Create a mock for the MsgBusServiceClient interface
+    msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-// 	// Act
-// 	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-// 		UserUuid: member.UserId.String(),
-// 		Role:     pb.RoleType(db.Users),
-// 	})
+    // Configure the mock to expect a call to PublishRequest with specific arguments
+    msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).
+        Return(nil) // You can specify the expected return value here
 
-// 	// Assert
-// 	msgclientRepo.AssertExpectations(t)
-// 	assert.NoError(t, err)
+    // Create an instance of the SoftwareManagerServer with the mocks
+    s := NewSoftwareManagerServer(msgclientRepo, false, testOrgName, softwareManager)
 
-// 	mRepo.AssertExpectations(t)
-// }
+    // Test
+    r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
+        Name: "test",
+        Tag:  "test",
+    })
+
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, r)
+
+    // Verify that the expected methods on the mocks were called
+    softwareManager.AssertExpectations(t)
+    msgclientRepo.AssertExpectations(t)
+}
+func Test_GetLatestSoftwareUpdate(t *testing.T) {
+    ctx := context.Background()
+
+    // Create a mock for the SoftwareManagerRepo interface
+    softwareManager := &mocks.SoftwareManagerRepo{}
+
+    // Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
+    softwareManager.On("GetLatestSoftwareUpdate").
+        Return(&db.Software{
+            Id:   uuid.NewV4(),
+            Name: "test",
+            Tag:  "test",
+            // Add other fields as needed
+        }, nil)
+
+    // Create a mock for the MsgBusServiceClient interface
+    msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+    // Create an instance of the SoftwareManagerServer with the mocks
+    s := NewSoftwareManagerServer(msgclientRepo, false, testOrgName, softwareManager)
+
+    // Test
+    r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})
+
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, r)
+
+    // Verify that the expected methods on the mocks were called
+    softwareManager.AssertExpectations(t)
+    msgclientRepo.AssertExpectations(t)
+}

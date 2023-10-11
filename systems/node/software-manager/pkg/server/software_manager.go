@@ -34,37 +34,31 @@ func NewSoftwareManagerServer(msgBus mb.MsgBusServiceClient, debug bool, orgName
 	}
 }
 
-func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.CreateSoftwareUpdateRequest) (*pb.CreateSoftwareUpdateResponse, error) {
-	if req.Name == "" || req.Version == "" || req.ReleaseDate == "" {
+func (s *SoftwaManagerServer) CreateSoftwareUpdate(ctx context.Context, req *pb.CreateSoftwareUpdateRequest) (*pb.CreateSoftwareUpdateResponse, error) {
+	if req.Name == "" || req.Tag == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
-			" Name, Version, Description, ReleaseDate, Status, NodeId are required")
+			" Name, Tag, Description, ReleaseDate, Status")
 	}
 
-	releaseDate, err := time.Parse("2006-01-02", req.ReleaseDate)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"Invalid format for ReleaseDate. Error: %s", err.Error())
-	}
+	
 	log.Infof("Creating software update %s", req)
-
+//realesase date should be the current date time.time.now()
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
-		Tag:         req.Version,
-		ReleaseDate: releaseDate,
-		Status:      db.Status(req.Status),
+		Tag:         req.Tag,
+		ReleaseDate: time.Now(),
+		Status:      db.Beta,
 	}
 
-	err = s.sRepo.CreateSoftware(softwareUpdate, nil)
+	err := s.sRepo.CreateSoftwareUpdate(softwareUpdate, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to create software update")
 	}
 
 	capps := &pb.CreateSoftwareUpdateRequest{
 		Name:        req.Name,
-		Version:     req.Version,
-		ReleaseDate: req.ReleaseDate,
-		Status:      req.Status,
+		Tag:     req.Tag,
 	}
 
 	route := s.baseRoutingKey.SetActionCreate().SetObject("newUpdate").MustBuild()
@@ -78,46 +72,11 @@ func (s *SoftwaManagerServer) CreateSoftware(ctx context.Context, req *pb.Create
 	}, nil
 
 }
-func (s *SoftwaManagerServer) ReadSoftware(ctx context.Context, req *pb.ReadSoftwareUpdateRequest) (*pb.ReadSoftwareUpdateResponse, error) {
-	log.Infof("Reading software update with id %s", req.Id)
 
-	uuid, err := uuid.FromString(req.GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of software uuid. Error %s", err.Error())
-	}
-
-	softwareUpdate, err := s.sRepo.ReadSoftware(uuid)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "Failed to read software update")
-	}
-	return &pb.ReadSoftwareUpdateResponse{
-		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
-	}, nil
-
-}
-func (s *SoftwaManagerServer) ListSoftwares(ctx context.Context, req *pb.ListSoftwareUpdatesRequest) (*pb.ListSoftwareUpdatesResponse, error) {
-	log.Infof("Listing software updates")
-
-	softwareUpdates, err := s.sRepo.ListSoftwares()
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "Failed to list software updates")
-	}
-
-	var pbSoftwareUpdates []*pb.SoftwareUpdate
-	for _, software := range softwareUpdates {
-		pbSoftwareUpdates = append(pbSoftwareUpdates, dbSoftwareToPbSoftwareUpdate(software))
-	}
-
-	return &pb.ListSoftwareUpdatesResponse{
-		SoftwareUpdates: pbSoftwareUpdates,
-	}, nil
-
-}
-func (s *SoftwaManagerServer) GetLatestSoftware(ctx context.Context, req *pb.GetLatestSoftwareUpdateRequest) (*pb.GetLatestSoftwareUpdateResponse, error) {
+func (s *SoftwaManagerServer) GetLatestSoftwareUpdate(ctx context.Context, req *pb.GetLatestSoftwareUpdateRequest) (*pb.GetLatestSoftwareUpdateResponse, error) {
 	log.Infof("Getting latest software update")
 
-	softwareUpdate, err := s.sRepo.GetLatestSoftware()
+	softwareUpdate, err := s.sRepo.GetLatestSoftwareUpdate()
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get latest software update")
 	}
@@ -132,7 +91,7 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 	return &pb.SoftwareUpdate{
 		Id:          software.Id.String(),
 		Name:        software.Name,
-		Version:     software.Tag,
+		Tag:     software.Tag,
 		ReleaseDate: software.ReleaseDate.String(),
 		Status:      pb.Status(software.Status),
 	}

@@ -37,10 +37,10 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 			return nil, err
 		}
 
-		err = l.sRepo.CreateSoftware(&db.Software{
+		err = l.sRepo.CreateSoftwareUpdate(&db.Software{
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
-			Tag:         msg.Version,
+			Tag:         msg.Tag,
 			ReleaseDate: time.Now(),
 		}, nil)
 		if err != nil {
