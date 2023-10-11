@@ -39,7 +39,7 @@ func NewConfig() *Config {
 			Registry:   "http://localhost:8075",
 			Metrics:    "http://localhost:8072",
 			Subscriber: "http://localhost:8078",
-			Billing:    "http://localhost:8079",
+			Billing:    "http://localhost:8680",
 			Nucleus:    "http://localhost:8060",
 		},
 	}

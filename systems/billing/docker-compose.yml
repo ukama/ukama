@@ -66,7 +66,8 @@ services:
    - COLLECTOR_SERVICE_HOST=billing-collector
    - COLLECTOR_SERVICE_PORT=9090
    - LAGOAPIKEY=${LAGO_API_KEY}
-   - LAGOHOST=${DOCKER_HOST_IP}
+   - LAGOHOST=${LOCAL_HOST_IP}
+   - ORGNAME=ukama-test-org
   restart: always
   depends_on:
    - postgresd

@@ -4,18 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/num30/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
-	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
 
@@ -29,10 +26,12 @@ import (
 
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
-	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	nuc "github.com/ukama/ukama/testing/integration/pkg/nucleus"
+	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	subs "github.com/ukama/ukama/testing/integration/pkg/subscriber"
 )
+
+var config *pkg.Config
 
 var errTestFailure = errors.New("test failure")
 
@@ -64,7 +63,7 @@ type BillingData struct {
 	SimId            string
 	ActivePackageId  string
 
-	NucleusClient *nuc.NucleusClient
+	NucleusClient  *nuc.NucleusClient
 	RegistryClient *reg.RegistryClient
 	RegHost        string
 	OwnerName      string
@@ -94,26 +93,27 @@ type BillingData struct {
 	reqActivateDeactivateSim   sapi.ActivateDeactivateSimReq
 }
 
-var serviceConfig = pkg.NewConfig()
+// var serviceConfig = pkg.NewConfig()
 
-func init() {
-	log.SetLevel(log.InfoLevel)
-	log.SetOutput(os.Stderr)
+// func init() {
+// 	log.SetLevel(log.InfoLevel)
+// 	log.SetOutput(os.Stderr)
 
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
-	if err != nil {
-		log.Fatalf("Error reading config file. Error: %v", err)
-	} else if serviceConfig.DebugMode {
-		// output config in debug mode
-		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
-			log.Infof("Config:\n%s", string(b))
-		}
-	}
+// 	err := config.NewConfig(pkg.ServiceName).Read(serviceConfig)
+// 	if err != nil {
+// 		log.Fatalf("Error reading config file. Error: %v", err)
+// 	} else if serviceConfig.DebugMode {
+// 		// output config in debug mode
+// 		b, err := yaml.Marshal(serviceConfig)
+// 		if err != nil {
+// 			log.Infof("Config:\n%s", string(b))
+// 		}
+// 	}
 
-}
+// }
 
 func InitializeData() *BillingData {
+	config = pkg.NewConfig()
 	d := &BillingData{}
 
 	d.SimType = "test"
@@ -121,16 +121,15 @@ func InitializeData() *BillingData {
 	d.Host = "http://localhost:3000"
 	d.MbHost = "amqp://guest:guest@localhost:5672/"
 
-	d.BillingClient = billing.NewBillingClient(d.Host, serviceConfig.Key)
+	d.BillingClient = billing.NewBillingClient(d.Host, config.Key)
 
-	d.DplanHost = "http://localhost:8080"
+	d.DplanHost = config.System.Dataplan
 	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
 	d.BaseRateId = make([]string, 8)
 	d.Country = "The lunar maria"
-
 	d.Provider = "ABC Tel"
 
-	d.SubsHost = "http://localhost:8081"
+	d.SubsHost = config.System.Subscriber
 	d.SubscriberClient = subs.NewSubscriberClient(d.SubsHost)
 	d.EncriptKey = "the-key-has-to-be-32-bytes-long!"
 	d.SubscriberName = faker.FirstName()
@@ -138,7 +137,7 @@ func InitializeData() *BillingData {
 	d.SubscriberEmail = strings.ToLower(faker.Email())
 	d.SubscriberPhone = faker.Phonenumber()
 
-	d.RegHost = "http://localhost:8082"
+	d.RegHost = config.System.Registry
 	d.RegistryClient = reg.NewRegistryClient(d.RegHost)
 	d.OwnerName = strings.ToLower(faker.FirstName())
 	d.OwnerEmail = strings.ToLower(faker.Email())
@@ -146,10 +145,13 @@ func InitializeData() *BillingData {
 	d.OrgName = strings.ToLower(faker.FirstName() + "-org")
 	d.NetworkName = strings.ToLower(faker.FirstName()) + "-net"
 
+	d.NucleusClient = nuc.NewNucleusClient(config.System.Nucleus)
+
 	d.reqAddUser = napi.AddUserRequest{
-		Name:  d.OwnerName,
-		Email: d.OwnerEmail,
-		Phone: d.OwnerPhone,
+		Name:   d.OwnerName,
+		Email:  d.OwnerEmail,
+		Phone:  d.OwnerPhone,
+		AuthId: faker.UUIDHyphenated(),
 	}
 
 	d.reqAddOrg = napi.AddOrgRequest{
