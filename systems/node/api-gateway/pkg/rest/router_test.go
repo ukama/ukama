@@ -81,7 +81,6 @@ func Test_RestarteNode(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-
 func Test_RestarteNodes(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
@@ -89,13 +88,13 @@ func Test_RestarteNodes(t *testing.T) {
 	jsonPayload := `{"node_ids":["60285a2a-fe1d-4261-a868-5be480075b8f"]}`
 
 	req, _ := http.NewRequest("POST", "/v1/controllers/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
-	req.Header.Set("Content-Type", "application/json") 
+	req.Header.Set("Content-Type", "application/json")
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
 	restartNodeReq := &cpb.RestartNodesRequest{
-		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4", 
-		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"}, 
+		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4",
+		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"},
 	}
 
 	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
@@ -113,11 +112,10 @@ func Test_RestarteNodes(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-
 func Test_RestarteSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	 req, _ := http.NewRequest("POST", "/v1/controllers/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
+	req, _ := http.NewRequest("POST", "/v1/controllers/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
@@ -126,7 +124,7 @@ func Test_RestarteSite(t *testing.T) {
 		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
 	}
 
-	c.On("RestartSite" ,mock.Anything,RestartSiteRequest).Return(&cpb.RestartSiteResponse{
+	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{
 		Status: cpb.RestartStatus_ACCEPTED},
 		nil)
 

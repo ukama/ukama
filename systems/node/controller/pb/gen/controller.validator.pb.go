@@ -26,8 +26,10 @@ func (this *RestartNodesRequest) Validate() error {
 	if this.NetworkId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
-	if this.NodeIds == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIds))
+	for _, item := range this.NodeIds {
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
 	}
 	return nil
 }

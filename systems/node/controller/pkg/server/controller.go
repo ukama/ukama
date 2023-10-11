@@ -135,7 +135,6 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	}
 
 	for _, nodeId := range req.NodeIds {
-
 		nId, err := ukama.ValidateNodeId(string(nodeId))
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
