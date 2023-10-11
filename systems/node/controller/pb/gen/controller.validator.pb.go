@@ -18,7 +18,6 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 var _regex_RestartNodesRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_RestartNodesRequest_NodeIds = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *RestartNodesRequest) Validate() error {
 	if !_regex_RestartNodesRequest_NetworkId.MatchString(this.NetworkId) {
@@ -27,13 +26,8 @@ func (this *RestartNodesRequest) Validate() error {
 	if this.NetworkId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
-	for _, item := range this.NodeIds {
-		if !_regex_RestartNodesRequest_NodeIds.MatchString(item) {
-			return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, item))
-		}
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
+	if this.NodeIds == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIds))
 	}
 	return nil
 }
@@ -43,13 +37,7 @@ func (this *RestartNodesResponse) Validate() error {
 func (this *RestartSiteResponse) Validate() error {
 	return nil
 }
-
-var _regex_RestartNodeRequest_NodeId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *RestartNodeRequest) Validate() error {
-	if !_regex_RestartNodeRequest_NodeId.MatchString(this.NodeId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NodeId))
-	}
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}

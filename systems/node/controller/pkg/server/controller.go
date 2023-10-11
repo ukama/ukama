@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -92,25 +93,26 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
 	}
 
-	nodeId, err := uuid.FromString(req.GetNodeId())
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
-	}
-	_, err = c.nodeLogRepo.Get(nodeId.String())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
-	}
+	// if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
+	// }
+	// _, err = c.nodeLogRepo.Get(nodeId.String())
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
+	// }
 	anyMsg,err:= anypb.New(req)
 	if err != nil {
 		return nil,err
 	}
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("node").MustBuild()
 	msg:= &cpb.NodeFeederMsg{
-		Target:     c.orgName + "." + nodeId.String(),
+		Target:     c.orgName + "." + nId.String(),
 		HTTPMethod: "POST",
 		Path:       "/v1/node/restart",
 		Msg:        anyMsg,
@@ -121,7 +123,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		log.Errorf("Failed to publish message with key %+v. Errors %s", route, err.Error())
 		return nil, err
 	}
-	log.Infof("Published controller %s on route %s for node %s ", anyMsg, route, nodeId.String())
+	log.Infof("Published controller %s on route %s for node %s ", anyMsg, route, nId.String())
 	return &pb.RestartNodeResponse{
 		Status: pb.RestartStatus_ACCEPTED,
 	}, nil
@@ -133,16 +135,18 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	}
 
 	for _, nodeId := range req.NodeIds {
-		nodeId, err := uuid.FromString(nodeId)
+
+		nId, err := ukama.ValidateNodeId(string(nodeId))
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of node id. Error %s", err.Error())
 		}
 
-		if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
+		if err := c.registrySystem.ValidateNode(nId.String(), c.orgName); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
 		}
 
-		_, err = c.nodeLogRepo.Get(nodeId.String())
+		_, err = c.nodeLogRepo.Get(nId.String())
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
