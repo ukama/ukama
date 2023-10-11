@@ -69,15 +69,15 @@ type BillingData struct {
 	OwnerName      string
 	OwnerEmail     string
 	OwnerPhone     string
-	OrgName        string
-	OwnerId        string
 	OrgId          string
+	OrgName        string
+	OrgOwnerId     string
+	OwnerId        string
 	NetworkName    string
 	NetworkId      string
 
 	// API requests
 	reqAddUser                 napi.AddUserRequest
-	reqAddOrg                  napi.AddOrgRequest
 	reqAddNetwork              rapi.AddNetworkRequest
 	reqUploadBaseRates         dapi.UploadBaseRatesRequest
 	reqGetBaseRatesByCountry   dapi.GetBaseRatesByCountryRequest
@@ -138,11 +138,13 @@ func InitializeData() *BillingData {
 	d.SubscriberPhone = faker.Phonenumber()
 
 	d.RegHost = config.System.Registry
+	d.OrgId = config.OrgId
+	d.OrgName = config.OrgName
+	d.OrgOwnerId = config.OrgOwnerId
 	d.RegistryClient = reg.NewRegistryClient(d.RegHost)
 	d.OwnerName = strings.ToLower(faker.FirstName())
 	d.OwnerEmail = strings.ToLower(faker.Email())
 	d.OwnerPhone = strings.ToLower(faker.Phonenumber())
-	d.OrgName = strings.ToLower(faker.FirstName() + "-org")
 	d.NetworkName = strings.ToLower(faker.FirstName()) + "-net"
 
 	d.NucleusClient = nuc.NewNucleusClient(config.System.Nucleus)
@@ -154,21 +156,15 @@ func InitializeData() *BillingData {
 		AuthId: faker.UUIDHyphenated(),
 	}
 
-	d.reqAddOrg = napi.AddOrgRequest{
-		OrgName:     d.OrgName,
-		Owner:       d.OwnerId,
-		Certificate: utils.RandomBase64String(2048),
-	}
-
 	d.reqAddNetwork = rapi.AddNetworkRequest{
 		OrgName: d.OrgName,
 		NetName: d.NetworkName,
 	}
 
 	d.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
-		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
+		EffectiveAt: utils.GenerateUTCFutureDate(time.Second * 2),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
-		EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
+		EndAt:       utils.GenerateUTCFutureDate(365 * 24 * time.Hour),
 		SimType:     d.SimType,
 	}
 
@@ -238,19 +234,6 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			assert.Equal(t, d.OwnerPhone, aUserResp.User.Phone)
 		}
 
-		d.OwnerId = aUserResp.User.Id
-
-		// Add new org
-		d.reqAddOrg.Owner = d.OwnerId
-
-		aOrgResp, err := d.NucleusClient.AddOrg(d.reqAddOrg)
-		if assert.NoError(t, err) {
-			assert.NotNil(t, aOrgResp)
-			assert.Equal(t, d.OrgName, aOrgResp.Org.Name)
-		}
-
-		d.OrgId = aOrgResp.Org.Id
-
 		// Add new network
 		aNetResp, err := d.RegistryClient.AddNetwork(d.reqAddNetwork)
 		if assert.NoError(t, err) {
@@ -287,7 +270,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			Markup: float64(utils.RandomInt(50)),
 		}
 
-		d.reqSetMarkup.OwnerId = d.OwnerId
+		d.reqSetMarkup.OwnerId = d.OrgOwnerId
 
 		mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkup)
 		if assert.NoError(t, err) {
@@ -329,12 +312,12 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 
 			// Add a new package
 			a.reqAddPackage = dapi.AddPackageRequest{
-				OwnerId:    a.OwnerId,
+				OwnerId:    a.OrgOwnerId,
 				OrgId:      a.OrgId,
 				Name:       faker.FirstName() + "-monthly-pack",
 				SimType:    a.SimType,
-				From:       utils.GenerateFutureDate(24 * time.Hour),
-				To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
+				From:       utils.GenerateUTCFutureDate(24 * time.Hour),
+				To:         utils.GenerateUTCFutureDate(30 * 24 * time.Hour),
 				BaserateId: a.BaserateId,
 				SmsVolume:  100,
 				DataVolume: 1024,
