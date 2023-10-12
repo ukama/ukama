@@ -38,7 +38,6 @@ type ConfigStoreProvider interface {
 }
 
 type ConfigMetaData struct {
-	org      string
 	network  string
 	site     string
 	node     string
