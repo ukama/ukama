@@ -2,6 +2,7 @@ package configstore
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -180,7 +181,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 	log.Infof("Files to be updated %+v", filesToUpdate)
 	if len(filesToUpdate) > 0 {
 		prepCommit := make(map[string]*pb.Config, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
-		prepNodeCommit := make(map[string][]string) /* Map from nodeId to config files*/
+		prepNodeCommit := make(map[string][]string)                   /* Map from nodeId to config files*/
 		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
@@ -320,24 +321,26 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 
 	for n, files := range nodes {
+		state := db.Failed
+
 		/* Check if node existes in configuration db */
 		_, err := c.configRepo.Get(n)
 		if err != nil {
 			log.Errorf("Failed to get configuration data for node %s: %v", n, err)
 			continue
 		}
-
+		metaData := &ConfigMetaData{}
 		log.Infof("Pushing configs %+v for node %s", files, n)
 		for _, f := range files {
 
-			meteData := md[f]
+			metaData = md[f]
 			anyMsg, err := anypb.New(m[f])
 			if err != nil {
-				return err
+				goto RecordState
 			}
 
 			msg := &pb.NodeFeederMessage{
-				Target:     c.OrgName + "." + meteData.network + "." + meteData.site + "." + n,
+				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HTTPMethod: "POST",
 				Path:       "/v1/configd/config",
 				Msg:        anyMsg,
@@ -346,11 +349,24 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			err = c.msgbus.PublishRequest(route, msg)
 			if err != nil {
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
-				return err
+				goto RecordState
 			}
 			log.Infof("Published config %s on route %s for node %s ", msg, route, n)
+			/* Atleast one is success */
+			state = db.Partial
 		}
 
+		/* Publish config version information */
+		err = c.PublishCommitInfo(metaData, route, commit)
+		if err != nil {
+			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
+			goto RecordState
+		}
+
+		/* Publish the config commit info */
+		state = db.Published
+
+	RecordState:
 		/* Update the version for commited config on node */
 		cRec, err := c.configRepo.Get(n)
 		if err != nil {
@@ -358,21 +374,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			return err
 		}
 
-		// err = c.commitRepo.Add(strings.ToLower(commit))
-		// if err != nil {
-		// 	log.Errorf("Failed to add new commit: %v", err)
-		// 	return err
-		// }
-
-		// newCommit, err := c.commitRepo.Get(commit)
-		// if err != nil {
-		// 	log.Errorf("Failed to read from commit repo. %v", err)
-		// 	return err
-
-		// }
-
 		cRec.Commit = db.Commit{Hash: commit}
-		state := db.Published
 		err = c.configRepo.UpdateLastCommit(*cRec, &state)
 		if err != nil {
 			log.Errorf("Failed to update latest commit: %v", err)
@@ -381,5 +383,56 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 
 	}
 
+	return nil
+}
+
+func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string) error {
+	m.app = "config"
+	m.fileName = "configInfo.json"
+
+	type ConfigVerData struct {
+		Name   string `json:"name"`
+		App    string `json:"app"`
+		Commit string `json:"commit"`
+		NodeId string `json:"node_id"`
+	}
+
+	data := ConfigVerData{
+		Name:   m.fileName,
+		App:    m.app,
+		Commit: ver,
+		NodeId: m.node,
+	}
+
+	json, err := json.Marshal(data)
+	if err != nil {
+		log.Errorf("Failed to marshal config version data %+v. Errors %s", data, err.Error())
+		return err
+	}
+
+	configData := &pb.Config{
+		Filename: m.fileName, /* filename with path */
+		App:      m.app,
+		Data:     json,
+	}
+	anyMsg, err := anypb.New(configData)
+	if err != nil {
+		return err
+	}
+
+	msg := &pb.NodeFeederMessage{
+		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
+		HTTPMethod: "POST",
+		Path:       "/v1/configd/config",
+		Msg:        anyMsg,
+	}
+
+	err = c.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", configData, route, err.Error())
+		return err
+	}
+
+	log.Infof("Published config %s on route %s for node %s ", msg, route, m.node)
 	return nil
 }
