@@ -6,6 +6,7 @@ on:
   push:   
     paths:
         - "systems/services/msgClient/**"
+        - "systems/common/**"
         - ".github/workflows/systems-services-msgClient.yaml"
  
   workflow_dispatch:
