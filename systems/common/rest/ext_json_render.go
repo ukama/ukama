@@ -2,17 +2,17 @@ package rest
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"net/http"
 )
 
 var jsonContentType = []string{"application/json; charset=utf-8"}
 
 // Extended json renderer.
-// It's same as default renderer with exception that it rendeers protobuf messages without ommitin andy filds.
-// Default renderer omits fields that have default values
-
+// It's same as default renderer but with support of proto marshalling to json because
+// default renderer omits fields that have default values
 type ExtJson struct {
 	Data   interface{}
 	Indent bool
