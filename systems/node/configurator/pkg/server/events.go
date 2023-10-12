@@ -7,6 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -38,6 +40,16 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(n.orgName, "event.node.local.{{ .Org}}.messaging.mesh.config.create"):
+		msg, err := n.unmarshalNodeConfigUpdateEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeConfigUpdateEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -71,5 +83,55 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 		log.Errorf("Error adding node %s to configuration repo.Error: %+v", msg.NodeId, err)
 		return err
 	}
+	return nil
+}
+
+/* To Be tested on integration */
+func (n *ConfiguratorEventServer) unmarshalNodeConfigUpdateEvent(msg *anypb.Any) (*eCfgPb.NodeConfigUpdateEvent, error) {
+	p := &eCfgPb.NodeConfigUpdateEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal NodeConfigUpdate message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+// so, commenting for compiling.
+func (n *ConfiguratorEventServer) handleNodeConfigUpdateEvent(key string, msg *eCfgPb.NodeConfigUpdateEvent) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	cfg, err := n.s.configRepo.Get(strings.ToLower(msg.NodeId))
+	if err != nil {
+		log.Errorf("Error reading node %s from configuration repo.Error: %+v", msg.NodeId, err)
+		return err
+	}
+
+	c, err := n.s.commitRepo.Get(msg.GetCommit())
+	if err != nil {
+		log.Errorf("Error reading commit %s from commit repo.Error: %+v", msg.Commit, err)
+		return err
+	}
+
+	state := db.CommitState(uint8(msg.GetStatus()))
+	if state == db.Success || state == db.Rollback || state == db.Default {
+		cfg.Commit = *c
+		err = n.s.configRepo.UpdateCurrentCommit(*cfg, &state)
+		if err != nil {
+			log.Errorf("Error updating node %s commit configuration repo.Error: %+v", msg.NodeId, err)
+			return err
+		}
+
+	} else if state == db.Failed {
+		err = n.s.configRepo.UpdateLastCommit(*cfg, &state)
+		if err != nil {
+			log.Errorf("Error adding node %s last commit configuration repo.Error: %+v", msg.NodeId, err)
+			return err
+		}
+	} else {
+		log.Warningf("Unwanted config states: %v", msg)
+		return nil
+	}
+
 	return nil
 }

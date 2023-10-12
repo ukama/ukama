@@ -25,12 +25,14 @@ const (
 
 // actual routing keys
 const (
-	DeviceConnectedRoutingKey     RoutingKey = "event.device.mesh.link.connect"
-	UserRegisteredRoutingKey      RoutingKey = "event.cloud.identity.user.create"
-	DeviceFeederRequestRoutingKey RoutingKey = "request.cloud.device-feeder"
-	OrgCreatedRoutingKey          RoutingKey = "event.cloud.org.org.created"
-	OrgDeletedRoutingKey          RoutingKey = "event.cloud.org.org.deleted"
-	NodeUpdatedRoutingKey         RoutingKey = "event.cloud.node.node.updated"
+	NodeConnectedRoutingKey     RoutingKey = "event.device.mesh.link.connect"
+	NodeFeederRequestRoutingKey RoutingKey = "request.cloud.local.*.*.node.publish"
+
+	/* deprecated */
+	UserRegisteredRoutingKey RoutingKey = "event.cloud.identity.user.create"
+	OrgCreatedRoutingKey     RoutingKey = "event.cloud.org.org.created"
+	OrgDeletedRoutingKey     RoutingKey = "event.cloud.org.org.deleted"
+	NodeUpdatedRoutingKey    RoutingKey = "event.cloud.node.node.updated"
 
 	DefaultExchange = "amq.topic"
 )

@@ -12,3 +12,19 @@ message Config {
     string app = 2;
     bytes Data = 3;
 }
+
+message NodeConfigUpdateEvent {
+    string nodeId = 1 ;
+    string commit = 2 ;
+    UpdateStatus status = 3 ;
+}
+
+enum UpdateStatus {
+    Undefined = 0;
+    Default = 1; /* Default concfig */
+    Success = 2;
+    Failed = 3; 
+    Published = 4;
+    Partial = 5;
+    Rollback = 6;
+}

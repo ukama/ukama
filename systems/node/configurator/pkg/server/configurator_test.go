@@ -47,7 +47,7 @@ func TestConfiguratorServer_GetConfigVersion(t *testing.T) {
 
 	configRepo.On("Get", mock.AnythingOfType("string")).Return(&db.Configuration{
 		NodeId:          "node-id",
-		State:           db.Commited,
+		State:           db.Published,
 		Commit:          db.Commit{Hash: "commit"},
 		LastCommitState: db.Published,
 		LastCommit:      db.Commit{Hash: "lastcommit"},

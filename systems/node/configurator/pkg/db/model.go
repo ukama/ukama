@@ -29,9 +29,9 @@ const (
 	Default   CommitState = 1 /* First time when node connects */
 	Success   CommitState = 2 /* After first succesful commit */
 	Failed    CommitState = 3 /* After failed  commit */
-	Commited  CommitState = 4 /* After commit is pushed to NodeFeeder but still waiting for confirmation from node */
-	Partial   CommitState = 6 /* After partial commits */
-	Published CommitState = 7 /* After commit is pushed to msgclient.*/
+	Published CommitState = 4 /* After commit is pushed to NodeFeeder but still waiting for confirmation from node */
+	Partial   CommitState = 5 /* After partial commits */
+	Rollback  CommitState = 6 /* After commit is pushed to msgclient.*/
 )
 
 func (e *CommitState) Scan(value interface{}) error {
@@ -50,7 +50,7 @@ func (e CommitState) String() string {
 		Default:   "default",
 		Success:   "success",
 		Failed:    "failed",
-		Commited:  "commited",
+		Rollback:  "rollback",
 		Partial:   "partial",
 		Published: "published",
 	}
@@ -69,8 +69,8 @@ func ParseCommitState(s string) CommitState {
 	case "failed":
 		return Failed
 	case "commited":
-		return Commited
-	case "published":
+		return Rollback
+	case "rollback":
 		return Published
 	default:
 		return Undefined
