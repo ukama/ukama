@@ -86,8 +86,8 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 		Version:     srvVersion,
 	}
 
-	f.GET("/openapi.json", nil, f.OpenAPI(infos, "json"))
-	swagger.AddOpenApiUIHandler(g, "swagger", "/openapi.json")
+	f.GET("/openapi.yaml", nil, f.OpenAPI(infos, "yaml"))
+	swagger.AddOpenApiUIHandler(g, "swagger", "/openapi.yaml")
 
 	return f
 }
@@ -110,7 +110,7 @@ func GenerateSpecDoc(srvName, srvVersion, srvDesc string, f *fizz.Fizz) {
 
 	// Write to swagger.json
 	if err := os.WriteFile("swagger.yaml", []byte(responseBody), 0644); err != nil {
-		fmt.Printf("Error writing to swagger.json: %v\n", err)
+		fmt.Printf("Error writing to swagger.yaml: %v\n", err)
 		return
 	}
 	logrus.Info("Successfully generated swagger.yaml")

@@ -29,8 +29,8 @@ import (
 
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
-	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	nuc "github.com/ukama/ukama/testing/integration/pkg/nucleus"
+	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	subs "github.com/ukama/ukama/testing/integration/pkg/subscriber"
 )
 
@@ -64,7 +64,7 @@ type BillingData struct {
 	SimId            string
 	ActivePackageId  string
 
-	NucleusClient *nuc.NucleusClient
+	NucleusClient  *nuc.NucleusClient
 	RegistryClient *reg.RegistryClient
 	RegHost        string
 	OwnerName      string
