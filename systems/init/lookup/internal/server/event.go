@@ -46,7 +46,7 @@ func (l *LookupEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.ip.update"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"):
 		msg, err := l.unmarshalOrgIpUpdateEvent(e.Msg)
 		if err != nil {
 			return nil, err
