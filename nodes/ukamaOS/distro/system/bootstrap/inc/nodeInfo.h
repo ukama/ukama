@@ -41,7 +41,7 @@ typedef struct nodeInfo_ {
 	char *oem;
 } NodeInfo;
 
-int get_nodeID_from_noded(char **nodeID, char *host, char *port);
+int get_nodeID_from_noded(char **nodeID, char *host, int port);
 void free_node_info(NodeInfo *nodeInfo);
 
 #endif /* NODE_INFO_H */

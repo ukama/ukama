@@ -3,7 +3,6 @@
 [config]
 
 	noded-host       = "localhost"
-	noded-port       = "8095"
 	mesh-config      = "/conf/mesh_config.toml"
 	remote-ip-file   = "/conf/ip_file"
 	bootstrap-server = "localhost:8070"

@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <netdb.h>
+
 #include "web_service.h"
 
 #include "device.h"
@@ -31,6 +33,24 @@ UInst serverInst;
 static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
+
+static int find_service_port(char *serviceName) {
+
+    struct servent *entry = NULL;
+
+    entry = getservbyname(serviceName, NULL);
+    if (entry == NULL) {
+        usys_log_error("Unable to find port entry for service: %s", serviceName);
+        return 0;
+    }
+
+    usys_log_debug("Service entry found. Name: %s port: %d proto: %s",
+                   entry->s_name,
+                   ntohs(entry->s_port),
+                   entry->s_proto);
+
+    return ntohs(entry->s_port);
+}
 
 /**
  * @fn      void clean_noded_notif(NodedNotifDetails*)
@@ -1409,15 +1429,23 @@ static int start_framework(UInst *instance) {
  * @brief   Initializes the REST server framework
  *
  * @param   inst
- * @param   port
  * @return  On success STATUS_OK
  *          On failure STATUS_NOK
  */
-static int init_framework(UInst *inst, int port) {
+static int init_framework(UInst *inst) {
+
+    int port;
+
+    port = find_service_port(SERVICE_NAME);
+    if (port == 0) {
+        usys_log_error("Unable to find %s in the service db",
+                       SERVICE_NAME);
+        return STATUS_NOK;
+    }
+
     if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
-        usys_log_error(
-                        "Error initializing instance for websocket"
-                        " remote port %d", port);
+        usys_log_error("Error initializing instance for websocket"
+                       " remote port %d", port);
         return STATUS_NOK;
     }
 
@@ -1450,12 +1478,12 @@ int web_service_start() {
 
     /* open connection for web_services */
     if (start_framework(&serverInst)) {
-        usys_log_error("Failed to start web_services for cld_ctrl: %d",
-                        WEB_SERVICE_PORT);
+        usys_log_error("Failed to start web_services");
         return STATUS_NOK;
     }
 
-    usys_log_info("Webservice on client port: %d started.", WEB_SERVICE_PORT);
+    usys_log_info("Webservice on client port: %d started.",
+                  find_service_port(SERVICE_NAME));
 
     return STATUS_OK;
 }
@@ -1473,7 +1501,7 @@ int web_service_init(char *notifServer) {
     usys_log_info("Added notification server  %s", gNotifServer);
 
     /* Initialize the web_services framework. */
-    if (init_framework(&serverInst, WEB_SERVICE_PORT) != STATUS_OK) {
+    if (init_framework(&serverInst) != STATUS_OK) {
         usys_log_error("Error initializing web_service framework");
         return STATUS_NOK;
     }

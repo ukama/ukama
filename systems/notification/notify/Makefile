@@ -22,7 +22,6 @@ deps:
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/vektra/mockery/v2/.../
 
-
 gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 		notify.proto
@@ -31,9 +30,7 @@ gen:
 
 
 clean:
-	rm pb/gen/*.go
-	rm mocks/*.go
-
+	rm -rf ./bin/
 
 # integration tests
 integration.test:
