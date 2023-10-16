@@ -11,6 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -23,6 +26,7 @@ const apiEndpoint = "/v1/invoices"
 
 const invoiceId = "87052671-38c6-4064-8f4b-55f13aa52384"
 const subscriberId = "a2041828-737b-48d4-81c0-9c02500a23ff"
+const networkId = "63b0ab7b-18f0-46a1-8d07-309440e7d93e"
 
 var invoicePb = pb.GetResponse{
 	Invoice: &pb.Invoice{
@@ -131,30 +135,6 @@ func TestRouter_GetInvoice(t *testing.T) {
 }
 
 func TestRouter_GetInvoices(t *testing.T) {
-	t.Run("InvoicesNotFound", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s", apiEndpoint, subscriberId), nil)
-
-		m := &imocks.InvoiceServiceClient{}
-
-		pReq := &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId,
-		}
-
-		m.On("GetBySubscriber", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
-
-		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
-		}, routerConfig).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		m.AssertExpectations(t)
-	})
-
 	t.Run("InvoicesFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s", apiEndpoint, subscriberId), nil)
@@ -178,6 +158,50 @@ func TestRouter_GetInvoices(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})
+
+	t.Run("InvoicesNotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?network=%s", apiEndpoint, networkId), nil)
+
+		m := &imocks.InvoiceServiceClient{}
+
+		pReq := &pb.GetByNetworkRequest{
+			NetworkId: networkId,
+		}
+
+		m.On("GetByNetwork", mock.Anything, pReq).Return(nil,
+			status.Errorf(codes.NotFound, "network not found"))
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(m),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("BadRequest", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s&network=%s",
+			apiEndpoint, subscriberId, networkId), nil)
+
+		m := &imocks.InvoiceServiceClient{}
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(m),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		m.AssertExpectations(t)
+	})
 }
 
 func TestRouter_DeleteInvoice(t *testing.T) {
@@ -190,7 +214,8 @@ func TestRouter_DeleteInvoice(t *testing.T) {
 		pReq := &pb.DeleteRequest{
 			InvoiceId: invoiceId,
 		}
-		m.On("Delete", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
+		m.On("Delete", mock.Anything, pReq).Return(nil,
+			status.Errorf(codes.NotFound, "invoice not found"))
 
 		r := NewRouter(&Clients{
 			Billing: client.NewBillingFromClient(m),
@@ -200,7 +225,7 @@ func TestRouter_DeleteInvoice(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.Equal(t, http.StatusNotFound, w.Code)
 		m.AssertExpectations(t)
 	})
 

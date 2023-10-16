@@ -3,7 +3,8 @@ package rest
 import "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 
 type GetInvoicesRequest struct {
-	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber" query:"subscriber" binding:"required" validate:"required"`
+	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber" query:"subscriber" binding:"required"`
+	NetworkId    string `example:"{{NetworkUUID}}" form:"network_id" json:"network" query:"network" binding:"required"`
 }
 
 type GetInvoiceRequest struct {
