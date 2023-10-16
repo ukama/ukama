@@ -44,7 +44,7 @@ func main() {
 
 	exec := pkg.NewRequestExecutor(ipResolve, &serviceConfig.Device)
 
-	listener, err := pkg.NewQueueListener(serviceConfig.Queue.Uri, os.Getenv(global.POD_NAME_ENV_VAR), m, exec, serviceConfig.Listener)
+	listener, err := pkg.NewQueueListener(global.ServiceName, serviceConfig.Queue.Uri, os.Getenv(global.POD_NAME_ENV_VAR), m, exec, serviceConfig.Listener)
 	if err != nil {
 		logrus.WithError(err).Error("Error creating new listener")
 		os.Exit(1)
@@ -83,4 +83,3 @@ func exposeMetrics() {
 
 	}
 }
-

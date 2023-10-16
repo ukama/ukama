@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/ukama/ukama/systems/common/config"
+	mb "github.com/ukama/ukama/systems/common/msgbus"
 )
 
 type RegistryConfig struct {
@@ -20,9 +21,11 @@ type DeviceNetworkConfig struct {
 }
 
 type ListenerConfig struct {
-	ExecutionRetryCount int64 // max retries count
-	RetryPeriodSec      int   // how long request waits after failure to try again
-	Threads             int   // how many go routines run message processor
+	ExecutionRetryCount int64           // max retries count
+	RetryPeriodSec      int             // how long request waits after failure to try again
+	Threads             int             // how many go routines run message processor
+	Exchange            string          // exchange
+	Routes              []mb.RoutingKey // routes
 }
 
 type Config struct {
@@ -57,6 +60,8 @@ func NewConfig() *Config {
 			ExecutionRetryCount: 3,
 			RetryPeriodSec:      30,
 			Threads:             3,
+			Routes:              []mb.RoutingKey{"request.cloud.local.*.*.*.nodefeeder.publish"},
+			Exchange:            "amqp.Topic",
 		},
 		Metrics: config.DefaultMetrics(),
 	}

@@ -82,6 +82,7 @@ services:
       - NNS_SERVICE_PORT=9090
       - REGISTRY=http://${LOCAL_HOST_IP}:8075
       - ORG=36960fb9-dc87-4fe6-9275-583b694a89a3
+      - ORGNAME=ukama-org
     restart: always
     networks:
       ukama-net:
@@ -120,10 +121,18 @@ services:
     volumes:
       - './coredns/Corefile:/etc/coredns/Corefile'
 
-  bastion:
-    image: nicolaka/netshoot:latest
-    command: tail -F anything
-    restart: always
+  node-feeder:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-feeder
+    environment:
+      - DEBUGMODE=true
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+
+    depends_on:
+      - nnsd
+    networks:
+      - ukama-net
 
 networks:
   ukama-net:
