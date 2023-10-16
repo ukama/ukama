@@ -1,21 +1,19 @@
 package db_test
 
 import (
+	"database/sql"
 	"regexp"
 	"testing"
 
-	"database/sql"
-
-	extsql "database/sql"
-
-	invoicedb "github.com/ukama/ukama/systems/billing/invoice/pkg/db"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	log "github.com/sirupsen/logrus"
+	invoicedb "github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 )
 
 type UkamaDbMock struct {
@@ -53,7 +51,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func TestInvoiceRepo_Add(t *testing.T) {
 	t.Run("AddINvoice", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 
 		invoice := invoicedb.Invoice{
 			Id:           uuid.NewV4(),
@@ -67,7 +65,7 @@ func TestInvoiceRepo_Add(t *testing.T) {
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(invoice.Id, invoice.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -105,7 +103,7 @@ func TestInvoiceRepo_Get(t *testing.T) {
 		var invoiceId = uuid.NewV4()
 		var subscriberId = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -148,7 +146,7 @@ func TestInvoiceRepo_Get(t *testing.T) {
 		// Arrange
 		var invoiceId = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -191,7 +189,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		var invoiceId = uuid.NewV4()
 		var subscriberId = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -234,7 +232,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		// Arrange
 		var subscriberId = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -273,7 +271,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 
 func TestINvoiceRepo_Delete(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
-		var db *extsql.DB
+		var db *sql.DB
 
 		// Arrange
 		var invoiceId = uuid.NewV4()
@@ -316,7 +314,7 @@ func TestINvoiceRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("InvoiceNotFound", func(t *testing.T) {
-		var db *extsql.DB
+		var db *sql.DB
 
 		// Arrange
 		var invoiceId = uuid.NewV4()
