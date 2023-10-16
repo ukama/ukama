@@ -1,16 +1,15 @@
 package pdf
 
 import (
-	"embed"
-	_ "embed"
-	"os"
-
 	"bytes"
+	"embed"
 	"fmt"
 	"html/template"
+	"os"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/mattn/go-slim"
+
 	log "github.com/sirupsen/logrus"
 )
 

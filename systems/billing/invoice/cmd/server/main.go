@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"os"
 
-	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/billing/invoice/cmd/version"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
@@ -12,6 +11,8 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	"github.com/num30/config"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
