@@ -15,7 +15,7 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
-
+	"github.com/ukama/ukama/systems/common/msgbus"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
@@ -41,6 +41,7 @@ type BillingData struct {
 	BillingClient *billing.BillingClient
 	Host          string
 	MbHost        string
+	SystemName    string
 
 	DataPlanClient *dplan.DataplanClient
 	DplanHost      string
@@ -115,7 +116,7 @@ type BillingData struct {
 func InitializeData() *BillingData {
 	config = pkg.NewConfig()
 	d := &BillingData{}
-
+	d.SystemName = "billing"
 	d.SimType = "test"
 
 	d.Host = "http://localhost:3000"
@@ -308,7 +309,8 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("package").SetActionCreate().SetObject("package").MustBuild())
 
 			// Add a new package
 			a.reqAddPackage = dapi.AddPackageRequest{
@@ -403,7 +405,8 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.subscriber.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("registry").SetAction("create").SetObject("subscriber").MustBuild())
 
 			// Add new subscriber
 			a.reqSubscriberAdd.NetworkId = a.NetworkId
@@ -489,7 +492,8 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("allocate").SetObject("sim").MustBuild())
 
 			// Allocate new sim to subscriber
 			a.reqAllocateSim.NetworkId = a.NetworkId
@@ -581,8 +585,9 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost,
-				[]string{"event.cloud.simmanager.package.activate",
-					"event.cloud.simmanager.sim.activepackage"})
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("activepackage").SetObject("sim").MustBuild())
+			// []string{"event.cloud.simmanager.package.activate",
+			// "event.cloud.simmanager.sim.activepackage"}
 
 			// Get the sim
 			a.reqGetSim.SimId = a.SimId
