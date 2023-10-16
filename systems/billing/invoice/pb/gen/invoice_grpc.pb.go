@@ -22,6 +22,7 @@ const (
 	InvoiceService_Add_FullMethodName             = "/ukama.billing.invoice.v1.InvoiceService/Add"
 	InvoiceService_Get_FullMethodName             = "/ukama.billing.invoice.v1.InvoiceService/Get"
 	InvoiceService_GetBySubscriber_FullMethodName = "/ukama.billing.invoice.v1.InvoiceService/GetBySubscriber"
+	InvoiceService_GetByNetwork_FullMethodName    = "/ukama.billing.invoice.v1.InvoiceService/GetByNetwork"
 	InvoiceService_Delete_FullMethodName          = "/ukama.billing.invoice.v1.InvoiceService/Delete"
 )
 
@@ -32,6 +33,7 @@ type InvoiceServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetBySubscriber(ctx context.Context, in *GetBySubscriberRequest, opts ...grpc.CallOption) (*GetBySubscriberResponse, error)
+	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
 	// Update
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
@@ -71,6 +73,15 @@ func (c *invoiceServiceClient) GetBySubscriber(ctx context.Context, in *GetBySub
 	return out, nil
 }
 
+func (c *invoiceServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
+	out := new(GetByNetworkResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_GetByNetwork_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *invoiceServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, InvoiceService_Delete_FullMethodName, in, out, opts...)
@@ -87,6 +98,7 @@ type InvoiceServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error)
+	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
 	// Update
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
@@ -104,6 +116,9 @@ func (UnimplementedInvoiceServiceServer) Get(context.Context, *GetRequest) (*Get
 }
 func (UnimplementedInvoiceServiceServer) GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBySubscriber not implemented")
+}
+func (UnimplementedInvoiceServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
 }
 func (UnimplementedInvoiceServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -175,6 +190,24 @@ func _InvoiceService_GetBySubscriber_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InvoiceService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InvoiceServiceServer).GetByNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InvoiceService_GetByNetwork_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InvoiceServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InvoiceService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -211,6 +244,10 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBySubscriber",
 			Handler:    _InvoiceService_GetBySubscriber_Handler,
+		},
+		{
+			MethodName: "GetByNetwork",
+			Handler:    _InvoiceService_GetByNetwork_Handler,
 		},
 		{
 			MethodName: "Delete",
