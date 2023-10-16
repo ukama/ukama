@@ -480,6 +480,65 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 	})
 }
 
+func TestInvoiceServer_GetInvoiceByNetwork(t *testing.T) {
+	t.Run("NetworkFound", func(t *testing.T) {
+		var invoiceId = uuid.NewV4()
+		var networkId = uuid.NewV4()
+
+		invoiceRepo := &mocks.InvoiceRepo{}
+
+		invoiceRepo.On("GetByNetwork", networkId).Return(
+			[]db.Invoice{
+				{Id: invoiceId,
+					NetworkId: networkId,
+					IsPaid:    false,
+				}}, nil).Once()
+
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
+
+		res, err := s.GetByNetwork(context.TODO(),
+			&pb.GetByNetworkRequest{NetworkId: networkId.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, invoiceId.String(), res.GetInvoices()[0].GetId())
+		assert.Equal(t, networkId.String(), res.NetworkId)
+		invoiceRepo.AssertExpectations(t)
+	})
+
+	t.Run("NetworkNotFound", func(t *testing.T) {
+		var networkId = uuid.Nil
+
+		invoiceRepo := &mocks.InvoiceRepo{}
+
+		invoiceRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
+
+		res, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
+			NetworkId: networkId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		invoiceRepo.AssertExpectations(t)
+	})
+
+	t.Run("NetworkUUIDInvalid", func(t *testing.T) {
+		var networkId = "1"
+
+		invoiceRepo := &mocks.InvoiceRepo{}
+
+		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil)
+
+		res, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
+			NetworkId: networkId})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		invoiceRepo.AssertExpectations(t)
+	})
+}
+
 func TestInvoiceServer_Delete(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
 		var invoiceId = uuid.NewV4()

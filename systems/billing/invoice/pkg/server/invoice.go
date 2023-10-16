@@ -156,6 +156,26 @@ func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscr
 	return resp, nil
 }
 
+func (i *InvoiceServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	networkId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
+	}
+
+	invoices, err := i.invoiceRepo.GetByNetwork(networkId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invoices")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkId: req.NetworkId,
+		Invoices:  dbInvoicesToPbInvoices(invoices),
+	}
+
+	return resp, nil
+}
+
 func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting invoice %s", req.InvoiceId)
 
