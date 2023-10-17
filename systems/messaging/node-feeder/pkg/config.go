@@ -61,8 +61,9 @@ func NewConfig() *Config {
 			RetryPeriodSec:      30,
 			Threads:             3,
 			Routes:              []mb.RoutingKey{"request.cloud.local.*.*.*.nodefeeder.publish"},
-			Exchange:            "amqp.Topic",
+			Exchange:            "amq.topic",
 		},
 		Metrics: config.DefaultMetrics(),
+		//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 	}
 }

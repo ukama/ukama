@@ -25,10 +25,7 @@ func main() {
 	ccmd.ProcessVersionArgument(global.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	registryClient, err := multipl.NewRegistryClient(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds)
-	if err != nil {
-		logrus.Fatalf("Failed to create registry client: %v", err)
-	}
+	registryClient := multipl.NewRegistryProvider(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds, serviceConfig.DebugMode)
 
 	pub, err := multipl.NewQPub(serviceConfig.Queue.Uri, global.ServiceName, serviceConfig.Registry.Host, os.Getenv(global.POD_NAME_ENV_VAR))
 	if err != nil {
@@ -37,7 +34,7 @@ func main() {
 
 	m := multipl.NewRequestMultiplier(registryClient, pub)
 
-	ipResolve, err := pkg.NewDeviceIpResolver(serviceConfig.Net.Host, serviceConfig.Registry.TimeoutSeconds)
+	ipResolve, err := pkg.NewNodeIpResolver(serviceConfig.Net.Host, serviceConfig.Registry.TimeoutSeconds)
 	if err != nil {
 		logrus.Fatalf("Failed to create device ip resolver: %v", err)
 	}

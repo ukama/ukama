@@ -26,8 +26,6 @@ const deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
 
 type QueueListener struct {
 	service        string
-	routes         []mb.RoutingKey
-	exchange       string
 	consumer       mb.Consumer
 	serviceId      string
 	requestMult    RequestMultiplier

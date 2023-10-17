@@ -128,7 +128,8 @@ services:
     environment:
       - DEBUGMODE=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-
+      - REGISTRY_HOST=registry-gateway:8080
+      - NET_HOST=nnsd:9090
     depends_on:
       - nnsd
     networks:

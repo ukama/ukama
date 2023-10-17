@@ -1,48 +1,119 @@
 package multipl
 
 import (
-	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	log "github.com/sirupsen/logrus"
+	ic "github.com/ukama/ukama/systems/common/initclient"
+	"github.com/ukama/ukama/systems/common/rest"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type registryClient struct {
-	registryClient nodepb.NodeServiceClient
-	timeoutSecond  int
+const RegistryVersion = "/v1/"
+const SystemName = "registry"
+
+type RoleType int32
+
+const (
+	RoleType_OWNER    RoleType = 0
+	RoleType_ADMIN    RoleType = 1
+	RoleType_EMPLOYEE RoleType = 2
+	RoleType_VENDOR   RoleType = 3
+	RoleType_USERS    RoleType = 4
+)
+
+// Enum value maps for RoleType.
+var (
+	RoleType_name = map[int32]string{
+		0: "OWNER",
+		1: "ADMIN",
+		2: "EMPLOYEE",
+		3: "VENDOR",
+		4: "USERS",
+	}
+	RoleType_value = map[string]int32{
+		"OWNER":    0,
+		"ADMIN":    1,
+		"EMPLOYEE": 2,
+		"VENDOR":   3,
+		"USERS":    4,
+	}
+)
+
+type RegistryProvider interface {
+	GetAllNodes(org string) (*nodepb.GetNodesResponse, error)
 }
 
-type RegistryClient interface {
-	GetNodesList() (nodes []*nodepb.Node, err error)
+type registryProvider struct {
+	R       *rest.RestClient
+	debug   bool
+	icHost  string
+	timeout time.Duration
 }
 
-func NewRegistryClient(registryHost string, timeoutSecond int) (*registryClient, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, registryHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+type OrgMember struct {
+	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
+	Role     string `example:"member" json:"role" validate:"required"`
+}
 
+func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) {
+	/* Add user to member db of the org */
+	url, err := ic.GetHostUrl(ic.CreateHostString(org, SystemName), r.icHost, &org, r.debug)
 	if err != nil {
-		log.Errorf("Could not connect to registry: %v", err)
+		log.Errorf("Failed to resolve registry address to update user as member: %v", err)
+		return nil, fmt.Errorf("failed to resolve org registry address. Error: %v", err)
+	}
+
+	rc := rest.NewRestyClient(url, r.debug)
+
+	return rc, nil
+}
+
+func NewRegistryProvider(icHost string, t int, debug bool) *registryProvider {
+
+	r := &registryProvider{
+		debug:   debug,
+		icHost:  icHost,
+		timeout: time.Duration(t) * time.Second,
+	}
+
+	return r
+}
+
+func (r *registryProvider) GetAllNodes(orgName string) (*nodepb.GetNodesResponse, error) {
+
+	var err error
+
+	nodeResp := &nodepb.GetNodesResponse{}
+	/* Get Provider */
+	r.R, err = r.GetRestyClient(orgName)
+	if err != nil {
 		return nil, err
 	}
 
-	return &registryClient{timeoutSecond: timeoutSecond,
-		registryClient: nodepb.NewNodeServiceClient(conn)}, nil
-}
+	errStatus := &rest.ErrorMessage{}
 
-func (r registryClient) GetNodesList() (nodes []*nodepb.Node, err error) {
-	log.Info("Getting device list")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
-	defer cancel()
-	resp, err := r.registryClient.GetNodes(ctx, &nodepb.GetNodesRequest{Free: true}, grpc_retry.WithMax(3))
+	resp, err := r.R.C.R().
+		SetError(errStatus).
+		Get(r.R.URL.String() + RegistryVersion + "nodes")
+
 	if err != nil {
-		log.Errorf("Could not get device list: %v", err)
-		return nil, err
+		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
+		return nil, fmt.Errorf("api request to registry at %s failure: %v", r.R.URL.String(), err)
 	}
 
-	return resp.Node, nil
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to get nodes from registry at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		return nil, fmt.Errorf("failed to get noddes from registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
+	}
+
+	err = json.Unmarshal(resp.Body(), nodeResp)
+	if err != nil {
+		log.Errorf("failed to decode registry response  for node list: %s", err.Error())
+		return nil, fmt.Errorf("failed to decode registry response for node list")
+	}
+
+	return nodeResp, nil
 }
