@@ -109,7 +109,10 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 func usageError() {
 	log.Println("Enter event key when prompted.")
 	log.Printf("Possible Keys:")
+	log.Printf("request.coud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish")
+	log.Printf("event.cloud.global.{{ .Org}}.messaging.mesh.ip.update")
 	log.Printf("Example: For Route: event.cloud.global.{{ .Org}}.messaging.mesh.ip.update of Org ukama-org  Key is event.cloud.global.ukamaorg.messaging.mesh.ip.update ")
+
 }
 
 func start(m mb.MsgBusServiceClient) {
@@ -138,6 +141,13 @@ func start(m mb.MsgBusServiceClient) {
 				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
 			}
 
+		case msgbus.PrepareRoute(serviceConfig.OrgName, "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish"):
+			//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, "request.coud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish")
+			err := pkg.NodeFeederPublishMessage(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
 		default:
 			log.Infof("No message for route %s implemented", route)
 		}
