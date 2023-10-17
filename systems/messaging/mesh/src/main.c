@@ -7,11 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-/*
- * Mesh.d - L7-websocket based forward/reversed proxy
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,9 +199,13 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	log_debug("Mesh running ...");
-
-    pause();
+    /* Step-3: publish AMQP event with org name, org id and binding port */
+    if (publish_boot_event()) {
+        log_debug("Mesh running for Ukama Org: %s", config->orgName);
+        pause();
+    } else {
+        log_error("Unable to publish boot event to AMQP");
+    }
 
 	ulfius_stop_framework(&websocketInst);
 	ulfius_stop_framework(&servicesInst);
