@@ -8,29 +8,31 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/software-manager/pb/gen"
 	"github.com/ukama/ukama/systems/node/software-manager/pkg"
 	"github.com/ukama/ukama/systems/node/software-manager/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type SoftwaManagerServer struct {
 	pb.UnimplementedSoftwareManagerServiceServer
-	sRepo          db.SoftwareManagerRepo
-	msgBus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	debug          bool
-	orgName        string
+	sRepo                db.SoftwareManagerRepo
+	msgBus               mb.MsgBusServiceClient
+	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
+	debug                bool
+	orgName              string
 }
 
 func NewSoftwareManagerServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, sRepo db.SoftwareManagerRepo) *SoftwaManagerServer {
 	return &SoftwaManagerServer{
-		sRepo:          sRepo,
-		msgBus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		debug:          debug,
+		sRepo:                sRepo,
+		msgBus:               msgBus,
+		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		debug:                debug,
 	}
 }
 
@@ -40,9 +42,8 @@ func (s *SoftwaManagerServer) CreateSoftwareUpdate(ctx context.Context, req *pb.
 			" Name, Tag, Description, ReleaseDate, Status")
 	}
 
-	
 	log.Infof("Creating software update %s", req)
-//realesase date should be the current date time.time.now()
+	//realesase date should be the current date time.time.now()
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
@@ -57,12 +58,20 @@ func (s *SoftwaManagerServer) CreateSoftwareUpdate(ctx context.Context, req *pb.
 	}
 
 	capps := &pb.CreateSoftwareUpdateRequest{
-		Name:        req.Name,
-		Tag:     req.Tag,
+		Name: req.Name,
+		Tag:  req.Tag,
 	}
+	route := s.NodeFeederRoutingKey.SetObject("node").SetAction("update").MustBuild()
 
-	route := s.baseRoutingKey.SetActionCreate().SetObject("newUpdate").MustBuild()
-	err = s.msgBus.PublishRequest(route, capps)
+	anyMsg, err := anypb.New(capps)
+
+	msg := &cpb.NodeFeederMessage{
+		Target:     s.orgName + "." + capps.Name + "." + capps.Tag,
+		HTTPMethod: "POST",
+		Path:       "/v1/node/update",
+		Msg:        anyMsg,
+	}
+	err = s.msgBus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -91,7 +100,7 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 	return &pb.SoftwareUpdate{
 		Id:          software.Id.String(),
 		Name:        software.Name,
-		Tag:     software.Tag,
+		Tag:         software.Tag,
 		ReleaseDate: software.ReleaseDate.String(),
 		Status:      pb.Status(software.Status),
 	}

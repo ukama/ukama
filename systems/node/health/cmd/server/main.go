@@ -21,7 +21,6 @@ import (
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
@@ -57,8 +56,13 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+		mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
+			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+			serviceConfig.MsgClient.RetryCount,
+			serviceConfig.MsgClient.ListenerRoutes)
+	log.Infof("MessageBus Client is %+v", mbClient)
 
 	healthsrv := server.NewHealthServer(
 		mbClient,
@@ -66,6 +70,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.OrgName,
 		db.NewHealthRepo(gormdb),
 	)
+	
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterHealhtServiceServer(s, healthsrv)

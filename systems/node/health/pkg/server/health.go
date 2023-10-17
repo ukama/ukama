@@ -20,7 +20,7 @@ type HealthServer struct {
 	pb.UnimplementedHealhtServiceServer
 	sRepo          db.HealthRepo
 	msgBus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	healthRoutingKey msgbus.RoutingKeyBuilder
 	debug          bool
 	orgName        string
 }
@@ -29,7 +29,7 @@ func NewHealthServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, 
 	return &HealthServer{
 		sRepo:          sRepo,
 		msgBus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		debug:          debug,
 	}
 }
@@ -88,7 +88,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	}
 
 	// Publish the message to the message bus
-	route := h.baseRoutingKey.SetAction("store").SetObject("apps").MustBuild()
+	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
 	err = h.msgBus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

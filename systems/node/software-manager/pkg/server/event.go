@@ -50,7 +50,7 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.store.apps"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
 
 		msg, err := unmarshalSoftwareUpdate(e.Msg)
 		if err != nil {
