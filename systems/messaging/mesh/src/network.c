@@ -14,6 +14,9 @@
 #include <ulfius.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "callback.h"
 #include "mesh.h"
@@ -25,22 +28,27 @@
 #define WEB_SERVICE 0
 
 /* define in websocket.c */
-extern void websocket_manager(const URequest *request, WSManager *manager,
+extern void websocket_manager(const URequest *request,
+                              WSManager *manager,
 							  void *data);
 extern void websocket_incoming_message(const URequest *request,
-									   WSManager *manager, WSMessage *message,
+									   WSManager *manager,
+                                       WSMessage *message,
 									   void *data);
-extern void  websocket_onclose(const URequest *request, WSManager *manager,
+extern void  websocket_onclose(const URequest *request,
+                               WSManager *manager,
 							   void *data);
-/*
- * init_framework -- initializa ulfius framework.
- *
- */
-static int init_framework(UInst *inst, int port) {
 
-	if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
-		log_error("Error initializing instance for websocket remote port %d",
-				  port);
+static int init_framework(UInst *inst,
+                          struct sockaddr_in *bindAddr,
+                          int bindPort) {
+
+    if (ulfius_init_instance(inst,
+                             bindPort,
+                             bindAddr,
+                             NULL)!= U_OK) {
+		log_error("Error initializing instance for websocket: %d",
+				  bindPort);
 		return FALSE;
 	}
 
@@ -128,8 +136,17 @@ static int start_framework(Config *config, UInst *instance, int flag) {
  */
 int start_websocket_server(Config *config, UInst *websocketInst) {
 
+    struct sockaddr_in bindAddr;
+
+    memset(&bindAddr, 0, sizeof(bindAddr));
+    bindAddr.sin_family = AF_INET;
+    bindAddr.sin_port   = htons(atoi(config->websocketPort));
+    bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
+
 	/* Initialize the admin and client webservices framework. */
-	if (init_framework(websocketInst, atoi(config->websocketPort)) != TRUE) {
+	if (init_framework(websocketInst,
+                       &bindAddr,
+                       atoi(config->websocketPort)) != TRUE) {
 		log_error("Error initializing websocket framework");
 		return FALSE;
 	}
@@ -155,7 +172,7 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
 int start_web_services(Config *config, UInst *clientInst) {
 
 	/* Initialize the admin and client webservices framework. */
-	if (init_framework(clientInst, atoi(config->servicesPort)) != TRUE){
+	if (init_framework(clientInst, NULL, atoi(config->servicesPort)) != TRUE){
 		log_error("Error initializing webservice framework");
 		return FALSE;
 	}

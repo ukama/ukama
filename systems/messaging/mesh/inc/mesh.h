@@ -32,14 +32,14 @@
 #define MESH_NODE_RESPONSE    "node_response"
 
 /* For MAP */
-#define MESH_MAP_TYPE_URL  1
-#define MESH_MAP_TYPE_HDR  2
-#define MESH_MAP_TYPE_POST 3
+#define MESH_MAP_TYPE_URL    1
+#define MESH_MAP_TYPE_HDR    2
+#define MESH_MAP_TYPE_POST   3
 #define MESH_MAP_TYPE_COOKIE 4
 
-#define MESH_MAP_TYPE_URL_STR  "map_url"
-#define MESH_MAP_TYPE_HDR_STR  "map_header"
-#define MESH_MAP_TYPE_POST_STR "map_post"
+#define MESH_MAP_TYPE_URL_STR    "map_url"
+#define MESH_MAP_TYPE_HDR_STR    "map_header"
+#define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
 #define MESH_LOCK_TIMEOUT 10 /* seconds */
@@ -58,6 +58,9 @@
 #define ENV_MESH_CERT_FILE   "ENV_MESH_CERT_FILE"
 #define ENV_MESH_KEY_FILE    "ENV_MESH_KEY_FILE"
 #define ENV_MESH_LOG_LEVEL   "ENV_MESH_LOG_LEVEL"
+#define ENV_UKAMA_ORG_NAME   "ENV_UKAMA_ORG_NAME"
+#define ENV_UKAMA_ORG_ID     "ENV_UKAMA_ORG_ID"
+#define ENV_BINDING_IP       "ENV_BINDING_IP"
 
 #define DEFAULT_MESH_AMQP_EXCHANGE "amqp.direct"
 #define DEFAULT_MESH_CERT_FILE     "certs/test.cert"

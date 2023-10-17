@@ -51,7 +51,8 @@ void usage(void) {
 	printf("--h, --help    Help menu.\n");
 	printf("--V, --version Version.\n");
     printf("Environment variable needed are: \n");
-    printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n",
+    printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n"
+           "\t %s \n\t %s \n\t %s \n",
            ENV_WEBSOCKET_PORT,
            ENV_SERVICES_PORT,
            ENV_AMQP_HOST,
@@ -59,7 +60,10 @@ void usage(void) {
            ENV_INIT_CLIENT_HOST,
            ENV_INIT_CLIENT_PORT,
            ENV_MESH_CERT_FILE,
-           ENV_MESH_KEY_FILE);
+           ENV_MESH_KEY_FILE,
+           ENV_UKAMA_ORG_NAME,
+           ENV_UKAMA_ORG_ID,
+           ENV_BINDING_IP);
 }
 
 /* Set the verbosity level for logs. */
