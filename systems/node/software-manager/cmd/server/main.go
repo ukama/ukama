@@ -12,6 +12,7 @@ import (
 	"github.com/ukama/ukama/systems/node/software-manager/pkg"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/node/software-manager/cmd/version"
 
@@ -60,15 +61,18 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	softwaresrv := server.NewSoftwareManagerServer(
+	softwareSrv := server.NewSoftwareManagerServer(
 		mbClient,
 		serviceConfig.DebugMode,
 		serviceConfig.OrgName,
 		db.NewSoftwareManagerRepo(gormdb),
 	)
+	simManagerEventServer := server.NewSoftwareUpdateEventServer(serviceConfig.OrgName, softwareSrv)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pb.RegisterSoftwareManagerServiceServer(s, softwaresrv)
+		pb.RegisterSoftwareManagerServiceServer(s, softwareSrv)
+		egenerated.RegisterEventNotificationServiceServer(s, simManagerEventServer)
+
 	})
 
 	grpcServer.StartServer()
@@ -112,4 +116,3 @@ func initDb() sql.Db {
 	}
 	return d
 }
-

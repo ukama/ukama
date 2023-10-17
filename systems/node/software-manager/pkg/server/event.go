@@ -17,27 +17,29 @@ import (
 
 type SoftwareUpdateEventServer struct {
 	orgName string
-	sRepo   db.SoftwareManagerRepo
+	s       *SoftwaManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSoftwareUpdateEventServer(orgName string, sRepo db.SoftwareManagerRepo) *SoftwareUpdateEventServer {
+func NewSoftwareUpdateEventServer(orgName string, s *SoftwaManagerServer) *SoftwareUpdateEventServer {
 	return &SoftwareUpdateEventServer{
 		orgName: orgName,
-		sRepo:   sRepo,
+		s:       s,
 	}
 }
 
 func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+	//add another case for the other event
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.hub.distributor.capp"):
 		msg, err := unmarshalSoftwareUpdate(e.Msg)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Received from distributor service:", msg)
 
-		err = l.sRepo.CreateSoftwareUpdate(&db.Software{
+		err = l.s.sRepo.CreateSoftwareUpdate(&db.Software{
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
 			Tag:         msg.Tag,
@@ -48,16 +50,20 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.performance"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.store.apps"):
+
 		msg, err := unmarshalSoftwareUpdate(e.Msg)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Received from health service:", msg)
 
-		fmt.Println(" recevied from health service :", msg)
+		// Compare resp to capps version from the event
+
+		fmt.Println("Received from health service:", msg)
 
 	default:
-		log.Errorf("handler not registered for %s", e.RoutingKey)
+		log.Errorf("Handler not registered for %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil

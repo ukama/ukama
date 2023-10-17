@@ -14,8 +14,8 @@ type Config struct {
 	Timeout          time.Duration   `default:"20s"`
 	Service          *uconf.Service
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgName          string            `default:"ukama"`
-	InitClientHost   string            `default:"http://ukama.initclient:8080"`
+	OrgName          string           `default:"ukama"`
+	InitClientHost   string           `default:"http://ukama.initclient:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -25,7 +25,8 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout: 5 * time.Second,
+			Timeout:        5 * time.Second,
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.node.health.store.apps"},
 		},
 	}
 }

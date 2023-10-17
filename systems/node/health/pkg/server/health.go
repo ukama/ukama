@@ -88,7 +88,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	}
 
 	// Publish the message to the message bus
-	route := h.baseRoutingKey.SetActionCreate().SetObject("apps").MustBuild()
+	route := h.baseRoutingKey.SetAction("store").SetObject("apps").MustBuild()
 	err = h.msgBus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

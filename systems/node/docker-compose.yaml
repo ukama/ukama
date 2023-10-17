@@ -61,7 +61,7 @@ services:
       - "9072:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-registry
+      - DB_HOST=postgresd-node
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
