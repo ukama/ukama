@@ -52,6 +52,7 @@ services:
       - BYPASS_AUTH_MODE=true
       - NODEMETRICSPORT=10251
       - SERVICES_NNS=nnsd:9090
+      - ORGNAME=ukama-org
     depends_on:
       - nnsd
     networks:
@@ -100,6 +101,8 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - SYSTEM=messaging
+      - ORGNAME=ukama-org
+      - MASTERORGNAME=ukama-org
     restart: always
     networks:
       - ukama-net
@@ -130,10 +133,13 @@ services:
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - REGISTRY_HOST=registry-gateway:8080
       - NET_HOST=nnsd:9090
+      - ORGNAME=ukama-org
     depends_on:
       - nnsd
+      - msgclient-messaging
     networks:
       - ukama-net
+      #request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 
 networks:
   ukama-net:
