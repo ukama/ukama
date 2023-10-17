@@ -10,6 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	amqp "github.com/streadway/amqp"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -36,7 +37,7 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *cpb.NodeFeederMsg) error
+	Process(body *cpb.NodeFeederMessage) error
 }
 
 func NewQueueListener(service string, queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
@@ -201,8 +202,18 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 
 // process node msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-	request := &cpb.NodeFeederMsg{}
-	err := proto.Unmarshal(delivery.Body, request)
+
+	log.Infof("Raw message %v", delivery.Body)
+
+	evtAny := new(anypb.Any)
+	err := proto.Unmarshal(delivery.Body, evtAny)
+	if err != nil {
+		log.Errorf("Failed to parse message with key %s. Error %s", delivery.RoutingKey, err.Error())
+		return nil
+	}
+
+	request := &cpb.NodeFeederMessage{}
+	err = evtAny.UnmarshalTo(request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return nil

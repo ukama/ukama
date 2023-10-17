@@ -22,7 +22,7 @@ func NewRequestMultiplier(registryClient RegistryProvider, queue QueuePublisher)
 	}
 }
 
-func (r *requestMultiplier) Process(req *cpb.NodeFeederMsg) error {
+func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 	// "org.nodeId"
 	segments := strings.Split(req.Target, ".")
 	if len(segments) != 2 {
@@ -44,7 +44,7 @@ func (r *requestMultiplier) Process(req *cpb.NodeFeederMsg) error {
 	logrus.Infof("Creating requests for %d nodes", len(nodeResp.Node))
 	counter := 0
 	for _, n := range nodeResp.Node {
-		err = r.queue.Publish(&cpb.NodeFeederMsg{
+		err = r.queue.Publish(&cpb.NodeFeederMessage{
 			Target:     orgName + "." + n.Id,
 			HTTPMethod: req.HTTPMethod,
 			Path:       req.Path,

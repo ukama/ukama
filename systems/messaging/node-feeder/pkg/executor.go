@@ -30,7 +30,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *cpb.NodeFeederMsg) error
+	Execute(req *cpb.NodeFeederMessage) error
 }
 
 type requestExecutor struct {
@@ -42,12 +42,12 @@ func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetwo
 	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
 }
 
-func (e *requestExecutor) Execute(req *cpb.NodeFeederMsg) error {
+func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	segs := strings.Split(req.Target, ".")
-	if len(segs) != 2 {
+	if len(segs) != 4 {
 		return fmt.Errorf("invalid target format")
 	}
-	nodeId, err := ukama.ValidateNodeId(segs[1])
+	nodeId, err := ukama.ValidateNodeId(segs[3])
 	if err != nil {
 		return errors.Wrap(err, "invalid node id format")
 	}
@@ -76,9 +76,9 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMsg) error {
 	}
 
 	msgBytes, err := proto.Marshal(req.Msg)
-if err != nil {
-    return errors.Wrap(err, "error marshaling protobuf message")
-}
+	if err != nil {
+		return errors.Wrap(err, "error marshaling protobuf message")
+	}
 	logrus.Infof("sending request to %s", u.String())
 	resp, err := c.Do(&http.Request{
 		Body:   io.NopCloser(bytes.NewReader((msgBytes))),

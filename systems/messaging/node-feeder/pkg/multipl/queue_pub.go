@@ -24,7 +24,7 @@ type queuePublisher struct {
 
 
 type QueuePublisher interface {
-	Publish(msg *cpb.NodeFeederMsg) error
+	Publish(msg *cpb.NodeFeederMessage) error
 	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
@@ -58,7 +58,7 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 
 
 
-func (q *queuePublisher) Publish(msg *cpb.NodeFeederMsg) error {
+func (q *queuePublisher) Publish(msg *cpb.NodeFeederMessage) error {
 
 	b, err := proto.Marshal(msg)
 	if err != nil {
