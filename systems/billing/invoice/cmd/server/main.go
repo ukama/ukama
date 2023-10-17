@@ -6,6 +6,7 @@ import (
 
 	"github.com/ukama/ukama/systems/billing/invoice/cmd/version"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/client"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
 	"github.com/ukama/ukama/systems/common/metrics"
@@ -96,6 +97,7 @@ func runGrpcServer(gormDB sql.Db) {
 	invoiceServer := server.NewInvoiceServer(
 		serviceConfig.OrgName,
 		db.NewInvoiceRepo(gormDB),
+		client.NewSubscriberClient(serviceConfig.SubscriberHost, false),
 		mbClient,
 	)
 

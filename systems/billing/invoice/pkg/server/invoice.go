@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/client"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/util"
@@ -31,17 +32,19 @@ const defaultTemplate = "templates/invoice.html.tmpl"
 const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
-	invoiceRepo    db.InvoiceRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	invoiceRepo      db.InvoiceRepo
+	subscriberClient client.SubscriberClient
+	msgbus           mb.MsgBusServiceClient
+	baseRoutingKey   msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient client.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
-		invoiceRepo:    invoiceRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		invoiceRepo:      invoiceRepo,
+		subscriberClient: subscriberClient,
+		msgbus:           msgBus,
+		baseRoutingKey:   msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -68,8 +71,14 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 
+	subscriberInfo, err := i.subscriberClient.Get(subscriberId.String())
+	if err != nil {
+		return nil, err
+	}
+
 	invoice := &db.Invoice{
 		SubscriberId: subscriberId,
+		NetworkId:    subscriberInfo.NetworkId,
 	}
 
 	log.Infof("Adding invoice for subscriber: %s", subscriberId)
@@ -230,6 +239,7 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	inv := &pb.Invoice{
 		Id:           invoice.Id.String(),
 		SubscriberId: invoice.SubscriberId.String(),
+		NetworkId:    invoice.NetworkId.String(),
 		Period:       timestamppb.New(invoice.Period),
 		IsPaid:       invoice.IsPaid,
 		CreatedAt:    timestamppb.New(invoice.CreatedAt),
