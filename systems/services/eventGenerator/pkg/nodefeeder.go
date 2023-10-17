@@ -22,7 +22,7 @@ func NodeFeederPublishMessage(c *Config, k string, m mb.MsgBusServiceClient) err
 	}
 
 	msg := &pb.NodeFeederMessage{
-		Target:     "ukama-org" + "." + "network" + "." + "site" + "." + "node",
+		Target:     "ukamaorg" + "." + "network" + "." + "site" + "." + "uk-000000-hnode-00-0000",
 		HTTPMethod: "POST",
 		Path:       "/v1/configd/config",
 		Msg:        anyMsg,
