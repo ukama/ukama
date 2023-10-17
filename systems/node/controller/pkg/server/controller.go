@@ -99,13 +99,13 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	// if err := c.registrySystem.ValidateNode(nodeId.String(), c.orgName); err != nil {
-	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
-	// }
-	// _, err = c.nodeLogRepo.Get(nodeId.String())
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
-	// }
+	if err := c.registrySystem.ValidateNode(nId.String(), c.orgName); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
+	}
+	_, err = c.nodeLogRepo.Get(nId.String())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
+	}
 	anyMsg,err:= anypb.New(req)
 	if err != nil {
 		return nil,err
@@ -114,7 +114,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName + "." + nId.String(),
 		HTTPMethod: "POST",
-		Path:       "/v1/node/restart",
+		Path:       "/v1/controller/restart/node",
 		Msg:        anyMsg,
 	}
 
@@ -159,7 +159,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName,
 		HTTPMethod: "POST",
-		Path:       "/v1/node/restart",
+		Path:       "/v1/controller/restart/nodes",
 		Msg:        anyMsg,
 	}
 

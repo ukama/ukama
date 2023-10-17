@@ -7,6 +7,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2
@@ -17,6 +18,8 @@ require (
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
+	gorm.io/driver/postgres v1.3.5
+	gorm.io/gorm v1.24.3
 )
 
 require (
@@ -93,6 +96,4 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.3.5 // indirect
-	gorm.io/gorm v1.24.3 // indirect
 )

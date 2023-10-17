@@ -1,17 +1,8 @@
 package db
 
-import (
-	"time"
+import "gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-)
-
-//Only nodeId is required for now
 type NodeLog struct {
-	ID        uuid.UUID `gorm:"type:uuid;primary_key;"`
-	NodeId string `gorm:"not null"`
-	Status string 
-	CreatedAt time.Time  `gorm:"not null"`
-	UpdatedAt time.Time  `gorm:"not null"`
-	DeletedAt *time.Time `gorm:"index"`
+	gorm.Model
+	NodeId          string      `gorm:"type:string;uniqueIndex:idx_node_id_case_insensitive,where:deleted_at is null;size:23;not null"`
 }
