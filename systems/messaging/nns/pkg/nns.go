@@ -72,6 +72,28 @@ func (n *Nns) Get(c context.Context, nodeId string) (ip string, err error) {
 	return ip, nil
 }
 
+func (n *Nns) GetMesh(c context.Context, nodeId string) (ip string, err error) {
+	nodeId = strings.ToLower(nodeId)
+
+	if _, err = ukama.ValidateNodeId(nodeId); err != nil {
+		metrics.RecordIpRequestFailureMetric()
+		return "", status.Error(codes.InvalidArgument, err.Error())
+	}
+	var ok bool
+
+	nodeIdKey := formatNodeIdKey(nodeId)
+	if ip, ok = n.cache[nodeIdKey]; !ok {
+		if ip, err = n.getFromEtcd(c, nodeIdKey); err != nil {
+			metrics.RecordIpRequestFailureMetric()
+			return "", err
+		}
+		n.cache[nodeIdKey] = ip
+	}
+
+	metrics.RecordIpRequestSuccessMetric()
+	return ip, nil
+}
+
 func (n *Nns) getFromEtcd(c context.Context, nodeId string) (string, error) {
 	log.Infof("Getting ip from etcd for nodeId: %s", nodeId)
 	val, err := n.etcd.Get(c, nodeId)

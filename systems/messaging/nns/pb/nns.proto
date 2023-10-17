@@ -20,8 +20,17 @@ service Nns { // The Node Name Service (like DNS)
     rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
     rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
     rpc GetNodeIPMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
+    rpc GetMesh(GetMeshIPRequest) returns (GetMeshIPResponse);
 }   
 
+message GetMeshIPRequest{
+    string nodeId = 1;
+}
+
+message GetMeshIPResponse{
+    string ip = 1;
+    int32 port = 2;
+}
 
 message GetNodeIPRequest{
     string nodeId = 1;
@@ -41,6 +50,7 @@ message SetNodeIPRequest{
     string org = 6;
     string network = 7;
     string site = 8;
+    string meshHostName = 9;
 }
 
 message SetNodeIPResponse{
@@ -76,6 +86,7 @@ message NodeOrgMap {
     string network = 6;
     string site = 7;
     string domainname = 8;
+    string meshHostName = 9;
 }
 message NodeOrgMapListResponse{
   repeated NodeOrgMap map = 1 ;
