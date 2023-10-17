@@ -143,7 +143,7 @@ func start(m mb.MsgBusServiceClient) {
 
 		case msgbus.PrepareRoute(serviceConfig.OrgName, "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish"):
 			//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
-			k := msgbus.PrepareRoute(serviceConfig.OrgName, "request.coud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish")
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish")
 			err := pkg.NodeFeederPublishMessage(serviceConfig, k, m)
 			if err != nil {
 				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
