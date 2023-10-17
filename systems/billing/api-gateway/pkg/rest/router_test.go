@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,12 +19,16 @@ import (
 	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/rest"
 
+	pmocks "github.com/ukama/ukama/systems/billing/api-gateway/mocks"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	imocks "github.com/ukama/ukama/systems/billing/invoice/pb/gen/mocks"
 )
 
-const apiEndpoint = "/v1/invoices"
+const (
+	invoiceEndpoint = "/v1/invoices"
+	pdfEndpoint     = "/v1/pdf"
+)
 
 const invoiceId = "87052671-38c6-4064-8f4b-55f13aa52384"
 const subscriberId = "a2041828-737b-48d4-81c0-9c02500a23ff"
@@ -85,20 +91,101 @@ func TestPingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
-func TestRouter_GetInvoice(t *testing.T) {
-	t.Run("InvoiceNotFound", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", apiEndpoint, invoiceId), nil)
+func TestRouter_AddInvoice(t *testing.T) {
+	t.Run("InvoiceValid", func(t *testing.T) {
+		var im = &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
-		m := &imocks.InvoiceServiceClient{}
+		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
 
-		pReq := &pb.GetRequest{
-			InvoiceId: invoiceId,
+		invoicePayload := &WebHookRequest{
+			WebhookType: invoiceCreatedType,
+			ObjectType:  invoiceObject,
 		}
-		m.On("Get", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
+
+		invoiceReq := &pb.AddRequest{
+			RawInvoice: raw,
+		}
+
+		body, err := json.Marshal(invoicePayload)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", invoiceEndpoint, bytes.NewReader(body))
+
+		im.On("Add", mock.Anything, invoiceReq).Return(&pb.AddResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusCreated, w.Code)
+		im.AssertExpectations(t)
+	})
+
+	t.Run("WebhookTypeNotValid", func(t *testing.T) {
+		var im = &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		invoicePayload := &WebHookRequest{
+			WebhookType: "lol",
+			ObjectType:  "bof",
+		}
+
+		body, err := json.Marshal(invoicePayload)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", invoiceEndpoint, bytes.NewReader(body))
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		im.AssertExpectations(t)
+	})
+
+	t.Run("UnexpectedError", func(t *testing.T) {
+		var im = &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
+
+		invoicePayload := &WebHookRequest{
+			WebhookType: invoiceCreatedType,
+			ObjectType:  invoiceObject,
+		}
+
+		invoiceReq := &pb.AddRequest{
+			RawInvoice: raw,
+		}
+
+		body, err := json.Marshal(invoicePayload)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", invoiceEndpoint, bytes.NewReader(body))
+
+		im.On("Add", mock.Anything, invoiceReq).Return(nil,
+			fmt.Errorf("some unexpected error"))
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -106,23 +193,52 @@ func TestRouter_GetInvoice(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
 	})
 
-	t.Run("InvoiceFound", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", apiEndpoint, invoiceId), nil)
+}
 
-		m := &imocks.InvoiceServiceClient{}
+func TestRouter_GetInvoice(t *testing.T) {
+	t.Run("InvoiceNotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", invoiceEndpoint, invoiceId), nil)
+
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
 		pReq := &pb.GetRequest{
 			InvoiceId: invoiceId,
 		}
 
-		m.On("Get", mock.Anything, pReq).Return(&invoicePb, nil)
+		im.On("Get", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		im.AssertExpectations(t)
+	})
+
+	t.Run("InvoiceFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", invoiceEndpoint, invoiceId), nil)
+
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		pReq := &pb.GetRequest{
+			InvoiceId: invoiceId,
+		}
+
+		im.On("Get", mock.Anything, pReq).Return(&invoicePb, nil)
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -130,25 +246,26 @@ func TestRouter_GetInvoice(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
 	})
 }
 
 func TestRouter_GetInvoices(t *testing.T) {
 	t.Run("InvoicesFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s", apiEndpoint, subscriberId), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s", invoiceEndpoint, subscriberId), nil)
 
-		m := &imocks.InvoiceServiceClient{}
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
 		pReq := &pb.GetBySubscriberRequest{
 			SubscriberId: subscriberId,
 		}
 
-		m.On("GetBySubscriber", mock.Anything, pReq).Return(&SubscriberinvoicesPb, nil)
+		im.On("GetBySubscriber", mock.Anything, pReq).Return(&SubscriberinvoicesPb, nil)
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -156,24 +273,25 @@ func TestRouter_GetInvoices(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
 	})
 
 	t.Run("InvoicesNotFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?network=%s", apiEndpoint, networkId), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?network=%s", invoiceEndpoint, networkId), nil)
 
-		m := &imocks.InvoiceServiceClient{}
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
 		pReq := &pb.GetByNetworkRequest{
 			NetworkId: networkId,
 		}
 
-		m.On("GetByNetwork", mock.Anything, pReq).Return(nil,
+		im.On("GetByNetwork", mock.Anything, pReq).Return(nil,
 			status.Errorf(codes.NotFound, "network not found"))
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -181,18 +299,19 @@ func TestRouter_GetInvoices(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
 	})
 
 	t.Run("BadRequest", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s&network=%s",
-			apiEndpoint, subscriberId, networkId), nil)
+			invoiceEndpoint, subscriberId, networkId), nil)
 
-		m := &imocks.InvoiceServiceClient{}
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -200,49 +319,24 @@ func TestRouter_GetInvoices(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
 	})
 }
 
-func TestRouter_DeleteInvoice(t *testing.T) {
-	t.Run("InvoiceNotFound", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", apiEndpoint, invoiceId), nil)
-
-		m := &imocks.InvoiceServiceClient{}
-
-		pReq := &pb.DeleteRequest{
-			InvoiceId: invoiceId,
-		}
-		m.On("Delete", mock.Anything, pReq).Return(nil,
-			status.Errorf(codes.NotFound, "invoice not found"))
-
-		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
-		}, routerConfig).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		m.AssertExpectations(t)
-	})
-
+func TestRouter_GetInvoicePdf(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", apiEndpoint, invoiceId), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
 
-		m := &imocks.InvoiceServiceClient{}
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
 
-		pReq := &pb.DeleteRequest{
-			InvoiceId: invoiceId,
-		}
+		var content = []byte("some fake pdf data")
 
-		m.On("Delete", mock.Anything, pReq).Return(&pb.DeleteResponse{}, nil)
+		pm.On("GetPdf", invoiceId).Return(content, nil)
 
 		r := NewRouter(&Clients{
-			Billing: client.NewBillingFromClient(m),
+			Billing: client.NewBillingFromClient(im, pm),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -250,6 +344,79 @@ func TestRouter_DeleteInvoice(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
+		im.AssertExpectations(t)
+	})
+
+	t.Run("InvoiceNotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
+
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		pm.On("GetPdf", invoiceId).Return(nil, client.ErrInvoicePDFNotFound)
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		im.AssertExpectations(t)
+	})
+}
+
+func TestRouter_DeleteInvoice(t *testing.T) {
+	t.Run("InvoiceNotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", invoiceEndpoint, invoiceId), nil)
+
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		pReq := &pb.DeleteRequest{
+			InvoiceId: invoiceId,
+		}
+		im.On("Delete", mock.Anything, pReq).Return(nil,
+			status.Errorf(codes.NotFound, "invoice not found"))
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		im.AssertExpectations(t)
+	})
+
+	t.Run("InvoiceFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", invoiceEndpoint, invoiceId), nil)
+
+		im := &imocks.InvoiceServiceClient{}
+		pm := &pmocks.PdfClient{}
+
+		pReq := &pb.DeleteRequest{
+			InvoiceId: invoiceId,
+		}
+
+		im.On("Delete", mock.Anything, pReq).Return(&pb.DeleteResponse{}, nil)
+
+		r := NewRouter(&Clients{
+			Billing: client.NewBillingFromClient(im, pm),
+		}, routerConfig).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		im.AssertExpectations(t)
 	})
 }

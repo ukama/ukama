@@ -47,12 +47,13 @@ func NewBilling(invoiceHost, fileHost string, timeout time.Duration) *Billing {
 	}
 }
 
-func NewBillingFromClient(invoiceClient pb.InvoiceServiceClient) *Billing {
+func NewBillingFromClient(invoiceClient pb.InvoiceServiceClient, pdfClient PdfClient) *Billing {
 	return &Billing{
 		invoiceHost:   "localhost",
 		timeout:       1 * time.Second,
 		conn:          nil,
 		invoiceClient: invoiceClient,
+		pdfClient:     pdfClient,
 	}
 }
 

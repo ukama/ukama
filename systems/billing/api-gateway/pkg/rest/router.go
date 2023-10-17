@@ -152,7 +152,7 @@ func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) ([]
 	return invoices, err
 }
 
-func (r *Router) postInvoiceHandler(c *gin.Context, req *HandleWebHookRequest) error {
+func (r *Router) postInvoiceHandler(c *gin.Context, req *WebHookRequest) error {
 	log.Infof("Webhook event of type %q for object %q received form billing provider",
 		req.WebhookType, req.ObjectType)
 

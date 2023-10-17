@@ -11,7 +11,7 @@ type GetInvoiceRequest struct {
 	InvoiceId string `example:"{{InvoiceUUID}}" path:"invoice_id" validate:"required"`
 }
 
-type HandleWebHookRequest struct {
+type WebHookRequest struct {
 	WebhookType string          `example:"webhook-type" json:"webhook_type" validate:"required"`
 	ObjectType  string          `example:"object-type" json:"object_type" validate:"required"`
 	Invoice     util.RawInvoice `example:"{}" json:"invoice" validate:"required"`
