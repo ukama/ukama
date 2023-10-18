@@ -27,7 +27,7 @@ type ControllerServer struct {
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	debug                bool
 	orgName              string
-	nodeLogRepo 		db.NodeLogRepo
+	nodeLogRepo          db.NodeLogRepo
 }
 
 func NewControllerServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, debug bool, orgName string, nodeLogRepo db.NodeLogRepo) *ControllerServer {
@@ -37,7 +37,7 @@ func NewControllerServer(msgBus mb.MsgBusServiceClient, registry providers.Regis
 		registrySystem:       registry,
 		debug:                pkg.IsDebugMode,
 		orgName:              orgName,
-		nodeLogRepo: nodeLogRepo,
+		nodeLogRepo:          nodeLogRepo,
 	}
 }
 
@@ -68,10 +68,10 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("site").MustBuild()
 	anyMsg, err := anypb.New(req)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	msg := &cpb.NodeFeederMsg{
-		Target:     c.orgName + "." + netId.String() + "." + req.SiteName ,
+	msg := &cpb.NodeFeederMessage{
+		Target:     c.orgName + "." + netId.String() + "." + req.SiteName,
 		HTTPMethod: "POST",
 		Path:       "/v1/node/site/restart",
 		Msg:        anyMsg,
@@ -106,12 +106,12 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	// if err != nil {
 	// 	return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	// }
-	anyMsg,err:= anypb.New(req)
+	anyMsg, err := anypb.New(req)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("node").MustBuild()
-	msg:= &cpb.NodeFeederMsg{
+	msg := &cpb.NodeFeederMessage{
 		Target:     c.orgName + "." + nId.String(),
 		HTTPMethod: "POST",
 		Path:       "/v1/node/restart",
@@ -151,12 +151,12 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 		}
 	}
 
-	anyMsg,err:= anypb.New(req)
+	anyMsg, err := anypb.New(req)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
-	msg:= &cpb.NodeFeederMsg{
+	msg := &cpb.NodeFeederMessage{
 		Target:     c.orgName,
 		HTTPMethod: "POST",
 		Path:       "/v1/node/restart",
@@ -170,7 +170,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	}
 
 	log.Infof("Published controller %s on route %s for nodes %s ", anyMsg, route, req.NodeIds)
-	
+
 	return &pb.RestartNodesResponse{
 		Status: pb.RestartStatus_ACCEPTED,
 	}, nil

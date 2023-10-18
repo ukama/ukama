@@ -45,7 +45,7 @@ type MetricConfig struct {
 func NewConfig(name string) *Config {
 	return &Config{
 		Grpc: &config.Grpc{
-			Port: 9092,
+			Port: 9090,
 		},
 		Metrics: &config.Metrics{
 			Port: 10251,
