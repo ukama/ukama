@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
@@ -37,6 +38,11 @@ func (n *NnsServer) Get(c context.Context, req *pb.GetNodeIPRequest) (*pb.GetNod
 
 func (n *NnsServer) Set(c context.Context, req *pb.SetNodeIPRequest) (*pb.SetNodeIPResponse, error) {
 	log.Infof("Seting Ip for: %s", req.GetNodeId())
+
+	i := net.ParseIP(req.GetMeshIp())
+	if i == nil {
+		return nil, fmt.Errorf("not valid ip")
+	}
 
 	err := n.nns.Set(c, req.GetNodeId(), fmt.Sprintf("%s:%d", req.GetMeshIp(), req.MeshPort))
 	if err != nil {

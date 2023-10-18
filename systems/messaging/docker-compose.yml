@@ -12,15 +12,15 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  mesh:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./mesh
-    restart: always
-    ports:
-      - "9275:9275"
-    networks:
-      - ukama-net
+  # mesh:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ./mesh
+  #   restart: always
+  #   ports:
+  #     - "9275:9275"
+  #   networks:
+  #     - ukama-net
 
   initclient-messaging:
     build:

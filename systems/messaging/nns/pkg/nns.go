@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -118,13 +117,9 @@ func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	i := net.ParseIP(ip)
-	if i == nil {
-		return fmt.Errorf("not valid ip")
-	}
 	nodeIdKey := formatNodeIdKey(nodeId)
-	log.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
-	_, err = n.etcd.Put(c, nodeIdKey, i.String())
+	log.Debugf("Adding node %s with ip %s to db", nodeIdKey, ip)
+	_, err = n.etcd.Put(c, nodeIdKey, ip)
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
 	}
