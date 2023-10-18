@@ -23,11 +23,12 @@ func MeshIPUpdateEvent(c *Config, k string, m mb.MsgBusServiceClient) error {
 
 func MeshNodeOnlineEvent(c *Config, k string, m mb.MsgBusServiceClient) error {
 	p := &epb.NodeOnlineEvent{
-		NodeId:   "uk-000000-hnode-00-0000",
-		NodeIp:   "10.102.81.3",
-		NodePort: 1234,
-		MeshIp:   "172.17.0.1",
-		MeshPort: 1234,
+		NodeId:       "uk-000000-hnode-00-0000",
+		NodeIp:       "10.102.81.3",
+		NodePort:     1234,
+		MeshIp:       "172.17.0.1",
+		MeshPort:     1234,
+		MeshHostName: "mesh01",
 	}
 
 	err := m.PublishRequest(k, p)
