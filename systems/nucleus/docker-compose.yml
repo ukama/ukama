@@ -14,8 +14,6 @@ services:
 
  org:
   build: ./org
-  ports:
-   - '9061:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus
@@ -39,8 +37,6 @@ services:
 
  user:
   build: ./user
-  ports:
-   - '9062:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus
@@ -89,8 +85,6 @@ services:
 
  msgclient-nucleus:
   build: ../services/msgClient
-  ports:
-   - '9095:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus

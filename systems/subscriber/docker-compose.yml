@@ -36,7 +36,7 @@ services:
  registry:
   build: ./registry
   ports:
-   - '9091:9090'
+   - '9096:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
