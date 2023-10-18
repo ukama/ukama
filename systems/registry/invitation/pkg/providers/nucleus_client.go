@@ -79,20 +79,20 @@ func (p *nucleusInfoClient) GetByEmail(email string) (*UserInfo, error) {
 	if err != nil {
 		log.Errorf("Failed to send api request to nucleus/user. Error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to user system failure: %w", err)
+		return &UserInfo{}, fmt.Errorf("api request to user system failure: %w", err)
 	}
 
 	if !resp.IsSuccess() {
 		log.Tracef("Failed to fetch org info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf("User Info failure %s", errStatus.Message)
+		return &UserInfo{}, fmt.Errorf("User Info failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
 		log.Tracef("Failed to deserialize user info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("user info deserailization failure: %w", err)
+		return &UserInfo{}, fmt.Errorf("user info deserialization failure: %w", err)
 	}
 
 	log.Infof("User Info: %+v", pkg)

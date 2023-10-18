@@ -19,8 +19,8 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	msgbus "github.com/ukama/ukama/systems/common/msgbus"
+	generated "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 
 	"google.golang.org/grpc"
 )

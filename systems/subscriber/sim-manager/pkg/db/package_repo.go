@@ -51,14 +51,14 @@ func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 }
 
 func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
-	var pkg Package
+	pkg := &Package{}
 
-	result := p.Db.GetGormDb().First(&pkg, packageID)
+	result := p.Db.GetGormDb().Where("package_id = ?", packageID).First(pkg)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return &pkg, nil
+	return pkg, nil
 }
 
 func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
@@ -114,7 +114,7 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 
 func (p *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Package{}, packageID)
+		result := tx.Where("package_id=?", packageID).Delete(&Package{})
 		if result.Error != nil {
 			return result.Error
 		}

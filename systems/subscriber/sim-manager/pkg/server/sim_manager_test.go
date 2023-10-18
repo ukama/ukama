@@ -591,6 +591,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		var packageID = uuid.NewV4()
 		var simID = uuid.NewV4()
 
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
 
@@ -615,7 +616,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			},
 			mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, nil, nil, nil, "", msgbusClient, "", "", nil, nil)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),

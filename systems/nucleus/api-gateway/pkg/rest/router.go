@@ -128,6 +128,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 		users.GET("/auth/:auth_id", formatDoc("Get User By AuthId", "Get a specific user by authId"), tonic.Handler(r.getUserByAuthIdHandler, http.StatusOK))
 		users.GET("/whoami/:user_id", formatDoc("Get detailed User", "Get a specific user details with all linked orgs"), tonic.Handler(r.whoamiHandler, http.StatusOK))
+		//add get user by email
+		users.GET("/email/:email", formatDoc("Get User By Email", "Get a specific user by email"), tonic.Handler(r.getUserByEmailHandler, http.StatusOK))
 		// user orgs-member
 		// update user
 		// Deactivate user
@@ -161,6 +163,10 @@ func (r *Router) updateOrgToUserHandler(c *gin.Context, req *UserOrgRequest) (*o
 
 func (r *Router) removeUserFromOrgHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.RemoveOrgForUserResponse, error) {
 	return r.clients.Organization.RemoveOrgForUser(req.OrgId, req.UserId)
+}
+
+func (r *Router) getUserByEmailHandler(c *gin.Context, req *GetByEmailRequest) (*userspb.GetResponse, error) {
+	return r.clients.User.GetByEmail(req.Email)
 }
 
 // Users handlers

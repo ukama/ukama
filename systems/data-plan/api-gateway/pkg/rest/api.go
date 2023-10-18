@@ -11,6 +11,7 @@ type AddPackageRequest struct {
 	DataVolume  int64   `example:"1024" json:"data_volume" validation:"required"`
 	DataUnit    string  `example:"MegaBytes" json:"data_unit" validation:"required"`
 	VoiceUnit   string  `example:"seconds" json:"voice_unit" validation:"required"`
+	Duration    uint64  `example:"1" json:"duration" validation:"required"`
 	Type        string  `example:"postpaid" json:"type" validation:"required"`
 	Flatrate    bool    `example:"false" json:"flat_rate" default:"false"`
 	Amount      float64 `example:"0" json:"amount" default:"0.00"`
@@ -32,17 +33,18 @@ type PackagesRequest struct {
 }
 
 type GetBaseRatesByCountryRequest struct {
-	Country  string `path:"country" validate:"required"`
-	Provider string `json:"network"`
-	SimType  string `json:"sim_type" binding:"required" validate:"required"`
+	Country     string `json:"country" query:"country" binding:"required" validation:"required"`
+	Provider    string `json:"provider" query:"provider" binding:"required"`
+	SimType     string `json:"sim_type" query:"sim_type" binding:"required" validation:"required"`
+	EffectiveAt string `json:"effective_at" query:"effective_at" binding:"required"`
 }
 
 type GetBaseRatesForPeriodRequest struct {
-	Country  string `path:"country" validate:"required"`
-	Provider string `json:"network" binding:"required" validate:"required"`
-	To       string `json:"to" binding:"required" validate:"required"`
-	From     string `json:"from" binding:"required" validate:"required"`
-	SimType  string `json:"sim_type" binding:"required" validate:"required"`
+	Country  string `query:"country" validate:"required"`
+	Provider string `query:"provider" binding:"required" validate:"required"`
+	To       string `query:"to" binding:"required" validate:"required"`
+	From     string `query:"from" binding:"required" validate:"required"`
+	SimType  string `query:"sim_type" binding:"required" validate:"required"`
 }
 
 type GetBaseRateRequest struct {
@@ -60,12 +62,12 @@ type UploadBaseRatesRequest struct {
 }
 
 type GetRateRequest struct {
-	OwnerId     string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
-	Country     string `json:"country" binding:"required" validate:"required"`
-	Provider    string `json:"provider" binding:"required" validate:"required"`
-	To          string `json:"to" binding:"required" validate:"required"`
-	From        string `json:"from" binding:"required" validate:"required"`
-	SimType     string `json:"sim_type" binding:"required" validate:"required"`
+	UserId   string `json:"user_id" path:"user_id" binding:"required"`
+	Country  string `json:"country" query:"country" binding:"required"`
+	Provider string `json:"provider" query:"provider" binding:"required"`
+	To       string `json:"to" query:"to" binding:"required" `
+	From     string `json:"from" query:"from" binding:"required"`
+	SimType  string `json:"sim_type" query:"sim_type" binding:"required"`
 }
 
 type DeleteMarkupRequest struct {

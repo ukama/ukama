@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,9 @@ func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceC
 
 		conn, err := grpc.DialContext(ctx, u.simManagerHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
+			log.Errorf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
+
+			return nil, fmt.Errorf("Failed to connect to remote SimManager service: %w", err)
 		}
 
 		u.simManagerService = pb.NewSimManagerServiceClient(conn)

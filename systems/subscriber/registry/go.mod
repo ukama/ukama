@@ -16,7 +16,7 @@ require (
 	github.com/num30/config v0.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
-	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
@@ -27,7 +27,7 @@ require (
 require (
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
 )

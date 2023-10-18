@@ -22,7 +22,7 @@ gen:
 	mockery --all --recursive
 
 clean:
-	rm pb/gen/*.go
+	rm mocks/*.go
 
 # integration tests
 

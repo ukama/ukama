@@ -18,7 +18,7 @@ services:
     volumes:
       - lago_postgres_data:/data/postgres
     ports:
-      - ${POSTGRES_PORT:-5432}:5432
+      - ${POSTGRES_PORT:-5460}:5432
 
   redis:
     image: redis:6.2-alpine

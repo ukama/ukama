@@ -62,7 +62,7 @@ type SimByIccidReq struct {
 	Iccid string `example:"8910300000003540855" path:"iccid" validate:"required"`
 }
 
-type SimPoolStatByTypeReq struct {
+type SimPoolTypeReq struct {
 	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
 }
 
@@ -83,14 +83,14 @@ type SubscriberAddReq struct {
 	FirstName             string `example:"John" json:"first_name" validate:"required"`
 	LastName              string `example:"Doe" json:"last_name" validate:"required"`
 	Email                 string `example:"john@example.com" json:"email" validate:"required"`
-	Phone                 string `example:"4151231234" json:"phone" validate:"required"`
-	Dob                   string `example:"Mon, 02 Jan 2006 15:04:05 MST" json:"dob" validate:"required"`
-	ProofOfIdentification string `example:"passport" json:"proof_of_Identification" validate:"required"`
-	IdSerial              string `example:"123456789" json:"id_serial" validate:"required"`
-	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address" validate:"required"`
-	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
-	Gender                string `example:"male" json:"gender" validate:"required"`
 	OrgId                 string `example:"{{OrgUUID}}" json:"org_id" validate:"required"`
+	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	Gender                string `example:"male" json:"gender"`
+	Phone                 string `example:"4151231234" json:"phone"`
+	IdSerial              string `example:"123456789" json:"id_serial"`
+	Dob                   string `example:"Mon, 02 Jan 2006 15:04:05 MST" json:"dob"`
+	ProofOfIdentification string `example:"passport" json:"proof_of_Identification"`
+	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
 }
 
 type SubscriberGetReq struct {
