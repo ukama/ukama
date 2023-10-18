@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 )
@@ -12,11 +13,9 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database `default:"{}"`
 	Server            rest.HttpConfig
-	// Services          GrpcEndpoints  `mapstructure:"services"`
-	// Service          *uconf.Service
-	HttpServices HttpEndpoints  `mapstructure:"httpServices"`
-	Metrics      config.Metrics `mapstructure:"metrics"`
-	Auth         *config.Auth   `mapstructure:"auth"`
+	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Metrics           config.Metrics `mapstructure:"metrics"`
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type HttpEndpoints struct {
@@ -28,12 +27,6 @@ type HttpEndpoints struct {
 	Node        string
 	NodeMetrics string
 }
-
-// type GrpcEndpoints struct {
-// Timeout time.Duration
-// Mailer  string
-// Network string
-// }
 
 func NewConfig(name string) *Config {
 	defaultCors := cors.DefaultConfig()
@@ -48,12 +41,6 @@ func NewConfig(name string) *Config {
 		DB: &config.Database{
 			DbName: name,
 		},
-
-		// Service: uconf.LoadServiceHostConfig(name),
-
-		// Services: GrpcEndpoints{
-		// Timeout: 5 * time.Second,
-		// },
 
 		Server: rest.HttpConfig{
 			Port: 8080,
@@ -71,7 +58,6 @@ func NewConfig(name string) *Config {
 		},
 
 		Metrics: *config.DefaultMetrics(),
-
-		Auth: config.LoadAuthHostConfig("auth"),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }
