@@ -41,9 +41,9 @@ func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 		return err
 	}
 
-	logrus.Infof("Creating requests for %d nodes", len(nodeResp.Node))
+	logrus.Infof("Creating requests for %d nodes", len(nodeResp.Nodes))
 	counter := 0
-	for _, n := range nodeResp.Node {
+	for _, n := range nodeResp.Nodes {
 		err = r.queue.Publish(&cpb.NodeFeederMessage{
 			Target:     orgName + "." + n.Id,
 			HTTPMethod: req.HTTPMethod,
