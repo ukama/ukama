@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -17,27 +18,27 @@ import (
 
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 )
 
 type ControllerServer struct {
 	pb.UnimplementedControllerServiceServer
-	msgbus               mb.MsgBusServiceClient
+	sRepo          db.NodeLogRepo
+	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
+	msgbus              mb.MsgBusServiceClient
 	registrySystem       providers.RegistryProvider
-	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
-	debug                bool
-	orgName              string
-	nodeLogRepo 		db.NodeLogRepo
+	debug          bool
+	orgName        string
 }
 
-func NewControllerServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, debug bool, orgName string, nodeLogRepo db.NodeLogRepo) *ControllerServer {
+
+func NewControllerServer(orgName string, sRepo db.NodeLogRepo,  msgBus mb.MsgBusServiceClient, debug bool,registry providers.RegistryProvider) *ControllerServer {
 	return &ControllerServer{
-		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:               msgBus,
-		registrySystem:       registry,
-		debug:                pkg.IsDebugMode,
-		orgName:              orgName,
-		nodeLogRepo: nodeLogRepo,
+		sRepo:             sRepo,
+		orgName:             orgName,
+		nodeFeederRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:              msgBus,
+		debug:               debug,
+		registrySystem:      registry,
 	}
 }
 
@@ -65,7 +66,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %s", err.Error())
 	}
 
-	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("site").MustBuild()
+	route := c.nodeFeederRoutingKey.SetAction("restart").SetObject("site").MustBuild()
 	anyMsg, err := anypb.New(req)
 	if err != nil {
 		return nil,err
@@ -102,7 +103,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	if err := c.registrySystem.ValidateNode(nId.String(), c.orgName); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
 	}
-	_, err = c.nodeLogRepo.Get(nId.String())
+	_, err = c.sRepo.Get(nId.String())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
@@ -110,7 +111,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	if err != nil {
 		return nil,err
 	}
-	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("node").MustBuild()
+	route := c.nodeFeederRoutingKey.SetAction("restart").SetObject("node").MustBuild()
 	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName + "." + nId.String(),
 		HTTPMethod: "POST",
@@ -145,7 +146,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, status.Errorf(codes.InvalidArgument, "invalid node ID: %s", err.Error())
 		}
 
-		_, err = c.nodeLogRepo.Get(nId.String())
+		_, err = c.sRepo.Get(nId.String())
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
@@ -155,7 +156,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	if err != nil {
 		return nil,err
 	}
-	route := c.NodeFeederRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
+	route := c.nodeFeederRoutingKey.SetAction("restart").SetObject("nodes").MustBuild()
 	msg:= &cpb.NodeFeederMsg{
 		Target:     c.orgName,
 		HTTPMethod: "POST",
