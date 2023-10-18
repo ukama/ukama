@@ -77,7 +77,6 @@ func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResp
 func (r *InvitationRegistry) AddInvitation(org, name, email, role string) (*pb.AddInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-
 	res, err := r.client.Add(ctx, &pb.AddInvitationRequest{
 		Org:   org,
 		Name:  name,
@@ -111,11 +110,10 @@ func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateInvi
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	invitation := &pb.UpdateInvitationStatusRequest{
+	res, err := r.client.UpdateStatus(ctx, &pb.UpdateInvitationStatusRequest{
 		Id:     id,
 		Status: pb.StatusType(pb.StatusType_value[status]),
-	}
-	res, err := r.client.UpdateStatus(ctx, invitation)
+	})
 
 	if err != nil {
 		return nil, err

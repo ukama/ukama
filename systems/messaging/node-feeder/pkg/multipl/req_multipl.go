@@ -5,22 +5,24 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 )
 
 type requestMultiplier struct {
-	registryClient RegistryClient
+	registryClient RegistryProvider
 	queue          QueuePublisher
 }
 
-func NewRequestMultiplier(registryClient RegistryClient, queue QueuePublisher) pkg.RequestMultiplier {
+func NewRequestMultiplier(registryClient RegistryProvider, queue QueuePublisher) pkg.RequestMultiplier {
 	return &requestMultiplier{
 		registryClient: registryClient,
 		queue:          queue,
 	}
 }
 
-func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
+func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 	// "org.nodeId"
 	segments := strings.Split(req.Target, ".")
 	if len(segments) != 2 {
@@ -34,19 +36,19 @@ func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
 		return fmt.Errorf("device id in target is not supported")
 	}
 
-	nodes, err := r.registryClient.GetNodesList()
+	nodeResp, err := r.registryClient.GetAllNodes(orgName)
 	if err != nil {
 		return err
 	}
 
-	logrus.Infof("Creating requests for %d nodes", len(nodes))
+	logrus.Infof("Creating requests for %d nodes", len(nodeResp.Nodes))
 	counter := 0
-	for _, n := range nodes {
-		err = r.queue.Publish(pkg.DevicesUpdateRequest{
+	for _, n := range nodeResp.Nodes {
+		err = r.queue.Publish(&cpb.NodeFeederMessage{
 			Target:     orgName + "." + n.Id,
-			HttpMethod: req.HttpMethod,
+			HTTPMethod: req.HTTPMethod,
 			Path:       req.Path,
-			Body:       req.Body,
+			Msg:        req.Msg,
 		})
 
 		if err != nil {

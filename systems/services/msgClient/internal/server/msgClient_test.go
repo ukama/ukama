@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/services/msgClient/internal"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	mocks "github.com/ukama/ukama/systems/services/msgClient/mocks"
-	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stretchr/testify/assert"

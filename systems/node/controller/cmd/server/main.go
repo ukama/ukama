@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/num30/config"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 	"gopkg.in/yaml.v3"
@@ -18,6 +19,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -29,14 +31,14 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
+	nodelogDb := initDb()
+	runGrpcServer(nodelogDb)
 	logrus.Infof("Starting %s", pkg.ServiceName)
-	runGrpcServer()
 }
 
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
-	fmt.Println("serviceConfig", serviceConfig)
 	if err != nil {
 		logrus.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
@@ -48,7 +50,9 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func runGrpcServer() {
+
+
+func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -59,12 +63,14 @@ func runGrpcServer() {
 
 	reg := providers.NewRegistryProvider(serviceConfig.RegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	controllerServer := server.NewControllerServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName)
+	controllerServer := server.NewControllerServer(mbClient, reg, pkg.IsDebugMode, serviceConfig.OrgName, db.NewNodeLogRepo(gormdb))
+	controllerEventServer := server.NewControllerEventServer(serviceConfig.OrgName, controllerServer)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterControllerServiceServer(s, controllerServer)
+		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
 	})
 
 	go grpcServer.StartServer()
@@ -98,4 +104,13 @@ func waitForExit() {
 	log.Debug("awaiting terminate/interrrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
+}
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.NodeLog{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
 }

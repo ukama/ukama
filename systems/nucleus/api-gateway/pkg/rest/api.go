@@ -10,6 +10,10 @@ type GetOrgRequest struct {
 	OrgName string `example:"milky-way" path:"org" validate:"required"`
 }
 
+type GetByEmailRequest struct {
+	Email string `example:" {{Email}}" path:"email" validate:"required"`
+}
+
 type AddOrgRequest struct {
 	OrgName     string `example:"milky-way" json:"name" validate:"required"`
 	Owner       string `example:"{{UserUUID}}" json:"owner_uuid" validate:"required"`

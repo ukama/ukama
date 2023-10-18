@@ -4,8 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/registry/node/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/node cmd/server/main.go
-	# env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/registry/node/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/listener cmd/listener/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/registry/node/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/node cmd/server/main.go
 
 test:
 	go test -v ./...
@@ -36,3 +35,6 @@ integration.test:
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+
+server:
+	go run cmd/server/main.go

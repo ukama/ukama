@@ -25,8 +25,9 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.lookup.organization.create"},
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.lookup.organization.create",
+				"event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"},
 		},
 	}
 }

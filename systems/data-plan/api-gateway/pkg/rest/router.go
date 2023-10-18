@@ -65,7 +65,7 @@ type packageS interface {
 	GetPackage(id string) (*pb.GetPackageResponse, error)
 	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
-	DeletePackage(id string) (*pb.DeletePackageResponse, error)
+	DeletePackage(id string, orgId string) (*pb.DeletePackageResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -133,21 +133,21 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		baseRates := auth.Group("/baserates", "BaseRates", "BaseRates operations")
 		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
 		baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
-		baseRates.POST("/country/:country", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
-		baseRates.POST("/country/:country/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
-		baseRates.POST("/country/:country/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
-		baseRates.POST("/country/:country/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
+		baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
+		baseRates.GET("/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
+		baseRates.GET("/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
+		baseRates.GET("/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
 
 		packages := auth.Group("/packages", "Packages", "Packages operations")
 		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-		packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+		packages.GET("/orgs/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
 		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 		packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
 		rates := auth.Group("/rates", "Rates", "Get rates for a user")
-		rates.POST("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
+		rates.GET("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
 
 		markup := auth.Group("/markup", "Rates", "Get rates for a user and set markup percentages for user")
 		markup.GET("/users/:user_id", formatDoc("get markup percentage for user", ""), tonic.Handler(r.getMarkupHandler, http.StatusOK))
@@ -208,9 +208,10 @@ func (r *Router) getBaseRateByCountryHandler(c *gin.Context, req *GetBaseRatesBy
 
 func (r *Router) getBaseRateHistoryByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
 	resp, err := r.clients.b.GetBaseRatesHistoryByCountry(&bpb.GetBaseRatesByCountryRequest{
-		Country:  req.Country,
-		Provider: req.Provider,
-		SimType:  req.SimType,
+		Country:     req.Country,
+		Provider:    req.Provider,
+		SimType:     req.SimType,
+		EffectiveAt: req.EffectiveAt,
 	})
 
 	if err != nil {
@@ -290,7 +291,7 @@ func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) 
 }
 
 func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := r.clients.p.DeletePackage(req.Uuid)
+	resp, err := r.clients.p.DeletePackage(req.Uuid, c.Request.Header.Get("Org-id"))
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -305,6 +306,7 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		Uuid:   req.Uuid,
 		Name:   req.Name,
 		Active: req.Active,
+		OrgId:  c.Request.Header.Get("Org-id"),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -313,7 +315,6 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	}
 
 	return resp, nil
-
 }
 
 func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
@@ -324,7 +325,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		OwnerId:     req.OwnerId,
 		From:        req.From,
 		To:          req.To,
-		Baserate:    req.BaserateId,
+		BaserateId:  req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
@@ -337,6 +338,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Type:        req.Type,
 		Flatrate:    req.Flatrate,
 		Amount:      req.Amount,
+		Duration:    req.Duration,
 	}
 
 	return r.clients.p.AddPackage(pack)
@@ -344,7 +346,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 
 func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRateResponse, error) {
 	resp, err := r.clients.r.GetRate(&rpb.GetRateRequest{
-		OwnerId:  req.OwnerId,
+		OwnerId:  req.UserId,
 		Country:  req.Country,
 		Provider: req.Provider,
 		To:       req.To,
@@ -352,7 +354,7 @@ func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRa
 		SimType:  req.SimType,
 	})
 	if err != nil {
-		logrus.Errorf("Failed to get rate for user %s.Error %s", req.OwnerId, err.Error())
+		logrus.Errorf("Failed to get rate for user %s.Error %s", req.UserId, err.Error())
 		return nil, err
 	}
 

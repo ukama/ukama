@@ -9,7 +9,7 @@ type Member struct {
 	gorm.Model
 	UserId      uuid.UUID `gorm:"uniqueIndex:user_id_idx,where:deleted_at is null;not null;type:uuid"`
 	Deactivated bool      `gorm:"default:false"`
-	Role        RoleType  `gorm:"type:uint;not null;default:4"` // Set the default value to Member
+	Role        RoleType  `gorm:"type:uint;not null"` // Set the default value to Member
 }
 
 type RoleType uint8

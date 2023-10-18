@@ -15,7 +15,6 @@ const (
 	GaugeType           = "gauge"
 )
 
-
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database  `default:"{}"`
@@ -31,7 +30,7 @@ type Config struct {
 	SimPool           string `default:"sim:9090"`
 	TestAgent         string `default:"testagent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
-	OrgHost           string `default:"http://registry-api-gw:8080"`
+	OrgHost           string `default:"http://nucleus:8080"`
 	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	PushMetricHost    string `default:"http://localhost:9091"`
 	NotificationHost  string `default:"http://192.168.1.81:8089"`
@@ -52,8 +51,6 @@ func NewConfig(name string) *Config {
 		},
 	}
 }
-
-
 
 var SimMetric = []pmetric.MetricConfig{{
 	Name:   NumberOfSubscribers,

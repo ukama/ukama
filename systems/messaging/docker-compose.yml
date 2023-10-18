@@ -22,24 +22,24 @@ services:
   #   networks:
   #     - ukama-net
 
-  # initclient-messaging:
-  #   build:
-  #     dockerfile: ./Dockerfile
-  #     context: ../services/initClient
-  #   environment:
-  #     - ENV_SYSTEM_ORG=ukama001
-  #     - ENV_SYSTEM_NAME=messaging
-  #     - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-  #     - ENV_SYSTEM_PORT=8889
-  #     - ENV_SYSTEM_CERT=This-is-a-certificate
-  #     - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-  #     - ENV_INIT_SYSTEM_PORT=8071
-  #     - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-  #     - ENV_INIT_CLIENT_PORT=9091
-  #     - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
-  #   restart: always
-  #   networks:
-  #     - ukama-net
+  initclient-messaging:
+    build:
+      dockerfile: ./Dockerfile
+      context: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=ukama001
+      - ENV_SYSTEM_NAME=messaging
+      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_SYSTEM_PORT=8889
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_CLIENT_PORT=9091
+      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+    restart: always
+    networks:
+      - ukama-net
   
   gateway:
     build:
@@ -52,6 +52,7 @@ services:
       - BYPASS_AUTH_MODE=true
       - NODEMETRICSPORT=10251
       - SERVICES_NNS=nnsd:9090
+      - ORGNAME=ukama-org
     depends_on:
       - nnsd
     networks:
@@ -82,6 +83,7 @@ services:
       - NNS_SERVICE_PORT=9090
       - REGISTRY=http://${LOCAL_HOST_IP}:8075
       - ORG=36960fb9-dc87-4fe6-9275-583b694a89a3
+      - ORGNAME=ukama-org
     restart: always
     networks:
       ukama-net:
@@ -99,6 +101,8 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - SYSTEM=messaging
+      - ORGNAME=ukama-org
+      - MASTERORGNAME=ukama-org
     restart: always
     networks:
       - ukama-net
@@ -120,10 +124,22 @@ services:
     volumes:
       - './coredns/Corefile:/etc/coredns/Corefile'
 
-  bastion:
-    image: nicolaka/netshoot:latest
-    command: tail -F anything
-    restart: always
+  node-feeder:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-feeder
+    environment:
+      - DEBUGMODE=true
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - REGISTRY_HOST=registry-gateway:8080
+      - NET_HOST=nnsd:9090
+      - ORGNAME=ukama-org
+    depends_on:
+      - nnsd
+      - msgclient-messaging
+    networks:
+      - ukama-net
+      #request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 
 networks:
   ukama-net:

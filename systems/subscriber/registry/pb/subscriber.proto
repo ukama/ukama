@@ -84,7 +84,7 @@ message AddSubscriberRequest {
     // last name of the subscriber, must not be empty and have a length greater than 1
     string lastName = 2 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "last_name"];
     // email of the subscriber, must be in email format
-    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$", string_not_empty: true,}];
     // phone number of the subscriber, must be in phone number format
     string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"},
                             json_name = "phone_number"];
@@ -95,11 +95,11 @@ message AddSubscriberRequest {
     // network ID of the subscriber, must be a UUID and not empty
     string networkId = 7 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
     // proof of identification of the subscriber, must not be empty and have a length greater than 1
-    string proofOfIdentification =8 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
+    string proofOfIdentification =8;
     // date of birth of the subscriber
     string dob = 9;
     // gender of the subscriber, must not be empty and have a length greater than 1
-    string gender =10 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
+    string gender =10;
     // org ID of the subscriber, must be a UUID and not empty
     string orgId = 11 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     }
@@ -164,9 +164,9 @@ message Sim {
     string type = 9;
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 12;
-    google.protobuf.Timestamp lastActivatedOn = 13 ;
-    uint64 activationsCount = 14;
-    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp firstActivatedOn = 12 [json_name = "first_activated_on"];
+    google.protobuf.Timestamp lastActivatedOn = 13 [json_name = "last_activated_on"];
+    uint64 activationsCount = 14 [json_name = "activations_count"];
+    uint64 deactivationsCount = 15 [json_name = "deactivations_count"];
     google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
 }

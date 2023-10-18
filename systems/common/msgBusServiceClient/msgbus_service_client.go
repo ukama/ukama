@@ -13,7 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"google.golang.org/grpc"
 )
 

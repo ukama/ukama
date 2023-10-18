@@ -6,6 +6,8 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
+type Currency string
+
 type RawInvoice struct {
 	LagoID               uuid.UUID                 `json:"lago_id,omitempty"`
 	SequentialID         int                       `json:"sequential_id,omitempty"`
@@ -103,4 +105,40 @@ type Subscription struct {
 	StartedAt          *time.Time `json:"started_at"`
 	CanceledAt         *time.Time `json:"canceled_at"`
 	TerminatedAt       *time.Time `json:"terminated_at"`
+}
+
+type PlanInterval string
+
+type Plan struct {
+	LagoID                   uuid.UUID    `json:"lago_id"`
+	Name                     string       `json:"name,omitempty"`
+	Code                     string       `json:"code,omitempty"`
+	Interval                 PlanInterval `json:"interval,omitempty"`
+	Description              string       `json:"description,omitempty"`
+	AmountCents              int          `json:"amount_cents,omitempty"`
+	AmountCurrency           Currency     `json:"amount_currency,omitempty"`
+	PayInAdvance             bool         `json:"pay_in_advance,omitempty"`
+	BillChargeMonthly        bool         `json:"bill_charge_monthly,omitempty"`
+	ActiveSubscriptionsCount int          `json:"active_subscriptions_count,omitempty"`
+	DraftInvoicesCount       int          `json:"draft_invoices_count,omitempty"`
+	Charges                  []Charge     `json:"charges,omitempty"`
+}
+
+type ChargeModel string
+
+type Charge struct {
+	LagoID               uuid.UUID              `json:"lago_id,omitempty"`
+	LagoBillableMetricID uuid.UUID              `json:"lago_billable_metric_id,omitempty"`
+	BillableMetricCode   string                 `json:"billable_metric_code,omitempty"`
+	ChargeModel          ChargeModel            `json:"charge_model,omitempty"`
+	CreatedAt            time.Time              `json:"created_at,omitempty"`
+	PayInAdvance         bool                   `json:"pay_in_advance,omitempty"`
+	MinAmountCents       int                    `json:"min_amount_cents,omitempty"`
+	Properties           map[string]interface{} `json:"properties,omitempty"`
+	GroupProperties      []GroupProperties      `json:"group_properties,omitempty"`
+}
+
+type GroupProperties struct {
+	GroupID uuid.UUID              `json:"group_id"`
+	Values  map[string]interface{} `json:"values"`
 }

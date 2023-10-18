@@ -4,6 +4,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -16,8 +17,9 @@ const orgNetMappingKeyPrefix = "map:"
 const (
 	E_NODE_IP_IDX   = 0
 	E_NODE_PORT_IDX = 1
-	E_MESH_PORT_IDX = 2
-	E_MAX_IDX       = 3
+	E_MESH_HOST_IDX = 2
+	E_MESH_PORT_IDX = 3
+	E_MAX_IDX       = 4
 )
 
 /* org.net.site.b64Encoded(nodeIp:Nodeport:meshPort) */
@@ -32,13 +34,15 @@ const (
 type NodeOrgMap struct {
 	etcd *clientv3.Client
 }
+
 type OrgNet struct {
-	Org      string
-	Network  string
-	Site     string
-	NodePort int32
-	NodeIp   string
-	MeshPort int32
+	Org          string
+	Network      string
+	Site         string
+	NodePort     int32
+	NodeIp       string
+	MeshHostName string
+	MeshPort     int32
 }
 
 func NewNodeToOrgMap(config *Config) *NodeOrgMap {
@@ -55,9 +59,37 @@ func NewNodeToOrgMap(config *Config) *NodeOrgMap {
 	}
 }
 
-func (n *NodeOrgMap) Add(ctx context.Context, nodeId, org, network, site, nodeIp string, nodePort, meshPort int32) error {
+func (n *NodeOrgMap) UpdateMesh(ctx context.Context, hostname string, ip string) error {
+
+	_, err := n.etcd.Put(ctx, hostname, ip)
+	if err != nil {
+		return fmt.Errorf("failed to add mesh IP to db. Error: %v", err)
+	}
+	return nil
+}
+
+func (n *NodeOrgMap) GetMesh(ctx context.Context, hostname string) (*string, error) {
+	var meshIp string
+	val, err := n.etcd.Get(ctx, hostname)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mesh IP from db. Error: %v", err)
+	}
+
+	for _, val := range val.Kvs {
+		meshIp = string(val.Value)
+		ip := net.ParseIP(meshIp)
+		if ip == nil {
+			log.Errorf("failed to get mesh IP from db string %s", meshIp)
+			return nil, fmt.Errorf("failed to get mesh IP from db string %s", meshIp)
+		}
+	}
+
+	return &meshIp, nil
+}
+
+func (n *NodeOrgMap) Add(ctx context.Context, nodeId, org, network, site, nodeIp, meshHostName string, nodePort, meshPort int32) error {
 	nodeIdKey := formatMapKey(nodeId)
-	_, err := n.etcd.Put(ctx, nodeIdKey, org+"."+network+"."+site+"."+b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%d:%d", nodeIp, nodePort, meshPort))))
+	_, err := n.etcd.Put(ctx, nodeIdKey, org+"."+network+"."+site+"."+b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%d:%s:%d", nodeIp, nodePort, meshHostName, meshPort))))
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
 	}
@@ -119,7 +151,7 @@ func parseMapValue(data []byte) (*OrgNet, error) {
 	b64Add, err := b64.StdEncoding.DecodeString(c[MAP_ENC_IDX])
 	add := strings.Split(string(b64Add), ":")
 	if len(add) != E_MAX_IDX {
-		log.Errorf("failed to parse ip:port:meshport structure for '%s'", add)
+		log.Errorf("failed to parse ip:port:meshHostName:meshport structure for '%s'", add)
 		return nil, err
 	} else {
 		p1, err = strconv.ParseInt(add[E_NODE_PORT_IDX], 10, 32)
@@ -136,12 +168,13 @@ func parseMapValue(data []byte) (*OrgNet, error) {
 	}
 
 	return &OrgNet{
-		Org:      c[0],
-		Network:  c[1],
-		Site:     c[2],
-		NodeIp:   add[0],
-		NodePort: int32(p1),
-		MeshPort: int32(p2),
+		Org:          c[0],
+		Network:      c[1],
+		Site:         c[2],
+		NodeIp:       add[E_NODE_IP_IDX],
+		NodePort:     int32(p1),
+		MeshHostName: add[E_MESH_HOST_IDX],
+		MeshPort:     int32(p2),
 	}, nil
 
 }

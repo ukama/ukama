@@ -14,8 +14,11 @@ lint:
 	golangci-lint run
 
 deps:
-	go get github.com/vektra/mockery/v2/.../
-
+	go get google.golang.org/protobuf/cmd/protoc-gen-go \
+			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
+			github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
+			github.com/vektra/mockery/v2/.../
+			
 gen:
 	mockery --all --recursive --dir ./pkg
 

@@ -18,6 +18,7 @@
 #include <getopt.h>
 #include <ulfius.h>
 #include <errno.h>
+#include <netdb.h>
 #include <curl/curl.h>
 
 #include "nodeInfo.h"
@@ -30,11 +31,6 @@
 
 #define VERSION "0.0.1"
 
-/*
- * usage -- Usage options
- *
- *
- */
 static void usage() {
 
 	printf("bootstrap: ukama's node bootstrap client \n");
@@ -44,6 +40,24 @@ static void usage() {
 	printf("--c, --config                       Configuration file \n");
 	printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process. \n");
 	printf("--v, --version                      Version. \n");
+}
+
+static int find_noded_service_port() {
+
+    struct servent *entry = NULL;
+
+    entry = getservbyname("noded", NULL);
+    if (entry == NULL) {
+        log_error("Unable to find port entry for noded.d");
+        return 0;
+    }
+
+    log_debug("Noded entry found. Name: %s port: %d proto: %s",
+              entry->s_name,
+              ntohs(entry->s_port),
+              entry->s_proto);
+
+    return ntohs(entry->s_port);
 }
 
 /* Set the verbosity level for logs. */
@@ -170,6 +184,12 @@ int main (int argc, char **argv) {
 		log_error("Error processing the config file: %s", configFile);
 		exit(1);
 	}
+
+    config->nodedPort = find_noded_service_port();
+    if (config->nodedPort == 0) {
+        log_error("Error getting noded port from service db");
+        exit(1);
+    }
 	print_config(config);
 
 	/* Step-2: request node.d for NodeID */

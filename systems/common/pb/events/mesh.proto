@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+
+/* added a new node */
+message OrgIPUpdateEvent{
+    string OrgName = 1;
+    string OrgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string Ip  = 3;
+}

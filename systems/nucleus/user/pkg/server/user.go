@@ -213,6 +213,15 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	return &pb.DeactivateResponse{User: dbUserToPbUser(user)}, nil
 }
 
+func (u *UserService) GetByEmail(ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetResponse, error) {
+	user, err := u.userRepo.GetByEmail(req.Email)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	return &pb.GetResponse{User: dbUserToPbUser(user)}, nil
+}
+
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	userUUID, err := uuid.FromString(req.UserId)
 	if err != nil {

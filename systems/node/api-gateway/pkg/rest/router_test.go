@@ -67,20 +67,19 @@ func Test_RestarteNode(t *testing.T) {
 	// arrange
 	node := ukama.NewVirtualHomeNodeId().String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controllers/restartNode/"+node, nil)
+	req, _ := http.NewRequest("POST", "/v1/controllers/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
 
 	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{
-		Status: cpb.RestartStatus_RESTART_STATUS_SUCCESS},
+		Status: cpb.RestartStatus_ACCEPTED},
 		nil)
 
 	r := NewRouter(&Clients{
 		Controller:   client.NewControllerFromClient(c),
 		Configurator: client.NewConfiguratorFromClient(cfg),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
 	// act
 	r.ServeHTTP(w, req)
 
@@ -89,28 +88,61 @@ func Test_RestarteNode(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_postConfigEventHandler(t *testing.T) {
+func Test_RestarteNodes(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
+	// Create a JSON payload with the necessary data.
+	jsonPayload := `{"node_ids":["60285a2a-fe1d-4261-a868-5be480075b8f"]}`
 
-	req, _ := http.NewRequest("POST", "/v1/configurator/config", strings.NewReader("{\"name\": \"config\"}"))
+	req, _ := http.NewRequest("POST", "/v1/controllers/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
-	cfg := &cmocks.ConfiguratorServiceClient{}
 
-	cfg.On("ConfigEvent", mock.Anything, mock.Anything).Return(&cfgPb.ConfigStoreEventResponse{},
-		nil)
+	restartNodeReq := &cpb.RestartNodesRequest{
+		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4",
+		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"},
+	}
+
+	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
+		Status: cpb.RestartStatus_ACCEPTED,
+	}, nil)
 
 	r := NewRouter(&Clients{
-		Controller:   client.NewControllerFromClient(c),
-		Configurator: client.NewConfiguratorFromClient(cfg),
+		Controller: client.NewControllerFromClient(c),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
 	// act
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func Test_RestarteSite(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/v1/controllers/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
+	arc := &providers.AuthRestClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	RestartSiteRequest := &cpb.RestartSiteRequest{
+		SiteName:  "pamoja",
+		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
+	}
+
+	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{
+		Status: cpb.RestartStatus_ACCEPTED},
+		nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
 	c.AssertExpectations(t)
 }
 

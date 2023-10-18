@@ -14,8 +14,8 @@ type Invitation struct {
 	Email     string
 	Name      string
 	ExpiresAt time.Time
-	Role      RoleType         `gorm:"type:uint;not null;default:3"` // Set the default value to Member
-	Status    InvitationStatus `gorm:"type:uint;not null;default:0"` // Set the default value to Pending
+	Role      RoleType         `gorm:"type:uint;not null;default:4"`
+	Status    InvitationStatus `gorm:"type:uint;not null;default:0"`
 	UserId    string           `gorm:"type:uuid"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -32,7 +32,6 @@ const (
 
 func (e *InvitationStatus) Scan(value interface{}) error {
 	*e = InvitationStatus(uint8(value.(int64)))
-
 	return nil
 }
 

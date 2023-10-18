@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,9 +12,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type Device5xxServerError struct {
@@ -25,7 +30,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *DevicesUpdateRequest) error
+	Execute(req *cpb.NodeFeederMessage) error
 }
 
 type requestExecutor struct {
@@ -37,12 +42,12 @@ func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetwo
 	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
 }
 
-func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
+func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	segs := strings.Split(req.Target, ".")
-	if len(segs) != 2 {
+	if len(segs) != 4 {
 		return fmt.Errorf("invalid target format")
 	}
-	nodeId, err := ukama.ValidateNodeId(segs[1])
+	nodeId, err := ukama.ValidateNodeId(segs[3])
 	if err != nil {
 		return errors.Wrap(err, "invalid node id format")
 	}
@@ -70,10 +75,14 @@ func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
 		Timeout: time.Duration(e.deviceNetworkConf.TimeoutSeconds) * time.Second,
 	}
 
+	msgBytes, err := proto.Marshal(req.Msg)
+	if err != nil {
+		return errors.Wrap(err, "error marshaling protobuf message")
+	}
 	logrus.Infof("sending request to %s", u.String())
 	resp, err := c.Do(&http.Request{
-		Body:   io.NopCloser(strings.NewReader(req.Body)),
-		Method: req.HttpMethod,
+		Body:   io.NopCloser(bytes.NewReader((msgBytes))),
+		Method: req.HTTPMethod,
 		URL:    u,
 	})
 	if err != nil {

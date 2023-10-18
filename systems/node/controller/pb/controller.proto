@@ -9,31 +9,36 @@ import "validator.proto";
 service ControllerService {
   rpc RestartSite(RestartSiteRequest) returns (RestartSiteResponse);
   rpc RestartNode(RestartNodeRequest) returns (RestartNodeResponse);
+  rpc RestartNodes(RestartNodesRequest) returns (RestartNodesResponse);
 }
 
+message RestartNodesRequest {
+  string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+  repeated string nodeIds = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_ids"];
+}
+
+message RestartNodesResponse {
+  RestartStatus status = 1;
+}
 
 message RestartSiteResponse {
   RestartStatus status = 1;
-
 }
 
 message RestartNodeRequest {
-    string nodeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "node_id"];;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+
    }
 
 message RestartSiteRequest {
-    string siteName =1;
+    string siteName =1 [(validator.field) = {string_not_empty: true}, json_name = "site_name"];
     string networkId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-
 }
 
 message RestartNodeResponse {
     RestartStatus status = 1;
-
    }
 
 enum RestartStatus {
-    RESTART_STATUS_UNKNOWN = 0;
-    RESTART_STATUS_SUCCESS = 1;
-    RESTART_STATUS_FAILED = 2;
+    ACCEPTED = 0;
   }

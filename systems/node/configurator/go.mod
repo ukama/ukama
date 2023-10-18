@@ -101,7 +101,6 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tj/assert v0.0.3
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230830232303-9c8fd4fa1384 // indirect
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	github.com/willf/bitset v1.1.11 // indirect

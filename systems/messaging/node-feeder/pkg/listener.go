@@ -1,29 +1,32 @@
 package pkg
 
 import (
-	"encoding/json"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
-	//  "github.com/rabbitmq/amqp091-go"
 	amqp "github.com/streadway/amqp"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/metrics"
 )
+
 const deadLetterExchangeName = "device-feeder.dead-letter"
 const deadLetterExchangeHeaderName = "x-dead-letter-exchange"
 const errorCreatingWaitingQueueErr = "error declaring waiting queue"
 const deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
 
 type QueueListener struct {
+	service        string
 	consumer       mb.Consumer
 	serviceId      string
 	requestMult    RequestMultiplier
@@ -34,22 +37,17 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *DevicesUpdateRequest) error
+	Process(body *cpb.NodeFeederMessage) error
 }
 
-type DevicesUpdateRequest struct {
-	Target     string `json:"target"` // Target devices in form of "organization.network.device-id". Device id and network could be wildcarded
-	HttpMethod string `json:"httpMethod"`
-	Path       string `json:"path"`
-	Body       string `json:"body"`
-}
-func NewQueueListener(queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
-	
+func NewQueueListener(service string, queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
+
 	client, err := mb.NewConsumerClient(queueUri)
 	if err != nil {
 		return nil, err
 	}
 	q := &QueueListener{
+		service:        service,
 		consumer:       client,
 		serviceId:      serviceId,
 		requestMult:    requestMult,
@@ -64,7 +62,6 @@ func NewQueueListener(queueUri string, serviceId string, requestMult RequestMult
 
 	return q, nil
 }
-
 
 func (q *QueueListener) declareQueueTopology(queueUri string) error {
 	conn, err := amqp.Dial(queueUri)
@@ -101,20 +98,20 @@ func (q *QueueListener) declareQueueTopology(queueUri string) error {
 
 	// data feeder queue
 	dataFeederQueue, err := ch.QueueDeclare(
-		"device-feeder", // name
-		true,            // durable
-		false,           // delete when unused
-		false,           // exclusive
-		false,           // no-wait
+		"node-feeder", // name
+		true,          // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
 		map[string]interface{}{
 			deadLetterExchangeHeaderName:   deadLetterExchangeName,
-			deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
 		}, // arguments
 	)
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
 	}
-	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.DeviceFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
+	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.NodeFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
 
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
@@ -127,61 +124,52 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 
 	// TODO: set TTL via policy
 	waitingQueue, err := ch.QueueDeclare(
-		"device-feeder.waiting-queue", // name
-		true,                          // durable
-		false,                         // delete when unused
-		false,                         // exclusive
-		false,                         // no-wait
+		"node-feeder.waiting-queue", // name
+		true,                        // durable
+		false,                       // delete when unused
+		false,                       // exclusive
+		false,                       // no-wait
 		map[string]interface{}{
 			"x-message-ttl":                q.retryPeriodSec * 1000,
 			deadLetterExchangeHeaderName:   msgbus.DefaultExchange,
-			deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
+			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
 		},
 	)
 	return waitingQueue, err
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-    // queueArgs := map[string]interface{}{
-    //     deadLetterExchangeHeaderName:   deadLetterExchangeName,
-    //     deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
-    // }
 
-    err = q.consumer.SubscribeToQueue(global.QueueName, q.serviceId, q.incomingMessageHandler )
-    if err != nil {
-        log.Errorf("Error subscribing for queue messages. Error: %+v", err)
-        return err
-    }
+	err = q.consumer.SubscribeToServiceQueue("nodefeederService", q.listenerConfig.Exchange, q.listenerConfig.Routes, q.serviceId, q.incomingMessageHandler)
+	if err != nil {
+		log.Errorf("Error subscribing for queue messages. Error: %+v", err)
+		return err
+	}
 
-    quitChannel := make(chan os.Signal, 1)
-    signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
-    <-quitChannel
-    return nil
+	quitChannel := make(chan os.Signal, 1)
+	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
+	<-quitChannel
+	return nil
 }
-
-
 
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
-    if q.isRetryLimitReached(delivery) {
-        metrics.RecordFailedRequestMetric()
-        done <- true
-        return
-    }
+	if q.isRetryLimitReached(delivery) {
+		metrics.RecordFailedRequestMetric()
+		done <- true
+		return
+	}
 
-    err := q.processRequest(delivery)
-    if err != nil {
-        log.Errorf("Error processing request. Error: %+v", err)
-        metrics.RecordFailedRequestMetric()
-        done <- false
-        return
-    }
-    metrics.RecordSuccessfulRequestMetric()
+	err := q.processRequest(delivery)
+	if err != nil {
+		log.Errorf("Error processing request. Error: %+v", err)
+		metrics.RecordFailedRequestMetric()
+		done <- false
+		return
+	}
+	metrics.RecordSuccessfulRequestMetric()
 
-    done <- true
+	done <- true
 }
-
-
-
 
 func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	const deathHeader = "x-death"
@@ -212,11 +200,20 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	return false
 }
 
-// return error only if it could be fixed by retry
-// malformed request should not be considered as error
+// process node msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-	request := &DevicesUpdateRequest{}
-	err := json.Unmarshal(delivery.Body, request)
+
+	log.Infof("Raw message %v", delivery.Body)
+
+	evtAny := new(anypb.Any)
+	err := proto.Unmarshal(delivery.Body, evtAny)
+	if err != nil {
+		log.Errorf("Failed to parse message with key %s. Error %s", delivery.RoutingKey, err.Error())
+		return nil
+	}
+
+	request := &cpb.NodeFeederMessage{}
+	err = evtAny.UnmarshalTo(request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return nil
@@ -240,6 +237,5 @@ func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
 
 		return err
 	}
+
 }
-
-

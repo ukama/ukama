@@ -45,6 +45,7 @@ type Clients struct {
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
+	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
 }
 
 type configurator interface {
@@ -112,18 +113,16 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-
 		const cont = "/controllers"
 		controller := auth.Group(cont, "Controllers", "Operations on controllers")
-		controller.POST("/restartSite", formatDoc("restart site in org", "restaring a site within an org "), tonic.Handler(r.postRestartSiteHandler, http.StatusAccepted))
-		controller.POST("/restartNode/:node_id", formatDoc("restart node in network", "restaring a node within an network "), tonic.Handler(r.postRestartNodeHandler, http.StatusAccepted))
-
+		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
+		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
 		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
 		cfgS.POST("/config/apply/:commit", formatDoc("Apply config version ", "Updated nodes to version"), tonic.Handler(r.postConfigApplyVersionHandler, http.StatusAccepted))
 		cfgS.GET("/config/node/:node_id", formatDoc("Current ruunning config", "Read the cuurrent running version and status"), tonic.Handler(r.getRunningConfigVersionHandler, http.StatusOK))
-
 	}
 }
 
@@ -184,6 +183,10 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 	}
 
 	return cfg, nil
+}
+
+func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
+	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -17,8 +17,6 @@ extern "C" {
 #include "noded_macros.h"
 #include "ulfius.h"
 
-#define WEB_SERVICE_PORT                8095
-
 #define WEB_SOCKETS                     1
 #define WEB_SERVICE                     0
 

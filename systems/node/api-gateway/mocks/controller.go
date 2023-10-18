@@ -38,6 +38,32 @@ func (_m *controller) RestartNode(nodeId string) (*gen.RestartNodeResponse, erro
 	return r0, r1
 }
 
+// RestartNodes provides a mock function with given fields: networkId, nodeIds
+func (_m *controller) RestartNodes(networkId string, nodeIds []string) (*gen.RestartNodesResponse, error) {
+	ret := _m.Called(networkId, nodeIds)
+
+	var r0 *gen.RestartNodesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, []string) (*gen.RestartNodesResponse, error)); ok {
+		return rf(networkId, nodeIds)
+	}
+	if rf, ok := ret.Get(0).(func(string, []string) *gen.RestartNodesResponse); ok {
+		r0 = rf(networkId, nodeIds)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RestartNodesResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, []string) error); ok {
+		r1 = rf(networkId, nodeIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestartSite provides a mock function with given fields: siteName, networkId
 func (_m *controller) RestartSite(siteName string, networkId string) (*gen.RestartSiteResponse, error) {
 	ret := _m.Called(siteName, networkId)

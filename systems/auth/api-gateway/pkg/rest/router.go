@@ -145,7 +145,6 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if err != nil {
 		return err
 	}
-
 	var ss string
 	var orgId string
 	if st == "cookie" {

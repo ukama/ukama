@@ -51,6 +51,7 @@ message NodeOnlineEvent{
     int32 nodePort = 3;
     string meshIp = 4;
     int32 meshPort = 5; 
+    string meshHostName = 6;
 }
 
 message NodeOfflineEvent{

@@ -85,7 +85,7 @@ message GetNodesRequest{
 }
 
 message GetNodesResponse{
-   repeated Node node = 1;
+   repeated Node nodes = 1;
 }
 
 message  UpdateNodeStateRequest{

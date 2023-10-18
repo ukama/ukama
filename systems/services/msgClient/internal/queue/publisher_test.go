@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	mocks "github.com/ukama/ukama/systems/common/mocks"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
-	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 
 	"github.com/stretchr/testify/assert"
 )

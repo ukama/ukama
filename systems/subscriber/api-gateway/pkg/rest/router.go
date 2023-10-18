@@ -50,6 +50,7 @@ type Clients struct {
 type simPool interface {
 	Get(iccid string) (*simPoolPb.GetByIccidResponse, error)
 	GetStats(simType string) (*simPoolPb.GetStatsResponse, error)
+	GetSims(simType string) (*simPoolPb.GetSimsResponse, error)
 	AddSimsToSimPool(req *simPoolPb.AddRequest) (*simPoolPb.AddResponse, error)
 	UploadSimsToSimPool(req *simPoolPb.UploadRequest) (*simPoolPb.UploadResponse, error)
 	DeleteSimFromSimPool(id []uint64) (*simPoolPb.DeleteResponse, error)
@@ -143,6 +144,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		pool := auth.Group("/simpool", "SIM Pool", "SIM store for Org")
 		pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
+		pool.GET("/sims/:sim_type", formatDoc("Get SIMs by type", ""), tonic.Handler(r.getSims, http.StatusOK))
 		pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
 		pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
 		pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
@@ -150,7 +152,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		subscriber := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
 		subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
-		subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
+		subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
 		subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 
@@ -158,8 +160,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
 		sim.GET("/subscriber/:subscriber_id", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
 		sim.GET("/packages/:sim_id", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
-		sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
-		sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
+		sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusCreated))
+		sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusCreated))
 		sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
 		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
 		sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
@@ -183,7 +185,16 @@ func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.G
 	return resp, nil
 }
 
-func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*simPoolPb.GetStatsResponse, error) {
+func (r *Router) getSims(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetSimsResponse, error) {
+	resp, err := r.clients.sp.GetSims(req.SimType)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetStatsResponse, error) {
 	resp, err := r.clients.sp.GetStats(req.SimType)
 	if err != nil {
 		return nil, err
