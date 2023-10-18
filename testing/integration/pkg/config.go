@@ -31,7 +31,7 @@ func NewConfig() *Config {
 		OrgName:    "ukama-test-org",
 		OrgId:      "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc",
 		OrgOwnerId: "018688fa-d861-4e7b-b119-ffc5e1637ba8",
-		Key:        "24eda334-c168-4e3b-b55a-c29af5ce3569",
+		Key:        "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
 		System: SystemConfig{
 			MessageBus: "amqp://guest:guest@localhost:5672/",
 			Dataplan:   "http://localhost:8074",
