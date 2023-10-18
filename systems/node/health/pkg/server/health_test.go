@@ -47,7 +47,7 @@ func TestHealthServer_GetRunningApps(t *testing.T) {
 
 	hRepo.On("GetRunningApps", health.NodeID).Return(&health, nil).Once()
 
-	s := NewHealthServer(msgclientRepo, false, testOrgName, hRepo)
+	s := NewHealthServer(testOrgName,hRepo,msgclientRepo, false )
 
 	// Act
 	resp, err := s.GetRunningApps(context.TODO(), &pb.GetRunningAppsRequest{

@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/num30/config"
 
 	"github.com/ukama/ukama/systems/node/health/pkg/server"
@@ -18,37 +17,48 @@ import (
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *pkg.Config
+var svcConf *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	healthDb := initDb()
 	runGrpcServer(healthDb)
-	logrus.Infof("Starting %s", pkg.ServiceName)
-
+	log.Infof("Starting %s", pkg.ServiceName)
 }
+
 func initConfig() {
-	serviceConfig = pkg.NewConfig(pkg.ServiceName)
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	svcConf = pkg.NewConfig(pkg.ServiceName)
+	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
-		logrus.Fatal("Error reading config ", err)
-	} else if serviceConfig.DebugMode {
-		b, err := yaml.Marshal(serviceConfig)
+		log.Fatal("Error reading config ", err)
+	} else if svcConf.DebugMode {
+		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
-	pkg.IsDebugMode = serviceConfig.DebugMode
+	pkg.IsDebugMode = svcConf.DebugMode
 }
 
+
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
+	err := d.Init(&db.Health{}, &db.System{}, &db.Capp{}, &db.Resource{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
+}
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -56,31 +66,24 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-		mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-			serviceConfig.MsgClient.RetryCount,
-			serviceConfig.MsgClient.ListenerRoutes)
-	log.Infof("MessageBus Client is %+v", mbClient)
 
-	healthsrv := server.NewHealthServer(
-		mbClient,
-		serviceConfig.DebugMode,
-		serviceConfig.OrgName,
-		db.NewHealthRepo(gormdb),
-	)
-	
+	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
-	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pb.RegisterHealhtServiceServer(s, healthsrv)
+	log.Debugf("MessageBus Client is %+v", mbClient)
+	regServer := server.NewHealthServer(svcConf.OrgName, db.NewHealthRepo(gormdb),
+		mbClient, svcConf.DebugMode)
+
+	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
+		pb.RegisterHealhtServiceServer(s, regServer)
 	})
 
-	grpcServer.StartServer()
+	go grpcServer.StartServer()
+
 	go msgBusListener(mbClient)
 
 	waitForExit()
 }
+
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 
@@ -106,14 +109,4 @@ func waitForExit() {
 	log.Debug("awaiting terminate/interrrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
-}
-
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Health{}, &db.System{}, &db.Capp{}, &db.Resource{})
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
 }

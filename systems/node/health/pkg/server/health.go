@@ -19,24 +19,25 @@ import (
 type HealthServer struct {
 	pb.UnimplementedHealhtServiceServer
 	sRepo          db.HealthRepo
-	msgBus         mb.MsgBusServiceClient
 	healthRoutingKey msgbus.RoutingKeyBuilder
+	msgbus              mb.MsgBusServiceClient
 	debug          bool
 	orgName        string
 }
 
-func NewHealthServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, sRepo db.HealthRepo) *HealthServer {
+
+func NewHealthServer(orgName string, sRepo db.HealthRepo,  msgBus mb.MsgBusServiceClient, debug bool) *HealthServer {
 	return &HealthServer{
-		sRepo:          sRepo,
-		msgBus:         msgBus,
-		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		debug:          debug,
+		sRepo:             sRepo,
+		orgName:             orgName,
+		healthRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:              msgBus,
+		debug:               debug,
 	}
 }
 
 func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
 	log.Infof("StoreRunningAppsInfo: %v", req)
-
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -89,7 +90,8 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 	// Publish the message to the message bus
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-	err = h.msgBus.PublishRequest(route, req)
+
+	err = h.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -99,7 +101,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningAppsRequest) (*pb.GetRunningAppsResponse, error) {
 	log.Infof("GetRunningAppsInfo: %v", req)
-	nId, err := ukama.ValidateNodeId(req.GetNodeId())
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
