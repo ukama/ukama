@@ -17,70 +17,69 @@ const testOrgName = "test-org"
 
 var orgId = uuid.NewV4()
 
-
 func Test_CreateSoftwareUpdate(t *testing.T) {
-    ctx := context.Background()
+	ctx := context.Background()
 
-    // Create a mock for the SoftwareManagerRepo interface
-    softwareManager := &mocks.SoftwareManagerRepo{}
+	// Create a mock for the SoftwareManagerRepo interface
+	softwareManager := &mocks.SoftwareManagerRepo{}
 
-    // Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
-    softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
-        Return(nil) // You can specify the expected return value here
+	// Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
+	softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
+		Return(nil) // You can specify the expected return value here
 
-    // Create a mock for the MsgBusServiceClient interface
-    msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	// Create a mock for the MsgBusServiceClient interface
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-    // Configure the mock to expect a call to PublishRequest with specific arguments
-    msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).
-        Return(nil) // You can specify the expected return value here
+	// Configure the mock to expect a call to PublishRequest with specific arguments
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).
+		Return(nil) // You can specify the expected return value here
 
-    // Create an instance of the SoftwareManagerServer with the mocks
-    s := NewSoftwareManagerServer(msgclientRepo, false, testOrgName, softwareManager)
+	// Create an instance of the SoftwareManagerServer with the mocks
+	s := NewSoftwareManagerServer(testOrgName, softwareManager, msgclientRepo, false)
 
-    // Test
-    r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
-        Name: "test",
-        Tag:  "test",
-    })
+	// Test
+	r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
+		Name: "test",
+		Tag:  "test",
+	})
 
-    // Assert
-    assert.NoError(t, err)
-    assert.NotNil(t, r)
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, r)
 
-    // Verify that the expected methods on the mocks were called
-    softwareManager.AssertExpectations(t)
-    msgclientRepo.AssertExpectations(t)
+	// Verify that the expected methods on the mocks were called
+	softwareManager.AssertExpectations(t)
+	msgclientRepo.AssertExpectations(t)
 }
 func Test_GetLatestSoftwareUpdate(t *testing.T) {
-    ctx := context.Background()
+	ctx := context.Background()
 
-    // Create a mock for the SoftwareManagerRepo interface
-    softwareManager := &mocks.SoftwareManagerRepo{}
+	// Create a mock for the SoftwareManagerRepo interface
+	softwareManager := &mocks.SoftwareManagerRepo{}
 
-    // Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
-    softwareManager.On("GetLatestSoftwareUpdate").
-        Return(&db.Software{
-            Id:   uuid.NewV4(),
-            Name: "test",
-            Tag:  "test",
-            // Add other fields as needed
-        }, nil)
+	// Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
+	softwareManager.On("GetLatestSoftwareUpdate").
+		Return(&db.Software{
+			Id:   uuid.NewV4(),
+			Name: "test",
+			Tag:  "test",
+			// Add other fields as needed
+		}, nil)
 
-    // Create a mock for the MsgBusServiceClient interface
-    msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	// Create a mock for the MsgBusServiceClient interface
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-    // Create an instance of the SoftwareManagerServer with the mocks
-    s := NewSoftwareManagerServer(msgclientRepo, false, testOrgName, softwareManager)
+	// Create an instance of the SoftwareManagerServer with the mocks
+	s := NewSoftwareManagerServer(testOrgName, softwareManager, msgclientRepo, false)
 
-    // Test
-    r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})
+	// Test
+	r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})
 
-    // Assert
-    assert.NoError(t, err)
-    assert.NotNil(t, r)
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, r)
 
-    // Verify that the expected methods on the mocks were called
-    softwareManager.AssertExpectations(t)
-    msgclientRepo.AssertExpectations(t)
+	// Verify that the expected methods on the mocks were called
+	softwareManager.AssertExpectations(t)
+	msgclientRepo.AssertExpectations(t)
 }

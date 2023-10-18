@@ -37,8 +37,6 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Received from distributor service:", msg)
-
 		err = l.s.sRepo.CreateSoftwareUpdate(&db.Software{
 			Id:          uuid.NewV4(),
 			Name:        msg.Name,
@@ -51,15 +49,10 @@ func (l *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
-
 		msg, err := unmarshalSoftwareUpdate(e.Msg)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Received from health service:", msg)
-
-		// Compare resp to capps version from the event
-
 		fmt.Println("Received from health service:", msg)
 
 	default:

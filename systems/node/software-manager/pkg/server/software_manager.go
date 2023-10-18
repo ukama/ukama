@@ -21,17 +21,18 @@ import (
 type SoftwaManagerServer struct {
 	pb.UnimplementedSoftwareManagerServiceServer
 	sRepo                db.SoftwareManagerRepo
-	msgBus               mb.MsgBusServiceClient
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
 	debug                bool
 	orgName              string
 }
 
-func NewSoftwareManagerServer(msgBus mb.MsgBusServiceClient, debug bool, orgName string, sRepo db.SoftwareManagerRepo) *SoftwaManagerServer {
+func NewSoftwareManagerServer(orgName string, sRepo db.SoftwareManagerRepo, msgBus mb.MsgBusServiceClient, debug bool) *SoftwaManagerServer {
 	return &SoftwaManagerServer{
 		sRepo:                sRepo,
-		msgBus:               msgBus,
-		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:              orgName,
+		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:               msgBus,
 		debug:                debug,
 	}
 }
@@ -71,7 +72,7 @@ func (s *SoftwaManagerServer) CreateSoftwareUpdate(ctx context.Context, req *pb.
 		Path:       "/v1/node/update",
 		Msg:        anyMsg,
 	}
-	err = s.msgBus.PublishRequest(route, msg)
+	err = s.msgbus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
