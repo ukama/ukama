@@ -36,67 +36,67 @@ services:
       - msgclient-node
       - postgresd-node
 
-  # health:
-  #   build:
-  #     context: ./health
-  #     dockerfile: ./Dockerfile
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd-node
-  #     - DB_PASSWORD=Pass2020!
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-  #     - MSGCLIENT_HOST=msgclient-node:9095
-  #     - HEALTH_SERVICE_HOST=health
-  #     - HEALTH_SERVICE_PORT=9090
-  #     - ORGHOST=http://${LOCAL_HOST_IP}:8060
-  #     - ORGNAME=ukama-test-org
-  #   restart: always
-  #   networks:
-  #     - ukama-net
-  #   depends_on:
-  #     - msgclient-node
+  health:
+    build:
+      context: ./health
+      dockerfile: ./Dockerfile
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-node
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-node:9095
+      - HEALTH_SERVICE_HOST=health
+      - HEALTH_SERVICE_PORT=9090
+      - ORGHOST=http://${LOCAL_HOST_IP}:8060
+      - ORGNAME=ukama-test-org
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-node
 
-  # software-manager:
-  #   build:
-  #     dockerfile: ./Dockerfile
-  #     context: ./software-manager
-  #   ports:
-  #     - "9072:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd-registry
-  #     - DB_PASSWORD=Pass2020!
-  #     - DB_USER=postgres
-  #     - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-  #     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-  #     - MSGCLIENT_HOST=msgclient-registry:9095
-  #     - SOFTWARE_MANAGER_SERVICE_HOST=software-manager
-  #     - SOFTWARE_MANAGER_SERVICE_PORT=9090
-  #     - ORGNAME=ukama-test-org
-  #   restart: always
-  #   networks:
-  #     - ukama-net
-  #   depends_on:
-  #     - msgclient-node
+  software-manager:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./software-manager
+    ports:
+      - "9072:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-registry
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - SOFTWARE_MANAGER_SERVICE_HOST=software-manager
+      - SOFTWARE_MANAGER_SERVICE_PORT=9090
+      - ORGNAME=ukama-test-org
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-node
 
-  # node-gateway-node:
-  #   build:
-  #     dockerfile: ./Dockerfile
-  #     context: ./node-gateway
-  #   restart: always
-  #   ports:
-  #     - "8075:8080"
-  #   networks:
-  #     - ukama-net
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - BYPASS_AUTH_MODE=true
-  #     # - CORS_ALLOWALLORIGINS=true
-  #     # - CORS_ALLOWORIGINS=""
-  #   depends_on:
-  #     - health
-  #     - postgresd-node
+  node-gateway-node:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-gateway
+    restart: always
+    ports:
+      - "8075:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - health
+      - postgresd-node
 
   api-gateway-node:
     build:
