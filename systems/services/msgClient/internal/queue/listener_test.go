@@ -10,7 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 )
 
-var route = []mb.RoutingKey{mb.RoutingKey("event.cloud.lookup.organization.create")}
+var route = []mb.RoutingKey{mb.RoutingKey("event.cloud.local.ukama.init.lookup.organization.create")}
 
 var service = db.Service{
 	Name:        "test",
@@ -22,7 +22,7 @@ var service = db.Service{
 	Exchange:    "amq.topic",
 	ServiceUri:  "localhost:9090",
 	GrpcTimeout: 5,
-	Routes:      []db.Route{{Key: "event.cloud.lookup.organization.create"}},
+	Routes:      []db.Route{{Key: "event.cloud.local.ukama.init.lookup.organization.create"}},
 }
 
 func NewTestQueueListener(s db.Service) *QueueListener {

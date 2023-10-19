@@ -18,8 +18,9 @@ type Config struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout    time.Duration
-	Controller string
+	Timeout      time.Duration
+	Controller   string
+	Configurator string
 }
 
 type HttpEndpoints struct {

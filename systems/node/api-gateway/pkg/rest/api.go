@@ -13,3 +13,11 @@ type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
+
+type ApplyConfigRequest struct {
+	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
+}
+
+type GetConfigVersionRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+}
