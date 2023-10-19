@@ -18,10 +18,10 @@
 
 #include "log.h"
 
-#define PREFIX_WEBSOCKET "/websocket"
-#define PREFIX_WEBSERVICE "*"
-
-#define EP_PING "/ping"
+#define EP_WEBSOCKET        "/websocket"
+#define EP_WEBSERVICE_PING  "/ping"
+#define EP_WEBSERVICE_STATS "/stats"
+#define EP_NODE_FORWARD     "*"
 
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"

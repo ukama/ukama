@@ -52,60 +52,38 @@ static int init_framework(UInst *inst,
 		return FALSE;
 	}
 
-	/* Set few params. */
 	u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
 
 	return TRUE;
 }
 
-/*
- * setup_webservice_endpoints --
- *
- */
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
 
-	/* Endpoint list declaration. */
-	ulfius_add_endpoint_by_val(instance, "GET", PREFIX_WEBSERVICE, NULL, 0,
-							   &callback_webservice, config);
-	ulfius_add_endpoint_by_val(instance, "POST", PREFIX_WEBSERVICE, NULL, 0,
-							   &callback_webservice, config);
-	ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_WEBSERVICE, NULL, 0,
-							   &callback_webservice, config);
-	ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_WEBSERVICE, NULL, 0,
-							   &callback_webservice, config);
+	ulfius_add_endpoint_by_val(instance, "GET",
+                               EP_WEBSERVICE_PING, NULL, 0,
+							   &callback_get_ping, config);
 
-	/* Add ping EP for liveliness */
-	ulfius_add_endpoint_by_val(instance, "GET", EP_PING, NULL, 0,
-							   &callback_ping, config);
-
-	/* default endpoint. */
-	ulfius_set_default_endpoint(instance, &callback_default_webservice, config);
+	ulfius_set_default_endpoint(instance,
+                                &callback_default_webservice,
+                                config);
 }
 
-/*
- * setup_websocket_endpoints -- 
- *
- */
 static void setup_websocket_endpoints(Config *config, UInst *instance) {
 
-	/* Endpoint list declaration. */
-	ulfius_add_endpoint_by_val(instance, "GET", PREFIX_WEBSOCKET, NULL, 0,
+	ulfius_add_endpoint_by_val(instance, "GET", EP_WEBSOCKET, NULL, 0,
 							   &callback_websocket, config);
-	ulfius_add_endpoint_by_val(instance, "POST", PREFIX_WEBSOCKET, NULL, 0,
+	ulfius_add_endpoint_by_val(instance, "POST", EP_WEBSOCKET, NULL, 0,
 							   &callback_websocket, config);
-	ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_WEBSOCKET, NULL, 0,
-							   &callback_not_allowed, config);
-	ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_WEBSOCKET, NULL, 0,
-							   &callback_not_allowed, config);
-  
-	/* default endpoint. */
-	ulfius_set_default_endpoint(instance, &callback_default_websocket, config);
+	ulfius_add_endpoint_by_val(instance, "PUT", EP_WEBSOCKET, NULL, 0,
+							   &callback_websocket, config);
+	ulfius_add_endpoint_by_val(instance, "DELETE", EP_WEBSOCKET, NULL, 0,
+							   &callback_websocket, config);
+
+	ulfius_set_default_endpoint(instance,
+                                &callback_default_websocket,
+                                config);
 }
 
-/* 
- * start_framework --
- *
- */
 static int start_framework(Config *config, UInst *instance, int flag) {
 
 	int ret;
