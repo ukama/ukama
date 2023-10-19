@@ -79,14 +79,17 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 
 	err = c.msgbus.PublishRequest(route, msg)
+	
+
 	if err != nil {
 		log.Errorf("Failed to publish message with key %+v. Errors %s", route, err.Error())
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
-	log.Infof("Published controller on route %s for node %s ", msg, route)
+	log.Infof("Published controller %s on route %s for site %s ", anyMsg, "", req.SiteName)
 	return &pb.RestartSiteResponse{
-		Status: pb.RestartStatus_ACCEPTED,
+		Status: pb.RestartStatus_RESTARTED,
 	}, nil
+	
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
@@ -122,11 +125,11 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 
 	if err != nil {
 		log.Errorf("Failed to publish message with key %+v. Errors %s", route, err.Error())
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
 	log.Infof("Published controller %s on route %s for node %s ", anyMsg, "", nId.String())
 	return &pb.RestartNodeResponse{
-		Status: pb.RestartStatus_ACCEPTED,
+		Status: pb.RestartStatus_RESTARTED,
 	}, nil
 }
 
@@ -163,12 +166,11 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	err = c.msgbus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message with key %+v. Errors %s", route, err.Error())
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
-
-	log.Infof("Published controller %s on route %s for nodes %s ", anyMsg, route, req.NodeIds)
-
+	log.Infof("Published controller %s on route %s for nodes %s ", anyMsg, "", req.NodeIds)
 	return &pb.RestartNodesResponse{
-		Status: pb.RestartStatus_ACCEPTED,
+		Status: pb.RestartStatus_RESTARTED,
 	}, nil
+	
 }

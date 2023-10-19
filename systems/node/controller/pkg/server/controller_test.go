@@ -1,91 +1,136 @@
 package server
 
-// import (
-// 	"context"
-// 	"testing"
+import (
+	"context"
+	"testing"
 
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/mock"
-// 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-// 	"github.com/ukama/ukama/systems/common/uuid"
-// 	"github.com/ukama/ukama/systems/node/controller/mocks"
-// 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
-// 	"github.com/ukama/ukama/systems/node/controller/pkg"
-// )
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 
-// const testOrgName = "test-org"
+	"github.com/ukama/ukama/systems/node/controller/mocks"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
+	"google.golang.org/protobuf/types/known/anypb"
+)
 
-// var orgId = uuid.NewV4()
 
-// func TestControllerServer_RestartSite(t *testing.T) {
-// 	// Arrange
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+const testOrgName = "test-org"
 
-// 	RegRepo := &mocks.RegistryProvider{}
+var orgId = uuid.NewV4()
 
-// 	netId := uuid.NewV4()
+func TestControllerServer_RestartSite(t *testing.T) {
+	// Arrange
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
 
-// 	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
+	RegRepo := &mocks.RegistryProvider{}
 
-// 	RegRepo.On("ValidateSite", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-// 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartSiteRequest{
-// 		SiteName:  "pamoja",
-// 		NetworkId: netId.String(),
-// 	}).Return(nil).Once()
-// 	// Act
-// 	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{
-// 		SiteName:  "pamoja",
-// 		NetworkId: netId.String(),
-// 	})
-// 	// Assert
-// 	msgclientRepo.AssertExpectations(t)
-// 	assert.NoError(t, err)
+	netId := uuid.NewV4()
+	// siteName := "pamoja"
 
-// }
-// func TestControllerServer_RestartNode(t *testing.T) {
-// 	// Arrange
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
 
-// 	RegRepo := &mocks.RegistryProvider{}
+	anyMsg, err := anypb.New(&pb.RestartSiteRequest{
+		SiteName:  "pamoja",
+		NetworkId: netId.String(),
+	})
+	if err != nil {
+		return 
+	}
+	RegRepo.On("ValidateSite", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	RegRepo.On("ValidateNetwork", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:"test-org."+ netId.String()+ ".pamoja."+ netId.String(),
+		HTTPMethod: "POST",
+		Path:       "/v1/node/site/restart",
+		Msg:        anyMsg,
+	}).Return(nil).Once()
+	// Act
+	_, err = s.RestartSite(context.TODO(), &pb.RestartSiteRequest{
+		SiteName:  "pamoja",
+		NetworkId: netId.String(),
+	})
+	// Assert
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
 
-// 	nodeId := uuid.NewV4()
+}
+func TestControllerServer_RestartNode(t *testing.T) {
+	// Arrange
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	RegRepo := &mocks.RegistryProvider{}
 
-// 	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
+	nodeId := "uk-983794-hnode-78-7830"
+	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
 
-// 	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-// 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
-// 		NodeId: nodeId.String(),
-// 	}).Return(nil).Once()
-// 	// Act
-// 	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
-// 		NodeId: nodeId.String(),
-// 	})
-// 	// Assert
-// 	msgclientRepo.AssertExpectations(t)
-// 	assert.NoError(t, err)
+	anyMsg, err := anypb.New(&pb.RestartNodeRequest{
+		NodeId: nodeId,
+	})
+	if err != nil {
+		return 
+	}
 
-// }
+	NodeLog := db.NodeLog{
+		NodeId: nodeId,
+	}
+	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-// func TestControllerServer_RestartNodes(t *testing.T) {
-// 	// Arrange
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:     "test-org" + "." + "." + "." + nodeId,
+		HTTPMethod: "POST",
+		Path:       "/v1/controller/restart/node",
+		Msg:        anyMsg,
+	}).Return(nil).Once()
+	// Act
+	_, err = s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
+		NodeId: nodeId,
+	})
+	// Assert
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
 
-// 	RegRepo := &mocks.RegistryProvider{}
+}
 
-// 	nodeId := uuid.NewV4()
+func TestControllerServer_RestartNodes(t *testing.T) {
+	// Arrange
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	RegRepo := &mocks.RegistryProvider{}
+	netId := uuid.NewV4()
+	nodeId := "uk-983794-hnode-78-7830"
+	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
 
-// 	s := NewControllerServer(msgclientRepo, RegRepo, pkg.IsDebugMode, testOrgName, nil)
+	anyMsg, err := anypb.New(&pb.RestartNodesRequest{
+		NetworkId: netId.String(),
+		NodeIds: []string{nodeId},
+	})
+	if err != nil {
+		return 
+	}
 
-// 	RegRepo.On("ValidateNode", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-// 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.RestartNodeRequest{
-// 		NodeId: nodeId.String(),
-// 	}).Return(nil).Once()
-// 	// Act
-// 	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
-// 		NodeId: nodeId.String(),
-// 	})
-// 	// Assert
-// 	msgclientRepo.AssertExpectations(t)
-// 	assert.NoError(t, err)
+	NodeLog := db.NodeLog{
+		NodeId: nodeId,
+	}
+	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-// }
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:     "test-org" + "." + "." + "." + nodeId,
+		HTTPMethod: "POST",
+		Path:       "/v1/controller/restart/nodes",
+		Msg:        anyMsg,
+	}).Return(nil).Once()
+	// Act
+	_, err = s.RestartNodes(context.TODO(), &pb.RestartNodesRequest{
+		NetworkId: netId.String(),
+		NodeIds: []string{nodeId},
+	})
+	// Assert
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+
+}

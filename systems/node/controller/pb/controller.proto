@@ -40,5 +40,5 @@ message RestartNodeResponse {
    }
 
 enum RestartStatus {
-    ACCEPTED = 0;
+    RESTARTED = 0;
   }
