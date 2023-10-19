@@ -117,7 +117,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	msg := &cpb.NodeFeederMessage{
 		Target:     c.orgName + "." + "." + "." + nId.String(),
 		HTTPMethod: "POST",
-		Path:       "/v1/controller/restart/node",
+		Path:       "/v1/reboot/" + nId.String(),
 		Msg:        anyMsg,
 	}
 
