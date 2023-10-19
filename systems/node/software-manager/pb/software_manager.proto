@@ -1,0 +1,39 @@
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/node/software-manager/pb/gen";
+package ukama.node.software_manager.v1;
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+service SoftwareManagerService {
+    rpc CreateSoftwareUpdate (CreateSoftwareUpdateRequest) returns (CreateSoftwareUpdateResponse);
+    rpc GetLatestSoftwareUpdate (GetLatestSoftwareUpdateRequest) returns (GetLatestSoftwareUpdateResponse);
+}
+
+
+message CreateSoftwareUpdateRequest {
+    string name = 1;
+    string tag = 2;
+}
+message CreateSoftwareUpdateResponse {
+    SoftwareUpdate software_update = 1;
+}
+message SoftwareUpdate {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string tag = 2;
+    string release_date = 4;
+    Status status = 6;
+    string name = 8;
+}
+
+message GetLatestSoftwareUpdateRequest {
+}
+message GetLatestSoftwareUpdateResponse {
+    SoftwareUpdate software_update = 1;
+}
+
+
+enum Status {
+    Stable  = 0;
+	Beta    = 1;
+	Alpha   = 2;
+}
