@@ -44,3 +44,23 @@ func TestValidateNetwork(t *testing.T) {
 
 	mockRegistry.AssertCalled(t, "ValidateNetwork", "network_id", "org_name")
 }
+
+func TestGetNodesBySite(t *testing.T) {
+	mockRegistry := mocks.NewRegistryProvider(t)
+
+	mockRegistry.On("GetNodesBySite", "site_id").Return([]string{"node_id"}, nil)
+	mockRegistry.On("GetNodesBySite", "").Return(nil, errors.New("invalid arguments"))
+
+	nodes, err := mockRegistry.GetNodesBySite("site_id")
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"node_id"}, nodes)
+
+	nodes, err = mockRegistry.GetNodesBySite("")
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "invalid arguments")
+	assert.Nil(t, nodes)
+
+	mockRegistry.AssertCalled(t, "GetNodesBySite", "site_id")
+}

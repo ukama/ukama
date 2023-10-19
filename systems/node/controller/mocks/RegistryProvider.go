@@ -9,6 +9,32 @@ type RegistryProvider struct {
 	mock.Mock
 }
 
+// GetNodesBySite provides a mock function with given fields: siteId
+func (_m *RegistryProvider) GetNodesBySite(siteId string) ([]string, error) {
+	ret := _m.Called(siteId)
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(siteId)
+	}
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(siteId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(siteId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ValidateNetwork provides a mock function with given fields: networkId, orgName
 func (_m *RegistryProvider) ValidateNetwork(networkId string, orgName string) error {
 	ret := _m.Called(networkId, orgName)

@@ -32,7 +32,7 @@ func TestControllerServer_RestartSite(t *testing.T) {
 	netId := uuid.NewV4()
 
 	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
-
+	nodeId := "uk-983794-hnode-78-7830"
 	anyMsg, err := anypb.New(&pb.RestartSiteRequest{
 		SiteName:  "pamoja",
 		NetworkId: netId.String(),
@@ -40,12 +40,18 @@ func TestControllerServer_RestartSite(t *testing.T) {
 	if err != nil {
 		return 
 	}
+	nodeLog := &db.NodeLog{
+		NodeId: nodeId,
+	}
 	RegRepo.On("ValidateSite", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	RegRepo.On("ValidateNetwork", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	RegRepo.On("GetNodesBySite", "pamoja",mock.Anything,mock.Anything).Return([]string{nodeId}, nil).Once()
+	conRepo.On("Get", nodeId,mock.Anything).Return(nodeLog,nil).Once()
+
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
-		Target:"test-org."+ netId.String()+ ".pamoja."+ netId.String(),
+		Target:"test-org."+ "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/node/site/restart",
+		Path:       "/v1/reboot/"+nodeId,
 		Msg:        anyMsg,
 	}).Return(nil).Once()
 	// Act
@@ -82,7 +88,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/controller/restart/node",
+		Path:       "/v1/reboot/"+nodeId,
 		Msg:        anyMsg,
 	}).Return(nil).Once()
 	// Act
@@ -120,7 +126,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/controller/restart/nodes",
+		Path:       "/v1/reboot/"+nodeId,
 		Msg:        anyMsg,
 	}).Return(nil).Once()
 	// Act

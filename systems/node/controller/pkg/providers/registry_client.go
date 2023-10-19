@@ -14,6 +14,7 @@ const SystemName = "registry"
 type RegistryProvider interface {
 	ValidateSite(networkId string, siteName string, orgName string) error
 	ValidateNetwork(networkId string, orgName string) error
+	GetNodesBySite(siteId string) ([]string, error)
 }
 
 type registryProvider struct {
@@ -69,7 +70,6 @@ func (r *registryProvider) ValidateSite(siteName string, orgName string, network
 		SetError(errStatus).
 		SetBody(req).
 		Get(r.R.URL.String() + RegistryVersion + "/" + networkId + "/sites/" + siteName)
-
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
 		return fmt.Errorf("api request to registry at %s failure: %v", r.R.URL.String(), err)
@@ -109,4 +109,31 @@ func (r *registryProvider) ValidateNetwork(networkId string, orgName string) err
 	}
 
 	return nil
+}
+
+func (r *registryProvider) GetNodesBySite(siteId string) ([]string, error) {
+	
+	var err error
+
+	/* Get Provider */
+	r.R, err = r.GetRestyClient("")
+	if err != nil {
+		return nil, err
+	}
+
+	errStatus := &rest.ErrorMessage{}
+	resp, err := r.R.C.R().
+		SetError(errStatus).
+		Get(r.R.URL.String() + RegistryVersion + "/nodes/sites/" + siteId)
+	if err != nil {
+		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
+		return nil, fmt.Errorf("api request to registry at %s failure: %v", r.R.URL.String(), err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to get nodes from registry at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		return nil, fmt.Errorf("failed to get nodes from registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
+	}
+
+	return nil, nil
 }
