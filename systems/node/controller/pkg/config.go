@@ -16,7 +16,7 @@ type Config struct {
 	Service          *uconf.Service
 	MsgClient        *config.MsgClient `default:"{}"`
 	OrgName          string            `default:"ukama"`
-	RegistryHost     string            `default:"registry"`
+	RegistryHost     string            `default:"http://org:8080"`
 }
 
 func NewConfig(name string) *Config {

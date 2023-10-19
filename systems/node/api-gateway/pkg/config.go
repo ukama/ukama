@@ -23,7 +23,7 @@ type GrpcEndpoints struct {
 }
 
 type HttpEndpoints struct {
-	Timeout     time.Duration
+	Timeout time.Duration
 }
 
 func NewConfig() *Config {
@@ -41,7 +41,7 @@ func NewConfig() *Config {
 			Controller: "controller:9090",
 		},
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout: 3 * time.Second,
 		},
 
 		Server: rest.HttpConfig{

@@ -58,7 +58,7 @@ func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*
 func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	err := n.s.sRepo.Add(strings.ToLower(msg.NodeId))
+	err := n.s.nRepo.Add(strings.ToLower(msg.NodeId))
 	if err != nil {
 		log.Errorf("Error adding node %s to controller/nodeLog repo.Error: %+v", msg.NodeId, err)
 		return err

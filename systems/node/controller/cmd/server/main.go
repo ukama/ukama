@@ -5,10 +5,10 @@ import (
 
 	"github.com/num30/config"
 
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 	"gopkg.in/yaml.v3"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -17,6 +17,7 @@ import (
 
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -31,8 +32,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
-	healthDb := initDb()
-	runGrpcServer(healthDb)
+	cDb := initDb()
+	runGrpcServer(cDb)
 	log.Infof("Starting %s", pkg.ServiceName)
 }
 
@@ -49,7 +50,6 @@ func initConfig() {
 	}
 	pkg.IsDebugMode = svcConf.DebugMode
 }
-
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
@@ -72,11 +72,14 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	regServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
-		mbClient, svcConf.DebugMode, reg)
+	contServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
+		mbClient, reg, svcConf.DebugMode)
+	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-		pb.RegisterControllerServiceServer(s, regServer)
+		pb.RegisterControllerServiceServer(s, contServer)
+		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
+
 	})
 
 	go grpcServer.StartServer()
@@ -85,7 +88,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	waitForExit()
 }
-
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 
