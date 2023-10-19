@@ -78,3 +78,14 @@ export enum TIME_FILTER {
 registerEnumType(TIME_FILTER, {
   name: "TIME_FILTER",
 });
+
+export enum GRAPHS_TYPE {
+  NODE_HEALTH = "NODE_HEALTH",
+  SUBSCRIBERS = "SUBSCRIBERS",
+  NETWORK = "NETWORK",
+  RESOURCES = "RESOURCES",
+  RADIO = "RADIO",
+}
+registerEnumType(GRAPHS_TYPE, {
+  name: "GRAPHS_TYPE",
+});

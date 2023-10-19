@@ -7,8 +7,8 @@ import {
 const ERROR_RESPONSE = {
   success: true,
   msg: "success",
-  env: "",
-  nodeid: "",
+  orgId: "",
+  nodeId: "",
   type: "",
 };
 
@@ -17,12 +17,12 @@ export const parseLatestMetricRes = (
   args: GetLatestMetricInput
 ): LatestMetricRes => {
   const data = res.data.result[0];
-  if (data && data.value && data.value.lenght > 0) {
+  if (data && data.value && data.value.length > 0) {
     return {
       success: true,
       msg: "success",
-      env: data.metric.env,
-      nodeid: args.nodeId,
+      orgId: data.metric.org,
+      nodeId: args.nodeId,
       type: args.type,
       value: data.value,
     };
@@ -33,13 +33,13 @@ export const parseLatestMetricRes = (
 
 export const parseMetricRes = (res: any, type: string): MetricRes => {
   const data = res.data.result[0];
-  if (data && data.value && data.value.lenght > 0) {
+  if (data && data.values && data.values.length > 0) {
     return {
       type: type,
       success: true,
       msg: "success",
-      env: data.metric.env,
-      nodeid: data.metric.nodeid,
+      orgId: data.metric.org,
+      nodeId: data.metric.nodeid,
       values: fixTimestampInMetricData(data.values),
     };
   } else {
@@ -48,13 +48,13 @@ export const parseMetricRes = (res: any, type: string): MetricRes => {
 };
 export const parseNodeMetricRes = (res: any, type: string): MetricRes => {
   const data = res.data.result[0];
-  if (data && data.value && data.value.lenght > 0) {
+  if (data && data.values && data.values.length > 0) {
     return {
       type: type,
       success: true,
       msg: "success",
-      env: data.metric.env,
-      nodeid: data.metric.nodeid,
+      orgId: data.metric.org,
+      nodeId: data.metric.nodeid,
       values: fixTimestampInMetricData(data.values),
     };
   } else {

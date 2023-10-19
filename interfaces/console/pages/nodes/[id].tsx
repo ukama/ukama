@@ -116,9 +116,10 @@ export default function Page() {
             orgId: '123',
             userId: 'salman',
             from: metricFrom,
-            type: 'memory_trx_used',
-            withSubscription: true,
-            nodeId: 'uk-123456-hnode-77-8888',
+            type: 'uptime_trx',
+            to: metricFrom + 120,
+            withSubscription: false,
+            nodeId: 'uk-test36-hnode-a1-00ff',
           },
         },
       });

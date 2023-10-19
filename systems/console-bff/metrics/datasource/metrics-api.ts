@@ -42,12 +42,20 @@ const getNodeRangeMetric = async (
   args: GetMetricRangeInput
 ): Promise<MetricRes> => {
   const { from, to = 0, step = 1 } = args;
+  console.log(
+    "URL:",
+    `${METRIC_API_GW}/v1/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`
+  );
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${METRIC_API_GW}/v1/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
   })
-    .then(res => parseNodeMetricRes(res.data, args.type))
+    .then(res => {
+      console.log("RES: ", res);
+      return parseNodeMetricRes(res.data, args.type);
+    })
     .catch(err => {
+      console.log("ERR:", err);
       throw new GraphQLError(err);
     });
 };

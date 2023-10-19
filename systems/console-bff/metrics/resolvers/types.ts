@@ -1,6 +1,8 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
+import { GRAPHS_TYPE } from "../../common/enums";
+
 @ObjectType()
 export class LatestMetricRes {
   @Field()
@@ -10,10 +12,10 @@ export class LatestMetricRes {
   msg: string;
 
   @Field()
-  env: string;
+  orgId: string;
 
   @Field()
-  nodeid: string;
+  nodeId: string;
 
   @Field()
   type: string;
@@ -30,10 +32,10 @@ export class MetricRes {
   msg: string;
 
   @Field()
-  env: string;
+  orgId: string;
 
   @Field()
-  nodeid: string;
+  nodeId: string;
 
   @Field()
   type: string;
@@ -77,6 +79,40 @@ export class GetMetricRangeInput {
 
   @Field({ nullable: true })
   withSubscription?: boolean;
+}
+
+@ArgsType()
+@InputType()
+export class GetMetricByTabInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgId?: string;
+
+  @Field(() => GRAPHS_TYPE)
+  type: GRAPHS_TYPE;
+
+  @Field()
+  userId?: string;
+
+  @Field({ nullable: true })
+  from: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ nullable: true })
+  step?: number;
+
+  @Field({ nullable: false })
+  withSubscription?: boolean;
+}
+
+@ObjectType()
+export class MetricsRes {
+  @Field(() => [MetricRes])
+  metrics: MetricRes[];
 }
 
 @ArgsType()

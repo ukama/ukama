@@ -13,12 +13,12 @@ const MetricSubscription = ({ from }: IMetricSubscription) => {
       orgId: '123',
       userId: 'salman',
       from: from,
-      type: 'memory_trx_used',
-      nodeId: 'uk-123456-hnode-77-8888',
+      type: 'uptime_trx',
+      nodeId: 'uk-test36-hnode-a1-00ff',
     },
     onData: (data) => {
       PubSub.publish(
-        'memory_trx_used',
+        'uptime_trx',
         data.data.data?.getMetricRangeSub.value,
       );
     },

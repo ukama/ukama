@@ -2,8 +2,10 @@
 
 query GetLatestMetric($data: GetLatestMetricInput!) {
   getLatestMetric(data: $data) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     value
   }
@@ -11,8 +13,10 @@ query GetLatestMetric($data: GetLatestMetricInput!) {
 
 query GetMetricRange($data: GetMetricRangeInput!) {
   getMetricRange(data: $data) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     values
   }
@@ -20,9 +24,11 @@ query GetMetricRange($data: GetMetricRangeInput!) {
 
 query GetNodeRangeMetric($data: GetMetricRangeInput!) {
   getNodeRangeMetric(data: $data) {
-    env
+    success
+    msg
+    orgId
+    nodeId
     type
-    nodeid
     values
   }
 }
@@ -41,8 +47,10 @@ subscription MetricRange(
     userId: $userId
     from: $from
   ) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     value
   }

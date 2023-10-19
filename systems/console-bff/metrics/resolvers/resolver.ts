@@ -13,7 +13,7 @@ import { Worker } from "worker_threads";
 import { METRIC_API_GW_SOCKET, STORAGE_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
 import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
-import { getTimestampCount } from "../../common/utils";
+import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
 import {
   getLatestMetric,
   getMetricRange,
@@ -21,20 +21,22 @@ import {
 } from "../datasource/metrics-api";
 import {
   GetLatestMetricInput,
+  GetMetricByTabInput,
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
+  MetricsRes,
   SubMetricRangeInput,
 } from "./types";
 
-const WS_THREAD = "./threads/MetricsWSThread.ts";
+const WS_THREAD = "./threads/MetricsWSThread.js";
 
 const getErrorRes = (msg: string) =>
   ({
-    env: "",
+    orgId: "",
     msg: msg,
     type: "",
-    nodeid: "",
+    nodeId: "",
     values: [],
     success: false,
   } as MetricRes);
@@ -46,6 +48,64 @@ class MetricResolvers {
     return await getLatestMetric(data);
   }
 
+  @Query(() => MetricsRes)
+  async getMetricByTab(
+    @Arg("data") data: GetMetricByTabInput,
+    @PubSub() pubSub: PubSubEngine
+  ) {
+    const { type, orgId, userId, nodeId, withSubscription, from } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metrics: MetricsRes = { metrics: [] };
+    if (metricsKey.length > 0) {
+      for (let i = 0; i < metricsKey.length; i++) {
+        const res = await getNodeRangeMetric({ ...data, type: metricsKey[i] });
+        metrics.metrics.push(res);
+      }
+    }
+
+    if (withSubscription && metrics.metrics.length > 0) {
+      const keys = metricsKey.join(",");
+      const workerData: any = {
+        keys,
+        orgId,
+        userId,
+        url: `${METRIC_API_GW_SOCKET}/v1/live/metric?interval=1&metric=${type}`,
+        key: STORAGE_KEY,
+        timestamp: from,
+      };
+      const worker = new Worker(WS_THREAD, {
+        workerData,
+      });
+      worker.on("message", (_data: any) => {
+        if (!_data.isError) {
+          const res = JSON.parse(_data.data);
+          const result = res.data.result[0];
+          if (result && result.metric && result.value.length > 0) {
+            pubSub.publish(`metric-${type}`, {
+              success: true,
+              msg: "success",
+              orgId: result.metric.org,
+              nodeId: nodeId,
+              type: type,
+              value: result.value,
+            } as LatestMetricRes);
+          } else {
+            return getErrorRes("No metric data found");
+          }
+        }
+      });
+      worker.on("exit", (code: any) => {
+        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+        logger.info(
+          `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+        );
+      });
+    }
+
+    return metrics;
+  }
+
   @Query(() => MetricRes)
   async getMetricRange(
     @Arg("data") data: GetMetricRangeInput,
@@ -54,7 +114,7 @@ class MetricResolvers {
     const { type, orgId, userId, nodeId, withSubscription, from } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const res = await getMetricRange(data);
-    if (withSubscription && res.env) {
+    if (withSubscription && res.orgId && res.nodeId) {
       const workerData: any = {
         type,
         orgId,
@@ -74,8 +134,8 @@ class MetricResolvers {
             pubSub.publish(`metric-${type}`, {
               success: true,
               msg: "success",
-              env: result.metric.env,
-              nodeid: nodeId,
+              orgId: result.metric.org,
+              nodeId: nodeId,
               type: type,
               value: result.value,
             } as LatestMetricRes);
@@ -103,7 +163,7 @@ class MetricResolvers {
     const { type, orgId, userId, nodeId, withSubscription, from } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const res = await getNodeRangeMetric(data);
-    if (withSubscription && res.env) {
+    if (withSubscription && res.orgId && res.nodeId) {
       const workerData: any = {
         type,
         orgId,
@@ -121,8 +181,8 @@ class MetricResolvers {
           const result = res.data.result[0];
           if (result && result.metric && result.value.length > 0) {
             pubSub.publish(`metric-${type}`, {
-              env: result.metric.env,
-              nodeid: nodeId,
+              orgId: result.metric.org,
+              nodeId: nodeId,
               type: type,
               value:
                 result.value.length > 0

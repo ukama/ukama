@@ -1562,7 +1562,7 @@ const NodePageTabs = [
 ];
 
 const NodeResourcesTabConfigure: any = {
-  HOME: [
+  hnode: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1571,7 +1571,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  AMPLIFIER: [
+  anode: [
     { name: 'MEMORY-TRX', show: true, id: 'memoryctlused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cpuctlused' },
@@ -1580,7 +1580,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  TOWER: [
+  tnode: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'MEMORY-COM', show: true, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1591,19 +1591,19 @@ const NodeResourcesTabConfigure: any = {
   ],
 };
 const HealtChartsConfigure: any = {
-  HOME: [
-    { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
+  hnode: [
+    { name: 'Temp. (TRX)', show: true, id: 'uptime_trx' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
     { name: 'Attached ', show: true, id: 'subscribersattached' },
     { name: 'Active ', show: true, id: 'subscribersactive' },
   ],
-  AMPLIFIER: [
+  anode: [
     { name: 'Temp. (CTL)', show: true, id: 'temperaturectl' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
   ],
-  TOWER: [
+  tnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
     { name: 'Temp. (COM)', show: true, id: 'temperaturecom' },
     { name: 'Uptime', show: true, id: 'uptimetrx' },

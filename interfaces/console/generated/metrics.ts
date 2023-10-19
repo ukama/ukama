@@ -37,9 +37,9 @@ export type GetMetricRangeInput = {
 
 export type LatestMetricRes = {
   __typename?: 'LatestMetricRes';
-  env: Scalars['String']['output'];
   msg: Scalars['String']['output'];
-  nodeid: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Array<Scalars['Float']['output']>;
@@ -47,9 +47,9 @@ export type LatestMetricRes = {
 
 export type MetricRes = {
   __typename?: 'MetricRes';
-  env: Scalars['String']['output'];
   msg: Scalars['String']['output'];
-  nodeid: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   values: Array<Array<Scalars['Float']['output']>>;
@@ -102,21 +102,21 @@ export type GetLatestMetricQueryVariables = Exact<{
 }>;
 
 
-export type GetLatestMetricQuery = { __typename?: 'Query', getLatestMetric: { __typename?: 'LatestMetricRes', env: string, nodeid: string, type: string, value: Array<number> } };
+export type GetLatestMetricQuery = { __typename?: 'Query', getLatestMetric: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
 
 export type GetMetricRangeQueryVariables = Exact<{
   data: GetMetricRangeInput;
 }>;
 
 
-export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', env: string, nodeid: string, type: string, values: Array<Array<number>> } };
+export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
 
 export type GetNodeRangeMetricQueryVariables = Exact<{
   data: GetMetricRangeInput;
 }>;
 
 
-export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, values: Array<Array<number>> } };
+export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
 
 export type MetricRangeSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -127,14 +127,16 @@ export type MetricRangeSubscriptionVariables = Exact<{
 }>;
 
 
-export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', env: string, nodeid: string, type: string, value: Array<number> } };
+export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
 
 
 export const GetLatestMetricDocument = gql`
     query GetLatestMetric($data: GetLatestMetricInput!) {
   getLatestMetric(data: $data) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     value
   }
@@ -171,8 +173,10 @@ export type GetLatestMetricQueryResult = Apollo.QueryResult<GetLatestMetricQuery
 export const GetMetricRangeDocument = gql`
     query GetMetricRange($data: GetMetricRangeInput!) {
   getMetricRange(data: $data) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     values
   }
@@ -209,9 +213,11 @@ export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, 
 export const GetNodeRangeMetricDocument = gql`
     query GetNodeRangeMetric($data: GetMetricRangeInput!) {
   getNodeRangeMetric(data: $data) {
-    env
+    success
+    msg
+    orgId
+    nodeId
     type
-    nodeid
     values
   }
 }
@@ -253,8 +259,10 @@ export const MetricRangeDocument = gql`
     userId: $userId
     from: $from
   ) {
-    env
-    nodeid
+    success
+    msg
+    orgId
+    nodeId
     type
     value
   }

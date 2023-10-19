@@ -41,7 +41,8 @@ const CellValueByType = ({
   switch (type) {
     case 'name':
       return isRowClickable ? (
-        <Link href={`nodes/${row['id']}`} unselectable="on">
+        // <Link href={`nodes/${row['id']}`} unselectable="on">
+        <Link href={`nodes/uk-test36-hnode-a1-00ff`} unselectable="on">
           {row[type]}
         </Link>
       ) : (

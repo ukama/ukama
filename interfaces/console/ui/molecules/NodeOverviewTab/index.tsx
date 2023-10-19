@@ -183,8 +183,9 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
-                .show && (
+              {HealtChartsConfigure[
+                (selectedNode?.type as string) || 'hnode'
+              ][3].show && (
                 <LineChart
                   metricFrom={metricFrom}
                   initData={metrics}
@@ -194,8 +195,9 @@ const NodeOverviewTab = ({
                   title={HealtChartsConfigure[nodeType][3].name}
                 />
               )}
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][4]
-                .show && (
+              {HealtChartsConfigure[
+                (selectedNode?.type as string) || 'hnode'
+              ][4].show && (
                 <LineChart
                   metricFrom={metricFrom}
                   initData={metrics}
