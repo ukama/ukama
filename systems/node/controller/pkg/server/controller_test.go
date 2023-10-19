@@ -30,7 +30,6 @@ func TestControllerServer_RestartSite(t *testing.T) {
 	RegRepo := &mocks.RegistryProvider{}
 
 	netId := uuid.NewV4()
-	// siteName := "pamoja"
 
 	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
 
