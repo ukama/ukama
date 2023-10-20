@@ -30,5 +30,3 @@ func NewConfig(name string) *Config {
 	}
 
 }
-
-

@@ -1,19 +1,17 @@
-package db_test
+package db
 
 import (
-	extsql "database/sql"
-	"encoding/json"
+	"fmt"
 	"testing"
-	"time"
 
-	"github.com/ukama/ukama/systems/node/health/pkg/db"
+	extsql "database/sql"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	log "github.com/sirupsen/logrus"
+	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	"github.com/tj/assert"
-
+	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -23,11 +21,11 @@ type UkamaDbMock struct {
 }
 
 func (u UkamaDbMock) Init(model ...interface{}) error {
-	return nil
+	panic("implement me: Init()")
 }
 
 func (u UkamaDbMock) Connect() error {
-	return nil
+	panic("implement me: Connect()")
 }
 
 func (u UkamaDbMock) GetGormDb() *gorm.DB {
@@ -40,90 +38,106 @@ func (u UkamaDbMock) InitDB() error {
 
 func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func() error) error {
+	log.Fatal("implement me: ExecuteInTransaction()")
 	return nil
 }
 
 func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func(tx *gorm.DB) error) error {
+	log.Fatal("implement me: ExecuteInTransaction2()")
 	return nil
 }
 
 func TestHealthRepo_GetRunningAppsInfo(t *testing.T) {
-	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	var nodeId = ukama.NewVirtualNodeId("HomeNode")
+	id := uuid.NewV4()
 
-	t.Run("HealthExist", func(t *testing.T) {
-		// Arrange
-		health := db.Health{
-			Id:        uuid.NewV4(),
-			NodeID:   nodeId.String(),
-			Timestamp: time.Now().String(),
-			System: []db.System{
-				{
-					Id:    uuid.NewV4(),
-					Name:  "test",
-					Value: "test",
-				},
+	health := Health{
+		Id:        id,
+		NodeId:    nodeId.String(),
+		TimeStamp: "test",
+		System: []System{
+			{
+				Id:    id,
+				Name:  "test",
+				Value: "test",
 			},
-			Capps: []db.Capp{
-				{
-					Id:     uuid.NewV4(),
-					Name:   "test",
-					Tag:    "test",
-					Status: db.Active, // Assuming db.Running represents the Running status
-					Resources: []db.Resource{
-						{
-							Id:    uuid.NewV4(),
-							Name:  "test",
-							Value: "test",
-						},
+		},
+		Capps: []Capp{
+			{
+				Id:     id,
+				Name:   "test",
+				Tag:    "test",
+				Status: Status(1),
+				Resources: []Resource{
+					{
+						Id:    id,
+						Name:  "test",
+						Value: "test",
 					},
 				},
 			},
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			DeletedAt: nil,
-		}
+		},
+	}
+	t.Run("RunningAppFound", func(t *testing.T) {
+		var db *extsql.DB
 
-		var _db *extsql.DB
-
-		_db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
-
-		// Convert System and Capps slices to JSON strings
-		systemJSON, _ := json.Marshal(health.System)
-		cappsJSON, _ := json.Marshal(health.Capps)
-
-		rows := sqlmock.NewRows([]string{"id", "node_id", "time_stamp", "system", "capps"}).
-			AddRow(health.Id, health.NodeID, health.Timestamp, systemJSON, cappsJSON)
-
-		mock.ExpectQuery(`^SELECT.*healths.*`).
-			WithArgs(health.NodeID).
-			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
-			Conn:                 _db,
+			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
 
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := db.NewHealthRepo(&UkamaDbMock{
+		r := NewHealthRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
+		healthRows := sqlmock.NewRows([]string{"id", "node_id", "time_stamp"}).
+			AddRow(health.Id, nodeId.String(), "12-12-2024")
 
-		// Act
-		rm, err := r.GetRunningAppsInfo(nodeId)
+		systemRows := sqlmock.NewRows([]string{"id", "health_id", "name", "value"}).
+			AddRow(health.Id, health.Id, health.System[0].Name, health.System[0].Value)
 
+		cappRows := sqlmock.NewRows([]string{"id", "health_id", "name", "tag", "status"}).
+			AddRow(health.Id, health.Id, health.Capps[0].Name, health.Capps[0].Tag, health.Capps[0].Status)
+
+		resourceRows := sqlmock.NewRows([]string{"id", "capp_id", "name", "value"}).
+			AddRow(health.Capps[0].Resources[0].Id, health.Capps[0].Id, health.Capps[0].Resources[0].Name, health.Capps[0].Resources[0].Value)
+
+		mock.ExpectQuery(`^SELECT.*healths.*`).
+			WithArgs(nodeId).
+			WillReturnRows(healthRows)
+
+		mock.ExpectQuery(`^SELECT.*systems.*`).
+			WithArgs(health.System[0].Id).
+			WillReturnRows(systemRows)
+
+		mock.ExpectQuery(`^SELECT.*capps.*`).
+			WithArgs(health.Capps[0].Id).
+			WillReturnRows(cappRows, resourceRows)
+
+		mock.ExpectQuery(`^SELECT.*resources.*`).
+			WithArgs(health.Capps[0].Resources[0].CappID).
+			WillReturnRows(resourceRows)
+
+		mock.ExpectQuery(`^SELECT \* FROM "capps" WHERE "capps"."health_id" = \$1`).
+			WithArgs(health.NodeId). // Update this to match the actual parameter used
+			WillReturnRows(cappRows)
+
+		apps, err := r.GetRunningAppsInfo(nodeId)
+		fmt.Println("BRACKLEY", apps)
 		// Assert
-		assert.NoError(t, err)
-
+		assert.NotNil(t, apps)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, rm)
+
 	})
+
 }

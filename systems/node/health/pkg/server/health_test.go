@@ -23,21 +23,21 @@ func TestHealthServer_GetRunningApps(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	hRepo := &mocks.HealthRepo{}
-
+	id := uuid.NewV4()
 	health := db.Health{
-		Id:        uuid.NewV4(),
-		NodeID:    testNode.StringLowercase(),
-		Timestamp: "test",
+		Id:        id,
+		NodeId:    testNode.String(),
+		TimeStamp: "test",
 		System: []db.System{
 			{
-				Id:    uuid.NewV4(),
+				Id:    id,
 				Name:  "test",
 				Value: "test",
 			},
 		},
 		Capps: []db.Capp{
 			{
-				Id:     uuid.NewV4(),
+				Id:     id,
 				Name:   "test",
 				Tag:    "test",
 				Status: db.Status(1),
@@ -45,20 +45,67 @@ func TestHealthServer_GetRunningApps(t *testing.T) {
 		},
 	}
 
-	hRepo.On("GetRunningApps", health.NodeID).Return(&health, nil).Once()
+	hRepo.On("GetRunningAppsInfo", testNode).Return(&health, nil).Once()
 
-	s := NewHealthServer(testOrgName,hRepo,msgclientRepo, false )
+	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	// Act
 	resp, err := s.GetRunningApps(context.TODO(), &pb.GetRunningAppsRequest{
-		NodeId: health.NodeID,
+		NodeId: testNode.String(),
 	})
 
 	// Assert
 	msgclientRepo.AssertExpectations(t)
 	if assert.NoError(t, err) {
-		assert.Equal(t, health.NodeID, resp.RunningApps.NodeId)
+		assert.Equal(t, health.NodeId, resp.RunningApps.NodeId)
 	}
 
 	hRepo.AssertExpectations(t)
+
 }
+
+// func TestHealthServer_StoreRunningAppsInfo(t *testing.T) {
+// 	// Arrange
+// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+// 	hRepo := &mocks.HealthRepo{}
+
+// 	health := db.Health{
+// 		Id:        uuid.NewV4(),
+// 		NodeID:    testNode.StringLowercase(),
+// 		Timestamp: "test",
+// 		System: []db.System{
+// 			{
+// 				Id:    uuid.NewV4(),
+// 				Name:  "test",
+// 				Value: "test",
+// 			},
+// 		},
+// 		Capps: []db.Capp{
+// 			{
+// 				Id:     uuid.NewV4(),
+// 				Name:   "test",
+// 				Tag:    "test",
+// 				Status: db.Status(1),
+// 			},
+// 		},
+// 	}
+
+// 	hRepo.On("StoreRunningAppsInfo", health).Return(nil).Once()
+
+// 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+
+// 	// Act
+// 	_, err := s.StoreRunningAppsInfo(context.TODO(), &pb.StoreRunningAppsInfoRequest{
+// 		NodeId: health.NodeID,
+// 	})
+
+// 	// Assert
+// 	msgclientRepo.AssertExpectations(t)
+// 	if assert.NoError(t, err) {
+// 		//rest is empty obejct
+// 		assert.Equal(t, health.NodeID, nil)
+// 	}
+
+// 	hRepo.AssertExpectations(t)
+// }

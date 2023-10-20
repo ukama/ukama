@@ -57,22 +57,19 @@ services:
     depends_on:
       - msgclient-node
 
-  software-manager:
+  software:
     build:
+      context: ./software
       dockerfile: ./Dockerfile
-      context: ./software-manager
-    ports:
-      - "9072:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-registry
+      - DB_HOST=postgresd-node
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-registry:9095
-      - SOFTWARE_MANAGER_SERVICE_HOST=software-manager
-      - SOFTWARE_MANAGER_SERVICE_PORT=9090
+      - MSGCLIENT_HOST=msgclient-node:9095
+      - SOFTWARE_SERVICE_HOST=software
+      - SOFTWARE_SERVICE_PORT=9090
       - ORGNAME=ukama-test-org
     restart: always
     networks:
@@ -86,7 +83,7 @@ services:
       context: ./node-gateway
     restart: always
     ports:
-      - "8075:8080"
+      - "8036:8080"
     networks:
       - ukama-net
     environment:
@@ -130,27 +127,6 @@ services:
       - ukama-net
     depends_on:
       - postgresd-node
-
-  # node-feeder-node:
-  #   build: ../messaging/nodeFeeder
-  #   ports:
-  #     - "9080:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-  #     - SYSTEM=messaging
-  #     - QUEUE_HOST=localhost:9090
-  #     - QUEUE_TIMEOUT=3
-  #     - NET_HOST=localhost:9090
-  #     - NET_TIMEOUT=3
-  #     - DEVICE_PORT=0
-  #     - DEVICE_TIMEOUT=3
-  #     - LISTENER_RETRY_COUNT=3
-  #     - LISTENER_RETRY_PERIOD=30
-  #     - LISTENER_THREADS=3
-  #   restart: always
-  #   networks:
-  #     - ukama-net
 
   initclient-node:
     image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31

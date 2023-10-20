@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -18,21 +19,20 @@ import (
 
 type HealthServer struct {
 	pb.UnimplementedHealhtServiceServer
-	sRepo          db.HealthRepo
+	sRepo            db.HealthRepo
 	healthRoutingKey msgbus.RoutingKeyBuilder
-	msgbus              mb.MsgBusServiceClient
-	debug          bool
-	orgName        string
+	msgbus           mb.MsgBusServiceClient
+	debug            bool
+	orgName          string
 }
 
-
-func NewHealthServer(orgName string, sRepo db.HealthRepo,  msgBus mb.MsgBusServiceClient, debug bool) *HealthServer {
+func NewHealthServer(orgName string, sRepo db.HealthRepo, msgBus mb.MsgBusServiceClient, debug bool) *HealthServer {
 	return &HealthServer{
-		sRepo:             sRepo,
-		orgName:             orgName,
-		healthRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:              msgBus,
-		debug:               debug,
+		sRepo:            sRepo,
+		orgName:          orgName,
+		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:           msgBus,
+		debug:            debug,
 	}
 }
 
@@ -50,8 +50,8 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	// Create a Health instance
 	health := db.Health{
 		Id:        healthID,
-		NodeID:    nId.StringLowercase(),
-		Timestamp: req.GetTimestamp(),
+		NodeId:    nId.StringLowercase(),
+		TimeStamp: req.GetTimestamp(),
 	}
 
 	// Populate the System array from the request
@@ -90,7 +90,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 	// Publish the message to the message bus
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-
+	fmt.Println("BRACKLEy: ", route)
 	err = h.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -119,8 +119,8 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 
 	app := &pb.App{
 		Id:        health.Id.String(),
-		NodeId:    health.NodeID,
-		Timestamp: health.Timestamp,
+		NodeId:    health.NodeId,
+		Timestamp: health.TimeStamp,
 		System:    []*pb.System{}, // Initialize System and Capps slices
 		Capps:     []*pb.Capps{},
 	}

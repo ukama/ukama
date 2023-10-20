@@ -8,8 +8,8 @@ import (
 
 type Health struct {
 	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	NodeID    string    `gorm:"not null"`
-	Timestamp string     `gorm:"not null"`
+	NodeId    string     `gorm:"not null"`
+	TimeStamp string     `gorm:"not null"`
 	System    []System   `gorm:"foreignKey:HealthID"`
 	Capps     []Capp     `gorm:"foreignKey:HealthID"`
 	CreatedAt time.Time  `gorm:"not null"`
@@ -42,10 +42,10 @@ type Resource struct {
 type Status uint8
 
 const (
-	Pending Status =0
-	Active Status =1
-	Done Status =2
-	Unknown Status =3
+	Pending Status = 0
+	Active  Status = 1
+	Done    Status = 2
+	Unknown Status = 3
 )
 
 func (e *Status) Scan(value interface{}) error {
