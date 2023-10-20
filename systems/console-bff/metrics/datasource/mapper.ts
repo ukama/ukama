@@ -13,6 +13,15 @@ const ERROR_RESPONSE = {
   type: "",
 };
 
+const getEmptyMetric = (args: GetMetricRangeInput): MetricRes => {
+  return {
+    ...ERROR_RESPONSE,
+    type: args.type,
+    nodeId: args.nodeId,
+    values: [[0, 0]],
+  } as MetricRes;
+};
+
 export const parseLatestMetricRes = (
   res: any,
   args: GetLatestMetricInput
@@ -47,20 +56,25 @@ export const parseMetricRes = (res: any, type: string): MetricRes => {
     return { ...ERROR_RESPONSE, values: [[0, 0]] } as MetricRes;
   }
 };
-export const parseNodeMetricRes = (res: any, type: string): MetricRes => {
-  const data = res.data.result[0];
-  if (data && data.values && data.values.length > 0) {
-    return {
-      type: type,
-      success: true,
-      msg: "success",
-      orgId: data.metric.org,
-      nodeId: data.metric.nodeid,
-      values: fixTimestampInMetricData(data.values),
-    };
-  } else {
-    return { ...ERROR_RESPONSE, values: [[0, 0]] } as MetricRes;
-  }
+export const parseNodeMetricRes = (
+  { code, data }: { code: number; data: any },
+  args: GetMetricRangeInput
+): MetricRes => {
+  if (code === 404) return getEmptyMetric(args);
+  const { result } = data.data;
+  const hasValues =
+    result && result[0] && result[0].values && result[0].values.length > 0;
+
+  return hasValues
+    ? {
+        type: args.type,
+        success: true,
+        msg: "success",
+        orgId: result[0].metric.org,
+        nodeId: result[0].metric.nodeid,
+        values: fixTimestampInMetricData(result[0].values),
+      }
+    : getEmptyMetric(args);
 };
 
 const fixTimestampInMetricData = (
@@ -94,14 +108,5 @@ export const parsePromethRes = (
       nodeId: metric.metric.nodeid,
       values: fixTimestampInMetricData(metric.values),
     };
-  } else {
-    return {
-      type: args.type,
-      success: true,
-      msg: "success",
-      orgId: "",
-      nodeId: args.nodeId,
-      values: [[0, 0]],
-    } as MetricRes;
-  }
+  } else return getEmptyMetric(args);
 };

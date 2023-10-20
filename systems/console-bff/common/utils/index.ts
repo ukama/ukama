@@ -87,7 +87,7 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
       if (nodeId.includes(NODE_TYPE.hnode))
-        return ["trx_memory_ddr_used", "rfe_memory_ddr_used"];
+        return ["uptime_trx", "trx_memory_ddr_used", "rfe_memory_ddr_used"];
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
       else return ["temperature_trx", "temperature_com"];
