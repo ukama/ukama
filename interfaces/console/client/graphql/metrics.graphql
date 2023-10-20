@@ -33,6 +33,19 @@ query GetNodeRangeMetric($data: GetMetricRangeInput!) {
   }
 }
 
+query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+}
+
 subscription MetricRange(
   $nodeId: String!
   $orgId: String!

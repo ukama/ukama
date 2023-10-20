@@ -15,6 +15,7 @@ import { logger } from "../../common/logger";
 import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
 import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
 import {
+  directCall,
   getLatestMetric,
   getMetricRange,
   getNodeRangeMetric,
@@ -59,11 +60,10 @@ class MetricResolvers {
     const metrics: MetricsRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric({ ...data, type: metricsKey[i] });
+        const res = await directCall({ ...data, type: metricsKey[i] });
         metrics.metrics.push(res);
       }
     }
-
     if (withSubscription && metrics.metrics.length > 0) {
       const keys = metricsKey.join(",");
       const workerData: any = {

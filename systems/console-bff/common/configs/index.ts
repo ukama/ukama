@@ -22,6 +22,7 @@ export const AUTH_URL = process.env.AUTH_URL || "";
 export const STORAGE_KEY = process.env.STORAGE_KEY || "";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK || "";
+export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS || "";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT || "8000");

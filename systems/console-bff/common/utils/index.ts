@@ -87,12 +87,11 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
       if (nodeId.includes(NODE_TYPE.hnode))
-        return ["uptime_trx", "temperature_trx", "temperature_rfe"];
+        return ["trx_memory_ddr_used", "rfe_memory_ddr_used"];
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
-      else return ["uptime_trx", "temperature_trx", "temperature_com"];
+      else return ["temperature_trx", "temperature_com"];
     case GRAPHS_TYPE.NETWORK:
-      // The keys in this condition don't seem to directly map to the new list, so I'll leave them as-is for now
       if (!nodeId.includes(NODE_TYPE.anode))
         return ["rrc", "rlc", "erab", "throughputuplink", "throughputdownlink"];
       else return [];

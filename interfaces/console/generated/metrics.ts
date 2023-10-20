@@ -19,9 +19,28 @@ export type Scalars = {
   _FieldSet: { input: any; output: any; }
 };
 
+export enum Graphs_Type {
+  Network = 'NETWORK',
+  NodeHealth = 'NODE_HEALTH',
+  Radio = 'RADIO',
+  Resources = 'RESOURCES',
+  Subscribers = 'SUBSCRIBERS'
+}
+
 export type GetLatestMetricInput = {
   nodeId: Scalars['String']['input'];
   type: Scalars['String']['input'];
+};
+
+export type GetMetricByTabInput = {
+  from?: InputMaybe<Scalars['Float']['input']>;
+  nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  step?: InputMaybe<Scalars['Float']['input']>;
+  to?: InputMaybe<Scalars['Float']['input']>;
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
+  withSubscription: Scalars['Boolean']['input'];
 };
 
 export type GetMetricRangeInput = {
@@ -55,10 +74,16 @@ export type MetricRes = {
   values: Array<Array<Scalars['Float']['output']>>;
 };
 
+export type MetricsRes = {
+  __typename?: 'MetricsRes';
+  metrics: Array<MetricRes>;
+};
+
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
   getLatestMetric: LatestMetricRes;
+  getMetricByTab: MetricsRes;
   getMetricRange: MetricRes;
   getNodeRangeMetric: MetricRes;
 };
@@ -66,6 +91,11 @@ export type Query = {
 
 export type QueryGetLatestMetricArgs = {
   data: GetLatestMetricInput;
+};
+
+
+export type QueryGetMetricByTabArgs = {
+  data: GetMetricByTabInput;
 };
 
 
@@ -117,6 +147,13 @@ export type GetNodeRangeMetricQueryVariables = Exact<{
 
 
 export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
+
+export type GetMetricByTabQueryVariables = Exact<{
+  data: GetMetricByTabInput;
+}>;
+
+
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
 
 export type MetricRangeSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -250,6 +287,48 @@ export function useGetNodeRangeMetricLazyQuery(baseOptions?: Apollo.LazyQueryHoo
 export type GetNodeRangeMetricQueryHookResult = ReturnType<typeof useGetNodeRangeMetricQuery>;
 export type GetNodeRangeMetricLazyQueryHookResult = ReturnType<typeof useGetNodeRangeMetricLazyQuery>;
 export type GetNodeRangeMetricQueryResult = Apollo.QueryResult<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>;
+export const GetMetricByTabDocument = gql`
+    query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMetricByTabQuery__
+ *
+ * To run a query within a React component, call `useGetMetricByTabQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricByTabQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricByTabQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricByTabQuery(baseOptions: Apollo.QueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+      }
+export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+        }
+export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
+export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
+export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
 export const MetricRangeDocument = gql`
     subscription MetricRange($nodeId: String!, $orgId: String!, $type: String!, $userId: String!, $from: Float!) {
   getMetricRangeSub(

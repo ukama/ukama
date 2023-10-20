@@ -1,5 +1,6 @@
 import {
   GetLatestMetricInput,
+  GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
 } from "../resolvers/types";
@@ -74,4 +75,33 @@ const fixTimestampInMetricData = (
     return fixedValues;
   }
   return [];
+};
+
+export const parsePromethRes = (
+  res: any,
+  args: GetMetricRangeInput
+): MetricRes => {
+  const metric = res.data.result.filter(
+    (item: any) => item.metric.nodeid === args.nodeId
+  )[0];
+
+  if (metric && metric.values && metric.values.length > 0) {
+    return {
+      type: args.type,
+      success: true,
+      msg: "success",
+      orgId: metric.metric.org,
+      nodeId: metric.metric.nodeid,
+      values: fixTimestampInMetricData(metric.values),
+    };
+  } else {
+    return {
+      type: args.type,
+      success: true,
+      msg: "success",
+      orgId: "",
+      nodeId: args.nodeId,
+      values: [[0, 0]],
+    } as MetricRes;
+  }
 };

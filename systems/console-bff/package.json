@@ -47,6 +47,7 @@
     "graphql-scalars": "1.22.2",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^5.14.0",
+    "https": "^1.0.0",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13",
     "stripe": "^12.16.0",
