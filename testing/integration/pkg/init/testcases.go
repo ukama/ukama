@@ -11,6 +11,7 @@ import (
 	"github.com/bxcodec/faker/v4"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	api "github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
@@ -101,22 +102,18 @@ func InitializeData() *InitData {
 }
 
 var TC_init_add_org = &test.TestCase{
-
 	Name:        "Add Organization.",
 	Description: "Add organization to lookup table",
 	Data:        &pb.AddOrgResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.lookup.organization.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("Init").SetOrgName(a.OrgName).SetService("lookup").SetAction("create").SetObject("organization").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -129,7 +126,6 @@ var TC_init_add_org = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		d := tc.GetWorkflowData().(*InitData)
 		resp := tc.GetData().(*pb.AddOrgResponse)
@@ -144,9 +140,6 @@ var TC_init_add_org = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 		resp := tc.GetData().(*pb.AddOrgResponse)
 		a := tc.GetWorkflowData().(*InitData)
 		a.ROrgIp = resp.Ip
@@ -158,22 +151,19 @@ var TC_init_add_org = &test.TestCase{
 }
 
 var TC_init_add_system = &test.TestCase{
-
 	Name:        "Add System.",
 	Description: "Add System to lookup table",
 	Data:        &pb.AddSystemResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
+
 		a := tc.GetWorkflowData().(*InitData)
 		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.lookup.system.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("Init").SetOrgName(a.OrgName).SetService("lookup").SetAction("create").SetObject("system").SetGlobalScope().MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -186,7 +176,6 @@ var TC_init_add_system = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		d := tc.GetWorkflowData().(*InitData)
 		resp := tc.GetData().(*pb.AddSystemResponse)
@@ -200,31 +189,24 @@ var TC_init_add_system = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 		tc.Watcher.Stop()
 		return nil
 	},
 }
 
 var TC_init_add_node = &test.TestCase{
-
 	Name:        "Add Node.",
 	Description: "Add node to a lookup table",
 	Data:        &pb.AddSystemResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.lookup.node.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("Init").SetOrgName(a.OrgName).SetService("lookup").SetAction("create").SetObject("node").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -237,7 +219,6 @@ var TC_init_add_node = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		d := tc.GetWorkflowData().(*InitData)
 		resp := tc.GetData().(*pb.AddNodeResponse)
@@ -250,22 +231,17 @@ var TC_init_add_node = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 		tc.Watcher.Stop()
 		return nil
 	},
 }
 
 var TC_init_bootstrap_node = &test.TestCase{
-
 	Name:        "Bootstrap Node.",
 	Description: "Bootstrap node from a lookup table",
 	Data:        &pb.AddSystemResponse{},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -278,7 +254,6 @@ var TC_init_bootstrap_node = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		d := tc.GetWorkflowData().(*InitData)
 		resp := tc.GetData().(*pb.GetNodeResponse)
@@ -299,7 +274,6 @@ var TC_init_get_system = &test.TestCase{
 	Data:        &pb.AddSystemResponse{},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -312,7 +286,6 @@ var TC_init_get_system = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		d := tc.GetWorkflowData().(*InitData)
 		resp := tc.GetData().(*pb.GetSystemResponse)

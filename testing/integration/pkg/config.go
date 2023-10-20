@@ -31,7 +31,7 @@ func NewConfig() *Config {
 		OrgName:    "ukama-test-org",
 		OrgId:      "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc",
 		OrgOwnerId: "018688fa-d861-4e7b-b119-ffc5e1637ba8",
-		Key:        "the-key-has-to-be-32-bytes-long!",
+		Key:        "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
 		System: SystemConfig{
 			MessageBus: "amqp://guest:guest@localhost:5672/",
 			Dataplan:   "http://localhost:8074",
@@ -39,7 +39,7 @@ func NewConfig() *Config {
 			Registry:   "http://localhost:8075",
 			Metrics:    "http://localhost:8072",
 			Subscriber: "http://localhost:8078",
-			Billing:    "http://localhost:8079",
+			Billing:    "http://localhost:8680",
 			Nucleus:    "http://localhost:8060",
 		},
 	}

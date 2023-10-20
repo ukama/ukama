@@ -8,7 +8,7 @@ import (
 
 	"github.com/bxcodec/faker/v4"
 	log "github.com/sirupsen/logrus"
-
+	"github.com/ukama/ukama/systems/common/msgbus"
 	api "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
@@ -34,6 +34,7 @@ type InitData struct {
 	Countries  []string
 	OwnerId    string
 	OrgId      string
+	OrgName    string
 	BaserateId string
 	Country    string
 	Provider   string
@@ -68,6 +69,7 @@ func InitializeData() *InitData {
 	d.MbHost = config.System.MessageBus
 	d.Sys = NewDataplanClient(d.Host)
 	d.SimType = "test"
+	d.OrgName = config.OrgName
 	d.OrgId = config.OrgId
 	d.OwnerId = config.OrgOwnerId
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
@@ -139,20 +141,16 @@ var TC_dp_add_baserate = &test.TestCase{
 	Name:        "Adding base rate",
 	Description: "Add base rate provided by third parties",
 	Data:        &bpb.UploadBaseRatesResponse{},
-	//Workflow:    w,
 
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.rate.rate.upload"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("baserate").SetActionUpdate().SetObject("rate").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -165,24 +163,16 @@ var TC_dp_add_baserate = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 		resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
 		if resp != nil {
-			// if tc.Watcher.Expections() {
 			check = true
-			// } else {
-			// 	log.Error("Expected events not found.")
-			// }
 		}
 
 		return check, nil
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 		resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
 
 		a := tc.GetWorkflowData().(*InitData)
@@ -202,11 +192,7 @@ var TC_dp_get_baserate_by_id = &test.TestCase{
 	Name:        "Get Base rate",
 	Description: "Get Base rate by Id",
 	Data:        &bpb.GetBaseRatesByIdResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqGetBaseRateRequest = api.GetBaseRateRequest{
 			RateId: a.BaseRateId[len(a.BaseRateId)-1],
@@ -216,7 +202,6 @@ var TC_dp_get_baserate_by_id = &test.TestCase{
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -296,13 +281,8 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 	Name:        "Get base rate for period",
 	Description: "Get base rate for a period",
 	Data:        &bpb.GetBaseRatesResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
-
 		a.reqGetBaseRatesForPeriodRequest = api.GetBaseRatesForPeriodRequest{
 			Country:  a.Country,
 			Provider: a.Provider,
@@ -316,7 +296,6 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -329,7 +308,6 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*bpb.GetBaseRatesResponse)
@@ -350,19 +328,15 @@ var TC_dp_add_markup = &test.TestCase{
 	Name:        "Set Markup",
 	Description: "Add markup rate fpr owner",
 	Data:        &rpb.UpdateMarkupResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.markup.markup.set"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("rate").SetActionUpdate().SetObject("set").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -375,24 +349,17 @@ var TC_dp_add_markup = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*rpb.UpdateMarkupResponse)
 		if resp != nil {
-			// if tc.Watcher.Expections() {
 			check = true
-			// }
 		}
 
 		return check, nil
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
-
 		tc.Watcher.Stop()
 		return nil
 	},
@@ -438,9 +405,7 @@ var TC_dp_get_rate = &test.TestCase{
 	Description: "Get rate for a Owner's org",
 	Data:        &rpb.GetRateResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
+
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqGetRateRequest = api.GetRateRequest{
 			UserId:   a.OwnerId,
@@ -456,7 +421,6 @@ var TC_dp_get_rate = &test.TestCase{
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -469,7 +433,6 @@ var TC_dp_get_rate = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*rpb.GetRateResponse)
@@ -486,9 +449,6 @@ var TC_dp_get_rate = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 
 		if tc.State == test.StateTypePass {
 			resp := tc.GetData().(*rpb.GetRateResponse)
@@ -508,11 +468,8 @@ var TC_dp_add_package = &test.TestCase{
 	Name:        "Create a package",
 	Description: "Create package",
 	Data:        &ppb.AddPackageResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
+
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
 
@@ -533,12 +490,12 @@ var TC_dp_add_package = &test.TestCase{
 			Apn:        "ukama.tel",
 		}
 
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.local.dataplan.package.update"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("package").SetActionCreate().SetObject("package").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -552,7 +509,6 @@ var TC_dp_add_package = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*ppb.AddPackageResponse)
@@ -568,9 +524,7 @@ var TC_dp_add_package = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
+
 		tc.Watcher.Stop()
 
 		if tc.State == test.StateTypePass {
@@ -588,11 +542,8 @@ var TC_dp_get_package_for_org = &test.TestCase{
 	Name:        "Get packages for org",
 	Description: "Get packages for the organization",
 	Data:        &ppb.GetByOrgPackageResponse{},
-	//Workflow:    w,
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
+
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
 			OrgId: a.OrgId,
@@ -603,7 +554,6 @@ var TC_dp_get_package_for_org = &test.TestCase{
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -616,7 +566,6 @@ var TC_dp_get_package_for_org = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*ppb.GetByOrgPackageResponse)

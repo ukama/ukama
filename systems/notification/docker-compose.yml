@@ -31,6 +31,24 @@ services:
   networks:
    - ukama-net
 
+ notify:
+  build: ./notify
+  ports:
+   - '9068:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-notification
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-notification:9095
+   - NOTIFY_SERVICE_HOST=notify
+   - NOTIFY_SERVICE_PORT=9090
+   - ORGNAME=ukama-test-org
+  restart: always
+  networks:
+   - ukama-net
+
  api-gateway-notification:
   build:
    dockerfile: ./Dockerfile
@@ -46,6 +64,38 @@ services:
   depends_on:
    - mailer
    - postgresd-notification
+
+ node-gateway:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./node-gateway
+  restart: always
+  ports:
+   - '8054:8080'
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+  depends_on:
+   - api-gateway-notification
+   - postgresd-notification
+
+ msgclient-notification:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-notification
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=notification
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-notification
+
 networks:
  ukama-net:
   external: true

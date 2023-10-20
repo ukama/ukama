@@ -17,7 +17,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.61
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.22.0
 )

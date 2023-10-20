@@ -13,11 +13,11 @@ type EventValidator struct {
 }
 
 type Watcher struct {
-	v []EventValidator
+	v EventValidator
 	l messaging.Listener
 }
 
-func NewWatcher(v []EventValidator, url string) *Watcher {
+func NewWatcher(v EventValidator, url string) *Watcher {
 	c := messaging.NewListenerConfig(url)
 	return &Watcher{
 		v: v,
@@ -40,44 +40,34 @@ func (w *Watcher) Stop() {
 
 func (w *Watcher) Expections() bool {
 	time.Sleep(5 * time.Second)
-	for _, e := range w.v {
-		/* For now jsut checking event name  */
-		i, ok := w.l.GetEvent(e.key)
-		if !ok {
-			log.Errorf("Event for %s is missing", e.key)
-			return false
-		}
+	/* For now jsut checking event name  */
+	i, ok := w.l.GetEvent(w.v.key)
+	if !ok {
+		log.Errorf("Event for %s is missing", w.v.key)
+		return false
+	}
 
-		if e.Validator != nil {
-			b, ok := i.([]byte)
-			if ok {
-				if !e.Validator(e.key, b) {
-					log.Debugf("Got event for %s with validation failure", e.key)
-					return false
-				}
-			} else {
-				log.Debugf("Got event for %s with unexpected type", e.key)
+	if w.v.Validator != nil {
+		b, ok := i.([]byte)
+		if ok {
+			if !w.v.Validator(w.v.key, b) {
+				log.Debugf("Got event for %s with validation failure", w.v.key)
 				return false
 			}
+		} else {
+			log.Debugf("Got event for %s with unexpected type", w.v.key)
+			return false
 		}
-
 	}
 
 	return true
 }
 
-func SetupWatcher(url string, events []string) *Watcher {
-	Validator := []EventValidator{}
-	for _, e := range events {
-		v := EventValidator{
-			key:       e,
-			Validator: DummyValidator,
-		}
-
-		Validator = append(Validator, v)
-	}
-
-	w := NewWatcher(Validator, url)
+func SetupWatcher(url string, event string) *Watcher {
+	w := NewWatcher(EventValidator{
+		key:       event,
+		Validator: DummyValidator,
+	}, url)
 
 	w.Start()
 	time.Sleep(1 * time.Second)
