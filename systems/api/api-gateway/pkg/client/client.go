@@ -4,10 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/types"
 
 	log "github.com/sirupsen/logrus"
+	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
 const (
@@ -16,19 +17,19 @@ const (
 )
 
 type Client interface {
-	GetNetwork(string) (*NetworkInfo, error)
-	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*NetworkInfo, error)
+	GetNetwork(string) (*rest.NetworkInfo, error)
+	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*rest.NetworkInfo, error)
 
-	GetPackage(string) (*PackageInfo, error)
+	GetPackage(string) (*rest.PackageInfo, error)
 	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
-		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*PackageInfo, error)
+		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*rest.PackageInfo, error)
 
-	GetSim(string) (*SimInfo, error)
+	GetSim(string) (*rest.SimInfo, error)
 	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
-		string, string, string, string, uint32) (*SimInfo, error)
+		string, string, string, string, uint32) (*rest.SimInfo, error)
 
-	GetNode(string) (*NodeInfo, error)
-	RegisterNode(string, string, string, string) (*NodeInfo, error)
+	GetNode(string) (*rest.NodeInfo, error)
+	RegisterNode(string, string, string, string) (*rest.NodeInfo, error)
 	AttachNode(string, string, string) error
 	DetachNode(string) error
 	AddNodeToSite(string, string, string) error
@@ -37,15 +38,15 @@ type Client interface {
 }
 
 type clients struct {
-	network    NetworkClient
-	pkg        PackageClient
-	subscriber SubscriberClient
-	sim        SimClient
-	node       NodeClient
+	network    rest.NetworkClient
+	pkg        rest.PackageClient
+	subscriber rest.SubscriberClient
+	sim        rest.SimClient
+	node       rest.NodeClient
 }
 
-func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber SubscriberClient,
-	sim SimClient, node NodeClient) Client {
+func NewClientsSet(network rest.NetworkClient, pkg rest.PackageClient, subscriber rest.SubscriberClient,
+	sim rest.SimClient, node rest.NodeClient) Client {
 	c := &clients{
 		network:    network,
 		pkg:        pkg,
@@ -57,7 +58,7 @@ func NewClientsSet(network NetworkClient, pkg PackageClient, subscriber Subscrib
 	return c
 }
 
-func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
+func (c *clients) GetNetwork(id string) (*rest.NetworkInfo, error) {
 	net, err := c.network.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -66,7 +67,7 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	if net.SyncStatus == types.SyncStatusUnknown.String() || net.SyncStatus == types.SyncStatusFailed.String() {
 		log.Error(failedRequestMsg)
 
-		return nil, rest.HttpError{
+		return nil, crest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
 			Message:  failedRequestMsg,
 		}
@@ -75,7 +76,7 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 	if net.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn(pendingRequestMsg)
 
-		return net, rest.HttpError{
+		return net, crest.HttpError{
 			HttpCode: http.StatusPartialContent,
 			Message:  pendingRequestMsg,
 		}
@@ -86,8 +87,8 @@ func (c *clients) GetNetwork(id string) (*NetworkInfo, error) {
 
 func (c *clients) CreateNetwork(orgName, NetworkName string, allowedCountries,
 	allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32,
-	paymentLinks bool) (*NetworkInfo, error) {
-	net, err := c.network.Add(AddNetworkRequest{
+	paymentLinks bool) (*rest.NetworkInfo, error) {
+	net, err := c.network.Add(rest.AddNetworkRequest{
 		OrgName:          orgName,
 		NetName:          NetworkName,
 		AllowedCountries: allowedCountries,
@@ -104,7 +105,7 @@ func (c *clients) CreateNetwork(orgName, NetworkName string, allowedCountries,
 	return net, nil
 }
 
-func (c *clients) GetPackage(id string) (*PackageInfo, error) {
+func (c *clients) GetPackage(id string) (*rest.PackageInfo, error) {
 	pkg, err := c.pkg.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -113,7 +114,7 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 	if pkg.SyncStatus == types.SyncStatusUnknown.String() || pkg.SyncStatus == types.SyncStatusFailed.String() {
 		log.Error(failedRequestMsg)
 
-		return nil, rest.HttpError{
+		return nil, crest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
 			Message:  failedRequestMsg,
 		}
@@ -122,7 +123,7 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 	if pkg.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn(pendingRequestMsg)
 
-		return pkg, rest.HttpError{
+		return pkg, crest.HttpError{
 			HttpCode: http.StatusPartialContent,
 			Message:  pendingRequestMsg,
 		}
@@ -134,9 +135,9 @@ func (c *clients) GetPackage(id string) (*PackageInfo, error) {
 func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
 	simType, apn, pType string, duration uint64, markup, amount, overdraft float64, trafficPolicy uint32,
-	networks []string) (*PackageInfo, error) {
+	networks []string) (*rest.PackageInfo, error) {
 
-	pkg, err := c.pkg.Add(AddPackageRequest{
+	pkg, err := c.pkg.Add(rest.AddPackageRequest{
 		Name:          name,
 		OrgId:         orgId,
 		OwnerId:       ownerId,
@@ -166,7 +167,7 @@ func (c *clients) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	return pkg, nil
 }
 
-func (c *clients) GetSim(id string) (*SimInfo, error) {
+func (c *clients) GetSim(id string) (*rest.SimInfo, error) {
 	sim, err := c.sim.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -175,7 +176,7 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 	if sim.SyncStatus == types.SyncStatusUnknown.String() || sim.SyncStatus == types.SyncStatusFailed.String() {
 		log.Error(failedRequestMsg)
 
-		return nil, rest.HttpError{
+		return nil, crest.HttpError{
 			HttpCode: http.StatusUnprocessableEntity,
 			Message:  failedRequestMsg,
 		}
@@ -184,7 +185,7 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 	if sim.SyncStatus == types.SyncStatusPending.String() {
 		log.Warn(pendingRequestMsg)
 
-		return sim, rest.HttpError{
+		return sim, crest.HttpError{
 			HttpCode: http.StatusPartialContent,
 			Message:  pendingRequestMsg,
 		}
@@ -195,10 +196,10 @@ func (c *clients) GetSim(id string) (*SimInfo, error) {
 
 func (c *clients) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
 	email, phoneNumber, address, dob, proofOfID, idSerial, packageId, simType,
-	simToken string, trafficPolicy uint32) (*SimInfo, error) {
+	simToken string, trafficPolicy uint32) (*rest.SimInfo, error) {
 	if subscriberId == "" {
 		subscriber, err := c.subscriber.Add(
-			AddSubscriberRequest{
+			rest.AddSubscriberRequest{
 				OrgId:                 orgId,
 				NetworkId:             networkId,
 				FirstName:             firstName,
@@ -219,7 +220,7 @@ func (c *clients) ConfigureSim(subscriberId, orgId, networkId, firstName, lastNa
 		subscriberId = subscriber.SubscriberId.String()
 	}
 
-	sim, err := c.sim.Add(AddSimRequest{
+	sim, err := c.sim.Add(rest.AddSimRequest{
 		SubscriberId:  subscriberId,
 		NetworkId:     networkId,
 		PackageId:     packageId,
@@ -234,7 +235,7 @@ func (c *clients) ConfigureSim(subscriberId, orgId, networkId, firstName, lastNa
 	return sim, nil
 }
 
-func (c *clients) GetNode(id string) (*NodeInfo, error) {
+func (c *clients) GetNode(id string) (*rest.NodeInfo, error) {
 	node, err := c.node.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -243,8 +244,8 @@ func (c *clients) GetNode(id string) (*NodeInfo, error) {
 	return node, nil
 }
 
-func (c *clients) RegisterNode(nodeId, nodeName, orgId, state string) (*NodeInfo, error) {
-	node, err := c.node.Add(AddNodeRequest{
+func (c *clients) RegisterNode(nodeId, nodeName, orgId, state string) (*rest.NodeInfo, error) {
+	node, err := c.node.Add(rest.AddNodeRequest{
 		NodeId: nodeId,
 		Name:   nodeName,
 		OrgId:  orgId,
@@ -258,7 +259,7 @@ func (c *clients) RegisterNode(nodeId, nodeName, orgId, state string) (*NodeInfo
 }
 
 func (c *clients) AttachNode(id, left, right string) error {
-	err := c.node.Attach(id, AttachNodesRequest{
+	err := c.node.Attach(id, rest.AttachNodesRequest{
 		AmpNodeL: left,
 		AmpNodeR: right,
 	})
@@ -279,7 +280,7 @@ func (c *clients) DetachNode(id string) error {
 }
 
 func (c *clients) AddNodeToSite(id, networkId, siteId string) error {
-	err := c.node.AddToSite(id, AddToSiteRequest{
+	err := c.node.AddToSite(id, rest.AddToSiteRequest{
 		NetworkId: networkId,
 		SiteId:    siteId,
 	})
@@ -309,10 +310,10 @@ func (c *clients) DeleteNode(id string) error {
 }
 
 func handleRestErrorStatus(err error) error {
-	e := ErrorStatus{}
+	e := rest.ErrorStatus{}
 
 	if errors.As(err, &e) {
-		return rest.HttpError{
+		return crest.HttpError{
 			HttpCode: e.StatusCode,
 			Message:  err.Error(),
 		}

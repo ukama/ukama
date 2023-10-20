@@ -1,11 +1,11 @@
-package client
+package rest
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/ukama/ukama/systems/common/rest"
+	crest "github.com/ukama/ukama/systems/common/rest"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,7 +35,7 @@ func NewRestyWithBearer(key string) *Resty {
 }
 
 func (r *Resty) Get(url string) (*resty.Response, error) {
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	resp, err := r.C.R().SetError(&errStatus).Get(url)
 	if err != nil {
@@ -57,7 +57,7 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 }
 
 func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	resp, err := r.C.R().SetError(&errStatus).SetQueryString(q).Get(url)
 
@@ -82,7 +82,7 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	if b != nil {
 		r.C.R().SetError(&errStatus).SetBody(b)
@@ -110,7 +110,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	if b != nil {
 		r.C.R().SetError(&errStatus).SetBody(b)
@@ -138,7 +138,7 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 	var err error
 
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	if b != nil {
 		r.C.R().SetError(&errStatus).SetBody(b)
@@ -164,7 +164,7 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 }
 
 func (r *Resty) Delete(url string) (*resty.Response, error) {
-	errStatus := rest.ErrorMessage{}
+	errStatus := crest.ErrorMessage{}
 
 	resp, err := r.C.R().SetError(&errStatus).Delete(url)
 	if err != nil {

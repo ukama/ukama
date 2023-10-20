@@ -1,4 +1,4 @@
-package client_test
+package rest_test
 
 import (
 	"bytes"
@@ -8,14 +8,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 )
 
 func TestNetworkClient_Get(t *testing.T) {
 	t.Run("NetworkFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint+"/"+testUuid)
 
 			// fake network info
 			ntwk := `{"network":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_deactivated": true}}`
@@ -33,7 +33,7 @@ func TestNetworkClient_Get(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -47,7 +47,7 @@ func TestNetworkClient_Get(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -56,7 +56,7 @@ func TestNetworkClient_Get(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -68,7 +68,7 @@ func TestNetworkClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -78,7 +78,7 @@ func TestNetworkClient_Get(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -90,12 +90,12 @@ func TestNetworkClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint+"/"+testUuid)
 
 			return nil
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -110,7 +110,7 @@ func TestNetworkClient_Add(t *testing.T) {
 	t.Run("NetworkAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint)
 
 			// fake network info
 			ntwk := `{"network":{"id": "03cb753f-5e03-4c97-8e47-625115476c72","Name": "net-1", "is_deactivated": true}}`
@@ -128,14 +128,14 @@ func TestNetworkClient_Add(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{NetName: "net-1",
+			rest.AddNetworkRequest{NetName: "net-1",
 				OrgName: "Ukama"},
 		)
 
@@ -145,7 +145,7 @@ func TestNetworkClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint)
 
 			return &http.Response{
 				StatusCode: 500,
@@ -155,12 +155,12 @@ func TestNetworkClient_Add(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{
+			rest.AddNetworkRequest{
 				NetName: "net-1",
 				OrgName: "Ukama",
 			},
@@ -172,7 +172,7 @@ func TestNetworkClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -182,12 +182,12 @@ func TestNetworkClient_Add(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{
+			rest.AddNetworkRequest{
 				NetName: "net-1",
 				OrgName: "Ukama",
 			},
@@ -199,17 +199,17 @@ func TestNetworkClient_Add(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NetworkEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NetworkEndpoint)
 
 			return nil
 		}
 
-		testNetworkClient := client.NewNetworkClient("")
+		testNetworkClient := rest.NewNetworkClient("")
 
 		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(
-			client.AddNetworkRequest{
+			rest.AddNetworkRequest{
 				NetName: "net-1",
 				OrgName: "Ukama",
 			},

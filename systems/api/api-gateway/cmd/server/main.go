@@ -6,11 +6,12 @@ import (
 	"github.com/ukama/ukama/systems/api/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/providers"
 
 	log "github.com/sirupsen/logrus"
+	prest "github.com/ukama/ukama/systems/api/api-gateway/pkg/rest"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 )
 
@@ -21,11 +22,11 @@ func main() {
 	initConfig()
 
 	clientSet := client.NewClientsSet(
-		client.NewNetworkClient(svcConf.HttpServices.Network),
-		client.NewPackageClient(svcConf.HttpServices.Package),
-		client.NewSubscriberClient(svcConf.HttpServices.Subscriber),
-		client.NewSimClient(svcConf.HttpServices.Sim),
-		client.NewNodeClient(svcConf.HttpServices.Node),
+		rest.NewNetworkClient(svcConf.HttpServices.Network),
+		rest.NewPackageClient(svcConf.HttpServices.Package),
+		rest.NewSubscriberClient(svcConf.HttpServices.Subscriber),
+		rest.NewSimClient(svcConf.HttpServices.Sim),
+		rest.NewNodeClient(svcConf.HttpServices.Node),
 	)
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
@@ -33,7 +34,7 @@ func main() {
 		log.Errorf("Failed to create auth client: %v", err)
 	}
 
-	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	router := prest.NewRouter(clientSet, prest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	router.Run()
 }
 

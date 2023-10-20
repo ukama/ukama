@@ -15,11 +15,12 @@ import (
 
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/providers"
-	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
 const netEndpoint = "/v1/networks"
@@ -32,7 +33,7 @@ var defaultCors = cors.Config{
 }
 
 var routerConfig = &RouterConfig{
-	serverConf: &rest.HttpConfig{
+	serverConf: &crest.HttpConfig{
 		Cors: defaultCors,
 	},
 	auth: &cconfig.Auth{
@@ -80,7 +81,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		netInfo := &client.NetworkInfo{
+		netInfo := &rest.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
@@ -103,13 +104,13 @@ func TestRouter_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		netInfo := &client.NetworkInfo{
+		netInfo := &rest.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
 
 		c.On("GetNetwork", netId.String()).Return(netInfo,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
 			})
@@ -131,7 +132,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		netId := uuid.NewV4()
 
 		c.On("GetNetwork", netId.String()).Return(nil,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNetwork failure",
 			})
@@ -195,7 +196,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			PaymentLinks:     paymentLinks,
 		}
 
-		netInfo := &client.NetworkInfo{
+		netInfo := &rest.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
@@ -273,7 +274,7 @@ func TestRouter_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		pkgInfo := &client.PackageInfo{
+		pkgInfo := &rest.PackageInfo{
 			Id:   pkgId.String(),
 			Name: pkgName,
 		}
@@ -296,13 +297,13 @@ func TestRouter_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		pkgInfo := &client.PackageInfo{
+		pkgInfo := &rest.PackageInfo{
 			Id:   pkgId.String(),
 			Name: pkgName,
 		}
 
 		c.On("GetPackage", pkgId.String()).Return(pkgInfo,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
 			})
@@ -324,7 +325,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		pkgId := uuid.NewV4()
 
 		c.On("GetPackage", pkgId.String()).Return(nil,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNetwork failure",
 			})
@@ -417,7 +418,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Networks:      networks,
 		}
 
-		pkgInfo := &client.PackageInfo{
+		pkgInfo := &rest.PackageInfo{
 			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
@@ -529,7 +530,7 @@ func TestRouter_GetSim(t *testing.T) {
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		simInfo := &client.SimInfo{
+		simInfo := &rest.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
@@ -552,13 +553,13 @@ func TestRouter_GetSim(t *testing.T) {
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		simInfo := &client.SimInfo{
+		simInfo := &rest.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
 
 		c.On("GetSim", simId.String()).Return(simInfo,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
 			})
@@ -580,7 +581,7 @@ func TestRouter_GetSim(t *testing.T) {
 		simId := uuid.NewV4()
 
 		c.On("GetSim", simId.String()).Return(nil,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetSim failure",
 			})
@@ -661,7 +662,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 		sim.SubscriberId = subscriberId.String()
 
-		simInfo := &client.SimInfo{
+		simInfo := &rest.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
@@ -727,7 +728,7 @@ func TestRouter_GetNode(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
 
-		nodeInfo := &client.NodeInfo{
+		nodeInfo := &rest.NodeInfo{
 			Id:   nodeId,
 			Name: nodeName,
 		}
@@ -751,7 +752,7 @@ func TestRouter_GetNode(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
 		c.On("GetNode", nodeId).Return(nil,
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNode failure",
 			})
@@ -806,7 +807,7 @@ func TestRouter_RegisterNode(t *testing.T) {
 			State:  state,
 		}
 
-		nodeInfo := &client.NodeInfo{
+		nodeInfo := &rest.NodeInfo{
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
@@ -956,7 +957,7 @@ func TestRouter_DetachNode(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
 		c.On("DetachNode", nodeId).Return(
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
 			})
@@ -1081,7 +1082,7 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
 		c.On("RemoveNodeFromSite", nodeId).Return(
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
 			})
@@ -1145,7 +1146,7 @@ func TestRouter_DeleteNode(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
 		c.On("DeleteNode", nodeId).Return(
-			rest.HttpError{
+			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
 			})

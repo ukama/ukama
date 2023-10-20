@@ -1,4 +1,4 @@
-package client_test
+package rest_test
 
 import (
 	"bytes"
@@ -8,14 +8,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 )
 
 func TestSimClient_Get(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint+"/"+testUuid)
 
 			// fake sim info
 			sim := `{"sim":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_physical": false}}`
@@ -33,7 +33,7 @@ func TestSimClient_Get(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -47,7 +47,7 @@ func TestSimClient_Get(t *testing.T) {
 
 	t.Run("SimNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -56,7 +56,7 @@ func TestSimClient_Get(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -68,7 +68,7 @@ func TestSimClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -78,7 +78,7 @@ func TestSimClient_Get(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -90,12 +90,12 @@ func TestSimClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint+"/"+testUuid)
 
 			return nil
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -110,7 +110,7 @@ func TestSimClient_Add(t *testing.T) {
 	t.Run("SimAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint)
 
 			// fake sim info
 			sim := `{"sim":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_physical": false}}`
@@ -128,14 +128,14 @@ func TestSimClient_Add(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
-			client.AddSimRequest{
+			rest.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
@@ -146,7 +146,7 @@ func TestSimClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint)
 
 			return &http.Response{
 				StatusCode: 500,
@@ -156,12 +156,12 @@ func TestSimClient_Add(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
-			client.AddSimRequest{
+			rest.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
@@ -172,7 +172,7 @@ func TestSimClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -182,12 +182,12 @@ func TestSimClient_Add(t *testing.T) {
 			}
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
-			client.AddSimRequest{
+			rest.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)
@@ -198,17 +198,17 @@ func TestSimClient_Add(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SimEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.SimEndpoint)
 
 			return nil
 		}
 
-		testSimClient := client.NewSimClient("")
+		testSimClient := rest.NewSimClient("")
 
 		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
-			client.AddSimRequest{
+			rest.AddSimRequest{
 				SubscriberId: "some-subscriber_Id",
 				PackageId:    "some-package_id"},
 		)

@@ -3,28 +3,18 @@ package client_test
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/tj/assert"
 
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	crest "github.com/ukama/ukama/systems/common/rest"
 )
-
-const (
-	testUuid   = "03cb753f-5e03-4c97-8e47-625115476c72"
-	testNodeId = "uk-sa2341-hnode-v0-a1a0"
-)
-
-type RoundTripFunc func(req *http.Request) *http.Response
-
-func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return r(req), nil
-}
 
 func TestCient_GetNetwork(t *testing.T) {
 	netClient := &mocks.NetworkClient{}
@@ -36,7 +26,7 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&client.NetworkInfo{
+			Return(&rest.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
 				SyncStatus: types.SyncStatusCompleted.String(),
@@ -53,7 +43,7 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&client.NetworkInfo{
+			Return(&rest.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
 				SyncStatus: types.SyncStatusPending.String(),
@@ -62,7 +52,7 @@ func TestCient_GetNetwork(t *testing.T) {
 		netInfo, err := c.GetNetwork(netId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, netInfo)
@@ -72,7 +62,7 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusFailed", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&client.NetworkInfo{
+			Return(&rest.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
 				SyncStatus: types.SyncStatusFailed.String(),
@@ -81,7 +71,7 @@ func TestCient_GetNetwork(t *testing.T) {
 		netInfo, err := c.GetNetwork(netId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "invalid")
 
 		assert.Nil(t, netInfo)
@@ -91,12 +81,12 @@ func TestCient_GetNetwork(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(nil,
 				fmt.Errorf("GetNetwork failure: %w",
-					client.ErrorStatus{StatusCode: 404})).Once()
+					rest.ErrorStatus{StatusCode: 404})).Once()
 
 		netInfo, err := c.GetNetwork(netId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 
 		assert.Nil(t, netInfo)
@@ -132,13 +122,13 @@ func TestCient_CreateNetwork(t *testing.T) {
 	c := client.NewClientsSet(netClient, nil, nil, nil, nil)
 
 	t.Run("NetworkCreated", func(t *testing.T) {
-		netClient.On("Add", client.AddNetworkRequest{
+		netClient.On("Add", rest.AddNetworkRequest{
 			OrgName:          orgName,
 			NetName:          netName,
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
 			PaymentLinks:     paymentLinks,
-		}).Return(&client.NetworkInfo{
+		}).Return(&rest.NetworkInfo{
 			Id:               netId.String(),
 			Name:             netName,
 			AllowedCountries: countries,
@@ -156,7 +146,7 @@ func TestCient_CreateNetwork(t *testing.T) {
 	})
 
 	t.Run("NetworkNotCreated", func(t *testing.T) {
-		netClient.On("Add", client.AddNetworkRequest{
+		netClient.On("Add", rest.AddNetworkRequest{
 			OrgName:          orgName,
 			NetName:          netName,
 			AllowedCountries: countries,
@@ -182,7 +172,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&client.PackageInfo{
+			Return(&rest.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusCompleted.String(),
@@ -199,7 +189,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&client.PackageInfo{
+			Return(&rest.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusPending.String(),
@@ -208,7 +198,7 @@ func TestCient_GetPackage(t *testing.T) {
 		pkgInfo, err := c.GetPackage(packageId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, pkgInfo)
@@ -218,7 +208,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusFailed", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&client.PackageInfo{
+			Return(&rest.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusFailed.String(),
@@ -227,7 +217,7 @@ func TestCient_GetPackage(t *testing.T) {
 		pkgInfo, err := c.GetPackage(packageId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "invalid")
 
 		assert.Nil(t, pkgInfo)
@@ -237,12 +227,12 @@ func TestCient_GetPackage(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(nil,
 				fmt.Errorf("GetNetwork failure: %w",
-					client.ErrorStatus{StatusCode: 404})).Once()
+					rest.ErrorStatus{StatusCode: 404})).Once()
 
 		pkgInfo, err := c.GetPackage(packageId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 
 		assert.Nil(t, pkgInfo)
@@ -292,7 +282,7 @@ func TestCient_AddPackage(t *testing.T) {
 	c := client.NewClientsSet(nil, pkgClient, nil, nil, nil)
 
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
-		pkgClient.On("Add", client.AddPackageRequest{
+		pkgClient.On("Add", rest.AddPackageRequest{
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,
@@ -315,7 +305,7 @@ func TestCient_AddPackage(t *testing.T) {
 			Overdraft:     overdraft,
 			TrafficPolicy: trafficPolicy,
 			Networks:      networks,
-		}).Return(&client.PackageInfo{
+		}).Return(&rest.PackageInfo{
 			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
@@ -352,7 +342,7 @@ func TestCient_AddPackage(t *testing.T) {
 	})
 
 	t.Run("PackageNotCreated", func(t *testing.T) {
-		pkgClient.On("Add", client.AddPackageRequest{
+		pkgClient.On("Add", rest.AddPackageRequest{
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,
@@ -396,7 +386,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&client.SimInfo{
+			Return(&rest.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusCompleted.String(),
@@ -413,7 +403,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&client.SimInfo{
+			Return(&rest.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusPending.String(),
@@ -422,7 +412,7 @@ func TestCient_GetSim(t *testing.T) {
 		simInfo, err := c.GetSim(simId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "partial")
 
 		assert.NotNil(t, simInfo)
@@ -432,7 +422,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusFailed", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&client.SimInfo{
+			Return(&rest.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusFailed.String(),
@@ -441,7 +431,7 @@ func TestCient_GetSim(t *testing.T) {
 		simInfo, err := c.GetSim(simId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "invalid")
 
 		assert.Nil(t, simInfo)
@@ -451,12 +441,12 @@ func TestCient_GetSim(t *testing.T) {
 		simClient.On("Get", simId.String()).
 			Return(nil,
 				fmt.Errorf("GetSim failure: %w",
-					client.ErrorStatus{StatusCode: 404})).Once()
+					rest.ErrorStatus{StatusCode: 404})).Once()
 
 		simInfo, err := c.GetSim(simId.String())
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 
 		assert.Nil(t, simInfo)
@@ -501,7 +491,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	c := client.NewClientsSet(nil, nil, subscriberClient, simClient, nil)
 
 	t.Run("SimAndSubscriberCreatedAndStatusUpdated", func(t *testing.T) {
-		subscriberClient.On("Add", client.AddSubscriberRequest{
+		subscriberClient.On("Add", rest.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
 			FirstName:             firstName,
@@ -513,7 +503,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 			ProofOfIdentification: proofOfID,
 			IdSerial:              idSerial,
 		}).
-			Return(&client.SubscriberInfo{
+			Return(&rest.SubscriberInfo{
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
@@ -527,14 +517,14 @@ func TestCient_ConfigureSim(t *testing.T) {
 				IdSerial:              idSerial,
 			}, nil).Once()
 
-		simClient.On("Add", client.AddSimRequest{
+		simClient.On("Add", rest.AddSimRequest{
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			PackageId:     packageId.String(),
 			SimType:       simType,
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
-			Return(&client.SimInfo{
+			Return(&rest.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				NetworkId:    networkId.String(),
@@ -556,7 +546,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
 		subscriberClient.On("Get", subscriberId.String()).
-			Return(&client.SubscriberInfo{
+			Return(&rest.SubscriberInfo{
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
@@ -570,14 +560,14 @@ func TestCient_ConfigureSim(t *testing.T) {
 				IdSerial:              idSerial,
 			}, nil).Once()
 
-		simClient.On("Add", client.AddSimRequest{
+		simClient.On("Add", rest.AddSimRequest{
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			PackageId:     packageId.String(),
 			SimType:       simType,
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
-			Return(&client.SimInfo{
+			Return(&rest.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				NetworkId:    networkId.String(),
@@ -598,7 +588,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	})
 
 	t.Run("SubscriberNotCreated", func(t *testing.T) {
-		subscriberClient.On("Add", client.AddSubscriberRequest{
+		subscriberClient.On("Add", rest.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
 			FirstName:             firstName,
@@ -624,7 +614,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		subscriberClient.On("Get", subscriberId.String()).
 			Return(nil, nil).Once()
 
-		simClient.On("Add", client.AddSimRequest{
+		simClient.On("Add", rest.AddSimRequest{
 			SubscriberId: subscriberId.String(),
 			NetworkId:    networkId.String(),
 			PackageId:    packageId.String(),
@@ -652,7 +642,7 @@ func TestCient_GetNode(t *testing.T) {
 
 	t.Run("NodeFound", func(t *testing.T) {
 		nodeClient.On("Get", nodeId).
-			Return(&client.NodeInfo{
+			Return(&rest.NodeInfo{
 				Id:   nodeId,
 				Name: nodeName,
 			}, nil).Once()
@@ -670,12 +660,12 @@ func TestCient_GetNode(t *testing.T) {
 		nodeClient.On("Get", nodeId).
 			Return(nil,
 				fmt.Errorf("GetNode failure: %w",
-					client.ErrorStatus{StatusCode: 404})).Once()
+					rest.ErrorStatus{StatusCode: 404})).Once()
 
 		nodeInfo, err := c.GetNode(nodeId)
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 
 		assert.Nil(t, nodeInfo)
@@ -706,12 +696,12 @@ func TestCient_RegisterNode(t *testing.T) {
 	c := client.NewClientsSet(nil, nil, nil, nil, nodeClient)
 
 	t.Run("NodeRegistered", func(t *testing.T) {
-		nodeClient.On("Add", client.AddNodeRequest{
+		nodeClient.On("Add", rest.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
 			State:  state,
-		}).Return(&client.NodeInfo{
+		}).Return(&rest.NodeInfo{
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
@@ -727,7 +717,7 @@ func TestCient_RegisterNode(t *testing.T) {
 	})
 
 	t.Run("NodeNotRegistered", func(t *testing.T) {
-		nodeClient.On("Add", client.AddNodeRequest{
+		nodeClient.On("Add", rest.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
@@ -753,7 +743,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("Attach", nodeId, client.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, rest.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(nil).Once()
@@ -766,7 +756,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeNotAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("Attach", nodeId, client.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, rest.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(errors.New("some error")).Once()
@@ -797,12 +787,12 @@ func TestCient_DetachNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Detach", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				client.ErrorStatus{StatusCode: 404})).Once()
+				rest.ErrorStatus{StatusCode: 404})).Once()
 
 		err := c.DetachNode(nodeId)
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 	})
 
@@ -828,7 +818,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("AddToSite", nodeId, client.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, rest.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(nil).Once()
@@ -841,7 +831,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeNotAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("AddToSite", nodeId, client.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, rest.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(errors.New("some error")).Once()
@@ -872,12 +862,12 @@ func TestCient_RemoveNodeFromSite(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("RemoveFromSite", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				client.ErrorStatus{StatusCode: 404})).Once()
+				rest.ErrorStatus{StatusCode: 404})).Once()
 
 		err := c.RemoveNodeFromSite(nodeId)
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 	})
 
@@ -911,12 +901,12 @@ func TestCient_DeleteNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Delete", nodeId).
 			Return(fmt.Errorf("DeleteNode failure: %w",
-				client.ErrorStatus{StatusCode: 404})).Once()
+				rest.ErrorStatus{StatusCode: 404})).Once()
 
 		err := c.DeleteNode(nodeId)
 
 		assert.Error(t, err)
-		assert.IsType(t, err, rest.HttpError{})
+		assert.IsType(t, err, crest.HttpError{})
 		assert.Contains(t, err.Error(), "404")
 	})
 

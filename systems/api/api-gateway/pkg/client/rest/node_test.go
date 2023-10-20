@@ -1,4 +1,4 @@
-package client_test
+package rest_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -16,7 +16,7 @@ func TestNodeClient_Get(t *testing.T) {
 	t.Run("NodeFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			// fake node info
 			node := `{"node":{"id": "uk-sa2341-hnode-v0-a1a0", "name": "Node-A"}}`
@@ -34,7 +34,7 @@ func TestNodeClient_Get(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -48,7 +48,7 @@ func TestNodeClient_Get(t *testing.T) {
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -57,7 +57,7 @@ func TestNodeClient_Get(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -69,7 +69,7 @@ func TestNodeClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -79,7 +79,7 @@ func TestNodeClient_Get(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -91,12 +91,12 @@ func TestNodeClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -111,7 +111,7 @@ func TestNodeClient_Add(t *testing.T) {
 	t.Run("NodeAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint)
 
 			// fake node info
 			node := `{"node":{"id": "uk-sa2341-hnode-v0-a1a0", "name": "Node-A"}}`
@@ -129,14 +129,14 @@ func TestNodeClient_Add(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Add(
-			client.AddNodeRequest{
+			rest.AddNodeRequest{
 				NodeId: "uk-sa2341-hnode-v0-a1a0",
 				Name:   "Node-A",
 			})
@@ -147,7 +147,7 @@ func TestNodeClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint)
 
 			return &http.Response{
 				StatusCode: 500,
@@ -157,12 +157,12 @@ func TestNodeClient_Add(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Add(
-			client.AddNodeRequest{
+			rest.AddNodeRequest{
 				NodeId: "uk-sa2341-hnode-v0-a1a0",
 				Name:   "Node-A",
 			},
@@ -174,7 +174,7 @@ func TestNodeClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -184,12 +184,12 @@ func TestNodeClient_Add(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Add(
-			client.AddNodeRequest{
+			rest.AddNodeRequest{
 				NodeId: "uk-sa2341-hnode-v0-a1a0",
 				Name:   "Node-A",
 			},
@@ -201,17 +201,17 @@ func TestNodeClient_Add(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint)
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Add(
-			client.AddNodeRequest{
+			rest.AddNodeRequest{
 				NodeId: "uk-sa2341-hnode-v0-a1a0",
 				Name:   "Node-A",
 			},
@@ -226,7 +226,7 @@ func TestNodeClient_Delete(t *testing.T) {
 	t.Run("NodeFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			// Send mock response
 			return &http.Response{
@@ -236,7 +236,7 @@ func TestNodeClient_Delete(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -249,7 +249,7 @@ func TestNodeClient_Delete(t *testing.T) {
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -258,7 +258,7 @@ func TestNodeClient_Delete(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -269,12 +269,12 @@ func TestNodeClient_Delete(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId)
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId)
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -288,7 +288,7 @@ func TestNodeClient_Attach(t *testing.T) {
 	t.Run("NodeAttached", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			// Send mock response
 			return &http.Response{
@@ -299,14 +299,14 @@ func TestNodeClient_Attach(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Attach(testNodeId,
-			client.AttachNodesRequest{
+			rest.AttachNodesRequest{
 				AmpNodeL: "uk-sa2341-anode-v0-a1a0",
 				AmpNodeR: "uk-sa2341-anode-v0-a1a1",
 			})
@@ -316,7 +316,7 @@ func TestNodeClient_Attach(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			return &http.Response{
 				StatusCode: 500,
@@ -326,12 +326,12 @@ func TestNodeClient_Attach(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Attach(testNodeId,
-			client.AttachNodesRequest{
+			rest.AttachNodesRequest{
 				AmpNodeL: "uk-sa2341-anode-v0-a1a0",
 				AmpNodeR: "uk-sa2341-anode-v0-a1a1",
 			})
@@ -341,17 +341,17 @@ func TestNodeClient_Attach(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Attach(testNodeId,
-			client.AttachNodesRequest{
+			rest.AttachNodesRequest{
 				AmpNodeL: "uk-sa2341-anode-v0-a1a0",
 				AmpNodeR: "uk-sa2341-anode-v0-a1a1",
 			})
@@ -364,7 +364,7 @@ func TestNodeClient_Detach(t *testing.T) {
 	t.Run("NodeFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			// Send mock response
 			return &http.Response{
@@ -374,7 +374,7 @@ func TestNodeClient_Detach(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -387,7 +387,7 @@ func TestNodeClient_Detach(t *testing.T) {
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			return &http.Response{
 				StatusCode: 404,
@@ -396,7 +396,7 @@ func TestNodeClient_Detach(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -407,12 +407,12 @@ func TestNodeClient_Detach(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/attach")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/attach")
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -426,7 +426,7 @@ func TestNodeClient_AddToSite(t *testing.T) {
 	t.Run("NodeAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			// Send mock response
 			return &http.Response{
@@ -437,14 +437,14 @@ func TestNodeClient_AddToSite(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.AddToSite(testNodeId,
-			client.AddToSiteRequest{
+			rest.AddToSiteRequest{
 				NetworkId: uuid.NewV4().String(),
 				SiteId:    uuid.NewV4().String(),
 			})
@@ -454,7 +454,7 @@ func TestNodeClient_AddToSite(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			return &http.Response{
 				StatusCode: 500,
@@ -464,12 +464,12 @@ func TestNodeClient_AddToSite(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.AddToSite(testNodeId,
-			client.AddToSiteRequest{
+			rest.AddToSiteRequest{
 				NetworkId: uuid.NewV4().String(),
 				SiteId:    uuid.NewV4().String(),
 			})
@@ -479,17 +479,17 @@ func TestNodeClient_AddToSite(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testNodeClient.AddToSite(testNodeId,
-			client.AddToSiteRequest{
+			rest.AddToSiteRequest{
 				NetworkId: uuid.NewV4().String(),
 				SiteId:    uuid.NewV4().String(),
 			})
@@ -502,7 +502,7 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 	t.Run("NodeFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			// Send mock response
 			return &http.Response{
@@ -512,7 +512,7 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -525,7 +525,7 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			return &http.Response{
 				StatusCode: 404,
@@ -534,7 +534,7 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 			}
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -545,12 +545,12 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.NodeEndpoint+"/"+testNodeId+"/sites")
+			assert.Equal(tt, req.URL.String(), rest.NodeEndpoint+"/"+testNodeId+"/sites")
 
 			return nil
 		}
 
-		testNodeClient := client.NewNodeClient("")
+		testNodeClient := rest.NewNodeClient("")
 
 		testNodeClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
