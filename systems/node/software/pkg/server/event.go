@@ -2,16 +2,14 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/node/software/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -37,8 +35,13 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-
-		err = n.handleRegistryNodeAddEvent(e.RoutingKey, msg)
+		anyMsg, err := anypb.New(msg)
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("Received from health service: %v", msg)
+ 
+		err = n.publishMessage(n.s.orgName + "." + "." + "." + msg.NodeId, anyMsg, msg.NodeId)
 		if err != nil {
 			return nil, err
 		}
@@ -50,45 +53,20 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 	return &epb.EventResponse{}, nil
 }
 
-func (n *SoftwareUpdateEventServer) unmarshalSoftwareUpdateEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
-	p := &epb.NodeCreatedEvent{}
+func (n *SoftwareUpdateEventServer) unmarshalSoftwareUpdateEvent(msg *anypb.Any) (*pb.StoreRunningAppsInfoRequest, error) {
+	p := &pb.StoreRunningAppsInfoRequest{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal node health  message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
 }
 
-func unmarshalSoftwareUpdate(msg *anypb.Any) (*gen.SoftwareUpdate, error) {
-	p := &gen.SoftwareUpdate{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal SoftwareUpdateEvent message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 
-}
-func (n *SoftwareUpdateEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	anyMsg, err := anypb.New(msg)
-	if err != nil {
-		return  err
-	}
-	
-	   err = n.publishMessage(n.s.orgName + "." + "." + "." + msg.NodeId, anyMsg,msg.NodeId)
-	   if err != nil {
-		   log.Errorf("Failed to publish message. Errors %s", err.Error())
-		   return  status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-   
-	   }
-	fmt.Println("Received from health service:", msg)
-	return nil
-}
 
-func (e *SoftwareUpdateEventServer) publishMessage(target string , anyMsg *anypb.Any ,nodeId string) error {
-	route := "request.cloud.local" + "." + e.s.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
+func (c *SoftwareUpdateEventServer) publishMessage(target string , anyMsg *anypb.Any ,nodeId string) error {
+	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HTTPMethod: "POST",
@@ -97,6 +75,6 @@ func (e *SoftwareUpdateEventServer) publishMessage(target string , anyMsg *anypb
 	}
 	log.Infof("Published controller %s on route %s on target %s ",anyMsg,route,target)
 
-	err := e.s.msgbus.PublishRequest(route, msg)
+	err := c.s.msgbus.PublishRequest(route, msg)
 	return err
 }
