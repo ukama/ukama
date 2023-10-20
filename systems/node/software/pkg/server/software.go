@@ -8,14 +8,12 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type SoftwareServer struct {
@@ -59,26 +57,7 @@ func (s *SoftwareServer) CreateSoftwareUpdate(ctx context.Context, req *pb.Creat
 	err := s.sRepo.CreateSoftwareUpdate(softwareUpdate, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to create software update")
-	}
-
-	capps := &pb.CreateSoftwareUpdateRequest{
-		Name: req.Name,
-		Tag:  req.Tag,
-	}
-	route := s.nodeFeederRoutingKey.SetObject("node").SetAction("update").MustBuild()
-
-	anyMsg, err := anypb.New(capps)
-
-	msg := &cpb.NodeFeederMessage{
-		Target:     s.orgName + "." + capps.Name + "." + capps.Tag,
-		HTTPMethod: "POST",
-		Path:       "/v1/node/update",
-		Msg:        anyMsg,
-	}
-	err = s.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	}	
 
 	return &pb.CreateSoftwareUpdateResponse{
 		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
@@ -109,3 +88,4 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Status:      pb.Status(software.Status),
 	}
 }
+

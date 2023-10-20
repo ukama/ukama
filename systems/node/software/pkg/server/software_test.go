@@ -21,7 +21,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a mock for the SoftwareManagerRepo interface
-	softwareManager := &mocks.SoftwareManagerRepo{}
+	softwareManager := &mocks.SoftwareRepo{}
 
 	// Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
 	softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
@@ -35,7 +35,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 		Return(nil) // You can specify the expected return value here
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareManagerServer(testOrgName, softwareManager, msgclientRepo, false)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false)
 
 	// Test
 	r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
@@ -55,7 +55,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a mock for the SoftwareManagerRepo interface
-	softwareManager := &mocks.SoftwareManagerRepo{}
+	softwareManager := &mocks.SoftwareRepo{}
 
 	// Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
 	softwareManager.On("GetLatestSoftwareUpdate").
@@ -70,7 +70,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareManagerServer(testOrgName, softwareManager, msgclientRepo, false)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false)
 
 	// Test
 	r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})
