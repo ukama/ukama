@@ -779,6 +779,10 @@ static inline double usys_time(time_t *t) {
     return time(t);
 }
 
+static inline USysServiceEntry* usys_get_service_by_name(char *name) {
+    return getservbyname(name, NULL);
+}
+
 #ifdef __cplusplus
 }
 #endif

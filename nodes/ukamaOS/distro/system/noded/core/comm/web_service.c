@@ -24,6 +24,7 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
+#include "usys_file.h"
 
 #define NOTIFY_ALERT_EP       "/notify/v1/alert/"
 #define NOTIFY_EVENT_EP       "/notify/v1/event/"
@@ -33,24 +34,6 @@ UInst serverInst;
 static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
-
-static int find_service_port(char *serviceName) {
-
-    struct servent *entry = NULL;
-
-    entry = getservbyname(serviceName, NULL);
-    if (entry == NULL) {
-        usys_log_error("Unable to find port entry for service: %s", serviceName);
-        return 0;
-    }
-
-    usys_log_debug("Service entry found. Name: %s port: %d proto: %s",
-                   entry->s_name,
-                   ntohs(entry->s_port),
-                   entry->s_proto);
-
-    return ntohs(entry->s_port);
-}
 
 /**
  * @fn      void clean_noded_notif(NodedNotifDetails*)
@@ -1436,7 +1419,7 @@ static int init_framework(UInst *inst) {
 
     int port;
 
-    port = find_service_port(SERVICE_NAME);
+    port = usys_find_service_port(SERVICE_NAME);
     if (port == 0) {
         usys_log_error("Unable to find %s in the service db",
                        SERVICE_NAME);
@@ -1483,7 +1466,7 @@ int web_service_start() {
     }
 
     usys_log_info("Webservice on client port: %d started.",
-                  find_service_port(SERVICE_NAME));
+                  usys_find_service_port(SERVICE_NAME));
 
     return STATUS_OK;
 }

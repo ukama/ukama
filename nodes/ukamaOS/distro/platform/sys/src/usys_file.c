@@ -383,3 +383,17 @@ int usys_file_add_record(char *filename, char *rowdesc, char *data) {
     ret = usys_file_append(filename, data, 0, usys_strlen(data));
     return ret;
 }
+
+int usys_find_service_port(char *serviceName) {
+
+    USysServiceEntry *entry = NULL;
+
+    entry = usys_get_service_by_name(serviceName);
+    if (entry == NULL) {
+        return 0;
+    }
+
+    endservent();
+
+    return ntohs(entry->s_port);
+}
