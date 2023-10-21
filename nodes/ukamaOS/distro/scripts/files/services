@@ -1181,12 +1181,12 @@ fido		60179/tcp			# Ifmail
 fido		60179/udp
 
 # UkamaOS local services
-noded           18000/tcp   node 
-starterd        18001/tcp   starter
-meshd           18002/tcp   mesh
-deviced         18003/tcp   device
-lookoutd        18004/tcp   lookout
-wimcd           18005/tcp   wimc
-metricsd        18006/tcp   metrics
-configd         18007/tcp   config
+node   	        18000/tcp   noded 
+starter 	18001/tcp   starterd
+mesh          	18002/tcp   meshd
+device  	18003/tcp   deviced
+lookout 	18004/tcp   lookoutd
+wimc       	18005/tcp   wimcd
+metrics     	18006/tcp   metricsd
+config      	18007/tcp   configd
 
