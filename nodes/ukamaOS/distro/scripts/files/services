@@ -1180,5 +1180,13 @@ tfido		60177/udp
 fido		60179/tcp			# Ifmail
 fido		60179/udp
 
-# Local services
+# UkamaOS local services
+noded           18000/tcp   node 
+starterd        18001/tcp   starter
+meshd           18002/tcp   mesh
+deviced         18003/tcp   device
+lookoutd        18004/tcp   lookout
+wimcd           18005/tcp   wimc
+metricsd        18006/tcp   metrics
+configd         18007/tcp   config
 
