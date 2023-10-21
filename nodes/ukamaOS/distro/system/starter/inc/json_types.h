@@ -12,6 +12,7 @@
 
 #define JTAG_CAPPS  "capps"
 
+#define JTAG_SPACE  "space"
 #define JTAG_NAME   "name"
 #define JTAG_TAG    "tag"
 #define JTAG_STATUS "status"
