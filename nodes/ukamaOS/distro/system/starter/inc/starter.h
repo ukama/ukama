@@ -16,7 +16,7 @@
 #include "jansson.h"
 #include "capp_config.h"
 
-#define SERVICE_NAME           "starter.d"
+#define SERVICE_NAME           "starter"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 

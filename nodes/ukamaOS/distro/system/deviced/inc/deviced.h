@@ -15,7 +15,7 @@
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME           "deviced"
+#define SERVICE_NAME           "device"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 

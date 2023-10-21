@@ -10,7 +10,7 @@
 #ifndef NOTIFY_MACROS_H_
 #define NOTIFY_MACROS_H_
 
-#define SERVICE_NAME           "notifyD"
+#define SERVICE_NAME           "notify"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 

@@ -28,7 +28,7 @@
 
 #define NOTIFY_ALERT_EP       "/notify/v1/alert/"
 #define NOTIFY_EVENT_EP       "/notify/v1/event/"
-#define SERVICE_NAME          "noded"
+#define SERVICE_NAME          "node"
 
 UInst serverInst;
 static char gNotifServer[MAX_URL_LENGTH] = {0};

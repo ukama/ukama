@@ -15,7 +15,7 @@
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME           "lookout.d"
+#define SERVICE_NAME           "lookout"
 #define SERVICE_NODED          1
 #define SERVICE_STARTERD       2
 #define SERVICE_NOTIFYD        3
