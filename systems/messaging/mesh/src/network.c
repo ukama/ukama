@@ -24,8 +24,6 @@
 #include "config.h"
 #include "jserdes.h"
 
-#define WEB_SOCKETS 1
-#define WEB_SERVICE 0
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request,
@@ -38,6 +36,31 @@ extern void websocket_incoming_message(const URequest *request,
 extern void  websocket_onclose(const URequest *request,
                                WSManager *manager,
 							   void *data);
+
+static int find_first_available_port(int start, int end) {
+
+    int port = -1, sockfd;
+    struct sockaddr_in addr;
+
+    for (port = start; port <= end; port++) {
+
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) return -1;
+
+        addr.sin_family      = AF_INET;
+        addr.sin_addr.s_addr = INADDR_ANY;
+        addr.sin_port        = htons(port);
+
+        if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+            close(sockfd);
+            return port;
+        }
+
+        close(sockfd);
+    }
+
+    return 0;
+}
 
 static int init_framework(UInst *inst,
                           struct sockaddr_in *bindAddr,
@@ -99,13 +122,56 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 		return FALSE;
 	}
 
-	if (flag == WEB_SOCKETS) {
+	if (flag == WEBSOCKET) {
 		log_debug("Websocket succesfully started.");
-	} else {
+	} else if (flag == SERVICE) {
 		log_debug("Webservice sucessfully started.");
-	}
+	} else if (flag == FORWARD) {
+        log_debug("Forward service sucessfully started.");
+    }
   
 	return TRUE;
+}
+
+int start_forward_service(Config *config, UInst *forwardInst) {
+
+    struct sockaddr_in bindAddr;
+    int port;
+
+    port = find_first_available_port(START_PORT, END_PORT);
+    if (port <= 0) {
+        log_error("Unable to find empty port to bind");
+        return FALSE;
+    }
+
+    memset(&bindAddr, 0, sizeof(bindAddr));
+    bindAddr.sin_family      = AF_INET;
+    bindAddr.sin_port        = htons(port);
+    bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
+
+	if (init_framework(forwardInst,
+                       &bindAddr,
+                       port) != TRUE) {
+		log_error("Error initializing forward framework");
+		return FALSE;
+	}
+
+	/* setup endpoint */
+    ulfius_set_default_endpoint(forwardInst,
+                                &callback_default_forward,
+                                config);
+
+	if (start_framework(config,
+                        forwardInst,
+                        FORWARD) == FALSE) {
+		log_error("Failed to start forward service at port %d",
+                  port);
+		return FALSE;
+	}
+
+	log_debug("Forward service accepting on port: %d", port);
+
+    return port;
 }
 
 /*
@@ -132,8 +198,7 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
 	/* setup endpoints and methods callback. */
 	setup_websocket_endpoints(config, websocketInst);
 
-	/* open connection for both admin and client webservices */
-	if (start_framework(config, websocketInst, WEB_SOCKETS)==FALSE) {
+	if (start_framework(config, websocketInst, WEBSOCKET)==FALSE) {
 		log_error("Failed to start websocket at remote port %s",
 				  config->websocketPort);
 		return FALSE;
@@ -159,7 +224,7 @@ int start_web_services(Config *config, UInst *clientInst) {
 	setup_webservice_endpoints(config, clientInst);
 
 	/* open connection for both admin and client webservices */
-	if (!start_framework(config, clientInst, WEB_SERVICE)) {
+	if (!start_framework(config, clientInst, SERVICE)) {
 		log_error("Failed to start webservices for client: %s",
                   config->servicesPort);
 		return FALSE;

@@ -45,9 +45,15 @@
 #define MESH_LOCK_TIMEOUT 10 /* seconds */
 #define MAX_QUEUE_SIZE    100
 #define MAX_BUFFER        256
+#define START_PORT        1025
+#define END_PORT          65534
 
 #define TRUE  1
 #define FALSE 0
+
+#define FORWARD   1
+#define WEBSOCKET 2
+#define SERVICE   3
 
 #define ENV_WEBSOCKET_PORT   "ENV_WEBSOCKET_PORT"
 #define ENV_SERVICES_PORT    "ENV_SERVICES_PORT"

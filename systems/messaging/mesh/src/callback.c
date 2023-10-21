@@ -46,12 +46,13 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
  */
 int callback_websocket(const URequest *request, UResponse *response,
                        void *data) {
-	int ret;
+	int ret, forwardPort;
 	char *nodeID=NULL;
 	Config *config=NULL;
     MapItem *map=NULL;
     char ip[INET_ADDRSTRLEN]={0};
-    struct sockaddr_in *sin=NULL;
+    struct sockaddr_in *sin = NULL;
+    UInst *forwardInst      = NULL;
 
     config = (Config *)data;
 
@@ -64,12 +65,23 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
+    /* Open up forwarding web instance for services */
+    forwardPort = start_forward_service(config, forwardInst);
+    if (forwardPort <= 0 ) {
+        log_error("Unable to start forwarding serice");
+        return U_CALLBACK_ERROR;
+    }
+
     map = add_map_to_table(&IDsTable,
                            nodeID,
+                           forwardInst,
                            &ip[0], sin->sin_port,
-                           &ip[0], sin->sin_port);
+                           config->bindingIP,
+                           forwardPort);
 	if (map == NULL) {
-        return U_CALLBACK_CONTINUE; // XXX
+        ulfius_stop_framework(forwardInst);
+        ulfius_clean_instance(forwardInst);
+        return U_CALLBACK_ERROR;
 	}
 
     map->configData = data;
@@ -78,9 +90,13 @@ int callback_websocket(const URequest *request, UResponse *response,
 	if (publish_event(CONN_CONNECT,
                       nodeID,
                       &ip[0], sin->sin_port,
-                      &ip[0], sin->sin_port) == FALSE) {
+                      config->bindingIP,
+                      forwardPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-        //		return U_CALLBACK_ERROR; xxx
+        remove_map_item_from_table(&IDsTable, nodeID);
+        ulfius_stop_framework(forwardInst);
+        ulfius_clean_instance(forwardInst);
+        return U_CALLBACK_ERROR;
 	} else {
 		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
@@ -208,5 +224,15 @@ int callback_webservice(const URequest *request, UResponse *response,
 	// if (map->size)
 	//	free(map->data);
 
+	return U_CALLBACK_CONTINUE;
+}
+
+int callback_default_forward(const URequest *request,
+                             UResponse *response,
+                             void *user_data) {
+
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
 }

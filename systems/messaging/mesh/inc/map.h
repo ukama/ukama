@@ -25,6 +25,7 @@ typedef struct map_item_t {
     WorkList *transmit;
     WorkList *receive;
     void     *configData;
+    UInst    *forwardInst;
 
     pthread_mutex_t   mutex;   /* Client thread waiting on response
 								* This mutex is released by websocket */
@@ -52,6 +53,8 @@ void init_map_table(MapTable **table);
 void free_map_item(MapItem *map);
 void remove_map_item_from_table(MapTable *table, char *nodeID);
 MapItem *is_existing_item(MapTable *table, char *nodeID);
-MapItem *add_map_to_table(MapTable **table, char *nodeID, char *nodeIP,
-                          int nodePort, char *meshIP, int meshPort);
+MapItem *add_map_to_table(MapTable **table,
+                          char *nodeID, UInst *instance,
+                          char *nodeIP, int nodePort,
+                          char *meshIP, int meshPort);
 #endif /* MESH_MAP_H */
