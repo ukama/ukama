@@ -1185,8 +1185,9 @@ node   	        18000/tcp   noded
 starter 	18001/tcp   starterd
 mesh          	18002/tcp   meshd
 device  	18003/tcp   deviced
-lookout 	18004/tcp   lookoutd
-wimc       	18005/tcp   wimcd
-metrics     	18006/tcp   metricsd
-config      	18007/tcp   configd
+device-client   18004/tcp   device-client
+lookout 	18005/tcp   lookoutd
+wimc       	18006/tcp   wimcd
+metrics     	18007/tcp   metricsd
+config      	18008/tcp   configd
 
