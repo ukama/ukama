@@ -1190,4 +1190,5 @@ lookout 	18005/tcp   lookoutd
 wimc       	18006/tcp   wimcd
 metrics     	18007/tcp   metricsd
 config      	18008/tcp   configd
+notify		18009/tcp   notifyd
 
