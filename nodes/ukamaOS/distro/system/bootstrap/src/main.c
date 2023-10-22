@@ -21,6 +21,11 @@
 #include <netdb.h>
 #include <curl/curl.h>
 
+#include "usys_api.h"
+#include "usys_error.h"
+#include "usys_log.h"
+#include "usys_file.h"
+
 #include "nodeInfo.h"
 #include "config.h"
 #include "mesh_config.h"
@@ -42,24 +47,6 @@ static void usage() {
 	printf("--v, --version                      Version. \n");
 }
 
-static int find_noded_service_port() {
-
-    struct servent *entry = NULL;
-
-    entry = getservbyname("noded", NULL);
-    if (entry == NULL) {
-        log_error("Unable to find port entry for noded.d");
-        return 0;
-    }
-
-    log_debug("Noded entry found. Name: %s port: %d proto: %s",
-              entry->s_name,
-              ntohs(entry->s_port),
-              entry->s_proto);
-
-    return ntohs(entry->s_port);
-}
-
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
 
@@ -76,10 +63,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/*
- * write_to_file --
- *
- */
 static int write_to_file(char *fileName, char *buffer) {
 
 	FILE *fp=NULL;
@@ -185,7 +168,7 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
-    config->nodedPort = find_noded_service_port();
+    config->nodedPort = usys_find_service_port("node");
     if (config->nodedPort == 0) {
         log_error("Error getting noded port from service db");
         exit(1);
