@@ -9,7 +9,8 @@ import "validator.proto";
 message Config {
     string filename = 1;
     string app = 2;
-    bytes Data = 3;
+    string version = 3;
+    bytes Data = 4;
 }
 
 message NodeConfigUpdateEvent {

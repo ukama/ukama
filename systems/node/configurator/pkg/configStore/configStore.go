@@ -12,7 +12,6 @@ import (
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
@@ -35,6 +34,13 @@ type ConfigStore struct {
 type ConfigStoreProvider interface {
 	HandleConfigStoreEvent(ctx context.Context) error
 	HandleConfigCommitReq(ctx context.Context, rVer string) error
+}
+
+type ConfigData struct {
+	FileName string `json:"FileName"`
+	App      string `json:"App"`
+	Version  string `json:"version"`
+	Data     []byte `json:"Data"`
 }
 
 type ConfigMetaData struct {
@@ -291,7 +297,12 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	// if err := c.registrySystem.ValidateNetwork(netId.String(), d.org); err != nil {
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %s", err.Error())
 	// }
-
+	type ConfigData struct {
+		FileName string `json:"FileName"`
+		App      string `json:"App"`
+		Version  string `json:"version"`
+		Data     []byte `json:"Data"`
+	}
 	// if err := c.registrySystem.ValidateSite(d.network, d.site, d.org); err != nil {
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid site %s", err.Error())
 	// }
@@ -333,16 +344,29 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 		for _, f := range files {
 
 			metaData = md[f]
-			anyMsg, err := anypb.New(m[f])
+
+			cd := &ConfigData{
+				FileName: m[f].Filename,
+				App:      m[f].App,
+				Data:     m[f].Data,
+				Version:  commit,
+			}
+
+			// anyMsg, err := anypb.New(m[f])
+			// if err != nil {
+			// 	goto RecordState
+			// }
+			jd, err := json.Marshal(cd)
 			if err != nil {
-				goto RecordState
+				log.Errorf("Failed to marshal configdata %+v. Errors %s", cd, err.Error())
+				return err
 			}
 
 			msg := &pb.NodeFeederMessage{
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HTTPMethod: "POST",
 				Path:       "/v1/configd/config",
-				Msg:        anyMsg,
+				Msg:        jd,
 			}
 
 			err = c.msgbus.PublishRequest(route, msg)
@@ -403,32 +427,42 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 		NodeId: m.node,
 	}
 
-	json, err := json.Marshal(data)
+	jd, err := json.Marshal(data)
 	if err != nil {
 		log.Errorf("Failed to marshal config version data %+v. Errors %s", data, err.Error())
 		return err
 	}
 
-	configData := &pb.Config{
-		Filename: m.fileName, /* filename with path */
+	jsonMsg, err := json.Marshal(&ConfigData{
+		FileName: m.fileName, /* filename with path */
 		App:      m.app,
-		Data:     json,
-	}
-	anyMsg, err := anypb.New(configData)
+		Data:     jd,
+	})
 	if err != nil {
+		log.Errorf("Failed to marshal configdata %+v. Errors %s", data, err.Error())
 		return err
 	}
+
+	// configData := &pb.Config{
+	// 	Filename: m.fileName, /* filename with path */
+	// 	App:      m.app,
+	// 	Data:     json,
+	// }
+	// anyMsg, err := anypb.New(configData)
+	// if err != nil {
+	// 	return err
+	// }
 
 	msg := &pb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HTTPMethod: "POST",
 		Path:       "/v1/configd/config",
-		Msg:        anyMsg,
+		Msg:        jsonMsg,
 	}
 
 	err = c.msgbus.PublishRequest(route, msg)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", configData, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", jsonMsg, route, err.Error())
 		return err
 	}
 
