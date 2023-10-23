@@ -114,6 +114,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 			genResources = append(genResources, genResource)
 		}
 		genCapp := &gen.Capps{
+			Space:     capp.Space,
 			Name:      capp.Name,
 			Tag:       capp.Tag,
 			Status:    gen.Status(gen.Status_value[capp.Status]),

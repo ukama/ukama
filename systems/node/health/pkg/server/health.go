@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -68,6 +67,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 		health.Capps = append(health.Capps, db.Capp{
 			Id:       cappID,
 			HealthID: healthID,
+			Space :   capp.GetSpace(),
 			Name:     capp.GetName(),
 			Tag:      capp.GetTag(),
 			Status:   db.Status(capp.GetStatus()),
@@ -90,7 +90,6 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 	// Publish the message to the message bus
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-	fmt.Println("BRACKLEy: ", route)
 	err = h.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -138,6 +137,7 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 	for _, capp := range health.Capps {
 		capps := &pb.Capps{
 			Id:        capp.Id.String(),
+			Space:     capp.Space,
 			Name:      capp.Name,
 			Tag:       capp.Tag,
 			Status:    pb.Status(capp.Status), // Convert Status enum to string
@@ -160,6 +160,6 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 	}
 
 	return &pb.GetRunningAppsResponse{
-		RunningApps: app, // Include the populated app in the response
+		RunningApps: app, 
 	}, nil
 }

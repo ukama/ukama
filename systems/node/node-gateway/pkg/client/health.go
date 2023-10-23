@@ -71,6 +71,7 @@ func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (
 			}
 		}
 		genCapps[i] = &pb.Capps{
+			Space:    capp.Space,
 			Name:      capp.Name,
 			Tag:       capp.Tag,
 			Status:    capp.Status,

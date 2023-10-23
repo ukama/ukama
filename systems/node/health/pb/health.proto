@@ -36,6 +36,7 @@ message App {
 
 message Capps {
     string id = 1;
+    string space = 2;
     string name = 3;
     string tag = 4;
     Status status = 5;

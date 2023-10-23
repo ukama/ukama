@@ -16,6 +16,7 @@ type System struct {
 }
 
 type Capps struct {
+	Space    string      `json:"space" validate:"required" example:"{{space}}"`
 	Name      string      `json:"name" validate:"required" example:"{{name}}"`
 	Tag       string      `json:"tag" validate:"required" example:"{{tag}}"`
 	Status    string      `json:"status" validate:"required" example:"{{status}}"`

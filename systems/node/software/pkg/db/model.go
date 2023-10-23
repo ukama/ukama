@@ -10,6 +10,7 @@ type Software struct {
 	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string
 	Tag         string
+	Space 	 string
 	Status      Status `gorm:"type:smallint" default:"0"`
 	ReleaseDate time.Time
 	CreatedAt   time.Time  `gorm:"not null"`

@@ -16,6 +16,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 }
+
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{
@@ -23,9 +24,11 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout:        7 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.node.health.capps.store"},
+			Timeout: 7 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.node.health.capps.store",
+				"event.cloud.local.{{ .Org}}.hub.distributor.capp",
+			},
 		},
-		
 	}
 }

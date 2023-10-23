@@ -8,6 +8,7 @@ replace github.com/ukama/ukama/systems/node/software => ./
 
 replace github.com/ukama/ukama/systems/node/health => ../../node/health
 
+
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (

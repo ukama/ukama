@@ -9,7 +9,7 @@ import (
 type Health struct {
 	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	NodeId    string     `gorm:"not null"`
-	TimeStamp string     `gorm:"not null"`
+	TimeStamp string     
 	System    []System   `gorm:"foreignKey:HealthID"`
 	Capps     []Capp     `gorm:"foreignKey:HealthID"`
 	CreatedAt time.Time  `gorm:"not null"`
@@ -26,9 +26,10 @@ type System struct {
 type Capp struct {
 	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	HealthID  uuid.UUID  `gorm:"type:uuid"`
-	Name      string     `gorm:"not null"`
-	Tag       string     `gorm:"not null"`
-	Status    Status     `gorm:"not null"`
+	Space    string     
+	Name      string     
+	Tag       string     
+	Status    Status `gorm:"type:uint;not null;default:3"`
 	Resources []Resource `gorm:"foreignKey:CappID"`
 }
 

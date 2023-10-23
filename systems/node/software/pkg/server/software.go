@@ -18,25 +18,22 @@ import (
 
 type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
-	sRepo          db.SoftwareRepo
+	sRepo                db.SoftwareRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
-	msgbus              mb.MsgBusServiceClient
-	debug          bool
-	orgName        string
+	msgbus               mb.MsgBusServiceClient
+	debug                bool
+	orgName              string
 }
 
-
-
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo,  msgBus mb.MsgBusServiceClient, debug bool) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, msgBus mb.MsgBusServiceClient, debug bool) *SoftwareServer {
 	return &SoftwareServer{
-		sRepo:             sRepo,
-		orgName:             orgName,
-		nodeFeederRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:              msgBus,
-		debug:               debug,
+		sRepo:                sRepo,
+		orgName:              orgName,
+		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:               msgBus,
+		debug:                debug,
 	}
 }
-
 
 func (s *SoftwareServer) CreateSoftwareUpdate(ctx context.Context, req *pb.CreateSoftwareUpdateRequest) (*pb.CreateSoftwareUpdateResponse, error) {
 	if req.Name == "" || req.Tag == "" {
@@ -49,6 +46,7 @@ func (s *SoftwareServer) CreateSoftwareUpdate(ctx context.Context, req *pb.Creat
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
+		Space :      req.Space,
 		Tag:         req.Tag,
 		ReleaseDate: time.Now(),
 		Status:      db.Beta,
@@ -57,7 +55,7 @@ func (s *SoftwareServer) CreateSoftwareUpdate(ctx context.Context, req *pb.Creat
 	err := s.sRepo.CreateSoftwareUpdate(softwareUpdate, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to create software update")
-	}	
+	}
 
 	return &pb.CreateSoftwareUpdateResponse{
 		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
@@ -84,8 +82,7 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Id:          software.Id.String(),
 		Name:        software.Name,
 		Tag:         software.Tag,
-		ReleaseDate: software.ReleaseDate.String(),
+		Space:       software.Space,
 		Status:      pb.Status(software.Status),
 	}
 }
-
