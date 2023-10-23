@@ -1,15 +1,17 @@
 import { HealtChartsConfigure, TooltipsText } from '@/constants';
 import { Node, NodeTypeEnum } from '@/generated';
+import { MetricsRes } from '@/generated/metrics';
 import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
 import { useEffect, useState } from 'react';
 import LineChart from '../LineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
+import { getMetricValue } from '@/utils';
 
 interface INodeOverviewTab {
-  metricFrom: any;
-  metrics: any;
+  metricFrom: number;
+  metrics: MetricsRes;
   loading: boolean;
   metricsLoading: boolean;
   onNodeSelected: Function;
@@ -150,32 +152,43 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][0].id,
+                    metrics,
+                  )}
                   metricFrom={metricFrom}
-                  initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics?.length > 0 || false}
+                  hasData={metrics.metrics.length > 0 || false}
                   topic={HealtChartsConfigure[nodeType][0].id}
                   title={HealtChartsConfigure[nodeType][0].name}
                 />
               )}
-              {/* {HealtChartsConfigure[nodeType][1].show && (
+              {HealtChartsConfigure[nodeType][1].show && (
                 <LineChart
-                  initData={metrics}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][1].id,
+                    metrics,
+                  )}
+                  metricFrom={metricFrom}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
+                  hasData={metrics.metrics.length > 0}
                   topic={HealtChartsConfigure[nodeType][1].id}
                   title={HealtChartsConfigure[nodeType][1].name}
                 />
               )}
               {HealtChartsConfigure[nodeType][2].show && (
                 <LineChart
-                  initData={metrics}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][2].id,
+                    metrics,
+                  )}
+                  metricFrom={metricFrom}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
+                  hasData={metrics.metrics.length > 0}
                   topic={HealtChartsConfigure[nodeType][2].id}
                   title={HealtChartsConfigure[nodeType][2].name}
                 />
-              )} */}
+              )}
             </Stack>
           </Paper>
         )}
@@ -185,26 +198,32 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Subscribers</Typography>
               {HealtChartsConfigure[
                 (selectedNode?.type as string) || 'hnode'
-              ][3].show && (
+              ][4].show && (
                 <LineChart
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][4].id,
+                    metrics,
+                  )}
                   metricFrom={metricFrom}
-                  initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
-                  topic={HealtChartsConfigure[nodeType][3].id}
-                  title={HealtChartsConfigure[nodeType][3].name}
+                  hasData={metrics.metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][4].id}
+                  title={HealtChartsConfigure[nodeType][4].name}
                 />
               )}
               {HealtChartsConfigure[
                 (selectedNode?.type as string) || 'hnode'
-              ][4].show && (
+              ][5].show && (
                 <LineChart
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][5].id,
+                    metrics,
+                  )}
                   metricFrom={metricFrom}
-                  initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
-                  topic={HealtChartsConfigure[nodeType][4].id}
-                  title={HealtChartsConfigure[nodeType][4].name}
+                  hasData={metrics.metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][5].id}
+                  title={HealtChartsConfigure[nodeType][5].name}
                 />
               )}
             </Stack>

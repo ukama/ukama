@@ -37,14 +37,10 @@ const LineChart = ({
       events: {
         load: function () {
           var series: any = Highcharts.charts[0]?.series[0];
-          PubSub.subscribe('memory_trx_used', (_, data) => {
+          PubSub.subscribe(topic, (_, data) => {
+            // console.log(data);
             series.addPoint(data, true, true);
           });
-          // setInterval(function () {
-          //   var x = new Date().getTime() / 1000, // current time
-          //     y = Math.round(Math.random() * 100);
-          //   series.addPoint([Math.floor(x) * 1000, y], true, true);
-          // }, 1000);
         },
       },
     },

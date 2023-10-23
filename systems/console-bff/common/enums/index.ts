@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { registerEnumType } from "type-graphql";
 
 export enum API_METHOD_TYPE {

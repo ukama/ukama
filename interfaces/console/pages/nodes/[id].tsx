@@ -7,7 +7,7 @@ import {
   useGetNodesLazyQuery,
   useUpdateNodeMutation,
 } from '@/generated';
-import { useGetNodeRangeMetricLazyQuery } from '@/generated/metrics';
+import { MetricsRes, useGetMetricByTabLazyQuery } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import EditNode from '@/ui/molecules/EditNode';
@@ -18,7 +18,7 @@ import NodeRadioTab from '@/ui/molecules/NodeRadioTab';
 import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
-import { getUnixTime } from '@/utils';
+import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -28,7 +28,7 @@ export default function Page() {
   const router = useRouter();
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
-  const [metrics, setMetrics] = useState<any>([]);
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -62,17 +62,16 @@ export default function Page() {
   });
 
   const [
-    getNodeMetricRange,
+    getNodeMetricByTab,
     {
       data: nodeMetricsData,
       loading: nodeMetricsLoading,
       variables: nodeMetricsVariables,
-      subscribeToMore: subscrieToMoreNodeMetrics,
     },
-  ] = useGetNodeRangeMetricLazyQuery({
+  ] = useGetMetricByTabLazyQuery({
     client: metricsClient,
     onCompleted: (data) => {
-      setMetrics(data.getNodeRangeMetric.values);
+      setMetrics(data.getMetricByTab);
     },
   });
 
@@ -110,15 +109,15 @@ export default function Page() {
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom)
-      getNodeMetricRange({
+      getNodeMetricByTab({
         variables: {
           data: {
-            orgId: '123',
+            orgId: 'ukama',
             userId: 'salman',
             from: metricFrom,
-            type: 'uptime_trx',
+            type: getNodeTabTypeByIndex(selectedTab),
             to: metricFrom + 120,
-            withSubscription: false,
+            withSubscription: true,
             nodeId: 'uk-test36-hnode-a1-00ff',
           },
         },
@@ -199,7 +198,11 @@ export default function Page() {
           />
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
-          <NodeNetworkTab metrics={[]} loading={false} />
+          <NodeNetworkTab
+            metrics={metrics}
+            loading={false}
+            metricFrom={metricFrom}
+          />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab

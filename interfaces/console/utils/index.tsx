@@ -1,4 +1,5 @@
 import { NodeTypeEnum } from '@/generated';
+import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
 import { TNodeSiteTree, TObject } from '@/types';
 import { Typography } from '@mui/material';
@@ -204,7 +205,7 @@ const getDefaultMetricList = (name: string) => {
 
 const getTitleByKey = (key: string) => {
   switch (key) {
-    case 'uptimetrx':
+    case 'uptime_trx':
       return 'Uptime TRX';
     case 'temperaturetrx':
       return 'Temp. (TRX)';
@@ -256,6 +257,23 @@ const getTitleByKey = (key: string) => {
       return 'PA Power';
     default:
       return '';
+  }
+};
+
+export const getNodeTabTypeByIndex = (index: number) => {
+  switch (index) {
+    case 0:
+      return Graphs_Type.NodeHealth;
+    case 1:
+      return Graphs_Type.Network;
+    case 2:
+      return Graphs_Type.Resources;
+    case 3:
+      return Graphs_Type.Radio;
+    case 4:
+      return Graphs_Type.Subscribers;
+    default:
+      return Graphs_Type.NodeHealth;
   }
 };
 
@@ -473,6 +491,11 @@ const structureNodeSiteDate = (data: any) => {
   });
 
   return t;
+};
+
+export const getMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return metric?.values || [];
 };
 
 export {

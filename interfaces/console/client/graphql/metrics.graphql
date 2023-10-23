@@ -68,3 +68,26 @@ subscription MetricRange(
     value
   }
 }
+
+subscription GetMetricByTabSub(
+  $nodeId: String!
+  $orgId: String!
+  $type: GRAPHS_TYPE!
+  $userId: String!
+  $from: Float!
+) {
+  getMetricByTabSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}

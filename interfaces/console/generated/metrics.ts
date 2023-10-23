@@ -110,7 +110,17 @@ export type QueryGetNodeRangeMetricArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  getMetricByTabSub: LatestMetricRes;
   getMetricRangeSub: LatestMetricRes;
+};
+
+
+export type SubscriptionGetMetricByTabSubArgs = {
+  from: Scalars['Float']['input'];
+  nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
 };
 
 
@@ -165,6 +175,17 @@ export type MetricRangeSubscriptionVariables = Exact<{
 
 
 export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+
+export type GetMetricByTabSubSubscriptionVariables = Exact<{
+  nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
+  from: Scalars['Float']['input'];
+}>;
+
+
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
 
 
 export const GetLatestMetricDocument = gql`
@@ -374,3 +395,48 @@ export function useMetricRangeSubscription(baseOptions: Apollo.SubscriptionHookO
       }
 export type MetricRangeSubscriptionHookResult = ReturnType<typeof useMetricRangeSubscription>;
 export type MetricRangeSubscriptionResult = Apollo.SubscriptionResult<MetricRangeSubscription>;
+export const GetMetricByTabSubDocument = gql`
+    subscription GetMetricByTabSub($nodeId: String!, $orgId: String!, $type: GRAPHS_TYPE!, $userId: String!, $from: Float!) {
+  getMetricByTabSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}
+    `;
+
+/**
+ * __useGetMetricByTabSubSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricByTabSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricByTabSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricByTabSubSubscription({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *      orgId: // value for 'orgId'
+ *      type: // value for 'type'
+ *      userId: // value for 'userId'
+ *      from: // value for 'from'
+ *   },
+ * });
+ */
+export function useGetMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>(GetMetricByTabSubDocument, options);
+      }
+export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
+export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;

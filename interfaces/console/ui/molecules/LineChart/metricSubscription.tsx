@@ -1,5 +1,6 @@
 import { metricsClient } from '@/client/ApolloClient';
-import { useMetricRangeSubscription } from '@/generated/metrics';
+import { useGetMetricByTabSubSubscription } from '@/generated/metrics';
+import { getNodeTabTypeByIndex } from '@/utils';
 import PubSub from 'pubsub-js';
 
 interface IMetricSubscription {
@@ -7,20 +8,20 @@ interface IMetricSubscription {
 }
 
 const MetricSubscription = ({ from }: IMetricSubscription) => {
-  useMetricRangeSubscription({
+  useGetMetricByTabSubSubscription({
     client: metricsClient,
     variables: {
-      orgId: '123',
-      userId: 'salman',
       from: from,
-      type: 'uptime_trx',
+      orgId: 'ukama',
+      userId: 'salman',
+      type: getNodeTabTypeByIndex(0),
       nodeId: 'uk-test36-hnode-a1-00ff',
     },
     onData: (data) => {
-      PubSub.publish(
-        'uptime_trx',
-        data.data.data?.getMetricRangeSub.value,
-      );
+      PubSub.publish(data.data.data?.getMetricByTabSub.type || '', [
+        Math.floor(data.data.data?.getMetricByTabSub.value[0] || 0) * 1000,
+        data.data.data?.getMetricByTabSub.value[1],
+      ]);
     },
   });
   return <div></div>;

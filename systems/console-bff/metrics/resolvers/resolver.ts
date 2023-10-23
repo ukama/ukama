@@ -26,6 +26,7 @@ import {
   LatestMetricRes,
   MetricRes,
   MetricsRes,
+  SubMetricByTabInput,
   SubMetricRangeInput,
 } from "./types";
 
@@ -64,12 +65,16 @@ class MetricResolvers {
       }
     }
     if (withSubscription && metrics.metrics.length > 0) {
-      const keys = metricsKey.join(",");
+      let subKey = "";
+      metrics.metrics.map((metric: MetricRes) => {
+        if (metric.values.length > 2) subKey = subKey + metric.type + ",";
+      });
+      subKey = subKey.slice(0, -1);
       const workerData: any = {
-        keys,
+        type: subKey,
         orgId,
         userId,
-        url: `${METRIC_API_GW_SOCKET}/v1/live/metric?interval=1&metric=${type}`,
+        url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${subKey}&node=${nodeId}`,
         key: STORAGE_KEY,
         timestamp: from,
       };
@@ -81,12 +86,13 @@ class MetricResolvers {
           const res = JSON.parse(_data.data);
           const result = res.data.result[0];
           if (result && result.metric && result.value.length > 0) {
-            pubSub.publish(`metric-${type}`, {
+            pubSub.publish(subKey, {
               success: true,
               msg: "success",
               orgId: result.metric.org,
               nodeId: nodeId,
-              type: type,
+              type: subKey,
+              userId: userId,
               value: result.value,
             } as LatestMetricRes);
           } else {
@@ -169,7 +175,7 @@ class MetricResolvers {
         userId,
         timestamp: from,
         key: STORAGE_KEY,
-        url: `${METRIC_API_GW_SOCKET}/v1/live/metric?interval=1&metric=${type}`,
+        url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${type}`,
       };
       const worker = new Worker(WS_THREAD, {
         workerData,
@@ -207,7 +213,7 @@ class MetricResolvers {
   @Subscription(() => LatestMetricRes, {
     topics: ({ args }) => `metric-${args.type}`,
     filter: ({ payload, args }) => {
-      return args.nodeId === payload.nodeid;
+      return args.nodeId === payload.nodeId;
     },
   })
   async getMetricRangeSub(
@@ -216,6 +222,25 @@ class MetricResolvers {
   ): Promise<LatestMetricRes> {
     await storeInStorage(
       `${args.orgId}/${args.userId}/${args.type}/${args.from}`,
+      getTimestampCount("0")
+    );
+    return payload;
+  }
+
+  @Subscription(() => LatestMetricRes, {
+    topics: ({ args }) => {
+      return getGraphsKeyByType(args.type, args.nodeId);
+    },
+    filter: ({ payload, args }) => {
+      return args.nodeId === payload.nodeId && args.userId === payload.userId;
+    },
+  })
+  async getMetricByTabSub(
+    @Root() payload: LatestMetricRes,
+    @Args() args: SubMetricByTabInput
+  ): Promise<LatestMetricRes> {
+    await storeInStorage(
+      `${args.orgId}/${args.userId}/${payload.type}/${args.from}`,
       getTimestampCount("0")
     );
     return payload;

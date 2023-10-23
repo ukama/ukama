@@ -39,7 +39,6 @@ const runWorker = async () => {
     });
 
     ws.on("message", async function message(data) {
-      console.log("TH DATA:", data.toString());
       const value = await retriveFromStorage(
         `${orgId}/${userId}/${type}/${timestamp}`,
         storageKey
@@ -56,9 +55,10 @@ const runWorker = async () => {
         ws.close();
         // process.exit(0)
       }
+
       parentPort.postMessage({
         isError: false,
-        message: "",
+        message: "success",
         data: data.toString(),
       });
     });

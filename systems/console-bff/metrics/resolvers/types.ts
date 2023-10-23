@@ -133,3 +133,22 @@ export class SubMetricRangeInput {
   @Field()
   from: number;
 }
+
+@ArgsType()
+@InputType()
+export class SubMetricByTabInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgId: string;
+
+  @Field(() => GRAPHS_TYPE)
+  type: GRAPHS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
+}
