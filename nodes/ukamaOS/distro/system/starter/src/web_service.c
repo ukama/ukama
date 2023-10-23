@@ -20,6 +20,7 @@
 extern SpaceList *gSpaceList;
 extern void json_free(JsonObj** json);
 extern bool json_serialize_add_capp_to_array(JsonObj **json,
+                                             char *space,
                                              char *name,
                                              char *tag,
                                              char *status,
@@ -237,6 +238,7 @@ int web_service_cb_get_all_capps_status(const URequest *request,
             }
 
             json_serialize_add_capp_to_array(&json,
+                                             spacePtr->space->name,
                                              cappList->capp->name,
                                              cappList->capp->tag,
                                              status, pid);

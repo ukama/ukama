@@ -38,6 +38,7 @@ void json_log(json_t *json) {
 }
 
 static void add_capp_to_list(CappList **list,
+                             const char *space,
                              const char *name,
                              const char *tag,
                              const char *status,
@@ -45,8 +46,8 @@ static void add_capp_to_list(CappList **list,
 
     CappList *ptr=NULL;
 
-    if (name == NULL || tag == NULL ||
-        status == NULL) return;
+    if (space == NULL || name == NULL ||
+        tag == NULL || status == NULL) return;
 
     if (*list == NULL) { /* First entry */
         *list = (CappList *)calloc(1, sizeof(CappList));
@@ -63,6 +64,7 @@ static void add_capp_to_list(CappList **list,
 
     ptr->capp->name            = strdup(name);
     ptr->capp->tag             = strdup(tag);
+    ptr->capp->space           = strdup(space);
     ptr->capp->runtime->status = strdup(status);
     ptr->capp->runtime->pid    = pid;
     ptr->capp->runtime->memory = -1;
@@ -155,7 +157,8 @@ bool json_deserialize_node_id(char **nodeID, JsonObj *json) {
 /*
  * "capps" : [
  *    {
- *       "name" : "example",
+ *      "space" : "boot",
+ *      "name" : "example",
  *      "tag" : "0.0.1",
  *      "status" : "run",
  *      "pid" : "123"
@@ -168,6 +171,7 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
     JsonObj *jCapp=NULL, *jArray=NULL;
     JsonObj *jName=NULL, *jTag=NULL;
     JsonObj *jStatus=NULL, *jPid=NULL;
+    JsonObj *jSpace=NULL;
 
     if (json == NULL) {
         return USYS_FALSE;
@@ -186,13 +190,15 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
 
         if (jCapp == NULL) continue;
 
+        jSpace  = json_object_get(jCapp, JTAG_SPACE);
         jName   = json_object_get(jCapp, JTAG_NAME);
         jTag    = json_object_get(jCapp, JTAG_TAG);
         jStatus = json_object_get(jCapp, JTAG_STATUS);
         jPid    = json_object_get(jCapp, JTAG_PID);
 
-        if (jName && jTag && jStatus && jPid) {
+        if (jSpace && jName && jTag && jStatus && jPid) {
             add_capp_to_list(cappList,
+                             json_string_value(jSpace),
                              json_string_value(jName),
                              json_string_value(jTag),
                              json_string_value(jStatus),
@@ -289,6 +295,7 @@ http://localhost:8080/v1/health/{nodeID}
   ],
   "capps": [
     {
+      "space" : "boot",
       "name": "bootstrap",
       "tag": "0.0.1",
       "status": "run",
@@ -345,6 +352,9 @@ bool json_serialize_health_report(JsonObj **json,
         jResources = json_object();
         if (jCapp == NULL || jResources == NULL) return USYS_FALSE;
 
+        json_object_set_new(jCapp,
+                            JTAG_SPACE,
+                            json_string(capp->space));
         json_object_set_new(jCapp,
                             JTAG_NAME,
                             json_string(capp->name));
