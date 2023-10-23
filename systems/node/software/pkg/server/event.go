@@ -67,14 +67,18 @@ func (n *SoftwareUpdateEventServer) unmarshalSoftwareUpdateEvent(msg *anypb.Any)
 
 func (c *SoftwareUpdateEventServer) publishMessage(target string , anyMsg *anypb.Any ,nodeId string) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
+	res,err:=c.s.sRepo.GetLatestSoftwareUpdate()
+	if err != nil {
+		return err
+	}
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HTTPMethod: "POST",
-		Path:       "/v1/update/" + nodeId,
+		Path:       "update/:space/:name/"+res.Tag,		
 		Msg:        anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ",anyMsg,route,target)
 
-	err := c.s.msgbus.PublishRequest(route, msg)
+	err = c.s.msgbus.PublishRequest(route, msg)
 	return err
 }
