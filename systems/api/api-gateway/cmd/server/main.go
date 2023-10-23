@@ -21,20 +21,19 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	clientSet := client.NewClientsSet(
-		rest.NewNetworkClient(svcConf.HttpServices.Network),
-		rest.NewPackageClient(svcConf.HttpServices.Package),
-		rest.NewSubscriberClient(svcConf.HttpServices.Subscriber),
-		rest.NewSimClient(svcConf.HttpServices.Sim),
-		rest.NewNodeClient(svcConf.HttpServices.Node),
-	)
+	networkClient := client.NewNetworkClientSet(rest.NewNetworkClient(svcConf.HttpServices.Network))
+	packageClient := client.NewPackageClientSet(rest.NewPackageClient(svcConf.HttpServices.Network))
+	simClient := client.NewSimClientSet(rest.NewSimClient(svcConf.HttpServices.Network),
+		rest.NewSubscriberClient(svcConf.HttpServices.Subscriber))
+	nodeClient := client.NewNodeClientSet(rest.NewNodeClient(svcConf.HttpServices.Network))
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to create auth client: %v", err)
 	}
 
-	router := prest.NewRouter(clientSet, prest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	router := prest.NewRouter(networkClient, packageClient, simClient, nodeClient,
+		prest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	router.Run()
 }
 

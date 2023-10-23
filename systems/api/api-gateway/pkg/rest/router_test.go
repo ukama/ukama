@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -23,10 +22,19 @@ import (
 	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
-const netEndpoint = "/v1/networks"
-const pkgEndpoint = "/v1/packages"
-const simEndpoint = "/v1/sims"
-const nodeEndpoint = "/v1/nodes"
+const (
+	netEndpoint  = "/v1/networks"
+	pkgEndpoint  = "/v1/packages"
+	simEndpoint  = "/v1/sims"
+	nodeEndpoint = "/v1/nodes"
+)
+
+var (
+	netClient     = &mocks.Network{}
+	packageClient = &mocks.Package{}
+	simClient     = &mocks.Sim{}
+	nodeClient    = &mocks.Node{}
+)
 
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
@@ -43,28 +51,19 @@ var routerConfig = &RouterConfig{
 	},
 }
 
-var testClientSet client.Client
-
 func init() {
-	netClient := &mocks.NetworkClient{}
-	packageClient := &mocks.PackageClient{}
-	subscriberClient := &mocks.SubscriberClient{}
-	simClient := &mocks.SimClient{}
-	nodeClient := &mocks.NodeClient{}
-
 	gin.SetMode(gin.TestMode)
-	testClientSet = client.NewClientsSet(netClient, packageClient, subscriberClient, simClient, nodeClient)
 }
 
 func TestRouter_PingRoute(t *testing.T) {
-	var c = &mocks.Client{}
 	var arc = &providers.AuthRestClient{}
 
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(netClient, packageClient, simClient, nodeClient, routerConfig,
+		arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -73,7 +72,6 @@ func TestRouter_PingRoute(t *testing.T) {
 }
 
 func TestRouter_GetNetwork(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	netName := "net-1"
@@ -86,19 +84,20 @@ func TestRouter_GetNetwork(t *testing.T) {
 			Name: netName,
 		}
 
-		c.On("GetNetwork", netId.String()).Return(netInfo, nil)
+		netClient.On("GetNetwork", netId.String()).Return(netInfo, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
@@ -109,7 +108,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 			Name: netName,
 		}
 
-		c.On("GetNetwork", netId.String()).Return(netInfo,
+		netClient.On("GetNetwork", netId.String()).Return(netInfo,
 			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
@@ -118,20 +117,21 @@ func TestRouter_GetNetwork(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		c.On("GetNetwork", netId.String()).Return(nil,
+		netClient.On("GetNetwork", netId.String()).Return(nil,
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNetwork failure",
@@ -140,38 +140,39 @@ func TestRouter_GetNetwork(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 
 	t.Run("GetNetworkGetError", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		c.On("GetNetwork", netId.String()).Return(nil,
+		netClient.On("GetNetwork", netId.String()).Return(nil,
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_CreateNetwork(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
@@ -206,10 +207,11 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
+		netClient.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
 			Return(netInfo, nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
@@ -219,7 +221,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 
 	t.Run("NetworkCreatedAndStatusFailed", func(t *testing.T) {
@@ -248,10 +250,11 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", ntwk, err)
 		}
 
-		c.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
+		netClient.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
 			Return(nil, errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(netClient, nil, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
@@ -261,12 +264,11 @@ func TestRouter_CreateNetwork(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		netClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_GetPackage(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	pkgName := "Monthly Data"
@@ -279,19 +281,20 @@ func TestRouter_GetPackage(t *testing.T) {
 			Name: pkgName,
 		}
 
-		c.On("GetPackage", pkgId.String()).Return(pkgInfo, nil)
+		packageClient.On("GetPackage", pkgId.String()).Return(pkgInfo, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
@@ -302,7 +305,7 @@ func TestRouter_GetPackage(t *testing.T) {
 			Name: pkgName,
 		}
 
-		c.On("GetPackage", pkgId.String()).Return(pkgInfo,
+		packageClient.On("GetPackage", pkgId.String()).Return(pkgInfo,
 			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
@@ -311,20 +314,21 @@ func TestRouter_GetPackage(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 
 	t.Run("PackageNotFound", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		c.On("GetPackage", pkgId.String()).Return(nil,
+		packageClient.On("GetPackage", pkgId.String()).Return(nil,
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNetwork failure",
@@ -333,38 +337,39 @@ func TestRouter_GetPackage(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 
 	t.Run("GetPackageError", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		c.On("GetPackage", pkgId.String()).Return(nil,
+		packageClient.On("GetPackage", pkgId.String()).Return(nil,
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_AddPackage(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	pkgName := "Monthly Data"
@@ -449,12 +454,13 @@ func TestRouter_AddPackage(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", pkg, err)
 		}
 
-		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
+		packageClient.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
 			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
 			Return(pkgInfo, nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", pkgEndpoint, bytes.NewReader(body))
@@ -464,7 +470,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 
 	t.Run("PackageCreatedAndStatusFailed", func(t *testing.T) {
@@ -502,12 +508,13 @@ func TestRouter_AddPackage(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", pkg, err)
 		}
 
-		c.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
+		packageClient.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
 			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
 			Return(nil, errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", pkgEndpoint, bytes.NewReader(body))
@@ -517,12 +524,11 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_GetSim(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	subscriberId := uuid.NewV4()
@@ -535,19 +541,20 @@ func TestRouter_GetSim(t *testing.T) {
 			SubscriberId: subscriberId.String(),
 		}
 
-		c.On("GetSim", simId.String()).Return(simInfo, nil)
+		simClient.On("GetSim", simId.String()).Return(simInfo, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
@@ -558,7 +565,7 @@ func TestRouter_GetSim(t *testing.T) {
 			SubscriberId: subscriberId.String(),
 		}
 
-		c.On("GetSim", simId.String()).Return(simInfo,
+		simClient.On("GetSim", simId.String()).Return(simInfo,
 			crest.HttpError{
 				HttpCode: http.StatusPartialContent,
 				Message:  "partial content. request is still ongoing",
@@ -567,20 +574,21 @@ func TestRouter_GetSim(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		c.On("GetSim", simId.String()).Return(nil,
+		simClient.On("GetSim", simId.String()).Return(nil,
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetSim failure",
@@ -589,38 +597,39 @@ func TestRouter_GetSim(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 
 	t.Run("GetSimError", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		c.On("GetSim", simId.String()).Return(nil,
+		simClient.On("GetSim", simId.String()).Return(nil,
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_ConfigureSim(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 	networkId := uuid.NewV4()
 	packageId := uuid.NewV4()
@@ -672,12 +681,13 @@ func TestRouter_ConfigureSim(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
 		}
 
-		c.On("ConfigureSim", subscriberId.String(), orgId.String(),
+		simClient.On("ConfigureSim", subscriberId.String(), orgId.String(),
 			networkId.String(), firstName, lastName, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(simInfo, nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
@@ -687,7 +697,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusPartialContent, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 
 	t.Run("SimconfiguredAndStatusFailed", func(t *testing.T) {
@@ -700,12 +710,13 @@ func TestRouter_ConfigureSim(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", sim, err)
 		}
 
-		c.On("ConfigureSim", subscriberId.String(), orgId.String(),
+		simClient.On("ConfigureSim", subscriberId.String(), orgId.String(),
 			networkId.String(), firstName, lastName, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(nil, errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, simClient, nil, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
@@ -715,12 +726,11 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		simClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_GetNode(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	nodeName := "node-1"
@@ -733,25 +743,26 @@ func TestRouter_GetNode(t *testing.T) {
 			Name: nodeName,
 		}
 
-		c.On("GetNode", nodeId).Return(nodeInfo, nil)
+		nodeClient.On("GetNode", nodeId).Return(nodeInfo, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		c.On("GetNode", nodeId).Return(nil,
+		nodeClient.On("GetNode", nodeId).Return(nil,
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "GetNode failure",
@@ -760,38 +771,39 @@ func TestRouter_GetNode(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("GetNodeError", func(t *testing.T) {
 		nodeId := "uk-sa2341-anode-v0-a1a0"
 
-		c.On("GetNode", nodeId).Return(nil,
+		nodeClient.On("GetNode", nodeId).Return(nil,
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_RegisterNode(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	t.Run("NodeRegistered", func(t *testing.T) {
@@ -819,10 +831,11 @@ func TestRouter_RegisterNode(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", node, err)
 		}
 
-		c.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
+		nodeClient.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
 			Return(nodeInfo, nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
@@ -832,7 +845,7 @@ func TestRouter_RegisterNode(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotRegistered", func(t *testing.T) {
@@ -853,10 +866,11 @@ func TestRouter_RegisterNode(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", node, err)
 		}
 
-		c.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
+		nodeClient.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
 			Return(nil, errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
@@ -866,12 +880,11 @@ func TestRouter_RegisterNode(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_AttachNode(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	ampNodeL := "uk-sa2341-anode-v0-a1a0"
@@ -890,10 +903,11 @@ func TestRouter_AttachNode(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", nodes, err)
 		}
 
-		c.On("AttachNode", nodeId, ampNodeL, ampNodeR).
+		nodeClient.On("AttachNode", nodeId, ampNodeL, ampNodeR).
 			Return(nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
@@ -903,7 +917,7 @@ func TestRouter_AttachNode(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotAttached", func(t *testing.T) {
@@ -914,10 +928,11 @@ func TestRouter_AttachNode(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", nodes, err)
 		}
 
-		c.On("AttachNode", nodeId, ampNodeL, ampNodeR).
+		nodeClient.On("AttachNode", nodeId, ampNodeL, ampNodeR).
 			Return(errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
@@ -927,36 +942,36 @@ func TestRouter_AttachNode(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_DetachNode(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	t.Run("NodeDetached", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
 
-		c.On("DetachNode", nodeId).Return(nil)
+		nodeClient.On("DetachNode", nodeId).Return(nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		c.On("DetachNode", nodeId).Return(
+		nodeClient.On("DetachNode", nodeId).Return(
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
@@ -965,38 +980,39 @@ func TestRouter_DetachNode(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("DetachNodeError", func(t *testing.T) {
 		nodeId := "uk-sa2341-anode-v0-a1a0"
 
-		c.On("DetachNode", nodeId).Return(
+		nodeClient.On("DetachNode", nodeId).Return(
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_AddNodeToSite(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	networkId := uuid.NewV4().String()
@@ -1015,10 +1031,11 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", req, err)
 		}
 
-		c.On("AddNodeToSite", nodeId, networkId, siteId).
+		nodeClient.On("AddNodeToSite", nodeId, networkId, siteId).
 			Return(nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
@@ -1028,7 +1045,7 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotAdded", func(t *testing.T) {
@@ -1039,10 +1056,11 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 			t.Errorf("fail to marshal request data: %v. Error: %v", req, err)
 		}
 
-		c.On("AddNodeToSite", nodeId, networkId, siteId).
+		nodeClient.On("AddNodeToSite", nodeId, networkId, siteId).
 			Return(errors.New("some unexpected error occured"))
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
@@ -1052,36 +1070,36 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_RemoveNodeFromSite(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	t.Run("NodeRemoved", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
 
-		c.On("RemoveNodeFromSite", nodeId).Return(nil)
+		nodeClient.On("RemoveNodeFromSite", nodeId).Return(nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		c.On("RemoveNodeFromSite", nodeId).Return(
+		nodeClient.On("RemoveNodeFromSite", nodeId).Return(
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
@@ -1090,62 +1108,64 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("RemoveNodeError", func(t *testing.T) {
 		nodeId := "uk-sa2341-anode-v0-a1a0"
 
-		c.On("RemoveNodeFromSite", nodeId).Return(
+		nodeClient.On("RemoveNodeFromSite", nodeId).Return(
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }
 
 func TestRouter_DeleteNode(t *testing.T) {
-	c := &mocks.Client{}
 	arc := &providers.AuthRestClient{}
 
 	t.Run("NodeDeleted", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
 
-		c.On("DeleteNode", nodeId).Return(nil)
+		nodeClient.On("DeleteNode", nodeId).Return(nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		c.On("DeleteNode", nodeId).Return(
+		nodeClient.On("DeleteNode", nodeId).Return(
 			crest.HttpError{
 				HttpCode: http.StatusNotFound,
 				Message:  "DeleteNode failure",
@@ -1154,32 +1174,34 @@ func TestRouter_DeleteNode(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 
 	t.Run("NodeDeleteError", func(t *testing.T) {
 		nodeId := "uk-sa2341-anode-v0-a1a0"
 
-		c.On("DeleteNode", nodeId).Return(
+		nodeClient.On("DeleteNode", nodeId).Return(
 			errors.New("some unexpected error"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
-		r := NewRouter(c, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
+			arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		c.AssertExpectations(t)
+		nodeClient.AssertExpectations(t)
 	})
 }

@@ -23,7 +23,10 @@ var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
 	f       *fizz.Fizz
-	clients client.Client
+	network client.Network
+	pkg     client.Package
+	sim     client.Sim
+	node    client.Node
 	config  *RouterConfig
 }
 
@@ -33,9 +36,13 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-func NewRouter(clients client.Client, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(network client.Network, pkg client.Package, sim client.Sim, node client.Node,
+	config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
-		clients: clients,
+		network: network,
+		pkg:     pkg,
+		sim:     sim,
+		node:    node,
 		config:  config,
 	}
 
@@ -119,60 +126,60 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*rest.NetworkInfo, error) {
-	return r.clients.CreateNetwork(req.OrgName, req.NetName, req.AllowedCountries,
+	return r.network.CreateNetwork(req.OrgName, req.NetName, req.AllowedCountries,
 		req.AllowedNetworks, req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
 func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*rest.NetworkInfo, error) {
-	return r.clients.GetNetwork(req.NetworkId)
+	return r.network.GetNetwork(req.NetworkId)
 }
 
 func (r *Router) postPackage(c *gin.Context, req *AddPackageReq) (*rest.PackageInfo, error) {
-	return r.clients.AddPackage(req.Name, req.OrgId, req.OwnerId, req.From, req.To, req.BaserateId, req.Active,
+	return r.pkg.AddPackage(req.Name, req.OrgId, req.OwnerId, req.From, req.To, req.BaserateId, req.Active,
 		req.Flatrate, req.SmsVolume, req.VoiceVolume, req.DataVolume, req.VoiceUnit, req.DataUnit, req.SimType,
 		req.Apn, req.Type, req.Duration, req.Markup, req.Amount, req.Overdraft, req.TrafficPolicy, req.Networks)
 }
 
 func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*rest.PackageInfo, error) {
-	return r.clients.GetPackage(req.PackageId)
+	return r.pkg.GetPackage(req.PackageId)
 }
 
 func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*rest.SimInfo, error) {
-	return r.clients.ConfigureSim(req.SubscriberId, req.OrgId, req.NetworkId, req.FirstName,
+	return r.sim.ConfigureSim(req.SubscriberId, req.OrgId, req.NetworkId, req.FirstName,
 		req.LastName, req.Email, req.PhoneNumber, req.Address, req.Dob, req.ProofOfIdentification,
 		req.IdSerial, req.PackageId, req.SimType, req.SimToken, req.TrafficPolicy)
 }
 
 func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*rest.SimInfo, error) {
-	return r.clients.GetSim(req.Id)
+	return r.sim.GetSim(req.Id)
 }
 
 func (r *Router) getNode(c *gin.Context, req *GetNodeRequest) (*rest.NodeInfo, error) {
-	return r.clients.GetNode(req.NodeId)
+	return r.node.GetNode(req.NodeId)
 }
 
 func (r *Router) postNode(c *gin.Context, req *AddNodeRequest) (*rest.NodeInfo, error) {
-	return r.clients.RegisterNode(req.NodeId, req.Name, req.OrgId, req.State)
+	return r.node.RegisterNode(req.NodeId, req.Name, req.OrgId, req.State)
 }
 
 func (r *Router) deleteNode(c *gin.Context, req *GetNodeRequest) error {
-	return r.clients.DeleteNode(req.NodeId)
+	return r.node.DeleteNode(req.NodeId)
 }
 
 func (r *Router) attachNode(c *gin.Context, req *AttachNodesRequest) error {
-	return r.clients.AttachNode(req.ParentNode, req.AmpNodeL, req.AmpNodeR)
+	return r.node.AttachNode(req.ParentNode, req.AmpNodeL, req.AmpNodeR)
 }
 
 func (r *Router) detachNode(c *gin.Context, req *GetNodeRequest) error {
-	return r.clients.DetachNode(req.NodeId)
+	return r.node.DetachNode(req.NodeId)
 }
 
 func (r *Router) postNodeToSite(c *gin.Context, req *AddNodeToSiteRequest) error {
-	return r.clients.AddNodeToSite(req.NodeId, req.NetworkId, req.SiteId)
+	return r.node.AddNodeToSite(req.NodeId, req.NetworkId, req.SiteId)
 }
 
 func (r *Router) deleteNodeFromSite(c *gin.Context, req *GetNodeRequest) error {
-	return r.clients.RemoveNodeFromSite(req.NodeId)
+	return r.node.RemoveNodeFromSite(req.NodeId)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
