@@ -29,10 +29,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 
 	// Create a mock for the MsgBusServiceClient interface
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
 	// Configure the mock to expect a call to PublishRequest with specific arguments
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).
-		Return(nil) // You can specify the expected return value here
 
 	// Create an instance of the SoftwareManagerServer with the mocks
 	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false)
