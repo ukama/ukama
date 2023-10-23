@@ -1,4 +1,4 @@
-package internal
+package pkg
 
 import (
 	"time"
@@ -15,7 +15,8 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	OrgName          string
+	OrgName          string `default:"ukama-org"`
+	OrgId            string `default:"abdc6715-1a87-46cf-9112-cfb3ea2adbec"`
 }
 
 func NewConfig(name string) *Config {
@@ -23,11 +24,17 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
+		Queue: &uconf.Queue{
+			Uri: "amqp://guest:guest@192.168.0.14:5672",
+		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
+			Host:    "localhost:9000",
 			Timeout: 5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.lookup.organization.create",
-				"event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.eventGenerator.organization.create",
+				"event.cloud.global.{{ .Org}}.messaging.mesh.ip.update",
+				"*.*.*.*.*.*.*.*",
+			},
 		},
 	}
 }

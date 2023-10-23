@@ -35,6 +35,24 @@ static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
+static int find_service_port(char *serviceName) {
+
+    struct servent *entry = NULL;
+
+    entry = getservbyname(serviceName, NULL);
+    if (entry == NULL) {
+        usys_log_error("Unable to find port entry for service: %s", serviceName);
+        return 0;
+    }
+
+    usys_log_debug("Service entry found. Name: %s port: %d proto: %s",
+                   entry->s_name,
+                   ntohs(entry->s_port),
+                   entry->s_proto);
+
+    return ntohs(entry->s_port);
+}
+
 /**
  * @fn      void clean_noded_notif(NodedNotifDetails*)
  * @brief   Clean all the memory allocated while assingemnt.
