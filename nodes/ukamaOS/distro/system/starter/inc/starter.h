@@ -15,8 +15,9 @@
 #include "usys_log.h"
 #include "jansson.h"
 #include "capp_config.h"
+#include "usys_services.h"
 
-#define SERVICE_NAME           "starter"
+#define SERVICE_NAME           SERVICE_STARTER
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
