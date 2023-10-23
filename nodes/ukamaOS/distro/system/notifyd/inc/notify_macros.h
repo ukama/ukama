@@ -22,7 +22,6 @@
 #define NOTIFICATION_EVENT     "event"
 
 #define DEF_LOG_LEVEL          "TRACE"
-#define DEF_SERVICE_PORT       "8085"
 #define NOTIFY_VERSION         "0.0.0"
 
 #define DEF_NODED_HOST         "localhost"
