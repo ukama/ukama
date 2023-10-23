@@ -54,7 +54,7 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 				log.Infof("No new software update")
 				return nil, nil
 			}else {
-				err = n.publishMessage(n.s.orgName+"."+"."+"."+msg.NodeId, anyMsg, app.Space, app.Name)
+				err = n.publishMessage(n.s.orgName+"."+"."+"."+msg.NodeId, anyMsg, res.Space, res.Name,res.Tag)
 				if err != nil {
 					return nil, err
 				}
@@ -104,20 +104,17 @@ func (n *SoftwareUpdateEventServer) unmarshalSoftwareHubEvent(msg *anypb.Any) (*
 	return p, nil
 }
 
-func (c *SoftwareUpdateEventServer) publishMessage(target string, anyMsg *anypb.Any, space string, name string) error {
+func (c *SoftwareUpdateEventServer) publishMessage(target string, anyMsg *anypb.Any, space string, name string, tag string) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-	res, err := c.s.sRepo.GetLatestSoftwareUpdate()
-	if err != nil {
-		return err
-	}
+	
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HTTPMethod: "POST",
-		Path:       "update/" + space + "/" + name + "/" + res.Tag,
+		Path:       "update/" + space + "/" + name + "/" + tag,
 		Msg:        anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 
-	err = c.s.msgbus.PublishRequest(route, msg)
+	err := c.s.msgbus.PublishRequest(route, msg)
 	return err
 }
