@@ -24,23 +24,15 @@
 static int parse_config_entries(Config *config, toml_table_t *configData);
 static int read_line(char *buffer, int size, FILE *fp);
 
-/*
- * print_config --
- *
- */
 void print_config(Config *config) {
 
 	log_debug("Remote connect port: %s", config->remoteConnect);
-	log_debug("Local accept port: %s", config->localAccept);
-    log_debug("Local hostname: %s", config->localHostname);
-    log_debug("TLS/SSL key file: %s", config->keyFile);
-    log_debug("TLS/SSL cert file: %s", config->certFile);
+	log_debug("Local accept port: %d",   config->localAccept);
+    log_debug("Local hostname: %s",      config->localHostname);
+    log_debug("TLS/SSL key file: %s",    config->keyFile);
+    log_debug("TLS/SSL cert file: %s",   config->certFile);
 }
 
-/*
- * read_line -- read a line from file pointer.
- *
- */
 static int read_line(char *buffer, int size, FILE *fp) {
 
 	char *tmp;
@@ -59,10 +51,6 @@ static int read_line(char *buffer, int size, FILE *fp) {
 	return TRUE;
 }
 
-/*
- * split_strings --
- *
- */
 static void split_strings(char *input, char **str1, char **str2,
                           char *delimiter) {
 
@@ -133,7 +121,6 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	toml_datum_t localAccept, cert, key, localHostname, remoteIPFile;
 
 	remoteIPFile  = toml_string_in(configData, REMOTE_IP_FILE);
-	localAccept   = toml_string_in(configData, LOCAL_ACCEPT);
     localHostname = toml_string_in(configData, LOCAL_HOSTNAME);
 	cert          = toml_string_in(configData, CERT);
 	key           = toml_string_in(configData, KEY);
@@ -161,14 +148,6 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	}
     config->deviceInfo->nodeID = strdup(nodeID);
 
-	if (!localAccept.ok) {
-		log_debug("[%s] is missing, setting to default: %s", LOCAL_ACCEPT,
-				  DEFAULT_LOCAL_ACCEPT);
-		config->localAccept = strdup(DEFAULT_LOCAL_ACCEPT);
-	} else {
-		config->localAccept = strdup(localAccept.u.s);
-	}
-
 	if (!localHostname.ok) {
 		log_debug("[%s] is missing, setting to default: %s", LOCAL_HOSTNAME,
 				  DEFAULT_LOCAL_HOSTNAME);
@@ -193,7 +172,6 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	/* clear up toml allocations. */
 	if (key.ok)           free(key.u.s);
 	if (cert.ok)          free(cert.u.s);
-	if (localAccept.ok)   free(localAccept.u.s);
 	if (remoteIPFile.ok)  free(remoteIPFile.u.s);
     if (hostname)         free(hostname);
     if (subnetMask)       free(subnetMask);
@@ -257,7 +235,6 @@ void clear_config(Config *config) {
 	if (!config) return;
 
 	free(config->remoteConnect);
-	free(config->localAccept);
     free(config->localHostname);
 	free(config->certFile);
 	free(config->keyFile);

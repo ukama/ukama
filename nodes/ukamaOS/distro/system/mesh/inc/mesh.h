@@ -14,15 +14,22 @@
 #include <ulfius.h>
 #include <uuid/uuid.h>
 
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_types.h"
+#include "usys_services.h"
+
 #include "log.h"
 
-#define DEF_FILENAME "cert.crt"
-#define DEF_CA_FILE  ""
-#define DEF_CRL_FILE ""
-#define DEF_CA_PATH  ""
-#define DEF_SERVER_NAME "localhost"
-#define DEF_TLS_SERVER_PORT "4444"
-#define DEF_LOG_LEVEL "TRACE"
+#define SERVICE_NAME SERVICE_MESH
+
+#define DEF_FILENAME          "cert.crt"
+#define DEF_CA_FILE           ""
+#define DEF_CRL_FILE          ""
+#define DEF_CA_PATH           ""
+#define DEF_SERVER_NAME       "localhost"
+#define DEF_TLS_SERVER_PORT   "4444"
+#define DEF_LOG_LEVEL         "TRACE"
 #define DEF_CLOUD_SERVER_NAME "localhost"
 #define DEF_CLOUD_SERVER_PORT "4444"
 #define DEF_CLOUD_SERVER_CERT "certs/test.crt"
