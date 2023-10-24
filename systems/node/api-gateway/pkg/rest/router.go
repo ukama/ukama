@@ -64,6 +64,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
+	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
 	return c
 }
 
@@ -119,11 +120,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		const cont = "/controllers"
-		controller := auth.Group(cont, "Controllers", "Operations on controllers")
+		const cont = "/controller"
+		controller := auth.Group(cont, "Controller", "Operations on controllers")
 		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
+
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
 		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
@@ -131,7 +133,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		cfgS.GET("/config/node/:node_id", formatDoc("Current ruunning config", "Read the cuurrent running version and status"), tonic.Handler(r.getRunningConfigVersionHandler, http.StatusOK))
 
 		const soft = "/software"
-		softS := auth.Group(soft, "Software", "Operations on software")
+		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.POST("/update/:space/:name/:tag", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 	}
 }

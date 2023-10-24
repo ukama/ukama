@@ -49,6 +49,7 @@ func init() {
 		Timeout:      1 * time.Second,
 		Controller:   "0.0.0.0:9092",
 		Configurator: "0.0.0.0:9080",
+		Software:     "0.0.0.0:9091",
 	})
 }
 func TestPingRoute(t *testing.T) {
@@ -68,7 +69,7 @@ func TestPingRoute(t *testing.T) {
 func Test_RestarteNode(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controllers/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
@@ -95,7 +96,7 @@ func Test_RestarteNodes(t *testing.T) {
 	// Create a JSON payload with the necessary data.
 	jsonPayload := `{"node_ids":["60285a2a-fe1d-4261-a868-5be480075b8f"]}`
 
-	req, _ := http.NewRequest("POST", "/v1/controllers/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
+	req, _ := http.NewRequest("POST", "/v1/controller/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
@@ -144,7 +145,7 @@ func Test_SoftwareUpdate(t *testing.T) {
 func Test_RestarteSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controllers/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
+	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
