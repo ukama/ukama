@@ -14,7 +14,7 @@
 #include "ulfius.h"
 
 #define EP_BS                           "/"
-#define WEBSERVICE                      "configd"
+#define WEBSERVICE                      "config"
 #define REST_API_VERSION                "v1"
 
 /* API URL parameters*/
@@ -94,12 +94,16 @@ int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig);
 
-int web_service_cb_post_event(const URequest *request,
-                              UResponse *response,
-                              void *epConfig);
-
 int web_service_cb_default(const URequest *request,
-                           UResponse *response,
+						   UResponse *response,
                            void *epConfig);
+
+int web_service_cb_post_config(const URequest *request,
+                              UResponse *response,
+							  void *epConfig);
+
+int web_service_cb_post_config_complete(const URequest *request,
+                              UResponse *response,
+							  void *epConfig);
 
 #endif /* INC_WEB_SERVICE_H_ */

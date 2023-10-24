@@ -8,7 +8,7 @@
 include ../../../config.mk
 
 # Targets
-TARGET:=notifyd
+TARGET:=configd
 
 DISTRO_DIR:=../..
 
@@ -57,8 +57,8 @@ BUILD_DIR:=build
 
 # Compilers and flags
 ifdef XGCCPATH
-XCC=$(XGCCPATH)$(XGCC)
-XLD=$(XGCCPATH)$(XLD)
+XCC=/usr/bin/gcc
+#XLD=$(XGCCPATH)$(XLD)
 else
 XCC=/usr/bin/gcc
 endif

@@ -8,7 +8,7 @@
  */
 
 #include "config.h"
-#include "notify_macros.h"
+#include "config_macros.h"
 #include "service.h"
 #include "web.h"
 #include "usys_api.h"
@@ -33,6 +33,9 @@ void handle_sigint(int signum) {
 static UsysOption longOptions[] = {
     { "port",          required_argument, 0, 'p' },
     { "logs",          required_argument, 0, 'l' },
+    { "noded-host",    required_argument, 0, 'n' },
+    { "noded-port",    required_argument, 0, 's' },
+    { "noded-lep",     required_argument, 0, 'e' },
     { "help",          no_argument,       0, 'h' },
     { "version",       no_argument,       0, 'v' },
     { 0,               0,                 0,  0 }
@@ -73,6 +76,15 @@ void usage() {
         "--p, --port <port>                      Port at which service will"
               "listen.\n");
     usys_puts(
+        "-n, --noded-host <host>               Host at which noded service"
+                  "will listen.\n");
+    usys_puts(
+        "-s, --noded-port <port>               Port at which noded service"
+                   "will listen.\n");
+    usys_puts(
+        "-e, --noded-ep </node>                API EP at which noded service"
+                       "will enquire for node info.\n");
+    usys_puts(
         "-f, --map-file <file-name>         Status map file\n");
 
     usys_puts(
@@ -95,8 +107,7 @@ int main(int argc, char **argv) {
     char *nodedHost    = DEF_NODED_HOST;
     char *nodedPort    = DEF_NODED_PORT;
     char *nodedEP      = DEF_NODED_EP;
-    char *remoteServer = DEF_REMOTE_SERVER;
-    char *mapFile      = DEF_MAP_FILE;
+
     UInst serviceInst;
 
     Config serviceConfig = {0};
@@ -118,7 +129,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'v':
-            usys_puts(NOTIFY_VERSION);
+            usys_puts(CONFIG_VERSION);
             usys_exit(0);
             break;
 
@@ -134,7 +145,27 @@ int main(int argc, char **argv) {
             debug = optarg;
             set_log_level(debug);
             break;
-
+        case 'n':
+            nodedHost = optarg;
+            if (!nodedHost) {
+                usage();
+                usys_exit(0);
+            }
+            break;
+        case 's':
+            nodedPort = optarg;
+            if (!nodedPort) {
+                usage();
+                usys_exit(0);
+            }
+            break;
+        case 'e':
+            nodedEP = optarg;
+            if (!nodedEP) {
+                usage();
+                usys_exit(0);
+            }
+            break;
         default:
             usage();
             usys_exit(0);
@@ -144,7 +175,9 @@ int main(int argc, char **argv) {
     /* Service config update */
     serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort  = usys_atoi(cPort);
-    serviceConfig.configdEP      = usys_strdup(nodedEP);
+    serviceConfig.nodedEP      = usys_strdup(nodedEP);
+    serviceConfig.nodedHost      = usys_strdup(nodedHost);
+    serviceConfig.nodedPort     = usys_atoi(nodedPort);
 
     usys_log_debug("Starting config.d ...");
 
@@ -152,7 +185,7 @@ int main(int argc, char **argv) {
     signal(SIGINT, handle_sigint);
 
     /* Read Node Info from noded */
-    if (getenv(ENV_NOTIFY_DEBUG_MODE)) {
+    if (getenv(ENV_CONFIG_DEBUG_MODE)) {
        serviceConfig.nodeId = usys_strdup(DEF_NODE_ID);
        usys_log_debug("config.d: Using default Node ID: %s", DEF_NODE_ID);
     } else {
@@ -175,7 +208,8 @@ done:
 
     free(serviceConfig.serviceName);
     free(serviceConfig.nodeId);
-    free(serviceConfig.configdEP);
+    free(serviceConfig.nodedEP);
+    free(serviceConfig.nodedHost);
     usys_log_debug("Exiting config.d ...");
     return 1;
 }

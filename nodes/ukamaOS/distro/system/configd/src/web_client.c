@@ -173,7 +173,7 @@ int wc_read_node_info(Config* config) {
     sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
                     config->nodedEP);
 
-    ret = wc_send_node_info_request(url, "GET", &config->nodeID);
+    ret = wc_send_node_info_request(url, "GET", &config->nodeId);
     if (ret) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
         return ret;
@@ -189,7 +189,7 @@ int get_nodeid_from_noded(Config *config) {
         return STATUS_NOK;
     }
 
-    usys_log_info("notify.d: Node ID: %s", config->nodeID);
+    usys_log_info("notify.d: Node ID: %s", config->nodeId);
 
     return STATUS_OK;
 }

@@ -10,32 +10,17 @@
 #ifndef INC_CONFIGD_H_
 #define INC_CONFIGD_H_
 
-#define MAX_APPS  32
-typedef struct  {
-	char *fileName;
-	char *app;
-	char *data;
-	char *version;
-	uint32_t timestamp;
-} ConfigData;
+#include "jserdes.h"
+#include "session.h"
 
-typedef enum  {
-	UNKNOWN = 0,
-	UPDATE_AVAILABLE = 1,
-	REQUESTED_REBOOT = 2,
-	UPDATE_CONFIRMED = 3,
-} ConfigState;
+int configd_process_incoming_config(const char *service,
+		JsonObj *json, Config *config);
 
-typedef struct {
-	char *app;
-	ConfigState state;
-}AppState;
+int configd_process_complete(const char *service,
+		JsonObj *json, Config *config);
 
-typedef struct  {
-	AppState *apps[MAX_APPS];
-	uint32_t timestamp;
-	char* version;
-	uint32_t count;
-}ConfigSession;
+int configd_trigger_update(ConfigSession *s);
+
+void free_config_data(ConfigData *c);
 
 #endif /* INC_NOTIFICATION_H_ */

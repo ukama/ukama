@@ -10,7 +10,7 @@
 #ifndef INC_JSON_TYPES_H_
 #define INC_JSON_TYPES_H_
 
-#include "notify_macros.h"
+#include "config_macros.h"
 #include "usys_types.h"
 
 #include "jansson.h"
@@ -129,6 +129,13 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_MODULE             "module"
 #define JTAG_STATUS             "status"
 
+
+#define JTAG_CONFIG                "config"
+#define JTAG_FILE_NAME			   "filename"
+#define JTAG_APP_NAME              "app"
+#define JTAG_DATA                  "data"
+#define JTAG_VERSION               "version"
+#define JTAG_TIME_STAMP             "timestamp"
 typedef enum {
     TYPE_NULL = 0,
     TYPE_CHAR = 1,

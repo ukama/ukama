@@ -11,7 +11,7 @@
 #define WEB_CLIENT_H_
 
 #include "config.h"
-#include "notify_macros.h"
+#include "config_macros.h"
 #include "web.h"
 #include "json_types.h"
 

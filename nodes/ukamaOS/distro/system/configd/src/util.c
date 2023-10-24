@@ -7,24 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "configd.h"
-#include "jansson.h"
-#include "usys_api.h"
-#include "usys_file.h"
-#include "usys_getopt.h"
-#include "usys_log.h"
-#include "usys_string.h"
-#include "usys_types.h"
-
-
-#define CONFIG_TMP_PATH "/tmp/"
-#define CONFIG_STORE_PATH "/etc/config"
-#define CONFIG_RUNNING "/etc/config/running"
-#define CONFIG_BACKUP "/etc/config/backup"
-#define CONFIG_OLD "/etc/config/old"
+#include "util.h"
+#include "config_macros.h"
 
 int is_valid_json(const char *json_string) {
     json_error_t error;
@@ -99,7 +83,7 @@ int move_dir(const char *source, const char *destination) {
 	return 0;
 }
 
-int remove_directory(const char *path) {
+int remove_dir(const char *path) {
     struct stat st;
     if (stat(path, &st) != 0) {
         return 0; // Directory doesn't exist
@@ -117,12 +101,12 @@ int remove_directory(const char *path) {
 int create_config(ConfigData* c) {
 	char path[512] = {'\0'};
 	char fpath[512] = {'\0'};
-	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c.version, c.app);
+	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
     if (make_path(path) == 0) {
     	usys_log_debug("Directory %s created successfully.\n", path);
 
-        sprint(fpath, "%s/%s",path, c.fileName)
+        sprintf(fpath,"%s/%s", path, c->fileName);
         // Create and write to files in the new directory
         FILE* file = fopen(fpath, "w");
         if (file == NULL) {
@@ -189,9 +173,9 @@ int restore_config() {
 
 }
 
-int store_config(string version) {
+int store_config(char* version) {
 	char sPath[512] = {'\0'};
-	sprintf(sPath,"%s/%s", CONFIG_DIR_PATH, version);
+	sprintf(sPath,"%s/%s", CONFIG_TMP_PATH, version);
 	
 	/* Create a backup */
 	if (create_backup_config() != 0) {

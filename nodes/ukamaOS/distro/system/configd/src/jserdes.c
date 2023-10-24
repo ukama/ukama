@@ -8,11 +8,10 @@
  */
 
 #include "jserdes.h"
-#include "notification.h"
+#include "configd.h"
 #include "errorcode.h"
 #include "json_types.h"
 #include "web_service.h"
-#include "notify/notify.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -113,74 +112,18 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
     return USYS_TRUE;
 }
 
-/* 
+/*
 {
-    "serviceName" : "noded",
-    "time"        : 1234567,
-    "status"      : xxx,
-    "type"        : "alert"
-    "nodeID"      : "ukma-aaa-bbb-cccc",
-    "details": {
-        "module"   : "trx"
-        "property" : "metric-name",
-        "value"    : "xxx",
-        "units"    : "milli-seconds",
-        "description" : "User are too many"
-    }
+    "filename":"abc.json",
+    "app":"abc",
+    "timestamp":178893939,
+    "version":"acdef",
+    "data" : "{\"name\":\"xyz\"}"
 }
 */
-
-bool json_serialize_notification(JsonObj **json, Notification* notification,
-                                 char *type, char *nodeID, int statusCode) {
-                                
-    JsonObj *jDetails=NULL;
-
-    *json = json_object();
-    if (!*json) return USYS_FALSE;
-
-    json_object_set_new(*json, JTAG_SERVICE_NAME,
-                        json_string(notification->serviceName));
-
-    json_object_set_new(*json, JTAG_TIME,
-                        json_integer(notification->epochTime));
-
-    json_object_set_new(*json, JTAG_STATUS, json_integer(statusCode));
-    json_object_set_new(*json, JTAG_TYPE, json_string(type));
-    json_object_set_new(*json, JTAG_NODE_ID, json_string(nodeID));
-
-    /* Add details about the event/alarm */
-    json_object_set_new(*json, JTAG_DETAILS, json_object());
-    jDetails = json_object_get(*json, JTAG_DETAILS);
-
-    if (notification->module) {
-        json_object_set_new(jDetails, JTAG_MODULE,
-                            json_string(notification->module));
-    } else {
-        json_object_set_new(jDetails, JTAG_MODULE, json_string(EMPTY_STRING));
-    }
-
-    if (notification->device) {
-        json_object_set_new(jDetails, JTAG_DEVICE,
-                            json_string(notification->device));
-    } else {
-        json_object_set_new(jDetails, JTAG_DEVICE, json_string(EMPTY_STRING));
-    }
-
-    json_object_set_new(jDetails, JTAG_NAME,
-                        json_string(notification->propertyName));
-    json_object_set_new(jDetails, JTAG_VALUE,
-                        json_string(notification->propertyValue));
-    json_object_set_new(jDetails, JTAG_UNITS,
-                        json_string(notification->propertyUnit));
-    json_object_set_new(jDetails, JTAG_DESCRIPTION,
-                        json_string(notification->details));
-
-    return USYS_TRUE;
-}
-
-/* Deserialize generic notification received from local services */
-bool json_deserialize_notification(JsonObj *json,
-                                   Notification **notification) {
+/* Deserialize config data */
+bool json_deserialize_config_data(JsonObj *json,
+                                   ConfigData **cd) {
 
     bool ret=USYS_TRUE;
 
@@ -189,40 +132,30 @@ bool json_deserialize_notification(JsonObj *json,
         return USYS_FALSE;
     }
 
-    *notification = (Notification *)calloc(1, sizeof(Notification));
-    if (*notification == NULL) {
+    *cd = (ConfigData *)usys_calloc(1, sizeof(ConfigData));
+    if (*cd == NULL) {
         usys_log_error("Error allocating memory of size: %d",
-                       sizeof(Notification));
+                       sizeof(ConfigData));
         return USYS_FALSE;
     }
     
-    ret |= get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
-                          &(*notification)->serviceName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
-                          &(*notification)->severity, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TIME, JSON_INTEGER,
-                          NULL, &(*notification)->epochTime, NULL);
-    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
-                          &(*notification)->propertyName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_VALUE, JSON_STRING,
-                          &(*notification)->propertyValue, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_UNITS, JSON_STRING,
-                          &(*notification)->propertyUnit, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_DETAILS, JSON_STRING,
-                          &(*notification)->details, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
+                          &(*cd)->fileName, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
+                          &(*cd)->app, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
+                          NULL, &(*cd)->timestamp, NULL);
+    ret |= get_json_entry(json, JTAG_DATA, JSON_STRING,
+                          &(*cd)->data, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_VERSION, JSON_STRING,
+                          &(*cd)->version, NULL, NULL);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the notifiction JSON");
         json_log(json);
-        free_notification(*notification);
+        free_config_data(*cd);
         return USYS_FALSE;
     }
-
-    /* Module and device are optional */
-    get_json_entry(json, JTAG_MODULE, JSON_STRING,
-                              &(*notification)->module, NULL, NULL);
-    get_json_entry(json, JTAG_DEVICE, JSON_STRING,
-                              &(*notification)->device, NULL, NULL);
     return USYS_TRUE;
 }
 

@@ -9,7 +9,7 @@
 
 #include "web_service.h"
 
-#include "../inc/configd.h"
+#include "configd.h"
 #include "web_client.h"
 #include "httpStatus.h"
 #include "jserdes.h"
@@ -30,12 +30,12 @@
  * @return
  */
 int web_service_cb_ping(const URequest *request, UResponse *response,
-                        void *epConfig) {
+		void *epConfig) {
 
-    ulfius_set_string_body_response(response, HttpStatus_OK,
-                                    HttpStatusStr(HttpStatus_OK));
+	ulfius_set_string_body_response(response, HttpStatus_OK,
+			HttpStatusStr(HttpStatus_OK));
 
-    return U_CALLBACK_CONTINUE;
+	return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -49,12 +49,12 @@ int web_service_cb_ping(const URequest *request, UResponse *response,
  * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 int web_service_cb_default(const URequest *request, UResponse *response,
-                           void *epConfig) {
-    
-    ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                    HttpStatusStr(HttpStatus_NotFound));
+		void *epConfig) {
 
-    return U_CALLBACK_CONTINUE;
+	ulfius_set_string_body_response(response, HttpStatus_NotFound,
+			HttpStatusStr(HttpStatus_NotFound));
+
+	return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -67,35 +67,34 @@ int web_service_cb_default(const URequest *request, UResponse *response,
  * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 int web_service_cb_post_config(const URequest *request,
-                              UResponse *response, void *epConfig) {
+		UResponse *response, void *epConfig) {
 
-    int ret = STATUS_NOK;
-    char *service=NULL;
-    JsonObj *json=NULL;
+	int ret = STATUS_NOK;
+	char *service=NULL;
+	JsonObj *json=NULL;
 
-    service = u_map_get(request->map_url, "service");
-    json = ulfius_get_json_body_request(request, NULL);
-    if (service == NULL || json == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-    usys_log_trace("config.d:: Received POST for an config from %s.", service);
+	service = u_map_get(request->map_url, "service");
+	json = ulfius_get_json_body_request(request, NULL);
+	if (service == NULL || json == NULL) {
+		ulfius_set_string_body_response(response,
+				HttpStatus_BadRequest,
+				HttpStatusStr(HttpStatus_BadRequest));
+		return U_CALLBACK_CONTINUE;
+	}
+	usys_log_trace("config.d:: Received POST for an config from %s.", service);
 
-    ret = configd_process_incoming_config(service,
-                                               NOTIFICATION_EVENT,
-                                               json,
-                                               (Config *)epConfig);
-    if (ret == STATUS_OK) {
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-    } else {
-        ulfius_set_empty_body_response(response,
-                                       HttpStatus_InternalServerError);
-    }
+	ret = configd_process_incoming_config(service,
+			json,
+			(Config *)epConfig);
+	if (ret == STATUS_OK) {
+		ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+	} else {
+		ulfius_set_empty_body_response(response,
+				HttpStatus_InternalServerError);
+	}
 
-    json_free(&json);
-    return U_CALLBACK_CONTINUE;
+	json_free(&json);
+	return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -108,35 +107,34 @@ int web_service_cb_post_config(const URequest *request,
  * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 int web_service_cb_post_config_complete(const URequest *request,
-                              UResponse *response, void *epConfig) {
+		UResponse *response, void *epConfig) {
 
-    int ret = STATUS_NOK;
-    char *service=NULL;
-    JsonObj *json=NULL;
+	int ret = STATUS_NOK;
+	char *service=NULL;
+	JsonObj *json=NULL;
 
-    service = u_map_get(request->map_url, "service");
-    json = ulfius_get_json_body_request(request, NULL);
-    if (service == NULL || json == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-    usys_log_trace("config.d:: Received POST for an config complete from %s.", service);
+	service = u_map_get(request->map_url, "service");
+	json = ulfius_get_json_body_request(request, NULL);
+	if (service == NULL || json == NULL) {
+		ulfius_set_string_body_response(response,
+				HttpStatus_BadRequest,
+				HttpStatusStr(HttpStatus_BadRequest));
+		return U_CALLBACK_CONTINUE;
+	}
+	usys_log_trace("config.d:: Received POST for an config complete from %s.", service);
 
-    ret = configd_process_complete(service,
-                                               NOTIFICATION_ALERT,
-                                               json,
-                                               (Config *)epConfig);
-    if (ret == STATUS_OK) {
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-    } else {
-        ulfius_set_empty_body_response(response,
-                                       HttpStatus_InternalServerError);
-    }
+	ret = configd_process_complete(service,
+			json,
+			(Config *)epConfig);
+	if (ret == STATUS_OK) {
+		ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+	} else {
+		ulfius_set_empty_body_response(response,
+				HttpStatus_InternalServerError);
+	}
 
-    json_free(&json);
-    return U_CALLBACK_CONTINUE;
+	json_free(&json);
+	return U_CALLBACK_CONTINUE;
 }
 
 

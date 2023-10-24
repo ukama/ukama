@@ -10,25 +10,14 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define MAX_LINE_LENGTH 128
-#define MAX_ENTRIES     128
-
-typedef struct {
-
-    char serviceName[MAX_LINE_LENGTH];
-    char moduleName[MAX_LINE_LENGTH];
-    char propertyName[MAX_LINE_LENGTH];
-    char type[MAX_LINE_LENGTH];
-    char severity[MAX_LINE_LENGTH];
-    int  code;
-} Entry;
-
 /* Service configuration */
 typedef struct {
 
     char  *serviceName;
     int   servicePort;
-    char  *configdEP;
+    char* nodedHost;
+    int  nodedPort; 
+    char  *nodedEP;
     char *nodeId;
     void *updateSession;
 } Config;
