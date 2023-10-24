@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	SoftwareService_CreateSoftwareUpdate_FullMethodName    = "/ukama.node.software.v1.SoftwareService/CreateSoftwareUpdate"
 	SoftwareService_GetLatestSoftwareUpdate_FullMethodName = "/ukama.node.software.v1.SoftwareService/GetLatestSoftwareUpdate"
+	SoftwareService_UpdateSoftware_FullMethodName          = "/ukama.node.software.v1.SoftwareService/UpdateSoftware"
 )
 
 // SoftwareServiceClient is the client API for SoftwareService service.
@@ -29,6 +30,7 @@ const (
 type SoftwareServiceClient interface {
 	CreateSoftwareUpdate(ctx context.Context, in *CreateSoftwareUpdateRequest, opts ...grpc.CallOption) (*CreateSoftwareUpdateResponse, error)
 	GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error)
+	UpdateSoftware(ctx context.Context, in *UpdateSoftwareRequest, opts ...grpc.CallOption) (*UpdateSoftwareResponse, error)
 }
 
 type softwareServiceClient struct {
@@ -57,12 +59,22 @@ func (c *softwareServiceClient) GetLatestSoftwareUpdate(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *softwareServiceClient) UpdateSoftware(ctx context.Context, in *UpdateSoftwareRequest, opts ...grpc.CallOption) (*UpdateSoftwareResponse, error) {
+	out := new(UpdateSoftwareResponse)
+	err := c.cc.Invoke(ctx, SoftwareService_UpdateSoftware_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SoftwareServiceServer is the server API for SoftwareService service.
 // All implementations must embed UnimplementedSoftwareServiceServer
 // for forward compatibility
 type SoftwareServiceServer interface {
 	CreateSoftwareUpdate(context.Context, *CreateSoftwareUpdateRequest) (*CreateSoftwareUpdateResponse, error)
 	GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error)
+	UpdateSoftware(context.Context, *UpdateSoftwareRequest) (*UpdateSoftwareResponse, error)
 	mustEmbedUnimplementedSoftwareServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedSoftwareServiceServer) CreateSoftwareUpdate(context.Context, 
 }
 func (UnimplementedSoftwareServiceServer) GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSoftwareUpdate not implemented")
+}
+func (UnimplementedSoftwareServiceServer) UpdateSoftware(context.Context, *UpdateSoftwareRequest) (*UpdateSoftwareResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSoftware not implemented")
 }
 func (UnimplementedSoftwareServiceServer) mustEmbedUnimplementedSoftwareServiceServer() {}
 
@@ -125,6 +140,24 @@ func _SoftwareService_GetLatestSoftwareUpdate_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SoftwareService_UpdateSoftware_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSoftwareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SoftwareServiceServer).UpdateSoftware(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SoftwareService_UpdateSoftware_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SoftwareServiceServer).UpdateSoftware(ctx, req.(*UpdateSoftwareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SoftwareService_ServiceDesc is the grpc.ServiceDesc for SoftwareService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var SoftwareService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestSoftwareUpdate",
 			Handler:    _SoftwareService_GetLatestSoftwareUpdate_Handler,
+		},
+		{
+			MethodName: "UpdateSoftware",
+			Handler:    _SoftwareService_UpdateSoftware_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

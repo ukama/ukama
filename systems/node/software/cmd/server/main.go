@@ -17,6 +17,7 @@ import (
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
+	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -72,9 +73,10 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	// softwareServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
 	// 	mbClient,  svcConf.DebugMode)
+	wimsiC := providers.NewWimsiClientProvider(svcConf.WimsiHost, svcConf.DebugMode)
 
 		softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		mbClient, svcConf.DebugMode)
+		mbClient, svcConf.DebugMode, wimsiC)
 	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

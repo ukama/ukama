@@ -15,6 +15,7 @@ type Config struct {
 	Service          *uconf.Service
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
+	WimsiHost 	  string           `default:"http://wimsi:8080"`
 }
 
 func NewConfig(name string) *Config {

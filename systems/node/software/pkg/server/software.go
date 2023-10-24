@@ -12,6 +12,7 @@ import (
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
+	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -21,17 +22,20 @@ type SoftwareServer struct {
 	sRepo                db.SoftwareRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
+	wimsiClient        providers.WimsiClientProvider
 	debug                bool
 	orgName              string
+
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, msgBus mb.MsgBusServiceClient, debug bool) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, msgBus mb.MsgBusServiceClient, debug bool, wimsiClient providers.WimsiClientProvider) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		orgName:              orgName,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
+		wimsiClient:          wimsiClient,
 	}
 }
 
@@ -73,6 +77,25 @@ func (s *SoftwareServer) GetLatestSoftwareUpdate(ctx context.Context, req *pb.Ge
 
 	return &pb.GetLatestSoftwareUpdateResponse{
 		SoftwareUpdate: dbSoftwareToPbSoftwareUpdate(softwareUpdate),
+	}, nil
+
+}
+
+func (s *SoftwareServer) SoftwareUpdate(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
+	log.Infof("Getting software update")
+
+	softwareUpdate, err := s.sRepo.GetLatestSoftwareUpdate()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "Failed to get software update")
+	}
+
+    err =s.wimsiClient.RequestSoftwareUpdate(softwareUpdate.Space,softwareUpdate.Tag,softwareUpdate.Name)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "Failed to request software update")
+	}
+
+	return &pb.UpdateSoftwareResponse{
+	
 	}, nil
 
 }

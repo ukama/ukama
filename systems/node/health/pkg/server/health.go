@@ -87,10 +87,16 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	if err != nil {
 		return nil, err
 	}
-
+	
+msg :=&pb.StoreRunningAppsInfoRequest{
+		NodeId:    req.NodeId,
+		Timestamp: req.Timestamp,
+		System:    req.System,
+		Capps:     req.Capps,
+	}
 	// Publish the message to the message bus
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-	err = h.msgbus.PublishRequest(route, req)
+	err = h.msgbus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}

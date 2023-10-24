@@ -11,7 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -60,7 +60,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	}
 
 	if err := c.registrySystem.ValidateSite(netId.String(), req.GetSiteName(), c.orgName); err != nil {
-		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteName(),netId.String(), err.Error())
+		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
 	}
 
 	if err := c.registrySystem.ValidateNetwork(netId.String(), c.orgName); err != nil {
@@ -69,11 +69,11 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 
 	nodes, err := c.registrySystem.GetNodesBySite(req.SiteName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteName(),netId.String(), err.Error())
+		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
 
 	}
 	for _, nodeId := range nodes {
-		
+
 		nId, err := ukama.ValidateNodeId(nodeId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -85,16 +85,19 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
 
-		anyMsg, err := anypb.New(req)
+		msg := &pb.RestartNodeRequest{
+			NodeId: nId.String(),
+		}
+		data, err := proto.Marshal(msg)
 		if err != nil {
 			return nil, err
 		}
-		
-		err = c.publishMessage(c.orgName + "." + "." + "." + nId.String(), anyMsg, nId.String())
+
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-	
+
 		}
 	}
 
@@ -102,7 +105,6 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		Status: pb.RestartStatus_RESTARTED,
 	}, nil
 }
-
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
 	if req.NodeId == "" {
@@ -119,17 +121,21 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
-	anyMsg, err := anypb.New(req)
+
+	msg := &pb.RestartNodeRequest{
+		NodeId: nId.String(),
+	}
+	data, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
-	
-	   err = c.publishMessage(c.orgName + "." + "." + "." + nId.String(), anyMsg,nId.String())
-	   if err != nil {
-		   log.Errorf("Failed to publish message. Errors %s", err.Error())
-		   return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-   
-	   }
+
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+	if err != nil {
+		log.Errorf("Failed to publish message. Errors %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+
+	}
 	return &pb.RestartNodeResponse{
 		Status: pb.RestartStatus_RESTARTED,
 	}, nil
@@ -151,37 +157,39 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
-		anyMsg, err := anypb.New(req)
-	if err != nil {
-		return nil, err
-		
-	}
-	err = c.publishMessage(c.orgName + "." + "." + "." + nodeId, anyMsg, nodeId)
+		msg := &pb.RestartNodeRequest{
+			NodeId: string(nodeId),
+		}
+		data, err := proto.Marshal(msg)
+		if err != nil {
+			return nil, err
+		}
 
-	if err != nil {
-		log.Errorf("Failed to publish message . Errors %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, data, nodeId)
 
-	}
+		if err != nil {
+			log.Errorf("Failed to publish message . Errors %s", err.Error())
+			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+
+		}
 	}
 
-	
-	
 	return &pb.RestartNodesResponse{
 		Status: pb.RestartStatus_RESTARTED,
 	}, nil
-	
+
 }
 
-func (c *ControllerServer) publishMessage(target string , anyMsg *anypb.Any ,nodeId string) error {
+func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId string) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
+
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HTTPMethod: "POST",
 		Path:       "/v1/reboot/" + nodeId,
 		Msg:        anyMsg,
 	}
-	log.Infof("Published controller %s on route %s on target %s ",anyMsg,route,target)
+	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
