@@ -21,3 +21,9 @@ type ApplyConfigRequest struct {
 type GetConfigVersionRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
+
+type UpdateSoftwareRequest struct {
+	Space string `json:"space" validate:"required" path:"space"`
+	Name  string `json:"name" validate:"required" path:"name"`
+	Tag   string `json:"tag" validate:"required" path:"tag"`
+}

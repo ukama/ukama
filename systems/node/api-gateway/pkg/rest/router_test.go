@@ -22,6 +22,8 @@ import (
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	smocks "github.com/ukama/ukama/systems/node/software/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -65,7 +67,6 @@ func TestPingRoute(t *testing.T) {
 
 func Test_RestarteNode(t *testing.T) {
 	// arrange
-	node := ukama.NewVirtualHomeNodeId().String()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controllers/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
 	arc := &providers.AuthRestClient{}
@@ -73,7 +74,7 @@ func Test_RestarteNode(t *testing.T) {
 	cfg := &cmocks.ConfiguratorServiceClient{}
 
 	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{
-		Status: cpb.RestartStatus_ACCEPTED},
+		Status: cpb.RestartStatus_RESTARTED},
 		nil)
 
 	r := NewRouter(&Clients{
@@ -84,7 +85,7 @@ func Test_RestarteNode(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 	c.AssertExpectations(t)
 }
 
@@ -105,11 +106,32 @@ func Test_RestarteNodes(t *testing.T) {
 	}
 
 	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
-		Status: cpb.RestartStatus_ACCEPTED,
+		Status: cpb.RestartStatus_RESTARTED,
 	}, nil)
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func Test_SoftwareUpdate(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/v1/software/update/space1/name1/tag1", nil)
+	arc := &providers.AuthRestClient{}
+	c := &smocks.SoftwareServiceClient{}
+
+	c.On("UpdateSoftware", mock.Anything, mock.Anything).Return(&spb.UpdateSoftwareResponse{},
+		nil)
+
+	r := NewRouter(&Clients{
+		SoftwareManager: client.NewSoftwareManagerFromClient(c),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
@@ -132,7 +154,7 @@ func Test_RestarteSite(t *testing.T) {
 	}
 
 	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{
-		Status: cpb.RestartStatus_ACCEPTED},
+		Status: cpb.RestartStatus_RESTARTED},
 		nil)
 
 	r := NewRouter(&Clients{

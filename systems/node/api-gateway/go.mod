@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/node/controller => ../controller
 
 replace github.com/ukama/ukama/systems/node/configurator => ../configurator
 
+replace github.com/ukama/ukama/systems/node/software => ../software
+
 replace github.com/ukama/ukama/systems/node/api-gateway => ./
 
 require (
@@ -23,6 +25,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/stretchr/testify v1.8.4
 	github.com/ukama/ukama/systems/node/configurator v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/node/software v0.0.0-00010101000000-000000000000
 )
 
 require (
