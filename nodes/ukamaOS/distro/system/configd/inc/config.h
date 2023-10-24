@@ -30,6 +30,7 @@ typedef struct {
     int   servicePort;
     char  *configdEP;
     char *nodeId;
+    void *updateSession;
 } Config;
 
 #endif /* CONFIG_H_ */

@@ -10,6 +10,7 @@
 #ifndef INC_CONFIGD_H_
 #define INC_CONFIGD_H_
 
+#define MAX_APPS  32
 typedef struct  {
 	char *fileName;
 	char *app;
@@ -31,9 +32,10 @@ typedef struct {
 }AppState;
 
 typedef struct  {
-	AppState *apps;
+	AppState *apps[MAX_APPS];
 	uint32_t timestamp;
 	char* version;
-}ConfigState;
+	uint32_t count;
+}ConfigSession;
 
 #endif /* INC_NOTIFICATION_H_ */

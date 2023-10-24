@@ -21,37 +21,120 @@ void free_config_data(ConfigData *c) {
 	}
 }
 
-int configd_process_incoming_config(const char *service,
-                                         JsonObj *json, Config *config){
+int process_config(JsonObj *json, Config *config) {
+	int statusCode = STATUS_NOK;
+	ConfigData *cd = NULL;
 
-	int statusCode=-1;
-	ConfigData *config=NULL;
-
-	/* Deserialize incoming message from noded */
-	if (!json_deserialize_config(json, &config)) {
+	/* Deserialize incoming message from cloud */
+	if (!json_deserialize_config(json, &cd)) {
 		return STATUS_NOK;
 	}
 
-	/* Validate the jsosn data */
-	 if (is_valid_json(config->data)) {
-		 statusCode = create_config(config);
-	 }
+	/* Validate the json data */
+	if (!is_valid_json(cd->data)) {
+		return STATUS_NOK;
+	}
 
-	 free_config_data(config);
+	/* get or create session */
+	if (config) {
+		if (!config->updateSession) {
+			ConfigState *session = create_new_update_session(cd);
+			if (!session) {
+				usys_log_error("failed to create update session.");
+				return STATUS_NOK;
+			}
+			config->updateSession = session;
+
+		}
+	} else {
+		usys_log_error("invalid config for web service.");
+		return STATUS_NOK;
+	}
+
+	/* Validate the commit*/
+	if (!is_valid_commit(config, cd)) {
+		return STATUS_NOK;
+	}
+
+	statusCode =  create_config(cd)
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to create config for %s app version %s", cd->app, cd->version);
+		goto cleanup;
+	}
+	free_config_data(cd)
 
 	return statusCode;
 }
 
-
-int is_valid_commit(ConfigData *c) {
-
-	if ((c->timestamp > timestamp) && (usys_strcmp(c->version, version))) {
-		usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", c->version, c->timestamp, version, timestamp);
-		free_config_state_handler();
-		create_ne_config_state_handler();
+/* store incoming config file */
+int configd_process_incoming_config(const char *service,
+                                         JsonObj *json, Config *config){
+	int statusCode = STATUS_NOK;
+	statusCode = process_config(json, config)
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to process config complete message.")
 	}
 
-	if (!(usys_strcmp(c->version, version)) && (c->timestamp == timestamp) ) {
+	return statusCode;
+}
+
+/* creates a new session for update */
+ConfigSession* create_new_update_session(ConfigData *cd) {
+	ConfigSession *session = (ConfigSession*)usys_calloc(1, sizeof(ConfigSession));
+	if (session) {
+		session->timestamp = cd->timestamp;
+		session->version = usys_strdup(cd->version);
+		session->count = 0;
+		usys_log_debug("New update config session cretated for commit %s and timestamp %ld", cd->version, cd->timestamp);
+	}
+
+	return session;
+}
+
+
+void free_apps(AppState *apps, uint32_t count) {
+	for (uint32_t i = 0; i < count; i++) {
+		if (apps[i]) free(apps[i]);
+	}
+}
+/* creates a new session for update */
+void* clean_session(ConfigSession *session) {
+
+	if (session) {
+		if (session->version) free(session->version);
+		if (session->apps) free_apps (session->apps, session->count);
+		session->timestamp = 0;
+		session->count = 0;
+	}
+}
+
+
+/* Validate commit and creates a new session if required */
+int is_valid_commit(Config* c , ConfigData *cd) {
+
+	ConfigSession* s = (ConfigSession*) c->updateSession;
+	if ((cd->timestamp > s->timestamp) && (usys_strcmp(cd->version, s->version))) {
+		usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", cd->version, cd->timestamp, version, timestamp);
+		clean_session(c->updateSession);
+		c->updateSession = create_new_update_session(cd);
+		if (c->updateSession) {
+			s = (ConfigSession*) c->updateSession;
+		} else {
+			return 0;
+		}
+	}
+
+	if (!(usys_strcmp(cd->version, s->version)) && (cd->timestamp == s->timestamp) ) {
+		s->count++;
+		AppState* as = AppState* usys_calloc(1, sizeof(AppState*));
+		if (as) {
+			as->app = usys_strdup(cd->app);
+			as->state = UPDATE_AVAILABLE;
+			s->apps[s->count] = as;
+		} else {
+			perror("Memory failure");
+			return 0;
+		}
 		return 1;
 	}
 	return 0;
@@ -59,25 +142,40 @@ int is_valid_commit(ConfigData *c) {
 
 int configd_process_complete(const char *service,
 						JsonObj *json, Config *config){
-	int statusCode=-1;
-	ConfigData *cd = NULL;
-
-	/* Deserialize incoming message from noded */
-	if (!json_deserialize_config(json, &cd)) {
-		return STATUS_NOK;
+	int statusCode = STATUS_NOK;
+	statusCode = process_config(json, config)
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to process config complete message.")
+		goto cleanup;
 	}
 
-	/* Validate the jsosn data */
-	 if ( is_valid_json(cd->data) && is_valid_commit(cd) ) {
-		 statusCode = store_config(cd);
-	 }
+	/* Store config*/
+	ConfigSession* s = (ConfigSession*)config->updateSession;
+	statusCode = store_config(s->version)
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to store config %s", s->version);
+		goto cleanup;
+	}
 
+	/* Trigger updates */
+	statusCode = configd_trigger_update(s->version);
 
-	 /* Trigger updates */
-
-
-	 free_config_data(cd);
+cleanup:
+	clean_session(config);
 
 	return statusCode;
+}
+
+/* not monitoing anything app status for now */
+int configd_trigger_update(ConfigSession *s) {
+
+	for (int i = 0; i < s->count; i) {
+		usys_log_debug("Triggering update for %s app to version %s ", s->apps[i]->app, s->apps[i].version);
+			/* Send exit message to startup app */
+
+			/* send start message to startup app */
+	}
+
+	return 0;
 }
 

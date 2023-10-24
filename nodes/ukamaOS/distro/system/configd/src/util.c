@@ -20,11 +20,11 @@
 #include "usys_types.h"
 
 
-#define CONFIG_DIR_PATH "/tmp/"
+#define CONFIG_TMP_PATH "/tmp/"
 #define CONFIG_STORE_PATH "/etc/config"
-#define CONFIG_PREV_STORE "/etc/prev_config"
-#define CONFIG_OLD_STORE "/etc/old_config"
-
+#define CONFIG_RUNNING "/etc/config/running"
+#define CONFIG_BACKUP "/etc/config/backup"
+#define CONFIG_OLD "/etc/config/old"
 
 int is_valid_json(const char *json_string) {
     json_error_t error;
@@ -117,7 +117,7 @@ int remove_directory(const char *path) {
 int create_config(ConfigData* c) {
 	char path[512] = {'\0'};
 	char fpath[512] = {'\0'};
-	sprintf(path,"%s/%s/%s", CONFIG_DIR_PATH, c.version, c.app);
+	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c.version, c.app);
 
     if (make_path(path) == 0) {
     	usys_log_debug("Directory %s created successfully.\n", path);
@@ -149,43 +149,59 @@ int create_config(ConfigData* c) {
     return 0;
 }
 
-int move_old_config(){
+int create_backup_config(){
 
-	remove_dir(CONFIG_OLD_STORE);
+	remove_dir(CONFIG_OLD);
+	if (move_dir(CONFIG_BACKUP, CONFIG_OLD ) == 0) {
+		usys_log_debug("Moved backup config to old config.\n");
+	} else {
+        usys_log_error("failed to create old config.\n");
+        return -1;
+    }
 
-	if (move_dir(CONFIG_STORE_PATH, CONFIG_OLD_STORE ) == 0) {
-		usys_log_debug("Created a backup config for current running config.\n");
-	}
+    if (move_dir(CONFIG_RUNNING, CONFIG_BACKUP ) == 0) {
+		usys_log_debug("Created a backup config to old config.\n");
+	}else {
+        usys_log_error("failed to create backup config.\n");
+        return -1;
+    }
 
 	return 0;
 }
 
 int restore_config() {
 
-	if (move_dir(CONFIG_OLD_STORE, CONFIG_STORE_PATH ) == 0) {
-		usys_log_debug("Restore config.\n");
-	}
+	if (move_dir(CONFIG_BACKUP, CONFIG_RUNNING ) == 0) {
+		usys_log_debug("Restore running config done.\n");
+	}else {
+        usys_log_error("failed to restore running config.\n");
+        return -1;
+    }
+
+    if (move_dir(CONFIG_OLD, CONFIG_BACKUP ) == 0) {
+		usys_log_debug("Restore backup config done.\n");
+	}else {
+         usys_log_error("failed to restore backup config.\n");
+        return -1;
+    }
+
 	return 0;
 
 }
 
-int store_config(ConfigData *c) {
+int store_config(string version) {
 	char sPath[512] = {'\0'};
-	char dPath[512] = {'\0'};
-	char oldConfig[512] = {'\0'};
-
-	sprintf(sPath,"%s/%s", CONFIG_DIR_PATH, c.version);
-	sprintf(dPath,"%s/%s", CONFIG_STORE_PATH, c.version);
-
+	sprintf(sPath,"%s/%s", CONFIG_DIR_PATH, version);
+	
 	/* Create a backup */
-	if (move_old_config() != 0) {
-		usys_log_debug("Failed to move old config for backup. \n");
+	if (create_backup_config() != 0) {
+		usys_log_error("Failed to move old config for backup. \n");
 		return -1;
 	}
 
 	/* Create a config */
-	if (move_dir(sPath, dPath) != 0) {
-		usys_log_debug("Failed to create config for backup. Restoring config..\n");
+	if (move_dir(sPath, CONFIG_RUNNING) != 0) {
+		usys_log_error("Failed to create config for backup. Restoring config..\n");
 		restore_config();
 		return -1;
 	}
