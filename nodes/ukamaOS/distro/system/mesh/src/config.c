@@ -118,7 +118,7 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	int ret=TRUE;
 	char *hostname=NULL, *nodeID=NULL, *subnetMask=NULL;
-	toml_datum_t localAccept, cert, key, localHostname, remoteIPFile;
+	toml_datum_t cert, key, localHostname, remoteIPFile;
 
 	remoteIPFile  = toml_string_in(configData, REMOTE_IP_FILE);
     localHostname = toml_string_in(configData, LOCAL_HOSTNAME);

@@ -201,7 +201,7 @@ int start_web_services(Config *config, UInst *clientInst) {
     return FALSE;
   }
 
-  log_debug("Webservice on client port: %s started.", config->localAccept);
+  log_debug("Webservice on client port: %d started.", config->localAccept);
 
   return TRUE;
 }
