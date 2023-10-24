@@ -28,7 +28,7 @@
 
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 
-#define ENV_CONFIG_DEBUG_MODE  "true"
+#define ENV_CONFIG_DEBUG_MODE  "ENV_CONFIG_DEBUG_MODE"
 
 #define CONFIG_TMP_PATH "/tmp/"
 #define CONFIG_STORE_PATH "/etc/config"
