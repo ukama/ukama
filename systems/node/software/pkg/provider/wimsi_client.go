@@ -11,7 +11,7 @@ import (
 const wimsiEndpoint = "/v1/wimsi"
 
 type WimsiClientProvider interface {
-	RequestSoftwareUpdate(space string ,tag string , name string ) error
+	RequestSoftwareUpdate(space string ,tag string , name string , nodeId string ) error
 }
 
 type wimsiInfoClient struct {
@@ -51,11 +51,11 @@ func NewWimsiClientProvider(url string, debug bool) WimsiClientProvider {
 	return n
 }
 
-func (p *wimsiInfoClient) RequestSoftwareUpdate(space string, tag string, name string) error {
+func (p *wimsiInfoClient) RequestSoftwareUpdate(space string, tag string, name string, nodeId string) error {
     errStatus := &rest.ErrorMessage{}
 
     // Construct the URL with route parameters
-    params := fmt.Sprintf("%s/%s/%s/%s", "update", space, name, tag)
+    params := fmt.Sprintf("%s/%s/%s/%s/%s", "update", space, name, tag,nodeId)
 	endpoint:=wimsiEndpoint+params
     resp, err := p.R.C.R().
         SetError(errStatus).

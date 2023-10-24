@@ -12,12 +12,14 @@ service SoftwareService {
 }
 
 message UpdateSoftwareRequest {
+    string nodeId = 1;
     string tag = 2;
     string space = 3;
     string name = 5;
 }
 
 message UpdateSoftwareResponse {
+    string message =1;
 
 }
 message CreateSoftwareUpdateRequest {

@@ -23,6 +23,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 	// Create a mock for the SoftwareManagerRepo interface
 	softwareManager := &mocks.SoftwareRepo{}
 	wimsiProvider := &mocks.WimsiClientProvider{}
+	healthsvc := &mocks.HealthClientProvider{}
 
 	// Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
 	softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
@@ -33,7 +34,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 	// Configure the mock to expect a call to PublishRequest with specific arguments
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false,wimsiProvider)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false, wimsiProvider, healthsvc)
 
 	// Test
 	r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
@@ -55,6 +56,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 
 	// Create a mock for the SoftwareManagerRepo interface
 	softwareManager := &mocks.SoftwareRepo{}
+	healthsvc := &mocks.HealthClientProvider{}
 
 	// Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
 	softwareManager.On("GetLatestSoftwareUpdate").
@@ -69,7 +71,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false,wimsiProvider)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false, wimsiProvider, healthsvc)
 
 	// Test
 	r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})
@@ -82,4 +84,3 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 	softwareManager.AssertExpectations(t)
 	msgclientRepo.AssertExpectations(t)
 }
-

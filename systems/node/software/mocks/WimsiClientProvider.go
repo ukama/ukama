@@ -9,13 +9,13 @@ type WimsiClientProvider struct {
 	mock.Mock
 }
 
-// RequestSoftwareUpdate provides a mock function with given fields: space, tag, name
-func (_m *WimsiClientProvider) RequestSoftwareUpdate(space string, tag string, name string) error {
-	ret := _m.Called(space, tag, name)
+// RequestSoftwareUpdate provides a mock function with given fields: space, tag, name, nodeId
+func (_m *WimsiClientProvider) RequestSoftwareUpdate(space string, tag string, name string, nodeId string) error {
+	ret := _m.Called(space, tag, name, nodeId)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
-		r0 = rf(space, tag, name)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) error); ok {
+		r0 = rf(space, tag, name, nodeId)
 	} else {
 		r0 = ret.Error(0)
 	}

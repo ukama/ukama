@@ -71,12 +71,11 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	// softwareServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-	// 	mbClient,  svcConf.DebugMode)
+
 	wimsiC := providers.NewWimsiClientProvider(svcConf.WimsiHost, svcConf.DebugMode)
 
-		softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		mbClient, svcConf.DebugMode, wimsiC)
+	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
+		mbClient, svcConf.DebugMode, wimsiC, providers.NewHealthClientProvider(svcConf.Health))
 	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

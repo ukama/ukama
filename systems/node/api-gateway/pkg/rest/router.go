@@ -57,7 +57,7 @@ type configurator interface {
 }
 
 type softwareManager interface {
-	UpdateSoftware(space string, name string, tag string) (*spb.UpdateSoftwareResponse, error)
+	UpdateSoftware(space string, name string, tag string, nodeId string) (*spb.UpdateSoftwareResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -134,7 +134,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		const soft = "/software"
 		softS := auth.Group(soft, "Software manager", "Operations on software")
-		softS.POST("/update/:space/:name/:tag", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
+		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 	}
 }
 
@@ -147,7 +147,7 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 }
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
-	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag)
+	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

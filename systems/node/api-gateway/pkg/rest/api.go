@@ -26,4 +26,5 @@ type UpdateSoftwareRequest struct {
 	Space string `json:"space" validate:"required" path:"space"`
 	Name  string `json:"name" validate:"required" path:"name"`
 	Tag   string `json:"tag" validate:"required" path:"tag"`
+	NodeId string `json:"node_id" validate:"required" path:"node_id"`
 }

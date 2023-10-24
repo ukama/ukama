@@ -124,7 +124,7 @@ func Test_RestarteNodes(t *testing.T) {
 func Test_SoftwareUpdate(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/software/update/space1/name1/tag1", nil)
+	req, _ := http.NewRequest("POST", "/v1/software/update/space1/name1/tag1/uk-983794-hnode-78-7830", nil)
 	arc := &providers.AuthRestClient{}
 	c := &smocks.SoftwareServiceClient{}
 

@@ -49,11 +49,12 @@ func (r *SoftwareManager) Close() {
 	r.conn.Close()
 }
 
-func (r *SoftwareManager) UpdateSoftware(space string, name string, tag string) (*pb.UpdateSoftwareResponse, error) {
+func (r *SoftwareManager) UpdateSoftware(space string, name string, tag string, nodeId string) (*pb.UpdateSoftwareResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+		NodeId: nodeId,
 		Space: space,
 		Name:  name,
 		Tag:   tag,
