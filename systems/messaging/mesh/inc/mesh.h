@@ -45,8 +45,8 @@
 #define MESH_LOCK_TIMEOUT 10 /* seconds */
 #define MAX_QUEUE_SIZE    100
 #define MAX_BUFFER        256
-#define START_PORT        1025
-#define END_PORT          65534
+#define START_PORT        18100
+#define END_PORT          19000
 
 #define TRUE  1
 #define FALSE 0

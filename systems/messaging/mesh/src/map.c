@@ -29,7 +29,7 @@ void init_map_table(MapTable **table) {
  *
  */
 static MapItem *create_map_item(char *nodeID,
-                                UInst *instance,
+                                UInst **instance,
                                 char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
 
@@ -52,7 +52,7 @@ static MapItem *create_map_item(char *nodeID,
         return NULL;
     }
 
-    map->forwardInst        = instance;
+    map->forwardInst        = *instance;
     map->nodeInfo->nodeID   = strdup(nodeID);
     map->nodeInfo->nodeIP   = strdup(nodeIP);
     map->nodeInfo->nodePort = nodePort;
@@ -120,7 +120,7 @@ MapItem *is_existing_item(MapTable *table, char *nodeID) {
  */
 MapItem *add_map_to_table(MapTable **table,
                           char *nodeID,
-                          UInst *instance,
+                          UInst **instance,
                           char *nodeIP, int nodePort,
                           char *meshIP, int meshPort) {
 

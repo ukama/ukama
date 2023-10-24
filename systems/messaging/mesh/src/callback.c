@@ -66,7 +66,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	}
 
     /* Open up forwarding web instance for services */
-    forwardPort = start_forward_service(config, forwardInst);
+    forwardPort = start_forward_service(config, &forwardInst);
     if (forwardPort <= 0 ) {
         log_error("Unable to start forwarding serice");
         return U_CALLBACK_ERROR;
@@ -74,7 +74,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 
     map = add_map_to_table(&IDsTable,
                            nodeID,
-                           forwardInst,
+                           &forwardInst,
                            &ip[0], sin->sin_port,
                            config->bindingIP,
                            forwardPort);

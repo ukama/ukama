@@ -133,7 +133,7 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 	return TRUE;
 }
 
-int start_forward_service(Config *config, UInst *forwardInst) {
+int start_forward_service(Config *config, UInst **forwardInst) {
 
     struct sockaddr_in bindAddr;
     int port;
@@ -149,7 +149,14 @@ int start_forward_service(Config *config, UInst *forwardInst) {
     bindAddr.sin_port        = htons(port);
     bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
 
-	if (init_framework(forwardInst,
+    *forwardInst = (UInst *)calloc(1, sizeof(UInst));
+    if (*forwardInst == NULL) {
+        log_error("Error allocating memory of size: %d",
+                  sizeof(UInst));
+        return FALSE;
+    }
+
+	if (init_framework(*forwardInst,
                        &bindAddr,
                        port) != TRUE) {
 		log_error("Error initializing forward framework");
@@ -157,12 +164,13 @@ int start_forward_service(Config *config, UInst *forwardInst) {
 	}
 
 	/* setup endpoint */
-    ulfius_set_default_endpoint(forwardInst,
-                                &callback_default_forward,
-                                config);
+    ulfius_add_endpoint_by_val(*forwardInst,
+                               "POST",
+                               "*", NULL, 0,
+							   &callback_default_forward, config);
 
 	if (start_framework(config,
-                        forwardInst,
+                        *forwardInst,
                         FORWARD) == FALSE) {
 		log_error("Failed to start forward service at port %d",
                   port);
