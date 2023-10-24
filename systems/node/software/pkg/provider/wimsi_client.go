@@ -51,29 +51,29 @@ func NewWimsiClientProvider(url string, debug bool) WimsiClientProvider {
 	return n
 }
 
-func (p *wimsiInfoClient) RequestSoftwareUpdate(space string ,tag string ,name string)  error {
-	errStatus := &rest.ErrorMessage{}
+func (p *wimsiInfoClient) RequestSoftwareUpdate(space string, tag string, name string) error {
+    errStatus := &rest.ErrorMessage{}
 
-	pkg := WimsiRes{}
+    // Construct the URL with route parameters
+    params := fmt.Sprintf("%s/%s/%s/%s", "update", space, name, tag)
+	endpoint:=wimsiEndpoint+params
+    resp, err := p.R.C.R().
+        SetError(errStatus).
+        Post(p.R.URL.String() + endpoint)
 
-	resp, err := p.R.C.R().
-		SetError(errStatus).
-		Get(p.R.URL.String() + wimsiEndpoint + "/update/" + space + "/" + name + "/" + tag)
+    if err != nil {
+        log.Errorf("Failed to send API request to Wimsi. Error: %s", err.Error())
+        return fmt.Errorf("API request to Wimsi failure: %w", err)
+    }
 
-	if err != nil {
-		log.Errorf("Failed to send api request to wimsi. Error %s", err.Error())
+    if !resp.IsSuccess() {
+        log.Tracef("Failed to fetch org info. HTTP response code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+        return fmt.Errorf("User Info failure: %s", errStatus.Message)
+    }
 
-		return  fmt.Errorf("api request to wimsi failure: %w", err)
-	}
+    log.Infof("Wimsi response: %+v", resp.String()) // You can log the response if needed
 
-	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch org info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
-
-		return fmt.Errorf("User Info failure %s", errStatus.Message)
-	}
-
-	log.Infof("wimsi res: %+v", pkg)
-
-	return  nil
+    return nil
 }
+
 

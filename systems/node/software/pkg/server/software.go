@@ -81,7 +81,7 @@ func (s *SoftwareServer) GetLatestSoftwareUpdate(ctx context.Context, req *pb.Ge
 
 }
 
-func (s *SoftwareServer) SoftwareUpdate(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
+func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
 	log.Infof("Getting software update")
 
 	softwareUpdate, err := s.sRepo.GetLatestSoftwareUpdate()
