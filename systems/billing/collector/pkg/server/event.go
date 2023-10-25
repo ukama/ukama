@@ -7,15 +7,16 @@ import (
 	"strconv"
 	"time"
 
-	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
-	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
 // TODO: We need to think about retry policies for failing interaction between our backend and the upstream billing service
@@ -139,7 +140,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// update subscrition to customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate"):
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -192,6 +193,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	// TODO: upstream billing provider fails on a DB constraint when pay in advance
 	// is set to false (postpaid). Somwhow, false bool value from go is sent as null
 	// to upstream DB. Need to investigate this between upstream go client and DB.
+
 	// TODO updates: It seems like 0, false values are not sent by go client.
 
 	// payAdvance := false
