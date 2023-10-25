@@ -9,7 +9,9 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	"github.com/ukama/ukama/systems/common/uuid"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
@@ -18,6 +20,7 @@ import (
 	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type SoftwareServer struct {
@@ -25,20 +28,18 @@ type SoftwareServer struct {
 	sRepo                db.SoftwareRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
-	wimsiClient          providers.WimsiClientProvider
 	debug                bool
 	orgName              string
 	healthService        providers.HealthClientProvider
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, msgBus mb.MsgBusServiceClient, debug bool, wimsiClient providers.WimsiClientProvider, healthService providers.HealthClientProvider) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, msgBus mb.MsgBusServiceClient, debug bool, healthService providers.HealthClientProvider) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		orgName:              orgName,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
-		wimsiClient:          wimsiClient,
 		healthService:        healthService,
 	}
 }
@@ -110,9 +111,15 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get running apps")
 	}
+
 	for _, capp := range resp.RunningApps.Capps {
 		log.Infof("Running app %s", capp.Name)
-
+		softReq := &pb.UpdateSoftwareRequest{
+			NodeId: resp.RunningApps.NodeId,
+			Tag:    capp.Tag,
+			Name:   capp.Name,
+			Space:  capp.Space,
+		}
 		if capp.Tag == softwareUpdate.Tag {
 			log.Infof("App %s is already running and tag %s", capp.Name, capp.Tag)
 			msg := fmt.Sprintf("Capp %s is already running and tag %s", capp.Name, capp.Tag)
@@ -120,10 +127,11 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 				Message: msg,
 			}, nil
 		} else {
-			err = s.wimsiClient.RequestSoftwareUpdate(softwareUpdate.Space, softwareUpdate.Tag, softwareUpdate.Name, resp.RunningApps.NodeId)
+			data, err := proto.Marshal(softReq)
 			if err != nil {
-				return nil, grpc.SqlErrorToGrpc(err, "Failed to request software update")
+				log.Fatalf("Failed to marshal message: %v", err)
 			}
+			err = s.publishMessage(s.orgName+"."+"."+"."+resp.RunningApps.NodeId, data, capp.Space, capp.Name, capp.Tag)
 
 		}
 
@@ -142,4 +150,19 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Space:  software.Space,
 		Status: pb.Status(software.Status),
 	}
+}
+
+func (c *SoftwareServer) publishMessage(target string, anyMsg []byte, space string, name string, tag string) error {
+	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
+
+	msg := &cpb.NodeFeederMessage{
+		Target:     target,
+		HTTPMethod: "POST",
+		Path:       "wimc/v1/ping",
+		Msg:        anyMsg,
+	}
+	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
+
+	err := c.msgbus.PublishRequest(route, msg)
+	return err
 }

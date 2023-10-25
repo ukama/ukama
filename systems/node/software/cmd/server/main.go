@@ -72,10 +72,9 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	wimsiC := providers.NewWimsiClientProvider(svcConf.WimsiHost, svcConf.DebugMode)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		mbClient, svcConf.DebugMode, wimsiC, providers.NewHealthClientProvider(svcConf.Health))
+		mbClient, svcConf.DebugMode, providers.NewHealthClientProvider(svcConf.Health))
 	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
