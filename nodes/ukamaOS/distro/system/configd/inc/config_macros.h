@@ -30,10 +30,13 @@
 
 #define ENV_CONFIG_DEBUG_MODE  "ENV_CONFIG_DEBUG_MODE"
 
-#define CONFIG_TMP_PATH "/tmp/"
-#define CONFIG_STORE_PATH "/etc/config"
-#define CONFIG_RUNNING "/etc/config/running"
-#define CONFIG_BACKUP "/etc/config/backup"
-#define CONFIG_OLD "/etc/config/old"
-
+#define CONFIG_TMP_PATH "/tmp"
+//#define CONFIG_STORE_PATH "/etc/config"
+//#define CONFIG_RUNNING "/etc/config/running"
+//#define CONFIG_BACKUP "/etc/config/backup"
+//#define CONFIG_OLD "/etc/config/old"
+#define CONFIG_STORE_PATH "/home/vishal/cdrive/handson/configd"
+#define CONFIG_RUNNING "/home/vishal/cdrive/handson/configd/running"
+#define CONFIG_BACKUP "/home/vishal/cdrive/handson/configd/backup"
+#define CONFIG_OLD "/home/vishal/cdrive/handson/configd/old"
 #endif /* INC_CONFIG_MACROS_H_ */

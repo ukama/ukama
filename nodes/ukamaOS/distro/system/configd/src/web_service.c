@@ -73,9 +73,8 @@ int web_service_cb_post_config(const URequest *request,
 	char *service=NULL;
 	JsonObj *json=NULL;
 
-	service = u_map_get(request->map_url, "service");
 	json = ulfius_get_json_body_request(request, NULL);
-	if (service == NULL || json == NULL) {
+	if (json == NULL) {
 		ulfius_set_string_body_response(response,
 				HttpStatus_BadRequest,
 				HttpStatusStr(HttpStatus_BadRequest));
@@ -87,7 +86,7 @@ int web_service_cb_post_config(const URequest *request,
 			json,
 			(Config *)epConfig);
 	if (ret == STATUS_OK) {
-		ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+		ulfius_set_empty_body_response(response, HttpStatus_Created);
 	} else {
 		ulfius_set_empty_body_response(response,
 				HttpStatus_InternalServerError);
@@ -113,9 +112,8 @@ int web_service_cb_post_config_complete(const URequest *request,
 	char *service=NULL;
 	JsonObj *json=NULL;
 
-	service = u_map_get(request->map_url, "service");
 	json = ulfius_get_json_body_request(request, NULL);
-	if (service == NULL || json == NULL) {
+	if (json == NULL) {
 		ulfius_set_string_body_response(response,
 				HttpStatus_BadRequest,
 				HttpStatusStr(HttpStatus_BadRequest));
@@ -127,7 +125,7 @@ int web_service_cb_post_config_complete(const URequest *request,
 			json,
 			(Config *)epConfig);
 	if (ret == STATUS_OK) {
-		ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+		ulfius_set_empty_body_response(response, HttpStatus_OK);
 	} else {
 		ulfius_set_empty_body_response(response,
 				HttpStatus_InternalServerError);

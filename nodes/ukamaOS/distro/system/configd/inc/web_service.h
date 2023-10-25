@@ -28,7 +28,7 @@
 #define ENABLE                          "enable"
 #define DISABLE                         "disable"
 
-#define URL_PREFIX                      EP_BS REST_API_VERSION EP_BS WEBSERVICE
+#define URL_PREFIX                      EP_BS REST_API_VERSION
 #define API_RES_EP(RES)                 EP_BS RES
 
 

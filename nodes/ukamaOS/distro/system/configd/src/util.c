@@ -9,93 +9,191 @@
 
 #include "util.h"
 #include "config_macros.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int is_valid_json(const char *json_string) {
-    json_error_t error;
-    json_t *json = json_loads(json_string, 0, &error);
+	json_error_t error;
+	json_t *json = json_loads(json_string, 0, &error);
 
-    if (json != NULL) {
-        json_decref(json); // Release the JSON object
-        return 1; // Valid JSON
-    } else {
-        // Invalid JSON
-        fprintf(stderr, "Error: JSON parsing error at line %d, column %d: %s\n",
-                error.line, error.column, error.text);
-        return 0;
-    }
+	if (json != NULL) {
+		json_decref(json); // Release the JSON object
+		return 1; // Valid JSON
+	} else {
+		// Invalid JSON
+		fprintf(stderr, "Error: JSON parsing error at line %d, column %d: %s\n",
+				error.line, error.column, error.text);
+		return 0;
+	}
 }
 
 int make_path(const char* path) {
-    char* p = NULL;
-    char* token = NULL;
-    char pathCopy[256]; // Adjust the buffer size as needed
+	char* p = NULL;
+	char* token = NULL;
+	char pathCopy[512]; // Adjust the buffer size as needed
+	char npath[512]={'\0'};
+	// Create a copy of the path to avoid modifying the original
+	usys_strncpy(pathCopy, path, sizeof(pathCopy));
 
-    // Create a copy of the path to avoid modifying the original
-    usys_strncpy(pathCopy, path, sizeof(pathCopy));
+	// Tokenize the path by "/"
+	p = pathCopy;
+	while ((token = strsep(&p, "/")) != NULL) {
+		if (usys_strlen(token) == 0) {
+			continue;  // Skip empty tokens
+		}
 
-    // Tokenize the path by "/"
-    p = pathCopy;
-    while ((token = strsep(&p, "/")) != NULL) {
-        if (usys_strlen(token) == 0) {
-            continue;  // Skip empty tokens
-        }
+		// Append the token to the current path
+		usys_strcat(npath, "/");
+		usys_strcat(npath, token);
 
-        // Append the token to the current path
-        usys_strcat(pathCopy, "/");
-        usys_strcat(pathCopy, token);
+		// Check if the directory already exists
+		struct stat st;
+		if (stat(npath, &st) != 0) {
+			// If it doesn't exist, create it
+			if (mkdir(npath, 0777) != 0) {
+				usys_log_error("Failed to create directory: %s\n", pathCopy);
+				perror("error");
+				return 0; // Return 0 to indicate failure
+			}
+		}
+	}
 
-        // Check if the directory already exists
-        struct stat st;
-        if (stat(pathCopy, &st) != 0) {
-            // If it doesn't exist, create it
-            if (mkdir(pathCopy, 0777) != 0) {
-            	usys_log_error("Failed to create directory: %s\n", pathCopy);
-                return 0; // Return 0 to indicate failure
-            }
-        }
-    }
+	return 1; // Return 1 to indicate success
+}
 
-    return 1; // Return 1 to indicate success
+
+int copy_file(const char *source, const char *destination) {
+	FILE *src, *dest;
+	char ch;
+
+	src = fopen(source, "rb");
+	if (src == NULL) {
+		perror("Error opening source file");
+		return 1;
+	}
+
+	dest = fopen(destination, "wb");
+	if (dest == NULL) {
+		perror("Error creating destination file");
+		fclose(src);
+		return 1;
+	}
+
+	while ((ch = fgetc(src)) != EOF) {
+		fputc(ch, dest);
+	}
+
+	fclose(src);
+	fclose(dest);
+
+	if (remove(source) != 0) {
+		perror("Error removing source file");
+		return 1;
+	}
+
+	return 0;
+
 }
 
 int move_dir(const char *source, const char *destination) {
 
+	struct dirent *entry;
 	struct stat st;
+	DIR *dir = opendir(source);
 
 	// Check if the source directory exists
-	if (stat(source, &st) != 0) {
-		printf("Source directory does not exist.\n");
+	if (dir == NULL) {
+		perror("Failed to open source directory");
 		return -1;
 	}
 
 	// Create the destination directory
 	if (mkdir(destination, 0777) != 0) {
 		perror("Error creating destination directory");
+		closedir(dir);
 		return -1;
 	}
 
-	// Move the source directory to the destination
-	if (rename(source, destination) != 0) {
-		perror("Error moving directory");
-		return -1;
+	while ((entry = readdir(dir))) {
+		// Skip . and ..
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+
+		char sourcePath[512];
+		char destPath[512];
+		snprintf(sourcePath, sizeof(sourcePath), "%s/%s", source, entry->d_name);
+		snprintf(destPath, sizeof(destPath), "%s/%s", destination, entry->d_name);
+
+		if (lstat(sourcePath, &st) == -1) {
+			perror("Error getting file status");
+			return -1;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			// If it's a directory, recursively move it
+			if (move_dir(sourcePath, destPath)==0) {
+				rmdir(sourcePath);
+			} else {
+				return -1;
+			}
+		} else {
+			// If it's a file, move it
+			if (copy_file(sourcePath, destPath) != 0) {
+				perror("Error moving file");
+				return -1;
+			}
+		}
 	}
 
+	closedir(dir);
 	return 0;
 }
 
 int remove_dir(const char *path) {
-    struct stat st;
-    if (stat(path, &st) != 0) {
-        return 0; // Directory doesn't exist
-    }
+	struct dirent *entry;
+	struct stat st;
+	DIR *dir = opendir(path);
 
-    if (S_ISDIR(st.st_mode)) {
-        if (rmdir(path) != 0) {
-            perror("Error removing directory");
-            return -1; // Error removing directory
-        }
-    }
-    return 0; // Directory removed successfully
+	if (dir == NULL) {
+		perror("Failed to open directory");
+		return -1; // Error opening directory
+	}
+
+	while ((entry = readdir(dir))) {
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+
+		char entry_path[PATH_MAX];
+		snprintf(entry_path, sizeof(entry_path), "%s/%s", path, entry->d_name);
+
+		if (lstat(entry_path, &st) == -1) {
+			perror("Error getting file status");
+			continue;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			if (remove_dir(entry_path) != 0) {
+				closedir(dir);
+				return -1; // Error deleting subdirectory
+			}
+		} else {
+			if (remove(entry_path) != 0) {
+				perror("Error deleting file");
+				closedir(dir);
+				return -1; // Error deleting file
+			}
+		}
+	}
+
+	closedir(dir);
+
+	if (rmdir(path) != 0) {
+		perror("Error deleting directory");
+		return -1; // Error deleting directory
+	}
+
+	return 0; // Directory and its contents deleted successfully
 }
 
 int create_config(ConfigData* c) {
@@ -103,34 +201,34 @@ int create_config(ConfigData* c) {
 	char fpath[512] = {'\0'};
 	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
-    if (make_path(path) == 0) {
-    	usys_log_debug("Directory %s created successfully.\n", path);
+	if (make_path(path)) {
+		usys_log_debug("Directory %s created successfully.\n", path);
 
-        sprintf(fpath,"%s/%s", path, c->fileName);
-        // Create and write to files in the new directory
-        FILE* file = fopen(fpath, "w");
-        if (file == NULL) {
-        	usys_log_error("Failed to create file %s\n", fpath);
-        	perror(NULL);
-            return -1;
-        }
+		sprintf(fpath,"%s/%s", path, c->fileName);
+		// Create and write to files in the new directory
+		FILE* file = fopen(fpath, "w");
+		if (file == NULL) {
+			usys_log_error("Failed to create file %s\n", fpath);
+			perror(NULL);
+			return -1;
+		}
 
-        if (c->data != NULL) {
-        	if(fputs(c->data, file) == EOF) {
-        		perror("Failed to write to file");
-        		fclose(file); // Close the file
-        		return -1; // Return an error code
-        	}
-        }
-        usys_log_debug("File %s created successfully.\n", fpath);
+		if (c->data != NULL) {
+			if(fputs(c->data, file) == EOF) {
+				perror("Failed to write to file");
+				fclose(file); // Close the file
+				return -1; // Return an error code
+			}
+		}
+		usys_log_debug("File %s created successfully.\n", fpath);
 
-    } else {
-        printf("Failed to create directory.\n");
-        perror("Error");
-        return -1;
-    }
+	} else {
+		printf("Failed to create directory.\n");
+		perror("error");
+		return -1;
+	}
 
-    return 0;
+	return 0;
 }
 
 int create_backup_config(){
@@ -139,35 +237,42 @@ int create_backup_config(){
 	if (move_dir(CONFIG_BACKUP, CONFIG_OLD ) == 0) {
 		usys_log_debug("Moved backup config to old config.\n");
 	} else {
-        usys_log_error("failed to create old config.\n");
-        return -1;
-    }
+		usys_log_error("failed to create old config.\n");
+		perror("error");
+		return -1;
+	}
 
-    if (move_dir(CONFIG_RUNNING, CONFIG_BACKUP ) == 0) {
+	remove_dir(CONFIG_BACKUP);
+	if (move_dir(CONFIG_RUNNING, CONFIG_BACKUP ) == 0) {
 		usys_log_debug("Created a backup config to old config.\n");
 	}else {
-        usys_log_error("failed to create backup config.\n");
-        return -1;
-    }
+		usys_log_error("failed to create backup config.\n");
+		perror("error");
+		return -1;
+	}
 
 	return 0;
 }
 
 int restore_config() {
 
+	remove_dir(CONFIG_RUNNING);
 	if (move_dir(CONFIG_BACKUP, CONFIG_RUNNING ) == 0) {
 		usys_log_debug("Restore running config done.\n");
 	}else {
-        usys_log_error("failed to restore running config.\n");
-        return -1;
-    }
+		usys_log_error("failed to restore running config.\n");
+		perror("error");
+		return -1;
+	}
 
-    if (move_dir(CONFIG_OLD, CONFIG_BACKUP ) == 0) {
+	remove_dir(CONFIG_BACKUP);
+	if (move_dir(CONFIG_OLD, CONFIG_BACKUP ) == 0) {
 		usys_log_debug("Restore backup config done.\n");
 	}else {
-         usys_log_error("failed to restore backup config.\n");
-        return -1;
-    }
+		usys_log_error("failed to restore backup config.\n");
+		perror("error");
+		return -1;
+	}
 
 	return 0;
 
@@ -176,16 +281,19 @@ int restore_config() {
 int store_config(char* version) {
 	char sPath[512] = {'\0'};
 	sprintf(sPath,"%s/%s", CONFIG_TMP_PATH, version);
-	
+
 	/* Create a backup */
 	if (create_backup_config() != 0) {
 		usys_log_error("Failed to move old config for backup. \n");
+		perror("error");
 		return -1;
 	}
 
 	/* Create a config */
+	remove_dir(CONFIG_RUNNING);
 	if (move_dir(sPath, CONFIG_RUNNING) != 0) {
 		usys_log_error("Failed to create config for backup. Restoring config..\n");
+		perror("error");
 		restore_config();
 		return -1;
 	}

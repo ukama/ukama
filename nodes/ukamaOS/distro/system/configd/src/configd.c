@@ -73,12 +73,12 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 	}
 
 	if (!(usys_strcmp(cd->version, s->version)) && (cd->timestamp == s->timestamp) ) {
-		s->count++;
 		AppState* as = (AppState*) usys_calloc(1, sizeof(AppState));
 		if (as) {
 			as->app = usys_strdup(cd->app);
 			as->state = UPDATE_AVAILABLE;
 			s->apps[s->count] = as;
+			s->count++;
 		} else {
 			perror("Memory failure");
 			return 0;
