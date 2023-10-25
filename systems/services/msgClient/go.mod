@@ -7,8 +7,8 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/services/msgClient => ./
 
 require (
-	github.com/golang/protobuf v1.5.2
-	github.com/mwitkow/go-proto-validators v0.3.2
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1

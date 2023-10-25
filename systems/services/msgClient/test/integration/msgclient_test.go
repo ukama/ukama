@@ -14,8 +14,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	// "github.com/stretchr/testify/assert"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
-	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/grpc"
 	// "google.golang.org/protobuf/types/known/anypb"
 )

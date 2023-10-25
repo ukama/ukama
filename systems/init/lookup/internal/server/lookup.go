@@ -54,7 +54,8 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 
 	err := orgIp.Set(req.Ip)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid ip for Org %s. Error %s", req.OrgName, err.Error())
+		log.Errorf("Invalid ip %s for Org %s. Error %s", req.Ip, req.OrgName, err.Error())
+		orgIp.Status = pgtype.Null
 	}
 
 	id, err := uuid.FromString(req.GetOrgId())

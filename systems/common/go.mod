@@ -31,7 +31,6 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.22.0
 	github.com/wagslane/go-rabbitmq v0.12.4

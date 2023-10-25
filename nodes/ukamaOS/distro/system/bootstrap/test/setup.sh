@@ -17,7 +17,7 @@ TARGET=${DEF_TARGET}
 # default rootfs location is ${DEF_BUILD_DIR}
 BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 
-NODE_UUID="ukma-sa3333-tnode-m0-e465"
+NODE_UUID="uk-sa3333-tnode-m0-e465"
 
 #
 # Build needed tools, e.g., genSchema, genInventory, if needed.
@@ -29,7 +29,7 @@ build_utils() {
 	mkdir -p ${BUILD_DIR}/utils
 
 	# Build genSchema
-    cd ${NODED_ROOT} && make genSchema
+    	cd ${NODED_ROOT} && make genSchema
 	if [ -f ${NODED_ROOT}/build/genSchema ]; then
 		cp ${NODED_ROOT}/build/genSchema ${BUILD_DIR}/utils/
 	else
@@ -107,11 +107,25 @@ build_bins() {
 	cd ${CWD}
 
 	cd ${BOOTSTRAP_ROOT}/test && make clean && make
-	cp ${BOOTSTRAP_ROOT}/test/build/bootstrap_server ${BUILD_DIR}/bin
+	cp ${BOOTSTRAP_ROOT}/test/bootstrap_server ${BUILD_DIR}/bin
 	cd ${CWD}
 
 	cd ${NODED_ROOT} && make clean && make
 	cp ${NODED_ROOT}/build/noded ${BUILD_DIR}/bin
+	cd ${CWD}
+}
+
+#
+# clean noded, bootstrap and mock server
+#
+clean_bins() {
+
+	CWD=`pwd`
+	cd ${BOOTSTRAP_ROOT} && make clean
+	cd ${BOOTSTRAP_ROOT}/test && make clean
+	cd ${NODED_ROOT} && make clean
+
+    	rm -rf ${BUILD_DIR}/bin
 	cd ${CWD}
 }
 
@@ -140,7 +154,6 @@ create_bootstrap_config() {
 
 	echo "[config]"                                 >> ${BOOT_CONFIG}
 	echo " noded-host = \"localhost\" "             >> ${BOOT_CONFIG}
-	echo " noded-port = \"8095\" "                  >> ${BOOT_CONFIG}
 	echo " remote-ip-file = \"file\" "              >> ${BOOT_CONFIG}
 	echo " bootstrap-server  = \"localhost:4444\" " >> ${BOOT_CONFIG}
 	echo " mesh-config = \"${BUILD_DIR}/config/mesh_config.toml\" " \
@@ -175,6 +188,7 @@ case "$ACTION" in
 		echo "options are: help clean setup run"
 		;;
 	"clean")
+        clean_bins
 		rm -rf ${BUILD_DIR}
 		rm -rf /tmp/sys
 		

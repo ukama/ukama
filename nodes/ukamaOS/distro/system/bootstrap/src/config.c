@@ -27,7 +27,7 @@
 int parse_config(Config *config, toml_table_t *configData) {
 
 	int ret=FALSE;
-	toml_datum_t nodedHost, nodedPort;
+	toml_datum_t nodedHost;
 	toml_datum_t meshConfig, remoteIPFile;
 	toml_datum_t bootstrapServer;
 
@@ -44,16 +44,6 @@ int parse_config(Config *config, toml_table_t *configData) {
 		config->nodedHost = strdup(DEF_NODED_HOST);
 	} else {
 		config->nodedHost = strdup(nodedHost.u.s);
-	}
-
-	/* noded-port */
-	nodedPort = toml_string_in(configData, NODED_PORT);
-	if (!nodedPort.ok) {
-		log_debug("[%s] is missing, setting to default: %s", NODED_PORT,
-				  DEF_NODED_PORT);
-		config->nodedPort = strdup(DEF_NODED_PORT);
-	} else {
-		config->nodedPort = strdup(nodedPort.u.s);
 	}
 
 	/* mesh-config */
@@ -87,7 +77,6 @@ int parse_config(Config *config, toml_table_t *configData) {
 	}
 
 	if (nodedHost.ok)       free(nodedHost.u.s);
-	if (nodedPort.ok)       free(nodedPort.u.s);
 	if (meshConfig.ok)      free(meshConfig.u.s);
 	if (remoteIPFile.ok)    free(remoteIPFile.u.s);
 	if (bootstrapServer.ok) free(bootstrapServer.u.s);
@@ -146,9 +135,7 @@ void print_config(Config *config) {
 		log_debug("noded host: %s", config->nodedHost);
 	}
 
-	if (config->nodedPort) {
-		log_debug("noded port: %s", config->nodedPort);
-	}
+    log_debug("noded port: %d", config->nodedPort);
 
 	if (config->meshConfig) {
 		log_debug("mesh config: %s", config->meshConfig);
@@ -172,7 +159,6 @@ void clear_config(Config *config) {
 	if (!config) return;
 
 	free(config->nodedHost);
-	free(config->nodedPort);
 	free(config->meshConfig);
 	free(config->remoteIPFile);
 	free(config->bootstrapServer);

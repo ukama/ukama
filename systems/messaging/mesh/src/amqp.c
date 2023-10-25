@@ -414,7 +414,7 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
 	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
     nodeEvent.nodeid   = strdup(nodeID);
-    nodeEvent.nodeip   = nodeIP;
+    nodeEvent.nodeip   = strdup(nodeIP);
     nodeEvent.nodeport = nodePort;
     nodeEvent.meship   = strdup(meshIP);
     nodeEvent.meshport = meshPort;
