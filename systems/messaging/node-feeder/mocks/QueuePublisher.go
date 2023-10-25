@@ -30,11 +30,11 @@ func (_m *QueuePublisher) Close() error {
 }
 
 // Publish provides a mock function with given fields: msg
-func (_m *QueuePublisher) Publish(msg ukama.NodeFeederMsg) error {
+func (_m *QueuePublisher) Publish(msg *ukama.NodeFeederMessage) error {
 	ret := _m.Called(msg)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeFeederMsg) error); ok {
+	if rf, ok := ret.Get(0).(func(*ukama.NodeFeederMessage) error); ok {
 		r0 = rf(msg)
 	} else {
 		r0 = ret.Error(0)

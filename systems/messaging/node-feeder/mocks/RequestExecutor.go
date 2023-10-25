@@ -14,11 +14,11 @@ type RequestExecutor struct {
 }
 
 // Execute provides a mock function with given fields: req
-func (_m *RequestExecutor) Execute(req *ukama.NodeFeederMsg) error {
+func (_m *RequestExecutor) Execute(req *ukama.NodeFeederMessage) error {
 	ret := _m.Called(req)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*ukama.NodeFeederMsg) error); ok {
+	if rf, ok := ret.Get(0).(func(*ukama.NodeFeederMessage) error); ok {
 		r0 = rf(req)
 	} else {
 		r0 = ret.Error(0)

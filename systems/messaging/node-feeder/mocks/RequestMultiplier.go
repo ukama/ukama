@@ -14,11 +14,11 @@ type RequestMultiplier struct {
 }
 
 // Process provides a mock function with given fields: body
-func (_m *RequestMultiplier) Process(body *ukama.NodeFeederMsg) error {
+func (_m *RequestMultiplier) Process(body *ukama.NodeFeederMessage) error {
 	ret := _m.Called(body)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*ukama.NodeFeederMsg) error); ok {
+	if rf, ok := ret.Get(0).(func(*ukama.NodeFeederMessage) error); ok {
 		r0 = rf(body)
 	} else {
 		r0 = ret.Error(0)
