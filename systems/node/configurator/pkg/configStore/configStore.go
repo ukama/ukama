@@ -36,11 +36,20 @@ type ConfigStoreProvider interface {
 	HandleConfigCommitReq(ctx context.Context, rVer string) error
 }
 
+const (
+	REASON_UNKNOWN = iota
+	REASON_ADDED   = 1
+	REASON_DELETED = 2
+	REASON_UPDATED = 3
+)
+
 type ConfigData struct {
-	FileName string `json:"FileName"`
-	App      string `json:"App"`
-	Version  string `json:"version"`
-	Data     []byte `json:"Data"`
+	FileName  string `json:"fileName"`
+	App       string `json:"app"`
+	Version   string `json:"version"`
+	Data      []byte `json:"data"`
+	Reason    int    `json:"reason"`
+	Timestamp uint32 `json:"timestamp"`
 }
 
 type ConfigMetaData struct {
@@ -168,25 +177,30 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 		return err
 	}
 
-	var filesToUpdate []string
+	type FilesToUpdate struct {
+		Name   string
+		Reason int
+	}
+
+	var filesToUpdate []FilesToUpdate
 	cfPrefix := dir + providers.COMMIT_DIR_NAME + "/"
 	lfPrefix := dir + providers.LATEST_DIR_NAME + "/"
 	for _, file := range filesUpdated {
-		_, change, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
+		_, change, reason, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
 		if err != nil {
 			log.Errorf("Failed to get json diff between %s and %s: %v", cfPrefix+file, lfPrefix+file, err)
 			return err
 		}
 
 		if change {
-			filesToUpdate = append(filesToUpdate, file)
+			filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: file, Reason: reason})
 		}
 	}
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
 	if len(filesToUpdate) > 0 {
-		prepCommit := make(map[string]*pb.Config, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
-		prepNodeCommit := make(map[string][]string)                   /* Map from nodeId to config files*/
+		prepCommit := make(map[string]*ConfigData, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
+		prepNodeCommit := make(map[string][]string)                    /* Map from nodeId to config files*/
 		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
@@ -197,23 +211,24 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 				Node: uk-sa1000-HNODE-2145
 				App: epc
 			*/
-			cMetaData, err := ParseConfigStoreFilePath(file)
+			cMetaData, err := ParseConfigStoreFilePath(file.Name)
 			if err != nil {
-				log.Errorf("Failed to parse file %s. Error: %v", file, err)
+				log.Errorf("Failed to parse file %s. Error: %v", file.Name, err)
 				continue
 			}
 
 			/* This will filter out invalid network, site and nodes
 			Also reads the file store the config */
-			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file)
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file.Name)
 			if err != nil {
 				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
 				continue
 			}
+			configToCommit.Reason = file.Reason
 
-			prepMetaData[file] = cMetaData
-			prepCommit[file] = configToCommit
-			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file)
+			prepMetaData[file.Name] = cMetaData
+			prepCommit[file.Name] = configToCommit
+			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file.Name)
 		}
 
 		err = c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
@@ -283,7 +298,7 @@ func IfFileName(f string) bool {
 	return fileName
 }
 
-func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.Config, error) {
+func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*ConfigData, error) {
 
 	log.Infof("Preparing commit config %s for node %+v", file, d)
 	// var netId uuid.UUID
@@ -297,12 +312,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	// if err := c.registrySystem.ValidateNetwork(netId.String(), d.org); err != nil {
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %s", err.Error())
 	// }
-	type ConfigData struct {
-		FileName string `json:"FileName"`
-		App      string `json:"App"`
-		Version  string `json:"version"`
-		Data     []byte `json:"Data"`
-	}
+
 	// if err := c.registrySystem.ValidateSite(d.network, d.site, d.org); err != nil {
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid site %s", err.Error())
 	// }
@@ -317,8 +327,8 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 		return nil, err
 	}
 
-	configReq := &pb.Config{
-		Filename: filepath.Base(file), /* filename with path */
+	configReq := &ConfigData{
+		FileName: filepath.Base(file), /* filename with path */
 		App:      d.app,
 		Data:     data,
 	}
@@ -326,7 +336,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
+func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
 
 	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 
@@ -340,22 +350,16 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			continue
 		}
 		metaData := &ConfigMetaData{}
-		log.Infof("Pushing configs %+v for node %s", files, n)
+		t := (uint32)(time.Now().Unix())
+		log.Infof("Pushing configs %+v for node %s with timestamp %d", files, n, t)
 		for _, f := range files {
 
 			metaData = md[f]
 
-			cd := &ConfigData{
-				FileName: m[f].Filename,
-				App:      m[f].App,
-				Data:     m[f].Data,
-				Version:  commit,
-			}
+			cd := m[f]
+			cd.Version = commit
+			cd.Timestamp = t
 
-			// anyMsg, err := anypb.New(m[f])
-			// if err != nil {
-			// 	goto RecordState
-			// }
 			jd, err := json.Marshal(cd)
 			if err != nil {
 				log.Errorf("Failed to marshal configdata %+v. Errors %s", cd, err.Error())
@@ -365,7 +369,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			msg := &pb.NodeFeederMessage{
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HTTPMethod: "POST",
-				Path:       "/v1/configd/config",
+				Path:       "configd/v1/config",
 				Msg:        jd,
 			}
 
@@ -375,12 +379,13 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 				goto RecordState
 			}
 			log.Infof("Published config %s on route %s for node %s ", msg, route, n)
+
 			/* Atleast one is success */
 			state = db.Partial
 		}
 
 		/* Publish config version information */
-		err = c.PublishCommitInfo(metaData, route, commit)
+		err = c.PublishCommitInfo(metaData, route, commit, t)
 		if err != nil {
 			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
 			goto RecordState
@@ -409,22 +414,17 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 	return nil
 }
 
-func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string) error {
-	m.app = "config"
-	m.fileName = "configInfo.json"
+func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32) error {
+	m.app = "configd"
+	m.fileName = "version.json"
 
-	type ConfigVerData struct {
-		Name   string `json:"name"`
-		App    string `json:"app"`
-		Commit string `json:"commit"`
-		NodeId string `json:"node_id"`
-	}
-
-	data := ConfigVerData{
-		Name:   m.fileName,
-		App:    m.app,
-		Commit: ver,
-		NodeId: m.node,
+	data := ConfigData{
+		FileName:  m.fileName, /* filename with path */
+		App:       m.app,
+		Data:      []byte(""),
+		Reason:    REASON_UPDATED,
+		Timestamp: t,
+		Version:   ver,
 	}
 
 	jd, err := json.Marshal(data)
@@ -434,29 +434,22 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 	}
 
 	jsonMsg, err := json.Marshal(&ConfigData{
-		FileName: m.fileName, /* filename with path */
-		App:      m.app,
-		Data:     jd,
+		FileName:  m.fileName, /* filename with path */
+		App:       m.app,
+		Data:      jd,
+		Reason:    REASON_UPDATED,
+		Timestamp: t,
+		Version:   ver,
 	})
 	if err != nil {
 		log.Errorf("Failed to marshal configdata %+v. Errors %s", data, err.Error())
 		return err
 	}
 
-	// configData := &pb.Config{
-	// 	Filename: m.fileName, /* filename with path */
-	// 	App:      m.app,
-	// 	Data:     json,
-	// }
-	// anyMsg, err := anypb.New(configData)
-	// if err != nil {
-	// 	return err
-	// }
-
 	msg := &pb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HTTPMethod: "POST",
-		Path:       "/v1/configd/config",
+		Path:       "configd/v1/config/complete",
 		Msg:        jsonMsg,
 	}
 
