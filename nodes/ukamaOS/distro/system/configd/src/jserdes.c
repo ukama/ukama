@@ -145,6 +145,8 @@ bool json_deserialize_config_data(JsonObj *json,
                           &(*cd)->app, NULL, NULL);
     ret |= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
                           NULL, &(*cd)->timestamp, NULL);
+    ret |= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
+                              NULL, &(*cd)->reason, NULL);
     ret |= get_json_entry(json, JTAG_DATA, JSON_STRING,
                           &(*cd)->data, NULL, NULL);
     ret |= get_json_entry(json, JTAG_VERSION, JSON_STRING,

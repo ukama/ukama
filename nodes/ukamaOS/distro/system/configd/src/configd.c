@@ -41,6 +41,7 @@ void clean_session(ConfigSession *session) {
 		if (session->apps) free_apps (session->apps, session->count);
 		session->timestamp = 0;
 		session->count = 0;
+		free(session);
 	}
 }
 
@@ -51,7 +52,13 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 		session->timestamp = cd->timestamp;
 		session->version = usys_strdup(cd->version);
 		session->count = 0;
-		usys_log_debug("New update config session cretated for commit %s and timestamp %ld", cd->version, cd->timestamp);
+
+		if (prepare_for_new_config(cd) == 0) {
+			usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
+		} else {
+			clean_session(session);
+			session = NULL;
+		}
 	}
 
 	return session;
@@ -61,7 +68,8 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 int is_valid_commit(Config* c , ConfigData *cd) {
 
 	ConfigSession* s = (ConfigSession*) c->updateSession;
-	if ((cd->timestamp > s->timestamp) && (usys_strcmp(cd->version, s->version))) {
+	if ((cd->timestamp != s->timestamp) || (usys_strcmp(cd->version, s->version))) {
+		if (cd->timestamp > s->timestamp) {
 		usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
 		clean_session(c->updateSession);
 		c->updateSession = create_new_update_session(cd);
@@ -70,13 +78,17 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 		} else {
 			return 0;
 		}
+		} else {
+			usys_log_debug("Receiving config %s with timestamp %ld. expecting config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
+			return 0;
+		}
 	}
 
 	if (!(usys_strcmp(cd->version, s->version)) && (cd->timestamp == s->timestamp) ) {
 		AppState* as = (AppState*) usys_calloc(1, sizeof(AppState));
 		if (as) {
 			as->app = usys_strdup(cd->app);
-			as->state = UPDATE_AVAILABLE;
+			as->state = STATE_UPDATE_AVAILABLE;
 			s->apps[s->count] = as;
 			s->count++;
 		} else {
@@ -123,10 +135,19 @@ int process_config(JsonObj *json, Config *config) {
 		return STATUS_NOK;
 	}
 
-	statusCode =  create_config(cd);
-					if (statusCode != STATUS_OK ) {
-						usys_log_error("Failed to create config for %s app version %s", cd->app, cd->version);
-					}
+	if (cd->reason == CONFIG_DELETED){
+		statusCode =  remove_config(cd);
+		if (statusCode != STATUS_OK ) {
+			usys_log_error("Failed to remove config for %s app version %s", cd->app, cd->version);
+		}
+	}
+	else {
+		statusCode =  create_config(cd);
+		if (statusCode != STATUS_OK ) {
+			usys_log_error("Failed to create config for %s app version %s", cd->app, cd->version);
+		}
+
+	}
 	free_config_data(cd);
 
 	return statusCode;
@@ -137,9 +158,9 @@ int configd_process_incoming_config(const char *service,
 		JsonObj *json, Config *config){
 	int statusCode = STATUS_NOK;
 	statusCode = process_config(json, config);
-					if (statusCode != STATUS_OK ) {
-						usys_log_error("Failed to process config complete message.");
-					}
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to process config message.");
+	}
 
 	return statusCode;
 }
@@ -147,25 +168,31 @@ int configd_process_incoming_config(const char *service,
 int configd_process_complete(const char *service,
 		JsonObj *json, Config *config){
 	int statusCode = STATUS_NOK;
+	ConfigSession* s = (ConfigSession*)config->updateSession;
+	if (!s) {
+		usys_log_error("No configs pushed. Failed to process config complete message.");
+		goto cleanup;
+	}
+
 	statusCode = process_config(json, config);
-					if (statusCode != STATUS_OK ) {
-						usys_log_error("Failed to process config complete message.");
-						goto cleanup;
-					}
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to process config complete message.");
+		goto cleanup;
+	}
 
 	/* Store config*/
-	ConfigSession* s = (ConfigSession*)config->updateSession;
 	statusCode = store_config(s->version);
-					if (statusCode != STATUS_OK ) {
-						usys_log_error("Failed to store config %s", s->version);
-						goto cleanup;
-					}
+	if (statusCode != STATUS_OK ) {
+		usys_log_error("Failed to store config %s", s->version);
+		goto cleanup;
+	}
 
 	/* Trigger updates */
 	statusCode = configd_trigger_update(s);
 
 	cleanup:
 	clean_session(config->updateSession);
+	config->updateSession = NULL;
 
 	return statusCode;
 }

@@ -18,13 +18,21 @@ typedef struct  {
 	char *data;
 	char *version;
 	int timestamp;
+	int reason;
 } ConfigData;
 
+typedef enum {
+	CONFIG_UNKNOWN = 0,
+	CONFIG_ADDED = 1,
+	CONFIG_DELETED = 2,
+	CONFIG_UPDATED = 3
+} Reason;
+
 typedef enum  {
-	UNKNOWN = 0,
-	UPDATE_AVAILABLE = 1,
-	REQUESTED_REBOOT = 2,
-	UPDATE_CONFIRMED = 3,
+	STATE_UNKNOWN = 0,
+	STATE_UPDATE_AVAILABLE = 1,
+	STATE_REQUESTED_REBOOT = 2,
+	STATE_UPDATE_CONFIRMED = 3,
 } ConfigState;
 
 typedef struct {

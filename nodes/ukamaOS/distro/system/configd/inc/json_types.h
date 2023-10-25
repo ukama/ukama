@@ -135,7 +135,9 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_APP_NAME              "app"
 #define JTAG_DATA                  "data"
 #define JTAG_VERSION               "version"
-#define JTAG_TIME_STAMP             "timestamp"
+#define JTAG_TIME_STAMP            "timestamp"
+#define JTAG_REASON                "reason"
+
 typedef enum {
     TYPE_NULL = 0,
     TYPE_CHAR = 1,

@@ -13,6 +13,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define MOVE_DIR true
+#define COPY_DIR false
+
 int is_valid_json(const char *json_string) {
 	json_error_t error;
 	json_t *json = json_loads(json_string, 0, &error);
@@ -62,8 +65,22 @@ int make_path(const char* path) {
 	return 1; // Return 1 to indicate success
 }
 
+/* Remove config file */
+int remove_config(ConfigData *c, const char *source) {
+	char path[512] = {'\0'};
+	sprintf(path,"%s/%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app, c->fileName);
+	if (remove(path) != 0) {
+		perror("Error deleting file");
+		return -1; // Error deleting file
+	}
+	return 0;
+}
 
-int copy_file(const char *source, const char *destination) {
+/* Copy or move file.
+ * Flag true => move
+ * Flag false => copy
+ */
+int clone_file(const char *source, const char *destination, bool flag) {
 	FILE *src, *dest;
 	char ch;
 
@@ -86,18 +103,22 @@ int copy_file(const char *source, const char *destination) {
 
 	fclose(src);
 	fclose(dest);
-
-	if (remove(source) != 0) {
-		perror("Error removing source file");
-		return 1;
+	if (flag) {
+		if (remove(source) != 0) {
+			perror("Error removing source file");
+			return 1;
+		}
 	}
 
 	return 0;
 
 }
 
-int move_dir(const char *source, const char *destination) {
-
+/* Copy or move directory.
+ * Flag true => move
+ * Flag false => copy
+ */
+int clone_dir(const char *source, const char *destination, bool flag) {
 	struct dirent *entry;
 	struct stat st;
 	DIR *dir = opendir(source);
@@ -132,14 +153,16 @@ int move_dir(const char *source, const char *destination) {
 
 		if (S_ISDIR(st.st_mode)) {
 			// If it's a directory, recursively move it
-			if (move_dir(sourcePath, destPath)==0) {
-				rmdir(sourcePath);
+			if (clone_dir(sourcePath, destPath, flag)==0) {
+				if (flag) {
+					remove_dir(sourcePath);
+				}
 			} else {
 				return -1;
 			}
 		} else {
 			// If it's a file, move it
-			if (copy_file(sourcePath, destPath) != 0) {
+			if (clone_file(sourcePath, destPath, flag) != 0) {
 				perror("Error moving file");
 				return -1;
 			}
@@ -220,6 +243,7 @@ int create_config(ConfigData* c) {
 				return -1; // Return an error code
 			}
 		}
+		fclose(file);
 		usys_log_debug("File %s created successfully.\n", fpath);
 
 	} else {
@@ -234,7 +258,7 @@ int create_config(ConfigData* c) {
 int create_backup_config(){
 
 	remove_dir(CONFIG_OLD);
-	if (move_dir(CONFIG_BACKUP, CONFIG_OLD ) == 0) {
+	if (clone_dir(CONFIG_BACKUP, CONFIG_OLD, MOVE_DIR) == 0) {
 		usys_log_debug("Moved backup config to old config.\n");
 	} else {
 		usys_log_error("failed to create old config.\n");
@@ -243,7 +267,7 @@ int create_backup_config(){
 	}
 
 	remove_dir(CONFIG_BACKUP);
-	if (move_dir(CONFIG_RUNNING, CONFIG_BACKUP ) == 0) {
+	if (clone_dir(CONFIG_RUNNING, CONFIG_BACKUP, MOVE_DIR) == 0) {
 		usys_log_debug("Created a backup config to old config.\n");
 	}else {
 		usys_log_error("failed to create backup config.\n");
@@ -257,7 +281,7 @@ int create_backup_config(){
 int restore_config() {
 
 	remove_dir(CONFIG_RUNNING);
-	if (move_dir(CONFIG_BACKUP, CONFIG_RUNNING ) == 0) {
+	if (clone_dir(CONFIG_BACKUP, CONFIG_RUNNING, MOVE_DIR) == 0) {
 		usys_log_debug("Restore running config done.\n");
 	}else {
 		usys_log_error("failed to restore running config.\n");
@@ -266,7 +290,7 @@ int restore_config() {
 	}
 
 	remove_dir(CONFIG_BACKUP);
-	if (move_dir(CONFIG_OLD, CONFIG_BACKUP ) == 0) {
+	if (clone_dir(CONFIG_OLD, CONFIG_BACKUP, MOVE_DIR ) == 0) {
 		usys_log_debug("Restore backup config done.\n");
 	}else {
 		usys_log_error("failed to restore backup config.\n");
@@ -291,10 +315,28 @@ int store_config(char* version) {
 
 	/* Create a config */
 	remove_dir(CONFIG_RUNNING);
-	if (move_dir(sPath, CONFIG_RUNNING) != 0) {
+	if (clone_dir(sPath, CONFIG_RUNNING, MOVE_DIR) != 0) {
 		usys_log_error("Failed to create config for backup. Restoring config..\n");
 		perror("error");
 		restore_config();
+		return -1;
+	}
+
+	return 0;
+}
+
+int prepare_for_new_config(ConfigData* c) {
+	char path[512] = {'\0'};
+	char fpath[512] = {'\0'};
+	sprintf(path,"%s/%s", CONFIG_TMP_PATH, c->version);
+
+	/* remove old residue */
+	remove_dir(path);
+
+	/* Create new folder and copy current running config */
+	if (clone_dir(CONFIG_RUNNING, path, COPY_DIR) != 0) {
+		usys_log_error("Failed to prepare tmp config for download.\n");
+		perror("error");
 		return -1;
 	}
 

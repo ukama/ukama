@@ -39,4 +39,6 @@ int restore_config() ;
 
 int store_config(char* version);
 
+int prepare_for_new_config(ConfigData* c);
+
 #endif /* UTIL_H_ */
