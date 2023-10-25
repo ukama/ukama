@@ -221,10 +221,11 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 			Also reads the file store the config */
 			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file.Name)
 			if err != nil {
-				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
+				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file.Name, c, err)
 				continue
 			}
 			configToCommit.Reason = file.Reason
+			configToCommit.Version = cVer
 
 			prepMetaData[file.Name] = cMetaData
 			prepCommit[file.Name] = configToCommit
@@ -357,7 +358,6 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 			metaData = md[f]
 
 			cd := m[f]
-			cd.Version = commit
 			cd.Timestamp = t
 
 			jd, err := json.Marshal(cd)
@@ -378,7 +378,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
 				goto RecordState
 			}
-			log.Infof("Published config %s on route %s for node %s ", msg, route, n)
+			log.Infof("Published config %s  with timestamp %d on route %s for node %s ", msg, t, route, n)
 
 			/* Atleast one is success */
 			state = db.Partial
