@@ -104,7 +104,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	if err != nil {
 		return nil, err
 	}
-	resp, err := svc.GetRunningApps(ctx, &hpb.GetRunningAppsRequest{
+	runningApps, err := svc.GetRunningApps(ctx, &hpb.GetRunningAppsRequest{
 		NodeId: nId.String(),
 	})
 
@@ -112,10 +112,10 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get running apps")
 	}
 
-	for _, capp := range resp.RunningApps.Capps {
+	for _, capp := range runningApps.RunningApps.Capps {
 		log.Infof("Running app %s", capp.Name)
 		softReq := &pb.UpdateSoftwareRequest{
-			NodeId: resp.RunningApps.NodeId,
+			NodeId: runningApps.RunningApps.NodeId,
 			Tag:    capp.Tag,
 			Name:   capp.Name,
 			Space:  capp.Space,
@@ -126,15 +126,18 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 			return &pb.UpdateSoftwareResponse{
 				Message: msg,
 			}, nil
-		} else {
-			data, err := proto.Marshal(softReq)
-			if err != nil {
-				log.Fatalf("Failed to marshal message: %v", err)
-			}
-			err = s.publishMessage(s.orgName+"."+"."+"."+resp.RunningApps.NodeId, data, capp.Space, capp.Name, capp.Tag)
-
 		}
 
+		data, err := proto.Marshal(softReq)
+		if err != nil {
+			log.Fatalf("Failed to marshal message: %v", err)
+		}
+		err = s.publishMessage(s.orgName+"."+"."+"."+runningApps.RunningApps.NodeId, data, capp.Space, capp.Name, capp.Tag)
+		if err != nil {
+			log.Errorf("Failed to publish message. Errors %s", err.Error())
+			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+
+		}
 	}
 	return &pb.UpdateSoftwareResponse{
 		Message: "Software updated successfully",
