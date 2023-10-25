@@ -214,16 +214,30 @@ cleanup:
 }
 
 /* not monitoing anything app status for now */
-int configd_trigger_update(ConfigSession *s) {
+int configd_trigger_update(Config* c) {
+	int statusCode = STATUS_NOK;
+	ConfigSession *s = (ConfigSession*)c->updateSession;
 
 	for (int i = 0; i < s->count; i++) {
 		usys_log_debug("Triggering update for %s app to version %s ", s->apps[i]->app, s->version);
+
 		/* Send exit message to startup app */
+		statusCode = wc_send_terminate_req(c, s->apps[i]->app);
+		if (statusCode != STATUS_OK) {
+			usys_log_error("Failed to terminate app %s.", s->apps[i]->app);
+			continue;
+		}
 
 		/* send start message to startup app */
+		statusCode = wc_send_exec_req(c, s->apps[i]->app);
+		if (statusCode != STATUS_OK) {
+			usys_log_error("Failed to exec app %s.", s->apps[i]->app);
+			continue;
+		}
+
 	}
 
-	return 0;
+	return statusCode;
 }
 
 int configd_read_running_config(ConfigData **c) {

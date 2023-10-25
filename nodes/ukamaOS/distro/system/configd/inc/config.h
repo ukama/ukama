@@ -12,15 +12,17 @@
 
 /* Service configuration */
 typedef struct {
-
-    char  *serviceName;
-    int   servicePort;
-    char* nodedHost;
-    int  nodedPort; 
-    char  *nodedEP;
-    char *nodeId;
-    void *updateSession;
-    void *runningConfig;
+	char  *serviceName;
+	int   servicePort;
+	char* nodedHost;
+	int  nodedPort;
+	char  *nodedEP;
+	char* starterHost;
+	int  starterPort;
+	char  *starterEP;
+	char *nodeId;
+	void *updateSession;
+	void *runningConfig;
 } Config;
 
 #endif /* CONFIG_H_ */

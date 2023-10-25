@@ -51,6 +51,28 @@ int wc_read_node_info(Config* config);
  */
 int web_client_init(char* nodeID, Config* config);
 
+/**
+ * @fn      int wc_send_terminate_req(Config* c, char* app)
+ * @brief   Send a terminate request to starter service for kill app.
+ *
+ * @param   nodeID
+ * @param   config
+ * @return  On success, STATUS_OK
+ *          On Failure, STATUS_NOK
+ */
+int wc_send_terminate_req(Config* c, char* app);
+
+/**
+ * @fn      int wc_send_terminate_req(Config* c, char* app)
+ * @brief   Send a exec request to starter service for start app.
+ *
+ * @param   nodeID
+ * @param   config
+ * @return  On success, STATUS_OK
+ *          On Failure, STATUS_NOK
+ */
+int wc_send_exec_req(Config* c, char* app);
+
 int get_nodeid_from_noded(Config *config);
 
 #endif /* INC_WEB_CLIENT_H_ */

@@ -20,12 +20,13 @@
 
 #define CONFIG_VERSION         "0.0.0"
 
-#define DEF_SERVICE_PORT         "8080"
+#define DEF_SERVICE_PORT       "8080"
 #define DEF_NODED_HOST         "localhost"
-#define DEF_NODED_PORT         "8085"
-#define DEF_NODED_EP           "/v1/noded"
-#define DEF_REMOTE_SERVER      "http://localhost:8091"
-
+#define DEF_NODED_PORT         "8095"
+#define DEF_NODED_EP           "/noded/v1"
+#define DEF_STARTER_HOST       "localhost"
+#define DEF_STARTER_PORT       "8086"
+#define DEF_STARTER_EP         "/starter/v1"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 
 #define ENV_CONFIG_DEBUG_MODE  "ENV_CONFIG_DEBUG_MODE"

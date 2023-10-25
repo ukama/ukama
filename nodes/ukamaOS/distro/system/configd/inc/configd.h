@@ -19,7 +19,7 @@ int configd_process_incoming_config(const char *service,
 int configd_process_complete(const char *service,
 		JsonObj *json, Config *config);
 
-int configd_trigger_update(ConfigSession *s);
+int configd_trigger_update(Config* c);
 
 int configd_read_running_config(ConfigData **c);
 
