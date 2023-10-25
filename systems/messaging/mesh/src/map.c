@@ -88,25 +88,41 @@ void free_map_item(MapItem *map) {
 	free(map);
 }
 
-/*
- * is_existing_item --
- *
- */
 MapItem *is_existing_item(MapTable *table, char *nodeID) {
 
 	MapItem *item;
 
-	if (table == NULL && nodeID == NULL) {
+	if (table == NULL || nodeID == NULL) {
 		return NULL;
 	}
 
-	/* Is empty. */
 	if (table->first == NULL) {
 		return NULL;
 	}
 
 	for (item=table->first; item; item=item->next) {
 		if (strcmp(item->nodeInfo->nodeID, nodeID) == 0) {
+			return item;
+		}
+	}
+
+	return NULL;
+}
+
+MapItem *is_existing_item_by_port(MapTable *table, int port) {
+
+	MapItem *item = NULL;
+
+	if (table == NULL || port == 0) {
+		return NULL;
+	}
+
+	if (table->first == NULL) {
+		return NULL;
+	}
+
+	for (item=table->first; item; item=item->next) {
+		if (item->forwardInst->port == port) {
 			return item;
 		}
 	}

@@ -20,6 +20,10 @@
 #include "data.h"
 #include "jserdes.h"
 
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_services.h"
+
 typedef struct _response {
 	char *buffer;
 	size_t size;
@@ -67,10 +71,26 @@ void clear_request(MRequest **data) {
 	free(*data);
 }
 
-/*
- * send_data_to_server -- Forward recevied data to the local server.
- *
- */
+static void find_service_name_and_ep(char *input,
+                                     char **name,
+                                     char **ep) {
+
+    const char *separator = strchr(&input[1], '/');
+
+    if (separator != NULL) {
+        size_t length = separator - input;
+
+        *name = (char *)malloc(length);
+        strncpy(*name, &input[1], length-1);
+        (*name)[length] = '\0';
+
+        *ep = strdup(separator + 1);
+    } else {
+        *name = strdup(input);
+        *ep   = strdup("");
+    }
+}
+
 static long send_data_to_local_service(URequest *data, char *hostname,
                                        char *port, int *retCode,
                                        char **retStr) {
@@ -80,10 +100,13 @@ static long send_data_to_local_service(URequest *data, char *hostname,
 	CURL *curl=NULL;
 	CURLcode res;
 	struct curl_slist *headers=NULL;
+    char *serviceName = NULL;
+    char *serviceEP   = NULL;
+    int  servicePort = 0;
 	char url[MAX_BUFFER] = {0};
 	UMap *map;
 	Response response = {NULL, 0};
-  
+
 	*retCode = 0;
 
 	/* Sanity check */
@@ -111,9 +134,26 @@ static long send_data_to_local_service(URequest *data, char *hostname,
 		}
 	}
 
-	sprintf(url, "http://%s:%d/%s", hostname, atoi(port)+1, data->http_url);
-	curl_easy_setopt(curl, CURLOPT_URL, url);
+    find_service_name_and_ep(data->http_url, &serviceName, &serviceEP);
+    if (serviceName == NULL || serviceEP == NULL) {
+        log_error("Unable to extract service namd and EP. input",
+                  data->http_url);
+        return code;
+    }
 
+    servicePort = usys_find_service_port(serviceName);
+    if (servicePort <= 0) {
+        log_error("Unable to find service name in /etc/services: %s",
+                  serviceName);
+        return code;
+    }
+
+    sprintf(url,
+            "http://localhost:%d/%s",
+            servicePort,
+            serviceEP);
+
+	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 

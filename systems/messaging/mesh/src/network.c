@@ -165,7 +165,7 @@ int start_forward_service(Config *config, UInst **forwardInst) {
 
 	/* setup endpoint */
     ulfius_add_endpoint_by_val(*forwardInst,
-                               "POST",
+                               "GET",
                                "*", NULL, 0,
 							   &callback_default_forward, config);
 

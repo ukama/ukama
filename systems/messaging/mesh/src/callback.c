@@ -40,6 +40,7 @@ extern void websocket_incoming_message(const URequest *request,
 									   void *data);
 extern void  websocket_onclose(const URequest *request, WSManager *manager,
 							   void *data);
+
 /*
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
@@ -208,22 +209,11 @@ int callback_webservice(const URequest *request, UResponse *response,
 		statusCode = 402;
 		goto done;
 	}
+
+    statusCode = 200;
   
  done:
-    // xxx
-	/* Send response back to the callee */
-	// if (statusCode != 200) {
-	//	ulfius_set_string_body_response(response, statusCode, "");
-	//} else {
-	//	ulfius_set_string_body_response(response, statusCode, map->data);
-	//}
-    ulfius_set_string_body_response(response, 200, responseStr);
-    //    free(packetStr);
-    // free(requestStr);
-    
-	// if (map->size)
-	//	free(map->data);
-
+    ulfius_set_string_body_response(response, statusCode, responseStr);
 	return U_CALLBACK_CONTINUE;
 }
 
@@ -231,8 +221,76 @@ int callback_default_forward(const URequest *request,
                              UResponse *response,
                              void *user_data) {
 
-	ulfius_set_string_body_response(response,
-                                    HttpStatus_Forbidden,
-                                    HttpStatusStr(HttpStatus_Forbidden));
-	return U_CALLBACK_CONTINUE;
+    MapItem *map=NULL;
+    char *host=NULL, *port=NULL, *url=NULL;
+    char *packetStr=NULL;
+    char *requestStr=NULL, *responseStr=NULL;
+    int statusCode, ret;
+
+    url   = u_map_get(request->map_header, "Host");
+    split_strings(url, &host, &port, ":");
+
+    if (host == NULL || port == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    map = is_existing_item_by_port(IDsTable, atoi(port));
+    if (map == NULL) { /* No matching node connected. */
+        log_error("No matching node on port: %s", port);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ret = serialize_websocket_message(&requestStr,
+                                      request,
+                                      "", //nodeID,
+                                      port,
+                                      ""); //agent);
+    if (ret == FALSE && requestStr == NULL) {
+        log_error("Failed to convert request to JSON");
+        statusCode = 400;
+        goto done;
+    } else {
+        log_debug("Forward request JSON: %s", requestStr);
+    }
+
+    /* Add work for the websocket for transmission. */
+    add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
+
+    /* Wait for the response back. The cond is set by the websocket thread */
+    pthread_mutex_lock(&(map->mutex));
+    log_debug("Waiting for response back from the server ...");
+    pthread_cond_wait(&(map->receive->hasWork), &(map->mutex));
+    pthread_mutex_unlock(&(map->mutex));
+
+    responseStr = map->receive->first->data;
+    log_debug("Got response back from server. Response: %s", responseStr);
+
+    /* Send response back. */
+    if (map->size == 0) {
+        statusCode = 402;
+        goto done;
+    }
+
+done:
+    // xxx
+      /* Send response back to the callee */
+        // if (statusCode != 200) {
+        //      ulfius_set_string_body_response(response, statusCode, "");
+        //} else {
+        //      ulfius_set_string_body_response(response, statusCode, map->data);
+        //}
+    ulfius_set_string_body_response(response, 200, responseStr);
+    //    free(packetStr);
+    // free(requestStr);
+
+        // if (map->size)
+        //      free(map->data);
+
+    return U_CALLBACK_CONTINUE;
 }

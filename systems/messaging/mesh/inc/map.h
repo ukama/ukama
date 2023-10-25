@@ -28,13 +28,13 @@ typedef struct map_item_t {
     UInst    *forwardInst;
 
     pthread_mutex_t   mutex;   /* Client thread waiting on response
-								* This mutex is released by websocket */
+                                * This mutex is released by websocket */
     pthread_cond_t    hasResp; /* Conditional wait for response */
 
     int               size;    /* size of data packet. */
     void              *data;   /* response data recevied. */
 
-	struct map_item_t *next;   /* Link to next item in the table */
+    struct map_item_t *next;   /* Link to next item in the table */
 } MapItem;
 
 /*
@@ -42,10 +42,10 @@ typedef struct map_item_t {
  */
 typedef struct {
 
-	MapItem *first;        /* First item in the mapping table */
-	MapItem *last;         /* Last item in the mapping table */
+    MapItem *first;        /* First item in the mapping table */
+    MapItem *last;         /* Last item in the mapping table */
 
-	pthread_mutex_t mutex;    /* Mutex for insert and remove */
+    pthread_mutex_t mutex;    /* Mutex for insert and remove */
 } MapTable;
 
 /* Functions */
@@ -53,6 +53,7 @@ void init_map_table(MapTable **table);
 void free_map_item(MapItem *map);
 void remove_map_item_from_table(MapTable *table, char *nodeID);
 MapItem *is_existing_item(MapTable *table, char *nodeID);
+MapItem *is_existing_item_by_port(MapTable *table, int port);
 MapItem *add_map_to_table(MapTable **table,
                           char *nodeID, UInst **instance,
                           char *nodeIP, int nodePort,
