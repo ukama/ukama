@@ -119,11 +119,12 @@ type SimListReq struct {
 }
 
 type AllocateSimReq struct {
-	SubscriberId string `example:"{{SubscriberUUID}}" json:"subscriber_id" validate:"required"`
-	SimToken     string `example:"pj/9A5Hk8VkkZxOJyu0+9fWs7J6HCOjhmD5jEsIvOfZqmFFFMyStgC3Va4l1b6I5+2ibKOsJjR9KGug=" json:"sim_token"`
-	PackageId    string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
-	NetworkId    string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
-	SimType      string `example:"test" json:"sim_type" validate:"required"`
+	SubscriberId  string `example:"{{SubscriberUUID}}" json:"subscriber_id" validate:"required"`
+	SimToken      string `example:"pj/9A5Hk8VkkZxOJyu0+9fWs7J6HCOjhmD5jEsIvOfZqmFFFMyStgC3Va4l1b6I5+2ibKOsJjR9KGug=" json:"sim_token"`
+	PackageId     string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
+	NetworkId     string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	SimType       string `example:"test" json:"sim_type" validate:"required"`
+	TrafficPolicy uint32 `json:"traffic_policy"`
 }
 
 type SetActivePackageForSimReq struct {

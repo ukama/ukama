@@ -3,20 +3,23 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -52,6 +55,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	// Get the Org locally
 	orgName := req.GetOrgName()
 	networkName := req.GetName()
+
 	org, err := n.orgRepo.GetByName(orgName)
 	if err != nil {
 		log.Infof("lookup for org %s remotely", orgName)
@@ -91,8 +95,15 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	network := &db.Network{
-		Name:  networkName,
-		OrgId: org.Id,
+		Name:             networkName,
+		OrgId:            org.Id,
+		AllowedCountries: req.AllowedCountries,
+		AllowedNetworks:  req.AllowedNetworks,
+		Budget:           req.Budget,
+		Overdraft:        req.Overdraft,
+		TrafficPolicy:    req.TrafficPolicy,
+		PaymentLinks:     req.PaymentLinks,
+		SyncStatus:       types.SyncStatusPending,
 	}
 
 	log.Infof("Adding network %s", networkName)
@@ -108,9 +119,23 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 	route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
 
-	err = n.msgbus.PublishRequest(route, req)
+	evt := &epb.NetworkCreatedEvent{
+		Id:               network.Id.String(),
+		Name:             network.Name,
+		OrgId:            network.OrgId.String(),
+		AllowedCountries: network.AllowedCountries,
+		AllowedNetworks:  network.AllowedNetworks,
+		Budget:           network.Budget,
+		Overdraft:        network.Overdraft,
+		TrafficPolicy:    network.TrafficPolicy,
+		PaymentLinks:     network.PaymentLinks,
+		IsDeactivated:    network.Deactivated,
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	n.pushNetworkCount(org.Id)
@@ -298,11 +323,18 @@ func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesB
 
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
-		Id:            ntwk.Id.String(),
-		Name:          ntwk.Name,
-		OrgId:         ntwk.OrgId.String(),
-		IsDeactivated: ntwk.Deactivated,
-		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
+		Id:               ntwk.Id.String(),
+		Name:             ntwk.Name,
+		OrgId:            ntwk.OrgId.String(),
+		AllowedCountries: ntwk.AllowedCountries,
+		AllowedNetworks:  ntwk.AllowedNetworks,
+		Budget:           ntwk.Budget,
+		Overdraft:        ntwk.Overdraft,
+		TrafficPolicy:    ntwk.TrafficPolicy,
+		PaymentLinks:     ntwk.PaymentLinks,
+		IsDeactivated:    ntwk.Deactivated,
+		SyncStatus:       ntwk.SyncStatus.String(),
+		CreatedAt:        timestamppb.New(ntwk.CreatedAt),
 	}
 }
 

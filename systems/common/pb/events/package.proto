@@ -29,6 +29,9 @@ message CreatePackageEvent {
     string country=18;
     string provider= 19;
     string Type = 20;
+    double overdraft = 21;
+    uint32 trafficPolicy = 22 [json_name = "traffic_policy"];;
+    repeated string networks = 23 [json_name = "networks"];
 }
 
 message DeletePackageEvent {

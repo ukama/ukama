@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
@@ -25,9 +26,11 @@ type Sim struct {
 	DeactivationsCount uint64 `gorm:"default:0"`
 	FirstActivatedOn   time.Time
 	LastActivatedOn    time.Time
+	TrafficPolicy      uint32
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
 	TerminatedAt       gorm.DeletedAt `gorm:"index"`
+	SyncStatus         types.SyncStatus
 }
 
 type Package struct {

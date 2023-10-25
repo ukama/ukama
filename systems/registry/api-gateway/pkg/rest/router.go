@@ -5,17 +5,15 @@ import (
 	"net/http"
 
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 	"github.com/wI2L/fizz/openapi"
 
+	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/wI2L/fizz"
-
-	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
-
-	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -46,7 +44,8 @@ type Clients struct {
 }
 
 type network interface {
-	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
+	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64,
+		trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 
@@ -295,7 +294,8 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 }
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
-	return r.clients.Network.AddNetwork(req.OrgName, req.NetName)
+	return r.clients.Network.AddNetwork(req.OrgName, req.NetName, req.AllowedCountries, req.AllowedNetworks,
+		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
