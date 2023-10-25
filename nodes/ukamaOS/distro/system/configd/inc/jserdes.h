@@ -24,10 +24,10 @@
 #define JSON_ENCODING_OK               JSON_OK
 #define JSON_DECODING_OK               JSON_OK
 
-void json_log(json_t *json);
-bool json_deserialize_config_data(JsonObj *json,
-                                   ConfigData **cd);
+bool json_deserialize_config_data(JsonObj *json,ConfigData **cd);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
+bool json_deserialize_running_config(char* file, ConfigData **cd);
+void json_log(json_t *json);
 void json_free(JsonObj** json);
 
 #endif /* JSERDES_H_ */

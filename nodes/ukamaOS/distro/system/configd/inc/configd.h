@@ -21,6 +21,7 @@ int configd_process_complete(const char *service,
 
 int configd_trigger_update(ConfigSession *s);
 
-void free_config_data(ConfigData *c);
+int configd_read_running_config(ConfigData **c);
 
+void free_config_data(ConfigData *c);
 #endif /* INC_NOTIFICATION_H_ */

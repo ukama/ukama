@@ -67,19 +67,30 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 /* Validate commit and creates a new session if required */
 int is_valid_commit(Config* c , ConfigData *cd) {
 
-	ConfigSession* s = (ConfigSession*) c->updateSession;
-	if ((cd->timestamp != s->timestamp) || (usys_strcmp(cd->version, s->version))) {
-		if (cd->timestamp > s->timestamp) {
-		usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
-		clean_session(c->updateSession);
-		c->updateSession = create_new_update_session(cd);
-		if (c->updateSession) {
-			s = (ConfigSession*) c->updateSession;
-		} else {
+	/* Discard config is older then current running config */
+	ConfigData* rc = (ConfigData*) c->runningConfig;
+	if (rc) {
+		if (rc->timestamp > cd->timestamp) {
+			usys_log_debug("Received config %s with timestamp %ld. expecting config newer than %s with timestamp %d\n", cd->version, cd->timestamp, rc->version, rc->timestamp);
 			return 0;
 		}
+	}
+
+	ConfigSession* s = (ConfigSession*) c->updateSession;
+	if ((cd->timestamp != s->timestamp) || (usys_strcmp(cd->version, s->version))) {
+		/* Newer config */
+		if (cd->timestamp > s->timestamp) {
+			usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
+			clean_session(c->updateSession);
+			c->updateSession = create_new_update_session(cd);
+			if (c->updateSession) {
+				s = (ConfigSession*) c->updateSession;
+			} else {
+				return 0;
+			}
 		} else {
-			usys_log_debug("Receiving config %s with timestamp %ld. expecting config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
+			/* Old rest request or wrog version */
+			usys_log_error("Receiving config %s with timestamp %ld. expecting config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
 			return 0;
 		}
 	}
@@ -190,7 +201,12 @@ int configd_process_complete(const char *service,
 	/* Trigger updates */
 	statusCode = configd_trigger_update(s);
 
-	cleanup:
+	/* Update running config */
+	if (configd_read_running_config(&config->runningConfig)) {
+		usys_log_error("Failed to update running config.");
+	}
+
+cleanup:
 	clean_session(config->updateSession);
 	config->updateSession = NULL;
 
@@ -210,3 +226,29 @@ int configd_trigger_update(ConfigSession *s) {
 	return 0;
 }
 
+int configd_read_running_config(ConfigData **c) {
+	int statusCode = STATUS_NOK;
+	ConfigData *cd = NULL;
+
+	/* Read file */
+	char* file[512]={'\0'};
+	usys_strcpy(file, CONFIG_RUNNING);
+	usys_strcat(file, CONFIGD);
+	/* Deserialize running config */
+	if (!json_deserialize_running_config(file, &cd)) {
+		usys_log_error("Failed to read running config %s", file);
+		return STATUS_NOK;
+	}
+	/* clean */
+	if (*c) {
+		free_config_data(*c);
+		*c = NULL;
+	}
+
+	/* Allocate */
+	if (cd) {
+		*c = cd;
+	}
+
+	return STATUS_OK;
+}

@@ -139,26 +139,53 @@ bool json_deserialize_config_data(JsonObj *json,
         return USYS_FALSE;
     }
     
-    ret |= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
+    ret &= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
                           &(*cd)->fileName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
+    ret &= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
                           &(*cd)->app, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
+    ret &= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
                           NULL, &(*cd)->timestamp, NULL);
-    ret |= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
+    ret &= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
                               NULL, &(*cd)->reason, NULL);
-    ret |= get_json_entry(json, JTAG_DATA, JSON_STRING,
+    ret &= get_json_entry(json, JTAG_DATA, JSON_STRING,
                           &(*cd)->data, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_VERSION, JSON_STRING,
+    ret &= get_json_entry(json, JTAG_VERSION, JSON_STRING,
                           &(*cd)->version, NULL, NULL);
 
     if (ret == USYS_FALSE) {
-        usys_log_error("Error deserializing the notifiction JSON");
+        usys_log_error("Error deserializing the config JSON");
         json_log(json);
         free_config_data(*cd);
         return USYS_FALSE;
     }
     return USYS_TRUE;
+}
+
+bool json_deserialize_running_config(char* name, ConfigData **cd) {
+	FILE *file = fopen(name, "r");
+	if (file == NULL) {
+		usys_log_error("Failed opening file %s", name);
+		perror("Error");
+		return USYS_FALSE;
+	}
+
+	// Parse the JSON data
+	json_t *root;
+	json_error_t error;
+	root = json_loadf(file, 0, &error);
+
+	// Check for parsing errors
+	if (!root) {
+		usys_log_error("Failed parsing json file %s. Error %s at line %d, column %d\n", name, error.text, error.line, error.column);
+		return USYS_FALSE;
+	}
+
+	/* deserialize */
+	if (!json_deserialize_config_data(root, cd)) {
+		return USYS_FALSE;
+	}
+
+	return USYS_TRUE;
 }
 
 /* Decrement json references */

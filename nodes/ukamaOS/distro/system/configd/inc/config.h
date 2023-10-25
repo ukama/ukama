@@ -20,6 +20,7 @@ typedef struct {
     char  *nodedEP;
     char *nodeId;
     void *updateSession;
+    void *runningConfig;
 } Config;
 
 #endif /* CONFIG_H_ */

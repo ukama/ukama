@@ -195,6 +195,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (configd_read_running_config(&serviceConfig.runningConfig)) {
+    	usys_log_error("Failed to read last running config.");
+    	exit(1);
+    }
+
     if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         exit(1);
@@ -210,6 +215,7 @@ done:
     free(serviceConfig.nodeId);
     free(serviceConfig.nodedEP);
     free(serviceConfig.nodedHost);
+    free_config_data(serviceConfig.runningConfig);
     usys_log_debug("Exiting config.d ...");
     return 1;
 }

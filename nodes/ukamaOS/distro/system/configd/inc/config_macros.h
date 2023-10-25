@@ -39,4 +39,6 @@
 #define CONFIG_RUNNING "/home/vishal/cdrive/handson/configd/running"
 #define CONFIG_BACKUP "/home/vishal/cdrive/handson/configd/backup"
 #define CONFIG_OLD "/home/vishal/cdrive/handson/configd/old"
+#define CONFIGD  "/configd/version.json"
+
 #endif /* INC_CONFIG_MACROS_H_ */
