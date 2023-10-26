@@ -16,8 +16,7 @@
 int configd_process_incoming_config(const char *service,
 		JsonObj *json, Config *config);
 
-int configd_process_complete(const char *service,
-		JsonObj *json, Config *config);
+int configd_process_complete(Config *config);
 
 int configd_trigger_update(Config* c);
 

@@ -151,6 +151,8 @@ bool json_deserialize_config_data(JsonObj *json,
                           &(*cd)->data, NULL, NULL);
     ret &= get_json_entry(json, JTAG_VERSION, JSON_STRING,
                           &(*cd)->version, NULL, NULL);
+    ret &= get_json_entry(json, JTAG_FILE_COUNT, JSON_INTEGER,
+                                  NULL, &(*cd)->fileCount, NULL);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the config JSON");

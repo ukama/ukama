@@ -96,46 +96,6 @@ int web_service_cb_post_config(const URequest *request,
 	return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_post_config_complete(const URequest*, UResponse*, void*)
- * @brief   Receive a new event reported from service.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
-int web_service_cb_post_config_complete(const URequest *request,
-		UResponse *response, void *epConfig) {
-
-	int ret = STATUS_NOK;
-	char *service=NULL;
-	JsonObj *json=NULL;
-
-	json = ulfius_get_json_body_request(request, NULL);
-	if (json == NULL) {
-		ulfius_set_string_body_response(response,
-				HttpStatus_BadRequest,
-				HttpStatusStr(HttpStatus_BadRequest));
-		return U_CALLBACK_CONTINUE;
-	}
-	usys_log_trace("config.d:: Received POST for an config complete from %s.", service);
-
-	ret = configd_process_complete(service,
-			json,
-			(Config *)epConfig);
-	if (ret == STATUS_OK) {
-		ulfius_set_empty_body_response(response, HttpStatus_OK);
-	} else {
-		ulfius_set_empty_body_response(response,
-				HttpStatus_InternalServerError);
-	}
-
-	json_free(&json);
-	return U_CALLBACK_CONTINUE;
-}
-
-
 
 
 

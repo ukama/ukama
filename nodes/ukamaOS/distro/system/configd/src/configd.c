@@ -41,6 +41,7 @@ void clean_session(ConfigSession *session) {
 		if (session->apps) free_apps (session->apps, session->count);
 		session->timestamp = 0;
 		session->count = 0;
+		session->expectedCount = 0;
 		free(session);
 	}
 }
@@ -51,6 +52,7 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 	if (session) {
 		session->timestamp = cd->timestamp;
 		session->version = usys_strdup(cd->version);
+		session->expectedCount = cd->fileCount;
 		session->count = 0;
 
 		if (prepare_for_new_config(cd) == 0) {
@@ -82,6 +84,7 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 		if (cd->timestamp > s->timestamp) {
 			usys_log_debug("Receiving new config %s with timestamp %ld. Discarding old config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
 			clean_session(c->updateSession);
+			c->updateSession = NULL;
 			c->updateSession = create_new_update_session(cd);
 			if (c->updateSession) {
 				s = (ConfigSession*) c->updateSession;
@@ -114,6 +117,7 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 int process_config(JsonObj *json, Config *config) {
 	int statusCode = STATUS_NOK;
 	ConfigData *cd = NULL;
+	ConfigSession *session = (ConfigSession*) config->updateSession;
 
 	/* Deserialize incoming message from cloud */
 	if (!json_deserialize_config_data(json, &cd)) {
@@ -127,8 +131,8 @@ int process_config(JsonObj *json, Config *config) {
 
 	/* get or create session */
 	if (config) {
-		if (!config->updateSession) {
-			ConfigSession *session = create_new_update_session(cd);
+		if (!session) {
+			session = create_new_update_session(cd);
 			if (!session) {
 				usys_log_error("failed to create update session.");
 				return STATUS_NOK;
@@ -147,7 +151,7 @@ int process_config(JsonObj *json, Config *config) {
 	}
 
 	if (cd->reason == CONFIG_DELETED){
-		statusCode =  remove_config(cd);
+		statusCode = remove_config(cd);
 		if (statusCode != STATUS_OK ) {
 			usys_log_error("Failed to remove config for %s app version %s", cd->app, cd->version);
 		}
@@ -159,6 +163,17 @@ int process_config(JsonObj *json, Config *config) {
 		}
 
 	}
+
+	/* In case valid commit opened new update session */
+	session = (ConfigSession*) config->updateSession;
+	if (session->count == session->expectedCount) {
+		usys_log_debug("Received all expected %d configs", session->expectedCount);
+		statusCode = configd_process_complete(config);
+	} else {
+		usys_log_debug("Received %d files and expected %d configs. Waiting for %d",
+				session->count, session->expectedCount, (session->expectedCount - session->count));
+	}
+
 	free_config_data(cd);
 
 	return statusCode;
@@ -176,20 +191,9 @@ int configd_process_incoming_config(const char *service,
 	return statusCode;
 }
 
-int configd_process_complete(const char *service,
-		JsonObj *json, Config *config){
+int configd_process_complete(Config *config) {
 	int statusCode = STATUS_NOK;
 	ConfigSession* s = (ConfigSession*)config->updateSession;
-	if (!s) {
-		usys_log_error("No configs pushed. Failed to process config complete message.");
-		goto cleanup;
-	}
-
-	statusCode = process_config(json, config);
-	if (statusCode != STATUS_OK ) {
-		usys_log_error("Failed to process config complete message.");
-		goto cleanup;
-	}
 
 	/* Store config*/
 	statusCode = store_config(s->version);
@@ -199,7 +203,7 @@ int configd_process_complete(const char *service,
 	}
 
 	/* Trigger updates */
-	statusCode = configd_trigger_update(s);
+	statusCode = configd_trigger_update(config);
 
 	/* Update running config */
 	if (configd_read_running_config(&config->runningConfig)) {

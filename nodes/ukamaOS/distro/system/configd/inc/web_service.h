@@ -102,8 +102,4 @@ int web_service_cb_post_config(const URequest *request,
                               UResponse *response,
 							  void *epConfig);
 
-int web_service_cb_post_config_complete(const URequest *request,
-                              UResponse *response,
-							  void *epConfig);
-
 #endif /* INC_WEB_SERVICE_H_ */

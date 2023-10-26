@@ -19,6 +19,7 @@ typedef struct  {
 	char *version;
 	int timestamp;
 	int reason;
+	int fileCount;
 } ConfigData;
 
 typedef enum {
@@ -45,6 +46,7 @@ typedef struct  {
 	uint32_t timestamp;
 	char* version;
 	uint32_t count;
+	uint32_t expectedCount;
 }ConfigSession;
 
 #endif
