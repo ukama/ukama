@@ -76,7 +76,7 @@ void usage() {
 	usys_puts(
 			"-l, --logs <TRACE> <DEBUG> <INFO>      Log level for the process.\n");
 	usys_puts(
-			"--p, --port <port>                      Port at which service will"
+			"-p, --port <port>                      Port at which service will"
 			"listen.\n");
 	usys_puts(
 			"-n, --noded-host <host>               Host at which noded service"
