@@ -221,15 +221,8 @@ int configd_trigger_update(Config* c) {
 	for (int i = 0; i < s->count; i++) {
 		usys_log_debug("Triggering update for %s app to version %s ", s->apps[i]->app, s->version);
 
-		/* Send exit message to startup app */
-		statusCode = wc_send_terminate_req(c, s->apps[i]->app);
-		if (statusCode != STATUS_OK) {
-			usys_log_error("Failed to terminate app %s.", s->apps[i]->app);
-			continue;
-		}
-
-		/* send start message to startup app */
-		statusCode = wc_send_exec_req(c, s->apps[i]->app);
+		/* send start message to restart app */
+		statusCode = wc_send_restart_req(c, s->apps[i]->app);
 		if (statusCode != STATUS_OK) {
 			usys_log_error("Failed to exec app %s.", s->apps[i]->app);
 			continue;

@@ -194,7 +194,7 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-int wc_send_terminate_req(Config* config, char* app){
+int wc_send_restart_req(Config* config, char* app){
 	int ret = STATUS_NOK;
 	UResponse *httpResp = NULL;
 	URequest *httpReq = NULL;
@@ -202,51 +202,8 @@ int wc_send_terminate_req(Config* config, char* app){
 	/* Send HTTP request */
 	char url[128]={0};
 
-	sprintf(url,"http://%s:%d%s/%s/%s/%s", config->starterHost, config->starterPort,
-			config->starterEP,"terminate","TBU",app);
-
-	httpReq = wc_create_http_request(url, "POST", NULL);
-	if (!httpReq) {
-		return ret;
-	}
-
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
-		usys_log_error("Failed to send http request.");
-		goto cleanup;
-	}
-
-	if (httpResp->status == 200) {
-		ret = STATUS_OK;
-	}
-	else {
-		ret = STATUS_NOK;
-	}
-
-	cleanup:
-	if (httpReq) {
-		ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-	}
-	if (httpResp) {
-		ulfius_clean_response(httpResp);
-		usys_free(httpResp);
-	}
-
-	return ret;
-
-}
-
-int wc_send_exec_req(Config* config, char* app){
-	int ret = STATUS_NOK;
-	UResponse *httpResp = NULL;
-	URequest *httpReq = NULL;
-
-	/* Send HTTP request */
-	char url[128]={0};
-
-	sprintf(url,"http://%s:%d%s/%s/%s/%s", config->starterHost, config->starterPort,
-			config->starterEP,"exec","TBU",app);
+	sprintf(url,"http://%s:%d%s/%s/%s", config->starterHost, config->starterPort,
+			config->starterEP,"restart",app);
 
 	httpReq = wc_create_http_request(url, "POST", NULL);
 	if (!httpReq) {
