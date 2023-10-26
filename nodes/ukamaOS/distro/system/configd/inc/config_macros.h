@@ -10,7 +10,7 @@
 #ifndef CONFIG_MACROS_H_
 #define CONFIG_MACROS_H_
 
-#define SERVICE_NAME           "configD"
+#define SERVICE_NAME           "configd"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 

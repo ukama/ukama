@@ -38,6 +38,7 @@ typedef enum  {
 
 typedef struct {
 	char *app;
+	char *fileName;
 	ConfigState state;
 }AppState;
 
@@ -47,6 +48,7 @@ typedef struct  {
 	char* version;
 	uint32_t count;
 	uint32_t expectedCount;
+	bool configdVer;
 }ConfigSession;
 
 #endif

@@ -20,16 +20,21 @@
 
 void free_apps(AppState **apps, uint32_t count) {
 	for (uint32_t i = 0; i < count; i++) {
-		if (apps[i]) free(apps[i]);
+
+		if (apps[i]){
+			usys_free(apps[i]->app);
+			usys_free(apps[i]->fileName);
+			usys_free(apps[i]);
+		}
 	}
 }
 
 void free_config_data(ConfigData *c) {
 	if (c) {
-		if (c->fileName) free(c->fileName);
-		if (c->app) free(c->app);
-		if (c->version) free(c->version);
-		if (c->data) free(c->data);
+		if (c->fileName) usys_free(c->fileName);
+		if (c->app) usys_free(c->app);
+		if (c->version) usys_free(c->version);
+		if (c->data) usys_free(c->data);
 	}
 }
 
@@ -37,12 +42,13 @@ void free_config_data(ConfigData *c) {
 void clean_session(ConfigSession *session) {
 
 	if (session) {
-		if (session->version) free(session->version);
+		if (session->version) usys_free(session->version);
 		if (session->apps) free_apps (session->apps, session->count);
 		session->timestamp = 0;
 		session->count = 0;
 		session->expectedCount = 0;
-		free(session);
+		session->configdVer = USYS_FALSE;
+		usys_free(session);
 	}
 }
 
@@ -54,7 +60,7 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 		session->version = usys_strdup(cd->version);
 		session->expectedCount = cd->fileCount;
 		session->count = 0;
-
+		session->configdVer = USYS_FALSE;
 		if (prepare_for_new_config(cd) == 0) {
 			usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
 		} else {
@@ -64,6 +70,29 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 	}
 
 	return session;
+}
+
+/* Update session based on received files */
+void update_session(Config* c, AppState* a) {
+
+	ConfigSession* s = (ConfigSession*) c->updateSession;
+
+	/* check if its a duplicate reception of file for session */
+	for (int i = 0; i < s->count; i++) {
+		if (!(usys_strcmp(a->app, s->apps[i]->app)) && !(usys_strcmp(a->fileName, s->apps[i]->fileName))) {
+			usys_log_debug("Received a duplicate config file %s for app %s.", a->app, a->fileName);
+			return;
+		}
+	}
+
+	s->apps[s->count] = a;
+	s->count++;
+
+	/* version flag for configd/version.json */
+	if (!(usys_strcmp(a->app, c->serviceName)) && !(usys_strcmp(a->fileName, "version.json"))) {
+		s->configdVer = USYS_TRUE;
+	}
+
 }
 
 /* Validate commit and creates a new session if required */
@@ -103,8 +132,9 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 		if (as) {
 			as->app = usys_strdup(cd->app);
 			as->state = STATE_UPDATE_AVAILABLE;
-			s->apps[s->count] = as;
-			s->count++;
+			as->fileName = usys_strdup(cd->fileName);
+			update_session(c, as);
+
 		} else {
 			perror("Memory failure");
 			return 0;
@@ -167,8 +197,16 @@ int process_config(JsonObj *json, Config *config) {
 	/* In case valid commit opened new update session */
 	session = (ConfigSession*) config->updateSession;
 	if (session->count == session->expectedCount) {
-		usys_log_debug("Received all expected %d configs", session->expectedCount);
-		statusCode = configd_process_complete(config);
+		if (session->configdVer) {
+			usys_log_debug("Received all expected %d configs", session->expectedCount);
+			statusCode = configd_process_complete(config);
+		} else {
+			usys_log_error("Received %d configs but version.json for configd is missing", session->count);
+			usys_log_error("Cleaning session.");
+			clean_session(config->updateSession);
+			config->updateSession = NULL;
+			statusCode = STATUS_NOK;
+		}
 	} else {
 		usys_log_debug("Received %d files and expected %d configs. Waiting for %d",
 				session->count, session->expectedCount, (session->expectedCount - session->count));
