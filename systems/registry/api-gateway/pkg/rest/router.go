@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
-	"github.com/wI2L/fizz/openapi"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"

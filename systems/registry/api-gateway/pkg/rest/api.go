@@ -66,7 +66,7 @@ type DetachNodeRequest struct {
 
 type UpdateNodeStateRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
-	State  string `json:"state" path:"state" validate:"required"`
+	State  string `json:"state" validate:"required"`
 }
 
 type UpdateNodeRequest struct {
