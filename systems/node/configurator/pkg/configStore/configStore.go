@@ -50,6 +50,7 @@ type ConfigData struct {
 	Data      []byte `json:"data"`
 	Reason    int    `json:"reason"`
 	Timestamp uint32 `json:"timestamp"`
+	FileCount int    `json:"file_count"`
 }
 
 type ConfigMetaData struct {
@@ -352,6 +353,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 		}
 		metaData := &ConfigMetaData{}
 		t := (uint32)(time.Now().Unix())
+		count := len(files) + 1
 		log.Infof("Pushing configs %+v for node %s with timestamp %d", files, n, t)
 		for _, f := range files {
 
@@ -359,6 +361,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 
 			cd := m[f]
 			cd.Timestamp = t
+			cd.FileCount = count
 
 			jd, err := json.Marshal(cd)
 			if err != nil {
@@ -385,7 +388,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 		}
 
 		/* Publish config version information */
-		err = c.PublishCommitInfo(metaData, route, commit, t)
+		err = c.PublishCommitInfo(metaData, route, commit, t, count)
 		if err != nil {
 			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
 			goto RecordState
@@ -414,42 +417,37 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 	return nil
 }
 
-func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32) error {
+func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32, count int) error {
 	m.app = "configd"
 	m.fileName = "version.json"
 
-	data := ConfigData{
+	cdata := ConfigData{
 		FileName:  m.fileName, /* filename with path */
 		App:       m.app,
 		Data:      []byte(""),
 		Reason:    REASON_UPDATED,
 		Timestamp: t,
 		Version:   ver,
+		FileCount: count,
 	}
 
-	jd, err := json.Marshal(data)
+	jd, err := json.Marshal(&cdata)
 	if err != nil {
-		log.Errorf("Failed to marshal config version data %+v. Errors %s", data, err.Error())
+		log.Errorf("Failed to marshal config version data %+v. Errors %s", cdata, err.Error())
 		return err
 	}
 
-	jsonMsg, err := json.Marshal(&ConfigData{
-		FileName:  m.fileName, /* filename with path */
-		App:       m.app,
-		Data:      jd,
-		Reason:    REASON_UPDATED,
-		Timestamp: t,
-		Version:   ver,
-	})
+	cdata.Data = jd
+	jsonMsg, err := json.Marshal(&cdata)
 	if err != nil {
-		log.Errorf("Failed to marshal configdata %+v. Errors %s", data, err.Error())
+		log.Errorf("Failed to marshal configdata %+v. Errors %s", cdata, err.Error())
 		return err
 	}
 
 	msg := &pb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HTTPMethod: "POST",
-		Path:       "configd/v1/config/complete",
+		Path:       "configd/v1/config",
 		Msg:        jsonMsg,
 	}
 

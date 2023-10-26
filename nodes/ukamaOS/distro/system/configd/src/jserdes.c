@@ -114,12 +114,13 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 
 /*
 {
-    "filename":"abc.json",
-    "app":"abc",
-    "timestamp":178893939,
-    "version":"acdef",
-    "data" : "{\"name\":\"xyz\"}"
-}
+"filename":"version.json",
+"app":"configd",
+"version":"abcdef",
+"timestamp":189295,
+"reason": 1,
+"file_count":4,
+"data": ""}
 */
 /* Deserialize config data */
 bool json_deserialize_config_data(JsonObj *json,
