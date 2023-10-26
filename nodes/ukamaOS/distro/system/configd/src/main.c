@@ -8,12 +8,16 @@
  */
 
 #include "config.h"
+#include "configd.h"
 #include "config_macros.h"
 #include "service.h"
 #include "web.h"
+#include "web_client.h"
+#include "web_service.h"
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_getopt.h"
+#include "usys_mem.h"
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
@@ -231,7 +235,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (configd_read_running_config(&serviceConfig.runningConfig)) {
+	if (configd_read_running_config((ConfigData**)&serviceConfig.runningConfig)) {
 		usys_log_error("Failed to read last running config.");
 		exit(1);
 	}

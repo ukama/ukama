@@ -66,7 +66,7 @@ int make_path(const char* path) {
 }
 
 /* Remove config file */
-int remove_config(ConfigData *c, const char *source) {
+int remove_config(ConfigData *c) {
 	char path[512] = {'\0'};
 	sprintf(path,"%s/%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app, c->fileName);
 	if (remove(path) != 0) {

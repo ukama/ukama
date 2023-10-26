@@ -33,6 +33,8 @@ int remove_dir(const char *path);
 
 int create_config(ConfigData* c);
 
+int remove_config(ConfigData *c);
+
 int create_backup_config();
 
 int restore_config() ;

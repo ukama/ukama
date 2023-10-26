@@ -244,7 +244,7 @@ int configd_process_complete(Config *config) {
 	statusCode = configd_trigger_update(config);
 
 	/* Update running config */
-	if (configd_read_running_config(&config->runningConfig)) {
+	if (configd_read_running_config((ConfigData**)&config->runningConfig)) {
 		usys_log_error("Failed to update running config.");
 	}
 
@@ -280,7 +280,7 @@ int configd_read_running_config(ConfigData **c) {
 	ConfigData *cd = NULL;
 
 	/* Read file */
-	char* file[512]={'\0'};
+	char file[512]={'\0'};
 	usys_strcpy(file, CONFIG_RUNNING);
 	usys_strcat(file, CONFIGD);
 	/* Deserialize running config */
