@@ -1,20 +1,23 @@
 import { metricsClient } from '@/client/ApolloClient';
-import { useGetMetricByTabSubSubscription } from '@/generated/metrics';
-import { getNodeTabTypeByIndex } from '@/utils';
+import {
+  Graphs_Type,
+  useGetMetricByTabSubSubscription,
+} from '@/generated/metrics';
 import PubSub from 'pubsub-js';
 
 interface IMetricSubscription {
   from: number;
+  type: Graphs_Type;
 }
 
-const MetricSubscription = ({ from }: IMetricSubscription) => {
+const MetricSubscription = ({ from, type }: IMetricSubscription) => {
   useGetMetricByTabSubSubscription({
     client: metricsClient,
     variables: {
       from: from,
+      type: type,
       orgId: 'ukama',
       userId: 'salman',
-      type: getNodeTabTypeByIndex(0),
       nodeId: 'uk-test36-hnode-a1-00ff',
     },
     onData: (data) => {

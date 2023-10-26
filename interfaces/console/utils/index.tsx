@@ -498,6 +498,11 @@ export const getMetricValue = (key: string, metrics: MetricsRes) => {
   return metric?.values || [];
 };
 
+export const isMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return (metric && metric.values.length > 1) || false;
+};
+
 export {
   calculateCenterLatLng,
   convertToWeeksOrMonths,

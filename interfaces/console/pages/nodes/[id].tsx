@@ -7,7 +7,11 @@ import {
   useGetNodesLazyQuery,
   useUpdateNodeMutation,
 } from '@/generated';
-import { MetricsRes, useGetMetricByTabLazyQuery } from '@/generated/metrics';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import EditNode from '@/ui/molecules/EditNode';
@@ -28,11 +32,13 @@ export default function Page() {
   const router = useRouter();
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [graphType, setGraphType] = useState<Graphs_Type>(
+    Graphs_Type.NodeHealth,
+  );
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const onTabSelected = (_: any, value: number) => setSelectedTab(value);
 
   const [
     getNodes,
@@ -97,7 +103,6 @@ export default function Page() {
   });
 
   useEffect(() => {
-    setMetricFrom(() => getUnixTime() - 120);
     getNodes({
       variables: {
         data: {
@@ -115,7 +120,7 @@ export default function Page() {
             orgId: 'ukama',
             userId: 'salman',
             from: metricFrom,
-            type: getNodeTabTypeByIndex(selectedTab),
+            type: graphType,
             to: metricFrom + 120,
             withSubscription: true,
             nodeId: 'uk-test36-hnode-a1-00ff',
@@ -140,6 +145,17 @@ export default function Page() {
         },
       },
     });
+  };
+
+  const handleOverviewSectionChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - 120);
+  };
+
+  const onTabSelected = (_: any, value: number) => {
+    setSelectedTab(value);
+    setGraphType(getNodeTabTypeByIndex(value));
+    setMetricFrom(() => getUnixTime() - 120);
   };
 
   return (
@@ -184,11 +200,12 @@ export default function Page() {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            metricFrom={metricFrom}
             metrics={metrics}
+            metricFrom={metricFrom}
             isUpdateAvailable={true}
             selectedNode={selectedNode}
-            metricsLoading={false}
+            metricsLoading={nodeMetricsLoading}
+            handleOverviewSectionChange={handleOverviewSectionChange}
             handleUpdateNode={() => {}}
             connectedUsers={'0'}
             onNodeSelected={() => {}}
@@ -200,19 +217,24 @@ export default function Page() {
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
             metrics={metrics}
-            loading={false}
             metricFrom={metricFrom}
+            loading={nodeMetricsLoading}
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
-            metrics={[]}
+            metrics={metrics}
+            metricFrom={metricFrom}
             selectedNode={selectedNode}
-            loading={false}
+            loading={nodeMetricsLoading}
           />
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
-          <NodeRadioTab metrics={[]} loading={false} />
+          <NodeRadioTab
+            metrics={metrics}
+            metricFrom={metricFrom}
+            loading={nodeMetricsLoading}
+          />
         </TabPanel>
         <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <h1>Software Tab</h1>

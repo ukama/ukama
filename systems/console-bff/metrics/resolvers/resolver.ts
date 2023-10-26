@@ -70,41 +70,43 @@ class MetricResolvers {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
       subKey = subKey.slice(0, -1);
-      const workerData: any = {
-        type: subKey,
-        orgId,
-        userId,
-        url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${subKey}&node=${nodeId}`,
-        key: STORAGE_KEY,
-        timestamp: from,
-      };
-      const worker = new Worker(WS_THREAD, {
-        workerData,
-      });
-      worker.on("message", (_data: any) => {
-        if (!_data.isError) {
-          const res = JSON.parse(_data.data);
-          const result = res.data.result[0];
-          if (result && result.metric && result.value.length > 0) {
-            pubSub.publish(subKey, {
-              success: true,
-              msg: "success",
-              orgId: result.metric.org,
-              nodeId: nodeId,
-              type: subKey,
-              userId: userId,
-              value: result.value,
-            } as LatestMetricRes);
-          } else {
-            return getErrorRes("No metric data found");
+      subKey.split(",").map((key: string) => {
+        const workerData = {
+          type: key,
+          orgId,
+          userId,
+          url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          key: STORAGE_KEY,
+          timestamp: from,
+        };
+        const worker = new Worker(WS_THREAD, {
+          workerData,
+        });
+        worker.on("message", (_data: any) => {
+          if (!_data.isError) {
+            const res = JSON.parse(_data.data);
+            const result = res.data.result[0];
+            if (result && result.metric && result.value.length > 0) {
+              pubSub.publish(key, {
+                success: true,
+                msg: "success",
+                orgId: result.metric.org,
+                nodeId: nodeId,
+                type: key,
+                userId: userId,
+                value: result.value,
+              } as LatestMetricRes);
+            } else {
+              return getErrorRes("No metric data found");
+            }
           }
-        }
-      });
-      worker.on("exit", (code: any) => {
-        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
-        logger.info(
-          `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
-        );
+        });
+        worker.on("exit", (code: any) => {
+          removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+          logger.info(
+            `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+          );
+        });
       });
     }
 
@@ -200,7 +202,10 @@ class MetricResolvers {
         }
       });
       worker.on("exit", (code: any) => {
-        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+        const keys = getGraphsKeyByType(type, nodeId);
+        keys.map(async (key: string) => {
+          await removeKeyFromStorage(`${orgId}/${userId}/${key}/${from}`);
+        });
         logger.info(
           `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
         );

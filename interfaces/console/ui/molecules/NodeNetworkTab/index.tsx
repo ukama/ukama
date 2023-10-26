@@ -1,6 +1,6 @@
 import { TooltipsText } from '@/constants';
-import { MetricsRes } from '@/generated/metrics';
-import { getMetricValue } from '@/utils';
+import { Graphs_Type, MetricsRes } from '@/generated/metrics';
+import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
 import LineChart from '../LineChart';
@@ -69,40 +69,45 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
               metricFrom={metricFrom}
               topic={'throughputuplink'}
               title={'Throughput (U/L)'}
-              hasData={metrics.metrics.length > 0}
+              tabSection={Graphs_Type.Network}
               initData={getMetricValue('throughputuplink', metrics)}
+              hasData={isMetricValue('throughputuplink', metrics)}
             />
             <LineChart
               loading={loading}
               metricFrom={metricFrom}
               topic={'throughputdownlink'}
               title={'Throughput (D/L)'}
-              hasData={metrics.metrics.length > 0}
+              tabSection={Graphs_Type.Network}
               initData={getMetricValue('throughputdownlink', metrics)}
+              hasData={isMetricValue('throughputdownlink', metrics)}
             />
             <LineChart
               topic={'rrc'}
               title={'RRC'}
               loading={loading}
               metricFrom={metricFrom}
-              hasData={metrics.metrics.length > 0}
+              tabSection={Graphs_Type.Network}
               initData={getMetricValue('rrc', metrics)}
+              hasData={isMetricValue('rrc', metrics)}
             />
             <LineChart
               topic={'erab'}
               title={'ERAB'}
               loading={loading}
               metricFrom={metricFrom}
-              hasData={metrics.metrics.length > 0}
+              tabSection={Graphs_Type.Network}
               initData={getMetricValue('erab', metrics)}
+              hasData={isMetricValue('erab', metrics)}
             />
             <LineChart
               topic={'rlc'}
               title={'RLC'}
               loading={loading}
               metricFrom={metricFrom}
-              hasData={metrics.metrics.length > 0}
+              tabSection={Graphs_Type.Network}
               initData={getMetricValue('rlc', metrics)}
+              hasData={isMetricValue('rlc', metrics)}
             />
           </Stack>
         </Paper>

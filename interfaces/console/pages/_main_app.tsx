@@ -48,23 +48,31 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     },
   });
 
-  const [getUser] = useGetUserLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      _setUser({
-        role: '',
-        isFirstVisit: false,
-        id: data.getUser.uuid,
-        name: data.getUser.name,
-        email: data.getUser.email,
-      });
-      getMember({
-        variables: {
-          memberId: data.getUser.uuid,
-        },
-      });
-    },
-  });
+  const [getUser, { data: userData, loading: userLoading, error: userError }] =
+    useGetUserLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        _setUser({
+          role: '',
+          isFirstVisit: false,
+          id: data.getUser.uuid,
+          name: data.getUser.name,
+          email: data.getUser.email,
+        });
+        const pathname =
+          typeof window !== 'undefined' && window.location.pathname
+            ? window.location.pathname
+            : '';
+        setPage(
+          getTitleFromPath(pathname, (route.query['id'] as string) || ''),
+        );
+        getMember({
+          variables: {
+            memberId: data.getUser.uuid,
+          },
+        });
+      },
+    });
 
   const [
     getNetworks,
@@ -150,14 +158,13 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [commonData]);
 
   useEffect(() => {
-    const { id, name, email } = _user;
-    const pathname =
-      typeof window !== 'undefined' && window.location.pathname
-        ? window.location.pathname
-        : '';
-    setPage(getTitleFromPath(pathname, (route.query['id'] as string) || ''));
-    if (id && name && email) {
-      if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
+    if (!userLoading && userData && userData.getUser && _user.id) {
+      const { id, name, email } = _user;
+      if (id && name && email) {
+        if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
+      }
+    } else if (userError) {
+      handleGoToLogin();
     }
   }, [_user]);
 

@@ -1,3 +1,4 @@
+import { Graphs_Type } from '@/generated/metrics';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -13,34 +14,32 @@ interface ILineChart {
   filter?: string;
   hasData?: boolean;
   loading?: boolean;
+  tabSection: Graphs_Type;
   onFilterChange?: Function;
 }
 
-const LineChart = ({
-  title,
-  topic,
-  initData,
-  metricFrom,
-  loading = false,
-  filter = 'LIVE',
-}: ILineChart) => {
-  const options = {
+const getOptions = (topic: string, title: string, initData: any) => {
+  return {
+    title: {
+      text: topic,
+      align: 'left',
+    },
     chart: {
-      title: {
-        style: {
-          display: 'none',
-        },
-      },
-
       legend: { enabled: false },
-
       events: {
         load: function () {
-          var series: any = Highcharts.charts[0]?.series[0];
-          PubSub.subscribe(topic, (_, data) => {
-            // console.log(data);
-            series.addPoint(data, true, true);
-          });
+          var chart: any =
+            Highcharts.charts.length > 0
+              ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+              : null;
+          if (chart) {
+            var series: any = chart?.series[0];
+            PubSub.subscribe(topic, (_, data) => {
+              if (topic === chart?.title?.textStr && series) {
+                series.addPoint(data, true, true);
+              }
+            });
+          }
         },
       },
     },
@@ -100,19 +99,34 @@ const LineChart = ({
       opposite: false,
     },
   };
+};
 
+const LineChart = ({
+  topic,
+  hasData,
+  initData,
+  metricFrom,
+  title = '',
+  loading = false,
+  filter = 'LIVE',
+  tabSection = Graphs_Type.NodeHealth,
+}: ILineChart) => {
   return (
     <GraphTitleWrapper
       filter={filter}
+      hasData={hasData}
       variant="subtitle1"
-      title={title || ''}
+      title={title}
       handleFilterChange={() => {}}
       loading={loading || !initData}
-      hasData={initData?.length > 0 || false}
     >
       <Box sx={{ width: '100%' }}>
-        <MetricSubscription from={metricFrom} />
-        <HighchartsReact options={options} highcharts={Highcharts} />
+        <MetricSubscription type={tabSection} from={metricFrom} />
+        <HighchartsReact
+          key={topic}
+          options={getOptions(topic, title, initData)}
+          highcharts={Highcharts}
+        />
       </Box>
     </GraphTitleWrapper>
   );
