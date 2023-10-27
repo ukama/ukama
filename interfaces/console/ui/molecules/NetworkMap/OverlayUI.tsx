@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 
 export const LabelOverlayUI = ({ name }: { name: string }) => {
   return (
@@ -33,7 +34,12 @@ export const LabelOverlayUI = ({ name }: { name: string }) => {
   );
 };
 
-export const SitesTree = () => {
+interface ISitesTree {
+  sites: any;
+}
+
+export const SitesTree = ({ sites }: ISitesTree) => {
+  const router = useRouter();
   return (
     <Box
       sx={{
@@ -51,7 +57,7 @@ export const SitesTree = () => {
     >
       <Stack spacing={0.5}>
         <Typography variant="body1" fontWeight={600}>
-          Network (2)
+          Network ({sites.length})
         </Typography>
         <TreeView
           aria-label="sites-tree"
@@ -64,16 +70,17 @@ export const SitesTree = () => {
             maxHeight: '400px',
           }}
         >
-          <TreeItem nodeId="1" label="Site 1">
-            <TreeItem nodeId="2" label="Tower Node 1" />
-            <TreeItem nodeId="3" label="Tower Node 2" />
-            <TreeItem nodeId="4" label="Amplifier unit 1" />
-          </TreeItem>
-          <TreeItem nodeId="5" label="Site 2">
-            <TreeItem nodeId="6" label="Tower Node 1" />
-            <TreeItem nodeId="7" label="Amplifier unit 1" />
-            <TreeItem nodeId="8" label="Amplifier unit 2" />
-          </TreeItem>
+          {sites?.map((site: any) => {
+            return (
+              <TreeItem key={site.id} nodeId={site.id} label={site.name}>
+                <TreeItem
+                  nodeId={site.nodeId}
+                  label={site.nodeName}
+                  onClick={() => router.push(`/nodes/${site.nodeId}`)}
+                />
+              </TreeItem>
+            );
+          })}
         </TreeView>
       </Stack>
     </Box>

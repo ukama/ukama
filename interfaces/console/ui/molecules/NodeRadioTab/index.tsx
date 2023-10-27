@@ -1,4 +1,6 @@
 import { TooltipsText } from '@/constants';
+import { Graphs_Type } from '@/generated/metrics';
+import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
 import LineChart from '../LineChart';
@@ -9,8 +11,9 @@ const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
   metrics: any;
   loading: boolean;
+  metricFrom: number;
 }
-const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
+const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
   return (
@@ -50,27 +53,30 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
           <Stack spacing={4}>
             <LineChart
               loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
-              topic={'txpower'}
+              topic={'tx_power'}
               title={'TX Power'}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Radio}
+              hasData={isMetricValue('tx_power', metrics)}
+              initData={getMetricValue('tx_power', metrics)}
             />
             <LineChart
               loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
-              topic={'rxpower'}
+              topic={'rx_power'}
               title={'RX Power'}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Radio}
+              hasData={isMetricValue('rx_power', metrics)}
+              initData={getMetricValue('rx_power', metrics)}
             />
             <LineChart
               loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
-              topic={'papower'}
+              topic={'pa_power'}
               title={'PA Power'}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Radio}
+              hasData={isMetricValue('pa_power', metrics)}
+              initData={getMetricValue('pa_power', metrics)}
             />
           </Stack>
         </Paper>

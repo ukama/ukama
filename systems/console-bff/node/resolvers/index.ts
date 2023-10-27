@@ -7,6 +7,7 @@ import { DeleteNodeFromOrgResolver } from "./deleteNodeFromOrg";
 import { DetachNodeResolver } from "./detachNode";
 import { GetNodeResolver } from "./getNode";
 import { GetNodesResolver } from "./getNodes";
+import { GetNodesByNetworkResolver } from "./getNodesByNetwork";
 import { ReleaseNodeFromSiteResolver } from "./releaseNodeFromSite";
 import { UpdateNodeResolver } from "./updateNode";
 import { UpdateNodeStateResolver } from "./updateNodeState";
@@ -19,8 +20,9 @@ const resolvers: NonEmptyArray<any> = [
   UpdateNodeResolver,
   DetachNodeResolver,
   AddNodeToSiteResolver,
-  DeleteNodeFromOrgResolver,
   UpdateNodeStateResolver,
+  DeleteNodeFromOrgResolver,
+  GetNodesByNetworkResolver,
   ReleaseNodeFromSiteResolver,
 ];
 

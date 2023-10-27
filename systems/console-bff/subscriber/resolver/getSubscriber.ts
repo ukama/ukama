@@ -1,13 +1,11 @@
-import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { SubscriberDto } from "./types";
 
 @Resolver()
 export class GetSubscriberResolver {
   @Query(() => SubscriberDto)
-  @UseMiddleware(Authentication)
   async getSubscriber(
     @Arg("subscriberId") subscriberId: string,
     @Ctx() ctx: Context

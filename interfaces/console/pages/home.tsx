@@ -1,8 +1,8 @@
-import { commonData } from '@/app-recoil';
+import { commonData, snackbarMessage } from '@/app-recoil';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
-import { useGetSitesQuery } from '@/generated';
+import { useGetNodesByNetworkQuery, useGetSitesQuery } from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
-import { TCommonData } from '@/types';
+import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
 import EmptyView from '@/ui/molecules/EmptyView';
 import {
@@ -11,11 +11,12 @@ import {
   SitesTree,
 } from '@/ui/molecules/NetworkMap/OverlayUI';
 import NetworkStatus from '@/ui/molecules/NetworkStatus';
+import { structureNodeSiteDate } from '@/utils';
 import NetworkIcon from '@mui/icons-material/Hub';
-import { Paper } from '@mui/material';
+import { AlertColor, Paper } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 const DynamicMap = dynamic(
   () => import('../ui/molecules/NetworkMap/DynamicMap'),
   {
@@ -25,13 +26,37 @@ const DynamicMap = dynamic(
 
 export default function Page() {
   const _commonData = useRecoilValue<TCommonData>(commonData);
-
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
       networkId: _commonData?.networkId,
     },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'home-sites-err-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
   });
+
+  const { data: networkNodes, loading: networkNodesLoading } =
+    useGetNodesByNetworkQuery({
+      fetchPolicy: 'cache-and-network',
+      variables: {
+        networkId: _commonData?.networkId,
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'home-network-nodes-err-msg',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   return (
     <>
@@ -91,8 +116,12 @@ export default function Page() {
               <DynamicMap id="network-map" zoom={6} className="network-map">
                 {() => (
                   <>
-                    <LabelOverlayUI name={_commonData.networkName}/>
-                    <SitesTree />
+                    <LabelOverlayUI name={_commonData.networkName} />
+                    <SitesTree
+                      sites={structureNodeSiteDate(
+                        networkNodes?.getNodesByNetwork.nodes || [],
+                      )}
+                    />
                     <SitesSelection />
                   </>
                 )}

@@ -30,9 +30,9 @@ const commonData = atom({
   default: {
     networkId: '',
     networkName: '',
-    orgId: 'aac1ed88-2546-4f9c-a808-fb9c4d0ef24b',
-    userId: '018688fa-d861-4e7b-b119-ffc5e1637ba8',
-    orgName: 'ukama',
+    orgId: '',
+    userId: '',
+    orgName: '',
   },
   effects_UNSTABLE: [persistAtom],
 });
@@ -48,6 +48,11 @@ const user = atom({
 });
 
 export {
-  commonData, isDarkmode, isFirstVisit, isSkeltonLoading, pageName, snackbarMessage, user
+  commonData,
+  isDarkmode,
+  isFirstVisit,
+  isSkeltonLoading,
+  pageName,
+  snackbarMessage,
+  user,
 };
-

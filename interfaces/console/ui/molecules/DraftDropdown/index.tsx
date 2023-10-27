@@ -144,11 +144,7 @@ const DraftDropdown = ({
                   <Edit color="action" sx={ICON_STYLE} />
                 )}
               </IconButton>
-              <IconButton
-                onClick={() => {
-                  handleDeleteDraft(id);
-                }}
-              >
+              <IconButton onClick={() => handleDeleteDraft(_id)}>
                 <DeleteOutlineIcon color="error" sx={ICON_STYLE} />
               </IconButton>
             </Stack>

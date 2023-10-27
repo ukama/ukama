@@ -1,7 +1,9 @@
 import { Box, Button, Container, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import { useRouter } from 'next/router';
 
 const Page = () => {
+  const route = useRouter();
   return (
     <Box
       sx={{
@@ -18,7 +20,7 @@ const Page = () => {
             <Typography variant="h6">
               The page you’re looking for doesn’t exist.
             </Typography>
-            <Button variant="contained" href="/home">
+            <Button variant="contained" onClick={()=> route.push("/home")}>
               Back Home
             </Button>
           </Grid>

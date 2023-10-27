@@ -11,6 +11,21 @@ export class NodeStatus {
   @Field()
   state: string;
 }
+
+@ObjectType()
+export class NodeSite {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  siteId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  addedAt: string;
+}
 @ObjectType()
 export class Node {
   @Field()
@@ -25,21 +40,18 @@ export class Node {
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
 
-  // @Field(() => [Node])
-  // attached: Node[];
+  @Field(() => [Node])
+  attached: Node[];
+
+  @Field(() => NodeSite, { nullable: true })
+  site?: NodeSite;
 
   @Field(() => NodeStatus)
   status: NodeStatus;
 }
 
 @ObjectType()
-export class GetNode {
-  @Field(() => Node)
-  node: Node;
-}
-
-@ObjectType()
-export class GetNodes {
+export class Nodes {
   @Field(() => [Node])
   nodes: Node[];
 }
