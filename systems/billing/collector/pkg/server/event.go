@@ -80,7 +80,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create plan
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.dataplan.package.create"):
+	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err

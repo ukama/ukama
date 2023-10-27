@@ -83,7 +83,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 
 func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
-	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.dataplan.package.create")
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create")
 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
