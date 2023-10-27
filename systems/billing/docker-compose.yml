@@ -19,7 +19,7 @@ services:
    - '15432:5432'
   environment:
    - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=ThisIsUkamaXPass
+   - POSTGRES_PASSWORD=Pass2020!
   volumes:
    - postgress-data:/var/lib/postgresql
 
@@ -43,7 +43,7 @@ services:
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
-   - DB_PASSWORD=ThisIsUkamaXPass
+   - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
@@ -59,7 +59,7 @@ services:
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
-   - DB_PASSWORD=ThisIsUkamaXPass
+   - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
@@ -79,7 +79,7 @@ services:
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
-   - DB_PASSWORD=ThisIsUkamaXPass
+   - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
