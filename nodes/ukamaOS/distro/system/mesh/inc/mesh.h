@@ -63,7 +63,7 @@
 #define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
-#define MESH_LOCK_TIMEOUT 10 /* seconds */
+#define MESH_LOCK_TIMEOUT 1 /* seconds */
 
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
@@ -104,7 +104,7 @@ typedef struct {
 typedef struct {
 
 	char *reqType; /* Type: forward_request, command, stats, etc. */
-	int seqNo;     /* Sequence number of the request. */
+	char *seqNo;     /* Sequence number of the request. */
 
 	DeviceInfo  *deviceInfo;  /* Info. about originating device. */
 	ServiceInfo *serviceInfo; /* Info. about origniating service. */
@@ -115,7 +115,7 @@ typedef struct {
 typedef struct {
 
 	char        *reqType;
-	int         seqNo;
+	char        *seqNo;
 	int         size;
 	void        *data;
 	ServiceInfo *serviceInfo;
@@ -124,7 +124,7 @@ typedef struct {
 typedef struct {
 
     char        *reqType;
-    int         seqNo;
+    char        *seqNo;
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
     int         dataSize;

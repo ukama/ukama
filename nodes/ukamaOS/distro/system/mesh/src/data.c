@@ -19,6 +19,7 @@
 #include "work.h"
 #include "data.h"
 #include "jserdes.h"
+#include "httpStatus.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -32,9 +33,7 @@ typedef struct _response {
 extern WorkList *Transmit; /* global */
 extern MapTable *ClientTable;
 
-/*
- * response_callback --
- */
+
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
@@ -91,33 +90,31 @@ static void find_service_name_and_ep(char *input,
     }
 }
 
-static long send_data_to_local_service(URequest *data, char *hostname,
-                                       char *port, int *retCode,
-                                       char **retStr) {
+static int send_data_to_local_service(URequest *data,
+                                      char *hostname,
+                                      int *httpStatus,
+                                      char **retStr) {
   
-	int i;
-	long code=0;
 	CURL *curl=NULL;
 	CURLcode res;
 	struct curl_slist *headers=NULL;
     char *serviceName = NULL;
     char *serviceEP   = NULL;
-    int  servicePort = 0;
+    int  servicePort = 0, i;
+
 	char url[MAX_BUFFER] = {0};
-	UMap *map;
+	UMap *map = NULL;
 	Response response = {NULL, 0};
 
-	*retCode = 0;
-
-	/* Sanity check */
-	if (data == NULL && hostname == NULL && port == NULL) {
-		return code;
+	if (data == NULL && hostname == NULL) {
+		return FALSE;
 	}
      
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (curl == NULL) {
-		return code;
+        *httpStatus = HttpStatus_InternalServerError;
+		return FALSE;
 	}
 
 	/* Add to the header if exists. */
@@ -138,14 +135,16 @@ static long send_data_to_local_service(URequest *data, char *hostname,
     if (serviceName == NULL || serviceEP == NULL) {
         log_error("Unable to extract service namd and EP. input",
                   data->http_url);
-        return code;
+        *httpStatus = HttpStatus_InternalServerError;
+        return FALSE;
     }
 
     servicePort = usys_find_service_port(serviceName);
     if (servicePort <= 0) {
         log_error("Unable to find service name in /etc/services: %s",
                   serviceName);
-        return code;
+        *httpStatus = HttpStatus_ServiceUnavailable;
+        return FALSE;
     }
 
     sprintf(url,
@@ -163,17 +162,17 @@ static long send_data_to_local_service(URequest *data, char *hostname,
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-    //	curl_easy_setopt(curl, CURLOPT_USERAGENT, "mesh/0.1");
 
 	res = curl_easy_perform(curl);
 
 	if (res != CURLE_OK) {
 		log_error("Error sending request to server at %s Error: %s",
 				  url, curl_easy_strerror(res));
-		*retStr = strdup("Target service is not available. Try again");
+        *httpStatus = HttpStatus_ServiceUnavailable;
+        *retStr     = strdup(HttpStatusStr(*httpStatus));
 	} else {
 		/* get status code. */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, httpStatus);
 		if (response.size) {
 			log_debug("Response recevied from server: %s", response.buffer);
 			*retStr = strdup(response.buffer);
@@ -187,13 +186,9 @@ static long send_data_to_local_service(URequest *data, char *hostname,
 	curl_easy_cleanup(curl);
 	curl_global_cleanup();
 
-	return code;
+	return TRUE;
 }
 
-/*
- * process_incoming_websocket_response --
- *
- */
 void process_incoming_websocket_response(Message *message, void *data) {
 
     MapItem *item=NULL;
@@ -216,20 +211,11 @@ void process_incoming_websocket_response(Message *message, void *data) {
     pthread_cond_broadcast(&item->hasResp);
 }
 
-/*
- * process_incoming_websocket_message --
- *
- */
 int process_incoming_websocket_message(Message *message, Config *config) {
 
-    /*
-     * 1. replace the "nodeID" with hostname (e.g., localhost)
-     * 2. create thread,  make connection, send msg, recv response.
-     * 3. put the response back on the websocket outgoing queue.
-     */
-
-	int retCode=0, ret;
-	char *responseLocal=NULL, *responseRemote=NULL;
+	int httpStatus, ret;
+	char *responseLocal  = NULL;
+    char *responseRemote = NULL;
     json_t *jResp=NULL;
     URequest *request=NULL;
 
@@ -240,24 +226,32 @@ int process_incoming_websocket_message(Message *message, Config *config) {
 
     ret = send_data_to_local_service(request,
                                      config->localHostname,
-                                     message->nodeInfo->port,
-                                     &retCode, &responseLocal);
+                                     &httpStatus,
+                                     &responseLocal);
 
-    if (ret == 200) {
-        log_debug("Command success. CURL return code: %d. Return code: %d",
-                  ret, retCode);
+    if (ret) {
+        log_debug("Recevied response from local servier Code: %d Response: %s",
+                  httpStatus, responseLocal);
+
+        /* Convert the response into proper format and return. */
+        serialize_local_service_response(&responseRemote,
+                                         message,
+                                         httpStatus,
+                                         strlen(responseLocal),
+                                         responseLocal);
     } else {
-        log_debug("Command failed. CURL return code: %d. Return code: %d",
-                  ret, retCode);
+        log_error("Error sending message to local service. Error: %d",
+                  httpStatus);
+
+        /* Convert the response into proper format and return. */
+        serialize_local_service_response(&responseRemote,
+                                         message,
+                                         httpStatus,
+                                         strlen(HttpStatusStr(httpStatus)),
+                                         HttpStatusStr(httpStatus));
     }
 
-    /* Convert the response into proper format and return. */
-    serialize_local_service_response(&responseRemote, message,
-                                     retCode,
-                                     strlen(responseLocal),
-                                     responseLocal);
-
-    log_debug("Sending response back: %s", responseRemote);
+    log_debug("Adding response to the websocket queue: %s", responseRemote);
     add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
 
     return TRUE;
