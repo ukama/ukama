@@ -18,10 +18,6 @@ int callback_get_ping(const URequest *request,
                       UResponse *response,
                       void *user_data);
 
-int callback_webservice(const URequest *request,
-                        UResponse *response,
-                        void *user_data);
-
 int callback_websocket(const URequest *request,
                        UResponse *response,
                        void *user_data);

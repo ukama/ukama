@@ -46,6 +46,7 @@
 #define JSON_PORT     "port"
 #define JSON_MESSAGE  "message"
 #define JSON_CODE     "code"
+#define JSON_UUID     "uuid"
 
 /* for system info*/
 #define JSON_SYSTEM_NAME "systemName"
@@ -62,8 +63,8 @@
 /* Function headers. */
 int serialize_system_response(char **response, Message *message,
                               int code, int len, char *data);
-int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *nodePort, char *agent);
+int serialize_websocket_message(char **str, URequest *request,
+                                char *uuid);
 int serialize_device_info(json_t **json, NodeInfo *device);
 int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);

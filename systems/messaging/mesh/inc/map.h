@@ -14,6 +14,7 @@
 
 #include "mesh.h"
 #include "work.h"
+#include "client.h"
 
 /* keep track of ip:port to UUID mapping along with various mutex and
  * conditional variable. The thread will wait until its unlocked by the
@@ -27,10 +28,12 @@ typedef struct map_item_t {
     void     *configData;
     UInst    *forwardInst;
 
-    pthread_mutex_t   mutex;   /* Client thread waiting on response
-                                * This mutex is released by websocket */
+    ForwardList *forwardList;  /* services list */
+
+    pthread_mutex_t   mutex;   /* Client thread waiting on response */
     pthread_cond_t    hasResp; /* Conditional wait for response */
 
+    int               code;
     int               size;    /* size of data packet. */
     void              *data;   /* response data recevied. */
 

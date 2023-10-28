@@ -169,6 +169,9 @@ int start_forward_service(Config *config, UInst **forwardInst) {
                                "*", NULL, 0,
 							   &callback_default_forward, config);
 
+    ulfius_set_default_endpoint(*forwardInst,
+                                &callback_default_forward, config);
+
 	if (start_framework(config,
                         *forwardInst,
                         FORWARD) == FALSE) {

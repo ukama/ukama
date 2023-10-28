@@ -19,17 +19,16 @@
 #include "log.h"
 
 #define EP_WEBSOCKET        "/websocket"
-#define EP_WEBSERVICE_PING  "/ping"
-#define EP_WEBSERVICE_STATS "/stats"
+#define EP_WEBSERVICE_PING  "/v1/ping"
 #define EP_NODE_FORWARD     "*"
 
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
-#define MESH_SERVICE_REQUEST  "service_request"
-#define MESH_SERVICE_RESPONSE "service_response"
-#define MESH_NODE_REQUEST     "node_request"
-#define MESH_NODE_RESPONSE    "node_response"
+#define UKAMA_SERVICE_REQUEST  "service_request"
+#define UKAMA_SERVICE_RESPONSE "service_response"
+#define UKAMA_NODE_REQUEST     "node_request"
+#define UKAMA_NODE_RESPONSE    "node_response"
 
 /* For MAP */
 #define MESH_MAP_TYPE_URL    1
@@ -42,7 +41,7 @@
 #define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
-#define MESH_LOCK_TIMEOUT 10 /* seconds */
+#define MESH_LOCK_TIMEOUT 1 /* seconds */
 #define MAX_QUEUE_SIZE    100
 #define MAX_BUFFER        256
 #define START_PORT        18100
@@ -125,7 +124,7 @@ typedef struct {
 typedef struct {
 
     char        *reqType;
-    int         seqNo;
+    char        *seqNo;
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
     int         code;

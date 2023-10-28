@@ -35,7 +35,7 @@ extern int start_web_services(Config *config, UInst *servicesInst);
 extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
-MapTable *IDsTable=NULL;
+MapTable *NodesTable=NULL;
 ProcessState *processState=NULL;
 
 /* usage -- Usage options for the Mesh */
@@ -179,13 +179,13 @@ int main (int argc, char *argv[]) {
     }
 	print_config(config);
 
-	IDsTable = (MapTable *)malloc(sizeof(MapTable));
-	if (IDsTable == NULL) {
+	NodesTable = (MapTable *)malloc(sizeof(MapTable));
+	if (NodesTable == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(MapTable));
         exitStatus=1;
         goto exit_program;
 	}
-	init_map_table(&IDsTable);
+	init_map_table(&NodesTable);
 
 	/* Step-2a: setup all endpoints, cb and run websocket. Wait. */
 	if (start_websocket_server(config, &websocketInst) != TRUE) {

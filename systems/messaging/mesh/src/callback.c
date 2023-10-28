@@ -20,6 +20,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <uuid/uuid.h>
 
 #include "callback.h"
 #include "mesh.h"
@@ -30,7 +31,7 @@
 #include "u_amqp.h"
 #include "httpStatus.h"
 
-extern MapTable *IDsTable;
+extern MapTable *NodesTable;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -73,7 +74,7 @@ int callback_websocket(const URequest *request, UResponse *response,
         return U_CALLBACK_ERROR;
     }
 
-    map = add_map_to_table(&IDsTable,
+    map = add_map_to_table(&NodesTable,
                            nodeID,
                            &forwardInst,
                            &ip[0], sin->sin_port,
@@ -94,7 +95,7 @@ int callback_websocket(const URequest *request, UResponse *response,
                       config->bindingIP,
                       forwardPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-        remove_map_item_from_table(&IDsTable, nodeID);
+        remove_map_item_from_table(&NodesTable, nodeID);
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
         return U_CALLBACK_ERROR;
@@ -144,88 +145,18 @@ int callback_get_ping(const URequest *request,
 	return U_CALLBACK_CONTINUE;
 }
 
-int callback_webservice(const URequest *request, UResponse *response,
-						void *data) {
-
-	int ret, statusCode=200;
-	char *str;
-	MapItem *map=NULL;
-	struct sockaddr_in *sin;
-    char *nodeID=NULL, *nodePort=NULL, *url=NULL, *agent=NULL;
-    char *packetStr=NULL;
-    char *requestStr=NULL, *responseStr=NULL;
-
-    /*
-     * Find the NodeID from the URL.
-     * For the given NodeID, look up the Map item in the IDstable.
-     *   If match found, add the task to the transmit list and set cond
-     *   otherwise return 503 (Service Unavailable)
-     */
-
-    url   = u_map_get(request->map_header, "Host");
-    agent = u_map_get(request->map_header, "User-Agent");
-    split_strings(url, &nodeID, &nodePort, ":");
-
-    if (nodeID == NULL || nodePort == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    map = is_existing_item(IDsTable, nodeID);
-    if (map == NULL) { /* No matching node connected. */
-        log_error("For agent: %s No matching node with nodeID: %s",
-                  agent, nodeID);
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-        return U_CALLBACK_CONTINUE;
-    }
-
-	ret = serialize_websocket_message(&requestStr, request, nodeID, nodePort,
-                                      agent);
-	if (ret == FALSE && requestStr == NULL) {
-		log_error("Failed to convert request to JSON");
-		statusCode = 400;
-		goto done;
-	} else {
-		log_debug("Forward request JSON: %s", requestStr);
-	}
-
-	/* Add work for the websocket for transmission. */
-    add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
-
-	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&(map->mutex));
-	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&(map->receive->hasWork), &(map->mutex));
-	pthread_mutex_unlock(&(map->mutex));
-
-    // xxx
-    responseStr = map->receive->first->data;
-	log_debug("Got response back from server. Response: %s", responseStr);
-
-	/* Send response back. */
-	if (map->size == 0) {
-		statusCode = 402;
-		goto done;
-	}
-
-    statusCode = 200;
-  
- done:
-    ulfius_set_string_body_response(response, statusCode, responseStr);
-	return U_CALLBACK_CONTINUE;
-}
-
 int callback_default_forward(const URequest *request,
                              UResponse *response,
                              void *user_data) {
 
     MapItem *map=NULL;
     char *host=NULL, *port=NULL, *url=NULL;
-    char *packetStr=NULL;
-    char *requestStr=NULL, *responseStr=NULL;
-    int statusCode, ret;
+    char *requestStr=NULL;
+    char *responseStr=NULL;
+    int statusCode;
+    Forward *forward = NULL;
+    char uuidStr[36+1];
+    uuid_t uuid;
 
     url   = u_map_get(request->map_header, "Host");
     split_strings(url, &host, &port, ":");
@@ -237,23 +168,33 @@ int callback_default_forward(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    map = is_existing_item_by_port(IDsTable, atoi(port));
+    map = is_existing_item_by_port(NodesTable, atoi(port));
     if (map == NULL) { /* No matching node connected. */
         log_error("No matching node on port: %s", port);
         ulfius_set_string_body_response(response,
                                         HttpStatus_NotFound,
                                         HttpStatusStr(HttpStatus_NotFound));
+        free(port);
+        free(host);
         return U_CALLBACK_CONTINUE;
     }
 
-    ret = serialize_websocket_message(&requestStr,
-                                      request,
-                                      "", //nodeID,
-                                      port,
-                                      ""); //agent);
-    if (ret == FALSE && requestStr == NULL) {
+    uuid_generate(uuid);
+    uuid_unparse(uuid, uuidStr);
+    forward = add_client_to_list(&map->forwardList, uuidStr);
+    if (forward == NULL) {
+        log_error("Error adding to the forward list");
+        statusCode  = HttpStatus_InternalServerError;
+        responseStr = HttpStatusStr(statusCode);
+        goto done;
+    }
+
+    if (serialize_websocket_message(&requestStr,
+                                    request,
+                                    uuidStr) == FALSE) {
         log_error("Failed to convert request to JSON");
-        statusCode = 400;
+        statusCode  = HttpStatus_InternalServerError;
+        responseStr = HttpStatusStr(statusCode);
         goto done;
     } else {
         log_debug("Forward request JSON: %s", requestStr);
@@ -261,36 +202,32 @@ int callback_default_forward(const URequest *request,
 
     /* Add work for the websocket for transmission. */
     add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
+    free(requestStr);
 
     /* Wait for the response back. The cond is set by the websocket thread */
-    pthread_mutex_lock(&(map->mutex));
-    log_debug("Waiting for response back from the server ...");
-    pthread_cond_wait(&(map->receive->hasWork), &(map->mutex));
-    pthread_mutex_unlock(&(map->mutex));
+    pthread_mutex_lock(&(forward->mutex));
+    log_debug("Waiting for response back from the node...");
 
-    responseStr = map->receive->first->data;
-    log_debug("Got response back from server. Response: %s", responseStr);
+    pthread_cond_wait(&forward->hasData, &forward->mutex);
+	pthread_mutex_unlock(&forward->mutex);
 
-    /* Send response back. */
-    if (map->size == 0) {
-        statusCode = 402;
-        goto done;
-    }
+    log_debug("Response from System Code: %d len: %d Data: %s",
+              forward->httpCode,
+              forward->size,
+              (char *)forward->data);
+
+    statusCode  = forward->httpCode;
+    responseStr = (char *)forward->data;
 
 done:
-    // xxx
-      /* Send response back to the callee */
-        // if (statusCode != 200) {
-        //      ulfius_set_string_body_response(response, statusCode, "");
-        //} else {
-        //      ulfius_set_string_body_response(response, statusCode, map->data);
-        //}
-    ulfius_set_string_body_response(response, 200, responseStr);
-    //    free(packetStr);
-    // free(requestStr);
+    ulfius_set_string_body_response(response,
+                                    statusCode,
+                                    responseStr);
 
-        // if (map->size)
-        //      free(map->data);
+    remove_item_from_list(map->forwardList, uuidStr);
+    free(forward->data);
+    free(host);
+    free(port);
 
     return U_CALLBACK_CONTINUE;
 }

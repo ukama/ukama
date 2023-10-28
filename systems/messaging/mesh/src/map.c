@@ -13,9 +13,6 @@
 #include "map.h"
 #include "mesh.h"
 
-/*
- * init_map_table -- 
- */
 void init_map_table(MapTable **table) {
 
 	(*table)->first = NULL;
@@ -24,10 +21,6 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-/*
- * create_map_item --
- *
- */
 static MapItem *create_map_item(char *nodeID,
                                 UInst **instance,
                                 char *nodeIP, int nodePort,
@@ -44,6 +37,13 @@ static MapItem *create_map_item(char *nodeID,
 		log_error("Error allocating memory: %d", sizeof(MapItem));
 		return NULL;
 	}
+
+    map->forwardList = (ForwardList *)calloc(1, sizeof(ForwardList));
+    if (map->forwardList == NULL) {
+        log_error("Error allocating memory: %s", sizeof(ForwardList));
+        free(map);
+        return NULL;
+    }
 
 	map->nodeInfo = (NodeInfo *)calloc(1, sizeof(NodeInfo));
     if (map->nodeInfo == NULL) {
@@ -69,10 +69,6 @@ static MapItem *create_map_item(char *nodeID,
 	return map;
 }
 
-/*
- * free_map_item --
- *
- */
 void free_map_item(MapItem *map) {
 
 	if (!map) {
@@ -130,10 +126,6 @@ MapItem *is_existing_item_by_port(MapTable *table, int port) {
 	return NULL;
 }
 
-/*
- * add_map_to_table --
- *
- */
 MapItem *add_map_to_table(MapTable **table,
                           char *nodeID,
                           UInst **instance,
@@ -157,7 +149,7 @@ MapItem *add_map_to_table(MapTable **table,
 	if (map == NULL) {
 		return NULL;
 	}
-
+    
 	/* Try to get lock. */
 	pthread_mutex_lock(&(*table)->mutex);
 
@@ -181,10 +173,6 @@ MapItem *add_map_to_table(MapTable **table,
 	return map;
 }
 
-/*
- * remove_item -- remove the matching item from the table and free()
- *
- */
 void remove_map_item_from_table(MapTable *table, char *nodeID) {
 
     MapItem *current, *previous;
