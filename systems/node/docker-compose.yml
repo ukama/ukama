@@ -36,46 +36,46 @@ services:
       - msgclient-node
       - postgresd-node
 
-  health:
-    build:
-      context: ./health
-      dockerfile: ./Dockerfile
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-node
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-node:9095
-      - HEALTH_SERVICE_HOST=health
-      - HEALTH_SERVICE_PORT=9090
-      - ORGHOST=http://${LOCAL_HOST_IP}:8060
-      - ORGNAME=ukama-test-org
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - msgclient-node
+  # health:
+  #   build:
+  #     context: ./health
+  #     dockerfile: ./Dockerfile
+  #   environment:
+  #     - DEBUGMODE=true
+  #     - DB_HOST=postgresd-node
+  #     - DB_PASSWORD=Pass2020!
+  #     - DB_USER=postgres
+  #     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  #     - MSGCLIENT_HOST=msgclient-node:9095
+  #     - HEALTH_SERVICE_HOST=health
+  #     - HEALTH_SERVICE_PORT=9090
+  #     - ORGHOST=http://${LOCAL_HOST_IP}:8060
+  #     - ORGNAME=ukama-test-org
+  #   restart: always
+  #   networks:
+  #     - ukama-net
+  #   depends_on:
+  #     - msgclient-node
 
-  software:
-    build:
-      context: ./software
-      dockerfile: ./Dockerfile
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-node
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-node:9095
-      - SOFTWARE_SERVICE_HOST=software
-      - SOFTWARE_SERVICE_PORT=9090
-      - ORGNAME=ukama-test-org
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - msgclient-node
+  # software:
+  #   build:
+  #     context: ./software
+  #     dockerfile: ./Dockerfile
+  #   environment:
+  #     - DEBUGMODE=true
+  #     - DB_HOST=postgresd-node
+  #     - DB_PASSWORD=Pass2020!
+  #     - DB_USER=postgres
+  #     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  #     - MSGCLIENT_HOST=msgclient-node:9095
+  #     - SOFTWARE_SERVICE_HOST=software
+  #     - SOFTWARE_SERVICE_PORT=9090
+  #     - ORGNAME=ukama-test-org
+  #   restart: always
+  #   networks:
+  #     - ukama-net
+  #   depends_on:
+  #     - msgclient-node
 
   node-gateway-node:
     build:
@@ -92,7 +92,7 @@ services:
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
     depends_on:
-      - health
+      # - health
       - postgresd-node
 
   api-gateway-node:
@@ -128,24 +128,51 @@ services:
     depends_on:
       - postgresd-node
 
-  initclient-node:
-    image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
+  # initclient-node:
+  #   image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
+  #   environment:
+  #     - ENV_SYSTEM_ORG=ukama-test-org
+  #     - ENV_DNS_REFRESH_TIME_PERIOD=30
+  #     - ENV_SYSTEM_NAME=node
+  #     - ENV_SYSTEM_DNS=api-gateway-node
+  #     - ENV_DNS_SERVER=false
+  #     - ENV_SYSTEM_PORT=8080
+  #     - ENV_SYSTEM_CERT=This-is-a-certificate
+  #     - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_SYSTEM_PORT=8071
+  #     - ENV_INIT_CLIENT_ADDR=initclient-node
+  #     - ENV_INIT_CLIENT_PORT=8080
+  #     - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  #   restart: always
+  #   networks:
+  #     - ukama-net 
+  configurator:
+    build: ./configurator
+    ports:
+    - '9040:9090'
     environment:
-      - ENV_SYSTEM_ORG=ukama-test-org
-      - ENV_DNS_REFRESH_TIME_PERIOD=30
-      - ENV_SYSTEM_NAME=node
-      - ENV_SYSTEM_DNS=api-gateway-node
-      - ENV_DNS_SERVER=false
-      - ENV_SYSTEM_PORT=8080
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=initclient-node
-      - ENV_INIT_CLIENT_PORT=8080
-      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+    - DEBUGMODE=true
+    - DB_HOST=postgresd-node
+    - DB_PASSWORD=Pass2020!
+    - DB_USER=postgres
+    - ORGID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+    - ORGNAME=ukama-org
+    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+    - MSGCLIENT_HOST=msgclient-node:9095
+    - CONFIGURATOR_SERVICE_HOST=configurator
+    - CONFIGURATOR_SERVICE_PORT=9090
+    - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+    - REGISTRYHOST=http://${LOCAL_HOST_IP}:8060
+    - LATESTCONFIGHASH=1899b5588b085d7277804d519d976958bb544c15
+    - STOREURL=http://192.168.0.23/ukama/config.git
+    - STOREUSER=root
+    - ACCESSTOKEN=Ukama@123
     restart: always
     networks:
-      - ukama-net
+    - ukama-net
+    depends_on:
+    - msgclient-node
 
 networks:
   ukama-net:

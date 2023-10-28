@@ -38,8 +38,9 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:    3 * time.Second,
-			Controller: "controller:9090",
+			Timeout:      3 * time.Second,
+			Controller:   "controller:9090",
+			Configurator: "configurator:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
