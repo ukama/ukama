@@ -7,10 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-/*
- * config.h
- */
-
 #ifndef MESH_CONFIG_H
 #define MESH_CONFIG_H
 
@@ -18,8 +14,9 @@
 
 typedef struct {
 
-	char *websocketPort;   /* to accept nodes via websocket */
-	char *servicesPort;    /* to accept services */
+    char *bindingIP;      /* binding IP for websocket */
+	char *websocketPort;  /* to accept nodes via websocket */
+	char *servicesPort;   /* to accept services */
 
 	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
 	char *amqpPort;       /* Port where AMQP exchange is listening */
@@ -30,6 +27,9 @@ typedef struct {
 
 	char *certFile;       /* CA Cert file name. */
 	char *keyFile;        /* Key file name.*/
+
+    char *orgName;        /* Ukama organization name */
+    char *orgID;          /* and its ID */
 
     char *logLevel;
 } Config;

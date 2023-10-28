@@ -7,11 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-/*
- * Mesh.d - L7-websocket based forward/reversed proxy
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +35,7 @@ extern int start_web_services(Config *config, UInst *servicesInst);
 extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
-MapTable *IDsTable=NULL;
+MapTable *NodesTable=NULL;
 ProcessState *processState=NULL;
 
 /* usage -- Usage options for the Mesh */
@@ -51,7 +46,8 @@ void usage(void) {
 	printf("--h, --help    Help menu.\n");
 	printf("--V, --version Version.\n");
     printf("Environment variable needed are: \n");
-    printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n",
+    printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n"
+           "\t %s \n\t %s \n\t %s \n",
            ENV_WEBSOCKET_PORT,
            ENV_SERVICES_PORT,
            ENV_AMQP_HOST,
@@ -59,7 +55,10 @@ void usage(void) {
            ENV_INIT_CLIENT_HOST,
            ENV_INIT_CLIENT_PORT,
            ENV_MESH_CERT_FILE,
-           ENV_MESH_KEY_FILE);
+           ENV_MESH_KEY_FILE,
+           ENV_UKAMA_ORG_NAME,
+           ENV_UKAMA_ORG_ID,
+           ENV_BINDING_IP);
 }
 
 /* Set the verbosity level for logs. */
@@ -180,13 +179,13 @@ int main (int argc, char *argv[]) {
     }
 	print_config(config);
 
-	IDsTable = (MapTable *)malloc(sizeof(MapTable));
-	if (IDsTable == NULL) {
+	NodesTable = (MapTable *)malloc(sizeof(MapTable));
+	if (NodesTable == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(MapTable));
         exitStatus=1;
         goto exit_program;
 	}
-	init_map_table(&IDsTable);
+	init_map_table(&NodesTable);
 
 	/* Step-2a: setup all endpoints, cb and run websocket. Wait. */
 	if (start_websocket_server(config, &websocketInst) != TRUE) {
@@ -200,9 +199,13 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	log_debug("Mesh running ...");
-
-    pause();
+    /* Step-3: publish AMQP event with org name, org id and binding port */
+    if (publish_boot_event()) {
+        log_debug("Mesh running for Ukama Org: %s", config->orgName);
+        pause();
+    } else {
+        log_error("Unable to publish boot event to AMQP");
+    }
 
 	ulfius_stop_framework(&websocketInst);
 	ulfius_stop_framework(&servicesInst);

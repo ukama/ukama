@@ -15,21 +15,18 @@
 #include "usys_log.h"
 #include "jansson.h"
 #include "capp_config.h"
+#include "usys_services.h"
 
-#define SERVICE_NAME           "starter.d"
+#define SERVICE_NAME           SERVICE_STARTER
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define DEF_SERVICE_PORT        "8086"
 #define STARTER_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
 #define DEF_WIMC_HOST          "localhost"
-#define DEF_NOTIFY_PORT        "8085"
-#define DEF_NODED_PORT         "8095"
-#define DEF_WIMC_PORT          "8075"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"

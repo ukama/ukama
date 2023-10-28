@@ -27,7 +27,7 @@ static void log_json(json_t *json) {
 
 	char *str = NULL;
 
-	str = json_dumps(json, 0);
+	str = json_dumps(json, JSON_ENCODE_ANY);
 	if (str) {
 		log_debug("json str: %s", str);
 		free(str);
@@ -120,42 +120,6 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 }
 
 /*
- * serialize_device_info --
- *
- */
-int serialize_device_info(json_t **json, NodeInfo *device) {
-
-	json_t *jDevice=NULL;
-
-	if (device == NULL) {
-		return FALSE;
-	}
-
-	if (device->nodeID == NULL) {
-		return FALSE;
-	}
-
-	*json = json_object();
-	if (*json == NULL) {
-		return FALSE;
-	}
-
-	/* Add Device info (nodeID) */
-	json_object_set_new(*json, JSON_NODE_INFO, json_object());
-	jDevice = json_object_get(*json, JSON_NODE_INFO);
-
-	if (jDevice == NULL) {
-		json_decref(*json);
-		*json=NULL;
-		return FALSE;
-	}
-
-	json_object_set_new(jDevice, JSON_NODE_ID, json_string(device->nodeID));
-
-	return TRUE;
-}
-
-/*
  * serialize_system_response --
  *
  */
@@ -173,7 +137,7 @@ int serialize_system_response(char **response, Message *message,
 		return FALSE;
 	}
 
-	json_object_set_new(json, JSON_TYPE, json_string(MESH_NODE_RESPONSE));
+	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_NODE_RESPONSE));
     json_object_set_new(json, JSON_SEQ, json_integer(message->seqNo));
 
     /* Add node info. */
@@ -199,7 +163,7 @@ int serialize_system_response(char **response, Message *message,
 	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
 	json_object_set_new(obj, JSON_DATA, json_string(data));
 
-    *response = json_dumps(json, 0);
+    *response = json_dumps(json, JSON_ENCODE_ANY);
     json_decref(json);
 
 	return TRUE;
@@ -212,11 +176,10 @@ static void serialize_message_data(URequest *request, char **data) {
     json = json_object();
     if (json == NULL) return;
     
-	json_object_set_new(json, JSON_PROTOCOL,
-						json_string(request->http_protocol));
-	json_object_set_new(json, JSON_METHOD, json_string(request->http_verb));
-	json_object_set_new(json, JSON_URL, json_string(request->http_url));
-	json_object_set_new(json, JSON_PATH, json_string(request->url_path));
+	json_object_set_new(json, JSON_PROTOCOL, json_string(request->http_protocol));
+	json_object_set_new(json, JSON_METHOD,   json_string(request->http_verb));
+	json_object_set_new(json, JSON_URL,      json_string(request->http_url));
+	json_object_set_new(json, JSON_PATH,     json_string(request->url_path));
 
 	/* Add maps if they exists. */
 	if (request->map_url) {
@@ -245,48 +208,38 @@ static void serialize_message_data(URequest *request, char **data) {
 							json_string((char *)request->binary_body));
 	}
 
-    *data = json_dumps(json, 0);
+    *data = json_dumps(json, JSON_ENCODE_ANY);
     json_decref(json);
 }
 
-/*
- * serialize_websocket_message --
- *
- */
-int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *nodePort, char *agent) {
+int serialize_websocket_message(char **str,
+                                URequest *request,
+                                char *uuid) {
 
-    json_t *json=NULL, *jDevice=NULL, *jService=NULL;
+    json_t *json=NULL;
 	json_t *jRequest=NULL;
     char *data=NULL;
 
 	json = json_object();
 	if (json == NULL) {
+        *str = NULL;
 		return FALSE;
 	}
 
-	json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_REQUEST));
-	json_object_set_new(json, JSON_SEQ, json_integer(123456));
+	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_SERVICE_REQUEST));
+	json_object_set_new(json, JSON_UUID, json_string(uuid));
 
-	/* Node info */
-	json_object_set_new(json, JSON_NODE_INFO, json_object());
-	jDevice = json_object_get(json, JSON_NODE_INFO);
-	json_object_set_new(jDevice, JSON_NODE_ID, json_string(nodeID));
-    json_object_set_new(jDevice, JSON_PORT, json_string(nodePort));
-
-    /* Service info */
-	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
-	jService = json_object_get(json, JSON_SERVICE_INFO);
-	json_object_set_new(jService, JSON_NAME, json_string(agent));
-
-	/* Serialize and add request info */
     serialize_message_data(request, &data);
 	json_object_set_new(json, JSON_MESSAGE, json_object());
+
 	jRequest = json_object_get(json, JSON_MESSAGE);
 	json_object_set_new(jRequest, JSON_LENGTH, json_integer(strlen(data)));
-	json_object_set_new(jRequest, JSON_DATA, json_string(data));
+	json_object_set_new(jRequest, JSON_DATA,   json_string(data));
 
-    *str = json_dumps(json, 0);
+    *str = json_dumps(json, JSON_ENCODE_ANY);
+
+    json_decref(json);
+    free(data);
 
 	return TRUE;
 }
@@ -331,10 +284,6 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 	return ret;
 }
 
-/*
- * deserialize_websocket_message --
- *
- */
 int deserialize_websocket_message(Message **message, char *data) {
 
     json_t *json;
@@ -347,25 +296,20 @@ int deserialize_websocket_message(Message **message, char *data) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_SEQ);
-    jNodeInfo    = json_object_get(json, JSON_NODE_INFO);
-    jServiceInfo = json_object_get(json, JSON_SERVICE_INFO);
+    jSeq         = json_object_get(json, JSON_UUID);
     jMessage     = json_object_get(json, JSON_MESSAGE);
-    if (jType == NULL || jSeq == NULL || jNodeInfo == NULL ||
-        jServiceInfo == NULL || jMessage == NULL) {
+    if (jType == NULL || jSeq == NULL || jMessage == NULL) {
+        json_decref(json);
         log_error("Error decoding JSON. Missing fields. %s", data);
         return FALSE;
     }
 
-    jNodeID  = json_object_get(jNodeInfo,    JSON_NODE_ID);
-    jPort    = json_object_get(jNodeInfo,    JSON_PORT);
-    jName    = json_object_get(jServiceInfo, JSON_NAME);
-    jSrcPort = json_object_get(jServiceInfo, JSON_PORT);
     jLength  = json_object_get(jMessage,     JSON_LENGTH);
     jData    = json_object_get(jMessage,     JSON_DATA);
     jCode    = json_object_get(jMessage,     JSON_CODE);
-    if (jNodeID == NULL || jPort == NULL || jName == NULL || jLength ==NULL ||
-        jData == NULL || jSrcPort == NULL || jCode == NULL) {
+
+    if (jLength ==NULL || jData == NULL || jCode == NULL) {
+        json_decref(json);
         log_error("Error decoding JSON. Missing fields. %s", data);
         return FALSE;
     }
@@ -376,25 +320,14 @@ int deserialize_websocket_message(Message **message, char *data) {
 		return FALSE;
 	}
 
-    (*message)->nodeInfo    = (NodeInfo *)calloc(1, sizeof(NodeInfo));
-    (*message)->serviceInfo = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
-    if ((*message)->nodeInfo == NULL || (*message)->serviceInfo == NULL) {
-        log_error("Error allocating memory of size: %d or %d", sizeof(NodeInfo),
-                  sizeof(ServiceInfo));
-        free(*message); *message=NULL;
-        return FALSE;
-    }
+    (*message)->reqType  = strdup(json_string_value(jType));
+    (*message)->seqNo    = strdup(json_string_value(jSeq));
+    (*message)->code     = json_integer_value(jCode);
+    (*message)->dataSize = json_integer_value(jLength);
+    (*message)->data     = strdup(json_string_value(jData));
 
-    (*message)->reqType           = strdup(json_string_value(jType));
-    (*message)->seqNo             = json_integer_value(jSeq);
-    (*message)->nodeInfo->nodeID  = strdup(json_string_value(jNodeID));
-    (*message)->nodeInfo->port    = strdup(json_string_value(jPort));
-    (*message)->serviceInfo->name = strdup(json_string_value(jName));
-    (*message)->serviceInfo->port = strdup(json_string_value(jSrcPort));
-    (*message)->code              = json_integer_value(jCode);
-    (*message)->dataSize          = json_integer_value(jLength);
-    (*message)->data              = strdup(json_string_value(jData));
-
+    json_decref(json);
+    
 	return TRUE;
 }
 
