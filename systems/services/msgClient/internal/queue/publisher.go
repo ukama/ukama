@@ -47,7 +47,7 @@ func (p *QueuePublisher) Publish(key string, payload proto.Message) error {
 			err <- e
 		}
 
-		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s\n Message: \n %+v", p.name, p.instanceId, p.q, payload)
+		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s Key: %s \n Message: \n %+v", p.name, p.instanceId, p.q, key, payload)
 		err <- nil
 	}(err)
 
