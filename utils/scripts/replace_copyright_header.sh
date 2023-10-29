@@ -12,13 +12,13 @@ fi
 input_file="$1"
 
 # Check if "Ukama Inc" exists in the input file
-if ! grep -q "Ukama Inc" "$input_file"; then
+if ! grep -q "Ukama" "$input_file"; then
     printf "%-40s copyright change ... [${SKIPPED_COLOR}Skipped${RESET_COLOR}]\n" "$input_file"
     exit 1
 fi
 
 # Extract the year from the input file
-year=$(grep -oE '\b(2021|2022|2023)\b' "$input_file")
+year=$(grep -oE '\b(2020|2021|2022|2023)\b' "$input_file")
 
 if [ -z "$year" ]; then
     printf "%-40s copyright change ... [${SKIPPED_COLOR}Skipped${RESET_COLOR}]\n" "$input_file"
