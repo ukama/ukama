@@ -31,6 +31,11 @@ if is_go_file "$input_file"; then
         exit 1
     fi
 
+    if grep -q "Ukama" "$input_file"; then
+        printf "%-40s copyright change ... [${SKIPPED_COLOR}Skipped${RESET_COLOR}]\n" "$input_file"
+        exit 1
+    fi
+
     template_file="$SOURCE_DIR/header.template.2023"
     cat $template_file $input_file >> $SOURCE_DIR/tmp
     mv  $SOURCE_DIR/tmp $1
