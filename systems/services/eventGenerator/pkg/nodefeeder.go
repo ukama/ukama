@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 )
 
 func NodeFeederPublishMessage(c *Config, k string, m mb.MsgBusServiceClient) error {
@@ -15,12 +15,10 @@ func NodeFeederPublishMessage(c *Config, k string, m mb.MsgBusServiceClient) err
 		Data:     []byte("{ \"name\": \"config\", \"value\": \"0.0.1\"}"),
 	}
 
-	anyMsg, err := anypb.New(configReq)
+	anyMsg, err := proto.Marshal(configReq)
 	if err != nil {
-		log.Errorf("failed to create message: %v", err)
-		return err
+		log.Fatalf("Failed to create message: %v", err)
 	}
-
 	msg := &pb.NodeFeederMessage{
 		Target:     "ukamaorg" + "." + "network" + "." + "site" + "." + "uk-000000-hnode-00-0000",
 		HTTPMethod: "POST",
