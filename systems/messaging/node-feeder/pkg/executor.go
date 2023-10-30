@@ -18,7 +18,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 type Device5xxServerError struct {
@@ -75,13 +74,13 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Timeout: time.Duration(e.deviceNetworkConf.TimeoutSeconds) * time.Second,
 	}
 
-	msgBytes, err := proto.Marshal(req.Msg)
-	if err != nil {
-		return errors.Wrap(err, "error marshaling protobuf message")
-	}
+	// msgBytes, err := proto.Marshal(req.Msg)
+	// if err != nil {
+	// 	return errors.Wrap(err, "error marshaling protobuf message")
+	// }
 	logrus.Infof("sending request to %s", u.String())
 	resp, err := c.Do(&http.Request{
-		Body:   io.NopCloser(bytes.NewReader((msgBytes))),
+		Body:   io.NopCloser(bytes.NewReader((req.GetMsg()))),
 		Method: req.HTTPMethod,
 		URL:    u,
 	})
