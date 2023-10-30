@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -9,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type BaseRateClient struct {
@@ -49,11 +51,16 @@ func (b *BaseRateClient) Close() {
 	b.conn.Close()
 }
 
-func (b *BaseRateClient) GetBaseRatesById(req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
+func AppendHeadersInContext(ctx context.Context, headers http.Header) context.Context {
+	_ctx := metadata.AppendToOutgoingContext(ctx, "X-Session-Token", headers.Get("X-Session-Token"))
+	return _ctx
+}
+
+func (b *BaseRateClient) GetBaseRatesById(h http.Header, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 
-	return b.client.GetBaseRatesById(ctx, req)
+	return b.client.GetBaseRatesById(AppendHeadersInContext(ctx, h), req)
 }
 
 func (b *BaseRateClient) GetBaseRatesByCountry(req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	ory "github.com/ory/client-go"
+	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
 var SESSION_KEY = "ukama_session"
@@ -152,7 +153,10 @@ func SessionType(c *gin.Context, sessionKey string) (string, error) {
 	} else if c.Request.Header.Get("X-Session-Token") != "" {
 		return "header", nil
 	}
-	return "", fmt.Errorf("no cookie/token found")
+	return "", crest.HttpError{
+		HttpCode: http.StatusUnauthorized,
+		Message:  "no cookie/token found",
+	}
 
 }
 
@@ -182,7 +186,10 @@ func GetMemberDetails(c *gin.Context) (string, string) {
 func GetMetaHeaderValues(s string) (string, string, string, error) {
 	parts := strings.Split(s, ",")
 	if len(parts) < 3 {
-		return "", "", "", errors.New("meta header not provider")
+		return "", "", "", crest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "meta header not found",
+		}
 	}
 
 	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2]), nil

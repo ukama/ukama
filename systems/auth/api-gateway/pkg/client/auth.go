@@ -11,11 +11,12 @@ import (
 	"time"
 
 	ory "github.com/ory/client-go"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
 )
 
 var SESSION_KEY = "ukama_session"
+var isCheckAuthorization = false
 
 type AuthManager struct {
 	client        *ory.APIClient
@@ -206,19 +207,23 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
 
-	check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
-		Namespace(orgId).
-		Object(object).
-		Relation(relation).
-		SubjectId(role).Execute()
+	if isCheckAuthorization {
+		check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
+			Namespace(orgId).
+			Object(object).
+			Relation(relation).
+			SubjectId(role).Execute()
 
-	if err != nil {
-		logrus.Errorf("Encountered error: %v\n", err)
-		return nil, err
+		if err != nil {
+			log.Errorf("Encountered error: %v\n", err)
+			return nil, err
+		}
+		if check.Allowed {
+			log.Infof(role + " can " + " the " + object)
+			return resp, nil
+		}
+		return nil, fmt.Errorf(role + " is not authorized to " + " the " + object)
 	}
-	if check.Allowed {
-		logrus.Infof(role + " can " + " the " + object)
-		return resp, nil
-	}
-	return nil, fmt.Errorf(role + " is not authorized to " + " the " + object)
+
+	return resp, nil
 }

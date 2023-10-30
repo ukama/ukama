@@ -19,6 +19,7 @@ import (
 )
 
 var SESSION_KEY = "ukama_session"
+var isCheckAuthorization = false
 
 type Router struct {
 	f      *fizz.Fizz
@@ -180,8 +181,16 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 		return err
 	}
 
+	if !isCheckAuthorization {
+		_, err = p.client.au.AuthorizeUser(ss, st, user.Role, orgId, method, path)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if user.Role != "" {
-		_, err := p.client.au.AuthorizeUser(ss, st, user.Role, orgId, method, path)
+		_, err = p.client.au.AuthorizeUser(ss, st, user.Role, orgId, method, path)
 		if err != nil {
 			return err
 		}

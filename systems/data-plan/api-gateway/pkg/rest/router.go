@@ -52,7 +52,7 @@ type rates interface {
 }
 
 type baserate interface {
-	GetBaseRatesById(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
+	GetBaseRatesById(h http.Header, req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
 	GetBaseRatesByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesHistoryByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesForPeriod(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
@@ -118,7 +118,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			return
 		}
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
-		ctx.Request.Header.Set("Meta", s)
+		ctx.Request.Header.Set("meta", s)
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
@@ -179,7 +179,7 @@ func (r *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 }
 
 func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*bpb.GetBaseRatesByIdResponse, error) {
-	resp, err := r.clients.b.GetBaseRatesById(&bpb.GetBaseRatesByIdRequest{
+	resp, err := r.clients.b.GetBaseRatesById(c.Request.Header, &bpb.GetBaseRatesByIdRequest{
 		Uuid: req.RateId,
 	})
 
