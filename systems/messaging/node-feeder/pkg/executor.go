@@ -78,12 +78,15 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	// if err != nil {
 	// 	return errors.Wrap(err, "error marshaling protobuf message")
 	// }
-	logrus.Infof("sending request to %s", u.String())
-	resp, err := c.Do(&http.Request{
+
+	httpReq := http.Request{
 		Body:   io.NopCloser(bytes.NewReader((req.GetMsg()))),
+		Header: map[string][]string{"Content-Type": {"application/json"}},
 		Method: req.HTTPMethod,
 		URL:    u,
-	})
+	}
+	logrus.Infof("sending request %+v to %s ", httpReq, u.String())
+	resp, err := c.Do(&httpReq)
 	if err != nil {
 		return errors.Wrap(err, "error sending request")
 	}
