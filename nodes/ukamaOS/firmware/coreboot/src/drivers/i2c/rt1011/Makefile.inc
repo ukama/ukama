@@ -1,1 +1,0 @@
-ramstage-$(CONFIG_DRIVERS_I2C_RT1011) += rt1011.c

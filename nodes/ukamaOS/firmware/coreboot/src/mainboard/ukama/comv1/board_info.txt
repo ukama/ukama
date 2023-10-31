@@ -1,4 +1,0 @@
-Board name: ComV1
-Category: sbc
-ROM protocol: SPI
-ROM socketed: n

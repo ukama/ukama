@@ -1,8 +1,0 @@
-SAMA5D27 OC CA BOARD
-M:	Vishal Thakur <vishal@ukama.com>
-S:	Maintained
-F:	board/atmel/sama5d27_ukama_anode/
-F:	include/configs/sama5d27_ukama_anode.h
-F:	configs/sama5d27_ukama_anode_emmc_defconfig
-F:	configs/sama5d27_ukama_anode_sdcard_defconfig
-F:	configs/sama5d27_ukam_anode_qspiflash_defconfig

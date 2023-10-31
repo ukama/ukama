@@ -1,3 +1,0 @@
-config LINUX_KERNEL_ARG_STRING
-	default "console=ttyS0,115200 mtdparts=atmel_nand:5M(Bootstrap),125M(system),-(userdata) ubi.mtd=1 ubi.mtd=2 rw root=ubi0:system rootfstype=ubifs init=/init androidboot.console=ttyS0" if SAMA5D3XEK && !SDCARD
-	default "console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=ttyS0" if SAMA5D3XEK && SDCARD
