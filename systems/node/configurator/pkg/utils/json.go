@@ -23,7 +23,7 @@ func JsonDiff(srcFile string, targetFile string) ([]string, bool, int, error) {
 	if err != nil {
 		log.Warningf("File may be deleted in latest commit. Error reading json file %s: %v", targetFile, err)
 		state = 2 /* State */
-		return nil, change, state, nil
+		return nil, true, state, nil
 	}
 
 	patch, err := jsondiff.CompareJSON(source, target)
