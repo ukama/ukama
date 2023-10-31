@@ -1,11 +1,8 @@
 package rest
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"strings"
 
 	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -70,19 +67,9 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 		},
 	})
 
-	// f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
-	// 	"x-session-token": {
-	// 		SecurityScheme: &openapi.SecurityScheme{
-	// 			Type: "apiKey",
-	// 			In:   "header",
-	// 			Name: "X-Session-Token",
-	// 		},
-	// 	},
-	// })
-
 	infos := &openapi.Info{
 		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
-		Description: "",
+		Description: fmt.Sprintf("%v System REST Api Gateway", strings.ToTitle(srvName)),
 		Version:     srvVersion,
 	}
 
@@ -97,36 +84,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
-}
-func GenerateSpecDoc(srvName, srvVersion, srvDesc string, f *fizz.Fizz) {
-	infos := &openapi.Info{
-		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
-		Description: srvDesc,
-		Version:     srvVersion,
-	}
-
-	// Capture OpenAPI response
-	responseBody := captureOpenAPIResponse(f, infos)
-
-	// Write to swagger.json
-	if err := os.WriteFile("swagger.yaml", []byte(responseBody), 0644); err != nil {
-		fmt.Printf("Error writing to swagger.yaml: %v\n", err)
-		return
-	}
-	logrus.Info("Successfully generated swagger.yaml")
-}
-
-func captureOpenAPIResponse(f *fizz.Fizz, infos *openapi.Info) string {
-	handlerFunc := f.OpenAPI(infos, "yaml")
-
-	buffer := new(bytes.Buffer)
-	writer := httptest.NewRecorder()
-	writer.Body = buffer
-
-	c, _ := gin.CreateTestContext(writer)
-	handlerFunc(c)
-
-	return buffer.String()
 }
 
 func errorHook(c *gin.Context, e error) (int, interface{}) {
