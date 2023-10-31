@@ -8,18 +8,18 @@ import {
   useGetPackagesQuery,
   PackagesResDto,
   SimsResDto,
-  // useAllocateSimMutation,
-  // useGetSimLazyQuery,
-  // useSetActivePackageForSimMutation,
-  // useToggleSimStatusMutation,
+  useAllocateSimMutation,
+  useGetSimLazyQuery,
+  useSetActivePackageForSimMutation,
+  useToggleSimStatusMutation,
   useGetSimpoolStatsQuery,
   useGetSimsQuery,
-  // useGetPackagesForSimLazyQuery,
+  useGetPackagesForSimLazyQuery,
   useDeleteSubscriberMutation,
-  // useDeleteSimMutation,
+  useDeleteSimMutation,
   useUpdateSubscriberMutation,
-  // useAddPackageToSimMutation,
-  // useGetSimBySubscriberLazyQuery,
+  useAddPackageToSimMutation,
+  useGetSimsBySubscriberLazyQuery,
   // SubscriberToSimDto,
 } from '@/generated';
 import {
@@ -56,8 +56,7 @@ const Page = () => {
   const [isToPupData, setIsToPupData] = useState<boolean>(false);
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [subcriberInfo, setSubscriberInfo] = useState<any>();
-  const [subscriberSimList, setSubscriberSimList] =
-    useState<SubscriberToSimDto[]>();
+  const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
   const [topUpDetails, setTopUpDetails] = useState<any>({
@@ -70,8 +69,8 @@ const Page = () => {
   const [packages, setPackages] = useState<PackagesResDto>({
     packages: [],
   });
-  const [simList, setSimList] = useState<SimsResDto>({
-    sims: [],
+  const [simList, setSimList] = useState<any>({
+    sim: [],
   });
   const {
     loading,
@@ -105,17 +104,17 @@ const Page = () => {
     },
   });
 
-  const [getSimBySubscriber] = useGetSimBySubscriberLazyQuery({
+  const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
     onCompleted: (res) => {
-      if (res.getSimBySubscriber) {
-        setSubscriberSimList(res.getSimBySubscriber.sims);
+      if (res.getSimsBySubscriber) {
+        setSubscriberSimList(res.getSimsBySubscriber.sims);
       }
     },
   });
 
   const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
     onCompleted: (res) => {
-      if (res.getPackagesForSim.packages) {
+      if (res.getPackagesForSim) {
       }
     },
   });
@@ -169,7 +168,9 @@ const Page = () => {
       });
       getSimBySubscriber({
         variables: {
-          subscriberId: id,
+          data: {
+            subscriberId: id,
+          },
         },
       });
     }
@@ -189,7 +190,7 @@ const Page = () => {
       toggleSimStatus({
         variables: {
           data: {
-            sim_id: id,
+            simId: id,
             status: 'terminated',
           },
         },
@@ -282,10 +283,10 @@ const Page = () => {
         allocateSim({
           variables: {
             data: {
-              network_id: _commonData.networkId,
-              package_id: simPlan ?? '',
-              subscriber_id: res.addSubscriber.uuid,
-              sim_type: 'test',
+              networkId: _commonData.networkId,
+              packageId: simPlan ?? '',
+              subscriberId: res.addSubscriber.uuid,
+              simType: 'test',
               iccid: iccid,
             },
           },
@@ -348,21 +349,21 @@ const Page = () => {
           type: 'success' as AlertColor,
           show: true,
         });
-        setQrCode(res.allocateSim.sim.iccid);
-        setSimId(res.allocateSim.sim.id);
+        setQrCode(res.allocateSim.iccid);
+        setSimId(res.allocateSim.id);
         getSim({
           variables: {
             data: {
-              simId: res.allocateSim.sim.id,
+              simId: res.allocateSim.id,
             },
           },
         });
 
-        setActivePackageId(res.allocateSim.packageId);
+        // setActivePackageId(res.allocateSim.packageId);
         toggleSimStatus({
           variables: {
             data: {
-              sim_id: res.allocateSim.sim.id ?? '',
+              simId: res.allocateSim.id ?? '',
               status: 'active',
             },
           },
@@ -418,8 +419,8 @@ const Page = () => {
         activatePackageSim({
           variables: {
             data: {
-              sim_id: simId,
-              package_id: activePackageId,
+              simId: simId,
+              packageId: activePackageId,
             },
           },
         });
@@ -449,10 +450,10 @@ const Page = () => {
       if (
         _sims &&
         _sims.getSims &&
-        _sims.getSims.sims &&
-        _sims.getSims.sims.length > 0
+        _sims.getSims.sim &&
+        _sims.getSims.sim.length > 0
       ) {
-        const simsArray = _sims.getSims.sims || [];
+        const simsArray = _sims.getSims.sim || [];
 
         setSimList(() => ({
           sims: [...simsArray],
@@ -528,8 +529,23 @@ const Page = () => {
       sim_id: selectedSim,
       package_id: topUpplan,
     };
-    await addPackageToSim({ variables: { data } });
-    await activatePackageSim({ variables: { data } });
+    await addPackageToSim({
+      variables: {
+        data: {
+          simId: selectedSim,
+          packageId: topUpplan,
+          startDate: '2021-10-01T00:00:00.000Z',
+        },
+      },
+    });
+    await activatePackageSim({
+      variables: {
+        data: {
+          simId: selectedSim,
+          packageId: topUpplan,
+        },
+      },
+    });
   };
 
   const handleCloseSubscriberDetails = () => {
@@ -549,7 +565,7 @@ const Page = () => {
       toggleSimStatus({
         variables: {
           data: {
-            sim_id: subscriberId,
+            simId: subscriberId,
             status: 'terminated',
           },
         },
@@ -569,7 +585,7 @@ const Page = () => {
       toggleSimStatus({
         variables: {
           data: {
-            sim_id: simId,
+            simId: simId,
             status: 'inactive',
           },
         },
@@ -626,7 +642,11 @@ const Page = () => {
             addSubscriberLoading || allocateSimLoading || packagesLoading
             // simsLoading
           }
-          sims={simList?.sims?.filter((sim) => sim.isPhysical === 'true') || []}
+          sims={
+            simList?.sims?.filter(
+              (sim: { isPhysical: string }) => sim.isPhysical === 'true',
+            ) || []
+          }
           pkgList={packages.packages}
           loading={
             addSubscriberLoading ||

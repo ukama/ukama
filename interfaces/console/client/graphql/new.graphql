@@ -193,6 +193,15 @@ fragment PackageMarkup on PackageDto {
     markup
   }
 }
+
+fragment SimPackage on SimPackageDto {
+  id
+  name
+  description
+  createdAt
+  updatedAt
+}
+
 fragment Package on PackageDto {
   uuid
   name
@@ -251,9 +260,38 @@ mutation addPackage($data: AddPackageInputDto!) {
   }
 }
 
-mutation deletePacakge($packageId: String!) {
-  deletePackage(packageId: $packageId) {
-    uuid
+mutation removePackageForSim($data: RemovePackageFormSimInputDto!) {
+  removePackageForSim(data: $data) {
+    packageId
+  }
+}
+mutation addPackageToSim($data: AddPackageToSimInputDto!) {
+  addPackageToSim(data: $data) {
+    packageId
+  }
+}
+mutation setActivePackageForSim($data: SetActivePackageForSimInputDto!) {
+  setActivePackageForSim(data: $data) {
+    packageId
+  }
+}
+query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    sims {
+      ...SimPool
+    }
+  }
+}
+query getPackagesForSim($data: GetPackagesForSimInputDto!) {
+  getPackagesForSim(data: $data) {
+    Packages {
+      ...SimPackage
+    }
+  }
+}
+mutation deleteSim($data: DeleteSimInputDto!) {
+  deleteSim(data: $data) {
+    simId
   }
 }
 
@@ -293,6 +331,24 @@ fragment SimPool on SimDto {
   qrCode
   simType
   smapAddress
+}
+
+mutation allocateSim($data: AllocateSimInputDto!) {
+  allocateSim(data: $data) {
+    ...SimPool
+  }
+}
+
+mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
+  toggleSimStatus(data: $data) {
+    simId
+  }
+}
+
+query getSim($data: GetSimInputDto!) {
+  getSim(data: $data) {
+    ...SimPool
+  }
 }
 
 query getSims($type: String!) {
