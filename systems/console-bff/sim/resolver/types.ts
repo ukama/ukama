@@ -146,6 +146,11 @@ export class GetSimInputDto {
   simId: string;
 }
 @InputType()
+export class GetSimBySubscriberInputDto {
+  @Field()
+  subscriberId: string;
+}
+@InputType()
 export class GetSimBySubscriberIdInputDto {
   @Field()
   subscriberId: string;
@@ -210,6 +215,12 @@ export class SimAPIDto {
 
   @Field()
   sm_ap_address: string;
+}
+
+@ObjectType()
+export class SubscriberToSimsDto {
+  @Field(() => [SimDto])
+  sims: SimDto[];
 }
 @ObjectType()
 export class SimDto {

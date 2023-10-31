@@ -11,7 +11,7 @@ import {
 export class SetActivePackageForSimResolver {
   @Mutation(() => SetActivePackageForSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async setActivePackageForSim(
     @Arg("data") data: SetActivePackageForSimInputDto,
     @Ctx() ctx: Context
   ): Promise<SetActivePackageForSimResDto> {

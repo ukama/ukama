@@ -24,6 +24,7 @@ import {
   SimPoolStatsDto,
   SimStatusResDto,
   SimsResDto,
+  SubscriberToSimsDto,
   ToggleSimStatusInputDto,
   UploadSimsInputDto,
   UploadSimsResDto,
@@ -107,20 +108,6 @@ class SimApi extends RESTDataSource {
     };
   };
 
-  getSimBySubscriberId = async (
-    req: GetSimBySubscriberIdInputDto
-  ): Promise<SimDetailsDto> => {
-    return this.put(``, {
-      body: {
-        subscriberId: req.subscriberId,
-      },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
-  };
-
   getSimByNetworkId = async (
     req: GetSimByNetworkInputDto
   ): Promise<SimDetailsDto> => {
@@ -147,7 +134,7 @@ class SimApi extends RESTDataSource {
       });
   };
 
-  addPackegeToSim = async (
+  addPackageToSim = async (
     req: AddPackageToSimInputDto
   ): Promise<AddPackageSimResDto> => {
     return this.put(``, {
@@ -183,6 +170,16 @@ class SimApi extends RESTDataSource {
         simId: req.simId,
       },
     })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
+  };
+
+  getSimsBySubscriberId = async (
+    req: GetSimBySubscriberIdInputDto
+  ): Promise<SubscriberToSimsDto> => {
+    return this.get(`/sim/subscriber/${req.subscriberId}`)
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);

@@ -8,7 +8,7 @@ import { GetPackagesForSimInputDto, GetPackagesForSimResDto } from "./types";
 export class GetPackagesForSimResolver {
   @Query(() => GetPackagesForSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async getPackagesForSim(
     @Arg("data") data: GetPackagesForSimInputDto,
     @Ctx() ctx: Context
   ): Promise<GetPackagesForSimResDto> {
