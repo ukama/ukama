@@ -55,3 +55,42 @@
 [submodule "nodes/ukamaOS/distro/vendor/libunistring"]
 	path = nodes/ukamaOS/distro/vendor/libunistring
 	url = https://github.com/ukama/libunistring.git
+[submodule "nodes/ukamaOS/distro/vendor/iptables"]
+	path = nodes/ukamaOS/distro/vendor/iptables
+	url = https://github.com/ukama/iptables.git
+[submodule "nodes/ukamaOS/distro/vendor/gmp"]
+	path = nodes/ukamaOS/distro/vendor/gmp
+	url = https://github.com/ukama/gmp.git
+[submodule "nodes/ukamaOS/distro/vendor/libcap"]
+	path = nodes/ukamaOS/distro/vendor/libcap
+	url = https://github.com/ukama/libcap.git
+[submodule "nodes/ukamaOS/distro/vendor/libuuid"]
+	path = nodes/ukamaOS/distro/vendor/libuuid
+	url = https://github.com/ukama/libuuid.git
+[submodule "nodes/ukamaOS/distro/vendor/nettle"]
+	path = nodes/ukamaOS/distro/vendor/nettle
+	url = https://github.com/ukama/nettle.git
+[submodule "nodes/ukamaOS/distro/vendor/p11-kit"]
+	path = nodes/ukamaOS/distro/vendor/p11-kit
+	url = https://github.com/ukama/p11-kit.git
+[submodule "nodes/ukamaOS/distro/vendor/prometheus-client"]
+	path = nodes/ukamaOS/distro/vendor/prometheus-client
+	url = https://github.com/ukama/prometheus-client.git
+[submodule "nodes/ukamaOS/distro/vendor/sqlite"]
+	path = nodes/ukamaOS/distro/vendor/sqlite
+	url = https://github.com/ukama/sqlite.git
+[submodule "nodes/ukamaOS/distro/vendor/sysctl"]
+	path = nodes/ukamaOS/distro/vendor/sysctl
+	url = https://github.com/ukama/sysctl.git
+[submodule "nodes/ukamaOS/distro/vendor/ulfius"]
+	path = nodes/ukamaOS/distro/vendor/ulfius
+	url = https://github.com/ukama/ulfius.git
+[submodule "nodes/ukamaOS/distro/vendor/gnutlss"]
+	path = nodes/ukamaOS/distro/vendor/gnutlss
+	url = https://github.com/ukama/gnutls.git
+[submodule "nodes/ukamaOS/firmware"]
+	path = nodes/ukamaOS/firmware
+	url = https://github.com/ukama/firmware.git
+[submodule "nodes/ukamaOS/os"]
+	path = nodes/ukamaOS/os
+	url = https://github.com/ukama/os.git
