@@ -136,11 +136,13 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 	}
 
 	// Create the destination directory
-	if (mkdir(destination, 0777) != 0) {
-		usys_log_error("Failed creating dir %s", destination);
-		perror("Error creating destination directory");
-		closedir(dir);
-		return -1;
+	if (stat(destination, &st) != 0) {
+		if (mkdir(destination, 0777) != 0) {
+			usys_log_error("Failed creating dir %s", destination);
+			perror("Error creating destination directory");
+			closedir(dir);
+			return -1;
+		}
 	}
 
 	while ((entry = readdir(dir))) {
