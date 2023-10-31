@@ -44,7 +44,7 @@ const (
 )
 
 type ConfigData struct {
-	FileName  string `json:"fileName"`
+	FileName  string `json:"file_name"`
 	App       string `json:"app"`
 	Version   string `json:"version"`
 	Data      []byte `json:"data"`

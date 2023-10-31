@@ -131,7 +131,7 @@ typedef  json_error_t   JsonErrObj;
 
 
 #define JTAG_CONFIG                "config"
-#define JTAG_FILE_NAME			   "filename"
+#define JTAG_FILE_NAME			   "file_name"
 #define JTAG_APP_NAME              "app"
 #define JTAG_DATA                  "data"
 #define JTAG_VERSION               "version"
