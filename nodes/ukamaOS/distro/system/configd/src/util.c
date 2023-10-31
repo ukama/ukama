@@ -21,7 +21,7 @@ int is_valid_json(const char *json_string) {
 	json_t *json = json_loads(json_string, 0, &error);
 
 	if (json != NULL) {
-		usys_log_debug("Json data is : \n %s", json_dumps(json, JSON_INDENT(4)));
+		//usys_log_debug("Json data is : \n %s", json_dumps(json, JSON_INDENT(4)));
 		json_decref(json); // Release the JSON object
 		return 1; // Valid JSON
 	} else {
@@ -224,6 +224,7 @@ int remove_dir(const char *path) {
 	closedir(dir);
 
 	if (rmdir(path) != 0) {
+		usys_log_error("Failed deleting dir %s", path);
 		perror("Error deleting directory");
 		return -1; // Error deleting directory
 	}

@@ -43,6 +43,9 @@ void free_config_data(ConfigData *c) {
 void clean_session(ConfigSession *session) {
 
 	if (session) {
+		char path[512] = {'\0'};
+		sprintf(path,"%s/%s", CONFIG_TMP_PATH, session->version);
+		remove_dir(path);
 		if (session->version) usys_free(session->version);
 		if (session->apps) free_apps (session->apps, session->count);
 		session->timestamp = 0;
@@ -156,18 +159,14 @@ int process_config(JsonObj *json, Config *config) {
 	}
 
 	if (cd->data) {
-		int out= 0;
 		int len = usys_strlen(cd->data);
 		usys_log_debug("Config base64 [%d bytes] received is %s", len, cd->data);
-//		jc = base64_decode(cd->data,
-//		                             len,
-//		                             &out);
 		char *jc = usys_calloc(sizeof(char), len);
 		if (jc) {
 		base64_decode(jc, cd->data);
 		usys_free(cd->data);
 		cd->data=jc;
-		usys_log_debug("Config text [%d bytes] received is:\n  %s", out, cd->data);
+		usys_log_debug("Config text received is:\n  %s", cd->data);
 		} else {
 			usys_log_error("Memory exhausted for decoding request.");
 			return STATUS_NOK;
