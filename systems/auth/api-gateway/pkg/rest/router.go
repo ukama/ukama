@@ -85,7 +85,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	v1 := r.f.Group("/v1", "Auth API GW", "Auth system version v1")
+	v1 := r.f.Group("/v1", "Auth System", "Auth system provides authentication and authorization features")
 
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))

@@ -21,10 +21,6 @@ import (
 	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
-const USER_ID_KEY = "UserId"
-const ORG_URL_PARAMETER = "org"
-const DUMMY_AUTH_ID = "4eaef5fa-6548-481c-87eb-2b2d85ce6141"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -93,9 +89,8 @@ func (rt *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "Nucleus system", "Nucleuse system contain Org and User services", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
-			ctx.Set(USER_ID_KEY, DUMMY_AUTH_ID)
 			log.Info("Bypassing auth")
 			return
 		}
@@ -195,5 +190,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary
 		info.Description = description
+
 	}}
 }

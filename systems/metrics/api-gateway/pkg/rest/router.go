@@ -113,7 +113,7 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "metrics system ", "metrics system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "Metrics System", "Metrics system contains exporter service", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			logrus.Info("Bypassing auth")
 			return

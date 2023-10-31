@@ -30,6 +30,10 @@ type HttpError struct {
 	Message  string
 }
 
+type BaseRequest struct {
+	Session string `header:"X-Session-Token" validate:"required"`
+}
+
 func (g HttpError) Error() string {
 	return g.Message
 }
@@ -52,42 +56,34 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	tonic.SetRenderHook(renderHook, jsonContentType[0])
 
 	f := fizz.NewFromEngine(g)
-	f.GET("/ping", nil, tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
+	f.GET("/ping", formatDoc("Ping", "Service health check"), tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
 		return &PingResponse{Message: "pong", Service: fmt.Sprintf("%s@%s", srvName, srvVersion)}, nil
 	}, http.StatusOK))
 
-	f.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{
+	f.Generator().SetServers([]*openapi.Server{
 		{
-			"cookie": {"write", "read"},
+			Description: strings.ToUpper(srvName) + " API V1",
+			URL:         strings.ToUpper(srvName + "_URL"),
 		},
 	})
 
-	f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
-		"cookie": {
-			SecurityScheme: &openapi.SecurityScheme{
-				Type: "oauth2",
-				Flows: &openapi.OAuthFlows{
-					Implicit: &openapi.OAuthFlow{
-						Scopes: map[string]string{
-							"write": "write access",
-							"read":  "read access",
-						},
-						AuthorizationURL: redirectUrl,
-					},
-				},
-			},
-		},
-	})
 	infos := &openapi.Info{
 		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
-		Description: "To play with API's first you need to login via ukama auth app and get cookie. For that first click on Green Authorize button. On Popup model click on Authorize button again. You'll be redirected to ukama auth app. Login with your credentials. After that you'll be redirected back to this page. Now you can play with API's.",
+		Description: fmt.Sprintf("%v System REST Api Gateway", strings.ToTitle(srvName)),
 		Version:     srvVersion,
 	}
 
-	f.GET("/openapi.json", nil, f.OpenAPI(infos, "json"))
-	swagger.AddOpenApiUIHandler(g, "swagger", "/openapi.json")
+	f.GET("/openapi.yaml", nil, f.OpenAPI(infos, "yaml"))
+	swagger.AddOpenApiUIHandler(g, "swagger", "/openapi.yaml")
 
 	return f
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
 
 func errorHook(c *gin.Context, e error) (int, interface{}) {
