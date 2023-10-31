@@ -157,12 +157,21 @@ int process_config(JsonObj *json, Config *config) {
 
 	if (cd->data) {
 		int out= 0;
-		usys_log_debug("Config received is %s", cd->data);
-		jc = base64_decode(cd->data,
-		                             usys_strlen(cd->data),
-		                             &out);
+		int len = usys_strlen(cd->data);
+		usys_log_debug("Config base64 [%d bytes] received is %s", len, cd->data);
+//		jc = base64_decode(cd->data,
+//		                             len,
+//		                             &out);
+		char *jc = usys_calloc(sizeof(char), len);
+		if (jc) {
+		base64_decode(jc, cd->data);
 		usys_free(cd->data);
 		cd->data=jc;
+		usys_log_debug("Config text [%d bytes] received is:\n  %s", out, cd->data);
+		} else {
+			usys_log_error("Memory exhausted for decoding request.");
+			return STATUS_NOK;
+		}
 	}
 	/* Validate the json data */
 	if (!is_valid_json(cd->data)) {

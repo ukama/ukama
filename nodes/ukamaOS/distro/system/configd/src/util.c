@@ -21,6 +21,7 @@ int is_valid_json(const char *json_string) {
 	json_t *json = json_loads(json_string, 0, &error);
 
 	if (json != NULL) {
+		usys_log_debug("Json data is : \n %s", json_dumps(json, JSON_INDENT(4)));
 		json_decref(json); // Release the JSON object
 		return 1; // Valid JSON
 	} else {
@@ -70,6 +71,7 @@ int remove_config(ConfigData *c) {
 	char path[512] = {'\0'};
 	sprintf(path,"%s/%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app, c->fileName);
 	if (remove(path) != 0) {
+		usys_log_error("Failed removing config %s", path);
 		perror("Error deleting file");
 		return -1; // Error deleting file
 	}
@@ -86,12 +88,14 @@ int clone_file(const char *source, const char *destination, bool flag) {
 
 	src = fopen(source, "rb");
 	if (src == NULL) {
+		usys_log_error("Failed creating %s", source);
 		perror("Error opening source file");
 		return 1;
 	}
 
 	dest = fopen(destination, "wb");
 	if (dest == NULL) {
+		usys_log_error("Failed creating %s", destination);
 		perror("Error creating destination file");
 		fclose(src);
 		return 1;
@@ -105,6 +109,7 @@ int clone_file(const char *source, const char *destination, bool flag) {
 	fclose(dest);
 	if (flag) {
 		if (remove(source) != 0) {
+			usys_log_error("Failed removing %s", source);
 			perror("Error removing source file");
 			return 1;
 		}
@@ -125,12 +130,14 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 
 	// Check if the source directory exists
 	if (dir == NULL) {
+		usys_log_error("Failed opening %s", source);
 		perror("Failed to open source directory");
 		return -1;
 	}
 
 	// Create the destination directory
 	if (mkdir(destination, 0777) != 0) {
+		usys_log_error("Failed creating dir %s", destination);
 		perror("Error creating destination directory");
 		closedir(dir);
 		return -1;
@@ -147,6 +154,7 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 		snprintf(destPath, sizeof(destPath), "%s/%s", destination, entry->d_name);
 
 		if (lstat(sourcePath, &st) == -1) {
+			usys_log_error("Failed getting file status for %s", sourcePath);
 			perror("Error getting file status");
 			return -1;
 		}
@@ -163,6 +171,7 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 		} else {
 			// If it's a file, move it
 			if (clone_file(sourcePath, destPath, flag) != 0) {
+				usys_log_error("Failed moving file from %s to %s", sourcePath, destPath);
 				perror("Error moving file");
 				return -1;
 			}
@@ -179,6 +188,7 @@ int remove_dir(const char *path) {
 	DIR *dir = opendir(path);
 
 	if (dir == NULL) {
+		usys_log_error("Failed opening dir %s", dir);
 		perror("Failed to open directory");
 		return -1; // Error opening directory
 	}
@@ -187,21 +197,23 @@ int remove_dir(const char *path) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
 			continue;
 
-		char entry_path[PATH_MAX];
-		snprintf(entry_path, sizeof(entry_path), "%s/%s", path, entry->d_name);
+		char entryPath[PATH_MAX];
+		snprintf(entryPath, sizeof(entryPath), "%s/%s", path, entry->d_name);
 
-		if (lstat(entry_path, &st) == -1) {
+		if (lstat(entryPath, &st) == -1) {
+			usys_log_error("Failed getting file status for %s", entryPath);
 			perror("Error getting file status");
 			continue;
 		}
 
 		if (S_ISDIR(st.st_mode)) {
-			if (remove_dir(entry_path) != 0) {
+			if (remove_dir(entryPath) != 0) {
 				closedir(dir);
 				return -1; // Error deleting subdirectory
 			}
 		} else {
-			if (remove(entry_path) != 0) {
+			if (remove(entryPath) != 0) {
+				usys_log_error("Failed deleting file %s", entryPath);
 				perror("Error deleting file");
 				closedir(dir);
 				return -1; // Error deleting file

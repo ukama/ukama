@@ -12,11 +12,6 @@
 
 #include "usys_types.h"
 
-char *base64_encode(const unsigned char *data,
-                    size_t input_length,
-                    size_t *output_length);
+int base64_decode(char *decodedData, const char *encodedData);
 
-unsigned char *base64_decode(const char *data,
-                             size_t input_length,
-                             size_t *output_length) ;
 #endif
