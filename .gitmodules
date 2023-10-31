@@ -88,3 +88,9 @@
 [submodule "nodes/ukamaOS/distro/vendor/gnutlss"]
 	path = nodes/ukamaOS/distro/vendor/gnutlss
 	url = https://github.com/ukama/gnutls.git
+[submodule "nodes/ukamaOS/firmware"]
+	path = nodes/ukamaOS/firmware
+	url = https://github.com/ukama/firmware.git
+[submodule "nodes/ukamaOS/os"]
+	path = nodes/ukamaOS/os
+	url = https://github.com/ukama/os.git
