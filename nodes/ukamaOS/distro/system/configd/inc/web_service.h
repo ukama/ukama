@@ -15,7 +15,8 @@
 
 #define EP_BS                           "/"
 #define WEBSERVICE                      "config"
-#define REST_API_VERSION                "v1"
+//#define REST_API_VERSION                "v1"
+#define REST_API_VERSION                "configd/v1"
 
 /* API URL parameters*/
 #define UUID                            "uuid"

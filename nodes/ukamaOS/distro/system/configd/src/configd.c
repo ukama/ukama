@@ -9,6 +9,7 @@
 
 #include "configd.h"
 
+#include "base64.h"
 #include "util.h"
 #include "web_client.h"
 
@@ -148,12 +149,21 @@ int process_config(JsonObj *json, Config *config) {
 	int statusCode = STATUS_NOK;
 	ConfigData *cd = NULL;
 	ConfigSession *session = (ConfigSession*) config->updateSession;
-
+	unsigned char* jc = NULL;
 	/* Deserialize incoming message from cloud */
 	if (!json_deserialize_config_data(json, &cd)) {
 		return STATUS_NOK;
 	}
 
+	if (cd->data) {
+		int out= 0;
+		usys_log_debug("Config received is %s", cd->data);
+		jc = base64_decode(cd->data,
+		                             usys_strlen(cd->data),
+		                             &out);
+		usys_free(cd->data);
+		cd->data=jc;
+	}
 	/* Validate the json data */
 	if (!is_valid_json(cd->data)) {
 		return STATUS_NOK;

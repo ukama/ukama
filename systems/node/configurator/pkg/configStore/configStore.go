@@ -226,7 +226,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 				continue
 			}
 			configToCommit.Reason = file.Reason
-			configToCommit.Version = cVer
+			configToCommit.Version = rVer
 
 			prepMetaData[file.Name] = cMetaData
 			prepCommit[file.Name] = configToCommit
