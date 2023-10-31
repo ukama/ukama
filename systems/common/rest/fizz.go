@@ -31,7 +31,7 @@ type HttpError struct {
 }
 
 type BaseRequest struct {
-	Session string `header:"X-Session-Token" validate:"required"`
+	Session string `example:"token" json:"x-session-token" header:"X-Session-Token" validate:"required"`
 }
 
 func (g HttpError) Error() string {

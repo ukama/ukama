@@ -1,6 +1,11 @@
 package rest
 
+import (
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
 type GetUserInfo struct {
+	rest.BaseRequest
 	Id         string `example:"1" json:"id" validation:"required"`
 	Name       string `example:"John Doe" json:"name" validation:"required"`
 	Email      string `example:"john@example.com" json:"email" validation:"required"`
@@ -9,8 +14,8 @@ type GetUserInfo struct {
 }
 
 type OptReqHeader struct {
-	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId         string `example:"ORG_ID" json:"org-id" header:"org-id" validation:"required" required:"true"`
+	rest.BaseRequest
+	OrgId string `example:"ORG_ID" json:"org-id" header:"org-id" validation:"required" required:"true"`
 }
 
 type LoginReq struct {
@@ -22,13 +27,13 @@ type LoginRes struct {
 }
 
 type GetSessionReq struct {
-	XSessionToken string `example:"token" json:"x-session-token" header:"x-session-token" validation:"required"`
+	rest.BaseRequest
 }
 
 type UpdateRoleReq struct {
-	XSessionToken string   `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId         string   `example:"{{ORG_ID}}" json:"org-id" header:"org-id" validation:"required" required:"true"`
-	Role          RoleType `example:"member" json:"role" validation:"required" required:"true"`
+	rest.BaseRequest
+	OrgId string   `example:"{{ORG_ID}}" json:"org-id" header:"org-id" validation:"required" required:"true"`
+	Role  RoleType `example:"member" json:"role" validation:"required" required:"true"`
 }
 
 type RoleType string

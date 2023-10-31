@@ -1,10 +1,16 @@
 package rest
 
+import (
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
 type GetNodeIPRequest struct {
+	rest.BaseRequest
 	NodeId string `path:"node_id" validate:"required"`
 }
 
 type SetNodeIPRequest struct {
+	rest.BaseRequest
 	NodeId   string `path:"node_id" validate:"required"`
 	NodeIp   string `json:"node_ip" validate:"required"`
 	MeshIp   string `json:"mesh_ip" validate:"required"`
@@ -15,11 +21,14 @@ type SetNodeIPRequest struct {
 }
 
 type DeleteNodeIPRequest struct {
+	rest.BaseRequest
 	NodeId string `path:"node_id" validate:"required"`
 }
 
 type ListNodeIPsRequest struct {
+	rest.BaseRequest
 }
 
 type NodeOrgMapListRequest struct {
+	rest.BaseRequest
 }

@@ -1,10 +1,16 @@
 package rest
 
+import (
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
 type GetNetworkReq struct {
+	rest.BaseRequest
 	NetworkId string `json:"network_id" path:"network_id" validate:"required"`
 }
 
 type AddNetworkReq struct {
+	rest.BaseRequest
 	OrgName          string   `example:"milky-way"  json:"org" validate:"required"`
 	NetName          string   `example:"mesh-network" json:"network_name" validate:"required"`
 	AllowedCountries []string `json:"allowed_countries"`
@@ -16,10 +22,12 @@ type AddNetworkReq struct {
 }
 
 type GetPackageReq struct {
+	rest.BaseRequest
 	PackageId string `json:"package_id" path:"package_id" validate:"required"`
 }
 
 type AddPackageReq struct {
+	rest.BaseRequest
 	Name          string   `example:"Monthly-Data" json:"name" validation:"required"`
 	From          string   `example:"2023-04-01T00:00:00Z" json:"from" validation:"required"`
 	To            string   `example:"2023-05-01T00:00:00Z" json:"to" validation:"required"`
@@ -45,10 +53,12 @@ type AddPackageReq struct {
 }
 
 type GetSimReq struct {
+	rest.BaseRequest
 	Id string `json:"id" path:"id" validate:"required"`
 }
 
 type AddSimReq struct {
+	rest.BaseRequest
 	SubscriberId          string `json:"subscriber_id"`
 	OrgId                 string `json:"org_id"`
 	FirstName             string `json:"first_name"`
@@ -67,10 +77,12 @@ type AddSimReq struct {
 }
 
 type GetNodeRequest struct {
+	rest.BaseRequest
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
 type AddNodeRequest struct {
+	rest.BaseRequest
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`
 	OrgId  string `json:"org_id" validate:"required"`
@@ -78,12 +90,14 @@ type AddNodeRequest struct {
 }
 
 type AttachNodesRequest struct {
+	rest.BaseRequest
 	ParentNode string `json:"node_id" path:"node_id" validate:"required"`
 	AmpNodeL   string `json:"anodel"`
 	AmpNodeR   string `json:"anoder"`
 }
 
 type AddNodeToSiteRequest struct {
+	rest.BaseRequest
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 
 	// TODO: update RPC handlers for missing site_id (default site for network)
