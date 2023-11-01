@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { API_METHOD_TYPE } from "../enums";
 import { asyncRestCall } from "./../axiosClient";
 import { AUTH_URL } from "./../configs/index";

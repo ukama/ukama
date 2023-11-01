@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Arg, Mutation, Resolver } from "type-graphql";
 
 import { updateAttributes } from "./../../common/auth/authCalls";

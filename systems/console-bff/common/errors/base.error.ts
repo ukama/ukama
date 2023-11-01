@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { HttpStatusCode } from "./codes";
 
 export class BaseError extends Error {

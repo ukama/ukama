@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { AlertDto, AlertResponse } from "../resolver/types";
 
 export const dtoToDto = (res: AlertResponse): AlertDto[] => {

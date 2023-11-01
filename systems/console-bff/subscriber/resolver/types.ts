@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { IsEmail, IsPhoneNumber } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 

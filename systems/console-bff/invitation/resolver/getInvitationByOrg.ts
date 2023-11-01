@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 
 import { Authentication } from "../../common/auth";

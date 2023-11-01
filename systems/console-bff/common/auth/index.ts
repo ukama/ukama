@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { MiddlewareInterface, NextFn, ResolverData } from "type-graphql";
 import { Service } from "typedi";
 
