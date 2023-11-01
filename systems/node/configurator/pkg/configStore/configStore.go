@@ -188,7 +188,7 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 }
 
 func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
-	log.Infof("HandleConfigCommitReq")
+	log.Infof("HandleConfigCommitReqForNode")
 
 	dir := DIR_PREFIX + utils.RandomDirName()
 
@@ -226,18 +226,19 @@ func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer stri
 	path, err := utils.FindDir(nodeId, dir+providers.COMMIT_DIR_NAME)
 	if err != nil {
 		log.Errorf("Failed to find nodeid %s config under %s dir", nodeId, dir+providers.COMMIT_DIR_NAME)
-		return nil,"", err
+		return nil, "", err
 	}
 
-	filesUpdated, err := utils.GetFiles(fmt.Sprintf("%s%s/%s", dir, providers.COMMIT_DIR_NAME, *path))
+	filesUpdated, err := utils.GetFiles(*path)
 	if err != nil {
 		log.Errorf("Failed to get diff remote configs: %v", err)
-		return nil,"", err
+		return nil, "", err
 	}
 
 	var filesToUpdate []FilesToUpdate
 	for _, file := range filesUpdated {
-		filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: file, Reason: REASON_ADDED})
+		filePath := strings.Split(file, dir+providers.COMMIT_DIR_NAME+"/")
+		filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: filePath[1], Reason: REASON_ADDED})
 	}
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
