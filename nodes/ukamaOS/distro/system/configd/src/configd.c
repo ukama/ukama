@@ -18,6 +18,9 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 #include "usys_types.h"
+#include <usys_types.h>
+
+USysMutex mutex;
 
 void free_apps(AppState **apps, uint32_t count) {
 	for (uint32_t i = 0; i < count; i++) {
@@ -112,15 +115,18 @@ void update_session(Config* c, AppState* a) {
 /* Validate commit and creates a new session if required */
 int is_valid_commit(Config* c , ConfigData *cd, AppState** app) {
 
+	int ret = 0;
 	/* Discard config is older then current running config */
 	ConfigData* rc = (ConfigData*) c->runningConfig;
 	if (rc) {
 		if (rc->timestamp > cd->timestamp) {
 			usys_log_debug("Received config %s with timestamp %ld. expecting config newer than %s with timestamp %d\n", cd->version, cd->timestamp, rc->version, rc->timestamp);
-			return 0;
+			goto response;
+
 		}
 	}
 
+	pthread_mutex_lock(&mutex);
 	ConfigSession* s = (ConfigSession*) c->updateSession;
 	if ((cd->timestamp != s->timestamp) || (usys_strcmp(cd->version, s->version))) {
 		/* Newer config */
@@ -135,15 +141,15 @@ int is_valid_commit(Config* c , ConfigData *cd, AppState** app) {
 					usys_log_error("Failed to prepare_copy for new session %s", cd->version);
 					clean_session(c->updateSession);
 					c->updateSession = NULL;
-					return 0;
+					goto response;
 				}
 			} else {
-				return 0;
+				goto response;
 			}
 		} else {
 			/* Old rest request or wrog version */
 			usys_log_error("Receiving config %s with timestamp %ld. expecting config %s with timestamp %d\n", cd->version, cd->timestamp, s->version, s->timestamp);
-			return 0;
+			goto response;
 		}
 	}
 
@@ -156,11 +162,15 @@ int is_valid_commit(Config* c , ConfigData *cd, AppState** app) {
 			*app = as;
 		} else {
 			perror("Memory failure");
-			return 0;
+			goto response;
+
 		}
-		return 1;
+		ret = 1;
 	}
-	return 0;
+
+response:
+	pthread_mutex_unlock(&mutex);
+	return ret;
 }
 
 int process_config(JsonObj *json, Config *config) {
@@ -178,9 +188,11 @@ int process_config(JsonObj *json, Config *config) {
 	/* get or create session */
 	if (config) {
 		if (!session) {
+			pthread_mutex_lock(&mutex);
 			session = create_new_update_session(cd);
 			if (!session) {
 				usys_log_error("failed to create update session.");
+				pthread_mutex_unlock(&mutex);
 				return STATUS_NOK;
 			}
 			config->updateSession = session;
@@ -189,8 +201,10 @@ int process_config(JsonObj *json, Config *config) {
 				usys_log_error("Failed to prepare_copy for new session %s", cd->version);
 				clean_session(config->updateSession);
 				config->updateSession = NULL;
+				pthread_mutex_unlock(&mutex);
 				return STATUS_NOK;
 			}
+			pthread_mutex_unlock(&mutex);
 
 		}
 	} else {
@@ -229,11 +243,12 @@ int process_config(JsonObj *json, Config *config) {
 		}
 	}
 	else {
+		pthread_mutex_lock(&mutex);
 		statusCode =  create_config(cd);
 		if (statusCode != STATUS_OK ) {
 			usys_log_error("Failed to create config for %s app version %s", cd->app, cd->version);
 		}
-
+		pthread_mutex_unlock(&mutex);
 	}
 
 	/* Update session */
