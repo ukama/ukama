@@ -220,7 +220,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 
 			/* This will filter out invalid network, site and nodes
 			Also reads the file store the config */
-			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file.Name)
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file.Name, file.Reason)
 			if err != nil {
 				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file.Name, c, err)
 				continue
@@ -300,11 +300,11 @@ func IfFileName(f string) bool {
 	return fileName
 }
 
-func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*ConfigData, error) {
+func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string, reason int) (*ConfigData, error) {
 
 	log.Infof("Preparing commit config %s for node %+v", file, d)
 	// var netId uuid.UUID
-	// var err error
+	var err error
 
 	// netId, err = uuid.FromString(d.network)
 	// if err != nil {
@@ -323,10 +323,13 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*Conf
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid node: %s", err.Error())
 	// }
 
-	data, err := os.ReadFile(file)
-	if err != nil {
-		log.Errorf("unable to read file %s. Error %v", file, err)
-		return nil, err
+	var data []byte
+	if reason != REASON_DELETED {
+		data, err = os.ReadFile(file)
+		if err != nil {
+			log.Errorf("unable to read file %s. Error %v", file, err)
+			return nil, err
+		}
 	}
 
 	configReq := &ConfigData{
