@@ -13,6 +13,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
           working-directory: systems/console-bff
+          PLANNING_TOOL_DB: ${{ secrets.PLANNING_TOOL_DB }}
         steps:
             - uses: actions/checkout@v2
               # init vars required for tag generation
