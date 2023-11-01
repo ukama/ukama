@@ -65,15 +65,25 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
 		session->expectedCount = cd->fileCount;
 		session->count = 0;
 		session->configdVer = USYS_FALSE;
-		if (prepare_for_new_config(cd) == 0) {
-			usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
-		} else {
-			clean_session(session);
-			session = NULL;
-		}
+		session->stored = USYS_FALSE;
+		/* Need to move this from here. Taking to long */
+//		if (prepare_for_new_config(cd) == 0) {
+//			usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
+//		} else {
+//			clean_session(session);
+//			session = NULL;
+//		}
 	}
 
 	return session;
+}
+
+int prepare_copy_for_session(ConfigData *cd) {
+	if (prepare_for_new_config(cd) == 0) {
+		usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
+		return STATUS_OK;
+	}
+	return STATUS_NOK;
 }
 
 /* Update session based on received files */
@@ -100,7 +110,7 @@ void update_session(Config* c, AppState* a) {
 }
 
 /* Validate commit and creates a new session if required */
-int is_valid_commit(Config* c , ConfigData *cd) {
+int is_valid_commit(Config* c , ConfigData *cd, AppState** app) {
 
 	/* Discard config is older then current running config */
 	ConfigData* rc = (ConfigData*) c->runningConfig;
@@ -121,6 +131,12 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 			c->updateSession = create_new_update_session(cd);
 			if (c->updateSession) {
 				s = (ConfigSession*) c->updateSession;
+				if (prepare_copy_for_session(cd) != STATUS_OK) {
+					usys_log_error("Failed to prepare_copy for new session %s", cd->version);
+					clean_session(c->updateSession);
+					c->updateSession = NULL;
+					return 0;
+				}
 			} else {
 				return 0;
 			}
@@ -132,13 +148,12 @@ int is_valid_commit(Config* c , ConfigData *cd) {
 	}
 
 	if (!(usys_strcmp(cd->version, s->version)) && (cd->timestamp == s->timestamp) ) {
-		AppState* as = (AppState*) usys_calloc(1, sizeof(AppState));
+		AppState *as = (AppState*) usys_calloc(1, sizeof(AppState));
 		if (as) {
 			as->app = usys_strdup(cd->app);
 			as->state = STATE_UPDATE_AVAILABLE;
 			as->fileName = usys_strdup(cd->fileName);
-			update_session(c, as);
-
+			*app = as;
 		} else {
 			perror("Memory failure");
 			return 0;
@@ -153,8 +168,33 @@ int process_config(JsonObj *json, Config *config) {
 	ConfigData *cd = NULL;
 	ConfigSession *session = (ConfigSession*) config->updateSession;
 	unsigned char* jc = NULL;
+	AppState *as = NULL;
+
 	/* Deserialize incoming message from cloud */
 	if (!json_deserialize_config_data(json, &cd)) {
+		return STATUS_NOK;
+	}
+
+	/* get or create session */
+	if (config) {
+		if (!session) {
+			session = create_new_update_session(cd);
+			if (!session) {
+				usys_log_error("failed to create update session.");
+				return STATUS_NOK;
+			}
+			config->updateSession = session;
+
+			if (prepare_copy_for_session(cd) != STATUS_OK) {
+				usys_log_error("Failed to prepare_copy for new session %s", cd->version);
+				clean_session(config->updateSession);
+				config->updateSession = NULL;
+				return STATUS_NOK;
+			}
+
+		}
+	} else {
+		usys_log_error("invalid config for web service.");
 		return STATUS_NOK;
 	}
 
@@ -177,24 +217,8 @@ int process_config(JsonObj *json, Config *config) {
 		return STATUS_NOK;
 	}
 
-	/* get or create session */
-	if (config) {
-		if (!session) {
-			session = create_new_update_session(cd);
-			if (!session) {
-				usys_log_error("failed to create update session.");
-				return STATUS_NOK;
-			}
-			config->updateSession = session;
-
-		}
-	} else {
-		usys_log_error("invalid config for web service.");
-		return STATUS_NOK;
-	}
-
 	/* Validate the commit*/
-	if (!is_valid_commit(config, cd)) {
+	if (!is_valid_commit(config, cd, &as)) {
 		return STATUS_NOK;
 	}
 
@@ -211,6 +235,9 @@ int process_config(JsonObj *json, Config *config) {
 		}
 
 	}
+
+	/* Update session */
+	update_session(config, as);
 
 	/* In case valid commit opened new update session */
 	session = (ConfigSession*) config->updateSession;
@@ -251,19 +278,21 @@ int configd_process_complete(Config *config) {
 	int statusCode = STATUS_NOK;
 	ConfigSession* s = (ConfigSession*)config->updateSession;
 
-	/* Store config*/
-	statusCode = store_config(s->version);
-	if (statusCode != STATUS_OK ) {
-		usys_log_error("Failed to store config %s", s->version);
-		goto cleanup;
-	}
-
-	/* Trigger updates */
-	statusCode = configd_trigger_update(config);
-
-	/* Update running config */
-	if (configd_read_running_config((ConfigData**)&config->runningConfig)) {
-		usys_log_error("Failed to update running config.");
+	/* Store config */
+	if (!(s->stored)) {
+		s->stored = true;
+		statusCode = store_config(s->version);
+		if (statusCode != STATUS_OK ) {
+			usys_log_error("Failed to store config %s", s->version);
+			goto cleanup;
+		}
+	
+		/* Trigger updates */
+		statusCode = configd_trigger_update(config);
+		/* Update running config */
+		if (configd_read_running_config((ConfigData**)&config->runningConfig)) {
+			usys_log_error("Failed to update running config.");
+		}
 	}
 
 cleanup:

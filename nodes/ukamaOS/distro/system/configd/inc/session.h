@@ -49,6 +49,7 @@ typedef struct  {
 	uint32_t count;
 	uint32_t expectedCount;
 	bool configdVer;
+	bool stored;
 }ConfigSession;
 
 #endif

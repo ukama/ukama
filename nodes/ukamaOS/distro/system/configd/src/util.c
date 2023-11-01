@@ -56,7 +56,7 @@ int make_path(const char* path) {
 		if (stat(npath, &st) != 0) {
 			// If it doesn't exist, create it
 			if (mkdir(npath, 0777) != 0) {
-				usys_log_error("Failed to create directory: %s\n", pathCopy);
+				usys_log_error("Failed to create directory: %s\n", npath);
 				perror("error");
 				return 0; // Return 0 to indicate failure
 			}
@@ -239,6 +239,7 @@ int create_config(ConfigData* c) {
 	char fpath[512] = {'\0'};
 	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
+	remove(path);
 	if (make_path(path)) {
 		usys_log_debug("Directory %s created successfully.\n", path);
 

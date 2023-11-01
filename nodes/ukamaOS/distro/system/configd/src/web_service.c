@@ -87,9 +87,11 @@ int web_service_cb_post_config(const URequest *request,
 			(Config *)epConfig);
 	if (ret == STATUS_OK) {
 		ulfius_set_empty_body_response(response, HttpStatus_Created);
+		usys_log_trace("config.d:: Received POST for an config from %s is responsed with %d.", service, HttpStatus_Created);
 	} else {
 		ulfius_set_empty_body_response(response,
 				HttpStatus_InternalServerError);
+		usys_log_trace("config.d:: Received POST for an config from %s is responsed with %d.", service, HttpStatus_InternalServerError);
 	}
 
 	json_free(&json);
