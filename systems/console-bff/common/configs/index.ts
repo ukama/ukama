@@ -5,8 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import dotenv from "dotenv";
 
-import "dotenv/config";
+dotenv.config({ path: "../../.env" });
 
 export const VERSION = process.env.VERSION || "v1";
 
@@ -26,6 +27,7 @@ export const PLAYGROUND_URL = process.env.PLAYGROUND_URL || "";
 export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL || "";
 
 // UTILS
+export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB || "";
 export const AUTH_URL = process.env.AUTH_URL || "";
 export const STORAGE_KEY = process.env.STORAGE_KEY || "";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
