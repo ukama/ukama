@@ -47,7 +47,7 @@ func TestConfiguratorServer_EventNotification(t *testing.T) {
 
 		configRepo.On("Add", testNode.String()).Return(nil).Once()
 		commitRepo.On("GetLatest").Return(&db.Commit{Hash: "abcdef"}, nil).Once()
-		configStore.On("HandleConfigCommitReq", mock.Anything, mock.AnythingOfType("string")).Return(nil).Once()
+		configStore.On("HandleConfigCommitReqForNode", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil).Once()
 		_, err = eventServer.EventNotification(context.Background(), &epb.Event{
 			RoutingKey: "event.cloud.local.testorg.registry.node.node.create",
 			Msg:        any,

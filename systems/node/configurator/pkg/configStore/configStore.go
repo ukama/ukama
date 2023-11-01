@@ -31,9 +31,15 @@ type ConfigStore struct {
 	OrgName              string
 }
 
+type FilesToUpdate struct {
+	Name   string
+	Reason int
+}
+
 type ConfigStoreProvider interface {
 	HandleConfigStoreEvent(ctx context.Context) error
 	HandleConfigCommitReq(ctx context.Context, rVer string) error
+	HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error
 }
 
 const (
@@ -120,7 +126,14 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return nil
 	}
 
-	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, lVer)
+	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, lVer)
+	if err != nil {
+		log.Errorf("Failed to get change list for version %s from version %s.", lVer, cVerRec.Hash)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, lVer, dir)
+
 }
 
 func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) error {
@@ -165,22 +178,79 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return err
 	}
 
-	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, rVer)
+	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, rVer)
+	if err != nil {
+		log.Errorf("Failed to get change list for version %s from version %s.", rVer, cVerRec.Hash)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, rVer, dir)
 }
 
-func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer string) error {
+func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
+	log.Infof("HandleConfigCommitReq")
 
+	dir := DIR_PREFIX + utils.RandomDirName()
+
+	err := utils.CreateDir(dir, PERM)
+	if err != nil {
+		return fmt.Errorf("error creating directory: %v", err)
+	}
+
+	defer func() {
+		err := utils.RemoveDir(dir)
+		if err != nil {
+			log.Errorf("error removing directory: %v", err)
+		}
+	}()
+
+	// Get requested remote version
+	err = c.Store.GetRemoteConfigVersion(dir, rVer)
+	if err != nil {
+		log.Errorf("Failed to get requested remote configs: %v", err)
+		return err
+	}
+
+	files, dir, err := c.LookingForNodeConfigs(dir, nodeid, rVer)
+	if err != nil {
+		log.Errorf("Failed to get change list of configs for node %s in rev %s.", nodeid, rVer)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, rVer, dir)
+}
+
+func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer string) ([]FilesToUpdate, string, error) {
+	log.Infof("Looking for nodeid %s configs", nodeId)
+
+	path, err := utils.FindDir(nodeId, dir+providers.COMMIT_DIR_NAME)
+	if err != nil {
+		log.Errorf("Failed to find nodeid %s config under %s dir", nodeId, dir+providers.COMMIT_DIR_NAME)
+		return nil,"", err
+	}
+
+	filesUpdated, err := utils.GetFiles(fmt.Sprintf("%s%s/%s", dir, providers.COMMIT_DIR_NAME, *path))
+	if err != nil {
+		log.Errorf("Failed to get diff remote configs: %v", err)
+		return nil,"", err
+	}
+
+	var filesToUpdate []FilesToUpdate
+	for _, file := range filesUpdated {
+		filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: file, Reason: REASON_ADDED})
+	}
+
+	log.Infof("Files to be updated %+v", filesToUpdate)
+	return filesToUpdate, (dir + providers.COMMIT_DIR_NAME), nil
+}
+
+func (c *ConfigStore) LookingForChanges(dir string, cVer string, rVer string) ([]FilesToUpdate, string, error) {
 	log.Infof("Looking for changes in config")
 
 	filesUpdated, err := c.Store.GetDiff(cVer, rVer, dir+providers.LATEST_DIR_NAME)
 	if err != nil {
 		log.Errorf("Failed to get diff remote configs: %v", err)
-		return err
-	}
-
-	type FilesToUpdate struct {
-		Name   string
-		Reason int
+		return nil, "", err
 	}
 
 	var filesToUpdate []FilesToUpdate
@@ -190,7 +260,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 		_, change, reason, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
 		if err != nil {
 			log.Errorf("Failed to get json diff between %s and %s: %v", cfPrefix+file, lfPrefix+file, err)
-			return err
+			return nil, "", err
 		}
 
 		if change {
@@ -199,6 +269,11 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 	}
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
+	return filesToUpdate, lfPrefix, nil
+}
+
+func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVer string, dir string) error {
+
 	if len(filesToUpdate) > 0 {
 		prepCommit := make(map[string]*ConfigData, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
 		prepNodeCommit := make(map[string][]string)                    /* Map from nodeId to config files*/
@@ -220,7 +295,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 
 			/* This will filter out invalid network, site and nodes
 			Also reads the file store the config */
-			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file.Name, file.Reason)
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, dir+file.Name, file.Reason)
 			if err != nil {
 				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file.Name, c, err)
 				continue
@@ -233,7 +308,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file.Name)
 		}
 
-		err = c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
+		err := c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
 		if err != nil {
 			return err
 		}

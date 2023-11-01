@@ -81,7 +81,9 @@ func TestConfigStore_ProcessConfigStoreEvent(t *testing.T) {
 
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
 		configRepo.On("UpdateLastCommit", mock.Anything, mock.MatchedBy(func(a *db.CommitState) bool { return a != nil && *a == db.Published })).Return(nil)
-		err := cS.ProcessConfigStoreEvent(dir, cVer, rVer)
+		files, ldir, err := cS.LookingForChanges(dir, cVer, rVer)
+		assert.NoError(t, err)
+		err = cS.ProcessConfigStoreEvent(files, cVer, ldir)
 		assert.NoError(t, err)
 		configRepo.AssertExpectations(t)
 	})
