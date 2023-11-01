@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -83,6 +84,21 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 		log.Errorf("Error adding node %s to configuration repo.Error: %+v", msg.NodeId, err)
 		return err
 	}
+
+	/* Getting latest config */
+	cfg, err := n.s.commitRepo.GetLatest()
+	if err != nil {
+		log.Errorf("Failed to get latest config for node %s. Error: %+v", msg.NodeId, err)
+		return err
+	}
+
+	/* Pushing latest available config */
+	_, err = n.s.ApplyConfig(context.Background(), &cfgPb.ApplyConfigRequest{Hash: cfg.Hash})
+	if err != nil {
+		log.Errorf("Error updating node %s to config %s. Error: %+v", msg.NodeId, cfg.Hash, err)
+		return err
+	}
+
 	return nil
 }
 
