@@ -85,8 +85,8 @@
 [submodule "nodes/ukamaOS/distro/vendor/ulfius"]
 	path = nodes/ukamaOS/distro/vendor/ulfius
 	url = https://github.com/ukama/ulfius.git
-[submodule "nodes/ukamaOS/distro/vendor/gnutlss"]
-	path = nodes/ukamaOS/distro/vendor/gnutlss
+[submodule "nodes/ukamaOS/distro/vendor/gnutls"]
+	path = nodes/ukamaOS/distro/vendor/gnutls
 	url = https://github.com/ukama/gnutls.git
 [submodule "nodes/ukamaOS/firmware"]
 	path = nodes/ukamaOS/firmware
