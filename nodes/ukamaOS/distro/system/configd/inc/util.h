@@ -30,6 +30,7 @@ int move_dir(const char *source, const char *destination);
 
 int remove_dir(const char *path);
 
+int clean_empty_dir(char* path);
 
 int create_config(ConfigData* c);
 

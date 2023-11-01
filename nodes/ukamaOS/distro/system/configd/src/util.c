@@ -32,6 +32,65 @@ int is_valid_json(const char *json_string) {
 	}
 }
 
+int is_dir_empty(const char *directoryPath) {
+    DIR *dir = opendir(directoryPath);
+
+    if (dir == NULL) {
+        perror("Unable to open directory");
+        return -1;  // Return -1 to indicate an error
+    }
+
+    struct dirent *entry;
+    int entriesCount = 0;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue; // Skip current directory and parent directory entries
+        }
+        entriesCount++;
+    }
+
+    closedir(dir);
+
+    // If there are no entries other than "." and "..", the directory is empty
+    return entriesCount == 0;
+}
+
+int clean_empty_dir(char* path) {
+	struct dirent *entry;
+	struct stat st;
+	DIR *dir = opendir(path);
+	usys_log_debug("Removing empty directories from %s", path);
+
+	while ((entry = readdir(dir))) {
+		// Skip . and ..
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+
+		char sourcePath[512];
+		snprintf(sourcePath, sizeof(sourcePath), "%s/%s", path, entry->d_name);
+
+		if (lstat(sourcePath, &st) == -1) {
+			usys_log_error("Failed getting file status for %s", sourcePath);
+			perror("Error getting file status");
+			return -1;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			// If it's a directory, recursively move it
+			if (is_dir_empty(sourcePath)) {
+				remove_dir(sourcePath);
+			} else {
+				clean_empty_dir(sourcePath);
+			}
+		}
+	}
+
+	closedir(dir);
+	return 0;
+
+}
+
 int make_path(const char* path) {
 	char* p = NULL;
 	char* token = NULL;
@@ -162,6 +221,13 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 		}
 
 		if (S_ISDIR(st.st_mode)) {
+
+			if (is_dir_empty(sourcePath)) {
+				int rs = remove(sourcePath);
+				usys_log_trace("Empty dir %s is %s removed", sourcePath, ((rs==0)? "successfully":"not"));
+				continue;
+			}
+
 			// If it's a directory, recursively move it
 			if (clone_dir(sourcePath, destPath, flag)==0) {
 				if (flag) {
@@ -343,7 +409,6 @@ int store_config(char* version) {
 
 int prepare_for_new_config(ConfigData* c) {
 	char path[512] = {'\0'};
-	char fpath[512] = {'\0'};
 	sprintf(path,"%s/%s", CONFIG_TMP_PATH, c->version);
 
 	/* remove old residue */

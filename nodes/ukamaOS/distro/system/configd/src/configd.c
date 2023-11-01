@@ -305,8 +305,14 @@ int configd_process_complete(Config *config) {
 			goto cleanup;
 		}
 	
+		/* clean up empty dir in store */
+//		char dir[512];
+//		sprintf(dir,"%s/%s", CONFIG_TMP_PATH, s->version);
+//		clean_empty_dir(dir);
+
 		/* Trigger updates */
 		statusCode = configd_trigger_update(config);
+
 		/* Update running config */
 		if (configd_read_running_config((ConfigData**)&config->runningConfig)) {
 			usys_log_error("Failed to update running config.");
@@ -328,11 +334,18 @@ int configd_trigger_update(Config* c) {
 	for (int i = 0; i < s->count; i++) {
 		usys_log_debug("Triggering update for %s app to version %s ", s->apps[i]->app, s->version);
 
-		/* send start message to restart app */
-		statusCode = wc_send_restart_req(c, s->apps[i]->app);
-		if (statusCode != STATUS_OK) {
-			usys_log_error("Failed to exec app %s.", s->apps[i]->app);
-			continue;
+		if (usys_strcmp(s->apps[i]->app, c->serviceName)) {
+
+			/* update runnig config */
+			configd_read_running_config(&(c->runningConfig));
+
+		} else {
+			/* send start message to restart app */
+			statusCode = wc_send_restart_req(c, s->apps[i]->app);
+			if (statusCode != STATUS_OK) {
+				usys_log_error("Failed to exec app %s.", s->apps[i]->app);
+				continue;
+			}
 		}
 
 	}
@@ -362,6 +375,7 @@ int configd_read_running_config(ConfigData **c) {
 	/* Allocate */
 	if (cd) {
 		*c = cd;
+		usys_log_debug("Running config set to %s.", (*c)->version);
 	}
 
 	return STATUS_OK;
