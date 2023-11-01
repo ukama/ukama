@@ -35,7 +35,7 @@ func MeshNodeOnlineEvent(c *Config, k string, m mb.MsgBusServiceClient) error {
 		NodeIp:       "10.102.81.3",
 		NodePort:     1234,
 		MeshIp:       "172.17.0.1",
-		MeshPort:     1234,
+		MeshPort:     8080,
 		MeshHostName: "mesh01",
 	}
 

@@ -11,6 +11,7 @@ package utils
 import (
 	"io"
 	"io/fs"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -78,4 +79,46 @@ func RemoveDir(path string) error {
 
 func CreateDir(path string, perm fs.FileMode) error {
 	return os.MkdirAll(path, perm)
+}
+
+func FindDir(name string, root string) (*string, error) {
+	var foundDirectory string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if info.IsDir() && info.Name() == name {
+			// If a directory with the target name is found, store its path and stop walking.
+			foundDirectory = path
+			return filepath.SkipDir
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &foundDirectory, nil
+}
+
+func GetFiles(path string) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			// If it's not a directory, it's a file, so add its path to the slice.
+			files = append(files, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return files, nil
 }

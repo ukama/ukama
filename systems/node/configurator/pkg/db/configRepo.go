@@ -41,9 +41,16 @@ func NewConfigRepo(db sql.Db) ConfigRepo {
 }
 
 func (n *configRepo) Add(node string) error {
+	def := Commit{
+		Model: gorm.Model{
+			ID: 1,
+		},
+	}
 	config := Configuration{
-		NodeId: node,
-		State:  Default,
+		NodeId:     node,
+		State:      Default,
+		LastCommit: def,
+		Commit:     def,
 	}
 
 	r := n.Db.GetGormDb().Clauses(clause.OnConflict{

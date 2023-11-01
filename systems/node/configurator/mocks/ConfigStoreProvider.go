@@ -27,6 +27,20 @@ func (_m *ConfigStoreProvider) HandleConfigCommitReq(ctx context.Context, rVer s
 	return r0
 }
 
+// HandleConfigCommitReqForNode provides a mock function with given fields: ctx, rVer, nodeid
+func (_m *ConfigStoreProvider) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
+	ret := _m.Called(ctx, rVer, nodeid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, rVer, nodeid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // HandleConfigStoreEvent provides a mock function with given fields: ctx
 func (_m *ConfigStoreProvider) HandleConfigStoreEvent(ctx context.Context) error {
 	ret := _m.Called(ctx)

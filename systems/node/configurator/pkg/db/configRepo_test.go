@@ -165,7 +165,8 @@ func TestConfigRepo_Add(t *testing.T) {
 		// Arrange
 
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
+		hash := ""
+		id := 1
 		var db *extsql.DB
 		var err error
 
@@ -175,7 +176,15 @@ func TestConfigRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), nid.String(), int_db.Default, 0, 0, 0).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), hash, id).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), hash, id).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), nid.String(), int_db.Default, 1, 1, 0).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

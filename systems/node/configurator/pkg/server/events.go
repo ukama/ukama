@@ -91,6 +91,21 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 		log.Errorf("Error adding node %s to configuration repo.Error: %+v", msg.NodeId, err)
 		return err
 	}
+
+	/* Getting latest config */
+	cfg, err := n.s.commitRepo.GetLatest()
+	if err != nil {
+		log.Errorf("Failed to get latest config for node %s. Error: %+v", msg.NodeId, err)
+		return err
+	}
+
+	/* Pushing latest available config */
+	err = n.s.configStore.HandleConfigCommitReqForNode(context.Background(), cfg.Hash, msg.NodeId)
+	if err != nil {
+		log.Errorf("Error updating node %s to config %s. Error: %+v", msg.NodeId, cfg.Hash, err)
+		return err
+	}
+
 	return nil
 }
 

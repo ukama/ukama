@@ -36,6 +36,7 @@ const (
 	MESH_IP_UPDATE            = "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"
 	EVTGEN_NODEFEEDER_PUBLISH = "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish"
 	MESH_NODE_ONLINE          = "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"
+	REGISTRY_NODE_CREATE      = "event.cloud.local.{{ .Org}}.registry.node.node.create"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -126,6 +127,7 @@ func usageError() {
 	log.Printf(MESH_IP_UPDATE)
 	log.Printf(EVTGEN_NODEFEEDER_PUBLISH)
 	log.Printf(MESH_NODE_ONLINE)
+	log.Printf(REGISTRY_NODE_CREATE)
 	log.Printf("Example: For Route: event.cloud.global.{{ .Org}}.messaging.mesh.ip.update of Org ukama-org  Key is event.cloud.global.ukamaorg.messaging.mesh.ip.update ")
 
 }
@@ -168,6 +170,14 @@ func start(m mb.MsgBusServiceClient) {
 			//event.cloud.local.ukamaorg.messaging.mesh.node.online
 			k := msgbus.PrepareRoute(serviceConfig.OrgName, MESH_NODE_ONLINE)
 			err := pkg.MeshNodeOnlineEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+
+		case msgbus.PrepareRoute(serviceConfig.OrgName, REGISTRY_NODE_CREATE):
+			//event.cloud.local.ukamaorg.messaging.mesh.node.online
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, REGISTRY_NODE_CREATE)
+			err := pkg.RegistryNodeCreateEvent(serviceConfig, k, m)
 			if err != nil {
 				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
 			}

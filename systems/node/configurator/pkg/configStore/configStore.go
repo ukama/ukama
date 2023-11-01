@@ -40,9 +40,32 @@ type ConfigStore struct {
 	OrgName              string
 }
 
+type FilesToUpdate struct {
+	Name   string
+	Reason int
+}
+
 type ConfigStoreProvider interface {
 	HandleConfigStoreEvent(ctx context.Context) error
 	HandleConfigCommitReq(ctx context.Context, rVer string) error
+	HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error
+}
+
+const (
+	REASON_UNKNOWN = iota
+	REASON_ADDED   = 1
+	REASON_DELETED = 2
+	REASON_UPDATED = 3
+)
+
+type ConfigData struct {
+	FileName  string `json:"file_name"`
+	App       string `json:"app"`
+	Version   string `json:"version"`
+	Data      []byte `json:"data"`
+	Reason    int    `json:"reason"`
+	Timestamp uint32 `json:"timestamp"`
+	FileCount int    `json:"file_count"`
 }
 
 type ConfigMetaData struct {
@@ -103,7 +126,7 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	// Get current commited version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
+		log.Errorf("Failed to get current remote configs: %v", err)
 		return err
 	}
 
@@ -112,7 +135,14 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return nil
 	}
 
-	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, lVer)
+	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, lVer)
+	if err != nil {
+		log.Errorf("Failed to get change list for version %s from version %s.", lVer, cVerRec.Hash)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, lVer, dir)
+
 }
 
 func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) error {
@@ -132,10 +162,10 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		}
 	}()
 
-	// Get latest remote version
+	// Get requested remote version
 	err = c.Store.GetRemoteConfigVersion(dir, rVer)
 	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
+		log.Errorf("Failed to get requested remote configs: %v", err)
 		return err
 	}
 
@@ -145,50 +175,119 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return err
 	}
 
-	// Get current commited version
-	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
-	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
-		return err
-	}
-
 	if rVer == cVerRec.Hash {
 		log.Infof("HandleConfigCommitReq remote config and requested commit are same %s", cVerRec.Hash)
 		return nil
 	}
 
-	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, rVer)
+	// Get current commited version
+	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
+	if err != nil {
+		log.Errorf("Failed to get current remote configs: %v", err)
+		return err
+	}
+
+	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, rVer)
+	if err != nil {
+		log.Errorf("Failed to get change list for version %s from version %s.", rVer, cVerRec.Hash)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, rVer, dir)
 }
 
-func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer string) error {
+func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
+	log.Infof("HandleConfigCommitReqForNode")
 
+	dir := DIR_PREFIX + utils.RandomDirName()
+
+	err := utils.CreateDir(dir, PERM)
+	if err != nil {
+		return fmt.Errorf("error creating directory: %v", err)
+	}
+
+	defer func() {
+		err := utils.RemoveDir(dir)
+		if err != nil {
+			log.Errorf("error removing directory: %v", err)
+		}
+	}()
+
+	// Get requested remote version
+	err = c.Store.GetRemoteConfigVersion(dir, rVer)
+	if err != nil {
+		log.Errorf("Failed to get requested remote configs: %v", err)
+		return err
+	}
+
+	files, dir, err := c.LookingForNodeConfigs(dir, nodeid, rVer)
+	if err != nil {
+		log.Errorf("Failed to get change list of configs for node %s in rev %s.", nodeid, rVer)
+		return err
+	}
+
+	return c.ProcessConfigStoreEvent(files, rVer, dir)
+}
+
+func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer string) ([]FilesToUpdate, string, error) {
+	log.Infof("Looking for nodeid %s configs", nodeId)
+
+	path, err := utils.FindDir(nodeId, dir+providers.COMMIT_DIR_NAME)
+	if err != nil {
+		log.Errorf("Failed to find nodeid %s config under %s dir", nodeId, dir+providers.COMMIT_DIR_NAME)
+		return nil, "", err
+	}
+
+	filesUpdated, err := utils.GetFiles(*path)
+	if err != nil {
+		log.Errorf("Failed to get diff remote configs: %v", err)
+		return nil, "", err
+	}
+
+	var filesToUpdate []FilesToUpdate
+	lprefix := dir + providers.COMMIT_DIR_NAME + "/"
+	for _, file := range filesUpdated {
+		filePath := strings.Split(file, lprefix)
+		filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: filePath[1], Reason: REASON_ADDED})
+	}
+
+	log.Infof("Files to be updated %+v", filesToUpdate)
+	return filesToUpdate, lprefix, nil
+}
+
+func (c *ConfigStore) LookingForChanges(dir string, cVer string, rVer string) ([]FilesToUpdate, string, error) {
 	log.Infof("Looking for changes in config")
 
 	filesUpdated, err := c.Store.GetDiff(cVer, rVer, dir+providers.LATEST_DIR_NAME)
 	if err != nil {
 		log.Errorf("Failed to get diff remote configs: %v", err)
-		return err
+		return nil, "", err
 	}
 
-	var filesToUpdate []string
+	var filesToUpdate []FilesToUpdate
 	cfPrefix := dir + providers.COMMIT_DIR_NAME + "/"
 	lfPrefix := dir + providers.LATEST_DIR_NAME + "/"
 	for _, file := range filesUpdated {
-		_, change, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
+		_, change, reason, err := utils.JsonDiff(cfPrefix+file, lfPrefix+file)
 		if err != nil {
 			log.Errorf("Failed to get json diff between %s and %s: %v", cfPrefix+file, lfPrefix+file, err)
-			return err
+			return nil, "", err
 		}
 
 		if change {
-			filesToUpdate = append(filesToUpdate, file)
+			filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: file, Reason: reason})
 		}
 	}
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
+	return filesToUpdate, lfPrefix, nil
+}
+
+func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVer string, dir string) error {
+
 	if len(filesToUpdate) > 0 {
-		prepCommit := make(map[string]*pb.Config, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
-		prepNodeCommit := make(map[string][]string)                   /* Map from nodeId to config files*/
+		prepCommit := make(map[string]*ConfigData, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
+		prepNodeCommit := make(map[string][]string)                    /* Map from nodeId to config files*/
 		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
@@ -199,26 +298,28 @@ func (c *ConfigStore) ProcessConfigStoreEvent(dir string, cVer string, rVer stri
 				Node: uk-sa1000-HNODE-2145
 				App: epc
 			*/
-			cMetaData, err := ParseConfigStoreFilePath(file)
+			cMetaData, err := ParseConfigStoreFilePath(file.Name)
 			if err != nil {
-				log.Errorf("Failed to parse file %s. Error: %v", file, err)
+				log.Errorf("Failed to parse file %s. Error: %v", file.Name, err)
 				continue
 			}
 
 			/* This will filter out invalid network, site and nodes
 			Also reads the file store the config */
-			configToCommit, err := c.PrepareConfigCommit(cMetaData, lfPrefix+file)
+			configToCommit, err := c.PrepareConfigCommit(cMetaData, dir+file.Name, file.Reason)
 			if err != nil {
-				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file, c, err)
+				log.Errorf("Failed to prepare config commit for file %s and metadata %v. Error: %v", file.Name, c, err)
 				continue
 			}
+			configToCommit.Reason = file.Reason
+			configToCommit.Version = rVer
 
-			prepMetaData[file] = cMetaData
-			prepCommit[file] = configToCommit
-			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file)
+			prepMetaData[file.Name] = cMetaData
+			prepCommit[file.Name] = configToCommit
+			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file.Name)
 		}
 
-		err = c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
+		err := c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
 		if err != nil {
 			return err
 		}
@@ -285,11 +386,11 @@ func IfFileName(f string) bool {
 	return fileName
 }
 
-func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.Config, error) {
+func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string, reason int) (*ConfigData, error) {
 
 	log.Infof("Preparing commit config %s for node %+v", file, d)
 	// var netId uuid.UUID
-	// var err error
+	var err error
 
 	// netId, err = uuid.FromString(d.network)
 	// if err != nil {
@@ -308,14 +409,17 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	// 	return nil, status.Errorf(codes.InvalidArgument, "invalid node: %s", err.Error())
 	// }
 
-	data, err := os.ReadFile(file)
-	if err != nil {
-		log.Errorf("unable to read file %s. Error %v", file, err)
-		return nil, err
+	var data []byte
+	if reason != REASON_DELETED {
+		data, err = os.ReadFile(file)
+		if err != nil {
+			log.Errorf("unable to read file %s. Error %v", file, err)
+			return nil, err
+		}
 	}
 
-	configReq := &pb.Config{
-		Filename: filepath.Base(file), /* filename with path */
+	configReq := &ConfigData{
+		FileName: filepath.Base(file), /* filename with path */
 		App:      d.app,
 		Data:     data,
 	}
@@ -323,7 +427,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string) (*pb.C
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
+func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
 
 	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 
@@ -337,22 +441,28 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 			continue
 		}
 		metaData := &ConfigMetaData{}
-		log.Infof("Pushing configs %+v for node %s", files, n)
+		t := (uint32)(time.Now().Unix())
+		count := len(files) + 1
+		log.Infof("Pushing configs %+v for node %s with timestamp %d", files, n, t)
 		for _, f := range files {
 
 			metaData = md[f]
 
-			msgBytes, err := proto.Marshal(m[f])
+			cd := m[f]
+			cd.Timestamp = t
+			cd.FileCount = count
+
+			jd, err := json.Marshal(cd)
 			if err != nil {
-				// Handle the error
-				goto RecordState
+				log.Errorf("Failed to marshal configdata %+v. Errors %s", cd, err.Error())
+				return err
 			}
 
 			msg := &pb.NodeFeederMessage{
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HTTPMethod: "POST",
-				Path:       "/v1/configd/config",
-				Msg:        msgBytes,
+				Path:       "configd/v1/config",
+				Msg:        jd,
 			}
 
 			err = c.msgbus.PublishRequest(route, msg)
@@ -360,13 +470,14 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
 				goto RecordState
 			}
-			log.Infof("Published config %s on route %s for node %s ", msg, route, n)
+			log.Infof("Published config %s  with timestamp %d on route %s for node %s ", msg, t, route, n)
+
 			/* Atleast one is success */
 			state = db.Partial
 		}
 
 		/* Publish config version information */
-		err = c.PublishCommitInfo(metaData, route, commit)
+		err = c.PublishCommitInfo(metaData, route, commit, t, count)
 		if err != nil {
 			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
 			goto RecordState
@@ -395,52 +506,43 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 	return nil
 }
 
-func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string) error {
-	m.app = "config"
-	m.fileName = "configInfo.json"
+func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32, count int) error {
+	m.app = "configd"
+	m.fileName = "version.json"
 
-	type ConfigVerData struct {
-		Name   string `json:"name"`
-		App    string `json:"app"`
-		Commit string `json:"commit"`
-		NodeId string `json:"node_id"`
+	cdata := ConfigData{
+		FileName:  m.fileName, /* filename with path */
+		App:       m.app,
+		Data:      []byte(""),
+		Reason:    REASON_UPDATED,
+		Timestamp: t,
+		Version:   ver,
+		FileCount: count,
 	}
 
-	data := ConfigVerData{
-		Name:   m.fileName,
-		App:    m.app,
-		Commit: ver,
-		NodeId: m.node,
-	}
-
-	json, err := json.Marshal(data)
+	jd, err := json.Marshal(&cdata)
 	if err != nil {
-		log.Errorf("Failed to marshal config version data %+v. Errors %s", data, err.Error())
+		log.Errorf("Failed to marshal config version data %+v. Errors %s", cdata, err.Error())
 		return err
 	}
 
-	configData := &pb.Config{
-		Filename: m.fileName, /* filename with path */
-		App:      m.app,
-		Data:     json,
-	}
-
-	msgBytes, err := proto.Marshal(configData)
+	cdata.Data = jd
+	jsonMsg, err := json.Marshal(&cdata)
 	if err != nil {
-		// Handle the error
+		log.Errorf("Failed to marshal configdata %+v. Errors %s", cdata, err.Error())
 		return err
 	}
 
 	msg := &pb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HTTPMethod: "POST",
-		Path:       "/v1/configd/config",
-		Msg:        msgBytes,
+		Path:       "configd/v1/config",
+		Msg:        jsonMsg,
 	}
 
 	err = c.msgbus.PublishRequest(route, msg)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", configData, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", jsonMsg, route, err.Error())
 		return err
 	}
 
