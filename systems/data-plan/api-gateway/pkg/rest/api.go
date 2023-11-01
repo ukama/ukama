@@ -60,7 +60,7 @@ type GetBaseRatesForPeriodRequest struct {
 }
 
 type GetBaseRateRequest struct {
-	rest.BaseRequest
+	// rest.BaseRequest
 	RateId string `path:"base_rate" validate:"required"`
 }
 

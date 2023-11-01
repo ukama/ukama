@@ -57,7 +57,9 @@ func AppendHeadersInContext(ctx context.Context, headers http.Header) context.Co
 }
 
 func (b *BaseRateClient) GetBaseRatesById(h http.Header, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
+	// fmt.Println("Headers", h)
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
+
 	defer cancel()
 
 	return b.client.GetBaseRatesById(AppendHeadersInContext(ctx, h), req)

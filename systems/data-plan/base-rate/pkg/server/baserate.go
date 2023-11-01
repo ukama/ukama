@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -40,6 +42,13 @@ func NewBaseRateServer(orgName string, baseRateRepo db.BaseRateRepo, msgBus mb.M
 }
 
 func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "metadata is not provided")
+	}
+	values := md.Get("x-session-token")
+	fmt.Println("Metadata Values", values)
+
 	uuid, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)

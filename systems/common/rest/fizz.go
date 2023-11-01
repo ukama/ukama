@@ -31,7 +31,7 @@ type HttpError struct {
 }
 
 type BaseRequest struct {
-	Session string `example:"token" json:"x-session-token" header:"X-Session-Token" validate:"required"`
+	Session string `example:"token" json:"x-session-token" header:"X-Session-Token"`
 }
 
 func (g HttpError) Error() string {
@@ -63,7 +63,7 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	f.Generator().SetServers([]*openapi.Server{
 		{
 			Description: strings.ToUpper(srvName) + " API V1",
-			URL:         strings.ToUpper(srvName + "_URL"),
+			URL:         "",
 		},
 	})
 

@@ -41,7 +41,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout:  5 * time.Second,
 			Package:  "package:9090",
-			Baserate: "baserate:9090",
+			Baserate: "localhost:9090",
 			Rate:     "rate:9090",
 		},
 		HttpServices: HttpEndpoints{
@@ -49,7 +49,7 @@ func NewConfig() *Config {
 			NodeMetrics: "http://localhost",
 		},
 		Server: rest.HttpConfig{
-			Port: 8080,
+			Port: 8081,
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),

@@ -128,23 +128,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			return
 		}
 	})
-	auth.Use()
+	auth.Use(tonic.Handler(tracingMiddleware, http.StatusOK))
 	{
-		baseRates := auth.Group("/baserates", "BaseRates", "BaseRates operations")
-		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
-		baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
-		baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
-		baseRates.GET("/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
-		baseRates.GET("/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
-		baseRates.GET("/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
-
-		packages := auth.Group("/packages", "Packages", "Packages operations")
-		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-		packages.GET("/orgs/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
-		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
-		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
-		packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+		baseRates := auth.Group("/base-rates", "Base Rates", "Get base rates for a period or package")
+		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(
+			func(c *gin.Context, req interface{}) (interface{}, error) {
+				return wrapper(r.getBaseRateHandler(c, req.(*GetBaseRateRequest)))
+			}, http.StatusOK))
 
 		rates := auth.Group("/rates", "Rates", "Get rates for a user")
 		rates.GET("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
@@ -159,6 +149,58 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		markup.GET("/default", formatDoc("get default markup percentage", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
 		markup.GET("/default/history", formatDoc("get default markup percentage history", ""), tonic.Handler(r.getDefaultMarkupHistory, http.StatusOK))
 	}
+}
+
+func tracingMiddleware(c *gin.Context) error {
+	fmt.Println("Tracing middleware called", c.Request.Header)
+	return nil
+	// return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	ctx := r.Context()
+	// 	tracingHeaders := []string{
+	// 		"x-request-id",
+	// 		"x-b3-traceid",
+	// 		"x-b3-spanid",
+	// 		"x-b3-sampled",
+	// 		"x-b3-parentspanid",
+	// 		"x-b3-flags",
+	// 		"x-ot-span-context",
+	// 	}
+	// 	for _, key := range tracingHeaders {
+	// 		if val := r.Header.Get(key); val != "" {
+	// 			ctx = metadata.AppendToOutgoingContext(ctx, key, val)
+	// 		}
+	// 	}
+	// 	// next.ServeHTTP(w, r.WithContext(ctx))
+	// })
+}
+
+func middleware() gin.HandlerFunc {
+	// fmt.Println("Middleware called")
+	return func(c *gin.Context) {
+		// fmt.Println("Middleware context: ", c.Request.Header)
+		c.Next()
+
+		// fmt.Println("Returning from middleware called")
+	}
+}
+
+func wrapper(f func(*gin.Context, interface{}) (interface{}, error)) (interface{}, error) {
+	return func(c *gin.Context) (interface{}, error) {
+		// fmt.Println("Wrapper called")
+		var req interface{}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return nil, err
+		}
+
+		resp, err := f(c, req)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return nil, err
+		}
+
+		return resp, nil
+	}, nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -179,6 +221,7 @@ func (r *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 }
 
 func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*bpb.GetBaseRatesByIdResponse, error) {
+	// fmt.Println("Handler called === ", c.Request.Header)
 	resp, err := r.clients.b.GetBaseRatesById(c.Request.Header, &bpb.GetBaseRatesByIdRequest{
 		Uuid: req.RateId,
 	})
@@ -187,7 +230,7 @@ func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*b
 		logrus.Error(err)
 		return nil, err
 	}
-
+	// fmt.Println("Returning response")
 	return resp, nil
 }
 
