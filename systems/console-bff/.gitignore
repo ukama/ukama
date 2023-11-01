@@ -7,3 +7,4 @@ src/.DS_Store
 .env.test
 .env.production
 yarn-error.log
+.env.example
