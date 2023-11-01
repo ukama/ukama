@@ -111,7 +111,7 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	// Get current commited version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
+		log.Errorf("Failed to get current remote configs: %v", err)
 		return err
 	}
 
@@ -140,10 +140,10 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		}
 	}()
 
-	// Get latest remote version
+	// Get requested remote version
 	err = c.Store.GetRemoteConfigVersion(dir, rVer)
 	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
+		log.Errorf("Failed to get requested remote configs: %v", err)
 		return err
 	}
 
@@ -153,16 +153,16 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return err
 	}
 
-	// Get current commited version
-	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
-	if err != nil {
-		log.Errorf("Failed to get latest remote configs: %v", err)
-		return err
-	}
-
 	if rVer == cVerRec.Hash {
 		log.Infof("HandleConfigCommitReq remote config and requested commit are same %s", cVerRec.Hash)
 		return nil
+	}
+
+	// Get current commited version
+	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
+	if err != nil {
+		log.Errorf("Failed to get current remote configs: %v", err)
+		return err
 	}
 
 	return c.ProcessConfigStoreEvent(dir, cVerRec.Hash, rVer)
