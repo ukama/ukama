@@ -10,6 +10,7 @@ package configstore
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"strings"
 	"testing"
@@ -88,6 +89,7 @@ func TestConfigStore_ProcessConfigStoreEvent(t *testing.T) {
 		})).Return(&db.Configuration{NodeId: node}, nil)
 
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		commitRepo.On("Get", mock.AnythingOfType("string"), mock.Anything).Return(nil, sql.ErrNoRows)
 		configRepo.On("UpdateLastCommit", mock.Anything, mock.MatchedBy(func(a *db.CommitState) bool { return a != nil && *a == db.Published })).Return(nil)
 		files, ldir, err := cS.LookingForChanges(dir, cVer, rVer)
 		assert.NoError(t, err)

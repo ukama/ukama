@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
@@ -440,6 +439,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 			log.Errorf("Failed to get configuration data for node %s: %v", n, err)
 			continue
 		}
+
 		metaData := &ConfigMetaData{}
 		t := (uint32)(time.Now().Unix())
 		count := len(files) + 1
@@ -495,6 +495,13 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 		}
 
 		cRec.Commit = db.Commit{Hash: commit}
+
+		/* Get commit */
+		cmt, err := c.commitRepo.Get(commit)
+		if err == nil {
+			cRec.Commit = *cmt
+		}
+
 		err = c.configRepo.UpdateLastCommit(*cRec, &state)
 		if err != nil {
 			log.Errorf("Failed to update latest commit: %v", err)
