@@ -236,13 +236,14 @@ func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer stri
 	}
 
 	var filesToUpdate []FilesToUpdate
+	lprefix := dir + providers.COMMIT_DIR_NAME + "/"
 	for _, file := range filesUpdated {
-		filePath := strings.Split(file, dir+providers.COMMIT_DIR_NAME+"/")
+		filePath := strings.Split(file, lprefix)
 		filesToUpdate = append(filesToUpdate, FilesToUpdate{Name: filePath[1], Reason: REASON_ADDED})
 	}
 
 	log.Infof("Files to be updated %+v", filesToUpdate)
-	return filesToUpdate, (dir + providers.COMMIT_DIR_NAME), nil
+	return filesToUpdate, lprefix, nil
 }
 
 func (c *ConfigStore) LookingForChanges(dir string, cVer string, rVer string) ([]FilesToUpdate, string, error) {
