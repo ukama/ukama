@@ -17,10 +17,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 
@@ -341,8 +341,10 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 		for _, f := range files {
 
 			metaData = md[f]
-			anyMsg, err := anypb.New(m[f])
+
+			msgBytes, err := proto.Marshal(m[f])
 			if err != nil {
+				// Handle the error
 				goto RecordState
 			}
 
@@ -350,7 +352,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*pb.Config, nodes map[string][]s
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HTTPMethod: "POST",
 				Path:       "/v1/configd/config",
-				Msg:        anyMsg,
+				Msg:        msgBytes,
 			}
 
 			err = c.msgbus.PublishRequest(route, msg)
@@ -422,8 +424,10 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 		App:      m.app,
 		Data:     json,
 	}
-	anyMsg, err := anypb.New(configData)
+
+	msgBytes, err := proto.Marshal(configData)
 	if err != nil {
+		// Handle the error
 		return err
 	}
 
@@ -431,7 +435,7 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HTTPMethod: "POST",
 		Path:       "/v1/configd/config",
-		Msg:        anyMsg,
+		Msg:        msgBytes,
 	}
 
 	err = c.msgbus.PublishRequest(route, msg)
