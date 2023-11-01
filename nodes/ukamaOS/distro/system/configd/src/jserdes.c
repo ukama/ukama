@@ -46,7 +46,11 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
 
     switch(type) {
     case (JSON_STRING): 
-        *strValue = strdup(json_string_value(jEntry));
+        if (jEntry->type == JSON_NULL) {
+        	*strValue = NULL;
+        } else {
+        	*strValue = strdup(json_string_value(jEntry));
+        }
         break;
     case (JSON_INTEGER):
         *intValue = json_integer_value(jEntry);
