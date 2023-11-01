@@ -95,7 +95,10 @@ class SimApi extends RESTDataSource {
 
   getSims = async (type: string): Promise<SimsResDto> => {
     return this.get(`/sims/${type}`)
-      .then(res => dtoToSimsDto(res))
+      .then(res => {
+        console.log("SIM :", res);
+        return dtoToSimsDto(res);
+      })
       .catch(err => {
         throw new GraphQLError(err);
       });
@@ -116,7 +119,10 @@ class SimApi extends RESTDataSource {
         networkId: req.networkId,
       },
     })
-      .then(res => dtoToSimDetailsDto(res))
+      .then(res => {
+        console.log(res); // Add this line to log the response
+        return dtoToSimDetailsDto(res);
+      })
       .catch(err => {
         throw new GraphQLError(err);
       });
