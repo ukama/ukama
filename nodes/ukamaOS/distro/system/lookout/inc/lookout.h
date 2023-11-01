@@ -62,6 +62,7 @@ typedef struct _runtime {
 
 typedef struct _capp {
 
+    char        *space;    /* space capp belongs */
     char        *name;     /* Name of the cApp */
     char        *tag;      /* cApp tag/version */
     CappRuntime *runtime;  /* runtime of capp */

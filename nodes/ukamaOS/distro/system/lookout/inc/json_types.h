@@ -10,6 +10,7 @@
 #define JSON_TYPES_H_
 
 #define JTAG_CAPPS      "capps"
+#define JTAG_SPACE      "space"
 #define JTAG_NAME       "name"
 #define JTAG_VALUE      "value"
 #define JTAG_TAG        "tag"

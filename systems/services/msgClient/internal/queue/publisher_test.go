@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	mocks "github.com/ukama/ukama/systems/common/mocks"
-	mb "github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 
@@ -40,8 +39,7 @@ var ServiceUuid = "1ce2fa2f-2997-422c-83bf-92cf2e7334dd"
 func TestQueuePublisher_Publish(t *testing.T) {
 	pub := &mocks.QPub{}
 	qp := &QueuePublisher{
-		pub:            pub,
-		baseRoutingKey: mb.NewRoutingKeyBuilder().SetCloudSource().SetContainer("test"),
+		pub: pub,
 	}
 
 	msg := pb.PublishMsgRequest{
@@ -60,8 +58,7 @@ func TestQueuePublisher_Publish(t *testing.T) {
 func TestQueuePublisher_Close(t *testing.T) {
 	pub := &mocks.QPub{}
 	qp := &QueuePublisher{
-		pub:            pub,
-		baseRoutingKey: mb.NewRoutingKeyBuilder().SetCloudSource().SetContainer("test"),
+		pub: pub,
 	}
 
 	pub.On("Close").Return(nil).Once()

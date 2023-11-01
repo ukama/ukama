@@ -21,7 +21,7 @@ import (
 const (
 	TYPE_EVENT         = "event"
 	TYPE_REQUEST       = "request"
-	TYPE_RESPONSE      = "request"
+	TYPE_RESPONSE      = "response"
 	SOURCE_NODE        = "node"
 	SOURCE_CLOUD       = "cloud"
 	SCOPE_LOCAL        = "local"

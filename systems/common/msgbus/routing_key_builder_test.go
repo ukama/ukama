@@ -64,4 +64,10 @@ func TestBuild(t *testing.T) {
 		newKey := UpdateToAcceptFromAllOrg(rk1)
 		assert.Equal(t, "event.cloud.local.org.system.service.object.update", newKey)
 	})
+
+	t.Run("Parse", func(t *testing.T) {
+		route := "event.cloud.local.ukama.operator.cdr.sim.usage"
+		_, err := Parse(route)
+		assert.NoError(t, err)
+	})
 }

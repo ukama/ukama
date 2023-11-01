@@ -19,10 +19,11 @@
 #include "usys_types.h"
 
 bool json_serialize_add_capp_to_array(JsonObj **json,
-                                         char *name,
-                                         char *tag,
-                                         char *status,
-                                         int  pid) {
+                                      char *space,
+                                      char *name,
+                                      char *tag,
+                                      char *status,
+                                      int  pid) {
 
     JsonObj *jArray = NULL;
     JsonObj *jCapp  = NULL;
@@ -36,6 +37,7 @@ bool json_serialize_add_capp_to_array(JsonObj **json,
         jCapp = json_object();
         if (jCapp == NULL) return USYS_FALSE;
 
+        json_object_set_new(jCapp, JTAG_SPACE,  json_string(space));
         json_object_set_new(jCapp, JTAG_NAME,   json_string(name));
         json_object_set_new(jCapp, JTAG_TAG,    json_string(tag));
         json_object_set_new(jCapp, JTAG_STATUS, json_string(status));

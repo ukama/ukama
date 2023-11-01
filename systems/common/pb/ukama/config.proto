@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
+
+package ukama.config.v1;
+
+import "validator.proto";
+
+message Config {
+    string filename = 1;
+    string app = 2;
+    string version = 3;
+    bytes Data = 4;
+}
+
+message NodeConfigUpdateEvent {
+    string nodeId = 1 ;
+    string commit = 2 ;
+    UpdateStatus status = 3 ;
+}
+
+enum UpdateStatus {
+    Undefined = 0;
+    Default = 1; /* Default concfig */
+    Success = 2;
+    Failed = 3; 
+    Published = 4;
+    Partial = 5;
+    Rollback = 6;
+}
