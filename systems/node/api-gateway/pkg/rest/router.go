@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package rest
 
 import (
@@ -21,6 +29,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 )
 
 type Router struct {
@@ -38,8 +47,9 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Controller   controller
-	Configurator configurator
+	Controller      controller
+	Configurator    configurator
+	SoftwareManager softwareManager
 }
 
 type controller interface {
@@ -54,10 +64,15 @@ type configurator interface {
 	GetConfigVersion(nodeId string) (*cfgPb.ConfigVersionResponse, error)
 }
 
+type softwareManager interface {
+	UpdateSoftware(space string, name string, tag string, nodeId string) (*spb.UpdateSoftwareResponse, error)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
+	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
 	return c
 }
 
@@ -113,16 +128,21 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		const cont = "/controllers"
-		controller := auth.Group(cont, "Controllers", "Operations on controllers")
+		const cont = "/controller"
+		controller := auth.Group(cont, "Controller", "Operations on controllers")
 		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
+
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
 		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
 		cfgS.POST("/config/apply/:commit", formatDoc("Apply config version ", "Updated nodes to version"), tonic.Handler(r.postConfigApplyVersionHandler, http.StatusAccepted))
 		cfgS.GET("/config/node/:node_id", formatDoc("Current ruunning config", "Read the cuurrent running version and status"), tonic.Handler(r.getRunningConfigVersionHandler, http.StatusOK))
+
+		const soft = "/software"
+		softS := auth.Group(soft, "Software manager", "Operations on software")
+		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 	}
 }
 
@@ -132,6 +152,10 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
 	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
+}
+
+func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
+	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

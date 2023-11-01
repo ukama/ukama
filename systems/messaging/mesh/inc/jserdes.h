@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #ifndef MESH_JSERDES_H
@@ -46,6 +45,7 @@
 #define JSON_PORT     "port"
 #define JSON_MESSAGE  "message"
 #define JSON_CODE     "code"
+#define JSON_UUID     "uuid"
 
 /* for system info*/
 #define JSON_SYSTEM_NAME "systemName"
@@ -62,8 +62,8 @@
 /* Function headers. */
 int serialize_system_response(char **response, Message *message,
                               int code, int len, char *data);
-int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *nodePort, char *agent);
+int serialize_websocket_message(char **str, URequest *request,
+                                char *uuid);
 int serialize_device_info(json_t **json, NodeInfo *device);
 int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);

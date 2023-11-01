@@ -74,11 +74,6 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Timeout: time.Duration(e.deviceNetworkConf.TimeoutSeconds) * time.Second,
 	}
 
-	// msgBytes, err := proto.Marshal(req.Msg)
-	// if err != nil {
-	// 	return errors.Wrap(err, "error marshaling protobuf message")
-	// }
-
 	httpReq := http.Request{
 		Body:   io.NopCloser(bytes.NewReader((req.GetMsg()))),
 		Header: map[string][]string{"Content-Type": {"application/json"}},
@@ -86,6 +81,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		URL:    u,
 	}
 	logrus.Infof("sending request %+v to %s ", httpReq, u.String())
+	
 	resp, err := c.Do(&httpReq)
 	if err != nil {
 		return errors.Wrap(err, "error sending request")

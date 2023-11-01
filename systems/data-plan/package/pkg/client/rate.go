@@ -1,14 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package client
 
 import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
 type Rate struct {
@@ -28,7 +36,7 @@ func NewRate(rate string, timeout time.Duration) (*Rate, error) {
 
 	conn, err := grpc.DialContext(ctx, rate, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
+		log.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
 		return nil, err
 	}
 	client := pb.NewRateServiceClient(conn)

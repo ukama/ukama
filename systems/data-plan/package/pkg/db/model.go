@@ -1,11 +1,23 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db
 
 import (
 	"time"
 
+	"github.com/lib/pq"
+	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/ukama"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Package struct {
@@ -33,6 +45,10 @@ type Package struct {
 	To             time.Time `gorm:"not null"`
 	Country        string    `gorm:"not null;type:string"`
 	Provider       string    `gorm:"not null;type:string"`
+	Overdraft      float64
+	TrafficPolicy  uint32
+	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
+	SyncStatus     types.SyncStatus
 }
 
 type PackageDetails struct {

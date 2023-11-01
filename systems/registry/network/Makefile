@@ -1,3 +1,9 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
+
 include ../../config.mk
 
 .PHONY: integration.test test
@@ -29,6 +35,7 @@ gen:
 
 clean:
 	rm pb/gen/*.go
+	rm mocks/*.go
 
 
 # integration tests
@@ -39,7 +46,3 @@ integration.test:
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
-
-
-
-

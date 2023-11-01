@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { Draft } from '@/generated';
 import { colors } from '@/styles/theme';
 import { hexToRGB } from '@/utils';
@@ -144,11 +152,7 @@ const DraftDropdown = ({
                   <Edit color="action" sx={ICON_STYLE} />
                 )}
               </IconButton>
-              <IconButton
-                onClick={() => {
-                  handleDeleteDraft(id);
-                }}
-              >
+              <IconButton onClick={() => handleDeleteDraft(_id)}>
                 <DeleteOutlineIcon color="error" sx={ICON_STYLE} />
               </IconButton>
             </Stack>

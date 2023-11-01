@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 'use client';
 import {
   commonData,
@@ -8,6 +16,7 @@ import {
   user,
 } from '@/app-recoil';
 import {
+  useGetMemberLazyQuery,
   useGetNetworksLazyQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
@@ -25,7 +34,6 @@ const Layout = dynamic(() => import('@/ui/layout'), {
 
 const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
-
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [_user, _setUser] = useRecoilState<TUser>(user);
   const [page, setPage] = useRecoilState(pageName);
@@ -38,18 +46,41 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
 
-  const [getUser] = useGetUserLazyQuery({
-    fetchPolicy: 'cache-and-network',
+  const [getMember] = useGetMemberLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       _setUser({
-        role: '',
-        isFirstVisit: false,
-        id: data.getUser.uuid,
-        name: data.getUser.name,
-        email: data.getUser.email,
+        ..._user,
+        role: data.getMember.role,
       });
     },
   });
+
+  const [getUser, { data: userData, loading: userLoading, error: userError }] =
+    useGetUserLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        _setUser({
+          role: '',
+          isFirstVisit: false,
+          id: data.getUser.uuid,
+          name: data.getUser.name,
+          email: data.getUser.email,
+        });
+        const pathname =
+          typeof window !== 'undefined' && window.location.pathname
+            ? window.location.pathname
+            : '';
+        setPage(
+          getTitleFromPath(pathname, (route.query['id'] as string) || ''),
+        );
+        getMember({
+          variables: {
+            memberId: data.getUser.uuid,
+          },
+        });
+      },
+    });
 
   const [
     getNetworks,
@@ -57,7 +88,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   ] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      if (data.getNetworks.networks.length > 1) {
+      if (
+        data.getNetworks.networks.length >= 1 &&
+        _commonData.networkId === ''
+      ) {
         setCommonData({
           ..._commonData,
           networkId: data.getNetworks.networks[0].id,
@@ -108,7 +142,12 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
             '404',
       );
       setPage(getTitleFromPath(route.pathname, route.query['id'] as string));
-      if (getTitleFromPath(route.pathname, '') === '404') route.replace('/404');
+      if (
+        getTitleFromPath(route.pathname, '') === '404' &&
+        route.pathname !== '/404'
+      ) {
+        route.replace('/404');
+      }
     }
   }, [route]);
 
@@ -127,14 +166,13 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [commonData]);
 
   useEffect(() => {
-    const { id, name, email } = _user;
-    const pathname =
-      typeof window !== 'undefined' && window.location.pathname
-        ? window.location.pathname
-        : '';
-    setPage(getTitleFromPath(pathname, (route.query['id'] as string) || ''));
-    if (id && name && email) {
-      if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
+    if (!userLoading && userData && userData.getUser && _user.id) {
+      const { id, name, email } = _user;
+      if (id && name && email) {
+        if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
+      }
+    } else if (userError) {
+      handleGoToLogin();
     }
   }, [_user]);
 

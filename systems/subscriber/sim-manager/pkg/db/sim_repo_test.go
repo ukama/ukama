@@ -1,19 +1,26 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
 	"database/sql"
 	"regexp"
-
-	extsql "database/sql"
 	"testing"
 
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/DATA-DOG/go-sqlmock"
-	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	log "github.com/sirupsen/logrus"
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
@@ -58,7 +65,7 @@ func TestSimRepo_Get(t *testing.T) {
 
 		var packageID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -110,7 +117,7 @@ func TestSimRepo_Get(t *testing.T) {
 		// Arrange
 		var simID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -156,7 +163,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 
 		var packageID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -207,7 +214,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		// Arrange
 		var subID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -253,7 +260,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 
 		var packageID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -304,7 +311,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 		// Arrange
 		var netID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -344,7 +351,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 func TestSimRepo_Add(t *testing.T) {
 	t.Run("AddSim", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 
 		sim := simdb.Sim{
 			Id:           uuid.NewV4(),
@@ -357,9 +364,9 @@ func TestSimRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -393,7 +400,7 @@ func TestSimRepo_Add(t *testing.T) {
 
 func TestSimRepo_Delete(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var db *extsql.DB
+		var db *sql.DB
 
 		// Arrange
 		var simID = uuid.NewV4()

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
@@ -88,56 +96,4 @@ func TestSoftwareRepo_Get(t *testing.T) {
 	
 
 }
-
-// func TestControllerRepo_Add(t *testing.T) {
-
-// 	t.Run("Add", func(t *testing.T) {
-// 		// Arrange
-
-// 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
-// 		var db *extsql.DB
-// 		var err error
-
-// 		db, mock, err := sqlmock.New() // mock sql.DB
-// 		assert.NoError(t, err)
-
-// 		mock.ExpectBegin()
-
-// 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-// 			WithArgs(  sqlmock.AnyArg(), sqlmock.AnyArg(),sqlmock.AnyArg(),nid.String()).
-// 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-// 		mock.ExpectCommit()
-
-// 		dialector := postgres.New(postgres.Config{
-// 			DSN:                  "sqlmock_db_0",
-// 			DriverName:           "postgres",
-// 			Conn:                 db,
-// 			PreferSimpleProtocol: true,
-// 		})
-// 		gdb, err := gorm.Open(dialector, &gorm.Config{})
-// 		assert.NoError(t, err)
-
-// 		r := int_db.NewSoftwareRepo(&UkamaDbMock{
-// 			GormDb: gdb,
-// 		})
-
-// 		assert.NoError(t, err)
-
-// 		// Act
-// 		err = r.CreateSoftwareUpdate(nid.String())
-
-// 		// Assert
-// 		assert.NoError(t, err)
-
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
-
-// }
-
-
-
-
 

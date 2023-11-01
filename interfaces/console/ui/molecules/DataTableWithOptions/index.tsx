@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import {
   Box,
@@ -14,8 +22,9 @@ import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
 
 interface DataTableWithOptionsInterface {
-  dataset: any;
   icon?: any;
+  dataset: any;
+  isRowClickable?: boolean;
   emptyViewLabel?: string;
   onMenuItemClick: Function;
   menuOptions: MenuItemType[];
@@ -23,8 +32,9 @@ interface DataTableWithOptionsInterface {
 }
 
 type CellValueByTypeProps = {
-  type: string;
   row: any;
+  type: string;
+  isRowClickable: boolean;
   menuOptions: MenuItemType[];
   onMenuItemClick: Function;
 };
@@ -33,14 +43,18 @@ const CellValueByType = ({
   type,
   row,
   menuOptions,
+  isRowClickable,
   onMenuItemClick,
 }: CellValueByTypeProps) => {
   switch (type) {
     case 'name':
-      return (
-        <Link href={`node/${row['id']}`} unselectable="on">
+      return isRowClickable ? (
+        // <Link href={`nodes/${row['id']}`} unselectable="on">
+        <Link href={`nodes/uk-test36-hnode-a1-00ff`} unselectable="on">
           {row[type]}
         </Link>
+      ) : (
+        <Typography variant="body2">{row[type]}</Typography>
       );
     case 'actions':
       return (
@@ -62,6 +76,7 @@ const DataTableWithOptions = ({
   menuOptions,
   onMenuItemClick,
   emptyViewLabel = '',
+  isRowClickable = true,
 }: DataTableWithOptionsInterface) => {
   return (
     <Box
@@ -108,6 +123,7 @@ const DataTableWithOptions = ({
                         row={row}
                         type={column.id}
                         menuOptions={menuOptions}
+                        isRowClickable={isRowClickable}
                         onMenuItemClick={(type: string) =>
                           onMenuItemClick(row.id, type)
                         }

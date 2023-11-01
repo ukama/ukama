@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef DEVICED_H_
@@ -12,23 +11,20 @@
 
 #include "ulfius.h"
 #include "usys_types.h"
+#include "usys_services.h"
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME           "deviced"
+#define SERVICE_NAME           SERVICE_DEVICE
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define DEF_SERVICE_PORT        "8086"
-#define DEF_SERVICE_CLIENT_PORT "8087"
 #define DEF_SERVICE_CLIENT_HOST "localhost"
 #define DEVICED_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
-#define DEF_NOTIFY_PORT        "8085"
-#define DEF_NODED_PORT         "8095"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"

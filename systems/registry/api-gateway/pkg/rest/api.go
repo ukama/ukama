@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package rest
 
 type MemberRequest struct {
@@ -35,8 +43,14 @@ type GetNetworkRequest struct {
 }
 
 type AddNetworkRequest struct {
-	OrgName string `example:"milky-way"  json:"org" validate:"required"`
-	NetName string `example:"mesh-network" json:"network_name" validate:"required"`
+	OrgName          string   `example:"milky-way"  json:"org" validate:"required"`
+	NetName          string   `example:"mesh-network" json:"network_name" validate:"required"`
+	AllowedCountries []string `json:"allowed_countries"`
+	AllowedNetworks  []string `json:"allowed_networks"`
+	Budget           float64  `json:"budget"`
+	Overdraft        float64  `json:"overdraft"`
+	TrafficPolicy    uint32   `json:"traffic_policy"`
+	PaymentLinks     bool     `example:"true" json:"payment_links"`
 }
 
 type GetSiteRequest struct {
@@ -60,7 +74,7 @@ type DetachNodeRequest struct {
 
 type UpdateNodeStateRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
-	State  string `json:"state" path:"state" validate:"required"`
+	State  string `json:"state" validate:"required"`
 }
 
 type UpdateNodeRequest struct {

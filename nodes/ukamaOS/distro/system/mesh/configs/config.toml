@@ -2,7 +2,6 @@
 
 [local-config]
     remote-ip-file = "./configs/ip_file_2"
-    local-accept   = "4440"
     local-hostname = "localhost"
     cert           = "./conf/cert.crt"
     key            = "./conf/pem.key"

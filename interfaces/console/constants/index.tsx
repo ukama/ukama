@@ -1562,53 +1562,53 @@ const NodePageTabs = [
 ];
 
 const NodeResourcesTabConfigure: any = {
-  HOME: [
-    { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
-    { name: 'none', show: false, id: 'memorycomused' },
-    { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
-    { name: 'none', show: false, id: 'cpucomusage' },
-    { name: 'DISK-TRX', show: true, id: 'disktrxused' },
-    { name: 'none', show: false, id: 'diskcomused' },
-    { name: 'none', show: false, id: 'powerlevel' },
+  hnode: [
+    { name: 'MEMORY-TRX', show: true, id: 'memory_trx_used' },
+    { name: 'none', show: false, id: 'memory_com_used' },
+    { name: 'CPU-TRX', show: true, id: 'cpu_trx_usage' },
+    { name: 'none', show: false, id: 'cpu_com_usage' },
+    { name: 'DISK-TRX', show: true, id: 'disk_trx_used' },
+    { name: 'none', show: false, id: 'disk_com_used' },
+    { name: 'none', show: false, id: 'power_level' },
   ],
-  AMPLIFIER: [
-    { name: 'MEMORY-TRX', show: true, id: 'memoryctlused' },
-    { name: 'none', show: false, id: 'memorycomused' },
-    { name: 'CPU-TRX', show: true, id: 'cpuctlused' },
-    { name: 'none', show: false, id: 'cpucomusage' },
-    { name: 'DISK-TRX', show: true, id: 'diskctlused' },
-    { name: 'none', show: false, id: 'diskcomused' },
-    { name: 'none', show: false, id: 'powerlevel' },
+  anode: [
+    { name: 'MEMORY-TRX', show: true, id: 'memory_ctl_used' },
+    { name: 'none', show: false, id: 'memory_com_used' },
+    { name: 'CPU-TRX', show: true, id: 'cpu_ctl_used' },
+    { name: 'none', show: false, id: 'cpu_com_usage' },
+    { name: 'DISK-TRX', show: true, id: 'disk_ctl_used' },
+    { name: 'none', show: false, id: 'disk_com_used' },
+    { name: 'none', show: false, id: 'power_level' },
   ],
-  TOWER: [
-    { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
-    { name: 'MEMORY-COM', show: true, id: 'memorycomused' },
-    { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
-    { name: 'CPU-COM', show: true, id: 'cpucomusage' },
-    { name: 'DISK-TRX', show: true, id: 'disktrxused' },
-    { name: 'DISK-COM', show: true, id: 'diskcomused' },
-    { name: 'POWER', show: true, id: 'powerlevel' },
+  tnode: [
+    { name: 'MEMORY-TRX', show: true, id: 'memory_trx_used' },
+    { name: 'MEMORY-COM', show: true, id: 'memory_com_used' },
+    { name: 'CPU-TRX', show: true, id: 'cpu_trx_usage' },
+    { name: 'CPU-COM', show: true, id: 'cpu_com_usage' },
+    { name: 'DISK-TRX', show: true, id: 'disk_trx_used' },
+    { name: 'DISK-COM', show: true, id: 'disk_com_used' },
+    { name: 'POWER', show: true, id: 'power_level' },
   ],
 };
 const HealtChartsConfigure: any = {
-  HOME: [
-    { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
-    { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
+  hnode: [
+    { name: 'Uptime', show: true, id: 'uptime_trx' },
+    { name: 'Temp. (TRX)', show: true, id: 'temperature_trx' },
+    { name: 'Temp. (RFE)', show: true, id: 'temperature_rfe' },
     { name: 'none', show: false, id: '' },
-    { name: 'Attached ', show: true, id: 'subscribersattached' },
-    { name: 'Active ', show: true, id: 'subscribersactive' },
+    { name: 'Attached ', show: true, id: 'subscribers_attached' },
+    { name: 'Active ', show: true, id: 'subscribers_active' },
   ],
-  AMPLIFIER: [
-    { name: 'Temp. (CTL)', show: true, id: 'temperaturectl' },
-    { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
+  anode: [
+    { name: 'Temp. (CTL)', show: true, id: 'temperature_ctl' },
+    { name: 'Temp. (RFE)', show: true, id: 'temperature_rfe' },
     { name: 'none', show: false, id: '' },
   ],
-  TOWER: [
-    { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
-    { name: 'Temp. (COM)', show: true, id: 'temperaturecom' },
-    { name: 'Uptime', show: true, id: 'uptimetrx' },
-    { name: 'Attached ', show: true, id: 'subscribersattached' },
-    { name: 'Active ', show: true, id: 'subscribersactive' },
+  tnode: [
+    { name: 'Temp. (TRX)', show: true, id: 'temperature_trx' },
+    { name: 'Temp. (COM)', show: true, id: 'temperature_com' },
+    { name: 'Attached ', show: true, id: 'subscribers_attached' },
+    { name: 'Active ', show: true, id: 'subscribers_active' },
   ],
 };
 

@@ -35,7 +35,6 @@ func NodeFeederPublishMessage(c *Config, k string, m mb.MsgBusServiceClient) err
 		log.Errorf("Failed to marshal configdata %+v. Errors %s", configReq, err.Error())
 		return err
 	}
-
 	msg := &pb.NodeFeederMessage{
 		Target:     "ukamaorg" + "." + "network" + "." + "site" + "." + "uk-000000-hnode-00-0000",
 		HTTPMethod: "POST",

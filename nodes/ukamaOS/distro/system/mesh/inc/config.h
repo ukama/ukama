@@ -1,7 +1,3 @@
-/*
- * config.h
- */
-
 #ifndef MESH_CONFIG_H
 #define MESH_CONFIG_H
 
@@ -28,7 +24,7 @@
 /* Struct to define the server and/or client host cfg. */
 typedef struct {
 
-	char *localAccept;    /* Port on which to accept local clients */
+	int  localAccept;     /* Port on which to accept local clients */
     char *localHostname;
 	char *remoteConnect;  /* Client: hostname:port to connect with remotely */
 	char *certFile;       /* CA Cert file name. */

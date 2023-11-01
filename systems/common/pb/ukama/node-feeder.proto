@@ -4,11 +4,9 @@ package ukama.nodefeeder.v1;
 
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
 
-import "google/protobuf/any.proto";
-
-message NodeFeederMessage  {
+message NodeFeederMessage {
     string Target = 1;
-    string HTTPMethod  = 2;
+    string HTTPMethod = 2;
     string Path = 3;
-    bytes msg = 4 ; /// could be any protobuf msg based on need like config for node config
+    bytes msg = 4;  // Use bytes for binary data
 }

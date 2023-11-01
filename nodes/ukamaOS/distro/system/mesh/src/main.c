@@ -1,15 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
- *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
 /*
- * Mesh.d - L7-websocket based forward/reversed proxy
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include <stdio.h>
@@ -231,6 +225,11 @@ int main (int argc, char *argv[]) {
 				configFile);
 		exit(1);
 	}
+    config->localAccept = usys_find_service_port(SERVICE_NAME);
+    if (!config->localAccept) {
+        log_error("Unable to find service port");
+        exit(1);
+    }
     state->config = config;
 	print_config(config);
 
@@ -280,7 +279,7 @@ int main (int argc, char *argv[]) {
 
     pthread_detach(thread);
 
-	log_debug("Mesh.d running ...");
+	log_debug("%s running ...", SERVICE_NAME);
 
     pause();
 

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { CenterContainer } from '@/styles/global';
 import { CircularProgress } from '@mui/material';
 import { ComponentType, LazyExoticComponent, ReactNode, lazy } from 'react';
@@ -7,7 +15,6 @@ import LayersIcon from '@mui/icons-material/Layers';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import RouterIcon from '@mui/icons-material/Router';
 
-import LocationIcon from '@mui/icons-material/LocationOn';
 
 export interface IRoute {
   // Path, like in basic prop
@@ -71,13 +78,13 @@ export const NavList = [
     isPrivate: true,
     isFullScreen: false,
   },
-  {
-    name: 'Sites',
-    path: '/sites',
-    icon: LocationIcon,
-    isPrivate: true,
-    isFullScreen: false,
-  },
+  // {
+  //   name: 'Sites',
+  //   path: '/sites',
+  //   icon: LocationIcon,
+  //   isPrivate: true,
+  //   isFullScreen: false,
+  // },
   {
     name: 'Nodes',
     path: '/nodes',

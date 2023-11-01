@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -22,6 +30,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 
 	// Create a mock for the SoftwareManagerRepo interface
 	softwareManager := &mocks.SoftwareRepo{}
+	healthsvc := &mocks.HealthClientProvider{}
 
 	// Configure the mock to expect a call to CreateSoftwareUpdate with specific arguments
 	softwareManager.On("CreateSoftwareUpdate", mock.Anything, mock.Anything).
@@ -32,7 +41,7 @@ func Test_CreateSoftwareUpdate(t *testing.T) {
 	// Configure the mock to expect a call to PublishRequest with specific arguments
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false, healthsvc)
 
 	// Test
 	r, err := s.CreateSoftwareUpdate(ctx, &gen.CreateSoftwareUpdateRequest{
@@ -53,6 +62,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 
 	// Create a mock for the SoftwareManagerRepo interface
 	softwareManager := &mocks.SoftwareRepo{}
+	healthsvc := &mocks.HealthClientProvider{}
 
 	// Configure the mock to expect a call to GetLatestSoftwareUpdate and return a *db.Software
 	softwareManager.On("GetLatestSoftwareUpdate").
@@ -67,7 +77,7 @@ func Test_GetLatestSoftwareUpdate(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	// Create an instance of the SoftwareManagerServer with the mocks
-	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false)
+	s := NewSoftwareServer(testOrgName, softwareManager, msgclientRepo, false, healthsvc)
 
 	// Test
 	r, err := s.GetLatestSoftwareUpdate(ctx, &gen.GetLatestSoftwareUpdateRequest{})

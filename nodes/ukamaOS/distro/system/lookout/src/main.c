@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <stdio.h>
@@ -19,6 +18,7 @@
 #include "usys_string.h"
 #include "usys_types.h"
 #include "usys_mem.h"
+#include "usys_services.h"
 
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
@@ -26,10 +26,7 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "port",          required_argument, 0, 'p' },
     { "logs",          required_argument, 0, 'l' },
-    { "noded-port",    required_argument, 0, 'd' },
-    { "starter-port",  required_argument, 0, 's' },
     { "system-port",   required_argument, 0, 'S' },
     { "help",          no_argument, 0, 'h' },
     { "version",       no_argument, 0, 'v' },
@@ -56,9 +53,6 @@ void usage() {
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-p, --port <port>             Local listening port");
-    usys_puts("-d, --noded-port    <port>    Node.d port");
-    usys_puts("-s, --starter-port  <port>    Starter.d port");
     usys_puts("-S, --system-port   <port>    Node system port");
     usys_puts("-v, --version                 Software version");
 }
@@ -67,9 +61,6 @@ int main(int argc, char **argv) {
 
     int opt, optIdx;
     char *debug        = DEF_LOG_LEVEL;
-    char *port         = DEF_SERVICE_PORT;
-    char *nodedPort    = DEF_NODED_PORT;
-    char *starterPort  = DEF_STARTERD_PORT;
     char *systemPort   = DEF_NODE_SYSTEM_PORT;
     UInst  serviceInst; 
     Config serviceConfig = {0};
@@ -80,7 +71,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:p:l:n:s:S", longOptions,
+        opt = usys_getopt_long(argc, argv, "vh:l:S", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -97,33 +88,9 @@ int main(int argc, char **argv) {
             usys_exit(0);
             break;
 
-        case 'p':
-            port = optarg;
-            if (!port) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
         case 'l':
             debug = optarg;
             set_log_level(debug);
-            break;
-
-        case 'n':
-            nodedPort = optarg;
-            if (!nodedPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
-        case 's':
-            starterPort = optarg;
-            if (!starterPort) {
-                usage();
-                usys_exit(0);
-            }
             break;
 
         case 'S':
@@ -140,12 +107,18 @@ int main(int argc, char **argv) {
         }
     }
 
-    /* Service config update */
-    serviceConfig.servicePort    = usys_atoi(port);
-    serviceConfig.nodedPort      = usys_atoi(nodedPort);
-    serviceConfig.starterdPort   = usys_atoi(starterPort);
+    serviceConfig.servicePort    = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.nodedPort      = usys_find_service_port(SERVICE_NODE);
+    serviceConfig.starterdPort   = usys_find_service_port(SERVICE_STARTER);
     serviceConfig.nodeSystemPort = usys_atoi(systemPort);
     serviceConfig.nodeID         = NULL;
+
+    if (!serviceConfig.servicePort  ||
+        !serviceConfig.nodedPort    ||
+        !serviceConfig.starterdPort) {
+        usys_log_error("Unable to determine the port for services");
+        usys_exit(1);
+    }
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 

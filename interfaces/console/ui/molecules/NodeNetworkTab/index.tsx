@@ -1,4 +1,14 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { TooltipsText } from '@/constants';
+import { Graphs_Type, MetricsRes } from '@/generated/metrics';
+import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
 import LineChart from '../LineChart';
@@ -7,10 +17,11 @@ import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
-  metrics: any;
+  metrics: MetricsRes;
+  metricFrom: number;
   loading: boolean;
 }
-const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
+const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
 
@@ -63,43 +74,48 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
           <Stack spacing={4}>
             <LineChart
               loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
+              metricFrom={metricFrom}
               topic={'throughputuplink'}
               title={'Throughput (U/L)'}
+              tabSection={Graphs_Type.Network}
+              initData={getMetricValue('throughputuplink', metrics)}
+              hasData={isMetricValue('throughputuplink', metrics)}
             />
             <LineChart
               loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
+              metricFrom={metricFrom}
               topic={'throughputdownlink'}
               title={'Throughput (D/L)'}
+              tabSection={Graphs_Type.Network}
+              initData={getMetricValue('throughputdownlink', metrics)}
+              hasData={isMetricValue('throughputdownlink', metrics)}
             />
             <LineChart
-              loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
               topic={'rrc'}
               title={'RRC'}
+              loading={loading}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Network}
+              initData={getMetricValue('rrc', metrics)}
+              hasData={isMetricValue('rrc', metrics)}
             />
             <LineChart
-              loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
               topic={'erab'}
               title={'ERAB'}
+              loading={loading}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Network}
+              initData={getMetricValue('erab', metrics)}
+              hasData={isMetricValue('erab', metrics)}
             />
             <LineChart
-              loading={loading}
-              initData={metrics}
-              metricFrom={0}
-              hasData={metrics.length > 0}
               topic={'rlc'}
               title={'RLC'}
+              loading={loading}
+              metricFrom={metricFrom}
+              tabSection={Graphs_Type.Network}
+              initData={getMetricValue('rlc', metrics)}
+              hasData={isMetricValue('rlc', metrics)}
             />
           </Stack>
         </Paper>

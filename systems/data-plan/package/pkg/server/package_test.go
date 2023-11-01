@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -7,21 +15,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
+	"github.com/ukama/ukama/systems/data-plan/package/mocks"
+	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/common/grpc"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/package/mocks"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
-	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
 const OrgName = "testorg"

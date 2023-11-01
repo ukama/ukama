@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package rest
 
 import (
@@ -10,22 +18,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cconfig "github.com/ukama/ukama/systems/common/config"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	imocks "github.com/ukama/ukama/systems/registry/invitation/pb/gen/mocks"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	mmocks "github.com/ukama/ukama/systems/registry/member/pb/gen/mocks"
 	netmocks "github.com/ukama/ukama/systems/registry/network/pb/gen/mocks"
 	nmocks "github.com/ukama/ukama/systems/registry/node/pb/gen/mocks"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 )
 
 var defaultCors = cors.Config{

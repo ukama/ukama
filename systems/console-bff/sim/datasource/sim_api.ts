@@ -1,4 +1,13 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { SUBSCRIBER_API_GW } from "../../common/configs";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
@@ -40,7 +49,11 @@ class SimApi extends RESTDataSource {
         data: req.data,
         sim_type: req.simType,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   allocateSim = async (req: AllocateSimInputDto): Promise<SimDto> => {
@@ -53,7 +66,11 @@ class SimApi extends RESTDataSource {
         ...req,
         sim_token: token,
       },
-    }).then(res => dtoToSimResDto(res));
+    })
+      .then(res => dtoToSimResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   toggleSimStatus = async (
@@ -64,7 +81,11 @@ class SimApi extends RESTDataSource {
         simId: req.simId,
         status: req.status,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {
@@ -72,11 +93,19 @@ class SimApi extends RESTDataSource {
       params: {
         simId: req.simId,
       },
-    }).then(res => dtoToSimResDto(res));
+    })
+      .then(res => dtoToSimResDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getSims = async (type: string): Promise<SimsResDto> => {
-    return this.get(`/sims/${type}`).then(res => dtoToSimsDto(res));
+    return this.get(`/sims/${type}`)
+      .then(res => dtoToSimsDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getDataUsage = async (simId: string): Promise<SimDataUsage> => {
@@ -93,7 +122,11 @@ class SimApi extends RESTDataSource {
       body: {
         subscriberId: req.subscriberId,
       },
-    }).then(res => dtoToSimDetailsDto(res));
+    })
+      .then(res => dtoToSimDetailsDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getSimByNetworkId = async (
@@ -103,7 +136,11 @@ class SimApi extends RESTDataSource {
       body: {
         networkId: req.networkId,
       },
-    }).then(res => dtoToSimDetailsDto(res));
+    })
+      .then(res => dtoToSimDetailsDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   deleteSim = async (req: DeleteSimInputDto): Promise<DeleteSimResDto> => {
@@ -111,7 +148,11 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   addPackegeToSim = async (
@@ -121,7 +162,11 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   removePackageFromSim = async (
@@ -131,7 +176,11 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getPackagesForSim = async (
@@ -141,11 +190,19 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`).then(res => res);
+    return this.get(`/stats/${type}`)
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   setActivePackageForSim = async (
@@ -155,7 +212,11 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    }).then(res => res);
+    })
+      .then(res => res)
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 

@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 #include "config.h"
@@ -17,6 +16,8 @@
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 /**
  * @fn      void handle_sigint(int)
@@ -31,10 +32,8 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "port",          required_argument, 0, 'p' },
     { "logs",          required_argument, 0, 'l' },
     { "noded-host",    required_argument, 0, 'n' },
-    { "noded-port",    required_argument, 0, 's' },
     { "noded-lep",     required_argument, 0, 'e' },
     { "remote-server", required_argument, 0, 'r' },
     { "status-file",   required_argument, 0, 'f' },
@@ -106,14 +105,8 @@ void usage() {
     usys_puts(
         "-l, --logs <TRACE> <DEBUG> <INFO>      Log level for the process.\n");
     usys_puts(
-        "--p, --port <port>                      Port at which service will"
-              "listen.\n");
-    usys_puts(
         "-n, --noded-host <host>               Host at which noded service"
                   "will listen.\n");
-    usys_puts(
-        "-s, --noded-port <port>               Port at which noded service"
-                   "will listen.\n");
     usys_puts(
         "-e, --noded-ep </node>                API EP at which noded service"
                        "will enquire for node info.\n");
@@ -127,21 +120,12 @@ void usage() {
         "-v, --version                          Software Version.\n");
 }
 
-/**
- * @fn      int main(int, char**)
- * @brief
- *
- * @param   argc
- * @param   argv
- * @return  Should stay in main function entire time.
- */
 int main(int argc, char **argv) {
-    int ret = USYS_OK, port=0;
+
+    int ret = USYS_OK;
 
     char *debug        = DEF_LOG_LEVEL;
-    char *cPort        = DEF_SERVICE_PORT;
     char *nodedHost    = DEF_NODED_HOST;
-    char *nodedPort    = DEF_NODED_PORT;
     char *nodedEP      = DEF_NODED_EP;
     char *remoteServer = DEF_REMOTE_SERVER;
     char *mapFile      = DEF_MAP_FILE;
@@ -154,7 +138,7 @@ int main(int argc, char **argv) {
         int opt = 0;
         int opdIdx = 0;
 
-        opt = getopt_long(argc, argv, "f:p:l:n:s:e:r:hv", longOptions, &opdIdx);
+        opt = getopt_long(argc, argv, "f:l:n:e:r:hv", longOptions, &opdIdx);
         if (opt == -1) {
             break;
         }
@@ -170,14 +154,6 @@ int main(int argc, char **argv) {
             usys_exit(0);
             break;
 
-        case 'p':
-            cPort = optarg;
-            if (!cPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
         case 'l':
             debug = optarg;
             set_log_level(debug);
@@ -190,13 +166,7 @@ int main(int argc, char **argv) {
                 usys_exit(0);
             }
             break;
-        case 's':
-            nodedPort = optarg;
-            if (!nodedPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
+
         case 'e':
             nodedEP = optarg;
             if (!nodedEP) {
@@ -224,12 +194,18 @@ int main(int argc, char **argv) {
 
     /* Service config update */
     serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
-    serviceConfig.servicePort  = usys_atoi(cPort);
+    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedHost    = usys_strdup(nodedHost);
-    serviceConfig.nodedPort    = usys_atoi(nodedPort);
+    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.nodedEP      = usys_strdup(nodedEP);
     serviceConfig.remoteServer = usys_strdup(remoteServer);
     serviceConfig.numEntries   = readMapFile(serviceConfig.entries, mapFile);
+
+    if (!serviceConfig.servicePort ||
+        !serviceConfig.nodedPort) {
+        usys_log_error("Unable to determine the port for services");
+        usys_exit(1);
+    }
 
     usys_log_debug("Starting notify.d ...");
 

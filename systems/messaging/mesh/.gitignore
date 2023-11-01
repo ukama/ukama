@@ -3,4 +3,4 @@
 /src/*.o
 mprof*
 /*.tar.gz
-mesh.d
+mesh

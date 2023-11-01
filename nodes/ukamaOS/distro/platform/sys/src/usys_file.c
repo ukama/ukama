@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include "usys_file.h"
@@ -382,4 +381,18 @@ int usys_file_add_record(char *filename, char *rowdesc, char *data) {
     /* Add data to file */
     ret = usys_file_append(filename, data, 0, usys_strlen(data));
     return ret;
+}
+
+int usys_find_service_port(char *serviceName) {
+
+    USysServiceEntry *entry = NULL;
+
+    entry = usys_get_service_by_name(serviceName);
+    if (entry == NULL) {
+        return 0;
+    }
+
+    endservent();
+
+    return ntohs(entry->s_port);
 }

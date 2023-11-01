@@ -17,7 +17,7 @@
 
 #include "agent.h"
 
-#define SERVICE_NAME       "wimc.d"
+#define SERVICE_NAME       "wimc"
 #define WIMC_VERSION       "0.0.1"
 
 #define EP_BS              "/"

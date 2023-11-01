@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package main
 
 import (
@@ -5,29 +13,25 @@ import (
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"gopkg.in/yaml.v2"
-
-	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
-	"github.com/sirupsen/logrus"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
+
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -105,10 +109,9 @@ func runGrpcServer(gormDB sql.Db) {
 	}
 	nucleusP := providers.NewNetworkClientProvider(serviceConfig.NetworkHost, serviceConfig.DebugMode)
 
-
 	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
 	if err != nil {
-		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
+		log.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
 	}
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,

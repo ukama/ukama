@@ -1,3 +1,0 @@
-:PREROUTING,OUTPUT
-*raw
--j TRACE;=;OK

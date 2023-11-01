@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /*
@@ -22,19 +21,6 @@
 #include "log.h"
 
 /*
- * Various environment variables:
- * ENV_WEBSOCKET_PORT
- * ENV_SERVICE_PORT   
- * ENV_AMQP_HOST
- * ENV_AMQP_PORT 
- * ENV_INIT_CLIENT_HOST
- * ENV_INIT_CLIENT_PORT
- * ENV_MESH_CERT_FILE 
- * ENV_MESH_KEY_FILE
- *
- */
-
-/*
  * read_config_from_env -- read configuration params from the env variables
  *
  */
@@ -44,14 +30,18 @@ int read_config_from_env(Config **config) {
     char *amqpHost=NULL, *amqpPort=NULL;
 	char *initClientHost=NULL, *initClientPort=NULL;
 	char *certFile=NULL, *keyFile=NULL;
+    char *orgName=NULL, *orgID=NULL;
+    char *bindingIP=NULL;
 
-    if ((websocketPort = getenv(ENV_WEBSOCKET_PORT)) == NULL ||
+    if ((bindingIP = getenv(ENV_BINDING_IP)) == NULL ||
+        (websocketPort = getenv(ENV_WEBSOCKET_PORT)) == NULL ||
         (servicesPort = getenv(ENV_SERVICES_PORT)) == NULL ||
         (amqpHost = getenv(ENV_AMQP_HOST)) == NULL ||
         (amqpPort = getenv(ENV_AMQP_PORT)) == NULL ||
         (initClientHost = getenv(ENV_INIT_CLIENT_HOST)) == NULL ||
-        (initClientPort = getenv(ENV_INIT_CLIENT_PORT)) == NULL) {
-
+        (initClientPort = getenv(ENV_INIT_CLIENT_PORT)) == NULL ||
+        (orgName = getenv(ENV_UKAMA_ORG_NAME)) == NULL ||
+        (orgID   = getenv(ENV_UKAMA_ORG_ID)) == NULL) {
         log_error("Required env variable not defined");
         return FALSE;
     }
@@ -72,6 +62,7 @@ int read_config_from_env(Config **config) {
 
     (*config)->logLevel = getenv(ENV_MESH_LOG_LEVEL);
 
+    (*config)->bindingIP      = strdup(bindingIP);
 	(*config)->websocketPort  = strdup(websocketPort);
     (*config)->servicesPort   = strdup(servicesPort);
     (*config)->amqpHost       = strdup(amqpHost);
@@ -79,6 +70,8 @@ int read_config_from_env(Config **config) {
     (*config)->amqpExchange   = strdup(DEFAULT_MESH_AMQP_EXCHANGE);
     (*config)->initClientHost = strdup(initClientHost);
     (*config)->initClientPort = strdup(initClientPort);
+    (*config)->orgName        = strdup(orgName);
+    (*config)->orgID          = strdup(orgID);
 
     if (!(*config)->logLevel) {
         log_debug("Log level not defined, setting to default: DEBUG");
@@ -94,22 +87,23 @@ int read_config_from_env(Config **config) {
  */
 void print_config(Config *config) {
 
-	log_debug("Websocket port: %s", config->websocketPort);
-    log_debug("Services port:   %s", config->servicesPort);
-	log_debug("AMQP: %s:%s", config->amqpHost, config->amqpPort);
-	log_debug("initClient: %s:%s", config->initClientHost,
-              config->initClientPort);
-    log_debug("Cert file: %s", config->certFile);
-    log_debug("Key file:  %s", config->keyFile);
+    log_debug("Ukama org name: %s",  config->orgName);
+    log_debug("Ukama org ID:   %s",  config->orgID);
+    log_debug("Binding IP:     %s",  config->bindingIP);
+	log_debug("Websocket port: %s",  config->websocketPort);
+    log_debug("Services port:  %s",  config->servicesPort);
+	log_debug("AMQP: %s:%s",         config->amqpHost, config->amqpPort);
+	log_debug("initClient: %s:%s",   config->initClientHost,
+                                     config->initClientPort);
+    log_debug("Cert file: %s",       config->certFile);
+    log_debug("Key file:  %s",       config->keyFile);
 }
 
-/*
- * clear_config --
- */
 void clear_config(Config *config) {
 
 	if (!config) return;
 
+    free(config->bindingIP);
     free(config->websocketPort);
     free(config->servicesPort);
 	free(config->amqpHost);
@@ -119,4 +113,6 @@ void clear_config(Config *config) {
     free(config->initClientPort);
 	free(config->certFile);
 	free(config->keyFile);
+    free(config->orgName);
+    free(config->orgID);
 }

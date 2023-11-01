@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package pkg
 
 import (
@@ -15,6 +23,8 @@ type Config struct {
 	Service          *uconf.Service
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
+	WimsiHost        string           `default:"http://wimsi:8080"`
+	Health           string           `default:"http://health:9090"`
 }
 
 func NewConfig(name string) *Config {
@@ -26,7 +36,7 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.node.health.capps.store",
+				// "event.cloud.local.{{ .Org}}.node.health.capps.store",
 				"event.cloud.local.{{ .Org}}.hub.distributor.capp",
 			},
 		},

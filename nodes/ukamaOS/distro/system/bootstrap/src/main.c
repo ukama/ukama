@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /*
@@ -20,6 +19,11 @@
 #include <errno.h>
 #include <netdb.h>
 #include <curl/curl.h>
+
+#include "usys_api.h"
+#include "usys_error.h"
+#include "usys_log.h"
+#include "usys_file.h"
 
 #include "nodeInfo.h"
 #include "config.h"
@@ -76,10 +80,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/*
- * write_to_file --
- *
- */
 static int write_to_file(char *fileName, char *buffer) {
 
 	FILE *fp=NULL;
@@ -185,7 +185,8 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
-    config->nodedPort = find_noded_service_port();
+
+    config->nodedPort = usys_find_service_port("node");
     if (config->nodedPort == 0) {
         log_error("Error getting noded port from service db");
         exit(1);

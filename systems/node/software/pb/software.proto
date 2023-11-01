@@ -7,9 +7,21 @@ import "google/protobuf/wrappers.proto";
 service SoftwareService {
     rpc CreateSoftwareUpdate (CreateSoftwareUpdateRequest) returns (CreateSoftwareUpdateResponse);
     rpc GetLatestSoftwareUpdate (GetLatestSoftwareUpdateRequest) returns (GetLatestSoftwareUpdateResponse);
+
+    rpc UpdateSoftware (UpdateSoftwareRequest) returns (UpdateSoftwareResponse);
 }
 
+message UpdateSoftwareRequest {
+    string nodeId = 1;
+    string tag = 2;
+    string space = 3;
+    string name = 5;
+}
 
+message UpdateSoftwareResponse {
+    string message =1;
+
+}
 message CreateSoftwareUpdateRequest {
     string name = 1;
     string tag = 2;
@@ -32,6 +44,7 @@ message GetLatestSoftwareUpdateRequest {
 message GetLatestSoftwareUpdateResponse {
     SoftwareUpdate software_update = 1;
 }
+
 
 
 enum Status {

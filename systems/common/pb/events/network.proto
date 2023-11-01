@@ -1,0 +1,26 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+
+// added a new network
+message NetworkCreatedEvent {
+    string id = 1;
+    string name = 2;
+    string orgId = 3;
+    repeated string allowedCountries = 4;
+    repeated string allowedNetworks = 5;
+    double budget = 6;
+    double overdraft = 7;
+    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
+    bool isDeactivated = 9;
+    bool paymentLinks = 10;
+}

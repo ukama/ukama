@@ -1,2 +1,0 @@
-config BOARD_ASROCK_H110M_DVS
-	bool "H110M-DVS"

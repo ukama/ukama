@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -14,9 +22,8 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 )
-
 
 const testOrgName = "test-org"
 
@@ -31,28 +38,28 @@ func TestControllerServer_RestartSite(t *testing.T) {
 
 	netId := uuid.NewV4()
 
-	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, RegRepo, pkg.IsDebugMode)
 	nodeId := "uk-983794-hnode-78-7830"
-	anyMsg, err := anypb.New(&pb.RestartSiteRequest{
-		SiteName:  "pamoja",
-		NetworkId: netId.String(),
-	})
-	if err != nil {
-		return 
-	}
 	nodeLog := &db.NodeLog{
 		NodeId: nodeId,
 	}
 	RegRepo.On("ValidateSite", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	RegRepo.On("ValidateNetwork", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-	RegRepo.On("GetNodesBySite", "pamoja",mock.Anything,mock.Anything).Return([]string{nodeId}, nil).Once()
-	conRepo.On("Get", nodeId,mock.Anything).Return(nodeLog,nil).Once()
+	RegRepo.On("GetNodesBySite", "pamoja", mock.Anything, mock.Anything).Return([]string{nodeId}, nil).Once()
+	conRepo.On("Get", nodeId, mock.Anything).Return(nodeLog, nil).Once()
 
+	msg := &pb.RestartNodeRequest{
+		NodeId: nodeId,
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return
+	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
-		Target:"test-org."+ "." + "." + nodeId,
+		Target:     "test-org." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/"+nodeId,
-		Msg:        anyMsg,
+		Path:       "/v1/reboot/" + nodeId,
+		Msg:        data,
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartSite(context.TODO(), &pb.RestartSiteRequest{
@@ -71,25 +78,25 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	RegRepo := &mocks.RegistryProvider{}
 
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
-
-	anyMsg, err := anypb.New(&pb.RestartNodeRequest{
-		NodeId: nodeId,
-	})
-	if err != nil {
-		return 
-	}
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, RegRepo, pkg.IsDebugMode)
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
 	}
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
+	msg := &pb.RestartNodeRequest{
+		NodeId: nodeId,
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return
+	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/"+nodeId,
-		Msg:        anyMsg,
+		Path:       "/v1/reboot/" + nodeId,
+		Msg:        data,
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
@@ -108,31 +115,38 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	RegRepo := &mocks.RegistryProvider{}
 	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName,conRepo,msgclientRepo,RegRepo,pkg.IsDebugMode)
-
-	anyMsg, err := anypb.New(&pb.RestartNodesRequest{
-		NetworkId: netId.String(),
-		NodeIds: []string{nodeId},
-	})
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, RegRepo, pkg.IsDebugMode)
+	msg := &pb.RestartNodeRequest{
+		NodeId: nodeId,
+	}
+	data, err := proto.Marshal(msg)
 	if err != nil {
-		return 
+		return
 	}
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
 	}
+
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
+	msg = &pb.RestartNodeRequest{
+		NodeId: nodeId,
+	}
+	data, err = proto.Marshal(msg)
+	if err != nil {
+		return
+	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/"+nodeId,
-		Msg:        anyMsg,
+		Path:       "/v1/reboot/" + nodeId,
+		Msg:        data,
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartNodes(context.TODO(), &pb.RestartNodesRequest{
 		NetworkId: netId.String(),
-		NodeIds: []string{nodeId},
+		NodeIds:   []string{nodeId},
 	})
 	// Assert
 	msgclientRepo.AssertExpectations(t)

@@ -1,4 +1,10 @@
 #!/bin/bash
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
+
 echo "Readme generated based on you proto file at path:"
 cd $1
 pwd;find -s . -not -path '*/.*' -not -path '*/*.txt'  -print  2>/dev/null|awk '!/\.$/ {for (i=1;i<NF-1;i++){printf("      │")}print "      ├── "$NF}'  FS='/' &> temp.txt

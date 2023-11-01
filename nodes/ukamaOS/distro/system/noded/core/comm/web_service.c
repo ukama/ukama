@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include <netdb.h>
@@ -24,10 +23,11 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
+#include "usys_file.h"
 
 #define NOTIFY_ALERT_EP       "/notify/v1/alert/"
 #define NOTIFY_EVENT_EP       "/notify/v1/event/"
-#define SERVICE_NAME          "noded"
+#define SERVICE_NAME          "node"
 
 UInst serverInst;
 static char gNotifServer[MAX_URL_LENGTH] = {0};
@@ -1436,7 +1436,7 @@ static int init_framework(UInst *inst) {
 
     int port;
 
-    port = find_service_port(SERVICE_NAME);
+    port = usys_find_service_port(SERVICE_NAME);
     if (port == 0) {
         usys_log_error("Unable to find %s in the service db",
                        SERVICE_NAME);
@@ -1483,7 +1483,7 @@ int web_service_start() {
     }
 
     usys_log_info("Webservice on client port: %d started.",
-                  find_service_port(SERVICE_NAME));
+                  usys_find_service_port(SERVICE_NAME));
 
     return STATUS_OK;
 }

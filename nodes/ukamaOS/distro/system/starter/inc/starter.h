@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef STARTER_H_
@@ -15,21 +14,18 @@
 #include "usys_log.h"
 #include "jansson.h"
 #include "capp_config.h"
+#include "usys_services.h"
 
-#define SERVICE_NAME           "starter.d"
+#define SERVICE_NAME           SERVICE_STARTER
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define DEF_SERVICE_PORT        "8086"
 #define STARTER_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
 #define DEF_WIMC_HOST          "localhost"
-#define DEF_NOTIFY_PORT        "8085"
-#define DEF_NODED_PORT         "8095"
-#define DEF_WIMC_PORT          "8075"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"

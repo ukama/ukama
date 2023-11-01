@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /*
@@ -20,6 +19,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <uuid/uuid.h>
 
 #include "callback.h"
 #include "mesh.h"
@@ -30,7 +30,7 @@
 #include "u_amqp.h"
 #include "httpStatus.h"
 
-extern MapTable *IDsTable;
+extern MapTable *NodesTable;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -40,18 +40,20 @@ extern void websocket_incoming_message(const URequest *request,
 									   void *data);
 extern void  websocket_onclose(const URequest *request, WSManager *manager,
 							   void *data);
+
 /*
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
  */
 int callback_websocket(const URequest *request, UResponse *response,
                        void *data) {
-	int ret;
+	int ret, forwardPort;
 	char *nodeID=NULL;
 	Config *config=NULL;
     MapItem *map=NULL;
     char ip[INET_ADDRSTRLEN]={0};
-    struct sockaddr_in *sin=NULL;
+    struct sockaddr_in *sin = NULL;
+    UInst *forwardInst      = NULL;
 
     config = (Config *)data;
 
@@ -64,12 +66,23 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
-    map = add_map_to_table(&IDsTable,
+    /* Open up forwarding web instance for services */
+    forwardPort = start_forward_service(config, &forwardInst);
+    if (forwardPort <= 0 ) {
+        log_error("Unable to start forwarding serice");
+        return U_CALLBACK_ERROR;
+    }
+
+    map = add_map_to_table(&NodesTable,
                            nodeID,
+                           &forwardInst,
                            &ip[0], sin->sin_port,
-                           &ip[0], sin->sin_port);
+                           config->bindingIP,
+                           forwardPort);
 	if (map == NULL) {
-        return U_CALLBACK_CONTINUE; // XXX
+        ulfius_stop_framework(forwardInst);
+        ulfius_clean_instance(forwardInst);
+        return U_CALLBACK_ERROR;
 	}
 
     map->configData = data;
@@ -78,9 +91,13 @@ int callback_websocket(const URequest *request, UResponse *response,
 	if (publish_event(CONN_CONNECT,
                       nodeID,
                       &ip[0], sin->sin_port,
-                      &ip[0], sin->sin_port) == FALSE) {
+                      config->bindingIP,
+                      forwardPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-        //		return U_CALLBACK_ERROR; xxx
+        remove_map_item_from_table(&NodesTable, nodeID);
+        ulfius_stop_framework(forwardInst);
+        ulfius_clean_instance(forwardInst);
+        return U_CALLBACK_ERROR;
 	} else {
 		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
@@ -99,134 +116,117 @@ int callback_websocket(const URequest *request, UResponse *response,
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_not_allowed -- 
- *
- */
-int callback_not_allowed(const URequest *request, UResponse *response,
-						 void *user_data) {
-  
-	ulfius_set_string_body_response(response, 403, "Operation not allowed\n");
-	return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_default_websocket -- default callback for no-match
- *
- */
-int callback_default_websocket(const URequest *request, UResponse *response,
+int callback_default_websocket(const URequest *request,
+                               UResponse *response,
 							   void *user_data) {
 
-	ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_default -- default callback for no-match
- *
- */
-int callback_default_webservice(const URequest *request, UResponse *response,
+int callback_default_webservice(const URequest *request,
+                                UResponse *response,
 								void *data) {
 
-	ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_ping --
- *
- */
-int callback_ping(const URequest *request, UResponse *response,
-						void *data) {
+int callback_get_ping(const URequest *request,
+                      UResponse *response,
+                      void *data) {
 
-	ulfius_set_string_body_response(response, 200, "ok");
+	ulfius_set_string_body_response(response, 200, "");
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_webservice --
- *
- */
-int callback_webservice(const URequest *request, UResponse *response,
-						void *data) {
+int callback_default_forward(const URequest *request,
+                             UResponse *response,
+                             void *user_data) {
 
-	int ret, statusCode=200;
-	char *str;
-	MapItem *map=NULL;
-	struct sockaddr_in *sin;
-    char *nodeID=NULL, *nodePort=NULL, *url=NULL, *agent=NULL;
-    char *packetStr=NULL;
-    char *requestStr=NULL, *responseStr=NULL;
-
-    /*
-     * Find the NodeID from the URL.
-     * For the given NodeID, look up the Map item in the IDstable.
-     *   If match found, add the task to the transmit list and set cond
-     *   otherwise return 503 (Service Unavailable)
-     */
+    MapItem *map=NULL;
+    char *host=NULL, *port=NULL, *url=NULL;
+    char *requestStr=NULL;
+    char *responseStr=NULL;
+    int statusCode;
+    Forward *forward = NULL;
+    char uuidStr[36+1];
+    uuid_t uuid;
 
     url   = u_map_get(request->map_header, "Host");
-    agent = u_map_get(request->map_header, "User-Agent");
-    split_strings(url, &nodeID, &nodePort, ":");
+    split_strings(url, &host, &port, ":");
 
-    if (nodeID == NULL || nodePort == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+    if (host == NULL || port == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
-    map = is_existing_item(IDsTable, nodeID);
+    map = is_existing_item_by_port(NodesTable, atoi(port));
     if (map == NULL) { /* No matching node connected. */
-        log_error("For agent: %s No matching node with nodeID: %s",
-                  agent, nodeID);
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+        log_error("No matching node on port: %s", port);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_NotFound,
                                         HttpStatusStr(HttpStatus_NotFound));
+        free(port);
+        free(host);
         return U_CALLBACK_CONTINUE;
     }
 
-	ret = serialize_websocket_message(&requestStr, request, nodeID, nodePort,
-                                      agent);
-	if (ret == FALSE && requestStr == NULL) {
-		log_error("Failed to convert request to JSON");
-		statusCode = 400;
-		goto done;
-	} else {
-		log_debug("Forward request JSON: %s", requestStr);
-	}
+    uuid_generate(uuid);
+    uuid_unparse(uuid, uuidStr);
+    forward = add_client_to_list(&map->forwardList, uuidStr);
+    if (forward == NULL) {
+        log_error("Error adding to the forward list");
+        statusCode  = HttpStatus_InternalServerError;
+        responseStr = HttpStatusStr(statusCode);
+        goto done;
+    }
 
-	/* Add work for the websocket for transmission. */
+    if (serialize_websocket_message(&requestStr,
+                                    request,
+                                    uuidStr) == FALSE) {
+        log_error("Failed to convert request to JSON");
+        statusCode  = HttpStatus_InternalServerError;
+        responseStr = HttpStatusStr(statusCode);
+        goto done;
+    } else {
+        log_debug("Forward request JSON: %s", requestStr);
+    }
+
+    /* Add work for the websocket for transmission. */
     add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
+    free(requestStr);
 
-	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&(map->mutex));
-	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&(map->receive->hasWork), &(map->mutex));
-	pthread_mutex_unlock(&(map->mutex));
+    /* Wait for the response back. The cond is set by the websocket thread */
+    pthread_mutex_lock(&(forward->mutex));
+    log_debug("Waiting for response back from the node...");
 
-    // xxx
-    responseStr = map->receive->first->data;
-	log_debug("Got response back from server. Response: %s", responseStr);
+    pthread_cond_wait(&forward->hasData, &forward->mutex);
+	pthread_mutex_unlock(&forward->mutex);
 
-	/* Send response back. */
-	if (map->size == 0) {
-		statusCode = 402;
-		goto done;
-	}
-  
- done:
-    // xxx
-	/* Send response back to the callee */
-	// if (statusCode != 200) {
-	//	ulfius_set_string_body_response(response, statusCode, "");
-	//} else {
-	//	ulfius_set_string_body_response(response, statusCode, map->data);
-	//}
-    ulfius_set_string_body_response(response, 200, responseStr);
-    //    free(packetStr);
-    // free(requestStr);
-    
-	// if (map->size)
-	//	free(map->data);
+    log_debug("Response from System Code: %d len: %d Data: %s",
+              forward->httpCode,
+              forward->size,
+              (char *)forward->data);
 
-	return U_CALLBACK_CONTINUE;
+    statusCode  = forward->httpCode;
+    responseStr = (char *)forward->data;
+
+done:
+    ulfius_set_string_body_response(response,
+                                    statusCode,
+                                    responseStr);
+
+    remove_item_from_list(map->forwardList, uuidStr);
+    free(forward->data);
+    free(host);
+    free(port);
+
+    return U_CALLBACK_CONTINUE;
 }
