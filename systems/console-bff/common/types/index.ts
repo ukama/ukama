@@ -8,6 +8,7 @@ export type ApiMethodDataDto = {
   method: API_METHOD_TYPE;
   params?: any;
   headers?: any;
+  httpsAgent?: any;
   body?: any;
 };
 

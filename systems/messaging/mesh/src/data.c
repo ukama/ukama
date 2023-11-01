@@ -181,7 +181,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 	char *systemHost=NULL, *systemPort=NULL;
 	json_t *jResp=NULL;
 
-    if (strcmp(message->reqType, MESH_NODE_REQUEST) != 0) {
+    if (strcmp(message->reqType, UKAMA_NODE_REQUEST) != 0) {
         log_error("Invalid request type. ignoring.");
         retCode = HttpStatus_BadRequest;
         responseLocal = HttpStatusStr(retCode);

@@ -230,6 +230,8 @@ int usys_file_write_number(void *fname, void *data, off_t offset,
  */
 void usys_file_close(int fd);
 
+int usys_find_service_port(char *serviceName);
+
 #ifdef __cplusplus
 }
 #endif

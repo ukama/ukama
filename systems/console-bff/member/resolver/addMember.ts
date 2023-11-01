@@ -1,16 +1,16 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { AddMemberInputDto, MemberObj } from "./types";
+import { AddMemberInputDto, MemberDto } from "./types";
 
 @Resolver()
 export class AddMemberResolver {
-  @Mutation(() => MemberObj)
+  @Mutation(() => MemberDto)
   async addMember(
     @Arg("data") data: AddMemberInputDto,
     @Ctx() ctx: Context
-  ): Promise<MemberObj> {
-    const { dataSources, headers } = ctx;
-    return dataSources.dataSource.addMember(data, headers.orgName);
+  ): Promise<MemberDto> {
+    const { dataSources } = ctx;
+    return dataSources.dataSource.addMember(data);
   }
 }

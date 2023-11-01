@@ -1,6 +1,7 @@
 import { NodeTypeEnum } from '@/generated';
+import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
-import { TObject } from '@/types';
+import { TNodeSiteTree, TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
 const getTitleFromPath = (path: string, id: string) => {
@@ -9,18 +10,18 @@ const getTitleFromPath = (path: string, id: string) => {
       return 'Home';
     case '/settings':
       return 'Settings';
-    case '/sites':
-      return 'Sites';
+    // case '/sites':
+    //   return 'Sites';
     case '/nodes':
       return 'Nodes';
     case '/nodes/[id]':
       return `Nodes > ${id}`;
-    case '/subscriber':
+    case '/subscribers':
       return 'Subscribers';
     case '/site_planning':
       return 'Site Planning';
-    case '/manage':
-      return 'Manage';
+    // case '/manage':
+    //   return 'Manage';
     case '/uidev':
       return 'UIDEV';
     case '/ping':
@@ -204,7 +205,7 @@ const getDefaultMetricList = (name: string) => {
 
 const getTitleByKey = (key: string) => {
   switch (key) {
-    case 'uptimetrx':
+    case 'uptime_trx':
       return 'Uptime TRX';
     case 'temperaturetrx':
       return 'Temp. (TRX)';
@@ -256,6 +257,23 @@ const getTitleByKey = (key: string) => {
       return 'PA Power';
     default:
       return '';
+  }
+};
+
+export const getNodeTabTypeByIndex = (index: number) => {
+  switch (index) {
+    case 0:
+      return Graphs_Type.NodeHealth;
+    case 1:
+      return Graphs_Type.Network;
+    case 2:
+      return Graphs_Type.Resources;
+    case 3:
+      return Graphs_Type.Radio;
+    case 4:
+      return Graphs_Type.Subscribers;
+    default:
+      return Graphs_Type.NodeHealth;
   }
 };
 
@@ -446,8 +464,48 @@ const getUnixTime = (): number => {
   return Math.floor(Date.now() / 1000);
 };
 
+const convertToWeeksOrMonths = (number: number): string => {
+  if (number >= 4) {
+    const months = Math.floor(number / 4);
+    return `${months <= 1 ? 'Month' : 'Months'} `;
+  } else {
+    const weeks = Math.floor(number);
+    return ` ${weeks <= 1 ? 'Week' : 'Weeks'} `;
+  }
+};
+
+const structureNodeSiteDate = (data: any) => {
+  let count = 1;
+  const t: TNodeSiteTree[] = [];
+
+  data.forEach((node: any) => {
+    if (node.type === NodeTypeEnum.Tnode) {
+      t.push({
+        id: node.site?.siteId || '',
+        name: `Site ${count++}`,
+        nodeId: node.id,
+        nodeType: node.type,
+        nodeName: node.name,
+      });
+    }
+  });
+
+  return t;
+};
+
+export const getMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return metric?.values || [];
+};
+
+export const isMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return (metric && metric.values.length > 1) || false;
+};
+
 export {
   calculateCenterLatLng,
+  convertToWeeksOrMonths,
   doesHttpOnlyCookieExist,
   fileToBase64,
   formatBytes,
@@ -472,5 +530,6 @@ export {
   parseObjectInNameValue,
   secToHoursNMints,
   secondsToDuration,
+  structureNodeSiteDate,
   uniqueObjectsArray,
 };

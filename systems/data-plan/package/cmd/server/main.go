@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/server"
 
@@ -10,17 +12,14 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/package/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	"google.golang.org/grpc"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -42,7 +41,7 @@ func initConfig() {
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 

@@ -304,11 +304,12 @@ func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetwork
 
 func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.AllocateSimResponse, error) {
 	simReq := simMangPb.AllocateSimRequest{
-		SubscriberId: req.SubscriberId,
-		SimToken:     req.SimToken,
-		PackageId:    req.PackageId,
-		NetworkId:    req.NetworkId,
-		SimType:      req.SimType,
+		SubscriberId:  req.SubscriberId,
+		SimToken:      req.SimToken,
+		PackageId:     req.PackageId,
+		NetworkId:     req.NetworkId,
+		SimType:       req.SimType,
+		TrafficPolicy: req.TrafficPolicy,
 	}
 	res, err := r.clients.sm.AllocateSim(&simReq)
 	if err != nil {

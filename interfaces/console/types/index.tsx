@@ -143,3 +143,13 @@ export type TCommonData = {
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
+
+export type TNodeSiteChild = {};
+
+export type TNodeSiteTree = {
+  id: string;
+  name: string;
+  nodeId: string;
+  nodeType: string;
+  nodeName: string;
+};

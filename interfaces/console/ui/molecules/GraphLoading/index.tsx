@@ -1,3 +1,4 @@
+import { colors } from '@/styles/theme';
 import { Skeleton, Stack } from '@mui/material';
 
 const GraphLoading = () => {
@@ -8,10 +9,30 @@ const GraphLoading = () => {
       alignItems="flex-end"
       justifyContent="center"
     >
-      <Skeleton variant="rectangular" width={10} height={24} />
-      <Skeleton variant="rectangular" width={10} height={34} />
-      <Skeleton variant="rectangular" width={10} height={44} />
-      <Skeleton variant="rectangular" width={10} height={40} />
+      <Skeleton
+        variant="rectangular"
+        width={10}
+        height={24}
+        sx={{ backgroundColor: colors.vulcan70 }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width={10}
+        height={34}
+        sx={{ backgroundColor: colors.vulcan70 }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width={10}
+        height={44}
+        sx={{ backgroundColor: colors.vulcan70 }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width={10}
+        height={40}
+        sx={{ backgroundColor: colors.vulcan70 }}
+      />
     </Stack>
   );
 };

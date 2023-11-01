@@ -124,8 +124,9 @@ int serialize_local_service_response(char **response, Message *message,
 	}
 
 	json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_RESPONSE));
-    json_object_set_new(json, JSON_SEQ, json_integer(message->seqNo));
+    json_object_set_new(json, JSON_UUID, json_string(message->seqNo));
 
+#if 0
     /* Add node info. */
 	json_object_set_new(json, JSON_NODE_INFO, json_object());
 	obj = json_object_get(json, JSON_NODE_INFO);
@@ -138,6 +139,7 @@ int serialize_local_service_response(char **response, Message *message,
 	obj = json_object_get(json, JSON_SERVICE_INFO);
 	json_object_set_new(obj, JSON_NAME,
                         json_string(message->serviceInfo->name));
+#endif
     
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
@@ -440,13 +442,9 @@ int deserialize_request_info(URequest **request, char *str) {
 	return TRUE;
 }
 
-/*
- * deserialize_websocket_message --
- *
- */
 int deserialize_websocket_message(Message **message, json_t *json) {
 
-    json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jMessage;
+    json_t *jType, *jSeq, *jMessage;
     json_t *jLength, *jData, *jCode;
 	char *jStr=NULL;
 
@@ -456,14 +454,11 @@ int deserialize_websocket_message(Message **message, json_t *json) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_SEQ);
-    jNodeInfo    = json_object_get(json, JSON_NODE_INFO);
-    jServiceInfo = json_object_get(json, JSON_SERVICE_INFO);
+    jSeq         = json_object_get(json, JSON_UUID);
     jMessage     = json_object_get(json, JSON_MESSAGE);
 
-    if (jType == NULL || jSeq == NULL || jNodeInfo == NULL ||
-        jServiceInfo == NULL || jMessage == NULL) {
-        jStr = json_dumps(json, 0);
+    if (jType == NULL || jSeq == NULL || jMessage == NULL) {
+        jStr = json_dumps(json, JSON_ENCODE_ANY);
         log_error("Error decoding JSON: %s", jStr);
         free(jStr);
         return FALSE;
@@ -487,14 +482,11 @@ int deserialize_websocket_message(Message **message, json_t *json) {
 	}
 
     (*message)->reqType  = strdup(json_string_value(jType));
-    (*message)->seqNo    = json_integer_value(jSeq);
+    (*message)->seqNo    = strdup(json_string_value(jSeq));
     (*message)->code     = json_integer_value(jCode);
     (*message)->dataSize = json_integer_value(jLength);
     (*message)->data     = strdup(json_string_value(jData));
     
-    deserialize_node_info(&(*message)->nodeInfo, jNodeInfo);
-	deserialize_service_info(&(*message)->serviceInfo, jServiceInfo);
-
     /* deserialize the data */
     if (strcmp((*message)->reqType, MESH_SERVICE_REQUEST) == 0) {
         deserialize_request_info((URequest **)&(*message)->data, jData);

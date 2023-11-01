@@ -149,7 +149,6 @@ void websocket_manager(const URequest *request, WSManager *manager,
         if (list->exit) break;
 
 		if (list->first == NULL) { /* Empty. Wait. */
-			log_debug("Waiting for work to be available ...");
 			ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
             if (ret == ETIMEDOUT) {
                 pthread_mutex_unlock(&(list->mutex));
@@ -160,7 +159,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
                     continue;
                 }
             }
-		}
+        }
 
 		/* We have some packet to transmit. */
 		work = get_work_to_transmit(list);
@@ -179,7 +178,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
 		/* 2. Send data over the wire. */
 		/* Currently, Packet is JSON string. Send it over. */
-		if (ulfius_websocket_wait_close(manager, 2000) ==
+		if (ulfius_websocket_wait_close(manager, 1) ==
 			U_WEBSOCKET_STATUS_OPEN) {
             jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
 			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
@@ -199,25 +198,33 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	return;
 }
 
-/*
- * websocket_incoming_message -- handle incoming message over websocket.
- *
+/* handles incoming message over websocket.
  */
-
 void websocket_incoming_message(const URequest *request,
-								WSManager *manager, WSMessage *message,
-								void *data) {
+								WSManager *manager,
+                                WSMessage *message,
+								void *config) {
+
 	MResponse *rcvdResp=NULL;
     Message *rcvdMessage=NULL;
+    char *data = NULL;
 	json_t *json;
 	int ret;
 
-	log_debug("Packet recevied. Data: %s", message->data);
+    data = (char *)calloc(1, message->data_len+1);
+    if (data == NULL) {
+        log_error("Unable to allocate memory of size: %d",
+                  message->data_len+1);
+        return;
+    }
+    strncpy(data, message->data, message->data_len);
+    
+	log_debug("Packet recevied. Data: %s", data);
 
-	json = json_loads(message->data, JSON_DECODE_ANY, NULL);
-	if (json==NULL) {
-		log_error("Error loading recevied data into JSON format. Str: %s",
-				  message->data);
+	json = json_loads(data, JSON_DECODE_ANY, NULL);
+	if (json == NULL) {
+		log_error("Error loading recevied data into JSON format: %s",
+				  data);
 		goto done;
 	}
 
@@ -228,14 +235,15 @@ void websocket_incoming_message(const URequest *request,
 	}
 
     if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0 ) {
-        process_incoming_websocket_message(rcvdMessage, (Config *)data);
+        process_incoming_websocket_message(rcvdMessage, (Config *)config);
     } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
-        process_incoming_websocket_response(rcvdMessage, data);
+        process_incoming_websocket_response(rcvdMessage, config);
     } else {
         log_error("Invalid incoming message on the websocket. Ignored");
     }
 
 done:
+    if (data) free(data);
 	if (json) json_decref(json);
 	clear_response(&rcvdResp);
 	return;

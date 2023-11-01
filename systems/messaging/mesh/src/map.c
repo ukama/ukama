@@ -13,9 +13,6 @@
 #include "map.h"
 #include "mesh.h"
 
-/*
- * init_map_table -- 
- */
 void init_map_table(MapTable **table) {
 
 	(*table)->first = NULL;
@@ -24,11 +21,9 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-/*
- * create_map_item --
- *
- */
-static MapItem *create_map_item(char *nodeID, char *nodeIP, int nodePort,
+static MapItem *create_map_item(char *nodeID,
+                                UInst **instance,
+                                char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
 
 	MapItem *map=NULL;
@@ -43,6 +38,13 @@ static MapItem *create_map_item(char *nodeID, char *nodeIP, int nodePort,
 		return NULL;
 	}
 
+    map->forwardList = (ForwardList *)calloc(1, sizeof(ForwardList));
+    if (map->forwardList == NULL) {
+        log_error("Error allocating memory: %s", sizeof(ForwardList));
+        free(map);
+        return NULL;
+    }
+
 	map->nodeInfo = (NodeInfo *)calloc(1, sizeof(NodeInfo));
     if (map->nodeInfo == NULL) {
         log_error("Error allocating memory: %s", sizeof(NodeInfo));
@@ -50,13 +52,14 @@ static MapItem *create_map_item(char *nodeID, char *nodeIP, int nodePort,
         return NULL;
     }
 
+    map->forwardInst        = *instance;
     map->nodeInfo->nodeID   = strdup(nodeID);
     map->nodeInfo->nodeIP   = strdup(nodeIP);
     map->nodeInfo->nodePort = nodePort;
     map->nodeInfo->meshIP   = strdup(meshIP);
     map->nodeInfo->meshPort = meshPort;
-    map->transmit = NULL;
-    map->receive  = NULL;
+    map->transmit           = NULL;
+    map->receive            = NULL;
 
 	pthread_mutex_init(&map->mutex, NULL);
 	pthread_cond_init(&map->hasResp, NULL);
@@ -66,10 +69,6 @@ static MapItem *create_map_item(char *nodeID, char *nodeIP, int nodePort,
 	return map;
 }
 
-/*
- * free_map_item --
- *
- */
 void free_map_item(MapItem *map) {
 
 	if (!map) {
@@ -85,19 +84,14 @@ void free_map_item(MapItem *map) {
 	free(map);
 }
 
-/*
- * is_existing_item --
- *
- */
 MapItem *is_existing_item(MapTable *table, char *nodeID) {
 
 	MapItem *item;
 
-	if (table == NULL && nodeID == NULL) {
+	if (table == NULL || nodeID == NULL) {
 		return NULL;
 	}
 
-	/* Is empty. */
 	if (table->first == NULL) {
 		return NULL;
 	}
@@ -111,12 +105,32 @@ MapItem *is_existing_item(MapTable *table, char *nodeID) {
 	return NULL;
 }
 
-/*
- * add_map_to_table --
- *
- */
-MapItem *add_map_to_table(MapTable **table, char *nodeID, char *nodeIP,
-                          int nodePort, char *meshIP, int meshPort) {
+MapItem *is_existing_item_by_port(MapTable *table, int port) {
+
+	MapItem *item = NULL;
+
+	if (table == NULL || port == 0) {
+		return NULL;
+	}
+
+	if (table->first == NULL) {
+		return NULL;
+	}
+
+	for (item=table->first; item; item=item->next) {
+		if (item->forwardInst->port == port) {
+			return item;
+		}
+	}
+
+	return NULL;
+}
+
+MapItem *add_map_to_table(MapTable **table,
+                          char *nodeID,
+                          UInst **instance,
+                          char *nodeIP, int nodePort,
+                          char *meshIP, int meshPort) {
 
 	MapItem *map=NULL;
 
@@ -129,11 +143,13 @@ MapItem *add_map_to_table(MapTable **table, char *nodeID, char *nodeIP,
 		return map;
 	}
 
-	map = create_map_item(nodeID, nodeIP, nodePort, meshIP, meshPort);
+	map = create_map_item(nodeID, instance,
+                          nodeIP, nodePort,
+                          meshIP, meshPort);
 	if (map == NULL) {
 		return NULL;
 	}
-
+    
 	/* Try to get lock. */
 	pthread_mutex_lock(&(*table)->mutex);
 
@@ -157,10 +173,6 @@ MapItem *add_map_to_table(MapTable **table, char *nodeID, char *nodeIP,
 	return map;
 }
 
-/*
- * remove_item -- remove the matching item from the table and free()
- *
- */
 void remove_map_item_from_table(MapTable *table, char *nodeID) {
 
     MapItem *current, *previous;

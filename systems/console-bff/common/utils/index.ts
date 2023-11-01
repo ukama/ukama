@@ -1,3 +1,4 @@
+import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { Meta, THeaders } from "../types";
 
@@ -82,7 +83,50 @@ const getPaginatedOutput = (
   };
 };
 
+const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
+  switch (type) {
+    case GRAPHS_TYPE.NODE_HEALTH:
+      if (nodeId.includes(NODE_TYPE.hnode))
+        return ["uptime_trx", "temperature_trx", "temperature_rfe"];
+      else if (nodeId.includes(NODE_TYPE.anode))
+        return ["temperature_ctl", "temperature_rfe"];
+      else return ["temperature_trx", "temperature_com"];
+    case GRAPHS_TYPE.NETWORK:
+      if (!nodeId.includes(NODE_TYPE.anode))
+        return ["rrc", "rlc", "erab", "throughputuplink", "throughputdownlink"];
+      else return [];
+    case GRAPHS_TYPE.RESOURCES:
+      if (nodeId.includes(NODE_TYPE.hnode))
+        return ["cpu_trx_usage", "memory_trx_used", "disk_trx_used"];
+      else if (nodeId.includes(NODE_TYPE.anode))
+        return ["cpu_ctl_used", "disk_ctl_used", "memory_ctl_used"];
+      else
+        return [
+          "power_level",
+          "cpu_trx_usage",
+          "cpu_com_usage",
+          "disk_trx_used",
+          "disk_com_used",
+          "memory_trx_used",
+          "memory_com_used",
+        ];
+    case GRAPHS_TYPE.RADIO:
+      if (nodeId.includes(NODE_TYPE.hnode))
+        return ["tx_power", "rx_power", "pa_power"];
+      else return [];
+    case GRAPHS_TYPE.SUBSCRIBERS:
+      if (nodeId.includes(NODE_TYPE.hnode))
+        return ["subscribers_active", "subscribers_attached"];
+      else if (nodeId.includes(NODE_TYPE.anode))
+        return ["temperature_ctl", "temperature_rfe"];
+      else return ["subscribers_active", "subscribers_attached"];
+    default:
+      return [];
+  }
+};
+
 export {
+  getGraphsKeyByType,
   getPaginatedOutput,
   getStripeIdByUserId,
   getTimestampCount,

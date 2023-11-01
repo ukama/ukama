@@ -44,6 +44,7 @@
 #define JSON_PORT     "port"
 #define JSON_MESSAGE  "message"
 #define JSON_CODE     "code"
+#define JSON_UUID     "uuid"
 
 #define JSON_KEY   "key"
 #define JSON_VALUE "value"

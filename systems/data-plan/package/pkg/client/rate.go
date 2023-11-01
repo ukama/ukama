@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
 type Rate struct {
@@ -28,7 +28,7 @@ func NewRate(rate string, timeout time.Duration) (*Rate, error) {
 
 	conn, err := grpc.DialContext(ctx, rate, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
+		log.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
 		return nil, err
 	}
 	client := pb.NewRateServiceClient(conn)

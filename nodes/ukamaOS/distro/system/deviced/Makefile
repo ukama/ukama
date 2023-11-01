@@ -1,10 +1,6 @@
 # Copyright (c) 2022-present, Ukama Inc.
 # All rights reserved.
 
-#
-# Makefile for the bootstrap client
-#
-
 include ../../../config.mk
 
 TARGET_EXEC = device.d
@@ -60,9 +56,9 @@ OBJFILES = $(CFILES:.c=.o)
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
+.PHONY: $(TARGET_EXEC)
 
-bootstrap: $(TARGET_EXEC)
+deviced: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
@@ -74,7 +70,7 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: bootstrap
+all: deviced
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)

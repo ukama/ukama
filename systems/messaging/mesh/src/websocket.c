@@ -21,8 +21,9 @@
 #include "map.h"
 #include "config.h"
 #include "u_amqp.h"
+#include "client.h"
 
-extern MapTable *IDsTable;
+extern MapTable *NodesTable;
 
 /*
  * clear_response -- free up memory from MResponse.
@@ -39,6 +40,17 @@ static void clear_response(MResponse **resp) {
 	}
 
 	free(*resp);
+}
+
+static void free_message(Message *message) {
+
+    if (message == NULL) return;
+    
+    free(message->reqType);
+    free(message->seqNo);
+    free(message->data);
+
+    free(message);
 }
 
 /*
@@ -84,7 +96,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
     int ret;
     json_t *jData;
 
-    map = is_existing_item(IDsTable, (char *)data);
+    map = is_existing_item(NodesTable, (char *)data);
     if (map == NULL) {
         log_error("Websocket error NodeID: %s not found in table",
                   (char *)data);
@@ -117,8 +129,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		}
 
 		if (list->first == NULL) { /* Empty. Wait. */
-			log_debug("Waiting for work to be available ...");
-			ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
+            ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
             if (ret == ETIMEDOUT) {
                 /* Check if this connection is still valid, otherwise
                  * report and close
@@ -152,12 +163,13 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
 		/* 2. Send data over the wire. */
 		/* Currently, packet is JSON string. Send it over. */
-		if (ulfius_websocket_wait_close(manager, 2000) ==
+		if (ulfius_websocket_wait_close(manager, 1) ==
 			U_WEBSOCKET_STATUS_OPEN) {
             jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
 			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
 				log_error("Error sending JSON message.");
 			}
+            json_decref(jData);
 		}
 
 		/* 3. Any post-processing. */
@@ -184,29 +196,59 @@ void websocket_incoming_message(const URequest *request,
 	MRequest *rcvdData=NULL;
 	int ret;
     MapItem *map=NULL;
+    Forward *forward=NULL;
+    char *rcvdDataStr=NULL;
 
-    map = is_existing_item(IDsTable, (char *)data);
+    map = is_existing_item(NodesTable, (char *)data);
     if (map == NULL) {
         log_error("Websocket error NodeID: %s not found in table",
                   (char *)data);
         return;
     }
 
-	log_debug("Packet recevied. Data: %s", message->data);
+    rcvdDataStr = (char *)calloc(1, message->data_len + 1);
+    strncpy(rcvdDataStr, message->data, message->data_len);
+    log_debug("Packet recevied. data: %s", rcvdDataStr);
 
 	/* Ignore the rest, for now. */
 	if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
 
-		ret = deserialize_websocket_message(&rcvdMessage, message->data);
+		ret = deserialize_websocket_message(&rcvdMessage, rcvdDataStr);
 		if (ret==FALSE) goto done;
 
-        /* process the incoming and response back on the queue */
-        if (process_incoming_websocket_message(rcvdMessage, &responseRemote)) {
-            add_work_to_queue(&map->transmit, responseRemote, NULL, 0, NULL, 0);
+        if (strcmp(rcvdMessage->reqType, UKAMA_NODE_REQUEST) == 0) {
+            /* process the incoming and response back on the queue */
+            if (process_incoming_websocket_message(rcvdMessage, &responseRemote)) {
+                add_work_to_queue(&map->transmit, responseRemote, NULL, 0, NULL, 0);
+            }
+        }
+
+        else if (strcmp(rcvdMessage->reqType, UKAMA_SERVICE_RESPONSE) == 0) {
+
+            forward = is_existing_item_in_list(map->forwardList,
+                                                rcvdMessage->seqNo);
+
+            if (forward == NULL) {
+                log_error("No matching uuid in the list. uuid: %s",
+                          rcvdMessage->seqNo);
+                goto done;
+            }
+
+            forward->size     = rcvdMessage->dataSize;
+            forward->data     = strdup(rcvdMessage->data);
+            forward->httpCode = rcvdMessage->code;
+
+            pthread_cond_broadcast(&forward->hasData);
+
+        } else {
+            log_error("Invalid request type on websocket");
+            goto done;
         }
 	}
 
- done:
+done:
+    free_message(rcvdMessage);
+    free(rcvdDataStr);
 	return;
 }
 
@@ -214,12 +256,13 @@ void websocket_incoming_message(const URequest *request,
  * websocket_onclose -- is called when the websocket is closed.
  *
  */
-void websocket_onclose(const URequest *request, WSManager *manager,
+void websocket_onclose(const URequest *request,
+                       WSManager *manager,
                        void *data) {
 
     MapItem *map=NULL;
 
-    map = is_existing_item(IDsTable, (char *)data);
+    map = is_existing_item(NodesTable, (char *)data);
     if (map == NULL) {
         log_error("Websocket error NodeID: %s not found in table",
                   (char *)data);
@@ -241,7 +284,7 @@ void websocket_onclose(const URequest *request, WSManager *manager,
 		}
 	}
 
-    remove_map_item_from_table(IDsTable, map->nodeInfo->nodeID);
+    remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
 
 	return;
 }

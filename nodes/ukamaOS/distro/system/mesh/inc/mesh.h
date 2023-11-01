@@ -14,15 +14,22 @@
 #include <ulfius.h>
 #include <uuid/uuid.h>
 
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_types.h"
+#include "usys_services.h"
+
 #include "log.h"
 
-#define DEF_FILENAME "cert.crt"
-#define DEF_CA_FILE  ""
-#define DEF_CRL_FILE ""
-#define DEF_CA_PATH  ""
-#define DEF_SERVER_NAME "localhost"
-#define DEF_TLS_SERVER_PORT "4444"
-#define DEF_LOG_LEVEL "TRACE"
+#define SERVICE_NAME SERVICE_MESH
+
+#define DEF_FILENAME          "cert.crt"
+#define DEF_CA_FILE           ""
+#define DEF_CRL_FILE          ""
+#define DEF_CA_PATH           ""
+#define DEF_SERVER_NAME       "localhost"
+#define DEF_TLS_SERVER_PORT   "4444"
+#define DEF_LOG_LEVEL         "TRACE"
 #define DEF_CLOUD_SERVER_NAME "localhost"
 #define DEF_CLOUD_SERVER_PORT "4444"
 #define DEF_CLOUD_SERVER_CERT "certs/test.crt"
@@ -56,7 +63,7 @@
 #define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
-#define MESH_LOCK_TIMEOUT 10 /* seconds */
+#define MESH_LOCK_TIMEOUT 1 /* seconds */
 
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
@@ -97,7 +104,7 @@ typedef struct {
 typedef struct {
 
 	char *reqType; /* Type: forward_request, command, stats, etc. */
-	int seqNo;     /* Sequence number of the request. */
+	char *seqNo;     /* Sequence number of the request. */
 
 	DeviceInfo  *deviceInfo;  /* Info. about originating device. */
 	ServiceInfo *serviceInfo; /* Info. about origniating service. */
@@ -108,7 +115,7 @@ typedef struct {
 typedef struct {
 
 	char        *reqType;
-	int         seqNo;
+	char        *seqNo;
 	int         size;
 	void        *data;
 	ServiceInfo *serviceInfo;
@@ -117,7 +124,7 @@ typedef struct {
 typedef struct {
 
     char        *reqType;
-    int         seqNo;
+    char        *seqNo;
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
     int         dataSize;

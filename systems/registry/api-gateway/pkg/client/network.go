@@ -2,15 +2,14 @@ package client
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-
+	log "github.com/sirupsen/logrus"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	"google.golang.org/grpc"
+	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
 const DefaultNetworkName = "default"
@@ -54,11 +53,21 @@ func (r *NetworkRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *NetworkRegistry) AddNetwork(orgName string, netName string) (*netpb.AddResponse, error) {
+func (r *NetworkRegistry) AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string,
+	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Add(ctx, &netpb.AddRequest{OrgName: orgName, Name: netName})
+	res, err := r.client.Add(ctx, &netpb.AddRequest{
+		OrgName:          orgName,
+		Name:             netName,
+		AllowedCountries: allowedCountries,
+		AllowedNetworks:  allowedNetworks,
+		Budget:           budget,
+		Overdraft:        overdraft,
+		TrafficPolicy:    trafficPolicy,
+		PaymentLinks:     paymentLinks,
+	})
 
 	if err != nil {
 		return nil, err

@@ -56,8 +56,9 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <netdb.h>
 
-/* Macro's for boolean values */
+    /* Macro's for boolean values */
 #define USYS_FALSE        false
 #define USYS_TRUE         true
 
@@ -75,6 +76,8 @@ typedef uint64_t USysMachineWord;
 #else
 typedef uint32_t USysMachineWord;
 #endif
+
+typedef struct servent USysServiceEntry;
 
 /**
  * @typedef USysMutex

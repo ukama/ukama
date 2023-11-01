@@ -186,7 +186,7 @@ int start_websocket_client(Config *config,
 int start_web_services(Config *config, UInst *clientInst) {
 
   /* Initialize the admin and client webservices framework. */
-  if (init_framework(clientInst, atoi(config->localAccept)) != TRUE){
+  if (init_framework(clientInst, config->localAccept) != TRUE){
     log_error("Error initializing webservice framework");
     return FALSE;
   }
@@ -201,7 +201,7 @@ int start_web_services(Config *config, UInst *clientInst) {
     return FALSE;
   }
 
-  log_debug("Webservice on client port: %s started.", config->localAccept);
+  log_debug("Webservice on client port: %d started.", config->localAccept);
 
   return TRUE;
 }

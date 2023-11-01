@@ -16,6 +16,7 @@ import {
   CONSOLE_APP_URL,
   GATEWAY_PORT,
   INVITATION_PORT,
+  MEMBER_PORT,
   NETWORK_PORT,
   NODE_PORT,
   ORG_PORT,
@@ -32,7 +33,7 @@ import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
 import UserApi from "../user/datasource/user_api";
-import { WhoamiDto } from "./../user/resolver/types";
+import { UserResDto, WhoamiDto } from "./../user/resolver/types";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
@@ -64,6 +65,7 @@ const loadServers = async () => {
         { name: "package", url: `http://localhost:${PACKAGE_PORT}` },
         { name: "rate", url: `http://localhost:${RATE_PORT}` },
         { name: "invitation", url: `http://localhost:${INVITATION_PORT}` },
+        { name: "member", url: `http://localhost:${MEMBER_PORT}` },
         { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
       introspectionHeaders: {
@@ -92,7 +94,7 @@ const loadServers = async () => {
 };
 
 const startServer = async () => {
-  await delay(5000);
+  await delay(10000);
   const gateway = await loadServers();
   const server = new ApolloServer({
     gateway,
@@ -125,15 +127,16 @@ const startServer = async () => {
   app.get("/ping", (_, res) => {
     res.send("pong");
   });
-  const TEMP_KID = "018688fa-d861-4e7b-b119-ffc5e1637ba8";
+  // const TEMP_KID = "018688fa-d861-4e7b-b119-ffc5e1637ba8";
+  // const TEMP_KID = "a9a3dc45-fe06-43d6-b148-7508c9674627";
   app.get("/get-user", async (req, res) => {
     const kId = req.query["kid"] as string;
     if (kId) {
       const userApi = new UserApi();
-      // const user: UserResDto = await userApi.auth(kId);
-      // if (user.uuid) {
-      if (TEMP_KID) {
-        const whoamiRes: WhoamiDto = await userApi.whoami(TEMP_KID);
+      const user: UserResDto = await userApi.auth(kId);
+      if (user.uuid) {
+        // if (TEMP_KID) {
+        const whoamiRes: WhoamiDto = await userApi.whoami(user.uuid);
         res.setHeader("Access-Control-Allow-Origin", "http://localhost:4455");
         res.setHeader("Access-Control-Allow-Credentials", "true");
         res.send(whoamiRes);

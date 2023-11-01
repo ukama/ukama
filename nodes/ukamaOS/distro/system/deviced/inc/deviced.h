@@ -12,23 +12,20 @@
 
 #include "ulfius.h"
 #include "usys_types.h"
+#include "usys_services.h"
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME           "deviced"
+#define SERVICE_NAME           SERVICE_DEVICE
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define DEF_SERVICE_PORT        "8086"
-#define DEF_SERVICE_CLIENT_PORT "8087"
 #define DEF_SERVICE_CLIENT_HOST "localhost"
 #define DEVICED_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
-#define DEF_NOTIFY_PORT        "8085"
-#define DEF_NODED_PORT         "8095"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"

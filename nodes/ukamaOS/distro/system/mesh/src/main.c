@@ -7,11 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-/*
- * Mesh.d - L7-websocket based forward/reversed proxy
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -231,6 +226,11 @@ int main (int argc, char *argv[]) {
 				configFile);
 		exit(1);
 	}
+    config->localAccept = usys_find_service_port(SERVICE_NAME);
+    if (!config->localAccept) {
+        log_error("Unable to find service port");
+        exit(1);
+    }
     state->config = config;
 	print_config(config);
 
@@ -280,7 +280,7 @@ int main (int argc, char *argv[]) {
 
     pthread_detach(thread);
 
-	log_debug("Mesh.d running ...");
+	log_debug("%s running ...", SERVICE_NAME);
 
     pause();
 
