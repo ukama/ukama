@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 const colors = [
   { border: 'rgb(53, 162, 235)', background: 'rgba(53, 162, 235, 0.5)' },
   { border: 'rgb(255, 99, 132)', background: 'rgba(255, 99, 132, 0.5)' },

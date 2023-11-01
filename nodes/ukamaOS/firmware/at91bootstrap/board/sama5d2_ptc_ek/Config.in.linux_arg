@@ -1,2 +1,0 @@
-config LINUX_KERNEL_ARG_STRING
-	default "console=ttyS0,115200 mtdparts=atmel_nand:12M(bootstrap/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs" if SAMA5D2_PTC_EK

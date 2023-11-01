@@ -1,2 +1,0 @@
-config LINUX_KERNEL_ARG_STRING
-	default "console=ttyS0,115200 rw root=/dev/mmcblk0gp0 rootfstype=ext4 rootwait" if VINCO
