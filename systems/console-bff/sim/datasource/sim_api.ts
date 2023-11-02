@@ -31,10 +31,12 @@ import {
 } from "../resolver/types";
 import { dtoToSimDetailsDto, dtoToSimResDto, dtoToSimsDto } from "./mapper";
 
-const version = "/v1/simpool";
+const VERSION = "v1";
+const SIMPOOL = "simpool";
+const SIM = "sim";
 
 class SimApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW + version;
+  baseURL = SUBSCRIBER_API_GW;
 
   uploadSims = async (req: UploadSimsInputDto): Promise<UploadSimsResDto> => {
     return this.put(`/upload`, {
@@ -54,7 +56,7 @@ class SimApi extends RESTDataSource {
       req.iccid,
       process.env.ENCRYPTION_KEY || ""
     );
-    return this.put(``, {
+    return this.post(`/${VERSION}/${SIM}`, {
       body: {
         ...req,
         sim_token: token,
@@ -82,7 +84,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {
-    return this.get(``, {
+    return this.get(`/${VERSION}/${SIM}/${req.simId}`, {
       params: {
         simId: req.simId,
       },
@@ -94,11 +96,8 @@ class SimApi extends RESTDataSource {
   };
 
   getSims = async (type: string): Promise<SimsResDto> => {
-    return this.get(`/sims/${type}`)
-      .then(res => {
-        console.log("SIM :", res);
-        return dtoToSimsDto(res);
-      })
+    return this.get(`/${VERSION}/${SIMPOOL}/sims/${type}`)
+      .then(res => dtoToSimsDto(res))
       .catch(err => {
         throw new GraphQLError(err);
       });
@@ -119,10 +118,7 @@ class SimApi extends RESTDataSource {
         networkId: req.networkId,
       },
     })
-      .then(res => {
-        console.log(res); // Add this line to log the response
-        return dtoToSimDetailsDto(res);
-      })
+      .then(res => dtoToSimDetailsDto(res))
       .catch(err => {
         throw new GraphQLError(err);
       });

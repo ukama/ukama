@@ -15,6 +15,7 @@ import {
   useAddSubscriberMutation,
   useGetSimLazyQuery,
   useGetSimsQuery,
+  useSetActivePackageForSimMutation,
   useToggleSimStatusMutation,
   PackagesResDto,
   useAllocateSimMutation,
@@ -43,7 +44,9 @@ const Page = () => {
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [openAddSubscriber, setOpenAddSubscriber] = useState<boolean>(false);
   const [simId, setSimId] = useState<string>('');
+  const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
   const [qrCode, setQrCode] = useState<string>('');
+  const [activePackageId, setActivePackageId] = useState<string>('');
   const [simPlan, setSimPlan] = useState<string>('');
   const [iccid, setIccid] = useState<string>('');
   const [simList, setSimList] = useState<any>({
@@ -134,6 +137,26 @@ const Page = () => {
 
   const onTableMenuItem = (id: string, type: string) => {};
 
+  const [activatePackageSim, { loading: activatePackageSimLoading }] =
+    useSetActivePackageForSimMutation({
+      onCompleted: () => {
+        setSnackbarMessage({
+          id: 'package-activated-success',
+          message: 'Package activated successfully!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setSubscriberSuccess(true);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'package-activated-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
   const {
     loading,
     data,
@@ -200,14 +223,14 @@ const Page = () => {
             },
           },
         });
-        // activatePackageSim({
-        //   variables: {
-        //     data: {
-        //       simId: simId,
-        //       packageId: activePackageId,
-        //     },
-        //   },
-        // });
+        activatePackageSim({
+          variables: {
+            data: {
+              simId: simId,
+              packageId: activePackageId,
+            },
+          },
+        });
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -239,6 +262,8 @@ const Page = () => {
         });
 
         // setActivePackageId(res.allocateSim.packageId);
+        // setActivePackageId(res.allocateSim.packageId);
+
         toggleSimStatus({
           variables: {
             data: {
@@ -261,6 +286,7 @@ const Page = () => {
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
+        console.log('SUBSCRIBER ADDED', res)
         refetchSubscribers();
         setSnackbarMessage({
           id: 'add-subscriber-success',
@@ -269,17 +295,17 @@ const Page = () => {
           show: true,
         });
 
-        // allocateSim({
-        //   variables: {
-        //     data: {
-        //       networkId: _commonData.networkId,
-        //       packageId: simPlan ?? '',
-        //       subscriberId: res.addSubscriber.uuid,
-        //       simType: 'test',
-        //       iccid: iccid,
-        //     },
-        //   },
-        // });
+        allocateSim({
+          variables: {
+            data: {
+              networkId: _commonData.networkId,
+              packageId: simPlan ?? '',
+              subscriberId: res.addSubscriber.uuid,
+              simType: 'test',
+              iccid: iccid,
+            },
+          },
+        });
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -300,15 +326,15 @@ const Page = () => {
         data: {
           email: email as string,
           first_name: name as string,
-          last_name: '',
-          network_id: _commonData.networkId,
-          org_id: _commonData.orgId,
+          last_name: 'pacifique',
+          network_id: '9fa532e5-cdb5-4ba9-be7b-4375f42e4ac3',
+          org_id: '8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc',
           address: 'test',
-          phone: '',
-          dob: 'Fri, 01 Jan 1990 00:00:00 GMT',
-          gender: '',
-          id_serial: '',
-          proof_of_identification: '',
+          phone: '+1 555-123-4567',
+          dob: '1990-01-01T00:00:00Z',
+          gender: 'make',
+          id_serial: '9802830928',
+          proof_of_identification: 'passwport',
         },
       },
     });
@@ -352,15 +378,24 @@ const Page = () => {
             open={openAddSubscriber}
             handleRoamingInstallation={handleRoamingInstallation}
             onClose={OnCloseAddSubcriber}
-            qrCode={''}
-            submitButtonState={true}
+            qrCode={qrCode}
+            submitButtonState={
+              addSubscriberLoading || allocateSimLoading || packagesLoading
+              // simsLoading
+            }
             sims={
               simList?.sims?.filter(
                 (sim: { isPhysical: string }) => sim.isPhysical === 'true',
               ) || []
             }
             pkgList={packages.packages}
-            loading={false}
+            loading={
+              addSubscriberLoading ||
+              allocateSimLoading ||
+              packagesLoading ||
+              toggleSimStatusLoading
+              // activatePackageSimLoading
+            }
             pSimCount={1}
             eSimCount={0}
           />

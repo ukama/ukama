@@ -1,13 +1,11 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { AllocateSimInputDto, SimDto } from "./types";
 
 @Resolver()
 export class AllocateSimResolver {
   @Mutation(() => SimDto)
-  @UseMiddleware(Authentication)
   async allocateSim(
     @Arg("data") data: AllocateSimInputDto,
     @Ctx() ctx: Context
