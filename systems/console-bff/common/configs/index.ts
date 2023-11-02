@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import dotenv from "dotenv";
-
-dotenv.config({ path: "../../.env" });
+import "dotenv/config";
 
 export const VERSION = process.env.VERSION || "v1";
 
