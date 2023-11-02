@@ -71,6 +71,16 @@ export type AttachNodeInput = {
   parentNode: Scalars['String']['input'];
 };
 
+export type AttachedNodes = {
+  __typename?: 'AttachedNodes';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  site: NodeSite;
+  status: NodeStatus;
+  type: NodeTypeEnum;
+};
+
 export type CBooleanResponse = {
   __typename?: 'CBooleanResponse';
   success: Scalars['Boolean']['output'];
@@ -485,11 +495,11 @@ export type NetworksResDto = {
 
 export type Node = {
   __typename?: 'Node';
-  attached: Array<Node>;
+  attached: Array<AttachedNodes>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
-  site?: Maybe<NodeSite>;
+  site: NodeSite;
   status: NodeStatus;
   type: NodeTypeEnum;
 };
@@ -500,10 +510,10 @@ export type NodeInput = {
 
 export type NodeSite = {
   __typename?: 'NodeSite';
-  addedAt: Scalars['String']['output'];
-  networkId: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
-  siteId: Scalars['String']['output'];
+  addedAt?: Maybe<Scalars['String']['output']>;
+  networkId?: Maybe<Scalars['String']['output']>;
+  nodeId?: Maybe<Scalars['String']['output']>;
+  siteId?: Maybe<Scalars['String']['output']>;
 };
 
 export type NodeStatus = {
@@ -999,28 +1009,28 @@ export type WhoamiDto = {
   user: UserResDto;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type GetNodesByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
 
-export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
+export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1048,7 +1058,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -1069,14 +1079,14 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -1372,16 +1382,6 @@ export const NodeFragmentDoc = gql`
   name
   orgId
   type
-  site {
-    nodeId
-    siteId
-    networkId
-    addedAt
-  }
-  status {
-    connectivity
-    state
-  }
   attached {
     id
     name
@@ -1397,6 +1397,16 @@ export const NodeFragmentDoc = gql`
       connectivity
       state
     }
+  }
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
+  status {
+    connectivity
+    state
   }
 }
     `;

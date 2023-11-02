@@ -8,7 +8,7 @@
 
 import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
-import { Nodes, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
+import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
@@ -21,14 +21,9 @@ import { Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
-const AVAILABLE_NODES = [
-  { id: 'node-1', name: 'Node 1', isChecked: false },
-  { id: 'node-2', name: 'Node 2', isChecked: false },
-];
-
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [nodes, setNodes] = useState<Nodes | undefined>();
+  const [nodes, setNodes] = useState<Node[] | undefined>(undefined);
   const [availableNodes, setAvailableNodes] = useState<
     Record<string, string | boolean>[] | undefined
   >(undefined);
@@ -43,7 +38,7 @@ export default function Page() {
         isFree: false,
       },
     },
-    onCompleted: (data: any) => {
+    onCompleted: (data) => {
       setNodes(data.getNodes.nodes);
     },
     onError: (err) => {
@@ -80,20 +75,18 @@ export default function Page() {
 
   useEffect(() => {
     if (search.length > 3) {
-      const nodes: any = nodesData?.getNodes.nodes.filter((node) => {
-        const s = search.toLowerCase();
-        if (
-          node.name.toLowerCase().includes(s) ||
-          node.name.toLowerCase().includes(s)
-        )
-          return node;
-      });
-      setNodes(nodes);
+      const _nodes: Node[] =
+        nodesData?.getNodes.nodes.filter((node) => {
+          const s = search.toLowerCase();
+          if (
+            node.name.toLowerCase().includes(s) ||
+            node.name.toLowerCase().includes(s)
+          )
+            return node;
+        }) || [];
+      setNodes(_nodes);
     } else if (search.length === 0) {
-      // setNodes(
-      //   nodesData && nodesData.getNodes ? nodesData.getNodes : undefined,
-      // );
-      setNodes(undefined);
+      setNodes(nodesData?.getNodes.nodes || []);
     }
   }, [search]);
 
@@ -147,7 +140,7 @@ export default function Page() {
             justifyContent={'flex-start'}
           >
             <PageContainerHeader
-              subtitle={nodes?.nodes.length ? `${nodes?.nodes.length}` : '0'}
+              subtitle={nodes?.length ? `${nodes?.length}` : '0'}
               search={search}
               title={'My Nodes'}
               showSearch={true}

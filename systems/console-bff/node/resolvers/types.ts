@@ -21,17 +21,38 @@ export class NodeStatus {
 
 @ObjectType()
 export class NodeSite {
-  @Field()
+  @Field({ nullable: true })
   nodeId: string;
 
-  @Field()
+  @Field({ nullable: true })
   siteId: string;
 
-  @Field()
+  @Field({ nullable: true })
   networkId: string;
 
-  @Field()
+  @Field({ nullable: true })
   addedAt: string;
+}
+
+@ObjectType()
+export class AttachedNodes {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  orgId: string;
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+
+  @Field(() => NodeSite)
+  site: NodeSite;
+
+  @Field(() => NodeStatus)
+  status: NodeStatus;
 }
 @ObjectType()
 export class Node {
@@ -47,11 +68,11 @@ export class Node {
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
 
-  @Field(() => [Node])
-  attached: Node[];
+  @Field(() => [AttachedNodes])
+  attached: AttachedNodes[];
 
-  @Field(() => NodeSite, { nullable: true })
-  site?: NodeSite;
+  @Field(() => NodeSite)
+  site: NodeSite;
 
   @Field(() => NodeStatus)
   status: NodeStatus;

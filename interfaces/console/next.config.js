@@ -11,7 +11,7 @@ const nextConfig = {
   experimental: {
     appDir: false,
   },
-  output: 'standalone',
+  output: 'node .next/standalone/server.js',
   async redirects() {
     return [
       {
