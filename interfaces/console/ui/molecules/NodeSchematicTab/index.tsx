@@ -44,12 +44,12 @@ const NodeSchematicTab = ({
                 justifyContent="center"
                 sx={{ height: '300px' }}
               >
-                <img
-                  src="https://i.ibb.co/d2cNd1d/Screen-Shot-2022-03-28-at-11-08-50.png"
-                  alt="1835cf7a15bd359317e492f4ea67166a"
+                {/* <Image
+                  src="https://ukama-site-assets.s3.amazonaws.com/images/schematic.png"
+                  alt="trx_schematic"
                   width="600"
                   height="300"
-                />
+                /> */}
               </Grid>
             </Grid>
           </Paper>

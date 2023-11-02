@@ -12,6 +12,16 @@ const nextConfig = {
     appDir: false,
   },
   output: 'node .next/standalone/server.js',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ukama-site-assets.s3.amazonaws.com',
+        port: '',
+        pathname: 'images/**',
+      },
+    ],
+  },
   async redirects() {
     return [
       {

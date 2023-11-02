@@ -30,6 +30,7 @@ import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
 import NodeOverviewTab from '@/ui/molecules/NodeOverviewTab';
 import NodeRadioTab from '@/ui/molecules/NodeRadioTab';
 import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
+import NodeSchematicTab from '@/ui/molecules/NodeSchematicTab';
 import NodeSoftwareTab from '@/ui/molecules/NodeSoftwareTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
@@ -279,13 +280,12 @@ export default function Page() {
           />
         </TabPanel>
         <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
-          {/* <NodeSchematicTab
-            getSearchValue={getSpecsSchematicSearch}
-            schematicsSpecsData={SpecsDocsData}
+          <NodeSchematicTab
+            getSearchValue={() => {}}
+            schematicsSpecsData={[]}
             nodeTitle={selectedNode?.name}
-            loading={nodesLoading}
-          /> */}
-          <h1>SM</h1>
+            loading={false}
+          />
         </TabPanel>
       </LoadingWrapper>
       {isEditNode && (
