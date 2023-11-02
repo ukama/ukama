@@ -102,6 +102,20 @@ mutation UpdateNode($data: UpdateNodeInput!) {
     ...node
   }
 }
+
+query getNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}
 ### End Node ###
 
 ### Member Start ###

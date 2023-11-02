@@ -65,6 +65,18 @@ export type AllocateSimInputDto = {
   subscriberId: Scalars['String']['input'];
 };
 
+export type AppChangeLog = {
+  __typename?: 'AppChangeLog';
+  date: Scalars['Float']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type AppChangeLogs = {
+  __typename?: 'AppChangeLogs';
+  logs: Array<AppChangeLog>;
+  type: NodeTypeEnum;
+};
+
 export type AttachNodeInput = {
   anodel: Scalars['String']['input'];
   anoder: Scalars['String']['input'];
@@ -504,6 +516,26 @@ export type Node = {
   type: NodeTypeEnum;
 };
 
+export type NodeApp = {
+  __typename?: 'NodeApp';
+  cpu: Scalars['String']['output'];
+  date: Scalars['Float']['output'];
+  memory: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  notes: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type NodeApps = {
+  __typename?: 'NodeApps';
+  apps: Array<NodeApp>;
+  type: NodeTypeEnum;
+};
+
+export type NodeAppsChangeLogInput = {
+  type: NodeTypeEnum;
+};
+
 export type NodeInput = {
   id: Scalars['String']['input'];
 };
@@ -616,6 +648,7 @@ export type PackagesResDto = {
 export type Query = {
   __typename?: 'Query';
   addSite: SiteDto;
+  getAppsChangeLog: AppChangeLogs;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
@@ -628,6 +661,7 @@ export type Query = {
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
+  getNodeApps: NodeApps;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
   getOrg: OrgDto;
@@ -650,6 +684,11 @@ export type Query = {
 export type QueryAddSiteArgs = {
   data: AddSiteInputDto;
   networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetAppsChangeLogArgs = {
+  data: NodeAppsChangeLogInput;
 };
 
 
@@ -685,6 +724,11 @@ export type QueryGetNetworkArgs = {
 
 export type QueryGetNodeArgs = {
   data: NodeInput;
+};
+
+
+export type QueryGetNodeAppsArgs = {
+  data: NodeAppsChangeLogInput;
 };
 
 
@@ -1087,6 +1131,13 @@ export type UpdateNodeMutationVariables = Exact<{
 
 
 export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+
+export type GetNodeAppsQueryVariables = Exact<{
+  data: NodeAppsChangeLogInput;
+}>;
+
+
+export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -1982,6 +2033,49 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
+export const GetNodeAppsDocument = gql`
+    query getNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}
+    `;
+
+/**
+ * __useGetNodeAppsQuery__
+ *
+ * To run a query within a React component, call `useGetNodeAppsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeAppsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodeAppsQuery(baseOptions: Apollo.QueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
+      }
+export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
+        }
+export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
+export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
+export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

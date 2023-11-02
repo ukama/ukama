@@ -7,28 +7,28 @@
  */
 
 import { isDarkmode } from '@/app-recoil';
+import { colors } from '@/styles/theme';
 import { ColumnsWithOptions } from '@/types';
 import ChipDropdown from '@/ui/molecules/ChipDropDown';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Chip,
+  IconButton,
   Link,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  Menu,
   TableHead,
-  MenuItem,
   TableRow,
   Typography,
-  IconButton,
 } from '@mui/material';
-import { useRecoilValue } from 'recoil';
-import { colors } from '@/styles/theme';
 import React, { useState } from 'react';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { useRecoilValue } from 'recoil';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
@@ -159,6 +159,7 @@ const SimpleDataTable = React.memo(
     handleCreateNetwork,
     handleDeleteElement,
   }: SimpleDataTableInterface) => {
+    console.log(dataset);
     const _isDarkMode = useRecoilValue(isDarkmode);
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
 

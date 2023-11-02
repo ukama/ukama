@@ -11,6 +11,8 @@ import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import {
   Node,
+  NodeTypeEnum,
+  useGetNodeAppsLazyQuery,
   useGetNodeQuery,
   useGetNodesLazyQuery,
   useUpdateNodeMutation,
@@ -28,6 +30,7 @@ import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
 import NodeOverviewTab from '@/ui/molecules/NodeOverviewTab';
 import NodeRadioTab from '@/ui/molecules/NodeRadioTab';
 import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
+import NodeSoftwareTab from '@/ui/molecules/NodeSoftwareTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
@@ -110,6 +113,19 @@ export default function Page() {
     },
   });
 
+  const [getApps, { data: nodeAppsRes, loading: nodeAppsLoading }] =
+    useGetNodeAppsLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'node-apps-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
   useEffect(() => {
     getNodes({
       variables: {
@@ -119,6 +135,18 @@ export default function Page() {
       },
     });
   }, []);
+
+  useEffect(() => {
+    if (selectedTab === 4) {
+      getApps({
+        variables: {
+          data: {
+            type: NodeTypeEnum.Hnode,
+          },
+        },
+      });
+    }
+  }, [selectedTab]);
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom)
@@ -245,22 +273,19 @@ export default function Page() {
           />
         </TabPanel>
         <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
-          <h1>Software Tab</h1>
-          {/* <NodeSoftwareTab
-              loading={isLoading || nodeAppsLogsLoading || nodeAppsLoading}
-              nodeApps={nodeAppsRes?.getNodeApps}
-              NodeLogs={nodeAppsLogsRes?.getNodeAppsVersionLogs}
-              getNodeAppDetails={getNodeAppDetails}
-            /> */}
+          <NodeSoftwareTab
+            loading={nodeAppsLoading}
+            nodeApps={nodeAppsRes?.getNodeApps.apps || []}
+          />
         </TabPanel>
         <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
-          <h1>Schematic Tab</h1>
           {/* <NodeSchematicTab
-              getSearchValue={getSpecsSchematicSearch}
-              schematicsSpecsData={SpecsDocsData}
-              nodeTitle={selectedNode?.name}
-              loading={nodesLoading}
-            /> */}
+            getSearchValue={getSpecsSchematicSearch}
+            schematicsSpecsData={SpecsDocsData}
+            nodeTitle={selectedNode?.name}
+            loading={nodesLoading}
+          /> */}
+          <h1>SM</h1>
         </TabPanel>
       </LoadingWrapper>
       {isEditNode && (

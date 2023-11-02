@@ -29,10 +29,12 @@ import {
   PLAYGROUND_URL,
 } from "../common/configs";
 import { logger } from "../common/logger";
+import { storeInStorage } from "../common/storage";
 import resolvers from "./resolvers";
 
 const app = express();
 const httpServer = createServer(app);
+storeInStorage("UkamaMetrics", "running");
 
 const runServer = async () => {
   const ts = await tq.buildSchema({

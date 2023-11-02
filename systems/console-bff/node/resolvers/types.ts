@@ -162,6 +162,54 @@ export class NodeState {
   state: NODE_STATUS;
 }
 
+@ObjectType()
+export class AppChangeLog {
+  @Field()
+  version: string;
+
+  @Field()
+  date: number;
+}
+
+@ObjectType()
+export class AppChangeLogs {
+  @Field(() => [AppChangeLog])
+  logs: AppChangeLog[];
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+}
+
+@ObjectType()
+export class NodeApp {
+  @Field()
+  name: string;
+
+  @Field()
+  date: number;
+
+  @Field()
+  version: string;
+
+  @Field()
+  cpu: string;
+
+  @Field()
+  memory: string;
+
+  @Field()
+  notes: string;
+}
+
+@ObjectType()
+export class NodeApps {
+  @Field(() => [NodeApp])
+  apps: NodeApp[];
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+}
+
 @ArgsType()
 @InputType()
 export class UpdateNodeInput {
@@ -170,4 +218,11 @@ export class UpdateNodeInput {
 
   @Field()
   name: string;
+}
+
+@ArgsType()
+@InputType()
+export class NodeAppsChangeLogInput {
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
 }
