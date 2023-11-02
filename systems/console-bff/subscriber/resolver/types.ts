@@ -136,8 +136,8 @@ export class SubscriberInputDto {
   org_id: string;
 
   @Field()
-  @IsPhoneNumber()
-  phone: string;
+  // @IsPhoneNumber()
+  phone?: string;
 
   @Field()
   proof_of_identification: string;
@@ -217,7 +217,7 @@ export class SubscriberDto {
   gender: string;
 
   @Field()
-  idSerial: string;
+  idSerial?: string;
 
   @Field()
   networkId: string;
@@ -231,8 +231,8 @@ export class SubscriberDto {
   @Field()
   proofOfIdentification: string;
 
-  @Field(() => [SubscriberSimDto])
-  sim: SubscriberSimDto[];
+  @Field(() => [SubscriberSimDto], { nullable: true })
+  sim?: SubscriberSimDto[];
 }
 
 @ObjectType()

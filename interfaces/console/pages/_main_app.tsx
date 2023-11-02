@@ -86,8 +86,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       ) {
         setCommonData({
           ..._commonData,
-          networkId: data.getNetworks.networks[0].id,
-          networkName: data.getNetworks.networks[0].name,
+          networkId: '9fa532e5-cdb5-4ba9-be7b-4375f42e4ac3',
+          networkName: "mesh-network",
         });
       }
     },
