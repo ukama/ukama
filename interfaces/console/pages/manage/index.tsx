@@ -9,16 +9,12 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
-  MemberObj,
   PackageDto,
-  // useAddInvitationMutation,
-  useAddMemberMutation,
   useAddPackageMutation,
   useDeletePacakgeMutation,
   // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
-  useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
@@ -48,15 +44,7 @@ const NodePool = dynamic(() => import('./_nodepool'));
 const Member = dynamic(() => import('./_member'));
 const DataPlan = dynamic(() => import('./_dataplan'));
 
-const structureData = (data: any) =>
-  data && data.length > 0
-    ? data.map((member: MemberObj) => ({
-        name: member.user.name,
-        email: member.user.email,
-        role: 'member',
-        uuid: member.uuid,
-      }))
-    : [];
+const structureData = (data: any) => [];
 
 interface IManageMenu {
   selectedId: string;
@@ -129,27 +117,27 @@ const Manage = () => {
     duration: 0,
   });
 
-  const {
-    data: members,
-    loading: membersLoading,
-    refetch: refetchMembers,
-  } = useGetOrgMemberQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev: any) => ({
-        ...prev,
-        members: members?.getOrgMembers.members,
-      }));
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'org-members',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  // const {
+  //   data: members,
+  //   loading: membersLoading,
+  //   refetch: refetchMembers,
+  // } = useGetOrgMemberQuery({
+  //   fetchPolicy: 'cache-and-network',
+  //   onCompleted: (data) => {
+  //     setData((prev: any) => ({
+  //       ...prev,
+  //       members: members?.getOrgMembers.members,
+  //     }));
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'org-members',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
   const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
@@ -254,26 +242,26 @@ const Manage = () => {
   //   },
   // });
 
-  const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
-    onCompleted: () => {
-      refetchMembers();
-      setSnackbarMessage({
-        id: 'add-member',
-        message: 'Invitation sent successfully',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-      setIsInviteMember(false);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'add-member-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  // const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
+  //   onCompleted: () => {
+  //     refetchMembers();
+  //     setSnackbarMessage({
+  //       id: 'add-member',
+  //       message: 'Invitation sent successfully',
+  //       type: 'success' as AlertColor,
+  //       show: true,
+  //     });
+  //     setIsInviteMember(false);
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'add-member-error',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
   // const [sendInvitation, { loading: sendInvitationLoading }] =
   //   useAddInvitationMutation({
   //     onCompleted: () => {
@@ -383,28 +371,27 @@ const Manage = () => {
       },
     });
 
-  useEffect(() => {
-    console.log(memberSearch);
-    if (memberSearch.length > 2) {
-      const _members = members?.getOrgMembers.members.filter((member) => {
-        const s = memberSearch.toLowerCase();
-        if (member.user.name.toLowerCase().includes(s)) return member;
-      });
-      setData((prev: any) => ({
-        ...prev,
-        members: structureData(_members),
-      }));
-    } else if (
-      memberSearch.length === 0 &&
-      data.members.length !== members?.getOrgMembers.members.length
-    ) {
-      setData((prev: any) => ({
-        ...prev,
-        members: structureData(members?.getOrgMembers.members),
-      }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberSearch]);
+  // useEffect(() => {
+  //   if (memberSearch.length > 2) {
+  //     const _members = members?.getOrgMembers.members.filter((member) => {
+  //       const s = memberSearch.toLowerCase();
+  //       if (member.user.name.toLowerCase().includes(s)) return member;
+  //     });
+  //     setData((prev: any) => ({
+  //       ...prev,
+  //       members: structureData(_members),
+  //     }));
+  //   } else if (
+  //     memberSearch.length === 0 &&
+  //     data.members.length !== members?.getOrgMembers.members.length
+  //   ) {
+  //     setData((prev: any) => ({
+  //       ...prev,
+  //       members: structureData(members?.getOrgMembers.members),
+  //     }));
+  //   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [memberSearch]);
 
   useEffect(() => {
     if (nodeSearch.length > 3) {
@@ -543,8 +530,8 @@ const Manage = () => {
   const isLoading =
     packagesLoading ||
     simsLoading ||
-    membersLoading ||
-    addMemberLoading ||
+    // membersLoading ||
+    // addMemberLoading ||
     // sendInvitationLoading ||
     uploadSimsLoading ||
     dataPlanLoading ||

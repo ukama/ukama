@@ -19,7 +19,7 @@ const StyledBtn = styled(Button)({
 });
 
 interface INodeStatus {
-  nodes: Node[];
+  nodes: any;
   loading: boolean;
   onAddNode: Function;
   nodeActionOptions: any[];

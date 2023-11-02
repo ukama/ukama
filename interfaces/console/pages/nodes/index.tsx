@@ -8,7 +8,7 @@
 
 import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
-import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
+import { Nodes, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
@@ -28,7 +28,7 @@ const AVAILABLE_NODES = [
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [nodes, setNodes] = useState<Node[] | undefined>(undefined);
+  const [nodes, setNodes] = useState<Nodes | undefined>();
   const [availableNodes, setAvailableNodes] = useState<
     Record<string, string | boolean>[] | undefined
   >(undefined);
@@ -43,7 +43,7 @@ export default function Page() {
         isFree: false,
       },
     },
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       setNodes(data.getNodes.nodes);
     },
     onError: (err) => {
@@ -80,19 +80,20 @@ export default function Page() {
 
   useEffect(() => {
     if (search.length > 3) {
-      const nodes: Node[] | undefined = nodesData?.getNodes.nodes.filter(
-        (node) => {
-          const s = search.toLowerCase();
-          if (
-            node.name.toLowerCase().includes(s) ||
-            node.name.toLowerCase().includes(s)
-          )
-            return node;
-        },
-      );
+      const nodes: any = nodesData?.getNodes.nodes.filter((node) => {
+        const s = search.toLowerCase();
+        if (
+          node.name.toLowerCase().includes(s) ||
+          node.name.toLowerCase().includes(s)
+        )
+          return node;
+      });
       setNodes(nodes);
     } else if (search.length === 0) {
-      setNodes(nodesData?.getNodes.nodes);
+      // setNodes(
+      //   nodesData && nodesData.getNodes ? nodesData.getNodes : undefined,
+      // );
+      setNodes(undefined);
     }
   }, [search]);
 
@@ -146,7 +147,7 @@ export default function Page() {
             justifyContent={'flex-start'}
           >
             <PageContainerHeader
-              subtitle={nodes?.length ? `${nodes?.length}` : '0'}
+              subtitle={nodes?.nodes.length ? `${nodes?.nodes.length}` : '0'}
               search={search}
               title={'My Nodes'}
               showSearch={true}

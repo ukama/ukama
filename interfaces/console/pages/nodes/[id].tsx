@@ -62,7 +62,7 @@ export default function Page() {
         id: router.query['id'] as string,
       },
     },
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       setSelectedNode(data.getNode);
     },
     onError: (err) => {
@@ -90,7 +90,7 @@ export default function Page() {
   });
 
   const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       setSelectedNode(data.updateNode);
       refetchNodes();
       setSnackbarMessage({
