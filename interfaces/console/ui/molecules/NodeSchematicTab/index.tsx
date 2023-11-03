@@ -5,10 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import ContainerHeader from '@/ui/molecules/ContainerHeader';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { Box, Card, Grid, Paper, Stack, Typography } from '@mui/material';
+import Image from 'next/image';
 
 type ISchematicsProps = {
   schematicsSpecsData?: any;
@@ -28,35 +28,35 @@ const NodeSchematicTab = ({
       <Stack direction="column" spacing={2}>
         <LoadingWrapper
           width="100%"
-          height="100%"
+          height="400px"
           radius={'small'}
           isLoading={loading}
         >
-          <Paper sx={{ p: 2 }}>
-            <Grid container xs={12}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Grid container>
               <Grid item xs={12} container justifyContent="flex-start">
                 <Typography variant="h6">{nodeTitle}</Typography>
               </Grid>
-              <Grid
-                item
-                xs={12}
-                container
-                justifyContent="center"
-                sx={{ height: '300px' }}
-              >
-                {/* <Image
+              <Grid item xs={12} container justifyContent="center">
+                <Image
                   src="https://ukama-site-assets.s3.amazonaws.com/images/schematic.png"
                   alt="trx_schematic"
-                  width="600"
-                  height="300"
-                /> */}
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    maxWidth: '720px',
+                  }}
+                />
               </Grid>
             </Grid>
           </Paper>
         </LoadingWrapper>
         <Paper sx={{ p: 2 }}>
-          <Grid container xs={12}>
-            <Grid xs={12} container spacing={2}>
+          <Grid container>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <ContainerHeader
                   title="Resources"
@@ -70,8 +70,12 @@ const NodeSchematicTab = ({
                   <Card
                     variant="outlined"
                     sx={{
-                      padding: '15px 18px 8px 18px',
+                      cursor: 'pointer',
                       borderRadius: '10px',
+                      padding: '15px 18px 8px 18px',
+                      ':hover': {
+                        boxShadow: '0px 3px 5px 2px #0000001F',
+                      },
                     }}
                   >
                     <Stack spacing={1} direction="column">

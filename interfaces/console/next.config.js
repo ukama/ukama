@@ -18,7 +18,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'ukama-site-assets.s3.amazonaws.com',
         port: '',
-        pathname: 'images/**',
+        pathname: '/images/**',
       },
     ],
   },
