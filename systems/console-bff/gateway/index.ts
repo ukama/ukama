@@ -133,7 +133,7 @@ const startServer = async () => {
   );
 
   app.get("/ping", async (_, res) => {
-    const r = await fetch(`http://localhost:${METRICS_PORT}/ping`);
+    const r = await fetch(`localhost:${METRICS_PORT}/ping`);
     if (r.status === 200) res.send("pong");
     else res.send(new HTTP500Error("Metrics service ping failed"));
   });
