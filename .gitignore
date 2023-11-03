@@ -1,4 +1,5 @@
 # Binaries for programs and plugins
+*.d
 *.exe
 *.exe~
 *.dll
@@ -49,3 +50,4 @@ systems/console-bff/.cache/*
 *.dylib
 
 **/build/*
+**/_*
