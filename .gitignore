@@ -24,3 +24,28 @@ systems/data-plan/base-rate/cover.
 systems/console-bff/.cache/*
 systems/testing/integration/pkg/user_stories/coverage.out
 systems/console-bff/.cache/*
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+**/build/*
