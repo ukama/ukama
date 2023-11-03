@@ -75,6 +75,9 @@ const runServer = async () => {
   });
 
   await server.start();
+  app.get("/ping", (_, res) => {
+    res.send("pong");
+  });
   app.use(
     "/graphql",
     cors({
