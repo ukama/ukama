@@ -24,6 +24,7 @@ import {
   GATEWAY_PORT,
   INVITATION_PORT,
   MEMBER_PORT,
+  METRICS_PORT,
   NETWORK_PORT,
   NODE_PORT,
   ORG_PORT,
@@ -35,7 +36,7 @@ import {
   SUBSCRIBER_PORT,
   USER_PORT,
 } from "../common/configs";
-import { HTTP401Error, Messages } from "../common/errors";
+import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
@@ -131,8 +132,10 @@ const startServer = async () => {
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
 
-  app.get("/ping", (_, res) => {
-    res.send("pong");
+  app.get("/ping", async (_, res) => {
+    const r = await fetch(`http://localhost:${METRICS_PORT}/ping`);
+    if (r.status === 200) res.send("pong");
+    else res.send(new HTTP500Error("Metrics service ping failed"));
   });
   // const TEMP_KID = "018688fa-d861-4e7b-b119-ffc5e1637ba8";
   // const TEMP_KID = "a9a3dc45-fe06-43d6-b148-7508c9674627";
