@@ -3,23 +3,41 @@
     "target": "ukma-xx-xx-xxxx",
 
     "spaces" : [
-        { "name" : "boot" },
+        { "name" : "boot" },   
         { "name" : "services" },
-        { "name" : "reboot" }
+        { "name" : "reboot" }  
     ],
-    
+
     "capps": [
         {
-            "name"   : "mesh",
+            "name"   : "node",
             "tag"    : "latest",
             "restart": "yes",
             "space"  : "boot"
         },
         {
-            "name"   : "mesh",
+            "name"    : "bootstrap",
+            "tag"     : "latest",
+            "restart" : "yes",
+            "space"   : "boot",
+            "depends_on" : [
+                {
+                    "capp" : "node",
+                    "state" : "run"
+                }
+            ]
+        },
+        {
+            "name"   : "mesh.d",
             "tag"    : "latest",
             "restart": "yes",
-            "space"  : "reboot"
+            "space"  : "boot",
+            "depends_on" : [
+                {
+                    "capp"  : "bootstrap",
+                    "state" : "done"
+                } 
+            ]
         }
     ]
 }
