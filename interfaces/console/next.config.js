@@ -11,7 +11,7 @@ const nextConfig = {
   experimental: {
     appDir: false,
   },
-  output: 'node .next/standalone/server.js',
+  output: 'standalone',
   images: {
     remotePatterns: [
       {

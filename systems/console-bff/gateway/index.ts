@@ -137,15 +137,13 @@ const startServer = async () => {
     if (r.status === 200) res.send("pong");
     else res.send(new HTTP500Error("Metrics service ping failed"));
   });
-  // const TEMP_KID = "018688fa-d861-4e7b-b119-ffc5e1637ba8";
-  // const TEMP_KID = "a9a3dc45-fe06-43d6-b148-7508c9674627";
+
   app.get("/get-user", async (req, res) => {
     const kId = req.query["kid"] as string;
     if (kId) {
       const userApi = new UserApi();
       const user: UserResDto = await userApi.auth(kId);
       if (user.uuid) {
-        // if (TEMP_KID) {
         const whoamiRes: WhoamiDto = await userApi.whoami(user.uuid);
         res.setHeader("Access-Control-Allow-Origin", "http://localhost:4455");
         res.setHeader("Access-Control-Allow-Credentials", "true");
