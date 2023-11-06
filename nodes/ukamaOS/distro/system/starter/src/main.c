@@ -164,6 +164,22 @@ int main(int argc, char **argv) {
 
     /* Read and handle spaces/capps from the manifest file */
     read_manifest_file(&manifest, serviceConfig.manifestFile);
+
+    if (validate_capp_dependency(&manifest) == USYS_FALSE) {
+
+        usys_log_error("Invalid manifest file: %s",
+                       serviceConfig.manifestFile);
+
+        if (start_web_service(&serviceConfig,
+                              &serviceInst) != USYS_TRUE) {
+            usys_log_error("Webservice failed to setup for clients. Exiting.");
+            exit(1);
+        }
+
+        pause();
+        goto done;
+    }
+
     process_manifest_file(&gSpaceList, manifest);
     print_spaces_list(gSpaceList);
 
@@ -179,7 +195,7 @@ int main(int argc, char **argv) {
 
     /* start all the apps - boot is reserved space and is
      * started first. Reboot is also reserved and only executed
-     * when the system is booting up
+     * when the system is rebooting
      */
     if (find_matching_space(&gSpaceList, SPACE_BOOT, &bootSpace)) {
         run_space_all_capps(bootSpace);
@@ -234,7 +250,7 @@ int main(int argc, char **argv) {
     pause();
 
 done:
-    free(manifest);
+    free_manifest(manifest);
     usys_log_debug("Exiting %s ...", SERVICE_NAME);
 
     return USYS_TRUE;

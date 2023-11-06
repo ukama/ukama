@@ -11,14 +11,15 @@
 #include <jansson.h>
 
 #include "manifest.h"
+#include "json_types.h"
 #include "config.h"
+#include "starter.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 #include "usys_types.h"
-
 
 void json_log(json_t *json) {
 
@@ -73,6 +74,8 @@ static void free_capps(CappsManifest *ptr) {
     usys_free(ptr->name);
     usys_free(ptr->tag);
     usys_free(ptr->space);
+    usys_free(ptr->dependencyCapp);
+    usys_free(ptr->dependencyState);
 }
 
 void free_manifest(Manifest *ptr) {
@@ -130,6 +133,8 @@ static int deserialize_capps(Manifest **manifest, json_t *json) {
 
     int ret=USYS_FALSE;
     CappsManifest *capp, *ptr;
+    json_t *jDependency = NULL;
+    json_t *jEntry = NULL;
     
     capp = (CappsManifest *)calloc(1, sizeof(CappsManifest));
     if (capp == NULL) {
@@ -152,6 +157,33 @@ static int deserialize_capps(Manifest **manifest, json_t *json) {
           free_capps(capp);
 
           return USYS_FALSE;
+    }
+
+    /* Dependency is optional and is only for boot and reboot spaces */
+    ret = get_json_entry(json, JTAG_DEPENDS_ON, JSON_OBJECT,
+                          NULL, NULL, NULL, &jDependency);
+
+    if (ret != USYS_FALSE &&
+        (strcasecmp(capp->space, SPACE_BOOT) == 0 ||
+         strcasecmp(capp->space, SPACE_REBOOT) == 0)) {
+        if (json_array_size(jDependency) != 1) {
+            usys_log_error("%s can only be 1 item",
+                           JTAG_DEPENDS_ON);
+            capp->dependencyCapp  = NULL;
+            capp->dependencyState = NULL;
+        } else {
+
+            jEntry = json_array_get(jDependency, 0);
+            ret |= get_json_entry(jEntry, JTAG_CAPP, JSON_STRING,
+                                  &capp->dependencyCapp,
+                                  NULL, NULL, NULL);
+            ret |= get_json_entry(jEntry, JTAG_STATE, JSON_STRING,
+                                  &capp->dependencyState,
+                                  NULL, NULL, NULL);
+        }
+    } else {
+        capp->dependencyCapp  = NULL;
+        capp->dependencyState = NULL;
     }
 
     if ((*manifest)->cappsManifest == NULL ){
@@ -223,6 +255,54 @@ static bool deserialize_manifest_file(Manifest **manifest,
     return USYS_TRUE;
 }
 
+bool validate_capp_dependency(Manifest **manifest) {
+
+    CappsManifest *ptr, *temp;
+    bool ret=USYS_FALSE;
+
+    for (ptr = (*manifest)->cappsManifest;
+         ptr != NULL;
+         ptr = ptr->next) {
+
+        ret = USYS_FALSE;
+
+        if (ptr->dependencyCapp  != NULL &&
+            ptr->dependencyState != NULL) {
+            if (strcasecmp(ptr->space, SPACE_BOOT) == 0 ||
+                strcasecmp(ptr->space, SPACE_REBOOT) == 0) {
+                for (temp = (*manifest)->cappsManifest;
+                     temp != NULL;
+                     temp = temp->next) {
+
+                    if (strcasecmp(ptr->name, temp->name) == 0)
+                        continue;
+
+                    if (strcasecmp(ptr->dependencyCapp,
+                                   temp->name) == 0 &&
+                        strcasecmp(temp->space,
+                                   ptr->space) == 0) {
+                        ret=USYS_TRUE;
+                    }
+                }
+
+                if (ret != USYS_TRUE) {
+                    usys_log_error("%s:%s unable to find dependency: %s",
+                                   ptr->name, ptr->tag, ptr->dependencyCapp);
+                    return USYS_FALSE;
+                }
+            } else {
+                usys_log_error("%s:%s dependencies only allowed for %s %s",
+                               ptr->name, ptr->tag,
+                               SPACE_BOOT,
+                               SPACE_REBOOT);
+                return USYS_FALSE;
+            }
+        }
+    }
+
+    return USYS_TRUE;
+}
+
 bool read_manifest_file(Manifest **manifest, char *fileName) {
 
     int ret=USYS_FALSE;
@@ -275,7 +355,6 @@ bool read_manifest_file(Manifest **manifest, char *fileName) {
         ret = deserialize_manifest_file(manifest, json);
     }
 
-done:
     if (buffer) free(buffer);
 
     fclose(fp);
