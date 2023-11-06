@@ -11,7 +11,7 @@ import {
   Grid,
   SelectChangeEvent,
 } from '@mui/material';
-import { PackageDto, SimPoolDto } from '@/generated';
+import { PackageDto, SimDto } from '@/generated';
 import colors from '@/styles/theme/colors';
 import { useState } from 'react';
 import { makeStyles } from '@mui/styles';
@@ -33,7 +33,7 @@ interface SubscriberDialogProps {
   goBack: () => void;
   submitButtonState: boolean;
   packages: PackageDto[];
-  sims: SimPoolDto[];
+  sims: SimDto[];
 
   selectedSimType: string;
 }

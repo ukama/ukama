@@ -18,6 +18,7 @@ import { useState } from 'react';
 const validationSchema = Yup.object({
   name: Yup.string().required('Name is required'),
   email: Yup.string().email('Invalid email').required('Email is required'),
+  phone: Yup.string().optional(),
 });
 
 interface SubscriberDialogProps {
@@ -30,6 +31,7 @@ interface SubscriberDialogProps {
 interface SubscriberFormValues {
   name: string;
   email: string;
+  phone: string;
 }
 
 const Step1: React.FC<SubscriberDialogProps> = ({
@@ -41,6 +43,7 @@ const Step1: React.FC<SubscriberDialogProps> = ({
   const initialValues: SubscriberFormValues = {
     name: '',
     email: '',
+    phone: '',
   };
   const gclasses = globalUseStyles();
 
@@ -162,6 +165,28 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                   helperText={touched.email && errors.email}
                   error={touched.email && Boolean(errors.email)}
                   id={'email'}
+                  spellCheck={false}
+                  InputProps={{
+                    classes: {
+                      input: gclasses.inputFieldStyle,
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={'PHONE (OPTIONAL)'}
+                  name={'phone'}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.phone}
+                  helperText={touched.phone && errors.phone}
+                  error={touched.phone && Boolean(errors.phone)}
+                  id={'phone'}
                   spellCheck={false}
                   InputProps={{
                     classes: {

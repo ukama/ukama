@@ -16,7 +16,7 @@ import Step1 from './Step1';
 import Step2 from './Step2';
 import Step4 from './Step4';
 import CloseIcon from '@mui/icons-material/Close';
-import { PackageDto, SimPoolDto } from '@/generated';
+import { PackageDto, SimDto } from '@/generated';
 
 interface SubscriberDialogProps {
   open: boolean;
@@ -24,7 +24,7 @@ interface SubscriberDialogProps {
   submitButtonState: boolean;
   pkgList: PackageDto[];
   loading: boolean;
-  sims: SimPoolDto[];
+  sims: SimDto[];
   pSimCount: number | undefined;
   eSimCount: number | undefined;
   handleRoamingInstallation: Function;
@@ -65,7 +65,9 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
   };
   const getSubscriberForm = (step: number) => {
     const commonProps = {
-      onClose,
+      onClose: () => {
+        setActiveStep(1);
+      },
       handleSimInstallation,
       pSimCount,
       eSimCount,

@@ -6,14 +6,15 @@ import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
   AddPackageToSimInputDto,
+  AllocateSimAPIDto,
   AllocateSimInputDto,
   DeleteSimInputDto,
   DeleteSimResDto,
   GetPackagesForSimInputDto,
-  GetPackagesForSimResDto,
   GetSimByNetworkInputDto,
   GetSimBySubscriberIdInputDto,
   GetSimInputDto,
+  GetSimPackagesDtoAPI,
   RemovePackageFormSimInputDto,
   RemovePackageFromSimResDto,
   SetActivePackageForSimInputDto,
@@ -29,7 +30,12 @@ import {
   UploadSimsInputDto,
   UploadSimsResDto,
 } from "../resolver/types";
-import { dtoToSimDetailsDto, dtoToSimResDto, dtoToSimsDto } from "./mapper";
+import {
+  dtoToAllocateSimResDto,
+  dtoToSimDetailsDto,
+  dtoToSimResDto,
+  dtoToSimsDto,
+} from "./mapper";
 
 const VERSION = "v1";
 const SIMPOOL = "simpool";
@@ -51,33 +57,49 @@ class SimApi extends RESTDataSource {
       });
   };
 
-  allocateSim = async (req: AllocateSimInputDto): Promise<SimDto> => {
-    const token = generateTokenFromIccid(
-      req.iccid,
-      process.env.ENCRYPTION_KEY || ""
-    );
-    return this.post(`/${VERSION}/${SIM}`, {
-      body: {
-        ...req,
-        sim_token: token,
-      },
+  toggleSimStatus = async (
+    req: ToggleSimStatusInputDto
+  ): Promise<SimStatusResDto> => {
+    console.log("TOGGLE SIM", req);
+    return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
+      body: { status: req.status },
     })
-      .then(res => dtoToSimResDto(res))
+      .then(res => {
+        console.log("SIM STATUS RES:", res);
+        return res;
+      })
       .catch(err => {
         throw new GraphQLError(err);
       });
   };
+  allocateSim = async (
+    req: AllocateSimInputDto
+  ): Promise<AllocateSimAPIDto> => {
+    const getToken = (): string | null => {
+      if (req.iccid) {
+        const token = generateTokenFromIccid(
+          req.iccid,
+          "the-key-has-to-be-32-bytes-long!"
+        );
+        return token;
+      }
 
-  toggleSimStatus = async (
-    req: ToggleSimStatusInputDto
-  ): Promise<SimStatusResDto> => {
-    return this.put(``, {
+      return null;
+    };
+    const requestBody = {
+      ...req,
+      ...(req.iccid ? { sim_token: getToken() } : {}),
+    };
+
+    return this.post(`/${VERSION}/${SIM}`, {
       body: {
-        simId: req.simId,
-        status: req.status,
+        ...requestBody,
       },
     })
-      .then(res => res)
+      .then(res => {
+        this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+        return dtoToAllocateSimResDto(res);
+      })
       .catch(err => {
         throw new GraphQLError(err);
       });
@@ -166,12 +188,8 @@ class SimApi extends RESTDataSource {
 
   getPackagesForSim = async (
     req: GetPackagesForSimInputDto
-  ): Promise<GetPackagesForSimResDto> => {
-    return this.put(``, {
-      body: {
-        simId: req.simId,
-      },
-    })
+  ): Promise<GetSimPackagesDtoAPI> => {
+    return this.get(`/${VERSION}/${SIM}/packages/${req.sim_id}`)
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);
@@ -199,11 +217,14 @@ class SimApi extends RESTDataSource {
   setActivePackageForSim = async (
     req: SetActivePackageForSimInputDto
   ): Promise<SetActivePackageForSimResDto> => {
-    return this.put(``, {
-      body: {
-        ...req,
-      },
-    })
+    return this.patch(
+      `/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`,
+      {
+        body: {
+          ...req,
+        },
+      }
+    )
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);

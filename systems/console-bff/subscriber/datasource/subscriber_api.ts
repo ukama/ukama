@@ -77,6 +77,7 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<SubscribersResDto> => {
     return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
       .then(res => dtoToSubscribersResDto(res))
+
       .catch(err => {
         throw new GraphQLError(err);
       });

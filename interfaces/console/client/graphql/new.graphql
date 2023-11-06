@@ -194,12 +194,12 @@ fragment PackageMarkup on PackageDto {
   }
 }
 
-fragment SimPackage on SimPackageDto {
+fragment SimPackages on SimToPackagesDto {
   id
-  name
-  description
-  createdAt
-  updatedAt
+  package_id
+  start_date
+  end_date
+  is_active
 }
 
 fragment Package on PackageDto {
@@ -284,8 +284,9 @@ query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
 }
 query getPackagesForSim($data: GetPackagesForSimInputDto!) {
   getPackagesForSim(data: $data) {
-    Packages {
-      ...SimPackage
+    sim_id
+    packages {
+      ...SimPackages
     }
   }
 }
@@ -332,10 +333,39 @@ fragment SimPool on SimDto {
   simType
   smapAddress
 }
+fragment SimAllocationPackage on SimAllocatePackageDto {
+  id
+  packageId
+  startDate
+  endDate
+  isActive
+}
 
+fragment SimAllocation on AllocateSimAPIDto {
+  id
+  subscriber_id
+  network_id
+  org_id
+  package {
+    ...SimAllocationPackage
+  }
+  iccid
+  msisdn
+  imsi
+  type
+  status
+  is_physical
+  traffic_policy
+  firstActivatedOn
+  lastActivatedOn
+  activationsCount
+  deactivationsCount
+  allocated_at
+  sync_status
+}
 mutation allocateSim($data: AllocateSimInputDto!) {
   allocateSim(data: $data) {
-    ...SimPool
+    ...SimAllocation
   }
 }
 

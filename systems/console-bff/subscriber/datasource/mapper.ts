@@ -10,7 +10,7 @@ export const dtoToSubscriberResDto = (
   res: SubscriberAPIResDto
 ): SubscriberDto => {
   const sims: SubscriberSimDto[] =
-    res.Subscriber.sim?.map(sim => ({
+    res.subscriber.sim?.map(sim => ({
       id: sim.id,
       imsi: sim.imsi,
       type: sim.type,
@@ -30,18 +30,18 @@ export const dtoToSubscriberResDto = (
     })) || [];
   return {
     sim: sims,
-    email: res.Subscriber.email,
-    orgId: res.Subscriber.org_id,
-    gender: res.Subscriber.gender,
-    address: res.Subscriber.address,
-    dob: res.Subscriber.date_of_birth,
-    phone: res.Subscriber.phone_number,
-    idSerial: res.Subscriber.id_serial,
-    uuid: res.Subscriber.subscriber_id,
-    lastName: res.Subscriber.last_name,
-    firstName: res.Subscriber.first_name,
-    networkId: res.Subscriber.network_id,
-    proofOfIdentification: res.Subscriber.proof_of_identification,
+    email: res.subscriber.email,
+    orgId: res.subscriber.org_id,
+    gender: res.subscriber.gender,
+    address: res.subscriber.address,
+    dob: res.subscriber.date_of_birth,
+    phone: res.subscriber.phone_number,
+    idSerial: res.subscriber.id_serial,
+    uuid: res.subscriber.subscriber_id,
+    lastName: res.subscriber.last_name,
+    firstName: res.subscriber.first_name,
+    networkId: res.subscriber.network_id,
+    proofOfIdentification: res.subscriber.proof_of_identification,
   };
 };
 
@@ -50,7 +50,7 @@ export const dtoToSubscribersResDto = (
 ): SubscribersResDto => {
   const subscribers: SubscriberDto[] = [];
   for (const subscriber of res.subscribers) {
-    const sub = dtoToSubscriberResDto({ Subscriber: subscriber });
+    const sub = dtoToSubscriberResDto({ subscriber: subscriber });
     subscribers.push(sub);
   }
 

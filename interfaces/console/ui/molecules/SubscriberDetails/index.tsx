@@ -40,7 +40,12 @@ interface SubscriberProps {
   ) => void;
   packageName?: string;
   bundle?: string;
-  handleUpdateSubscriber: (subscriberId: string, email: string) => void;
+  currentSite?: string;
+  handleUpdateSubscriber: (
+    subscriberId: string,
+    email: string,
+    firstName: string,
+  ) => void;
   handleDeleteSubscriber: (action: string, subscriberId: string) => void;
   loading: boolean;
   simStatusLoading: boolean;
@@ -56,6 +61,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   packageName,
   bundle,
   loading,
+  currentSite,
   simStatusLoading = false,
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -111,7 +117,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const handleSaveSubscriber = () => {
     setOnEditEmail(false);
     setOnEditName(false);
-    handleUpdateSubscriber(subscriberInfo.uuid, email);
+    handleUpdateSubscriber(subscriberInfo.uuid, email, fistName);
   };
 
   return (
@@ -294,7 +300,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                   Current site
                 </Typography>
                 <Typography variant="subtitle1" sx={{ color: colors.black }}>
-                  Pamoja site #
+                  {currentSite || ''}
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={2}>

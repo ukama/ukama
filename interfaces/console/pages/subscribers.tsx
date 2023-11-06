@@ -10,15 +10,22 @@ import { commonData, snackbarMessage } from '@/app-recoil';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import {
   SubscribersResDto,
+  useUpdateSubscriberMutation,
+  useGetSubscriberLazyQuery,
+  useDeleteSimMutation,
+  useGetPackagesForSimLazyQuery,
   useGetPackagesQuery,
+  useGetSimpoolStatsQuery,
   useGetSubscribersByNetworkQuery,
   useAddSubscriberMutation,
   useGetSimLazyQuery,
+  useDeleteSubscriberMutation,
   useGetSimsQuery,
   useSetActivePackageForSimMutation,
   useToggleSimStatusMutation,
   PackagesResDto,
   useAllocateSimMutation,
+  useGetSitesQuery,
 } from '@/generated';
 import {
   ContainerMax,
@@ -29,12 +36,12 @@ import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
 import AddSubscriberDialog from '@/ui/molecules/AddSubscriber';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
-import EmptyView from '@/ui/molecules/EmptyView';
+import SubscriberDetails from '@/ui/molecules/SubscriberDetails';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
-import PlanCard from '@/ui/molecules/PlanCard';
+import DeleteConfirmation from '@/ui/molecules/DeleteDialog';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
-import { AlertColor, Grid, Stack, Typography } from '@mui/material';
+import { AlertColor, Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
@@ -42,13 +49,26 @@ const Page = () => {
   const [search, setSearch] = useState<string>('');
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const [openAddSubscriber, setOpenAddSubscriber] = useState<boolean>(false);
+  const [isAddSubscriberDialogOpen, setIsAddSubscriberDialogOpen] =
+    useState(false);
+  const [isToPupData, setIsToPupData] = useState<boolean>(false);
+  const [topUpDetails, setTopUpDetails] = useState<any>({
+    simId: '',
+    subscriberId: '',
+  });
   const [simId, setSimId] = useState<string>('');
-  const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
   const [qrCode, setQrCode] = useState<string>('');
-  const [activePackageId, setActivePackageId] = useState<string>('');
   const [simPlan, setSimPlan] = useState<string>('');
   const [iccid, setIccid] = useState<string>('');
+  const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
+  const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
+  const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
+    useState<boolean>(false);
+  const [subcriberInfo, setSubscriberInfo] = useState<any>();
+
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('');
   const [simList, setSimList] = useState<any>({
     sim: [],
   });
@@ -58,6 +78,7 @@ const Page = () => {
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
+
   const { loading: packagesLoading, data: _packages } = useGetPackagesQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (_packages) => {
@@ -76,17 +97,7 @@ const Page = () => {
       });
     },
   });
-  const { data: dataPlanData, loading: dataPlanLoading } = useGetPackagesQuery({
-    fetchPolicy: 'cache-and-network',
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'data-plan-err-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+
   const { data: _sims } = useGetSimsQuery({
     variables: { type: 'test' },
 
@@ -134,9 +145,73 @@ const Page = () => {
       }));
     }
   }, [search]);
+  const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
+    onCompleted: (res) => {
+      if (res.getPackagesForSim.packages) {
+        activatePackageSim({
+          variables: {
+            data: {
+              sim_id: res.getPackagesForSim.sim_id,
+              package_id: res.getPackagesForSim.packages[0].package_id,
+            },
+          },
+        });
+      }
+    },
+  });
+  const [getSubscriber] = useGetSubscriberLazyQuery({
+    onCompleted: (res) => {
+      if (
+        res.getSubscriber &&
+        res.getSubscriber.sim &&
+        res.getSubscriber?.sim.length > 0
+      ) {
+        setSubscriberInfo(res.getSubscriber);
+        getPackagesForSim({
+          variables: {
+            data: {
+              sim_id: res?.getSubscriber && res.getSubscriber.sim[0].id,
+            },
+          },
+        });
+      }
+    },
+  });
 
-  const onTableMenuItem = (id: string, type: string) => {};
+  const onTableMenuItem = (id: string, type: string) => {
+    if (type === 'delete-sub') {
+      setIsConfirmationOpen(true);
+      setDeletedSubscriber(id);
+    }
+    if (type === 'top-up-data') {
+      setIsToPupData(true);
+      setTopUpDetails({
+        simId: id,
+        subscriberId: id,
+      });
+    }
+    if (type === 'edit-sub') {
+      setIsSubscriberDetailsOpen(true);
+      getSubscriber({
+        variables: {
+          subscriberId: id,
+        },
+      });
 
+      setSelectedSubscriber(id);
+    }
+
+    if (type === 'pause-service') {
+      toggleSimStatus({
+        variables: {
+          data: {
+            sim_id: id,
+            status: 'terminated',
+          },
+        },
+      });
+    }
+  };
   const [activatePackageSim, { loading: activatePackageSimLoading }] =
     useSetActivePackageForSimMutation({
       onCompleted: () => {
@@ -158,15 +233,16 @@ const Page = () => {
       },
     });
   const {
-    loading,
+    loading: getSubscriberByNetworkLoading,
     data,
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
-    variables: { networkId: _commonData.networkId },
+    variables: {
+      networkId: selectedNetwork || _commonData.networkId,
+    },
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
       if (data.getSubscribersByNetwork.subscribers.length > 0) {
-        console.log('SUBSCRIBER :', data);
         setSubscriber(() => ({
           subscribers: [...data.getSubscribersByNetwork.subscribers],
         }));
@@ -182,28 +258,53 @@ const Page = () => {
     },
   });
 
+  const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
+    variables: {
+      networkId: '9fa532e5-cdb5-4ba9-be7b-4375f42e4ac3',
+    },
+    fetchPolicy: 'cache-and-network',
+
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sites-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   const structureData = useCallback(
     (data: SubscribersResDto) =>
-      data.subscribers.map((subscriber) => ({
-        id: subscriber.uuid,
-        email: subscriber.email,
-        name: `${subscriber.firstName} ${subscriber.lastName}`,
-        dataUsage: '',
-        dataPlan: '',
-        actions: '',
-      })),
-    [],
+      data.subscribers.map((subscriber) => {
+        console.log('DATA', sitesData?.getSites?.sites);
+        console.log('SUB', subscriber);
+        const networkName =
+          sitesData?.getSites?.sites.find(
+            (site) => site.networkId === subscriber.networkId,
+          )?.name || '';
+
+        return {
+          id: subscriber.uuid,
+          email: subscriber.email,
+          name: `${subscriber.firstName}`,
+          dataUsage: '',
+          dataPlan: '',
+          actions: '',
+          network: networkName,
+        };
+      }),
+    [sitesData],
   );
+
   const handleAddSubscriberModal = () => {
-    setOpenAddSubscriber(true);
+    setIsAddSubscriberDialogOpen(true);
   };
   const OnCloseAddSubcriber = () => {
-    setOpenAddSubscriber(false);
+    setIsAddSubscriberDialogOpen(false);
   };
   const [getSim] = useGetSimLazyQuery({
     onCompleted: (res) => {
       if (res.getSim) {
-        console.log('SIM', res.getSim);
       }
     },
   });
@@ -223,14 +324,6 @@ const Page = () => {
             },
           },
         });
-        activatePackageSim({
-          variables: {
-            data: {
-              simId: simId,
-              packageId: activePackageId,
-            },
-          },
-        });
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -241,10 +334,17 @@ const Page = () => {
         });
       },
     });
-
+  const handleDeleteSubscriber = () => {
+    deleteSubscriber({
+      variables: {
+        subscriberId: deletedSubscriber,
+      },
+    });
+  };
   const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
     {
       onCompleted: (res) => {
+        setSimId(res.allocateSim.id);
         setSnackbarMessage({
           id: 'sim-allocated-success',
           message: 'Sim allocated successfully!',
@@ -252,23 +352,17 @@ const Page = () => {
           show: true,
         });
         setQrCode(res.allocateSim.iccid);
-        setSimId(res.allocateSim.id);
+        getPackagesForSim({
+          variables: {
+            data: {
+              sim_id: res.allocateSim.id,
+            },
+          },
+        });
         getSim({
           variables: {
             data: {
               simId: res.allocateSim.id,
-            },
-          },
-        });
-
-        // setActivePackageId(res.allocateSim.packageId);
-        // setActivePackageId(res.allocateSim.packageId);
-
-        toggleSimStatus({
-          variables: {
-            data: {
-              simId: res.allocateSim.id ?? '',
-              status: 'active',
             },
           },
         });
@@ -286,7 +380,6 @@ const Page = () => {
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
-        console.log('SUBSCRIBER ADDED', res)
         refetchSubscribers();
         setSnackbarMessage({
           id: 'add-subscriber-success',
@@ -298,11 +391,12 @@ const Page = () => {
         allocateSim({
           variables: {
             data: {
-              networkId: _commonData.networkId,
-              packageId: simPlan ?? '',
-              subscriberId: res.addSubscriber.uuid,
-              simType: 'test',
+              network_id: _commonData.networkId,
+              package_id: 'fe7455c5-0c76-4998-aa07-2233ba50825d',
+              subscriber_id: res.addSubscriber.uuid,
+              sim_type: 'test',
               iccid: iccid,
+              traffic_policy: 10,
             },
           },
         });
@@ -316,8 +410,29 @@ const Page = () => {
         });
       },
     });
+  const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
+    useDeleteSubscriberMutation({
+      onCompleted: () => {
+        refetchSubscribers();
+        setSnackbarMessage({
+          id: 'delete-subscriber-success',
+          message: 'Subscriber deleted successfully!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsConfirmationOpen(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'delete-subscriber-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
   const handleRoamingInstallation = async (values: any) => {
-    const { plan, simIccid, email, name } = values;
+    const { plan, simIccid, email, name, phone } = values;
     setSimPlan(plan);
     setIccid(simIccid);
 
@@ -326,27 +441,148 @@ const Page = () => {
         data: {
           email: email as string,
           first_name: name as string,
-          last_name: 'pacifique',
-          network_id: '9fa532e5-cdb5-4ba9-be7b-4375f42e4ac3',
-          org_id: '8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc',
-          address: 'test',
-          phone: '+1 555-123-4567',
-          dob: '1990-01-01T00:00:00Z',
-          gender: 'make',
-          id_serial: '9802830928',
-          proof_of_identification: 'passwport',
+          network_id: _commonData.networkId,
+          org_id: _commonData.orgId,
+          phone: phone,
+          last_name: '',
+          proof_of_identification: '',
+          dob: '',
+          address: '',
         },
       },
     });
+  };
+  const { data: simStatData } = useGetSimpoolStatsQuery({
+    variables: { type: 'test' },
+
+    fetchPolicy: 'cache-first',
+    onCompleted: (stats) => {
+      if (stats.getSimPoolStats.available) {
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sims-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const getSelectedNetwork = (network: string) => {
+    setSelectedNetwork(network);
+  };
+  const handleCloseSubscriberDetails = () => {
+    setIsSubscriberDetailsOpen(false);
+  };
+  const handleCancel = () => {
+    setIsConfirmationOpen(false);
+  };
+  const [deleteSim, { loading: deleteSimLoading }] = useDeleteSimMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'sim-delete-success',
+        message: 'Sim deleted successfully',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-delete-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const handleSimAction = (action: string, simId: string) => {
+    if (action === 'deleteSim') {
+      deleteSim({
+        variables: {
+          data: {
+            simId: simId,
+          },
+        },
+      });
+    } else if (action === 'deactivateSim') {
+      toggleSimStatus({
+        variables: {
+          data: {
+            sim_id: simId,
+            status: 'inactive',
+          },
+        },
+      });
+    }
+  };
+  const [updateSubscriber, { loading: updateSubscriberLoading }] =
+    useUpdateSubscriberMutation({
+      onCompleted: (res) => {
+        refetchSubscribers();
+        setSnackbarMessage({
+          id: 'update-subscriber-success',
+          message: 'Subscriber updated successfully!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'update-subscriber-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+  const handleUpdateSubscriber = (
+    subscriberId: string,
+    email: string,
+    firstName: string,
+  ) => {
+    updateSubscriber({
+      variables: {
+        subscriberId: subscriberId,
+        data: {
+          email: email,
+          first_name: firstName,
+        },
+      },
+    });
+    refetchSubscribers();
+  };
+  const handleDeleteSubscriberModal = (
+    action: string,
+    subscriberId: string,
+  ) => {
+    if (action === 'deleteSubscriber') {
+      deleteSubscriber({
+        variables: {
+          subscriberId: subscriberId,
+        },
+      });
+    } else if (action === 'pauseService') {
+      toggleSimStatus({
+        variables: {
+          data: {
+            sim_id: subscriberId,
+            status: 'terminated',
+          },
+        },
+      });
+    }
   };
   return (
     <Stack direction={'column'}>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={loading}
+        isLoading={sitesLoading || getSubscriberByNetworkLoading}
         cstyle={{
-          backgroundColor: loading ? colors.white : 'transparent',
+          backgroundColor: getSubscriberByNetworkLoading
+            ? colors.white
+            : 'transparent',
         }}
       >
         <PageContainer
@@ -370,18 +606,19 @@ const Page = () => {
                 menuOptions={SUBSCRIBER_TABLE_MENU}
                 onMenuItemClick={onTableMenuItem}
                 emptyViewLabel={'No subscribers yet!'}
+                getSelectedNetwork={getSelectedNetwork}
+                networkList={sitesData?.getSites?.sites ?? []}
               />
             </ContainerMax>
           </VerticalContainer>
           <AddSubscriberDialog
-            onSuccess={false}
-            open={openAddSubscriber}
+            onSuccess={subscriberSuccess}
+            open={isAddSubscriberDialogOpen}
             handleRoamingInstallation={handleRoamingInstallation}
             onClose={OnCloseAddSubcriber}
             qrCode={qrCode}
             submitButtonState={
               addSubscriberLoading || allocateSimLoading || packagesLoading
-              // simsLoading
             }
             sims={
               simList?.sims?.filter(
@@ -396,86 +633,31 @@ const Page = () => {
               toggleSimStatusLoading
               // activatePackageSimLoading
             }
-            pSimCount={1}
-            eSimCount={0}
+            pSimCount={simStatData?.getSimPoolStats.physical}
+            eSimCount={simStatData?.getSimPoolStats.physical}
+          />
+          <DeleteConfirmation
+            open={isConfirmationOpen}
+            onDelete={handleDeleteSubscriber}
+            onCancel={handleCancel}
+            itemName={deletedSubscriber}
+            loading={deleteSubscriberLoading}
+          />
+          <SubscriberDetails
+            ishowSubscriberDetails={isSubscriberDetailsOpen}
+            handleClose={handleCloseSubscriberDetails}
+            subscriberId={selectedSubscriber}
+            onCancel={handleCloseSubscriberDetails}
+            subscriberInfo={subcriberInfo}
+            handleSimActionOption={handleSimAction}
+            handleUpdateSubscriber={handleUpdateSubscriber}
+            loading={updateSubscriberLoading || deleteSimLoading}
+            handleDeleteSubscriber={handleDeleteSubscriberModal}
+            simStatusLoading={toggleSimStatusLoading}
+            currentSite={sitesData?.getSites?.sites[0].name}
           />
         </PageContainer>
       </LoadingWrapper>
-      {/* <LoadingWrapper
-        radius="small"
-        width={'100%'}
-        isLoading={dataPlanLoading}
-        cstyle={{
-          backgroundColor: dataPlanLoading ? colors.white : 'transparent',
-        }}
-      >
-        <PageContainer
-          sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 550px)' }}
-        >
-          <Stack direction={'row'} alignItems={'center'}>
-            <Typography variant="h6" mr={1}>
-              Data plans
-            </Typography>
-            <Typography variant="subtitle2">
-              <i>(view only)</i>
-            </Typography>
-          </Stack>
-          <Stack my={4}>
-            {dataPlanData?.getPackages &&
-            dataPlanData?.getPackages?.packages?.length > 0 ? (
-              <Grid container rowSpacing={2} columnSpacing={2}>
-                {dataPlanData?.getPackages?.packages.map(
-                  ({
-                    uuid,
-                    name,
-                    duration,
-                    users,
-                    currency,
-                    dataVolume,
-                    dataUnit,
-                    amount,
-                  }: any) => (
-                    <Grid item xs={12} sm={6} md={4} key={uuid}>
-                      <PlanCard
-                        uuid={uuid}
-                        name={name}
-                        users={users}
-                        amount={amount}
-                        dataUnit={dataUnit}
-                        duration={duration}
-                        currency={currency}
-                        dataVolume={dataVolume}
-                        isOptions={false}
-                      />
-                    </Grid>
-                  ),
-                )}
-              </Grid>
-            ) : (
-              <EmptyView
-                size="medium"
-                title={
-                  'No data plans yet! Go to “Manage data plans” in your organization settings to add one'
-                }
-                icon={SubscriberIcon}
-              />
-            )}
-          </Stack>
-          <AddSubscriberDialog
-            onSuccess={false}
-            open={openAddSubscriber}
-            handleRoamingInstallation={handleRoamingInstallation}
-            onClose={OnCloseAddSubcriber}
-            qrCode={''}
-            submitButtonState={true}
-            sims={[]}
-            pkgList={[]}
-            loading={false}
-            pSimCount={1}
-            eSimCount={0}
-          />
-        </PageContainer>
-      </LoadingWrapper> */}
     </Stack>
   );
 };

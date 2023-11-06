@@ -11,21 +11,21 @@ const generateTokenFromIccid = (iccid: string, key: string) => {
   return encrypted;
 };
 
-const encrypt = (t: string, key: string) => {
+const encrypt = (plaintext: string, key: string) => {
   if (key.length !== 32) {
     throw new Error("Key must be 32 bytes");
   }
 
-  const cipher = crypto.createCipheriv(
-    "aes-256-gcm",
-    Buffer.from(key),
-    Buffer.alloc(32)
-  );
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key), iv);
 
-  const encrypted = Buffer.concat([cipher.update(t, "utf8"), cipher.final()]);
-  const iv = cipher.getAuthTag();
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const tag = cipher.getAuthTag();
 
-  const result = Buffer.concat([iv, encrypted]);
+  const result = Buffer.concat([iv, encrypted, tag]);
 
   return result.toString("base64");
 };

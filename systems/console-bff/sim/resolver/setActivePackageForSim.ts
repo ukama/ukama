@@ -1,6 +1,5 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import {
   SetActivePackageForSimInputDto,
@@ -10,7 +9,6 @@ import {
 @Resolver()
 export class SetActivePackageForSimResolver {
   @Mutation(() => SetActivePackageForSimResDto)
-  @UseMiddleware(Authentication)
   async setActivePackageForSim(
     @Arg("data") data: SetActivePackageForSimInputDto,
     @Ctx() ctx: Context

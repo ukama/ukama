@@ -7,9 +7,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Button,
+  ListItem,
+  ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from '@mui/material';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import { SiteDto } from '@/generated';
+
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
 
@@ -21,6 +30,8 @@ interface DataTableWithOptionsInterface {
   onMenuItemClick: Function;
   menuOptions: MenuItemType[];
   columns: ColumnsWithOptions[];
+  networkList?: SiteDto[];
+  getSelectedNetwork?: Function;
 }
 
 type CellValueByTypeProps = {
@@ -66,10 +77,32 @@ const DataTableWithOptions = ({
   columns,
   dataset,
   menuOptions,
+  networkList,
   onMenuItemClick,
+  getSelectedNetwork,
   emptyViewLabel = '',
   isRowClickable = true,
 }: DataTableWithOptionsInterface) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<any>();
+
+  const handleOpenMenu = (event: any) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+  const handleNetworkSelect = (network: any) => {
+    setSelectedNetwork(network);
+    handleCloseMenu();
+  };
+  useEffect(() => {
+    if (networkList && networkList.length > 0) {
+      setSelectedNetwork(networkList[0].name);
+    }
+  }, []);
+
   return (
     <Box
       component="div"
@@ -94,7 +127,52 @@ const DataTableWithOptions = ({
                       padding: '6px 12px 12px 0px',
                     }}
                   >
-                    <b>{column.label}</b>
+                    <b>
+                      {column.label == 'network' ? (
+                        <>
+                          <Button
+                            onClick={handleOpenMenu}
+                            endIcon={<ArrowDropDown />}
+                            aria-controls="network-menu"
+                          >
+                            <b>
+                              {selectedNetwork
+                                ? selectedNetwork
+                                : 'networkName'}
+                            </b>
+                          </Button>
+                          <Menu
+                            id="network-menu"
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleCloseMenu}
+                          >
+                            {networkList &&
+                              networkList.map(
+                                ({ name, networkId, id }: SiteDto) => {
+                                  if (getSelectedNetwork) {
+                                    getSelectedNetwork(networkId); // Call your function only if it's defined
+                                  }
+                                  return (
+                                    <MenuItem
+                                      key={id}
+                                      onClick={() => handleNetworkSelect(name)}
+                                    >
+                                      <ListItem>
+                                        <ListItemText>
+                                          <b>{name}</b>
+                                        </ListItemText>
+                                      </ListItem>
+                                    </MenuItem>
+                                  );
+                                },
+                              )}
+                          </Menu>
+                        </>
+                      ) : (
+                        column.label
+                      )}
+                    </b>
                   </TableCell>
                 ))}
               </TableRow>
