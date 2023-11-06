@@ -19,9 +19,13 @@ const client = new ApolloClient({
 
 export default client;
 
-const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_METRIC_URL,
-});
+const httpLink = (headers: any) =>
+  new HttpLink({
+    uri: process.env.NEXT_PUBLIC_METRIC_URL,
+    headers: {
+      ...headers,
+    },
+  });
 
 const wsLink = new GraphQLWsLink(
   createClient({
@@ -29,20 +33,21 @@ const wsLink = new GraphQLWsLink(
   }),
 );
 
-const splitLink = split(
-  ({ query }) => {
-    const definition = getMainDefinition(query);
-    return (
-      definition.kind === 'OperationDefinition' &&
-      definition.operation === 'subscription'
-    );
-  },
-  wsLink,
-  httpLink,
-);
+export const MetricLink = (headers: any) => {
+  return split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === 'OperationDefinition' &&
+        definition.operation === 'subscription'
+      );
+    },
+    wsLink,
+    httpLink(headers),
+  );
+};
 
 export const metricsClient = new ApolloClient({
-  link: splitLink,
   cache: new InMemoryCache(),
   credentials: 'include',
 });

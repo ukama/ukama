@@ -11,6 +11,9 @@ const nextConfig = {
   experimental: {
     appDir: false,
   },
+  env: {
+    customKey: 'my-value',
+  },
   output: 'node .next/standalone/server.js',
   images: {
     remotePatterns: [
