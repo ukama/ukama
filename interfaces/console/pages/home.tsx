@@ -134,7 +134,12 @@ export default function Page() {
             }}
           >
             {_commonData.networkId ? (
-              <DynamicMap id="network-map" zoom={6} className="network-map">
+              <DynamicMap
+                id="network-map"
+                zoom={10}
+                className="network-map"
+                markersData={nodesLocationData?.getNodesLocation}
+              >
                 {() => (
                   <>
                     <LabelOverlayUI name={_commonData.networkName} />
