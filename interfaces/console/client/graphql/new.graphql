@@ -124,6 +124,7 @@ query GetNodesLocation($data: NodesInput!) {
       id
       lat
       lng
+      state
     }
   }
 }
@@ -133,6 +134,7 @@ query GetNodeLocation($data: NodeInput!) {
     id
     lat
     lng
+    state
   }
 }
 ### End Node ###

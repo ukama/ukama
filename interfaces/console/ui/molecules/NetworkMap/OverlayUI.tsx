@@ -6,18 +6,26 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NodeStatusEnum } from '@/generated';
+import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,
   Checkbox,
-  FormControlLabel,
-  FormGroup,
+  Collapse,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Stack,
   Typography,
 } from '@mui/material';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 export const LabelOverlayUI = ({ name }: { name: string }) => {
   return (
@@ -95,7 +103,21 @@ export const SitesTree = ({ sites }: ISitesTree) => {
   );
 };
 
-export const SitesSelection = () => {
+interface ISitesSelection {
+  filterState: NodeStatusEnum;
+  handleFilterState: (value: NodeStatusEnum) => void;
+}
+
+export const SitesSelection = ({
+  filterState,
+  handleFilterState,
+}: ISitesSelection) => {
+  console.log(filterState);
+  const [open, setIsOpen] = useState(false);
+
+  const handleToggle = (value: NodeStatusEnum) => () => {
+    handleFilterState(value);
+  };
   return (
     <Box
       sx={{
@@ -103,7 +125,8 @@ export const SitesSelection = () => {
         left: 24,
         zIndex: 400,
         display: 'flex',
-        padding: '16px 24px',
+        minWidth: '200px',
+        padding: '12px 18px',
         borderRadius: '4px',
         width: 'fit-content',
         position: 'absolute',
@@ -111,24 +134,62 @@ export const SitesSelection = () => {
         background: (theme) => theme.palette.background.paper,
       }}
     >
-      <FormGroup>
-        <FormControlLabel
-          control={<Checkbox defaultChecked sx={{ p: '4px' }} />}
-          label="All"
-        />
-        <FormControlLabel
-          control={<Checkbox sx={{ p: '4px' }} />}
-          label="Online (1)"
-        />
-        <FormControlLabel
-          control={<Checkbox sx={{ p: '4px' }} />}
-          label="Offline (1)"
-        />
-        <FormControlLabel
-          control={<Checkbox sx={{ p: '4px' }} />}
-          label="Needs attention (0)"
-        />
-      </FormGroup>
+      <List
+        component="nav"
+        sx={{ width: '100%', p: 0, bgcolor: 'background.paper' }}
+        aria-labelledby="nested-list-subheader"
+      >
+        <ListItemButton
+          sx={{ p: 0, m: 0, pb: 1 }}
+          onClick={() => setIsOpen(!open)}
+        >
+          <ListItemIcon>
+            <TuneIcon />
+          </ListItemIcon>
+          <ListItemText primary="Filters" />
+          {open ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {[
+              { id: 0, label: 'All', value: NodeStatusEnum.Undefined },
+              { id: 1, label: 'Configured', value: NodeStatusEnum.Configured },
+              {
+                id: 2,
+                label: 'Maintenance',
+                value: NodeStatusEnum.Maintenance,
+              },
+              { id: 3, label: 'Faulty', value: NodeStatusEnum.Faulty },
+              { id: 4, label: 'Onboarded', value: NodeStatusEnum.Onboarded },
+              { id: 5, label: 'Active', value: NodeStatusEnum.Active },
+            ].map(({ id, label, value }) => {
+              const labelId = `checkbox-list-label-${value}`;
+
+              return (
+                <ListItem key={id} disablePadding>
+                  <ListItemButton
+                    role={undefined}
+                    sx={{ p: 0, m: 0 }}
+                    onClick={handleToggle(value)}
+                    dense
+                  >
+                    <ListItemIcon>
+                      <Checkbox
+                        edge="start"
+                        checked={filterState === value}
+                        tabIndex={-1}
+                        disableRipple
+                        inputProps={{ 'aria-labelledby': labelId }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText id={labelId} primary={label} />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Collapse>
+      </List>
     </Box>
   );
 };

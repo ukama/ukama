@@ -9,6 +9,7 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import {
+  NodeStatusEnum,
   useGetNodesByNetworkQuery,
   useGetNodesLocationQuery,
   useGetSitesQuery,
@@ -28,6 +29,7 @@ import NetworkIcon from '@mui/icons-material/Hub';
 import { AlertColor, Paper } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 const DynamicMap = dynamic(
   () => import('../ui/molecules/NetworkMap/DynamicMap'),
@@ -38,6 +40,9 @@ const DynamicMap = dynamic(
 
 export default function Page() {
   const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [filterState, setFilterState] = useState<NodeStatusEnum>(
+    NodeStatusEnum.Undefined,
+  );
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
     fetchPolicy: 'cache-and-network',
@@ -74,6 +79,7 @@ export default function Page() {
     fetchPolicy: 'cache-first',
     variables: {
       data: {
+        nodeFilterState: filterState,
         networkId: _commonData?.networkId,
       },
     },
@@ -148,7 +154,10 @@ export default function Page() {
                         networkNodes?.getNodesByNetwork.nodes || [],
                       )}
                     />
-                    <SitesSelection />
+                    <SitesSelection
+                      filterState={filterState}
+                      handleFilterState={(value) => setFilterState(value)}
+                    />
                   </>
                 )}
               </DynamicMap>

@@ -545,6 +545,7 @@ export type NodeLocation = {
   id: Scalars['String']['output'];
   lat: Scalars['String']['output'];
   lng: Scalars['String']['output'];
+  state: NodeStatusEnum;
 };
 
 export type NodeSite = {
@@ -585,6 +586,7 @@ export type Nodes = {
 
 export type NodesInput = {
   networkId: Scalars['String']['input'];
+  nodeFilterState: NodeStatusEnum;
 };
 
 export type NodesLocation = {
@@ -1173,14 +1175,14 @@ export type GetNodesLocationQueryVariables = Exact<{
 }>;
 
 
-export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'NodesLocation', networkId: string, nodes: Array<{ __typename?: 'NodeLocation', id: string, lat: string, lng: string }> } };
+export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'NodesLocation', networkId: string, nodes: Array<{ __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum }> } };
 
 export type GetNodeLocationQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string } };
+export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -2127,6 +2129,7 @@ export const GetNodesLocationDocument = gql`
       id
       lat
       lng
+      state
     }
   }
 }
@@ -2165,6 +2168,7 @@ export const GetNodeLocationDocument = gql`
     id
     lat
     lng
+    state
   }
 }
     `;
