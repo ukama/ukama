@@ -7,31 +7,19 @@
  */
 
 'use client';
-import {
-  commonData,
-  isDarkmode,
-  pageName,
-  snackbarMessage,
-  user,
-} from '@/app-recoil';
+import { commonData, isDarkmode, snackbarMessage } from '@/app-recoil';
 import client from '@/client/ApolloClient';
 import { theme } from '@/styles/theme';
 import { MyAppProps, TCommonData, TSnackMessage } from '@/types';
+import AuthWrapper from '@/ui/wrappers/authWrapper';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
-import { doesHttpOnlyCookieExist } from '@/utils';
 import { ApolloProvider, HttpLink } from '@apollo/client';
 import { CacheProvider } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import {
-  RecoilRoot,
-  useRecoilState,
-  useRecoilValue,
-  useResetRecoilState,
-} from 'recoil';
+import { RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
 import '../styles/global.css';
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 const clientSideEmotionCache = createEmotionCache();
@@ -42,9 +30,6 @@ const ClientWrapper = (appProps: MyAppProps) => {
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const [_snackbarMessage, setSnackbarMessage] =
     useRecoilState<TSnackMessage>(snackbarMessage);
-  const [mounted, setMounted] = useState(false);
-  const resetData = useResetRecoilState(user);
-  const resetPageName = useResetRecoilState(pageName);
   const httpLink = new HttpLink({
     uri: process.env.NEXT_PUBLIC_API_GW,
     credentials: 'include',
@@ -56,24 +41,9 @@ const ClientWrapper = (appProps: MyAppProps) => {
     },
   });
 
-  useEffect(() => {
-    setMounted(true);
-    return () => {
-      setMounted(false);
-    };
-  });
-
   const getClient = (): any => {
-    if (mounted && !doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
     client.setLink(httpLink);
     return client;
-  };
-
-  const handleGoToLogin = () => {
-    resetData();
-    resetPageName();
-    typeof window !== 'undefined' &&
-      window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
   };
 
   const handleSnackbarClose = () =>
@@ -108,7 +78,9 @@ const RootWrapper = (appProps: MyAppProps) => {
   return (
     <ErrorBoundary>
       <RecoilRoot>
-        <ClientWrapper {...appProps} />
+        <AuthWrapper>
+          <ClientWrapper {...appProps} />
+        </AuthWrapper>
       </RecoilRoot>
     </ErrorBoundary>
   );

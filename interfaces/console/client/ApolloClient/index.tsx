@@ -22,6 +22,7 @@ export default client;
 const httpLink = (headers: any) =>
   new HttpLink({
     uri: process.env.NEXT_PUBLIC_METRICS_URL,
+    credentials: 'include',
     headers: {
       ...headers,
     },
