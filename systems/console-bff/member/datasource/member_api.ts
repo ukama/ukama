@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { REGISTRY_API_GW, VERSION } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
@@ -21,41 +20,27 @@ import { dtoToMemberResDto, dtoToMembersResDto } from "./mapper";
 class MemberApi extends RESTDataSource {
   baseURL = REGISTRY_API_GW;
   getMembers = async (): Promise<MembersResDto> => {
-    return this.get(`/${VERSION}/members`)
-      .then(res => dtoToMembersResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/members`).then(res => dtoToMembersResDto(res));
   };
 
   getMember = async (id: string): Promise<MemberDto> => {
-    return this.get(`/${VERSION}/members/${id}`)
-      .then(res => dtoToMemberResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/members/${id}`).then(res =>
+      dtoToMemberResDto(res)
+    );
   };
 
   removeMember = async (id: string): Promise<CBooleanResponse> => {
-    return this.delete(`/${VERSION}/members/${id}`)
-      .then(() => {
-        return {
-          success: true,
-        };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.delete(`/${VERSION}/members/${id}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 
   addMember = async (data: AddMemberInputDto): Promise<MemberDto> => {
     return this.post(`/${VERSION}/members`, {
       body: { user_uuid: data.userId, role: data.role },
-    })
-      .then(res => dtoToMemberResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToMemberResDto(res));
   };
 
   updateMember = async (
@@ -67,15 +52,11 @@ class MemberApi extends RESTDataSource {
         isDeactivated: req.isDeactivated,
         role: req.role,
       },
-    })
-      .then(() => {
-        return {
-          success: true,
-        };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 }
 

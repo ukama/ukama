@@ -28,7 +28,7 @@ const SubGraphServer = async (resolvers: NonEmptyArray<any>) => {
 
   const server = new ApolloServer({
     schema: federatedSchema,
-    csrfPrevention: false,
+    csrfPrevention: true,
     introspection: true,
     plugins: [ApolloServerPluginInlineTrace({})],
   });

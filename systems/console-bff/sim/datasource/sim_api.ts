@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { SUBSCRIBER_API_GW } from "../../common/configs";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
@@ -48,11 +47,7 @@ class SimApi extends RESTDataSource {
         data: req.data,
         sim_type: req.simType,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   allocateSim = async (req: AllocateSimInputDto): Promise<SimDto> => {
@@ -65,11 +60,7 @@ class SimApi extends RESTDataSource {
         ...req,
         sim_token: token,
       },
-    })
-      .then(res => dtoToSimResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimResDto(res));
   };
 
   toggleSimStatus = async (
@@ -80,11 +71,7 @@ class SimApi extends RESTDataSource {
         simId: req.simId,
         status: req.status,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {
@@ -92,19 +79,11 @@ class SimApi extends RESTDataSource {
       params: {
         simId: req.simId,
       },
-    })
-      .then(res => dtoToSimResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimResDto(res));
   };
 
   getSims = async (type: string): Promise<SimsResDto> => {
-    return this.get(`/sims/${type}`)
-      .then(res => dtoToSimsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/sims/${type}`).then(res => dtoToSimsDto(res));
   };
 
   getDataUsage = async (simId: string): Promise<SimDataUsage> => {
@@ -121,11 +100,7 @@ class SimApi extends RESTDataSource {
       body: {
         subscriberId: req.subscriberId,
       },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimDetailsDto(res));
   };
 
   getSimByNetworkId = async (
@@ -135,11 +110,7 @@ class SimApi extends RESTDataSource {
       body: {
         networkId: req.networkId,
       },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimDetailsDto(res));
   };
 
   deleteSim = async (req: DeleteSimInputDto): Promise<DeleteSimResDto> => {
@@ -147,11 +118,7 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   addPackegeToSim = async (
@@ -161,11 +128,7 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   removePackageFromSim = async (
@@ -175,11 +138,7 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   getPackagesForSim = async (
@@ -189,19 +148,11 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`)
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (
@@ -211,11 +162,7 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 }
 

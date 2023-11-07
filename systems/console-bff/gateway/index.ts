@@ -22,19 +22,9 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
-  INVITATION_PORT,
-  MEMBER_PORT,
   METRICS_PORT,
-  NETWORK_PORT,
-  NODE_PORT,
-  ORG_PORT,
-  PACKAGE_PORT,
-  PLANNING_SERVICE_PORT,
   PLAYGROUND_URL,
-  RATE_PORT,
-  SIM_PORT,
-  SUBSCRIBER_PORT,
-  USER_PORT,
+  SUB_GRAPH_LIST,
 } from "../common/configs";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
@@ -63,19 +53,11 @@ const httpServer = createServer(app);
 const loadServers = async () => {
   const gateway = new ApolloGateway({
     supergraphSdl: new IntrospectAndCompose({
-      subgraphs: [
-        { name: "org", url: `http://localhost:${ORG_PORT}` },
-        { name: "node", url: `http://localhost:${NODE_PORT}` },
-        { name: "user", url: `http://localhost:${USER_PORT}` },
-        { name: "network", url: `http://localhost:${NETWORK_PORT}` },
-        { name: "subscriber", url: `http://localhost:${SUBSCRIBER_PORT}` },
-        { name: "sim", url: `http://localhost:${SIM_PORT}` },
-        { name: "package", url: `http://localhost:${PACKAGE_PORT}` },
-        { name: "rate", url: `http://localhost:${RATE_PORT}` },
-        { name: "invitation", url: `http://localhost:${INVITATION_PORT}` },
-        { name: "member", url: `http://localhost:${MEMBER_PORT}` },
-        { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
-      ],
+      subgraphs: SUB_GRAPH_LIST.map(({ name, url }: any) => ({
+        name,
+        url,
+      })),
+
       introspectionHeaders: {
         introspection: "true",
       },

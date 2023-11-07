@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
@@ -24,19 +23,15 @@ const PACKAGES = "packages";
 class PackageApi extends RESTDataSource {
   baseURL = DATA_API_GW;
   getPackage = async (packageId: string): Promise<PackageDto> => {
-    return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {})
-      .then(res => dtoToPackageDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {}).then(res =>
+      dtoToPackageDto(res)
+    );
   };
 
   getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`)
-      .then(res => dtoToPackagesDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`).then(res =>
+      dtoToPackagesDto(res)
+    );
   };
 
   addPackage = async (
@@ -63,23 +58,15 @@ class PackageApi extends RESTDataSource {
         voice_unit: "seconds",
         voice_volume: 0,
       },
-    })
-      .then(res => dtoToPackageDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToPackageDto(res));
   };
 
   deletePackage = async (packageId: string): Promise<IdResponse> => {
-    return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`)
-      .then(() => {
-        return {
-          uuid: packageId,
-        };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`).then(() => {
+      return {
+        uuid: packageId,
+      };
+    });
   };
 
   updatePackage = async (
@@ -88,11 +75,7 @@ class PackageApi extends RESTDataSource {
   ): Promise<PackageDto> => {
     return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
       body: req,
-    })
-      .then(res => dtoToPackageDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToPackageDto(res));
   };
 }
 
