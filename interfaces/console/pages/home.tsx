@@ -7,6 +7,7 @@
  */
 
 import { commonData, snackbarMessage } from '@/app-recoil';
+import { metricsClient } from '@/client/ApolloClient';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import {
   NodeStatusEnum,
@@ -14,6 +15,7 @@ import {
   useGetNodesLocationQuery,
   useGetSitesQuery,
 } from '@/generated';
+import { useGetStatsMetricQuery } from '@/generated/metrics';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
@@ -59,6 +61,11 @@ export default function Page() {
     },
   });
 
+  const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
+    client: metricsClient,
+    fetchPolicy: 'cache-and-network',
+  });
+
   const { data: networkNodes, loading: networkNodesLoading } =
     useGetNodesByNetworkQuery({
       fetchPolicy: 'cache-and-network',
@@ -99,9 +106,9 @@ export default function Page() {
         <Grid xs={12} md={6} lg={4}>
           <StatusCard
             Icon={UsersWithBG}
-            title={'Connected Users'}
+            title={'Active subscribers'}
             options={TIME_FILTER}
-            subtitle1={'0'}
+            subtitle1={`${statsRes?.getStatsMetric.activeSubscriber}` || '0'}
             subtitle2={''}
             option={''}
             loading={false}
@@ -110,9 +117,11 @@ export default function Page() {
         </Grid>
         <Grid xs={12} md={6} lg={4}>
           <StatusCard
-            title={'Data Usage'}
-            subtitle1={`0`}
-            subtitle2={`Package`}
+            title={'Average signal strength'}
+            subtitle1={
+              `${statsRes?.getStatsMetric.averageSignalStrength}` || '0'
+            }
+            subtitle2={`dBM`}
             Icon={DataUsage}
             options={TIME_FILTER}
             option={'usage'}
@@ -122,9 +131,9 @@ export default function Page() {
         </Grid>
         <Grid xs={12} md={6} lg={4}>
           <StatusCard
-            title={'Data Bill'}
-            subtitle1={`$ 0`}
-            subtitle2={`0 / due in  days`}
+            title={'Average throughput'}
+            subtitle1={`${statsRes?.getStatsMetric.averageThroughput}` || '0'}
+            subtitle2={`bps`}
             Icon={DataBilling}
             options={MONTH_FILTER}
             loading={false}

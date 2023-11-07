@@ -33,6 +33,7 @@ import {
   LatestMetricRes,
   MetricRes,
   MetricsRes,
+  StatsMetric,
   SubMetricByTabInput,
   SubMetricRangeInput,
 } from "./types";
@@ -51,6 +52,15 @@ const getErrorRes = (msg: string) =>
 
 @Resolver(MetricRes)
 class MetricResolvers {
+  @Query(() => StatsMetric)
+  async getStatsMetric() {
+    return {
+      activeSubscriber: Math.floor(Math.random() * 30),
+      averageThroughput: Math.floor(Math.random() * 50),
+      averageSignalStrength: Math.floor(Math.random() * 90),
+    };
+  }
+
   @Query(() => LatestMetricRes)
   async getLatestMetric(@Arg("data") data: GetLatestMetricInput) {
     return await getLatestMetric(data);
