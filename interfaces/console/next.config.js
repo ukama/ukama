@@ -12,7 +12,8 @@ const nextConfig = {
     appDir: false,
   },
   env: {
-    customKey: 'my-value',
+    NEXT_PUBLIC_METRIC_URL: '',
+    NEXT_PUBLIC_METRIC_WEBSOCKET_URL: '',
   },
   output: 'node .next/standalone/server.js',
   images: {

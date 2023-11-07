@@ -6,8 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData, pageName, snackbarMessage, user } from '@/app-recoil';
-import { MetricLink, metricsClient } from '@/client/ApolloClient';
+import { snackbarMessage } from '@/app-recoil';
+import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import {
   Node,
@@ -23,7 +23,7 @@ import {
   useGetMetricByTabLazyQuery,
 } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
-import { TCommonData, TSnackMessage } from '@/types';
+import { TSnackMessage } from '@/types';
 import EditNode from '@/ui/molecules/EditNode';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
@@ -34,15 +34,11 @@ import NodeSchematicTab from '@/ui/molecules/NodeSchematicTab';
 import NodeSoftwareTab from '@/ui/molecules/NodeSoftwareTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
-import {
-  doesHttpOnlyCookieExist,
-  getNodeTabTypeByIndex,
-  getUnixTime,
-} from '@/utils';
+import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 
 const SPEC_DATA = [
   { id: 'pdf-1', title: 'PDF with Technical Specs', readingTime: '2mint' },
@@ -53,8 +49,6 @@ const SPEC_DATA = [
 
 export default function Page() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const _commonData = useRecoilValue<TCommonData>(commonData);
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [graphType, setGraphType] = useState<Graphs_Type>(
@@ -62,28 +56,8 @@ export default function Page() {
   );
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
-  const resetData = useResetRecoilState(user);
-  const resetPageName = useResetRecoilState(pageName);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-
-  const getMetricClient = (): any => {
-    if (mounted && !doesHttpOnlyCookieExist('ukama_session')) {
-      resetData();
-      resetPageName();
-      typeof window !== 'undefined' &&
-        window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
-      return null;
-    }
-    return metricsClient.setLink(
-      MetricLink({
-        'org-id': _commonData.orgId,
-        'user-id': _commonData.userId,
-        'org-name': _commonData.orgName,
-        'x-session-token': 'abc',
-      }),
-    );
-  };
 
   const [
     getNodes,
@@ -120,7 +94,7 @@ export default function Page() {
       variables: nodeMetricsVariables,
     },
   ] = useGetMetricByTabLazyQuery({
-    client: getMetricClient(),
+    client: metricsClient,
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       setMetrics(data.getMetricByTab);
@@ -162,13 +136,6 @@ export default function Page() {
     });
 
   useEffect(() => {
-    setMounted(true);
-    return () => {
-      setMounted(false);
-    };
-  });
-
-  useEffect(() => {
     getNodes({
       variables: {
         data: {
@@ -191,7 +158,7 @@ export default function Page() {
   }, [selectedTab]);
 
   useEffect(() => {
-    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom)
+    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
       getNodeMetricByTab({
         variables: {
           data: {
@@ -205,6 +172,7 @@ export default function Page() {
           },
         },
       });
+    }
   }, [metricFrom]);
 
   const handleNodeSelected = (node: Node) => {

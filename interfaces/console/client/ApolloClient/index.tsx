@@ -21,7 +21,7 @@ export default client;
 
 const httpLink = (headers: any) =>
   new HttpLink({
-    uri: process.env.NEXT_PUBLIC_METRIC_URL,
+    uri: process.env.NEXT_PUBLIC_METRICS_URL,
     headers: {
       ...headers,
     },
@@ -29,11 +29,26 @@ const httpLink = (headers: any) =>
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL || '',
+    url: process.env.NEXT_PUBLIC_METRICS_WEBSOCKET_URL || '',
   }),
 );
 
-export const MetricLink = (headers: any) => {
+export const MetricLink = () => {
+  const _commonData = {
+    orgId: '',
+    userId: '',
+    orgName: '',
+  };
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    let data = localStorage.getItem('recoil-persist');
+    if (data) {
+      let parsedData = JSON.parse(data);
+      _commonData.orgId = parsedData['commonData']['orgId'];
+      _commonData.userId = parsedData['commonData']['userId'];
+      _commonData.orgName = parsedData['commonData']['orgName'];
+    }
+  }
   return split(
     ({ query }) => {
       const definition = getMainDefinition(query);
@@ -42,12 +57,18 @@ export const MetricLink = (headers: any) => {
         definition.operation === 'subscription'
       );
     },
+
     wsLink,
-    httpLink(headers),
+    httpLink({
+      'org-id': _commonData.orgId,
+      'user-id': _commonData.userId,
+      'org-name': _commonData.orgName,
+    }),
   );
 };
 
 export const metricsClient = new ApolloClient({
+  link: MetricLink(),
   cache: new InMemoryCache(),
   credentials: 'include',
 });
