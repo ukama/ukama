@@ -7,6 +7,7 @@
  */
 import { Arg, Query, Resolver } from "type-graphql";
 
+import { NODE_STATUS } from "../../common/enums";
 import { NodeInput, NodeLocation } from "./types";
 
 @Resolver()
@@ -41,6 +42,7 @@ export class GetNodeLocationResolver {
       id: data.id,
       lat: randomLocation.split(",")[0].trim(),
       lng: randomLocation.split(",")[1].trim(),
+      state: NODE_STATUS.ACTIVE,
     };
   }
 }

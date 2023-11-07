@@ -237,6 +237,9 @@ export class NodeLocation {
 
   @Field()
   lng: string;
+
+  @Field(() => NODE_STATUS)
+  state: NODE_STATUS;
 }
 
 @ArgsType()
@@ -244,6 +247,9 @@ export class NodeLocation {
 export class NodesInput {
   @Field()
   networkId: string;
+
+  @Field(() => NODE_STATUS)
+  nodeFilterState: NODE_STATUS;
 }
 
 @ObjectType()

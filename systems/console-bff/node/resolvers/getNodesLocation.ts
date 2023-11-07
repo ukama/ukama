@@ -7,7 +7,20 @@
  */
 import { Arg, Query, Resolver } from "type-graphql";
 
+import { NODE_STATUS } from "../../common/enums";
 import { NodeLocation, NodesInput, NodesLocation } from "./types";
+
+const getRandomNodeState = () => {
+  const nodeStates = [
+    NODE_STATUS.ACTIVE,
+    NODE_STATUS.CONFIGURED,
+    NODE_STATUS.FAULTY,
+    NODE_STATUS.MAINTENANCE,
+    NODE_STATUS.ONBOARDED,
+    NODE_STATUS.UNDEFINED,
+  ];
+  return nodeStates[Math.floor(Math.random() * nodeStates.length)];
+};
 
 @Resolver()
 export class GetNodesLocationResolver {
@@ -36,18 +49,25 @@ export class GetNodesLocationResolver {
       "37.7514871501036 , -122.49702703770673",
     ];
     const nodes: NodeLocation[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       const randomLocation =
         locations[Math.floor(Math.random() * locations.length)];
       nodes.push({
         id: "node" + i,
         lat: randomLocation.split(",")[0].trim(),
         lng: randomLocation.split(",")[1].trim(),
+        state: getRandomNodeState(),
       });
     }
+
     return {
       networkId: data.networkId,
-      nodes: nodes,
+      nodes:
+        data.nodeFilterState === NODE_STATUS.UNDEFINED
+          ? nodes
+          : nodes.filter(
+              (node: NodeLocation) => node.state === data.nodeFilterState
+            ),
     };
   }
 }
