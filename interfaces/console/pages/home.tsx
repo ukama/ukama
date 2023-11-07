@@ -8,7 +8,11 @@
 
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
-import { useGetNodesByNetworkQuery, useGetSitesQuery } from '@/generated';
+import {
+  useGetNodesByNetworkQuery,
+  useGetNodesLocationQuery,
+  useGetSitesQuery,
+} from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
@@ -65,6 +69,15 @@ export default function Page() {
         });
       },
     });
+
+  const { data: nodesLocationData } = useGetNodesLocationQuery({
+    fetchPolicy: 'cache-first',
+    variables: {
+      data: {
+        networkId: _commonData?.networkId,
+      },
+    },
+  });
 
   return (
     <>

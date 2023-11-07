@@ -10,7 +10,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -540,6 +540,13 @@ export type NodeInput = {
   id: Scalars['String']['input'];
 };
 
+export type NodeLocation = {
+  __typename?: 'NodeLocation';
+  id: Scalars['String']['output'];
+  lat: Scalars['String']['output'];
+  lng: Scalars['String']['output'];
+};
+
 export type NodeSite = {
   __typename?: 'NodeSite';
   addedAt?: Maybe<Scalars['String']['output']>;
@@ -574,6 +581,16 @@ export enum NodeTypeEnum {
 export type Nodes = {
   __typename?: 'Nodes';
   nodes: Array<Node>;
+};
+
+export type NodesInput = {
+  networkId: Scalars['String']['input'];
+};
+
+export type NodesLocation = {
+  __typename?: 'NodesLocation';
+  networkId: Scalars['String']['output'];
+  nodes: Array<NodeLocation>;
 };
 
 export type OrgDto = {
@@ -662,8 +679,10 @@ export type Query = {
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodeApps: NodeApps;
+  getNodeLocation: NodeLocation;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
+  getNodesLocation: NodesLocation;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -732,6 +751,11 @@ export type QueryGetNodeAppsArgs = {
 };
 
 
+export type QueryGetNodeLocationArgs = {
+  data: NodeInput;
+};
+
+
 export type QueryGetNodesArgs = {
   data: GetNodesInput;
 };
@@ -739,6 +763,11 @@ export type QueryGetNodesArgs = {
 
 export type QueryGetNodesByNetworkArgs = {
   networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetNodesLocationArgs = {
+  data: NodesInput;
 };
 
 
@@ -1138,6 +1167,20 @@ export type GetNodeAppsQueryVariables = Exact<{
 
 
 export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
+
+export type GetNodesLocationQueryVariables = Exact<{
+  data: NodesInput;
+}>;
+
+
+export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'NodesLocation', networkId: string, nodes: Array<{ __typename?: 'NodeLocation', id: string, lat: string, lng: string }> } };
+
+export type GetNodeLocationQueryVariables = Exact<{
+  data: NodeInput;
+}>;
+
+
+export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -2076,6 +2119,83 @@ export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
 export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
 export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
+export const GetNodesLocationDocument = gql`
+    query GetNodesLocation($data: NodesInput!) {
+  getNodesLocation(data: $data) {
+    networkId
+    nodes {
+      id
+      lat
+      lng
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetNodesLocationQuery__
+ *
+ * To run a query within a React component, call `useGetNodesLocationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesLocationQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodesLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
+      }
+export function useGetNodesLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
+        }
+export type GetNodesLocationQueryHookResult = ReturnType<typeof useGetNodesLocationQuery>;
+export type GetNodesLocationLazyQueryHookResult = ReturnType<typeof useGetNodesLocationLazyQuery>;
+export type GetNodesLocationQueryResult = Apollo.QueryResult<GetNodesLocationQuery, GetNodesLocationQueryVariables>;
+export const GetNodeLocationDocument = gql`
+    query GetNodeLocation($data: NodeInput!) {
+  getNodeLocation(data: $data) {
+    id
+    lat
+    lng
+  }
+}
+    `;
+
+/**
+ * __useGetNodeLocationQuery__
+ *
+ * To run a query within a React component, call `useGetNodeLocationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeLocationQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodeLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+      }
+export function useGetNodeLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+        }
+export type GetNodeLocationQueryHookResult = ReturnType<typeof useGetNodeLocationQuery>;
+export type GetNodeLocationLazyQueryHookResult = ReturnType<typeof useGetNodeLocationLazyQuery>;
+export type GetNodeLocationQueryResult = Apollo.QueryResult<GetNodeLocationQuery, GetNodeLocationQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

@@ -116,6 +116,25 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
     type
   }
 }
+
+query GetNodesLocation($data: NodesInput!) {
+  getNodesLocation(data: $data) {
+    networkId
+    nodes {
+      id
+      lat
+      lng
+    }
+  }
+}
+
+query GetNodeLocation($data: NodeInput!) {
+  getNodeLocation(data: $data) {
+    id
+    lat
+    lng
+  }
+}
 ### End Node ###
 
 ### Member Start ###

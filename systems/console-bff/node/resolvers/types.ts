@@ -226,3 +226,31 @@ export class NodeAppsChangeLogInput {
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
 }
+
+@ObjectType()
+export class NodeLocation {
+  @Field()
+  id: string;
+
+  @Field()
+  lat: string;
+
+  @Field()
+  lng: string;
+}
+
+@ArgsType()
+@InputType()
+export class NodesInput {
+  @Field()
+  networkId: string;
+}
+
+@ObjectType()
+export class NodesLocation {
+  @Field()
+  networkId: string;
+
+  @Field(() => [NodeLocation])
+  nodes: NodeLocation[];
+}
