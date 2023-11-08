@@ -45,9 +45,11 @@ export const MetricLink = () => {
     let data = localStorage.getItem('recoil-persist');
     if (data) {
       let parsedData = JSON.parse(data);
-      _commonData.orgId = parsedData['commonData']['orgId'];
-      _commonData.userId = parsedData['commonData']['userId'];
-      _commonData.orgName = parsedData['commonData']['orgName'];
+      if (parsedData['commonData']) {
+        _commonData.orgId = parsedData['commonData']['orgId'];
+        _commonData.userId = parsedData['commonData']['userId'];
+        _commonData.orgName = parsedData['commonData']['orgName'];
+      }
     }
   }
   return split(

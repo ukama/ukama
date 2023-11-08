@@ -88,11 +88,11 @@ const Layout = ({
         <Box
           sx={{
             width: '100%',
-            height: '100vh',
-            overflow: 'auto',
+            height: '100%',
+            overflow: 'hidden',
             background: (theme) =>
               theme.palette.mode === 'light'
-                ? colors.black10
+                ? colors.black40
                 : colors.nightGrey,
           }}
         >
@@ -112,9 +112,10 @@ const Layout = ({
                     },
                     m: {
                       xs: `44px 0px 44px 62px !important`,
-                      md: `60px 0px 60px 218px !important`,
+                      md: `60px 0px 0px 218px !important`,
                     },
                   }),
+              height: '100%',
               backgroundColor: (theme) =>
                 theme.palette.mode === 'light'
                   ? colors.black10
@@ -125,11 +126,10 @@ const Layout = ({
               radius="small"
               width={'100%'}
               isLoading={isLoading}
-              height={isLoading ? '100vh' : '100%'}
-              cstyle={{ background: isLoading ? colors.white : 'inherit' }}
+              height={isLoading ? '90vh' : '100%'}
             >
-              <Stack direction={'column'}>
-                {page !== '404' && (
+              <Stack height={'100%'} direction={'column'}>
+                {page !== '404' && page !== 'Unauthorized' && (
                   <Box>
                     <Stack
                       direction={'row'}

@@ -15,18 +15,25 @@ class UserApi extends RESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getUser = async (userId: string): Promise<UserResDto> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/users/${userId}`);
     return this.get(`/${VERSION}/users/${userId}`, {}).then(res =>
       dtoToUserResDto(res)
     );
   };
 
   whoami = async (userId: string): Promise<WhoamiDto> => {
+    this.logger.info(
+      `Request Url: ${this.baseURL}/${VERSION}/users/whoami/${userId}`
+    );
     return this.get(`/${VERSION}/users/whoami/${userId}`).then(res =>
       dtoToWhoamiResDto(res)
     );
   };
 
   auth = async (authId: string): Promise<UserResDto> => {
+    this.logger.info(
+      `Request Url: ${this.baseURL}/${VERSION}/users/auth/${authId}`
+    );
     return this.get(`/${VERSION}/users/auth/${authId}`).then(res =>
       dtoToUserResDto(res)
     );

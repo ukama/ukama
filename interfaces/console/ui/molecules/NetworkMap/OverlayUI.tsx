@@ -112,7 +112,6 @@ export const SitesSelection = ({
   filterState,
   handleFilterState,
 }: ISitesSelection) => {
-  console.log(filterState);
   const [open, setIsOpen] = useState(false);
 
   const handleToggle = (value: NodeStatusEnum) => () => {

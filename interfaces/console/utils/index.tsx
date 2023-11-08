@@ -30,8 +30,8 @@ const getTitleFromPath = (path: string, id: string) => {
       return 'Site Planning';
     // case '/manage':
     //   return 'Manage';
-    case '/uidev':
-      return 'UIDEV';
+    case '/unauthorized':
+      return 'Unauthorized';
     case '/ping':
       return 'Ping';
     default:

@@ -10,7 +10,6 @@ import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
 import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
-import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import AddNodeDialog from '@/ui/molecules/AddNode';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
@@ -120,16 +119,16 @@ export default function Page() {
   };
 
   const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
+  const isLoading = nodesLoading || availableNodeLoading;
 
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={nodesLoading}
-        cstyle={{
-          backgroundColor: nodesLoading ? colors.white : 'transparent',
-        }}
+        height={isLoading ? '85vh' : '100%'}
+        isLoading={isLoading}
+        cstyle={{ marginTop: isLoading ? '18px' : '0px' }}
       >
         <PageContainer>
           <Stack

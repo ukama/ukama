@@ -20,6 +20,7 @@ import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
 import EmptyView from '@/ui/molecules/EmptyView';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   LabelOverlayUI,
   SitesSelection,
@@ -82,15 +83,16 @@ export default function Page() {
       },
     });
 
-  const { data: nodesLocationData } = useGetNodesLocationQuery({
-    fetchPolicy: 'cache-first',
-    variables: {
-      data: {
-        nodeFilterState: filterState,
-        networkId: _commonData?.networkId,
+  const { data: nodesLocationData, loading: nodesLocationLoading } =
+    useGetNodesLocationQuery({
+      fetchPolicy: 'cache-first',
+      variables: {
+        data: {
+          nodeFilterState: filterState,
+          networkId: _commonData?.networkId,
+        },
       },
-    },
-  });
+    });
 
   return (
     <>
@@ -111,7 +113,7 @@ export default function Page() {
             subtitle1={`${statsRes?.getStatsMetric.activeSubscriber}` || '0'}
             subtitle2={''}
             option={''}
-            loading={false}
+            loading={statsLoading}
             handleSelect={(value: string) => {}}
           />
         </Grid>
@@ -125,7 +127,7 @@ export default function Page() {
             Icon={DataUsage}
             options={TIME_FILTER}
             option={'usage'}
-            loading={false}
+            loading={statsLoading}
             handleSelect={(value: string) => {}}
           />
         </Grid>
@@ -136,7 +138,7 @@ export default function Page() {
             subtitle2={`bps`}
             Icon={DataBilling}
             options={MONTH_FILTER}
-            loading={false}
+            loading={statsLoading}
             option={'bill'}
             handleSelect={(value: string) => {}}
           />
@@ -149,27 +151,33 @@ export default function Page() {
             }}
           >
             {_commonData.networkId ? (
-              <DynamicMap
-                id="network-map"
-                zoom={10}
-                className="network-map"
-                markersData={nodesLocationData?.getNodesLocation}
+              <LoadingWrapper
+                radius="small"
+                width={'100%'}
+                isLoading={nodesLocationLoading || networkNodesLoading}
               >
-                {() => (
-                  <>
-                    <LabelOverlayUI name={_commonData.networkName} />
-                    <SitesTree
-                      sites={structureNodeSiteDate(
-                        networkNodes?.getNodesByNetwork.nodes || [],
-                      )}
-                    />
-                    <SitesSelection
-                      filterState={filterState}
-                      handleFilterState={(value) => setFilterState(value)}
-                    />
-                  </>
-                )}
-              </DynamicMap>
+                <DynamicMap
+                  id="network-map"
+                  zoom={10}
+                  className="network-map"
+                  markersData={nodesLocationData?.getNodesLocation}
+                >
+                  {() => (
+                    <>
+                      <LabelOverlayUI name={_commonData.networkName} />
+                      <SitesTree
+                        sites={structureNodeSiteDate(
+                          networkNodes?.getNodesByNetwork.nodes || [],
+                        )}
+                      />
+                      <SitesSelection
+                        filterState={filterState}
+                        handleFilterState={(value) => setFilterState(value)}
+                      />
+                    </>
+                  )}
+                </DynamicMap>
+              </LoadingWrapper>
             ) : (
               <EmptyView
                 title="No network selected"

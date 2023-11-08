@@ -159,7 +159,6 @@ const SimpleDataTable = React.memo(
     handleCreateNetwork,
     handleDeleteElement,
   }: SimpleDataTableInterface) => {
-    console.log(dataset);
     const _isDarkMode = useRecoilValue(isDarkmode);
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
 
