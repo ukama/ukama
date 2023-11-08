@@ -253,6 +253,13 @@ query getPackages {
     }
   }
 }
+query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    sims {
+      ...SimPool
+    }
+  }
+}
 
 mutation addPackage($data: AddPackageInputDto!) {
   addPackage(data: $data) {
@@ -265,6 +272,7 @@ mutation removePackageForSim($data: RemovePackageFormSimInputDto!) {
     packageId
   }
 }
+
 mutation addPackageToSim($data: AddPackageToSimInputDto!) {
   addPackageToSim(data: $data) {
     packageId

@@ -15,6 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  DateTimeISO: { input: any; output: any; }
 };
 
 export type AddDraftInput = {
@@ -59,9 +60,9 @@ export type AddPackageSimResDto = {
 };
 
 export type AddPackageToSimInputDto = {
-  packageId: Scalars['String']['input'];
-  simId: Scalars['String']['input'];
-  startDate: Scalars['String']['input'];
+  package_id: Scalars['String']['input'];
+  sim_id: Scalars['String']['input'];
+  start_date: Scalars['DateTimeISO']['input'];
 };
 
 export type AddSiteInputDto = {
@@ -1267,6 +1268,13 @@ export type GetPackageQueryVariables = Exact<{
 
 export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
+export type GetSimsBySubscriberQueryVariables = Exact<{
+  data: GetSimBySubscriberInputDto;
+}>;
+
+
+export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', sims: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
+
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
 }>;
@@ -1294,13 +1302,6 @@ export type SetActivePackageForSimMutationVariables = Exact<{
 
 
 export type SetActivePackageForSimMutation = { __typename?: 'Mutation', setActivePackageForSim: { __typename?: 'SetActivePackageForSimResDto', packageId?: string | null } };
-
-export type GetSimsBySubscriberQueryVariables = Exact<{
-  data: GetSimBySubscriberInputDto;
-}>;
-
-
-export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', sims: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
 
 export type GetPackagesForSimQueryVariables = Exact<{
   data: GetPackagesForSimInputDto;
@@ -2513,6 +2514,43 @@ export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
 export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
 export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export const GetSimsBySubscriberDocument = gql`
+    query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    sims {
+      ...SimPool
+    }
+  }
+}
+    ${SimPoolFragmentDoc}`;
+
+/**
+ * __useGetSimsBySubscriberQuery__
+ *
+ * To run a query within a React component, call `useGetSimsBySubscriberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsBySubscriberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsBySubscriberQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetSimsBySubscriberQuery(baseOptions: Apollo.QueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
+      }
+export function useGetSimsBySubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
+        }
+export type GetSimsBySubscriberQueryHookResult = ReturnType<typeof useGetSimsBySubscriberQuery>;
+export type GetSimsBySubscriberLazyQueryHookResult = ReturnType<typeof useGetSimsBySubscriberLazyQuery>;
+export type GetSimsBySubscriberQueryResult = Apollo.QueryResult<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>;
 export const AddPackageDocument = gql`
     mutation addPackage($data: AddPackageInputDto!) {
   addPackage(data: $data) {
@@ -2645,43 +2683,6 @@ export function useSetActivePackageForSimMutation(baseOptions?: Apollo.MutationH
 export type SetActivePackageForSimMutationHookResult = ReturnType<typeof useSetActivePackageForSimMutation>;
 export type SetActivePackageForSimMutationResult = Apollo.MutationResult<SetActivePackageForSimMutation>;
 export type SetActivePackageForSimMutationOptions = Apollo.BaseMutationOptions<SetActivePackageForSimMutation, SetActivePackageForSimMutationVariables>;
-export const GetSimsBySubscriberDocument = gql`
-    query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
-  getSimsBySubscriber(data: $data) {
-    sims {
-      ...SimPool
-    }
-  }
-}
-    ${SimPoolFragmentDoc}`;
-
-/**
- * __useGetSimsBySubscriberQuery__
- *
- * To run a query within a React component, call `useGetSimsBySubscriberQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetSimsBySubscriberQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSimsBySubscriberQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetSimsBySubscriberQuery(baseOptions: Apollo.QueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
-      }
-export function useGetSimsBySubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
-        }
-export type GetSimsBySubscriberQueryHookResult = ReturnType<typeof useGetSimsBySubscriberQuery>;
-export type GetSimsBySubscriberLazyQueryHookResult = ReturnType<typeof useGetSimsBySubscriberLazyQuery>;
-export type GetSimsBySubscriberQueryResult = Apollo.QueryResult<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>;
 export const GetPackagesForSimDocument = gql`
     query getPackagesForSim($data: GetPackagesForSimInputDto!) {
   getPackagesForSim(data: $data) {

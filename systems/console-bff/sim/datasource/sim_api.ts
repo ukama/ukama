@@ -60,12 +60,10 @@ class SimApi extends RESTDataSource {
   toggleSimStatus = async (
     req: ToggleSimStatusInputDto
   ): Promise<SimStatusResDto> => {
-    console.log("TOGGLE SIM", req);
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
     })
       .then(res => {
-        console.log("SIM STATUS RES:", res);
         return res;
       })
       .catch(err => {
@@ -79,7 +77,7 @@ class SimApi extends RESTDataSource {
       if (req.iccid) {
         const token = generateTokenFromIccid(
           req.iccid,
-          "the-key-has-to-be-32-bytes-long!"
+          process.env.ENCRYPTION_KEY || ""
         );
         return token;
       }
@@ -98,6 +96,17 @@ class SimApi extends RESTDataSource {
     })
       .then(res => {
         this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+        this.getPackagesForSim({ sim_id: res.sim.id })
+          .then((response: any) => {
+            this.setActivePackageForSim({
+              sim_id: res.sim.id,
+              package_id: response.packages[0].id,
+            });
+          })
+          .catch((error: any) => {
+            throw new GraphQLError(error);
+          });
+
         return dtoToAllocateSimResDto(res);
       })
       .catch(err => {

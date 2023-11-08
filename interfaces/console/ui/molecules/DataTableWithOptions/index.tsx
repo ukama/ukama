@@ -17,7 +17,7 @@ import {
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
-import { SiteDto } from '@/generated';
+import { NetworkDto } from '@/generated';
 
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
@@ -30,7 +30,7 @@ interface DataTableWithOptionsInterface {
   onMenuItemClick: Function;
   menuOptions: MenuItemType[];
   columns: ColumnsWithOptions[];
-  networkList?: SiteDto[];
+  networkList?: NetworkDto[];
   getSelectedNetwork?: Function;
 }
 
@@ -93,9 +93,12 @@ const DataTableWithOptions = ({
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
-  const handleNetworkSelect = (network: any) => {
+  const handleNetworkSelect = (network: string, networkId: string) => {
     setSelectedNetwork(network);
     handleCloseMenu();
+    if (getSelectedNetwork) {
+      getSelectedNetwork(networkId);
+    }
   };
   useEffect(() => {
     if (networkList && networkList.length > 0) {
@@ -148,25 +151,22 @@ const DataTableWithOptions = ({
                             onClose={handleCloseMenu}
                           >
                             {networkList &&
-                              networkList.map(
-                                ({ name, networkId, id }: SiteDto) => {
-                                  if (getSelectedNetwork) {
-                                    getSelectedNetwork(networkId); // Call your function only if it's defined
-                                  }
-                                  return (
-                                    <MenuItem
-                                      key={id}
-                                      onClick={() => handleNetworkSelect(name)}
-                                    >
-                                      <ListItem>
-                                        <ListItemText>
-                                          <b>{name}</b>
-                                        </ListItemText>
-                                      </ListItem>
-                                    </MenuItem>
-                                  );
-                                },
-                              )}
+                              networkList.map(({ name, id }: NetworkDto) => {
+                                return (
+                                  <MenuItem
+                                    key={id}
+                                    onClick={() =>
+                                      handleNetworkSelect(name, id)
+                                    }
+                                  >
+                                    <ListItem>
+                                      <ListItemText>
+                                        <b>{name}</b>
+                                      </ListItemText>
+                                    </ListItem>
+                                  </MenuItem>
+                                );
+                              })}
                           </Menu>
                         </>
                       ) : (

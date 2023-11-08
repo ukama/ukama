@@ -1,6 +1,8 @@
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, GraphQLISODateTime, InputType, ObjectType } from "type-graphql";
 
 import { SIM_TYPES } from "../../common/enums";
+
+// You might need to install this package
 
 @InputType()
 export class AllocateSimInputDto {
@@ -214,16 +216,24 @@ export class DeleteSimInputDto {
   @Field()
   simId: string;
 }
+// {
+//   "package_id": "{{PackageUUID}}",
+//   "sim_id": "{{SimUUID}}",
+//   "start_date": {
+//     "nanos": 0,
+//     "seconds": 0
+//   }
+// }
 @InputType()
 export class AddPackageToSimInputDto {
   @Field()
-  simId: string;
+  sim_id: string;
 
   @Field()
-  packageId: string;
+  package_id: string;
 
-  @Field()
-  startDate: string;
+  @Field(() => GraphQLISODateTime) // Use a proper date type
+  start_date: Date; // Change the data type to Date
 }
 @InputType()
 export class SetActivePackageForSimInputDto {
