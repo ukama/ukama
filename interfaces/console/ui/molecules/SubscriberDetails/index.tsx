@@ -390,6 +390,12 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                             >
                               Delete SIM
                             </MenuItem>
+                            <MenuItem
+                              onClick={() => handleSimMenu('topUp', sim.id)}
+                              sx={{ color: colors.red }}
+                            >
+                              Top up data
+                            </MenuItem>
                           </Menu>
                         </TableCell>
                       </TableRow>

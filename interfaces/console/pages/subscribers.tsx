@@ -563,6 +563,12 @@ const Page = () => {
           },
         },
       });
+    } else if (action === 'topUp') {
+      setIsToPupData(true);
+      setTopUpDetails({
+        simId: simId,
+        subscriberId: selectedSubscriber,
+      });
     }
   };
   const handleCloseTopUp = () => {
