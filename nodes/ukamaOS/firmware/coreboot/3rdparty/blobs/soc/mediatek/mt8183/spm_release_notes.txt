@@ -1,2 +1,0 @@
-=============== spm release 201907=============
-1. support spm suspend at the end of system suspend

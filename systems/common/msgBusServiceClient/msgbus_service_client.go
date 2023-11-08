@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package msgBusServiceClient
 
 import (
@@ -150,7 +158,7 @@ func (m *msgBusServiceClient) Stop() error {
 }
 
 func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
-	log.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
+	log.Debugf("Publishing message on route %s to MessageClientRoutine for %s service instance %s  msgclient ID %s", route, m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 

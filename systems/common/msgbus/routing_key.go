@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package msgbus
 
 import (
@@ -13,7 +21,7 @@ import (
 const (
 	TYPE_EVENT         = "event"
 	TYPE_REQUEST       = "request"
-	TYPE_RESPONSE      = "request"
+	TYPE_RESPONSE      = "response"
 	SOURCE_NODE        = "node"
 	SOURCE_CLOUD       = "cloud"
 	SCOPE_LOCAL        = "local"

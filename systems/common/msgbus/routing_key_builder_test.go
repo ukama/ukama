@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package msgbus
 
 import (
@@ -55,5 +63,11 @@ func TestBuild(t *testing.T) {
 			SetActionUpdate().SetCloudSource().SetLocalScope().SetOrgName("org").SetSystem("system").SetService("service").SetObject("object").MustBuild()
 		newKey := UpdateToAcceptFromAllOrg(rk1)
 		assert.Equal(t, "event.cloud.local.org.system.service.object.update", newKey)
+	})
+
+	t.Run("Parse", func(t *testing.T) {
+		route := "event.cloud.local.ukama.operator.cdr.sim.usage"
+		_, err := Parse(route)
+		assert.NoError(t, err)
 	})
 }

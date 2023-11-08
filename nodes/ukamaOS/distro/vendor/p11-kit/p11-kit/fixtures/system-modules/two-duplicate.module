@@ -1,4 +1,0 @@
-
-# This is a duplicate of the 'two' module
-module: mock-two.so
-# no priority, use name

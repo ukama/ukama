@@ -1,3 +1,9 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
+
 include ../../../systems/config.mk
 
 .PHONY: integration.test test build lint deps 
@@ -9,9 +15,6 @@ test: integration.test
 	go test -v ./...
 
 gen:
-
-	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
-					  msgClient.proto
 					  
 	mockery --all --recursive --dir ./internal
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks

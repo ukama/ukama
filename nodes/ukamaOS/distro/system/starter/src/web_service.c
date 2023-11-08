@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <signal.h>
@@ -20,6 +19,7 @@
 extern SpaceList *gSpaceList;
 extern void json_free(JsonObj** json);
 extern bool json_serialize_add_capp_to_array(JsonObj **json,
+                                             char *space,
                                              char *name,
                                              char *tag,
                                              char *status,
@@ -237,6 +237,7 @@ int web_service_cb_get_all_capps_status(const URequest *request,
             }
 
             json_serialize_add_capp_to_array(&json,
+                                             spacePtr->space->name,
                                              cappList->capp->name,
                                              cappList->capp->tag,
                                              status, pid);

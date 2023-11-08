@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package main
 
 import (
@@ -22,6 +30,13 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+)
+
+const (
+	MESH_IP_UPDATE            = "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"
+	EVTGEN_NODEFEEDER_PUBLISH = "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish"
+	MESH_NODE_ONLINE          = "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"
+	REGISTRY_NODE_CREATE      = "event.cloud.local.{{ .Org}}.registry.node.node.create"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -109,7 +124,12 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 func usageError() {
 	log.Println("Enter event key when prompted.")
 	log.Printf("Possible Keys:")
+	log.Printf(MESH_IP_UPDATE)
+	log.Printf(EVTGEN_NODEFEEDER_PUBLISH)
+	log.Printf(MESH_NODE_ONLINE)
+	log.Printf(REGISTRY_NODE_CREATE)
 	log.Printf("Example: For Route: event.cloud.global.{{ .Org}}.messaging.mesh.ip.update of Org ukama-org  Key is event.cloud.global.ukamaorg.messaging.mesh.ip.update ")
+
 }
 
 func start(m mb.MsgBusServiceClient) {
@@ -129,11 +149,35 @@ func start(m mb.MsgBusServiceClient) {
 
 		// Makes sure connection is closed when service exits.
 		switch route {
-		case msgbus.PrepareRoute(serviceConfig.OrgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"):
+		case msgbus.PrepareRoute(serviceConfig.OrgName, MESH_IP_UPDATE):
 			//event.cloud.global.ukamaorg.messaging.mesh.ip.update
 			log.Infof("Found messages for event %s", route)
-			k := msgbus.PrepareRoute(serviceConfig.OrgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update")
-			err := pkg.MeshIPUpdate(serviceConfig, k, m)
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, MESH_IP_UPDATE)
+			err := pkg.MeshIPUpdateEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+
+		case msgbus.PrepareRoute(serviceConfig.OrgName, EVTGEN_NODEFEEDER_PUBLISH):
+			//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, EVTGEN_NODEFEEDER_PUBLISH)
+			err := pkg.NodeFeederPublishMessage(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+
+		case msgbus.PrepareRoute(serviceConfig.OrgName, MESH_NODE_ONLINE):
+			//event.cloud.local.ukamaorg.messaging.mesh.node.online
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, MESH_NODE_ONLINE)
+			err := pkg.MeshNodeOnlineEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+
+		case msgbus.PrepareRoute(serviceConfig.OrgName, REGISTRY_NODE_CREATE):
+			//event.cloud.local.ukamaorg.messaging.mesh.node.online
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, REGISTRY_NODE_CREATE)
+			err := pkg.RegistryNodeCreateEvent(serviceConfig, k, m)
 			if err != nil {
 				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
 			}

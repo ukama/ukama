@@ -1,4 +1,0 @@
-:PREROUTING,FORWARD,POSTROUTING
-*mangle
--j CHECKSUM --checksum-fill;=;OK
--j CHECKSUM;;FAIL
