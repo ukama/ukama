@@ -9,35 +9,11 @@
     ],
 
     "capps": [
-        {
-            "name"   : "node",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"    : "bootstrap",
-            "tag"     : "latest",
-            "restart" : "yes",
-            "space"   : "boot",
-            "depends_on" : [
-                {
-                    "capp" : "node",
-                    "state" : "run"
-                }
-            ]
-        },
-        {
-            "name"   : "mesh.d",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-            "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-                    "state" : "done"
-                } 
-            ]
+      {
+          "name"   : "init",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "boot"
         }
     ]
 }
