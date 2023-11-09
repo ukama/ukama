@@ -42,6 +42,9 @@ static char *capp_status_str(int status) {
     case CAPP_RUNTIME_FAILURE:
         str = "Failure";
         break;
+    case CAPP_RUNTIME_UNKNOWN:
+        str = "Unknown";
+        break;
     default:
         str = "Unknown";
         break;

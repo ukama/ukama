@@ -43,6 +43,7 @@
 #define CAPP_RUNTIME_EXEC      2
 #define CAPP_RUNTIME_DONE      3
 #define CAPP_RUNTIME_FAILURE   4
+#define CAPP_RUNTIME_UNKNOWN   5
 
 #define EP_BS                  "/"
 #define REST_API_VERSION       "v1"

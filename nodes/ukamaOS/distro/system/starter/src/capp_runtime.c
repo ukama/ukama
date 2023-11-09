@@ -133,10 +133,22 @@ static bool execute_capp(void *arg) {
         runtime->pid = pid;
         waitpid(pid, &status, 0);
 
-        if (status == EXIT_FAILURE) {
-            runtime->status = CAPP_RUNTIME_FAILURE;
-        } else if (status == EXIT_SUCCESS) {
+        if (WIFEXITED(status)) {
+            usys_log_debug("%s: exited normally with status %d",
+                           capp->name, WEXITSTATUS(status));
             runtime->status = CAPP_RUNTIME_DONE;
+        } else if (WIFSIGNALED(status)) {
+            usys_log_debug("%s: terminated by signal: %d",
+                           capp->name, WTERMSIG(status));
+            runtime->status = CAPP_RUNTIME_FAILURE;
+        } else if (WIFSTOPPED(status)) {
+            usys_log_debug("%s: stopped by signal: %d",
+                           capp->name, WSTOPSIG(status));
+            runtime->status = CAPP_RUNTIME_FAILURE;
+        } else {
+            usys_log_debug("%s: uknown exit status: %d",
+                           capp->name, status);
+            runtime->status = CAPP_RUNTIME_UNKNOWN;
         }
     }
 
