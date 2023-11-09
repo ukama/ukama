@@ -30,7 +30,7 @@ static char *capp_status_str(int status) {
     char *str;
 
     switch(status) {
-    case CAPP_RUNTIME_NO_EXEC:
+    case CAPP_RUNTIME_PEND:
         str = "Pending";
         break;
     case CAPP_RUNTIME_EXEC:
@@ -38,6 +38,9 @@ static char *capp_status_str(int status) {
         break;
     case CAPP_RUNTIME_DONE:
         str = "Done";
+        break;
+    case CAPP_RUNTIME_FAILURE:
+        str = "Failure";
         break;
     default:
         str = "Unknown";
@@ -185,7 +188,7 @@ int web_service_cb_get_status(const URequest *request,
     if (capp->runtime) {
             status = capp->runtime->status;
     } else {
-            status = CAPP_RUNTIME_NO_EXEC;
+            status = CAPP_RUNTIME_PEND;
     }
 
     if (status == -1) {
@@ -229,10 +232,10 @@ int web_service_cb_get_all_capps_status(const URequest *request,
              cappList=cappList->next) {
 
             if (cappList->capp->runtime) {
-                status = capp_status_str(cappList->capp->runtime);
+                status = capp_status_str(cappList->capp->runtime->status);
                 pid    = cappList->capp->runtime->pid;
             } else {
-                status = capp_status_str(CAPP_RUNTIME_NO_EXEC);
+                status = capp_status_str(CAPP_RUNTIME_PEND);
                 pid    = 0;
             }
 
@@ -348,7 +351,8 @@ int web_service_cb_post_terminate(const URequest *request,
         return U_CALLBACK_CONTINUE;
     } else {
         /* already done or not executing */
-        if (capp->runtime->status == CAPP_RUNTIME_NO_EXEC ||
+        if (capp->runtime->status == CAPP_RUNTIME_PEND ||
+            capp->runtime->status == CAPP_RUNTIME_FAILURE ||
             capp->runtime->status == CAPP_RUNTIME_DONE) {
             ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));

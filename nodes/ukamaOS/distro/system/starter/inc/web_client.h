@@ -27,4 +27,6 @@
 
 int get_capp_path(Config *config, char *name, char *tag,
                   char **path, int *retCode);
-#endif /* WIMC_H */
+bool ping_capp(char *name);
+
+#endif /* WEB_CLIENT_H */

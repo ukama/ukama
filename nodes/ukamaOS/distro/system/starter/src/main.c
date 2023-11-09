@@ -61,7 +61,7 @@ void usage() {
 
 void fetch_and_update(void *config) {
 
-    SpaceList *spacePtr=NULL;
+    SpaceList *spacePtr = NULL;
 
     while (USYS_TRUE) {
         /* for each capp, with missing pkg, run a thred which fetch via wimc,
@@ -93,9 +93,9 @@ int main(int argc, char **argv) {
     UInst  serviceInst; 
     Config serviceConfig = {0};
 
-    Manifest  *manifest=NULL;
-    SpaceList *spacePtr=NULL;
-    Space     *bootSpace=NULL;
+    Manifest  *manifest  = NULL;
+    SpaceList *spacePtr  = NULL;
+    Space     *bootSpace = NULL;
 
     pthread_t thread;
     
@@ -163,7 +163,19 @@ int main(int argc, char **argv) {
     signal(SIGINT, handle_sigint);
 
     /* Read and handle spaces/capps from the manifest file */
-    read_manifest_file(&manifest, serviceConfig.manifestFile);
+    if (!read_manifest_file(&manifest, serviceConfig.manifestFile)) {
+        usys_log_error("Error with manifest file: %s",
+                       serviceConfig.manifestFile);
+
+        if (start_web_service(&serviceConfig,
+                              &serviceInst) != USYS_TRUE) {
+            usys_log_error("Webservice failed to setup for clients. Exiting.");
+            exit(1);
+        }
+
+        pause();
+        goto done;
+    }
 
     if (validate_capp_dependency(&manifest) == USYS_FALSE) {
 
@@ -219,7 +231,7 @@ int main(int argc, char **argv) {
         run_space_all_capps(spacePtr->space);
     }
 
-    /* for each capp, with missing pkg, run a thred which fetch via wimc,
+    /* for each capp, with missing pkg, run a thread which fetch via wimc,
      *  unpack into its space rootfs and run.
      */
     for (spacePtr = gSpaceList;
