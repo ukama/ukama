@@ -14,6 +14,26 @@
           "tag"    : "latest",
           "restart": "yes",
           "space"  : "boot"
-        }
+        },
+
+     {
+          "name"   : "mesh",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "boot",
+	     "depends_on" : [
+             {
+                  "capp"  : "init",
+			      "state" : "done"
+		      }
+	      ]
+     },
+
+     {
+          "name"   : "init",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "services"
+     }
     ]
 }
