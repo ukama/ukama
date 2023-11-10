@@ -329,7 +329,7 @@ void run_space_all_capps(Space *space) {
                 /* wait for program to exit */
                 waitpid(cappList->capp->runtime->pid, &status, 0);
 
-                if (cappList->capp->runtime->status == EXIT_FAILURE) {
+                if (cappList->capp->runtime->status != CAPP_RUNTIME_DONE) {
                     /* retry */
                     cappList->capp->runtime->status = CAPP_RUNTIME_PEND;
                     cappList->capp->runtime->pid    = 0;
