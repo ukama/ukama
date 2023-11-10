@@ -19,15 +19,35 @@ import { CacheProvider } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
 import { RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
 import '../styles/global.css';
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 const clientSideEmotionCache = createEmotionCache();
 const SNACKBAR_TIMEOUT = 5000;
 
+const getMetaInfo = async () => {
+  return await fetch('https://api.ipify.org/?format=json', {
+    method: 'GET',
+  })
+    .then((response) => response.text())
+    .then((data) => JSON.parse(data))
+    .then((data) =>
+      fetch(`https://ipapi.co/${data.ip}/json/`, {
+        method: 'GET',
+      }),
+    )
+    .then((response) => response.text())
+    .then((data) => JSON.parse(data))
+    .catch((err) => {
+      console.log(err);
+      return {};
+    });
+};
+
 const ClientWrapper = (appProps: MyAppProps) => {
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
-  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [_commonData, _setCommonData] = useRecoilState<TCommonData>(commonData);
   const [_snackbarMessage, setSnackbarMessage] =
     useRecoilState<TSnackMessage>(snackbarMessage);
   const httpLink = new HttpLink({
@@ -40,6 +60,20 @@ const ClientWrapper = (appProps: MyAppProps) => {
       'x-session-token': 'abc',
     },
   });
+
+  useEffect(() => {
+    const call = async () => {
+      const metaData = await getMetaInfo();
+      _setCommonData(
+        (prev) =>
+          ({
+            ...prev,
+            metaData,
+          } as TCommonData),
+      );
+    };
+    if (!_commonData.metaData) call();
+  }, []);
 
   const getClient = (): any => {
     client.setLink(httpLink);

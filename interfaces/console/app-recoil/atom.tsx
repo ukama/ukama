@@ -41,6 +41,7 @@ const commonData = atom({
     orgId: '',
     userId: '',
     orgName: '',
+    metaData: {},
   },
   effects_UNSTABLE: [persistAtom],
 });
