@@ -123,6 +123,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
     if (orgId && orgName) {
       setCommonData({
+        metaData: {},
         orgId,
         orgName,
         userId,

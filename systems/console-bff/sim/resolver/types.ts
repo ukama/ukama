@@ -359,6 +359,8 @@ export class SimAPIDto {
 
 @ObjectType()
 export class SubscriberToSimsDto {
+  @Field()
+  subscriber_id: string;
   @Field(() => [SimDto])
   sims: SimDto[];
 }
