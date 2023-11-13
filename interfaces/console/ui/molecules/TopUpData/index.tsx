@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { makeStyles } from '@mui/styles';
-import { PackageDto, SubcriberToSimDto } from '@/generated';
+import { PackageDto, SimDto } from '@/generated';
 
 const useStyles = makeStyles(() => ({
   selectStyle: () => ({
@@ -39,7 +39,7 @@ interface TopUpProps {
   handleTopUp: (planId: string, simId: string) => void;
   packages: PackageDto[];
   loadingTopUp: boolean;
-  sims: SubcriberToSimDto[];
+  sims: SimDto[];
 }
 
 const TopUpData: React.FC<TopUpProps> = ({
