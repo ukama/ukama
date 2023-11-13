@@ -91,3 +91,11 @@ subscription GetMetricByTabSub(
     value
   }
 }
+
+query GetStatsMetric {
+  getStatsMetric {
+    activeSubscriber
+    averageSignalStrength
+    averageThroughput
+  }
+}

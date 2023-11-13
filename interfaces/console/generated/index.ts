@@ -1,11 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -18,7 +10,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -108,10 +100,32 @@ export type AllocateSimInputDto = {
   traffic_policy: Scalars['Float']['input'];
 };
 
+export type AppChangeLog = {
+  __typename?: 'AppChangeLog';
+  date: Scalars['Float']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type AppChangeLogs = {
+  __typename?: 'AppChangeLogs';
+  logs: Array<AppChangeLog>;
+  type: NodeTypeEnum;
+};
+
 export type AttachNodeInput = {
   anodel: Scalars['String']['input'];
   anoder: Scalars['String']['input'];
   parentNode: Scalars['String']['input'];
+};
+
+export type AttachedNodes = {
+  __typename?: 'AttachedNodes';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  site: NodeSite;
+  status: NodeStatus;
+  type: NodeTypeEnum;
 };
 
 export type CBooleanResponse = {
@@ -569,12 +583,32 @@ export type NetworksResDto = {
 
 export type Node = {
   __typename?: 'Node';
-  attached: Array<Node>;
+  attached: Array<AttachedNodes>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
-  site?: Maybe<NodeSite>;
+  site: NodeSite;
   status: NodeStatus;
+  type: NodeTypeEnum;
+};
+
+export type NodeApp = {
+  __typename?: 'NodeApp';
+  cpu: Scalars['String']['output'];
+  date: Scalars['Float']['output'];
+  memory: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  notes: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type NodeApps = {
+  __typename?: 'NodeApps';
+  apps: Array<NodeApp>;
+  type: NodeTypeEnum;
+};
+
+export type NodeAppsChangeLogInput = {
   type: NodeTypeEnum;
 };
 
@@ -582,12 +616,20 @@ export type NodeInput = {
   id: Scalars['String']['input'];
 };
 
+export type NodeLocation = {
+  __typename?: 'NodeLocation';
+  id: Scalars['String']['output'];
+  lat: Scalars['String']['output'];
+  lng: Scalars['String']['output'];
+  state: NodeStatusEnum;
+};
+
 export type NodeSite = {
   __typename?: 'NodeSite';
-  addedAt: Scalars['String']['output'];
-  networkId: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
-  siteId: Scalars['String']['output'];
+  addedAt?: Maybe<Scalars['String']['output']>;
+  networkId?: Maybe<Scalars['String']['output']>;
+  nodeId?: Maybe<Scalars['String']['output']>;
+  siteId?: Maybe<Scalars['String']['output']>;
 };
 
 export type NodeStatus = {
@@ -616,6 +658,17 @@ export enum NodeTypeEnum {
 export type Nodes = {
   __typename?: 'Nodes';
   nodes: Array<Node>;
+};
+
+export type NodesInput = {
+  networkId: Scalars['String']['input'];
+  nodeFilterState: NodeStatusEnum;
+};
+
+export type NodesLocation = {
+  __typename?: 'NodesLocation';
+  networkId: Scalars['String']['output'];
+  nodes: Array<NodeLocation>;
 };
 
 export type OrgDto = {
@@ -690,6 +743,7 @@ export type PackagesResDto = {
 export type Query = {
   __typename?: 'Query';
   addSite: SiteDto;
+  getAppsChangeLog: AppChangeLogs;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
@@ -702,8 +756,11 @@ export type Query = {
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
+  getNodeApps: NodeApps;
+  getNodeLocation: NodeLocation;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
+  getNodesLocation: NodesLocation;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -726,6 +783,11 @@ export type Query = {
 export type QueryAddSiteArgs = {
   data: AddSiteInputDto;
   networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetAppsChangeLogArgs = {
+  data: NodeAppsChangeLogInput;
 };
 
 
@@ -764,6 +826,16 @@ export type QueryGetNodeArgs = {
 };
 
 
+export type QueryGetNodeAppsArgs = {
+  data: NodeAppsChangeLogInput;
+};
+
+
+export type QueryGetNodeLocationArgs = {
+  data: NodeInput;
+};
+
+
 export type QueryGetNodesArgs = {
   data: GetNodesInput;
 };
@@ -771,6 +843,11 @@ export type QueryGetNodesArgs = {
 
 export type QueryGetNodesByNetworkArgs = {
   networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetNodesLocationArgs = {
+  data: NodesInput;
 };
 
 
@@ -1129,28 +1206,28 @@ export type WhoamiDto = {
   user: UserResDto;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type GetNodesByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
 
-export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> }> } };
+export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1178,7 +1255,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -1199,14 +1276,35 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string }, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, site?: { __typename?: 'NodeSite', nodeId: string, siteId: string, networkId: string, addedAt: string } | null, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+
+export type GetNodeAppsQueryVariables = Exact<{
+  data: NodeAppsChangeLogInput;
+}>;
+
+
+export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
+
+export type GetNodesLocationQueryVariables = Exact<{
+  data: NodesInput;
+}>;
+
+
+export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'NodesLocation', networkId: string, nodes: Array<{ __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum }> } };
+
+export type GetNodeLocationQueryVariables = Exact<{
+  data: NodeInput;
+}>;
+
+
+export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
 
@@ -1564,16 +1662,6 @@ export const NodeFragmentDoc = gql`
   name
   orgId
   type
-  site {
-    nodeId
-    siteId
-    networkId
-    addedAt
-  }
-  status {
-    connectivity
-    state
-  }
   attached {
     id
     name
@@ -1589,6 +1677,16 @@ export const NodeFragmentDoc = gql`
       connectivity
       state
     }
+  }
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
+  status {
+    connectivity
+    state
   }
 }
     `;
@@ -2206,6 +2304,128 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
+export const GetNodeAppsDocument = gql`
+    query getNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}
+    `;
+
+/**
+ * __useGetNodeAppsQuery__
+ *
+ * To run a query within a React component, call `useGetNodeAppsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeAppsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodeAppsQuery(baseOptions: Apollo.QueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
+      }
+export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
+        }
+export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
+export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
+export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
+export const GetNodesLocationDocument = gql`
+    query GetNodesLocation($data: NodesInput!) {
+  getNodesLocation(data: $data) {
+    networkId
+    nodes {
+      id
+      lat
+      lng
+      state
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetNodesLocationQuery__
+ *
+ * To run a query within a React component, call `useGetNodesLocationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesLocationQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodesLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
+      }
+export function useGetNodesLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
+        }
+export type GetNodesLocationQueryHookResult = ReturnType<typeof useGetNodesLocationQuery>;
+export type GetNodesLocationLazyQueryHookResult = ReturnType<typeof useGetNodesLocationLazyQuery>;
+export type GetNodesLocationQueryResult = Apollo.QueryResult<GetNodesLocationQuery, GetNodesLocationQueryVariables>;
+export const GetNodeLocationDocument = gql`
+    query GetNodeLocation($data: NodeInput!) {
+  getNodeLocation(data: $data) {
+    id
+    lat
+    lng
+    state
+  }
+}
+    `;
+
+/**
+ * __useGetNodeLocationQuery__
+ *
+ * To run a query within a React component, call `useGetNodeLocationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeLocationQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodeLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+      }
+export function useGetNodeLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+        }
+export type GetNodeLocationQueryHookResult = ReturnType<typeof useGetNodeLocationQuery>;
+export type GetNodeLocationLazyQueryHookResult = ReturnType<typeof useGetNodeLocationLazyQuery>;
+export type GetNodeLocationQueryResult = Apollo.QueryResult<GetNodeLocationQuery, GetNodeLocationQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

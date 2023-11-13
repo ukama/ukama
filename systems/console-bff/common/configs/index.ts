@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import "dotenv/config";
 
 export const VERSION = process.env.VERSION || "v1";
@@ -26,6 +25,7 @@ export const PLAYGROUND_URL = process.env.PLAYGROUND_URL || "";
 export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL || "";
 
 // UTILS
+export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB || "";
 export const AUTH_URL = process.env.AUTH_URL || "";
 export const STORAGE_KEY = process.env.STORAGE_KEY || "";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
@@ -50,3 +50,53 @@ export const BILLING_PORT = parseInt(process.env.BILLING_PORT || "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT || "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT || "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT || "5054");
+
+export const SUB_GRAPH_LIST = [
+  { name: "org", url: `http://localhost:${ORG_PORT}`, isPingedSuccess: false },
+  {
+    name: "node",
+    url: `http://localhost:${NODE_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "user",
+    url: `http://localhost:${USER_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "network",
+    url: `http://localhost:${NETWORK_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "subscriber",
+    url: `http://localhost:${SUBSCRIBER_PORT}`,
+    isPingedSuccess: false,
+  },
+  { name: "sim", url: `http://localhost:${SIM_PORT}`, isPingedSuccess: false },
+  {
+    name: "package",
+    url: `http://localhost:${PACKAGE_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "rate",
+    url: `http://localhost:${RATE_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "invitation",
+    url: `http://localhost:${INVITATION_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "member",
+    url: `http://localhost:${MEMBER_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "planning",
+    url: `http://localhost:${PLANNING_SERVICE_PORT}`,
+    isPingedSuccess: false,
+  },
+];

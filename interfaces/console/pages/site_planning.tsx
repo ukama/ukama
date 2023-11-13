@@ -168,13 +168,13 @@ const Page = () => {
     variables: {
       userId: _commonData.userId,
     },
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       if (data.getDrafts.length > 0) {
         if (!selectedDraft) {
           setSelectedDraft(data.getDrafts[0]);
         } else {
           setSelectedDraft(
-            data.getDrafts.find((d) => d.id === selectedDraft?.id),
+            data.getDrafts.find((d: any) => d.id === selectedDraft?.id),
           );
         }
       } else {
@@ -187,7 +187,7 @@ const Page = () => {
   });
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       setSelectedDraft(data.addDraft);
       refetchDrafts();
       showAlert(
@@ -455,7 +455,7 @@ const Page = () => {
   };
 
   const handleDraftSelected = (draftId: string) => {
-    const d = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
+    const d: any = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
     setSelectedDraft(d);
   };
 

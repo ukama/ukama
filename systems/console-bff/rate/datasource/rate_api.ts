@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { DATA_API_GW } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
@@ -25,31 +23,21 @@ class RateApi extends RESTDataSource {
   defaultMarkup = async (
     req: DefaultMarkupInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${req.markup}/default`)
-      .then(() => {
-        return {
-          success: true,
-        };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.post(`/${req.markup}/default`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 
   getDefaultMarkup = async (): Promise<DefaultMarkupResDto> => {
-    return this.get(`/default`)
-      .then(res => dtoToDefaultMarkupDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/default`).then(res => dtoToDefaultMarkupDto(res));
   };
 
   getDefaultMarkupHistory = async (): Promise<DefaultMarkupHistoryResDto> => {
-    return this.get(`/default/history`)
-      .then(res => dtoToDefaultMarkupHistoryDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/default/history`).then(res =>
+      dtoToDefaultMarkupHistoryDto(res)
+    );
   };
 }
 

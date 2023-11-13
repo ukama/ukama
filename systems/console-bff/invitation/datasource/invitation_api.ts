@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { REGISTRY_API_GW, VERSION } from "../../common/configs";
 import {
@@ -31,19 +29,13 @@ class InvitationApi extends RESTDataSource {
   ): Promise<SendInvitationResDto> => {
     return this.post(``, {
       body: { ...req },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   getInvitation = async (id: string): Promise<InvitationDto> => {
-    return this.get(`/${VERSION}/invitation/${id}`)
-      .then(res => dtoToInvitationResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/invitation/${id}`).then(res =>
+      dtoToInvitationResDto(res)
+    );
   };
 
   updateInvitation = async (
@@ -52,11 +44,7 @@ class InvitationApi extends RESTDataSource {
   ): Promise<UpdateInvitationResDto> => {
     return this.put(`/${VERSION}/invitation/${id}`, {
       body: { status: req.status },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   deleteInvitation = async (id: string): Promise<DeleteInvitationResDto> => {
@@ -66,11 +54,7 @@ class InvitationApi extends RESTDataSource {
   getInvitationsByOrg = async (
     orgName: string
   ): Promise<GetInvitationByOrgResDto> => {
-    return this.get(`/${VERSION}/invitation/${orgName}`)
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/invitation/${orgName}`).then(res => res);
   };
 }
 

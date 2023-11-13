@@ -17,7 +17,7 @@ import {
 } from '@/app-recoil';
 import {
   useGetMemberLazyQuery,
-  useGetNetworksLazyQuery,
+  useGetNetworksQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
 } from '@/generated';
@@ -82,10 +82,12 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       },
     });
 
-  const [
-    getNetworks,
-    { data: networksData, error: networksError, loading: networksLoading },
-  ] = useGetNetworksLazyQuery({
+  const {
+    data: networksData,
+    error: networksError,
+    loading: networksLoading,
+  } = useGetNetworksQuery({
+    skip: _commonData?.orgId === '',
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (
@@ -106,7 +108,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         type: 'error',
         show: true,
       });
-      setSkeltonLoading(false);
     },
   });
 
@@ -138,6 +139,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       setIsFullScreen(
         route.pathname === '/manage' ||
           route.pathname === '/settings' ||
+          route.pathname === '/unauthorized' ||
           getTitleFromPath(route.pathname, route.query['id'] as string) ===
             '404',
       );
@@ -152,6 +154,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [route]);
 
   useEffect(() => {
+    if (!_commonData.userId || (!_commonData.orgId && !_commonData.orgName)) {
+      route.push('/unauthorized');
+    }
+
     if (_commonData.userId) {
       getUser({
         variables: {
@@ -159,11 +165,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         },
       });
     }
-    if (_commonData.orgId) {
-      setSkeltonLoading(true);
-      getNetworks();
-    }
-  }, [commonData]);
+  }, [_commonData]);
 
   useEffect(() => {
     if (!userLoading && userData && userData.getUser && _user.id) {
@@ -199,7 +201,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       page={page}
       isFullScreen={isFullScreen}
       isDarkMode={_isDarkMod}
-      isLoading={false}
+      isLoading={
+        networksLoading || orgsLoading || userLoading || skeltonLoading
+      }
       placeholder={'Select Network'}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}

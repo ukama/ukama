@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { BaseError } from "./base.error";
 import { HttpStatusCode } from "./codes";
 

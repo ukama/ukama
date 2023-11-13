@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";

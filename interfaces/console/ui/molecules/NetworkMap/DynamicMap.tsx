@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NodesLocation } from '@/generated';
 import styles from '@/styles/Map.module.css';
 import Leaflet from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -27,9 +28,10 @@ interface IMap {
   zoom: number;
   children: any;
   className?: string;
+  markersData: NodesLocation | undefined;
 }
 
-const Map = ({ id, zoom, children }: IMap) => {
+const Map = ({ id, zoom, markersData, children }: IMap) => {
   let mapClassName = styles.map;
   let mapContainer = styles['leaflet-container'];
 
@@ -54,7 +56,7 @@ const Map = ({ id, zoom, children }: IMap) => {
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
-      <MapLayer />
+      <MapLayer data={markersData} />
     </MapContainer>
   );
 };

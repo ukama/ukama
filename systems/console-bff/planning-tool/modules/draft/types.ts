@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import "reflect-metadata";
 import { Field, ID, InputType, ObjectType } from "type-graphql";
 

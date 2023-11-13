@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { ErrorType } from "../types";
 import { HttpStatusCode } from "./codes";
 import { HTTP400Error } from "./http400.error";

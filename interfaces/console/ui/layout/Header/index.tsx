@@ -75,12 +75,14 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
     <AppBar
       open={isOpen}
       isloading={`${isLoading}`}
-      sx={{ justifyContent: 'center' }}
+      sx={{
+        justifyContent: 'center',
+        boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
+      }}
     >
       <LoadingWrapper
         radius="none"
         isLoading={isLoading}
-        cstyle={{ display: 'flex' }}
         height={isOpen ? '60px' : '44px'}
       >
         <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>

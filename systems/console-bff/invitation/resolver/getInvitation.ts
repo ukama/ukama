@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Ctx, Query, Resolver } from "type-graphql";
 import { Arg, UseMiddleware } from "type-graphql";
 

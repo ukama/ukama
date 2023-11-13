@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginInlineTrace } from "@apollo/server/plugin/inlineTrace";
 import { buildSubgraphSchema, printSubgraphSchema } from "@apollo/subgraph";
@@ -29,7 +28,7 @@ const SubGraphServer = async (resolvers: NonEmptyArray<any>) => {
 
   const server = new ApolloServer({
     schema: federatedSchema,
-    csrfPrevention: false,
+    csrfPrevention: true,
     introspection: true,
     plugins: [ApolloServerPluginInlineTrace({})],
   });

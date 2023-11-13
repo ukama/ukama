@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { REGISTRY_API_GW, VERSION } from "../../common/configs";
 import {
@@ -33,45 +31,31 @@ class NetworkApi extends RESTDataSource {
       params: {
         org: orgId,
       },
-    })
-      .then(res => dtoToNetworksDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToNetworksDto(res));
   };
 
   getNetwork = async (networkId: string): Promise<NetworkDto> => {
-    return this.get(`/${VERSION}/networks/${networkId}`)
-      .then(res => dtoToNetworkDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/networks/${networkId}`).then(res =>
+      dtoToNetworkDto(res)
+    );
   };
 
   getSites = async (networkId: string): Promise<SitesResDto> => {
-    return this.get(`/${VERSION}/networks/${networkId}/sites`)
-      .then(res => dtoToSitesDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
+      dtoToSitesDto(res)
+    );
   };
 
   getSite = async (siteId: string, networkId: string): Promise<SiteDto> => {
-    return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`)
-      .then(res => dtoToSiteDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
+      res => dtoToSiteDto(res)
+    );
   };
 
   addNetwork = async (req: AddNetworkInputDto): Promise<NetworkDto> => {
     return this.post(`/${VERSION}/networks`, {
       body: req,
-    })
-      .then(res => dtoToNetworkDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToNetworkDto(res));
   };
 
   addSite = async (
@@ -80,11 +64,7 @@ class NetworkApi extends RESTDataSource {
   ): Promise<SiteDto> => {
     return this.post(`/${VERSION}/networks/${networkId}/sites`, {
       body: req,
-    })
-      .then(res => dtoToSiteDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSiteDto(res));
   };
 }
 

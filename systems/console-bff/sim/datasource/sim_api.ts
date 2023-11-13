@@ -57,11 +57,7 @@ class SimApi extends RESTDataSource {
         data: req.data,
         sim_type: req.simType,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   toggleSimStatus = async (
@@ -126,11 +122,7 @@ class SimApi extends RESTDataSource {
       params: {
         simId: req.simId,
       },
-    })
-      .then(res => dtoToSimResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimResDto(res));
   };
 
   getSims = async (type: string): Promise<SimsResDto> => {
@@ -155,11 +147,7 @@ class SimApi extends RESTDataSource {
       body: {
         networkId: req.networkId,
       },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimDetailsDto(res));
   };
 
   deleteSim = async (req: DeleteSimInputDto): Promise<DeleteSimResDto> => {
@@ -167,11 +155,7 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   addPackageToSim = async (
@@ -181,11 +165,7 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   removePackageFromSim = async (
@@ -195,11 +175,7 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   getPackagesForSim = async (
@@ -223,11 +199,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`)
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (

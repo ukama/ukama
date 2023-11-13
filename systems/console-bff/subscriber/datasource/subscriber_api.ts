@@ -26,45 +26,43 @@ class SubscriberApi extends RESTDataSource {
   baseURL = SUBSCRIBER_API_GW;
 
   addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`);
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
       body: { ...req },
-    })
-      .then(res => dtoToSubscriberResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSubscriberResDto(res));
   };
 
   updateSubscriber = async (
     subscriberId: string,
     req: UpdateSubscriberInputDto
   ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+    );
     return this.patch(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`, {
       body: { ...req },
-    })
-      .then(() => {
-        return { success: true };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(() => {
+      return { success: true };
+    });
   };
 
   deleteSubscriber = async (
     subscriberId: string
   ): Promise<CBooleanResponse> => {
-    return this.delete(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`)
-      .then(() => {
-        return {
-          success: true,
-        };
-      })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    this.logger.info(
+      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+    );
+    return this.delete(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 
   getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
+    this.logger.info(
+      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+    );
     return this.get(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(res =>
       dtoToSubscriberResDto(res)
     );

@@ -5,16 +5,6 @@ fragment node on Node {
   name
   orgId
   type
-  site {
-    nodeId
-    siteId
-    networkId
-    addedAt
-  }
-  status {
-    connectivity
-    state
-  }
   attached {
     id
     name
@@ -30,6 +20,16 @@ fragment node on Node {
       connectivity
       state
     }
+  }
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
+  status {
+    connectivity
+    state
   }
 }
 
@@ -100,6 +100,41 @@ mutation updateNodeState($data: UpdateNodeStateInput!) {
 mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
     ...node
+  }
+}
+
+query getNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}
+
+query GetNodesLocation($data: NodesInput!) {
+  getNodesLocation(data: $data) {
+    networkId
+    nodes {
+      id
+      lat
+      lng
+      state
+    }
+  }
+}
+
+query GetNodeLocation($data: NodeInput!) {
+  getNodeLocation(data: $data) {
+    id
+    lat
+    lng
+    state
   }
 }
 ### End Node ###

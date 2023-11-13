@@ -11,6 +11,7 @@ import { commonData, isDarkmode, snackbarMessage } from '@/app-recoil';
 import client from '@/client/ApolloClient';
 import { theme } from '@/styles/theme';
 import { MyAppProps, TCommonData, TSnackMessage } from '@/types';
+import AuthWrapper from '@/ui/wrappers/authWrapper';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { ApolloProvider, HttpLink } from '@apollo/client';
@@ -18,16 +19,35 @@ import { CacheProvider } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
 import { RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
 import '../styles/global.css';
-
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 const clientSideEmotionCache = createEmotionCache();
 const SNACKBAR_TIMEOUT = 5000;
 
+const getMetaInfo = async () => {
+  return await fetch('https://api.ipify.org/?format=json', {
+    method: 'GET',
+  })
+    .then((response) => response.text())
+    .then((data) => JSON.parse(data))
+    .then((data) =>
+      fetch(`https://ipapi.co/${data.ip}/json/`, {
+        method: 'GET',
+      }),
+    )
+    .then((response) => response.text())
+    .then((data) => JSON.parse(data))
+    .catch((err) => {
+      console.log(err);
+      return {};
+    });
+};
+
 const ClientWrapper = (appProps: MyAppProps) => {
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
-  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [_commonData, _setCommonData] = useRecoilState<TCommonData>(commonData);
   const [_snackbarMessage, setSnackbarMessage] =
     useRecoilState<TSnackMessage>(snackbarMessage);
   const httpLink = new HttpLink({
@@ -37,9 +57,23 @@ const ClientWrapper = (appProps: MyAppProps) => {
       'org-id': _commonData.orgId,
       'user-id': _commonData.userId,
       'org-name': _commonData.orgName,
-      "x-session-token": "abc"
+      'x-session-token': 'abc',
     },
   });
+
+  useEffect(() => {
+    const call = async () => {
+      const metaData = await getMetaInfo();
+      _setCommonData(
+        (prev) =>
+          ({
+            ...prev,
+            metaData,
+          } as TCommonData),
+      );
+    };
+    if (!_commonData.metaData) call();
+  }, []);
 
   const getClient = (): any => {
     client.setLink(httpLink);
@@ -78,7 +112,9 @@ const RootWrapper = (appProps: MyAppProps) => {
   return (
     <ErrorBoundary>
       <RecoilRoot>
-        <ClientWrapper {...appProps} />
+        <AuthWrapper>
+          <ClientWrapper {...appProps} />
+        </AuthWrapper>
       </RecoilRoot>
     </ErrorBoundary>
   );

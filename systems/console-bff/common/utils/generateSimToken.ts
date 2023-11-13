@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import crypto from "crypto";
 
 const generateTokenFromIccid = (iccid: string, key: string) => {
