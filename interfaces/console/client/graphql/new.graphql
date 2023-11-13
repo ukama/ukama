@@ -308,6 +308,11 @@ mutation removePackageForSim($data: RemovePackageFormSimInputDto!) {
   }
 }
 
+mutation deletePackage($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
 mutation addPackageToSim($data: AddPackageToSimInputDto!) {
   addPackageToSim(data: $data) {
     packageId

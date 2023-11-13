@@ -10,7 +10,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
+  ID: { input: string | number; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -1111,6 +1111,7 @@ export type SubscriberSimDto = {
 export type SubscriberToSimsDto = {
   __typename?: 'SubscriberToSimsDto';
   sims: Array<SimDto>;
+  subscriber_id: Scalars['String']['output'];
 };
 
 export type SubscribersResDto = {
@@ -1394,6 +1395,13 @@ export type RemovePackageForSimMutationVariables = Exact<{
 
 
 export type RemovePackageForSimMutation = { __typename?: 'Mutation', removePackageForSim: { __typename?: 'RemovePackageFromSimResDto', packageId?: string | null } };
+
+export type DeletePackageMutationVariables = Exact<{
+  packageId: Scalars['String']['input'];
+}>;
+
+
+export type DeletePackageMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
 
 export type AddPackageToSimMutationVariables = Exact<{
   data: AddPackageToSimInputDto;
@@ -2845,6 +2853,39 @@ export function useRemovePackageForSimMutation(baseOptions?: Apollo.MutationHook
 export type RemovePackageForSimMutationHookResult = ReturnType<typeof useRemovePackageForSimMutation>;
 export type RemovePackageForSimMutationResult = Apollo.MutationResult<RemovePackageForSimMutation>;
 export type RemovePackageForSimMutationOptions = Apollo.BaseMutationOptions<RemovePackageForSimMutation, RemovePackageForSimMutationVariables>;
+export const DeletePackageDocument = gql`
+    mutation deletePackage($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
+    `;
+export type DeletePackageMutationFn = Apollo.MutationFunction<DeletePackageMutation, DeletePackageMutationVariables>;
+
+/**
+ * __useDeletePackageMutation__
+ *
+ * To run a mutation, you first call `useDeletePackageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeletePackageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deletePackageMutation, { data, loading, error }] = useDeletePackageMutation({
+ *   variables: {
+ *      packageId: // value for 'packageId'
+ *   },
+ * });
+ */
+export function useDeletePackageMutation(baseOptions?: Apollo.MutationHookOptions<DeletePackageMutation, DeletePackageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeletePackageMutation, DeletePackageMutationVariables>(DeletePackageDocument, options);
+      }
+export type DeletePackageMutationHookResult = ReturnType<typeof useDeletePackageMutation>;
+export type DeletePackageMutationResult = Apollo.MutationResult<DeletePackageMutation>;
+export type DeletePackageMutationOptions = Apollo.BaseMutationOptions<DeletePackageMutation, DeletePackageMutationVariables>;
 export const AddPackageToSimDocument = gql`
     mutation addPackageToSim($data: AddPackageToSimInputDto!) {
   addPackageToSim(data: $data) {
