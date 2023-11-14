@@ -223,14 +223,7 @@ export class DeleteSimInputDto {
   @Field()
   simId: string;
 }
-// {
-//   "package_id": "{{PackageUUID}}",
-//   "sim_id": "{{SimUUID}}",
-//   "start_date": {
-//     "nanos": 0,
-//     "seconds": 0
-//   }
-// }
+
 @InputType()
 export class AddPackageToSimInputDto {
   @Field()
