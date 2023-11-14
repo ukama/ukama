@@ -1,4 +1,3 @@
-// TabsComponent.tsx
 import React from 'react';
 import { Tabs, Tab } from '@mui/material';
 

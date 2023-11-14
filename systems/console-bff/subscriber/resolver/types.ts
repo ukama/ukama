@@ -143,7 +143,6 @@ export class SubscriberInputDto {
   org_id: string;
 
   @Field({ nullable: true })
-  // @IsPhoneNumber()
   phone?: string;
 
   @Field({ nullable: true })
@@ -264,7 +263,6 @@ export class UpdateSubscriberInputDto {
   first_name: string;
 
   @Field({ nullable: true })
-  @IsPhoneNumber()
   phone: string;
 
   @Field({ nullable: true })

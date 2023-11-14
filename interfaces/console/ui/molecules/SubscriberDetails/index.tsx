@@ -5,29 +5,21 @@ import {
   Dialog,
   Button,
   DialogActions,
-  Skeleton,
   Box,
   Menu,
   MenuItem,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
   Typography,
   DialogTitle,
   IconButton,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import EditIcon from '@mui/icons-material/Edit';
+import SimInfoTab from './SimInfoTab';
 import TabsComponent from '@/ui/molecules/TabsComponent';
-import DataPlanComponent from '@/ui/molecules/DataPLan';
-import SubscriberMenu from '@/ui/molecules/SubscriberMenu';
-
+import UserInfo from './userInfo';
+import BillingCycle from './billingCycle';
+import DataPlanComponent from './dataPlanInfo';
 interface SubscriberProps {
   onCancel: () => void;
   ishowSubscriberDetails: boolean;
@@ -67,11 +59,11 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [simAction, setSimAction] = useState<any>();
-  const [SubscriberLoading, setSubscriberLoading] = useState(true);
+  const [subscriberLoading, setSubscriberLoading] = useState(true);
   const [email, setEmail] = useState<string>('');
   const [onEditEmail, setOnEditEmail] = useState<boolean>(false);
   const [onEditName, setOnEditName] = useState<boolean>(false);
-  const [fistName, setFistName] = useState<string>('');
+  const [firstName, setFirstName] = useState<string>('');
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
@@ -105,7 +97,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     if (subscriberInfo) {
       setSubscriberLoading(false);
       setEmail(subscriberInfo.email);
-      setFistName(subscriberInfo.firstName);
+      setFirstName(subscriberInfo.firstName);
     }
   }, [subscriberInfo]);
 
@@ -113,12 +105,12 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     setEmail(event.target.value);
   };
   const handleEditName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFistName(event.target.value);
+    setFirstName(event.target.value);
   };
   const handleSaveSubscriber = () => {
     setOnEditEmail(false);
     setOnEditName(false);
-    handleUpdateSubscriber(subscriberInfo.uuid, email, fistName);
+    handleUpdateSubscriber(subscriberInfo.uuid, email, firstName);
   };
 
   return (
@@ -185,154 +177,42 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
         <Box sx={{ pl: 2 }}>
           <Box component="div" role="tabpanel" hidden={selectedTab !== 0}>
-            <Stack direction="column" spacing={2}>
-              <Typography variant="body1" sx={{ color: colors.black }}>
-                Name
-              </Typography>
-              <Stack
-                direction="row"
-                spacing={2}
-                alignItems={'center'}
-                justifyContent={'space-between'}
-                sx={{ pr: 2 }}
-              >
-                {SubscriberLoading ? (
-                  <Skeleton
-                    variant="rectangular"
-                    width={120}
-                    height={24}
-                    sx={{ backgroundColor: colors.black10 }}
-                  />
-                ) : (
-                  <TextField
-                    id="outlined-basic"
-                    value={fistName}
-                    variant="standard"
-                    disabled={!onEditName}
-                    size="small"
-                    onChange={handleEditName}
-                    sx={{ width: '100%' }}
-                  />
-                )}
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => setOnEditName(!onEditName)}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-
-              <Typography variant="body1" sx={{ color: colors.black }}>
-                Email
-              </Typography>
-              <Stack
-                direction="row"
-                spacing={2}
-                alignItems={'center'}
-                justifyContent={'space-between'}
-                sx={{ pr: 2 }}
-              >
-                {SubscriberLoading ? (
-                  <Skeleton
-                    variant="rectangular"
-                    width={120}
-                    height={24}
-                    sx={{ backgroundColor: colors.black10 }}
-                  />
-                ) : (
-                  <TextField
-                    id="outlined-basic"
-                    value={email}
-                    variant="standard"
-                    disabled={!onEditEmail}
-                    size="small"
-                    onChange={handleSimEdit}
-                    sx={{ width: '100%' }}
-                  />
-                )}
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => {
-                    setOnEditEmail(!onEditEmail);
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            </Stack>
+            <UserInfo
+              subscriberLoading={subscriberLoading}
+              onEditName={onEditName}
+              firstName={firstName}
+              handleEditName={() => setOnEditName(!onEditName)}
+              onEditEmail={onEditEmail}
+              email={email}
+              handleSimEdit={() => setOnEditEmail(!onEditEmail)}
+              setOnEditName={setOnEditName}
+              setOnEditEmail={setOnEditEmail}
+            />
           </Box>
-          <Typography
-            component="div"
-            role="tabpanel"
-            hidden={selectedTab !== 1}
-          >
+
+          <Box component="div" role="tabpanel" hidden={selectedTab !== 1}>
             <DataPlanComponent
               packageName={packageName || ''}
               currentSite={currentSite || ''}
               bundle={bundle || ''}
             />
-          </Typography>
-          <Typography
-            component="div"
-            role="tabpanel"
-            hidden={selectedTab !== 2}
-          >
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}> SIM ICCID</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}> Type</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}> Status</strong>
-                    </TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <SubscriberMenu
-                    subscriberInfo={subscriberInfo}
-                    simStatusLoading={simStatusLoading}
-                  />
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Typography>
-          <Typography
-            component="div"
-            role="tabpanel"
-            hidden={selectedTab !== 3}
-          >
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}>
-                        {' '}
-                        Billing cycle
-                      </strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}>
-                        {' '}
-                        Data usage
-                      </strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong style={{ fontWeight: 'bold' }}> Data plan</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-              </Table>
-            </TableContainer>
-          </Typography>
+          </Box>
+
+          <Box component="div" role="tabpanel" hidden={selectedTab !== 2}>
+            <SimInfoTab
+              selectedTab={selectedTab}
+              subscriberInfo={subscriberInfo}
+              simStatusLoading={simStatusLoading}
+              handleSimAction={handleSimAction}
+              simAction={simAction}
+              handleCloseSimAction={handleCloseSimAction}
+              handleSimMenu={handleSimMenu}
+            />
+          </Box>
+
+          <Box component="div" role="tabpanel" hidden={selectedTab !== 3}>
+            <BillingCycle />
+          </Box>
         </Box>
       </Box>
       <DialogActions>

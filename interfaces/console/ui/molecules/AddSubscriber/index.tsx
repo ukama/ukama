@@ -17,7 +17,6 @@ import Step2 from './Step2';
 import Step4 from './Step4';
 import CloseIcon from '@mui/icons-material/Close';
 import { PackageDto, SimDto } from '@/generated';
-import { getSubTitle } from '../../../utils';
 
 interface SubscriberDialogProps {
   open: boolean;
@@ -102,11 +101,20 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       setActiveStep(1);
     };
   }, []);
-  const subTitle = getSubTitle(
-    onSuccess ? 3 : activeStep,
-    selectedSimType,
-    name,
-  );
+  const getSubTitle = (step: number) => {
+    switch (step) {
+      case 1:
+        return 'Add subscribers to your network.';
+      case 2:
+        return 'Enter the ICCID for the SIM you have assigned to the subscriber, and select their data plan. Please ensure the ICCID is correct, because it cannot be undone once assigned.';
+      case 3:
+        return selectedSimType == 'eSim '
+          ? `You have successfully added ${name} as a subscriber to your network, and an ${selectedSimType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`
+          : `You have successfully added ${name} as a subscriber to your network, and ${selectedSimType} installation instructions have been sent out to them. `;
+      default:
+        return 'Add subscribers to your network.';
+    }
+  };
 
   return (
     <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="sm">
@@ -124,7 +132,7 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       >
         <CloseIcon />
       </IconButton>
-      <DialogContent>{subTitle}</DialogContent>
+      <DialogContent>{getSubTitle(onSuccess ? 3 : activeStep)}</DialogContent>
       <Backdrop
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={loading}

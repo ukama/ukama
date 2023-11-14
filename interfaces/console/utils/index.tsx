@@ -56,21 +56,6 @@ const NetworkStatusLabel = ({ message }: any) => {
     </Typography>
   );
 };
-// utils.ts
-const getSubTitle = (step: number, name: string, selectedSimType: string) => {
-  switch (step) {
-    case 1:
-      return 'Add subscribers to your network.';
-    case 2:
-      return 'Enter the ICCID for the SIM you have assigned to the subscriber, and select their data plan. Please ensure the ICCID is correct, because it cannot be undone once assigned.';
-    case 3:
-      return selectedSimType === 'eSim'
-        ? `You have successfully added ${name} as a subscriber to your network, and an ${selectedSimType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`
-        : `You have successfully added ${name} as a subscriber to your network, and ${selectedSimType} installation instructions have been sent out to them.`;
-    default:
-      return 'Add subscribers to your network.';
-  }
-};
 
 const getStatusByType = (status: string) => {
   if (status === 'DOWN') return <NetworkStatusLabel message="is down." />;
@@ -555,5 +540,4 @@ export {
   secondsToDuration,
   structureNodeSiteDate,
   uniqueObjectsArray,
-  getSubTitle,
 };
