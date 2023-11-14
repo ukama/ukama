@@ -44,7 +44,6 @@
     "express": "^4.18.2",
     "express-winston": "^4.2.0",
     "graphql": "latest",
-    "graphql-iso-date": "^3.6.1",
     "graphql-scalars": "1.22.2",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^5.14.0",
