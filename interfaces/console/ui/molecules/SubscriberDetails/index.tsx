@@ -9,8 +9,6 @@ import {
   Box,
   Menu,
   MenuItem,
-  Tabs,
-  Tab,
   Stack,
   Table,
   TableBody,
@@ -26,6 +24,9 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
+import TabsComponent from '@/ui/molecules/TabsComponent';
+import DataPlanComponent from '@/ui/molecules/DataPLan';
+import SubscriberMenu from '@/ui/molecules/SubscriberMenu';
 
 interface SubscriberProps {
   onCancel: () => void;
@@ -176,24 +177,14 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       </IconButton>
       <Box sx={{ width: '100%' }}>
         <Box sx={{ p: 2 }}>
-          <Tabs
-            value={selectedTab}
-            onChange={handleTabChange}
-            aria-label="tabs menu"
-          >
-            <Tab label="Information" />
-            <Tab label="Data Usage" />
-            <Tab label="SIMs" />
-            <Tab label="History" />
-          </Tabs>
+          <TabsComponent
+            selectedTab={selectedTab}
+            handleTabChange={handleTabChange}
+          />
         </Box>
 
         <Box sx={{ pl: 2 }}>
-          <Typography
-            component="div"
-            role="tabpanel"
-            hidden={selectedTab !== 0}
-          >
+          <Box component="div" role="tabpanel" hidden={selectedTab !== 0}>
             <Stack direction="column" spacing={2}>
               <Typography variant="body1" sx={{ color: colors.black }}>
                 Name
@@ -271,56 +262,17 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                 </IconButton>
               </Stack>
             </Stack>
-          </Typography>
+          </Box>
           <Typography
             component="div"
             role="tabpanel"
             hidden={selectedTab !== 1}
           >
-            <Stack direction="column" spacing={2}>
-              <Stack direction="row" spacing={2}>
-                <Typography variant="body1" sx={{ color: colors.black }}>
-                  Data plan
-                </Typography>
-                <Typography variant="subtitle1" sx={{ color: colors.black }}>
-                  {packageName && packageName.length ? (
-                    packageName
-                  ) : (
-                    <Skeleton
-                      variant="rectangular"
-                      width={120}
-                      height={24}
-                      sx={{ backgroundColor: colors.black10 }}
-                    />
-                  )}
-                </Typography>
-              </Stack>
-              <Stack direction="row" spacing={2}>
-                <Typography variant="body1" sx={{ color: colors.black }}>
-                  Current site
-                </Typography>
-                <Typography variant="subtitle1" sx={{ color: colors.black }}>
-                  {currentSite || ''}
-                </Typography>
-              </Stack>
-              <Stack direction="row" spacing={2}>
-                <Typography variant="body1" sx={{ color: colors.black }}>
-                  Month usage
-                </Typography>
-                <Typography variant="subtitle1" sx={{ color: colors.black }}>
-                  {bundle && bundle.length ? (
-                    bundle
-                  ) : (
-                    <Skeleton
-                      variant="rectangular"
-                      width={120}
-                      height={24}
-                      sx={{ backgroundColor: colors.black10 }}
-                    />
-                  )}
-                </Typography>
-              </Stack>
-            </Stack>
+            <DataPlanComponent
+              packageName={packageName || ''}
+              currentSite={currentSite || ''}
+              bundle={bundle || ''}
+            />
           </Typography>
           <Typography
             component="div"
@@ -344,62 +296,10 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {subscriberInfo &&
-                    subscriberInfo.sim.map((sim: any) => (
-                      <TableRow key={sim.iccid}>
-                        <TableCell>{sim.msisdn}</TableCell>
-                        <TableCell>
-                          {sim.isPhysical ? 'pSim' : 'eSim'}
-                        </TableCell>
-                        <TableCell>
-                          {simStatusLoading ? (
-                            <Skeleton
-                              variant="rectangular"
-                              width={120}
-                              height={24}
-                              sx={{ backgroundColor: colors.black10 }}
-                            />
-                          ) : (
-                            sim.status
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            aria-controls="menu"
-                            aria-haspopup="true"
-                            onClick={handleSimAction}
-                          >
-                            <MoreVertIcon sx={{ transform: 'rotate(90deg)' }} />
-                          </IconButton>
-                          <Menu
-                            id="menu"
-                            anchorEl={simAction}
-                            open={Boolean(simAction)}
-                            onClose={handleCloseSimAction}
-                          >
-                            <MenuItem
-                              onClick={() =>
-                                handleSimMenu('deactivateSim', sim.id)
-                              }
-                            >
-                              Deactivate SIM
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => handleSimMenu('deleteSim', sim.id)}
-                              sx={{ color: colors.red }}
-                            >
-                              Delete SIM
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => handleSimMenu('topUp', sim.id)}
-                              sx={{ color: colors.red }}
-                            >
-                              Top up data
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                  <SubscriberMenu
+                    subscriberInfo={subscriberInfo}
+                    simStatusLoading={simStatusLoading}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>
