@@ -33,9 +33,9 @@ const (
 
 // actual routing keys
 const (
-	DeviceConnectedRoutingKey     RoutingKey = "event.device.mesh.link.connect"
+	NodeConnectedRoutingKey     RoutingKey = "event.device.mesh.link.connect"
 	UserRegisteredRoutingKey      RoutingKey = "event.cloud.identity.user.create"
-	DeviceFeederRequestRoutingKey RoutingKey = "request.cloud.device-feeder"
+	NodeFeederRequestRoutingKey RoutingKey = "request.cloud.node-feeder"
 	OrgCreatedRoutingKey          RoutingKey = "event.cloud.org.org.created"
 	OrgDeletedRoutingKey          RoutingKey = "event.cloud.org.org.deleted"
 	NodeUpdatedRoutingKey         RoutingKey = "event.cloud.node.node.updated"

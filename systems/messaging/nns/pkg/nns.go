@@ -11,7 +11,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -80,6 +79,28 @@ func (n *Nns) Get(c context.Context, nodeId string) (ip string, err error) {
 	return ip, nil
 }
 
+func (n *Nns) GetMesh(c context.Context, nodeId string) (ip string, err error) {
+	nodeId = strings.ToLower(nodeId)
+
+	if _, err = ukama.ValidateNodeId(nodeId); err != nil {
+		metrics.RecordIpRequestFailureMetric()
+		return "", status.Error(codes.InvalidArgument, err.Error())
+	}
+	var ok bool
+
+	nodeIdKey := formatNodeIdKey(nodeId)
+	if ip, ok = n.cache[nodeIdKey]; !ok {
+		if ip, err = n.getFromEtcd(c, nodeIdKey); err != nil {
+			metrics.RecordIpRequestFailureMetric()
+			return "", err
+		}
+		n.cache[nodeIdKey] = ip
+	}
+
+	metrics.RecordIpRequestSuccessMetric()
+	return ip, nil
+}
+
 func (n *Nns) getFromEtcd(c context.Context, nodeId string) (string, error) {
 	log.Infof("Getting ip from etcd for nodeId: %s", nodeId)
 	val, err := n.etcd.Get(c, nodeId)
@@ -104,13 +125,9 @@ func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	i := net.ParseIP(ip)
-	if i == nil {
-		return fmt.Errorf("not valid ip")
-	}
 	nodeIdKey := formatNodeIdKey(nodeId)
-	log.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
-	_, err = n.etcd.Put(c, nodeIdKey, i.String())
+	log.Debugf("Adding node %s with ip %s to db", nodeIdKey, ip)
+	_, err = n.etcd.Put(c, nodeIdKey, ip)
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
 	}

@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stretchr/testify/assert"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
 var route1 = db.Route{
@@ -41,6 +42,7 @@ var service1 = db.Service{
 func TestMsgClientServer_RegisterService(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
+	shovelP := &cmocks.MsgBusShovelProvider{}
 
 	rt := route1
 	svc := service1
@@ -63,7 +65,7 @@ func TestMsgClientServer_RegisterService(t *testing.T) {
 	routeRepo.On("Add", route1.Key).Return(&rt, nil).Once()
 	serviceRepo.On("AddRoute", &svc, &rt).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, nil, sys)
+	s := NewMsgClientServer(serviceRepo, routeRepo, shovelP, nil, sys)
 	_, err := s.RegisterService(context.TODO(), &reqPb)
 
 	assert.NoError(t, err)
@@ -75,6 +77,7 @@ func TestMsgClientServer_StartMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
+	shovelP := &cmocks.MsgBusShovelProvider{}
 
 	svc := service1
 	svc.ServiceUuid = ServiceUuid
@@ -87,7 +90,7 @@ func TestMsgClientServer_StartMsgHandler(t *testing.T) {
 	serviceRepo.On("Get", ServiceUuid).Return(&svc, nil).Once()
 	msgIf.On("UpdateServiceQueueHandler", &svc).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
+	s := NewMsgClientServer(serviceRepo, routeRepo, shovelP, msgIf, sys)
 	_, err := s.StartMsgBusHandler(context.TODO(), &reqStartPb)
 
 	assert.NoError(t, err)
@@ -98,6 +101,7 @@ func TestMsgClientServer_StoptMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
+	shovelP := &cmocks.MsgBusShovelProvider{}
 
 	reqStopPb := pb.StopMsgBusHandlerReq{
 		ServiceUuid: ServiceUuid,
@@ -105,7 +109,7 @@ func TestMsgClientServer_StoptMsgHandler(t *testing.T) {
 
 	msgIf.On("StopServiceQueueHandler", reqStopPb.ServiceUuid).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
+	s := NewMsgClientServer(serviceRepo, routeRepo, shovelP, msgIf, sys)
 	_, err := s.StopMsgBusHandler(context.TODO(), &reqStopPb)
 
 	assert.NoError(t, err)
@@ -116,6 +120,7 @@ func TestMsgClientServer_Publish(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
+	shovelP := &cmocks.MsgBusShovelProvider{}
 
 	svc := service1
 	svc.ServiceUuid = ServiceUuid
@@ -129,7 +134,7 @@ func TestMsgClientServer_Publish(t *testing.T) {
 
 	msgIf.On("Publish", reqMsg.ServiceUuid, reqMsg.RoutingKey, reqMsg.Msg).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
+	s := NewMsgClientServer(serviceRepo, routeRepo, shovelP, msgIf, sys)
 	_, err := s.PublishMsg(context.TODO(), &reqMsg)
 
 	assert.NoError(t, err)

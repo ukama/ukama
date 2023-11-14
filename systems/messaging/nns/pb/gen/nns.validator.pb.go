@@ -18,6 +18,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetMeshIPRequest) Validate() error {
+	return nil
+}
+func (this *GetMeshIPResponse) Validate() error {
+	return nil
+}
 func (this *GetNodeIPRequest) Validate() error {
 	return nil
 }
