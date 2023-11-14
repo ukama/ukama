@@ -14,6 +14,7 @@ import colors from '@/styles/theme/colors';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useState } from 'react';
+import SimTypeRadio from './simTypeComp';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Name is required'),
@@ -96,58 +97,22 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                 />
               </Grid>
               <Grid item xs={6}>
-                <Paper variant="outlined" sx={{}}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Radio
-                      checked={selectedSimType === 'eSim'}
-                      value="eSim"
-                      onChange={handleSimTypeChange}
-                      name="eSim"
-                      inputProps={{
-                        'aria-label': 'eSim',
-                      }}
-                    />
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography
-                        variant="body1"
-                        sx={{ color: colors.black }}
-                      >{`eSIM `}</Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.black70 }}
-                      >
-                        {` (${eSimCount || 0} left)`}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Paper>
+                <SimTypeRadio
+                  simType="eSim"
+                  label="eSIM"
+                  count={eSimCount}
+                  selectedSimType={selectedSimType}
+                  handleSimTypeChange={handleSimTypeChange}
+                />
               </Grid>
               <Grid item xs={6}>
-                <Paper variant="outlined" sx={{}}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Radio
-                      value="pSim"
-                      name="pSim"
-                      onChange={handleSimTypeChange}
-                      checked={selectedSimType === 'pSim'}
-                      inputProps={{
-                        'aria-label': 'pSim',
-                      }}
-                    />
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography
-                        variant="body1"
-                        sx={{ color: colors.black }}
-                      >{`pSIM `}</Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.black70 }}
-                      >
-                        {` (${pSimCount || 0} left)`}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Paper>
+                <SimTypeRadio
+                  simType="pSim"
+                  label="pSIM"
+                  count={pSimCount}
+                  selectedSimType={selectedSimType}
+                  handleSimTypeChange={handleSimTypeChange}
+                />
               </Grid>
 
               <Grid item xs={12}>
