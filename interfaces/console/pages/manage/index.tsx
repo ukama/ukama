@@ -11,7 +11,7 @@ import { MANAGE_MENU_LIST } from '@/constants';
 import {
   PackageDto,
   useAddPackageMutation,
-  useDeletePacakgeMutation,
+  useDeletePackageMutation,
   // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
@@ -330,7 +330,7 @@ const Manage = () => {
   });
 
   const [deletePackage, { loading: deletePkgLoading }] =
-    useDeletePacakgeMutation({
+    useDeletePackageMutation({
       onCompleted: () => {
         getDataPlans();
         setSnackbarMessage({

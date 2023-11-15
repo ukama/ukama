@@ -15,7 +15,7 @@ import { DeleteSimInputDto, DeleteSimResDto } from "./types";
 export class DeleteSimResolver {
   @Mutation(() => DeleteSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async deleteSim(
     @Arg("data") data: DeleteSimInputDto,
     @Ctx() ctx: Context
   ): Promise<DeleteSimResDto> {

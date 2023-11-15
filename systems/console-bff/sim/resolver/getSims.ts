@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { SIM_TYPES } from "../../common/enums";
 import { Context } from "../context";
 import { SimsResDto } from "./types";
@@ -15,7 +14,6 @@ import { SimsResDto } from "./types";
 @Resolver()
 export class GetSimsResolver {
   @Query(() => SimsResDto)
-  @UseMiddleware(Authentication)
   async getSims(
     @Arg("type") type: SIM_TYPES,
     @Ctx() ctx: Context

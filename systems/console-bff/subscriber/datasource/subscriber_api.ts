@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { SUBSCRIBER_API_GW } from "../../common/configs";
 import {
@@ -79,12 +80,12 @@ class SubscriberApi extends RESTDataSource {
   getSubscribersByNetwork = async (
     networkId: string
   ): Promise<SubscribersResDto> => {
-    this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`
-    );
-    return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`).then(
-      res => dtoToSubscribersResDto(res)
-    );
+    return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
+      .then(res => dtoToSubscribersResDto(res))
+
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 

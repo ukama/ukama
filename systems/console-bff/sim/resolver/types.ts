@@ -5,26 +5,31 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, GraphQLISODateTime, InputType, ObjectType } from "type-graphql";
 
 import { SIM_TYPES } from "../../common/enums";
+
+// You might need to install this package
 
 @InputType()
 export class AllocateSimInputDto {
   @Field()
-  networkId: string;
+  network_id: string;
 
   @Field()
-  packageId: string;
+  package_id: string;
+
+  @Field({ nullable: true })
+  iccid?: string;
 
   @Field()
-  iccid: string;
+  sim_type: SIM_TYPES;
 
   @Field()
-  simType: SIM_TYPES;
+  subscriber_id: string;
 
   @Field()
-  subscriberId: string;
+  traffic_policy: number;
 }
 
 @ObjectType()
@@ -129,20 +134,66 @@ export class RemovePackageFormSimInputDto {
   @Field()
   packageId: string;
 }
-@ObjectType()
-export class GetPackagesForSimResDto {
-  @Field(() => [SimPackageDto], { nullable: true })
-  Packages?: [SimPackageDto];
-}
+
 @InputType()
 export class GetPackagesForSimInputDto {
   @Field()
+  sim_id: string;
+}
+
+@ObjectType()
+export class GetSimPackagesDtoAPI {
+  @Field()
+  sim_id: string;
+  @Field(() => [SimToPackagesDto])
+  packages: SimToPackagesDto[];
+}
+@ObjectType()
+export class SimPackagesResDto {
+  @Field()
   simId: string;
+  @Field(() => [SimToPackagesResDto])
+  packages: SimToPackagesResDto[];
+}
+
+@ObjectType()
+export class SimToPackagesDto {
+  @Field()
+  id: string;
+
+  @Field()
+  package_id: string;
+
+  @Field()
+  start_date: string;
+
+  @Field()
+  end_date: string;
+
+  @Field()
+  is_active: boolean;
+}
+@ObjectType()
+export class SimToPackagesResDto {
+  @Field()
+  id: string;
+
+  @Field()
+  packageId: string;
+
+  @Field()
+  startDate: string;
+
+  @Field()
+  endDate: string;
+
+  @Field()
+  isActive: boolean;
 }
 @InputType()
 export class ToggleSimStatusInputDto {
   @Field()
-  simId: string;
+  sim_id: string;
 
   @Field()
   status: string;
@@ -151,6 +202,11 @@ export class ToggleSimStatusInputDto {
 export class GetSimInputDto {
   @Field()
   simId: string;
+}
+@InputType()
+export class GetSimBySubscriberInputDto {
+  @Field()
+  subscriberId: string;
 }
 @InputType()
 export class GetSimBySubscriberIdInputDto {
@@ -167,24 +223,99 @@ export class DeleteSimInputDto {
   @Field()
   simId: string;
 }
+
 @InputType()
 export class AddPackageToSimInputDto {
   @Field()
-  simId: string;
+  sim_id: string;
 
   @Field()
-  packageId: string;
+  package_id: string;
 
-  @Field()
-  startDate: string;
+  @Field(() => GraphQLISODateTime) // Use a proper date type
+  start_date: Date; // Change the data type to Date
 }
 @InputType()
 export class SetActivePackageForSimInputDto {
   @Field()
-  simId: string;
+  sim_id: string;
 
   @Field()
-  packageId: string;
+  package_id: string;
+}
+
+@ObjectType()
+export class SimAllocatePackageDto {
+  @Field({ nullable: true })
+  id?: string;
+
+  @Field({ nullable: true })
+  packageId?: string;
+
+  @Field({ nullable: true })
+  startDate?: string;
+
+  @Field({ nullable: true })
+  endDate?: string;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+@ObjectType()
+export class AllocateSimAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriber_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field()
+  org_id: string;
+
+  @Field(() => SimAllocatePackageDto)
+  package: SimAllocatePackageDto;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field({ nullable: true })
+  imsi?: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  is_physical: boolean;
+
+  @Field()
+  traffic_policy: number;
+
+  @Field({ nullable: true })
+  firstActivatedOn?: string;
+
+  @Field({ nullable: true })
+  lastActivatedOn?: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocated_at: string;
+
+  @Field()
+  sync_status: string;
 }
 @ObjectType()
 export class SimAPIDto {
@@ -218,13 +349,21 @@ export class SimAPIDto {
   @Field()
   sm_ap_address: string;
 }
+
+@ObjectType()
+export class SubscriberToSimsDto {
+  @Field()
+  subscriber_id: string;
+  @Field(() => [SimDto])
+  sims: SimDto[];
+}
 @ObjectType()
 export class SimDto {
-  @Field()
-  activationCode: string;
+  @Field({ nullable: true })
+  activationCode?: string;
 
-  @Field()
-  createdAt: string;
+  @Field({ nullable: true })
+  createdAt?: string;
 
   @Field()
   iccid: string;
@@ -255,6 +394,16 @@ export class SimDto {
 export class SimAPIResDto {
   @Field(() => SimAPIDto)
   sim: SimAPIDto;
+}
+
+export class SimAllResDto {
+  @Field(() => AllocateSimAPIDto)
+  sim: AllocateSimAPIDto;
+}
+@ObjectType()
+export class SimsAlloAPIResDto {
+  @Field(() => [SimAPIDto])
+  sims: AllocateSimAPIDto[];
 }
 @ObjectType()
 export class GetSimAPIResDto {

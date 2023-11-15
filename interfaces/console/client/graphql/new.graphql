@@ -228,6 +228,15 @@ fragment PackageMarkup on PackageDto {
     markup
   }
 }
+
+fragment SimPackages on SimToPackagesDto {
+  id
+  package_id
+  start_date
+  end_date
+  is_active
+}
+
 fragment Package on PackageDto {
   uuid
   name
@@ -279,6 +288,13 @@ query getPackages {
     }
   }
 }
+query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    sims {
+      ...SimPool
+    }
+  }
+}
 
 mutation addPackage($data: AddPackageInputDto!) {
   addPackage(data: $data) {
@@ -286,9 +302,45 @@ mutation addPackage($data: AddPackageInputDto!) {
   }
 }
 
-mutation deletePacakge($packageId: String!) {
+mutation removePackageForSim($data: RemovePackageFormSimInputDto!) {
+  removePackageForSim(data: $data) {
+    packageId
+  }
+}
+
+mutation deletePackage($packageId: String!) {
   deletePackage(packageId: $packageId) {
     uuid
+  }
+}
+mutation addPackageToSim($data: AddPackageToSimInputDto!) {
+  addPackageToSim(data: $data) {
+    packageId
+  }
+}
+mutation setActivePackageForSim($data: SetActivePackageForSimInputDto!) {
+  setActivePackageForSim(data: $data) {
+    packageId
+  }
+}
+query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    sims {
+      ...SimPool
+    }
+  }
+}
+query getPackagesForSim($data: GetPackagesForSimInputDto!) {
+  getPackagesForSim(data: $data) {
+    sim_id
+    packages {
+      ...SimPackages
+    }
+  }
+}
+mutation deleteSim($data: DeleteSimInputDto!) {
+  deleteSim(data: $data) {
+    simId
   }
 }
 
@@ -328,6 +380,53 @@ fragment SimPool on SimDto {
   qrCode
   simType
   smapAddress
+}
+fragment SimAllocationPackage on SimAllocatePackageDto {
+  id
+  packageId
+  startDate
+  endDate
+  isActive
+}
+
+fragment SimAllocation on AllocateSimAPIDto {
+  id
+  subscriber_id
+  network_id
+  org_id
+  package {
+    ...SimAllocationPackage
+  }
+  iccid
+  msisdn
+  imsi
+  type
+  status
+  is_physical
+  traffic_policy
+  firstActivatedOn
+  lastActivatedOn
+  activationsCount
+  deactivationsCount
+  allocated_at
+  sync_status
+}
+mutation allocateSim($data: AllocateSimInputDto!) {
+  allocateSim(data: $data) {
+    ...SimAllocation
+  }
+}
+
+mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
+  toggleSimStatus(data: $data) {
+    simId
+  }
+}
+
+query getSim($data: GetSimInputDto!) {
+  getSim(data: $data) {
+    ...SimPool
+  }
 }
 
 query getSims($type: String!) {

@@ -16,29 +16,25 @@ import {
 export const dtoToSubscriberResDto = (
   res: SubscriberAPIResDto
 ): SubscriberDto => {
-  const sims: SubscriberSimDto[] = [];
-  if (res.subscriber.sim.length > 0) {
-    for (const sim of res.subscriber.sim) {
-      sims.push({
-        id: sim.id,
-        imsi: sim.imsi,
-        type: sim.type,
-        iccid: sim.iccid,
-        orgId: sim.org_id,
-        msisdn: sim.msisdn,
-        status: sim.status,
-        package: sim.package,
-        networkId: sim.network_id,
-        isPhysical: sim.is_physical,
-        allocatedAt: sim.allocated_at,
-        subscriberId: sim.subscriber_id,
-        lastActivatedOn: sim.last_activated_on,
-        activationsCount: sim.activations_count,
-        firstActivatedOn: sim.first_activated_on,
-        deactivationsCount: sim.deactivations_count,
-      });
-    }
-  }
+  const sims: SubscriberSimDto[] =
+    res.subscriber.sim?.map(sim => ({
+      id: sim.id,
+      imsi: sim.imsi,
+      type: sim.type,
+      iccid: sim.iccid,
+      orgId: sim.org_id,
+      msisdn: sim.msisdn,
+      status: sim.status,
+      package: sim.package,
+      networkId: sim.network_id,
+      isPhysical: sim.is_physical,
+      allocatedAt: sim.allocated_at,
+      subscriberId: sim.subscriber_id,
+      lastActivatedOn: sim.last_activated_on,
+      activationsCount: sim.activations_count,
+      firstActivatedOn: sim.first_activated_on,
+      deactivationsCount: sim.deactivations_count,
+    })) || [];
   return {
     sim: sims,
     email: res.subscriber.email,
@@ -55,6 +51,7 @@ export const dtoToSubscriberResDto = (
     proofOfIdentification: res.subscriber.proof_of_identification,
   };
 };
+
 export const dtoToSubscribersResDto = (
   res: SubscribersAPIResDto
 ): SubscribersResDto => {
