@@ -11,10 +11,13 @@
 
 #define JTAG_CAPPS  "capps"
 
-#define JTAG_SPACE  "space"
-#define JTAG_NAME   "name"
-#define JTAG_TAG    "tag"
-#define JTAG_STATUS "status"
-#define JTAG_PID    "pid"
+#define JTAG_SPACE      "space"
+#define JTAG_NAME       "name"
+#define JTAG_TAG        "tag"
+#define JTAG_STATUS     "status"
+#define JTAG_PID        "pid"
+#define JTAG_DEPENDS_ON "depends_on"
+#define JTAG_CAPP       "capp"
+#define JTAG_STATE      "state"
 
 #endif /* JSON_TYPES_H_ */

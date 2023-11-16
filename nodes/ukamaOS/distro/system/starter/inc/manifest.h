@@ -31,11 +31,14 @@ typedef struct _cappsManifest {
     char *space;     /* group it belongs to */
     int  restart;    /* 1: yes, always restart. 0: No */
 
+    char *dependencyCapp;  /* name of capp it depends on */
+    char *dependencyState; /* state of dependency capp */
+
     struct _cappsManifest *next; /* Next in the list */
 } CappsManifest;
 
 typedef struct _spacesManifest {
-    
+
     char *name;
 
     struct _spacesManifest *next;
@@ -51,6 +54,7 @@ typedef struct {
 
 /* Function headers. */
 bool read_manifest_file(Manifest **manifest, char *fileName);
+bool validate_capp_dependency(Manifest **manifest);
 void free_manifest(Manifest *ptr);
 
 #endif /* MANIFEST_H */

@@ -39,9 +39,11 @@
 #define DEF_CAPP_CONFIG_FILE   "config.json"
 
 /* runtime status */
-#define CAPP_RUNTIME_NO_EXEC   0
-#define CAPP_RUNTIME_EXEC      1
-#define CAPP_RUNTIME_DONE      2
+#define CAPP_RUNTIME_PEND      1
+#define CAPP_RUNTIME_EXEC      2
+#define CAPP_RUNTIME_DONE      3
+#define CAPP_RUNTIME_FAILURE   4
+#define CAPP_RUNTIME_UNKNOWN   5
 
 #define EP_BS                  "/"
 #define REST_API_VERSION       "v1"
@@ -57,8 +59,15 @@
 #define SPACE_MAX_BUFFER    1024
 #define CAPP_MAX_BUFFER     1024
 
+#define MAX_RETRIES         3
+#define WAIT_TIME           10
+
 #define SPACE_BOOT   "boot"
 #define SPACE_REBOOT "reboot"
+
+#define STATE_NONE "none"
+#define STATE_DONE "done"
+#define STATE_RUN  "run"
 
 #define CAPP_PKG_NOT_FOUND 0
 #define CAPP_PKG_FOUND     1
@@ -72,6 +81,12 @@ typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 typedef json_t              JsonObj;
 typedef json_error_t        JsonErrObj;
+
+typedef struct _dependency {
+
+    char   *name;  /* name of capp it is depending on */
+    char   *state; /* state of the capp */
+} CappDepend;
 
 typedef struct _runtime {
 
@@ -93,6 +108,7 @@ typedef struct _capp {
     int         fetch;     /* fetch from hub? */
     CappRuntime *runtime;  /* runtime of capp */
     CappConfig  *config;   /* configuration of the capp */
+    CappDepend  *depend;   /* depency on other capp */
 } Capp;
 
 typedef struct _cappList {

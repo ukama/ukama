@@ -78,7 +78,17 @@ static void add_capp_to_space_list(SpaceList **spaceList,
             newCappList->capp->space   = strdup(cPtr->space);
             newCappList->capp->restart = cPtr->restart;
             newCappList->capp->runtime = NULL;
-            
+
+            if (cPtr->dependencyCapp) {
+                newCappList->capp->depend =
+                    (CappDepend *)calloc(1, sizeof(CappDepend));
+
+                newCappList->capp->depend->name =
+                    cPtr->dependencyCapp;
+                newCappList->capp->depend->state =
+                    cPtr->dependencyState;
+            }
+
             newCappList->next = currentSpaceList->space->cappList;
             currentSpaceList->space->cappList = newCappList;
             
@@ -86,18 +96,18 @@ static void add_capp_to_space_list(SpaceList **spaceList,
         }
         currentSpaceList = currentSpaceList->next;
     }
-    
-    /* Space not found, create a new space and add capp to the 
+
+    /* Space not found, create a new space and add capp to the
      * cappList of the new space
      */
     newSpace         = (Space *)malloc(sizeof(Space));
     newSpace->name   = strdup(spaceName);
     newSpace->rootfs = NULL;
-    
+
     newSpace->cappList  = (CappList *)malloc(sizeof(CappList));
     newCappList         = newSpace->cappList;
     newCappList->capp   = (Capp *)malloc(sizeof(Capp));
-    
+
     newCappList->capp->name    = strdup(cPtr->name);
     newCappList->capp->tag     = strdup(cPtr->tag);
     newCappList->capp->rootfs  = NULL;
@@ -105,11 +115,11 @@ static void add_capp_to_space_list(SpaceList **spaceList,
     newCappList->capp->restart = cPtr->restart;
     newCappList->capp->runtime = NULL;
     newSpace->cappList->next   = NULL;
-    
+
     newSpaceList        = (SpaceList *)malloc(sizeof(SpaceList));
     newSpaceList->space = newSpace;
     newSpaceList->next  = *spaceList;
-    
+
     *spaceList = newSpaceList;
 }
 
