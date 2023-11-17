@@ -44,8 +44,9 @@ type BillingCollectorEventServer struct {
 }
 
 func NewBillingCollectorEventServer(org string, client client.BillingClient) *BillingCollectorEventServer {
-	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
+	log.Infof("Starting billing collector for org: %s", org)
 
+	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
 	if err != nil {
 		log.Fatalf("Failed to initialize billable metric: %v", err)
 	}

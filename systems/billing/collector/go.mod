@@ -23,7 +23,6 @@ require (
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0

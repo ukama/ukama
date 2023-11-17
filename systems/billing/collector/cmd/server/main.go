@@ -3,25 +3,22 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/systems/common/metrics"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/billing/collector/cmd/version"
 	"github.com/ukama/ukama/systems/billing/collector/pkg"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-
-	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
+	"github.com/ukama/ukama/systems/common/metrics"
 
 	log "github.com/sirupsen/logrus"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
