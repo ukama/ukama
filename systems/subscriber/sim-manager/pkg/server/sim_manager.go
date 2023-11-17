@@ -5,27 +5,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/grpc"
-	pmetric "github.com/ukama/ukama/systems/common/metrics"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
-
+	log "github.com/sirupsen/logrus"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	simpoolpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
@@ -231,13 +230,30 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
 	}
 
+	sim.Package = *firstPackage
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, resp.Sim)
+	evt := &epb.SimAllocation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		NetworkId:    sim.NetworkId.String(),
+		OrgId:        sim.OrgId.String(),
+		DataPlanId:   sim.Package.PackageId.String(),
+		Iccid:        sim.Iccid,
+		Msisdn:       sim.Msisdn,
+		Imsi:         sim.Imsi,
+		Type:         sim.Type.String(),
+		Status:       sim.Status.String(),
+		IsPhysical:   sim.IsPhysical,
+		PackageId:    sim.Package.Id.String(),
+	}
+
+	err = s.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
@@ -505,7 +521,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.AddPackageResponse{}, nil
@@ -599,7 +615,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 		err = s.msgbus.PublishRequest(route, req)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
 		return nil
 	})
@@ -636,7 +652,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.RemovePackageResponse{}, nil
 }
