@@ -13,4 +13,4 @@ fi
 source .env
 
 # Start
-docker-compose -f provider.yml up
+docker-compose -f "./provider.yml" up -d
