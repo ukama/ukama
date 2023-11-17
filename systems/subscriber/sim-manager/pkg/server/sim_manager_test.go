@@ -6,26 +6,24 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
+	log "github.com/sirupsen/logrus"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
-
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	splpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	splmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"
-
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
 const testIccid = "890000-this-is-a-test-iccid"

@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
+
 	log "github.com/sirupsen/logrus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 const (

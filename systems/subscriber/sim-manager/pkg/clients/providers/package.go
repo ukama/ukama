@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const PackageEndpoint = "/v1/packages/"

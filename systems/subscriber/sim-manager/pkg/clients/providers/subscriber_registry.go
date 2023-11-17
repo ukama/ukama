@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
 // SubscriberRegistryClientProvider creates a local client to interact with

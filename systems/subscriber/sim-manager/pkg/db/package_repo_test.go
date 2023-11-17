@@ -2,22 +2,22 @@ package db_test
 
 import (
 	"database/sql"
-	extsql "database/sql"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 func TestPackageRepo_Add(t *testing.T) {
 	t.Run("AddPackage", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 
 		pkg := simdb.Package{
 			Id:    uuid.NewV4(),
@@ -69,7 +69,7 @@ func TestPackageRepo_Get(t *testing.T) {
 		var packageID = uuid.NewV4()
 		var simID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -113,7 +113,7 @@ func TestPackageRepo_Get(t *testing.T) {
 		// Arrange
 		var packageID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -156,7 +156,7 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 		var simID = uuid.NewV4()
 		var packageID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -199,7 +199,7 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 		// Arrange
 		var simID = uuid.NewV4()
 
-		var db *extsql.DB
+		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -238,7 +238,7 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 
 func TestPackageRepo_Delete(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
-		var db *extsql.DB
+		var db *sql.DB
 
 		// Arrange
 		var packageID = uuid.NewV4()

@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ukama/ukama/systems/common/config"
+
 	rconf "github.com/num30/config"
 	log "github.com/sirupsen/logrus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 

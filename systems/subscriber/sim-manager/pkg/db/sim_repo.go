@@ -1,11 +1,13 @@
 package db
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/sql"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/ukama/ukama/systems/common/sql"
+
+	log "github.com/sirupsen/logrus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type SimRepo interface {
