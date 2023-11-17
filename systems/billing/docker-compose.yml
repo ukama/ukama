@@ -1,27 +1,18 @@
 version: '3.9'
 
-volumes:
- postgress-data:
-
 services:
- rabbitmq:
-  image: rabbitmq:3-management
-  ports:
-   - 5673:5672
-   - 15673:15672
-  volumes:
-   - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-   - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
-
- postgresd:
+ postgresd-billing:
   image: postgres:13.3
   ports:
-   - '15432:5432'
+   - '5413:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
   volumes:
    - postgress-data:/var/lib/postgresql
+
 
  # Billing System
 
@@ -31,8 +22,10 @@ services:
   ports:
    - '8680:8080'
   restart: always
+  networks:
+   - ukama-net
   depends_on:
-   - postgresd
+   - postgresd-billing
    - billing-invoice
    - billing-collector
 
@@ -42,15 +35,16 @@ services:
    - '9690:9095'
   environment:
    - DEBUGMODE=true
-   - DB_HOST=postgresd
+   - DB_HOST=postgresd-billing
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-   - MSGCLIENT_HOST=msg-client-billing:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=billing
   restart: always
+  networks:
+   - ukama-net
   depends_on:
-   - postgresd
+   - postgresd-billing
 
  billing-collector:
   build: ./collector
@@ -58,10 +52,10 @@ services:
    - '9691:9090'
   environment:
    - DEBUGMODE=true
-   - DB_HOST=postgresd
+   - DB_HOST=postgresd-billing
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
    - COLLECTOR_SERVICE_HOST=billing-collector
    - COLLECTOR_SERVICE_PORT=9090
@@ -69,8 +63,10 @@ services:
    - LAGOHOST=${LOCAL_HOST_IP}
    - ORGNAME=ukama-test-org
   restart: always
+  networks:
+   - ukama-net
   depends_on:
-   - postgresd
+   - postgresd-billing
 
  billing-invoice:
   build: ./invoice
@@ -78,14 +74,25 @@ services:
    - '9692:9090'
   environment:
    - DEBUGMODE=true
-   - DB_HOST=postgresd
+   - DB_HOST=postgresd-billing
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
    - INVOICE_SERVICE_HOST=billing-invoice
    - INVOICE_SERVICE_PORT=9090
    - ORGNAME=ukama-test-org
   restart: always
+  networks:
+   - ukama-net
   depends_on:
-   - postgresd
+   - postgresd-billing
+
+
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net
+
+volumes:
+ postgress-data:
