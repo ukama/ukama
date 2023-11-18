@@ -231,6 +231,8 @@ void usys_file_close(int fd);
 
 int usys_find_service_port(char *serviceName);
 
+void usys_find_ukama_service_address(char **address);
+
 #ifdef __cplusplus
 }
 #endif

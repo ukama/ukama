@@ -25,7 +25,6 @@
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
-#define DEF_REMOTE_SERVER      "http://localhost:8091"
 #define DEF_REMOTE_EP          "/notification"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_MAP_FILE           "status.map"
