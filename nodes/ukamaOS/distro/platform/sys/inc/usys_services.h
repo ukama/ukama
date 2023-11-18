@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+#define SERVICE_UKAMA	      "ukama"
 #define SERVICE_BOOTSTRAP     "bootstrap"
 #define SERVICE_NODE          "node"
 #define SERVICE_STARTER       "starter"
