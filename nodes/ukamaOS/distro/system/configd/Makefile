@@ -1,9 +1,8 @@
-# Copyright (c) 2021-present, Ukama Inc.
-# All rights reserved.
-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# Makefile for the platform library
-#
+# Copyright (c) 2023-present, Ukama Inc.
 
 include ../../../config.mk
 
@@ -26,7 +25,8 @@ PLATFORM_DIR:=$(DISTRO_DIR)/platform
 PLATFORM_HEADERS_DIRS:=$(PLATFORM_DIR)/sys/inc
 PLATFORM_HEADERS_DIRS+=$(PLATFORM_DIR)/log/inc
 PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
-PLATFORM_LIB:=usys 
+PLATFORM_LIB:=usys
+PLATFORM=platform
 
 INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
 INC_HEADERS+=$(DISTRO_DIR)/system/common/inc
@@ -53,7 +53,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 
 # Build
 BUILD_DIR:=build
-
 
 # Compilers and flags
 ifdef XGCCPATH
@@ -84,7 +83,6 @@ LIBS+=-l$(JSON_LIB)
 LIBS+=-l$(HTTP_SERVER_LIB)
 LIBS+=$(ULFIUS_LIB_DEP)
 LIBS+=$(CURL_LIB_DEP)
-
 
 # Compiler flags
 CFLAGS+=-g
@@ -193,14 +191,17 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 # Build Target
-$(TARGET): $(SVC_OBJFILES)
+$(TARGET): $(SVC_OBJFILES) $(PLATFORM)
 	@echo "Building $(TARGET)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	$(XCC) -o $(BUILD_DIR)/$@ $(SVC_OBJFILES) $(LDFLAGS) $(LIBS)
 	
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGET)
 	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
-	@echo CC: $(BUILD_DIR)/$@ 
+	@echo CC: $(BUILD_DIR)/$@
+
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
 
 # Build Object files 
 $(BUILD_DIR)/%.o: %.c 
@@ -215,7 +216,4 @@ memcheck: $(UTEST)
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
 
