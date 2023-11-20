@@ -16,14 +16,15 @@ type Config struct {
 }
 
 type SystemConfig struct {
-	Dataplan   string `default:"http://localhost:8074"`
-	Init       string `default:"http://localhost:8071"`
-	Registry   string `default:"http://localhost:8075"`
-	Metrics    string `default:"http://localhost:8072"`
-	Subscriber string `default:"http://localhost:8078"`
-	Billing    string `default:"http://localhost:8079"`
-	Nucleus    string `default:"http://localhost:8060"`
-	MessageBus string `default:"amqp://guest:guest@localhost:5672/"`
+	Dataplan        string `default:"http://localhost:8074"`
+	Init            string `default:"http://localhost:8071"`
+	Registry        string `default:"http://localhost:8075"`
+	Metrics         string `default:"http://localhost:8072"`
+	Subscriber      string `default:"http://localhost:8078"`
+	Billing         string `default:"http://localhost:8079"`
+	BillingProvider string `default:"http://localhost:3000"`
+	Nucleus         string `default:"http://localhost:8060"`
+	MessageBus      string `default:"amqp://guest:guest@localhost:5672/"`
 }
 
 func NewConfig() *Config {
@@ -33,14 +34,15 @@ func NewConfig() *Config {
 		OrgOwnerId: "018688fa-d861-4e7b-b119-ffc5e1637ba8",
 		Key:        "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
 		System: SystemConfig{
-			MessageBus: "amqp://guest:guest@localhost:5672/",
-			Dataplan:   "http://localhost:8074",
-			Init:       "http://localhost:8071",
-			Registry:   "http://localhost:8075",
-			Metrics:    "http://localhost:8072",
-			Subscriber: "http://localhost:8078",
-			Billing:    "http://localhost:8680",
-			Nucleus:    "http://localhost:8060",
+			MessageBus:      "amqp://guest:guest@localhost:5672/",
+			Dataplan:        "http://localhost:8074",
+			Init:            "http://localhost:8071",
+			Registry:        "http://localhost:8075",
+			Metrics:         "http://localhost:8072",
+			Subscriber:      "http://localhost:8078",
+			Billing:         "http://localhost:8680",
+			BillingProvider: "http://localhost:3000",
+			Nucleus:         "http://localhost:8060",
 		},
 	}
 }

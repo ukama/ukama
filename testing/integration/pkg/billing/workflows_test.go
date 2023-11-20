@@ -38,7 +38,7 @@ type BillingData struct {
 	SimType string `default:"ukama_data"`
 
 	BillingClient *billing.BillingClient
-	Host          string
+	ProviderHost  string
 	BillingKey    string
 	MbHost        string
 	SystemName    string
@@ -101,11 +101,11 @@ func InitializeData() *BillingData {
 	d.SystemName = "billing"
 	d.SimType = "test"
 
-	d.Host = "http://localhost:3000"
-	d.MbHost = "amqp://guest:guest@localhost:5672/"
+	d.ProviderHost = config.System.BillingProvider
+	d.MbHost = config.System.MessageBus
 	d.BillingKey = "ae805486-c98c-44d0-9652-e4413e666a7f"
 
-	d.BillingClient = billing.NewBillingClient(d.Host, d.BillingKey)
+	d.BillingClient = billing.NewBillingClient(d.ProviderHost, d.BillingKey)
 
 	d.DplanHost = config.System.Dataplan
 	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
