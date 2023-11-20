@@ -251,7 +251,11 @@ int main (int argc, char *argv[]) {
 	}
 	init_map_table(&ClientTable);
 
-    /* start various web services */
+    while (start_websocket_client(config, &websocketHandler) != TRUE) {
+		log_error("Websocket failed to setup for client. Retrying in 5 seconds ...");
+        sleep(5);
+	}
+
 	if (start_forward_services(config, &fwdInst) != TRUE) {
 		log_error("Forward service failed to setup. Exiting.");
 		exit(1);
