@@ -27,7 +27,6 @@ void handle_sigint(int signum) {
 
 static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
-    { "system-port",   required_argument, 0, 'S' },
     { "help",          no_argument, 0, 'h' },
     { "version",       no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
@@ -53,7 +52,6 @@ void usage() {
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-S, --system-port   <port>    Node system port");
     usys_puts("-v, --version                 Software version");
 }
 
@@ -61,7 +59,6 @@ int main(int argc, char **argv) {
 
     int opt, optIdx;
     char *debug        = DEF_LOG_LEVEL;
-    char *systemPort   = DEF_NODE_SYSTEM_PORT;
     UInst  serviceInst; 
     Config serviceConfig = {0};
 
@@ -93,14 +90,6 @@ int main(int argc, char **argv) {
             set_log_level(debug);
             break;
 
-        case 'S':
-            systemPort = optarg;
-            if (!systemPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
         default:
             usage();
             usys_exit(0);
@@ -110,8 +99,12 @@ int main(int argc, char **argv) {
     serviceConfig.servicePort    = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedPort      = usys_find_service_port(SERVICE_NODE);
     serviceConfig.starterdPort   = usys_find_service_port(SERVICE_STARTER);
-    serviceConfig.nodeSystemPort = usys_atoi(systemPort);
     serviceConfig.nodeID         = NULL;
+
+    if (!usys_find_service_port(SERVICE_UKAMA)) {
+        usys_log_error("Unable to determine the port for Ukama");
+        usys_exit(1);
+    }
 
     if (!serviceConfig.servicePort  ||
         !serviceConfig.nodedPort    ||
@@ -145,9 +138,7 @@ int main(int argc, char **argv) {
     /* until interrupted by SIG */
     while (USYS_TRUE) {
         if (send_health_report(&serviceConfig) == USYS_FALSE) {
-            usys_log_error("Failed to send health report to system at %s:%d",
-                           DEF_NODE_SYSTEM_HOST,
-                           serviceConfig.nodeSystemPort);
+            usys_log_error("Failed to send health report to ukama system");
         }
         sleep(DEF_REPORT_INTERVAL);
     }

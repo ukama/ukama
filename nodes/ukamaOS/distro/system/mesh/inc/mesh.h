@@ -41,9 +41,9 @@
 #define PROXY_REVERSE 0x04
 
 #define PREFIX_WEBSOCKET "/websocket"
-#define PREFIX_WEBSERVICE "*"
+#define PREFIX_FWDSERVICE "*"
 
-#define MESH_CLIENT_AGENT "Mesh-client"
+#define MESH_CLIENT_AGENT   "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
 #define MESH_SERVICE_REQUEST  "service_request"
@@ -79,6 +79,7 @@ typedef struct {
 typedef struct {
 
     struct _websocket_client_handler *handler;
+    struct _u_instance *fwdInst;
     struct _u_instance *webInst;
     void    *config;
 } State;

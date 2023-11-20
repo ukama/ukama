@@ -35,7 +35,6 @@ static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
     { "noded-host",    required_argument, 0, 'n' },
     { "noded-lep",     required_argument, 0, 'e' },
-    { "remote-server", required_argument, 0, 'r' },
     { "status-file",   required_argument, 0, 'f' },
     { "help",          no_argument,       0, 'h' },
     { "version",       no_argument,       0, 'v' },
@@ -111,9 +110,6 @@ void usage() {
         "-e, --noded-ep </node>                API EP at which noded service"
                        "will enquire for node info.\n");
     usys_puts(
-        "-r, --remote-server <URL>              Remote server to receive"
-                       "notifications");
-    usys_puts(
         "-f, --map-file <file-name>         Status map file\n");
 
     usys_puts(
@@ -127,7 +123,6 @@ int main(int argc, char **argv) {
     char *debug        = DEF_LOG_LEVEL;
     char *nodedHost    = DEF_NODED_HOST;
     char *nodedEP      = DEF_NODED_EP;
-    char *remoteServer = DEF_REMOTE_SERVER;
     char *mapFile      = DEF_MAP_FILE;
     UInst serviceInst;
 
@@ -138,7 +133,7 @@ int main(int argc, char **argv) {
         int opt = 0;
         int opdIdx = 0;
 
-        opt = getopt_long(argc, argv, "f:l:n:e:r:hv", longOptions, &opdIdx);
+        opt = getopt_long(argc, argv, "f:l:n:e:hv", longOptions, &opdIdx);
         if (opt == -1) {
             break;
         }
@@ -174,13 +169,6 @@ int main(int argc, char **argv) {
                 usys_exit(0);
             }
             break;
-        case 'r':
-            remoteServer = optarg;
-            if (!remoteServer) {
-                usage();
-                usys_exit(0);
-            }
-            break;
 
         case 'f':
             mapFile = optarg;
@@ -192,13 +180,18 @@ int main(int argc, char **argv) {
         }
     }
 
+    usys_find_ukama_service_address(&serviceConfig.remoteServer);
+    if (serviceConfig.remoteServer == NULL) {
+        usys_log_error("Ukama not configured in /etc/services");
+        usys_exit(1);
+    }
+
     /* Service config update */
     serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedHost    = usys_strdup(nodedHost);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.nodedEP      = usys_strdup(nodedEP);
-    serviceConfig.remoteServer = usys_strdup(remoteServer);
     serviceConfig.numEntries   = readMapFile(serviceConfig.entries, mapFile);
 
     if (!serviceConfig.servicePort ||

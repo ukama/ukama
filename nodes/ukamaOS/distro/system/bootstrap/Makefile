@@ -24,6 +24,7 @@ PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
 VENDOR_PKG = tomlc curl jansson ulfius libuuid
+PLATFORM = platform
 
 # Setting up various compile and link flags
 CFLAGS=-c
@@ -62,12 +63,15 @@ XLD := $(XGCCPATH)$(XLD)
 
 bootstrap: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@ 
+	$(MAKE) -C $(VENDOR_DIR) $@
+
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@

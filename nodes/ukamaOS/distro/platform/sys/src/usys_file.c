@@ -13,8 +13,10 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
+#include "usys_services.h"
 
-#define MAX_STR_LENGTH 64
+#define MAX_STR_LENGTH   64
+#define LOOPBACK_ADDRESS "127.0.0.1"
 
 /* Check if file exist */
 int usys_file_path_exist(char *fname) {
@@ -395,4 +397,21 @@ int usys_find_service_port(char *serviceName) {
     endservent();
 
     return ntohs(entry->s_port);
+}
+
+void usys_find_ukama_service_address(char **address) {
+
+    int port;
+
+    *address = (char *)calloc(1, MAX_STR_LENGTH);
+    if (*address == NULL) return;
+
+    port = usys_find_service_port(SERVICE_UKAMA);
+    if (!port) {
+        usys_free(*address);
+        *address = NULL;
+        return;
+    }
+
+    sprintf(*address, "http://%s:%d/", LOOPBACK_ADDRESS, port);
 }

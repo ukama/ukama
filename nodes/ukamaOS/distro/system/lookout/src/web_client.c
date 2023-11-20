@@ -216,7 +216,8 @@ int send_health_report(Config *config) {
     CappRuntime *runtime  = NULL;
     JsonObj     *json     = NULL;
 
-    char url[MAX_BUFFER] = {0};
+    char url[MAX_BUFFER]   = {0};
+    char ukama[MAX_BUFFER] = {0};
     char *buffer = NULL;
     char *report = NULL;
 
@@ -242,10 +243,9 @@ int send_health_report(Config *config) {
         return USYS_FALSE;
     }
 
-    sprintf(url,"http://%s:%d/v1/health/nodes/%s/performance",
-            DEF_NODE_SYSTEM_HOST,
-            config->nodeSystemPort,
-            config->nodeID);
+    usys_find_ukama_service_address(&ukama);
+    sprintf(url,"%s/node/v1/health/nodes/%s/performance",
+            ukama, config->nodeID);
     report = json_dumps(json, 0);
 
     usys_log_debug("Sending to URL: %s the health report %s",

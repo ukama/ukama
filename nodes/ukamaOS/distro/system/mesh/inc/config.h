@@ -24,13 +24,14 @@
 /* Struct to define the server and/or client host cfg. */
 typedef struct {
 
-	int  localAccept;     /* Port on which to accept local clients */
+    int  forwardPort;     /* Port on which to accept local clients */
+    int  servicePort;
     char *localHostname;
-	char *remoteConnect;  /* Client: hostname:port to connect with remotely */
-	char *certFile;       /* CA Cert file name. */
-	char *keyFile;        /* Key file name.*/
+    char *remoteConnect;  /* Client: hostname:port to connect with remotely */
+    char *certFile;       /* CA Cert file name. */
+    char *keyFile;        /* Key file name.*/
 
-	DeviceInfo *deviceInfo;   /* Device related info. */
+    DeviceInfo *deviceInfo;   /* Device related info. */
 } Config;
 
 int process_config_file(Config *config, char *fileName);

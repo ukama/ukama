@@ -65,10 +65,10 @@ static void setup_webservice_endpoints(Config *config,
 int start_web_service(Config *config, UInst *serviceInst) {
 
     if (ulfius_init_instance(serviceInst,
-                             atoi(config->servicePort),
+                             config->servicePort,
                              NULL,
                              NULL) != U_OK) {
-        usys_log_error("Error initializing instance for webservice port %s",
+        usys_log_error("Error initializing instance for webservice port %d",
                        config->servicePort);
         return USYS_FALSE;
     }
@@ -80,7 +80,7 @@ int start_web_service(Config *config, UInst *serviceInst) {
     setup_webservice_endpoints(config, serviceInst);
 
     if (!start_framework(config, serviceInst)) {
-        usys_log_error("Failed to start webservices on port: %s",
+        usys_log_error("Failed to start webservices on port: %d",
                        config->servicePort);
         return USYS_FALSE;
     }
