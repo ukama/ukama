@@ -26,7 +26,8 @@ static int read_line(char *buffer, int size, FILE *fp);
 void print_config(Config *config) {
 
 	log_debug("Remote connect port: %s", config->remoteConnect);
-	log_debug("Local accept port: %d",   config->localAccept);
+	log_debug("Forward port: %d",        config->forwardPort);
+    log_debug("Servuce port: %d",        config->servicePort);
     log_debug("Local hostname: %s",      config->localHostname);
     log_debug("TLS/SSL key file: %s",    config->keyFile);
     log_debug("TLS/SSL cert file: %s",   config->certFile);

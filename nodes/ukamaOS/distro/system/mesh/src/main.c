@@ -26,11 +26,6 @@
 /* Global */
 State *state=NULL;
 
-/* Defined in network.c */
-extern int start_web_services(Config *config, UInst *webInst);
-extern int start_websocket_client(Config *config,
-								  struct _websocket_client_handler *handler);
-
 /* Global variables. */
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
@@ -38,10 +33,6 @@ MapTable *ClientTable=NULL;
 pthread_mutex_t websocketMutex, mutex;
 pthread_cond_t  websocketFail, hasData;
 
-/*
- * usage -- Usage options for the Mesh.d
- *
- */
 void usage() {
 
 	printf("Usage: mesh.d [options] \n");
@@ -52,7 +43,6 @@ void usage() {
 	printf("--V, --version                      Version.\n");
 }
 
-/* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
@@ -76,10 +66,6 @@ WorkList **get_receive(void) {
 	return &Receive;
 }
 
-/*
- * close_websocket -- close websocket connection with server with timeout
- *
- */
 void close_websocket(struct _websocket_client_handler *handler) {
 
     int ret;
@@ -98,10 +84,6 @@ void close_websocket(struct _websocket_client_handler *handler) {
     }
 }
 
-/*
- * signal_term_handler -- SIGTERM handling routine. Gracefully exit the process
- *
- */
 void signal_term_handler(int signal) {
 
     log_debug("Received signal: %d (%s)\n", signal, strsignal(signal));
@@ -115,6 +97,11 @@ void signal_term_handler(int signal) {
         ulfius_clean_instance(state->webInst);
     }
 
+    if (state->fwdInst) {
+        ulfius_stop_framework(state->fwdInst);
+        ulfius_stop_framework(state->fwdInst);
+    }
+
     if (state->config) {
         clear_config(state->config);
         free(state->config);
@@ -124,10 +111,6 @@ void signal_term_handler(int signal) {
     exit(1);
 }
 
-/*
- *  catch_sigterm -- setup SIGTERM catch
- *
- */
 void catch_sigterm(void) {
 
     static struct sigaction saction;
@@ -151,6 +134,7 @@ int main (int argc, char *argv[]) {
     pthread_t thread;
     
 	struct _u_instance webInst;
+    struct _u_instance fwdInst;
 	struct _websocket_client_handler websocketHandler = {NULL, NULL};
 
     state = (State *)calloc(1, sizeof(State));
@@ -158,6 +142,7 @@ int main (int argc, char *argv[]) {
         printf("Unable to allocate memory of size: %ld\n", sizeof(State));
         return 1;
     }
+    state->fwdInst = &fwdInst;
     state->webInst = &webInst;
     state->handler = &websocketHandler;
 
@@ -225,9 +210,16 @@ int main (int argc, char *argv[]) {
 				configFile);
 		exit(1);
 	}
-    config->localAccept = usys_find_service_port(SERVICE_NAME);
-    if (!config->localAccept) {
-        log_error("Unable to find service port");
+
+    config->forwardPort = usys_find_service_port(SERVICE_UKAMA);
+    config->servicePort = usys_find_service_port(SERVICE_NAME);
+    if (!config->forwardPort) {
+        log_error("Unable to find forward port in /etc/service");
+        exit(1);
+    }
+
+    if (!config->servicePort) {
+        log_error("Unable to find %s port in /etc/service", SERVICE_NAME);
         exit(1);
     }
     state->config = config;
@@ -259,14 +251,19 @@ int main (int argc, char *argv[]) {
 	}
 	init_map_table(&ClientTable);
 
-	/* start webservice for local client. */
-	if (start_web_services(config, &webInst) != TRUE) {
-		log_error("Webservice failed to setup for clients. Exiting.");
+    /* start various web services */
+	if (start_forward_services(config, &fwdInst) != TRUE) {
+		log_error("Forward service failed to setup. Exiting.");
 		exit(1);
 	}
 
 	if (start_websocket_client(config, &websocketHandler) != TRUE) {
 		log_error("Websocket failed to setup for client. Retrying soon ...");
+	}
+
+    if (start_web_services(config, &webInst) != TRUE) {
+        log_error("Web service failed to setup. Exiting.");
+		exit(1);
 	}
 
     /* create websocket monitoring thread */
@@ -284,7 +281,9 @@ int main (int argc, char *argv[]) {
     pause();
 
 	ulfius_websocket_client_connection_close(&websocketHandler);
-	ulfius_stop_framework(&webInst);
+	ulfius_stop_framework(&fwdInst);
+    ulfius_stop_framework(&webInst);
+	ulfius_clean_instance(&fwdInst);
 	ulfius_clean_instance(&webInst);
 
 	clear_config(config);
