@@ -15,9 +15,11 @@
 #include <sqlite3.h>
 #include <uuid/uuid.h>
 
+#include "usys_types.h"
+#include "usys_services.h"
 #include "agent.h"
 
-#define SERVICE_NAME       "wimc"
+#define SERVICE_NAME       SERVICE_WIMC
 #define WIMC_VERSION       "0.0.1"
 
 #define EP_BS              "/"
@@ -35,7 +37,6 @@
 
 #define DEF_HUB_URL       "http://localhost:8001/"
 #define DEF_DB_FILE       "test.db"
-#define DEF_SERVICE_PORT  "8087"
 #define DEF_LOG_LEVEL     "TRACE"
 
 
@@ -270,7 +271,7 @@ typedef struct tStats {
 
 typedef struct {
 
-  char    *servicePort;
+  int     servicePort;
   char    *dbFile;
   char    *hubURL;     /* Hub URL */
   sqlite3 *db;         /* SQLite3 db for various stats */

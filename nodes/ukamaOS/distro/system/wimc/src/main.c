@@ -34,7 +34,6 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "port",          required_argument, 0, 'p' },
     { "logs",          required_argument, 0, 'l' },
     { "dbFile",        required_argument, 0, 'd' },
     { "url",           required_argument, 0, 'u' },
@@ -63,7 +62,6 @@ void usage() {
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-p, --port <port>             Local listening port");
     usys_puts("-d, --dbFile                  dB file path");
     usys_puts("-u, --url                     Hub URL");
     usys_puts("-v, --version                 Software version");
@@ -76,7 +74,6 @@ int main (int argc, char **argv) {
     Agent  *agents = NULL;
     WTasks *tasks  = NULL;
     char   *debug  = DEF_LOG_LEVEL;
-    char   *port   = DEF_SERVICE_PORT;
     char   *hubURL = DEF_HUB_URL;
     char   *dbFile = DEF_DB_FILE;
     
@@ -104,14 +101,6 @@ int main (int argc, char **argv) {
         case 'v':
             usys_puts(WIMC_VERSION);
             usys_exit(0);
-            break;
-
-        case 'p':
-            port = optarg;
-            if (!port) {
-                usage();
-                usys_exit(0);
-            }
             break;
 
         case 'd':
@@ -142,10 +131,15 @@ int main (int argc, char **argv) {
     }
     
     /* Service config update */
-    serviceConfig.servicePort  = strdup(port);
+    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.dbFile       = strdup(dbFile);
     serviceConfig.hubURL       = strdup(hubURL);
 
+    if (!serviceConfig.servicePort) {
+        usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
+        usys_exit(1);
+    }
+    
     /* Signal handler */
     signal(SIGINT, handle_sigint);
   
