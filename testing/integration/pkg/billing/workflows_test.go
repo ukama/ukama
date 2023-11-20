@@ -10,20 +10,19 @@ import (
 
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
+	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
-
-	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
-
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
 	nuc "github.com/ukama/ukama/testing/integration/pkg/nucleus"
@@ -40,6 +39,7 @@ type BillingData struct {
 
 	BillingClient *billing.BillingClient
 	Host          string
+	BillingKey    string
 	MbHost        string
 	SystemName    string
 
@@ -84,6 +84,7 @@ type BillingData struct {
 	reqGetBaseRatesByCountry   dapi.GetBaseRatesByCountryRequest
 	reqGetBaseRate             dapi.GetBaseRateRequest
 	reqSetDefaultMarkupRequest dapi.SetDefaultMarkupRequest
+	reqGetMarkup               dapi.GetMarkupRequest
 	reqSetMarkup               dapi.SetMarkupRequest
 	reqAddPackage              dapi.AddPackageRequest
 	reqSubscriberAdd           sapi.SubscriberAddReq
@@ -94,25 +95,6 @@ type BillingData struct {
 	reqActivateDeactivateSim   sapi.ActivateDeactivateSimReq
 }
 
-// var serviceConfig = pkg.NewConfig()
-
-// func init() {
-// 	log.SetLevel(log.InfoLevel)
-// 	log.SetOutput(os.Stderr)
-
-// 	err := config.NewConfig(pkg.ServiceName).Read(serviceConfig)
-// 	if err != nil {
-// 		log.Fatalf("Error reading config file. Error: %v", err)
-// 	} else if serviceConfig.DebugMode {
-// 		// output config in debug mode
-// 		b, err := yaml.Marshal(serviceConfig)
-// 		if err != nil {
-// 			log.Infof("Config:\n%s", string(b))
-// 		}
-// 	}
-
-// }
-
 func InitializeData() *BillingData {
 	config = pkg.NewConfig()
 	d := &BillingData{}
@@ -121,8 +103,9 @@ func InitializeData() *BillingData {
 
 	d.Host = "http://localhost:3000"
 	d.MbHost = "amqp://guest:guest@localhost:5672/"
+	d.BillingKey = "ae805486-c98c-44d0-9652-e4413e666a7f"
 
-	d.BillingClient = billing.NewBillingClient(d.Host, config.Key)
+	d.BillingClient = billing.NewBillingClient(d.Host, d.BillingKey)
 
 	d.DplanHost = config.System.Dataplan
 	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
@@ -134,7 +117,6 @@ func InitializeData() *BillingData {
 	d.SubscriberClient = subs.NewSubscriberClient(d.SubsHost)
 	d.EncriptKey = "the-key-has-to-be-32-bytes-long!"
 	d.SubscriberName = faker.FirstName()
-	// d.SubscriberEmail = strings.ToLower(faker.FirstName() + "_" + faker.LastName() + "@example.com")
 	d.SubscriberEmail = strings.ToLower(faker.Email())
 	d.SubscriberPhone = faker.Phonenumber()
 
@@ -177,6 +159,10 @@ func InitializeData() *BillingData {
 
 	d.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
 		Markup: float64(utils.RandomInt(50)),
+	}
+
+	d.reqGetMarkup = dapi.GetMarkupRequest{
+		OwnerId: d.OwnerId,
 	}
 
 	d.reqSetMarkup = dapi.SetMarkupRequest{
@@ -266,16 +252,17 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 
 		d.BaserateId = gbResp.Rates[0].Uuid
 
-		// Set markup
-		d.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
-			Markup: float64(utils.RandomInt(50)),
-		}
+		// Get markup, set default if not present
+		d.reqGetMarkup.OwnerId = d.OrgOwnerId
+		_, err = d.DataPlanClient.DataPlanGetUserMarkup(d.reqGetMarkup)
+		if err != nil {
+			// Set markup
+			d.reqSetMarkup.OwnerId = d.OrgOwnerId
 
-		d.reqSetMarkup.OwnerId = d.OrgOwnerId
-
-		mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkup)
-		if assert.NoError(t, err) {
-			assert.NotNil(t, mResp)
+			mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkup)
+			if assert.NoError(t, err) {
+				assert.NotNil(t, mResp)
+			}
 		}
 
 		// Upload sims to sim pool
