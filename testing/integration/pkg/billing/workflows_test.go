@@ -115,7 +115,7 @@ func InitializeData() *BillingData {
 
 	d.SubsHost = config.System.Subscriber
 	d.SubscriberClient = subs.NewSubscriberClient(d.SubsHost)
-	d.EncriptKey = "the-key-has-to-be-32-bytes-long!"
+	d.EncriptKey = config.EncryptKey
 	d.SubscriberName = faker.FirstName()
 	d.SubscriberEmail = strings.ToLower(faker.Email())
 	d.SubscriberPhone = faker.Phonenumber()

@@ -100,7 +100,7 @@ func InitializeData() *InitData {
 	d.Sys = NewSubscriberClient(d.Host)
 	d.Reg = registry.NewRegistryClient(d.RegHost)
 	d.Nuc = nucleus.NewNucleusClient(d.NucHost)
-	d.EncKey = config.Key
+	d.EncKey = config.EncryptKey
 	d.SimType = "test"
 	d.OrgId = config.OrgId
 	d.OrgName = config.OrgName
