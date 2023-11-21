@@ -10,6 +10,7 @@ type Config struct {
 	System           SystemConfig
 	LogLevel         int    `default:"4`
 	EncryptKey       string `default:"KEY"`
+	BillingKey       string `default:"ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7"`
 	OrgId            string `default:"ORG_ID"`
 	OrgName          string `default:"ORG_NAME"`
 	OrgOwnerId       string `default:"ORG_OWNER_ID"`
@@ -33,7 +34,6 @@ func NewConfig() *Config {
 		OrgId:      "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc",
 		OrgOwnerId: "018688fa-d861-4e7b-b119-ffc5e1637ba8",
 		EncryptKey: "the-key-has-to-be-32-bytes-long!",
-		// EncryptKey: "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
 		System: SystemConfig{
 			MessageBus:      "amqp://guest:guest@localhost:5672/",
 			Dataplan:        "http://localhost:8074",

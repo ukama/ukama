@@ -1947,7 +1947,7 @@ func Story_Sim_Allocate() *test.TestCase {
 			tc.Watcher = utils.SetupWatcher(a.MbHost,
 				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("allocate").SetObject("sim").MustBuild())
 
-			token, err := smutil.GenerateTokenFromIccid(a.ICCID[0], config.Key)
+			token, err := smutil.GenerateTokenFromIccid(a.ICCID[0], config.EncryptKey)
 			if err != nil {
 				return fmt.Errorf("failed to generate token from iccid %v", err)
 			}

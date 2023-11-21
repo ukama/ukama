@@ -96,15 +96,19 @@ type BillingData struct {
 }
 
 func InitializeData() *BillingData {
-	config = pkg.NewConfig()
 	d := &BillingData{}
 	d.SystemName = "billing"
-	d.SimType = "test"
 
+	config = pkg.NewConfig()
+
+	// To run this workflow, you need to export your own BILLINGKEY, which is the same as the LAGO_API_KEY
+	// you are using to run the billing system.
+	utils.LoadConfigVarsFromEnv(d.SystemName, config)
+
+	d.SimType = "test"
 	d.ProviderHost = config.System.BillingProvider
 	d.MbHost = config.System.MessageBus
-	d.BillingKey = "ae805486-c98c-44d0-9652-e4413e666a7f"
-
+	d.BillingKey = config.BillingKey
 	d.BillingClient = billing.NewBillingClient(d.ProviderHost, d.BillingKey)
 
 	d.DplanHost = config.System.Dataplan
