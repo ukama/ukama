@@ -4,19 +4,18 @@
 #
 # Copyright (c) 2021-present, Ukama Inc.
 
-include ../../config.mk
+TARGET_EXEC  = capp
+UKAMAOS_ROOT = ../ukamaOS
 
-TARGET_EXEC = capp
+include $(UKAMAOS_ROOT)/config.mk
 
-UKAMAOS_ROOT = ../..
-
-VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
-VENDOR_BUILD = $(VENDOR_DIR)/build/
-VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_DIR     = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD   = $(VENDOR_DIR)/build/
+VENDOR_INC     = $(VENDOR_BUILD)/include/
 VENDOR_USR_INC = $(VENDOR_BUILD)/usr/include
-SYS_INC = $(XGCCPATH)/../$(HOST)/include
-VENDOR_LIB   = $(VENDOR_BUILD)/lib/
-VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
+SYS_INC        = $(XGCCPATH)/../$(HOST)/include
+VENDOR_LIB     = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64   = $(VENDOR_BUILD)/lib64/
 
 SCRIPTS = $(UKAMAOS_ROOT)/distro/scripts/
 ROOTFS  = ./_ukama_minimal_rootfs/
