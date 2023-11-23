@@ -34,8 +34,9 @@ static int read_capp_config(Config *config, char *fileName,
 static int read_entry(toml_table_t *table, char *key, char **destStr,
                       int *destInt, int flag) {
 
+    char *rootPath = NULL;
     toml_datum_t datum;
-    int ret=TRUE;
+    int ret=TRUE, size=0;
 
     if (table == NULL || key == NULL) return FALSE;
 
@@ -50,10 +51,30 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
             } else {
                 log_error("[%s] is invalid, except 'true' or 'false'", key);
                 *destInt = -1;
-                ret = FALSE;
+                ret      = FALSE;
             }
         } else if (flag & DATUM_STRING) {
-            *destStr = strdup(datum.u.s);
+
+            rootPath = getenv("UKAMA_ROOT");
+
+            if (strcmp(key, KEY_FROM) != 0 &&
+                strcmp(key, KEY_BIN_FROM) != 0 &&
+                strcmp(key, KEY_SOURCE) != 0) {
+                *destStr = strdup(datum.u.s);
+            } else {
+                if (rootPath == NULL) {
+                    *destStr = strdup(datum.u.s);
+                } else {
+
+                    size = strlen(rootPath) + strlen(datum.u.s) + 2;
+                    *destStr = (char *)malloc(size);
+                    if ( *destStr == NULL) {
+                        ret = FALSE;
+                    }
+
+                    sprintf(*destStr, "%s/%s", rootPath, datum.u.s);
+                }
+            }
         } else {
             ret = FALSE;
         }
