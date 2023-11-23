@@ -1,9 +1,8 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
 # Copyright (c) 2021-present, Ukama Inc.
-# All rights reserved.
-
-#
-# Makefile for the wimc.d
-#
 
 include ../../../config.mk
 
@@ -26,6 +25,7 @@ PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target.
 VENDOR_PKG = tomlc ulfius curl jansson
+PLATFORM = platform
 
 # Setting up various compile and link flags.
 CFLAGS=-c
@@ -77,7 +77,7 @@ wimc: $(TARGET_EXEC)
 
 agent: $(AGENT_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
@@ -88,6 +88,9 @@ $(AGENT_EXEC): $(VENDOR_PKG) $(AGENT_OBJFILES) $(COMM_OBJFILES)
 
 $(VENDOR_PKG):
 	cd $(VENDOR_DIR) && make $@
+
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@

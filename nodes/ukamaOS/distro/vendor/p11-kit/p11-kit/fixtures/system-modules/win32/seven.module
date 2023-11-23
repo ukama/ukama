@@ -1,4 +1,0 @@
-
-module: mock-seven.dll
-critical: yes
-enable-in: test-modules

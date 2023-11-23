@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #ifndef MESH_H
@@ -14,15 +13,22 @@
 #include <ulfius.h>
 #include <uuid/uuid.h>
 
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_types.h"
+#include "usys_services.h"
+
 #include "log.h"
 
-#define DEF_FILENAME "cert.crt"
-#define DEF_CA_FILE  ""
-#define DEF_CRL_FILE ""
-#define DEF_CA_PATH  ""
-#define DEF_SERVER_NAME "localhost"
-#define DEF_TLS_SERVER_PORT "4444"
-#define DEF_LOG_LEVEL "TRACE"
+#define SERVICE_NAME SERVICE_MESH
+
+#define DEF_FILENAME          "cert.crt"
+#define DEF_CA_FILE           ""
+#define DEF_CRL_FILE          ""
+#define DEF_CA_PATH           ""
+#define DEF_SERVER_NAME       "localhost"
+#define DEF_TLS_SERVER_PORT   "4444"
+#define DEF_LOG_LEVEL         "TRACE"
 #define DEF_CLOUD_SERVER_NAME "localhost"
 #define DEF_CLOUD_SERVER_PORT "4444"
 #define DEF_CLOUD_SERVER_CERT "certs/test.crt"
@@ -35,9 +41,9 @@
 #define PROXY_REVERSE 0x04
 
 #define PREFIX_WEBSOCKET "/websocket"
-#define PREFIX_WEBSERVICE "*"
+#define PREFIX_FWDSERVICE "*"
 
-#define MESH_CLIENT_AGENT "Mesh-client"
+#define MESH_CLIENT_AGENT   "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
 #define MESH_SERVICE_REQUEST  "service_request"
@@ -56,7 +62,7 @@
 #define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
-#define MESH_LOCK_TIMEOUT 10 /* seconds */
+#define MESH_LOCK_TIMEOUT 1 /* seconds */
 
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
@@ -73,6 +79,7 @@ typedef struct {
 typedef struct {
 
     struct _websocket_client_handler *handler;
+    struct _u_instance *fwdInst;
     struct _u_instance *webInst;
     void    *config;
 } State;
@@ -97,7 +104,7 @@ typedef struct {
 typedef struct {
 
 	char *reqType; /* Type: forward_request, command, stats, etc. */
-	int seqNo;     /* Sequence number of the request. */
+	char *seqNo;     /* Sequence number of the request. */
 
 	DeviceInfo  *deviceInfo;  /* Info. about originating device. */
 	ServiceInfo *serviceInfo; /* Info. about origniating service. */
@@ -108,7 +115,7 @@ typedef struct {
 typedef struct {
 
 	char        *reqType;
-	int         seqNo;
+	char        *seqNo;
 	int         size;
 	void        *data;
 	ServiceInfo *serviceInfo;
@@ -117,7 +124,7 @@ typedef struct {
 typedef struct {
 
     char        *reqType;
-    int         seqNo;
+    char        *seqNo;
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
     int         dataSize;

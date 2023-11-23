@@ -1,14 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
- *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
 /*
- * Network related stuff based on ulfius framework.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include <ulfius.h>
@@ -22,19 +17,14 @@
 
 #define WEB_SOCKETS 1
 #define WEB_SERVICE 0
+#define FWD_SERVICE 2
 
 /* define in websocket.c */
-extern void websocket_manager(const URequest *request, WSManager *manager,
-			      void *data);
+extern void websocket_manager(const URequest *request, WSManager *manager, void *data);
 extern void websocket_incoming_message(const URequest *request,
-				       WSManager *manager, WSMessage *message,
-				       void *data);
-extern void  websocket_onclose(const URequest *request, WSManager *manager,
-			       void *data);
-/*
- * init_framework -- initializa ulfius framework.
- *
- */
+                                       WSManager *manager, WSMessage *message,
+                                       void *data);
+extern void  websocket_onclose(const URequest *request, WSManager *manager, void *data);
 
 static int init_framework(UInst *inst, int port) {
 
@@ -49,30 +39,21 @@ static int init_framework(UInst *inst, int port) {
   return TRUE;
 }
 
-/*
- * setup_webservice_endpoints --
- *
- */
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
 
   /* Endpoint list declaration. */
-  ulfius_add_endpoint_by_val(instance, "GET", PREFIX_WEBSERVICE, NULL, 0,
-			     &callback_webservice, config);
-  ulfius_add_endpoint_by_val(instance, "POST", PREFIX_WEBSERVICE, NULL, 0,
-			     &callback_webservice, config);
-  ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_WEBSERVICE, NULL, 0,
-			     &callback_webservice, config);
-  ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_WEBSERVICE, NULL, 0,
-			     &callback_webservice, config);
+  ulfius_add_endpoint_by_val(instance, "GET", PREFIX_FWDSERVICE, NULL, 0,
+			     &callback_forward_service, config);
+  ulfius_add_endpoint_by_val(instance, "POST", PREFIX_FWDSERVICE, NULL, 0,
+			     &callback_forward_service, config);
+  ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_FWDSERVICE, NULL, 0,
+			     &callback_forward_service, config);
+  ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_FWDSERVICE, NULL, 0,
+			     &callback_forward_service, config);
 
   /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &callback_default_webservice, config);
+  ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
 }
-
-/*
- * setup_websocket_endpoints -- 
- *
- */
 
 static void setup_websocket_endpoints(Config *config, UInst *instance) {
 
@@ -87,13 +68,8 @@ static void setup_websocket_endpoints(Config *config, UInst *instance) {
 			     &callback_not_allowed, config);
   
   /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &callback_default_websocket, config);
+  ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
 }
-
-/* 
- * start_framework --
- *
- */
 
 static int start_framework(Config *config, UInst *instance, int flag) {
 
@@ -111,17 +87,14 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 
   if (flag == WEB_SOCKETS) {
       log_debug("Websocket succesfully started.");
+  } else if (flag == FWD_SERVICE) {
+      log_debug("Forward service sucessfully started.");
   } else {
       log_debug("Webservice sucessfully started.");
   }
-  
+
   return TRUE;
 }
-
-/*
- * start_websocket_client -- Connect with remote server using websockets.
- *
- */
 
 int start_websocket_client(Config *config,
 			   struct _websocket_client_handler *handler) {
@@ -179,29 +152,47 @@ int start_websocket_client(Config *config,
   return ret;
 }
 
-/*
- * start_web_services -- start accepting REST clients on 127.0.0.1:port
- *
- */
+int start_forward_services(Config *config, UInst *clientInst) {
+
+    /* Initialize the admin and client webservices framework. */
+    if (init_framework(clientInst, config->forwardPort) != TRUE){
+        log_error("Error initializing webservice framework");
+        return FALSE;
+    }
+
+    /* setup endpoints and methods callback. */
+    setup_webservice_endpoints(config, clientInst);
+
+    /* open connection for both admin and client webservices */
+    if (!start_framework(config, clientInst, FWD_SERVICE)) {
+        log_error("Failed to start webservices for client: %d",
+                  config->forwardPort);
+        return FALSE;
+    }
+
+    log_debug("Forward service on port: %d started.", config->forwardPort);
+
+    return TRUE;
+}
+
 int start_web_services(Config *config, UInst *clientInst) {
 
-  /* Initialize the admin and client webservices framework. */
-  if (init_framework(clientInst, atoi(config->localAccept)) != TRUE){
-    log_error("Error initializing webservice framework");
-    return FALSE;
-  }
+    if (init_framework(clientInst, config->servicePort) != TRUE){
+        log_error("Error initializing webservice framework");
+        return FALSE;
+    }
 
-  /* setup endpoints and methods callback. */
-  setup_webservice_endpoints(config, clientInst);
+    ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "ping", 0,
+                               &web_service_cb_ping, config);
+    ulfius_set_default_endpoint(clientInst, &web_service_cb_default, config);
 
-  /* open connection for both admin and client webservices */
-  if (!start_framework(config, clientInst, WEB_SERVICE)) {
-    log_error("Failed to start webservices for client: %s",
-	      config->localAccept);
-    return FALSE;
-  }
+    if (!start_framework(config, clientInst, WEB_SERVICE)) {
+        log_error("Failed to start webservices for client: %d",
+                  config->servicePort);
+        return FALSE;
+    }
 
-  log_debug("Webservice on client port: %s started.", config->localAccept);
+    log_debug("Web service on port: %d started.", config->servicePort);
 
-  return TRUE;
+    return TRUE;
 }

@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /* Functions related to the handling of received data on websockets. */
@@ -181,7 +180,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 	char *systemHost=NULL, *systemPort=NULL;
 	json_t *jResp=NULL;
 
-    if (strcmp(message->reqType, MESH_NODE_REQUEST) != 0) {
+    if (strcmp(message->reqType, UKAMA_NODE_REQUEST) != 0) {
         log_error("Invalid request type. ignoring.");
         retCode = HttpStatus_BadRequest;
         responseLocal = HttpStatusStr(retCode);

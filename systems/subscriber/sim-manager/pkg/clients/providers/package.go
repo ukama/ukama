@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package providers
 
 import (
@@ -24,12 +32,14 @@ type Package struct {
 }
 
 type PackageInfo struct {
-	Id       string `json:"uuid"`
-	Name     string `json:"name"`
-	OrgId    string `json:"org_id"`
-	SimType  string `json:"sim_type"`
-	IsActive bool   `json:"active"`
-	Duration uint   `json:"duration,string"`
+	Id            string  `json:"uuid"`
+	Name          string  `json:"name"`
+	OrgId         string  `json:"org_id"`
+	SimType       string  `json:"sim_type"`
+	IsActive      bool    `json:"active"`
+	Duration      uint    `json:"duration,string"`
+	Overdraft     float64 `json:"overdraft"`
+	TrafficPolicy uint32  `json:"traffic_policy"`
 }
 
 func NewPackageClient(url string, debug bool) (*packageInfoClient, error) {

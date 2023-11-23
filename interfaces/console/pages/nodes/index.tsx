@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
 import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';

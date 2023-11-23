@@ -1,4 +1,13 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { GraphQLError } from "graphql";
 
 import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
@@ -10,23 +19,32 @@ import {
 } from "../resolver/types";
 import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
 
-const version = "/v1/packages";
+const VERSION = "v1";
+const PACKAGES = "packages";
 
 class PackageApi extends RESTDataSource {
-  baseURL = DATA_API_GW + version;
+  baseURL = DATA_API_GW;
   getPackage = async (packageId: string): Promise<PackageDto> => {
-    return this.get(`/${packageId}`, {}).then(res => dtoToPackageDto(res));
+    return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {})
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/org/${headers.orgId}`).then(res => dtoToPackagesDto(res));
+    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`)
+      .then(res => dtoToPackagesDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   addPackage = async (
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
-    return this.post("", {
+    return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
         duration: req.duration,
         active: true,
@@ -46,24 +64,36 @@ class PackageApi extends RESTDataSource {
         voice_unit: "seconds",
         voice_volume: 0,
       },
-    }).then(res => dtoToPackageDto(res));
+    })
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   deletePackage = async (packageId: string): Promise<IdResponse> => {
-    return this.delete(`/${packageId}`).then(() => {
-      return {
-        uuid: packageId,
-      };
-    });
+    return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`)
+      .then(() => {
+        return {
+          uuid: packageId,
+        };
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 
   updatePackage = async (
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
-    return this.patch(`/${packageId}`, {
+    return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
       body: req,
-    }).then(res => dtoToPackageDto(res));
+    })
+      .then(res => dtoToPackageDto(res))
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
   };
 }
 

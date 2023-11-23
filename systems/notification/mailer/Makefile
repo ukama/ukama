@@ -1,3 +1,9 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
+
 include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
@@ -25,7 +31,7 @@ gen:
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 clean:
-	rm pb/gen/*.go
+	rm -rf ./bin/
 
 docs:
 	protoc --doc_out=. --doc_opt=./../../template.tmpl,README.md pb/*.proto & sh ./../../generate-dir-tree.sh $(PWD)

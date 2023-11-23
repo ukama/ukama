@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package rest
 
 import (
@@ -320,25 +328,28 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
 
 	pack := &pb.AddPackageRequest{
-		Name:        req.Name,
-		OrgId:       req.OrgId,
-		OwnerId:     req.OwnerId,
-		From:        req.From,
-		To:          req.To,
-		BaserateId:  req.BaserateId,
-		VoiceVolume: req.VoiceVolume,
-		Active:      req.Active,
-		DataVolume:  req.DataVolume,
-		SmsVolume:   req.SmsVolume,
-		DataUnit:    req.DataUnit,
-		VoiceUnit:   req.VoiceUnit,
-		SimType:     req.SimType,
-		Apn:         req.Apn,
-		Markup:      req.Markup,
-		Type:        req.Type,
-		Flatrate:    req.Flatrate,
-		Amount:      req.Amount,
-		Duration:    req.Duration,
+		Name:          req.Name,
+		OrgId:         req.OrgId,
+		OwnerId:       req.OwnerId,
+		From:          req.From,
+		To:            req.To,
+		BaserateId:    req.BaserateId,
+		VoiceVolume:   req.VoiceVolume,
+		Active:        req.Active,
+		DataVolume:    req.DataVolume,
+		SmsVolume:     req.SmsVolume,
+		DataUnit:      req.DataUnit,
+		VoiceUnit:     req.VoiceUnit,
+		SimType:       req.SimType,
+		Apn:           req.Apn,
+		Markup:        req.Markup,
+		Type:          req.Type,
+		Flatrate:      req.Flatrate,
+		Amount:        req.Amount,
+		Duration:      req.Duration,
+		Overdraft:     req.Overdraft,
+		TrafficPolicy: req.TrafficPolicy,
+		Networks:      req.Networks,
 	}
 
 	return r.clients.p.AddPackage(pack)

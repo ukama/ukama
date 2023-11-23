@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef MANIFEST_H
@@ -32,11 +31,14 @@ typedef struct _cappsManifest {
     char *space;     /* group it belongs to */
     int  restart;    /* 1: yes, always restart. 0: No */
 
+    char *dependencyCapp;  /* name of capp it depends on */
+    char *dependencyState; /* state of dependency capp */
+
     struct _cappsManifest *next; /* Next in the list */
 } CappsManifest;
 
 typedef struct _spacesManifest {
-    
+
     char *name;
 
     struct _spacesManifest *next;
@@ -52,6 +54,7 @@ typedef struct {
 
 /* Function headers. */
 bool read_manifest_file(Manifest **manifest, char *fileName);
+bool validate_capp_dependency(Manifest **manifest);
 void free_manifest(Manifest *ptr);
 
 #endif /* MANIFEST_H */

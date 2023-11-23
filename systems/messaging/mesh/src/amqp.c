@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 #include <string.h>
@@ -16,6 +15,7 @@
 #include "mesh.h"
 #include "u_amqp.h"
 #include "nodeEvent.pb-c.h"
+#include "bootEvent.pb-c.h"
 
 /* 
  * AMQP Routing key:
@@ -37,6 +37,7 @@ static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
 static char *create_routing_key(MeshEvent event);
 static int object_type(MeshEvent event);
+static void *serialize_boot_event(char *orgName, char *orgId, char *ip);
 static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
                                   char *meshIP, int meshPort);
 
@@ -125,10 +126,6 @@ static char *convert_type_to_str(MsgType type) {
 	return strdup(str);
 }
 
-/*
- * convert_source_to_str --
- *
- */
 static char *convert_source_to_str(MsgSource source) {
 
 	char *str;
@@ -150,10 +147,6 @@ static char *convert_source_to_str(MsgSource source) {
 	return strdup(str);
 }
 
-/*
- * convert_object_to_str --
- *
- */
 static char *convert_object_to_str(MsgObject object) {
 
 	char *str;
@@ -175,10 +168,6 @@ static char *convert_object_to_str(MsgObject object) {
 	return strdup(str);
 }
 
-/*
- * convert_state_to_str --
- *
- */
 static char *convert_state_to_str(ObjectState state) {
 
 	char *str;
@@ -220,10 +209,6 @@ static char *convert_state_to_str(ObjectState state) {
 	return strdup(str);
 }
 
-/*
- * is_valid_event --
- *
- */
 static int is_valid_event(MeshEvent event) {
 
 	int ret=FALSE;
@@ -414,7 +399,7 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
 	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
     nodeEvent.nodeid   = strdup(nodeID);
-    nodeEvent.nodeip   = nodeIP;
+    nodeEvent.nodeip   = strdup(nodeIP);
     nodeEvent.nodeport = nodePort;
     nodeEvent.meship   = strdup(meshIP);
     nodeEvent.meshport = meshPort;
@@ -434,6 +419,33 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
     free(nodeEvent.meship);
 
 	return buff;
+}
+
+static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {
+
+    BootEvent bootEvent = BOOT_EVENT__INIT;
+    void *buff=NULL;
+    size_t len;
+
+    bootEvent.orgname = strdup(orgName);
+    bootEvent.orgid   = strdup(orgId);
+    bootEvent.ip      = strdup(ip);
+
+    len = boot_event__get_packed_size(&bootEvent);
+
+    buff = malloc(len);
+    if (buff == NULL) {
+        log_error("Error allocating buffer of size: %d", len);
+        return NULL;
+    }
+
+    boot_event__pack(&bootEvent, buff);
+
+    free(bootEvent.orgname);
+    free(bootEvent.orgid);
+    free(bootEvent.ip);
+
+    return buff;
 }
 
 /*
@@ -472,10 +484,6 @@ static int object_type(MeshEvent event) {
 	return type;
 }
 
-/*
- * publish_amqp_event --
- *
- */
 static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
                               char *nodeID, char *nodeIP, int nodePort,
                               char *meshIP, int meshPort) {
@@ -485,15 +493,6 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	WAMQPProp prop;
 	void *buff=NULL;
 	int ret;
-
-	/* Sanity check */
-	if (conn==NULL) {
-		return FALSE;
-	}
-
-    if (nodeID == NULL) {
-        return FALSE;
-    }
 
 	/* Step-1: build the routing key for the event. 
 	 * <type>.<source>.<container>.<object>.<state>
@@ -545,9 +544,6 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	return ret;
 }
 
-/*
- * publish_event --
- */
 int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
                   char *meshIP, int meshPort) {
 
@@ -577,4 +573,62 @@ int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
 	amqp_destroy_connection(conn);
 
     return TRUE;
+}
+
+int publish_boot_event(void) {
+
+    WAMQPConn *conn=NULL;
+    char *amqpHost=NULL, *amqpPort=NULL;
+    char *orgName=NULL, *orgId=NULL, *ip=NULL;
+
+    char key[MAX_BUFFER] = {0};
+    WAMQPProp prop;
+    void *buff=NULL;
+    int ret;
+
+    amqpHost = getenv(ENV_AMQP_HOST);
+    amqpPort = getenv(ENV_AMQP_PORT);
+    orgName  = getenv(ENV_UKAMA_ORG_NAME);
+    orgId    = getenv(ENV_UKAMA_ORG_ID);
+    ip       = getenv(ENV_BINDING_IP);
+
+    conn = init_amqp_connection(amqpHost, amqpPort);
+    if (conn == NULL) {
+        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+        return FALSE;
+    }
+
+    /* set routing key */
+    sprintf(key, "event.cloud.global.%s.messaging.mesh.ip.update", orgName);
+
+    /* set AMQP delivery properties */
+    prop._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
+    prop.content_type = amqp_cstring_bytes("text/plain");
+    prop.delivery_mode = 2; /* persistent delivery mode */
+
+    /* protobuf msg. */
+    buff = serialize_boot_event(orgName, orgId, ip);
+    if (buff == NULL) {
+        log_error("Error serializing boot packet for AMQP");
+        return FALSE;
+    }
+
+    /* send the message to AMQP broker */
+    ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
+                             amqp_cstring_bytes(key), 0, 0, &prop,
+                             amqp_cstring_bytes(buff));
+    if (ret < 0) {
+        ret = FALSE;
+        log_error("Error sending AMQP boot message. Error: %s",
+                  amqp_error_string2(ret));
+    } else {
+        ret = TRUE;
+        log_debug("AMQP boot message successfully sent to default exchange");
+    }
+
+    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+    amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
+    amqp_destroy_connection(conn);
+
+    return ret;
 }

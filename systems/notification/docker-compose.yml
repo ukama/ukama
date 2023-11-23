@@ -51,7 +51,7 @@ services:
    - MSGCLIENT_HOST=msgclient-notification:9095
    - NOTIFY_SERVICE_HOST=notify
    - NOTIFY_SERVICE_PORT=9090
-   - ORGNAME=ukama-test-org
+   - ORGNAME=${UKAMA_ORG_NAME}
   restart: always
   networks:
    - ukama-net
@@ -77,7 +77,7 @@ services:
    - postgresd-notification
 
 
- node-gateway:
+ node-gateway-notification:
   build:
    dockerfile: ./Dockerfile
    context: ./node-gateway
@@ -93,6 +93,26 @@ services:
    - notify
    - mailer
    - postgresd-notification
+
+
+ initclient-notification:
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${UKAMA_ORG_NAME}
+   - ENV_SYSTEM_NAME=notification
+   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_SYSTEM_PORT=8889
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_CLIENT_PORT=9091
+   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  restart: always
+  networks:
+   - ukama-net
 
 
  msgclient-notification:

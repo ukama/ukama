@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package main
 
 import (
@@ -9,6 +17,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
@@ -22,7 +31,6 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 

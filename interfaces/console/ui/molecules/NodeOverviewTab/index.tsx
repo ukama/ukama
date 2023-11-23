@@ -1,5 +1,15 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { HealtChartsConfigure, TooltipsText } from '@/constants';
 import { Node, NodeTypeEnum } from '@/generated';
+import { Graphs_Type, MetricsRes } from '@/generated/metrics';
+import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
 import { useEffect, useState } from 'react';
 import LineChart from '../LineChart';
@@ -8,8 +18,8 @@ import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
 interface INodeOverviewTab {
-  metricFrom: any;
-  metrics: any;
+  metricFrom: number;
+  metrics: MetricsRes;
   loading: boolean;
   metricsLoading: boolean;
   onNodeSelected: Function;
@@ -19,6 +29,7 @@ interface INodeOverviewTab {
   selectedNode: Node | undefined;
   connectedUsers: string | undefined;
   getNodeSoftwareUpdateInfos: Function;
+  handleOverviewSectionChange: Function;
 }
 
 const NodeOverviewTab = ({
@@ -33,6 +44,7 @@ const NodeOverviewTab = ({
   handleUpdateNode,
   isUpdateAvailable,
   getNodeSoftwareUpdateInfos,
+  handleOverviewSectionChange,
 }: INodeOverviewTab) => {
   const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
   const [selected, setSelected] = useState<number>(0);
@@ -40,7 +52,12 @@ const NodeOverviewTab = ({
     setSelected(0);
   }, [selectedNode]);
 
-  const handleOnSelected = (value: number) => setSelected(value);
+  const handleOnSelected = (value: number) => {
+    handleOverviewSectionChange(
+      value === 1 ? Graphs_Type.NodeHealth : Graphs_Type.Subscribers,
+    );
+    setSelected(value);
+  };
 
   return (
     <Grid container columnSpacing={3}>
@@ -150,32 +167,55 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
+                  tabSection={Graphs_Type.NodeHealth}
                   metricFrom={metricFrom}
-                  initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics?.length > 0 || false}
                   topic={HealtChartsConfigure[nodeType][0].id}
                   title={HealtChartsConfigure[nodeType][0].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][0].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][0].id,
+                    metrics,
+                  )}
                 />
               )}
-              {/* {HealtChartsConfigure[nodeType][1].show && (
+              {HealtChartsConfigure[nodeType][1].show && (
                 <LineChart
-                  initData={metrics}
+                  tabSection={Graphs_Type.NodeHealth}
+                  metricFrom={metricFrom}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
                   topic={HealtChartsConfigure[nodeType][1].id}
                   title={HealtChartsConfigure[nodeType][1].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][1].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][1].id,
+                    metrics,
+                  )}
                 />
               )}
               {HealtChartsConfigure[nodeType][2].show && (
                 <LineChart
-                  initData={metrics}
+                  tabSection={Graphs_Type.NodeHealth}
+                  metricFrom={metricFrom}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
                   topic={HealtChartsConfigure[nodeType][2].id}
                   title={HealtChartsConfigure[nodeType][2].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][2].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][2].id,
+                    metrics,
+                  )}
                 />
-              )} */}
+              )}
             </Stack>
           </Paper>
         )}
@@ -183,26 +223,42 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
-                .show && (
+              {HealtChartsConfigure[
+                (selectedNode?.type as string) || 'hnode'
+              ][4].show && (
                 <LineChart
+                  tabSection={Graphs_Type.Subscribers}
                   metricFrom={metricFrom}
-                  initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
-                  topic={HealtChartsConfigure[nodeType][3].id}
-                  title={HealtChartsConfigure[nodeType][3].name}
-                />
-              )}
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][4]
-                .show && (
-                <LineChart
-                  metricFrom={metricFrom}
-                  initData={metrics}
-                  loading={metricsLoading}
-                  hasData={metrics.length > 0}
                   topic={HealtChartsConfigure[nodeType][4].id}
                   title={HealtChartsConfigure[nodeType][4].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][4].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][4].id,
+                    metrics,
+                  )}
+                />
+              )}
+              {HealtChartsConfigure[
+                (selectedNode?.type as string) || 'hnode'
+              ][5].show && (
+                <LineChart
+                  tabSection={Graphs_Type.Subscribers}
+                  metricFrom={metricFrom}
+                  loading={metricsLoading}
+                  topic={HealtChartsConfigure[nodeType][5].id}
+                  title={HealtChartsConfigure[nodeType][5].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][5].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][5].id,
+                    metrics,
+                  )}
                 />
               )}
             </Stack>

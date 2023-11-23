@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db
 
 import (
@@ -7,7 +15,8 @@ import (
 
 	"gorm.io/gorm"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Sim struct {
@@ -26,9 +35,11 @@ type Sim struct {
 	DeactivationsCount uint64 `gorm:"default:0"`
 	FirstActivatedOn   time.Time
 	LastActivatedOn    time.Time
+	TrafficPolicy      uint32
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
 	TerminatedAt       gorm.DeletedAt `gorm:"index"`
+	SyncStatus         types.SyncStatus
 }
 
 type Package struct {

@@ -30,6 +30,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
+	github.com/tj/assert v0.0.3
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.22.0
 	github.com/wagslane/go-rabbitmq v0.12.4
@@ -87,7 +88,6 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/services/msgClient v0.0.0-20230803165635-9bd6bd9bbecf // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect

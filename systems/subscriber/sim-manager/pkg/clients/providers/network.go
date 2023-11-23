@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package providers
 
 import (
@@ -24,6 +32,8 @@ type Network struct {
 	Id            string    `json:"id,omitempty"`
 	Name          string    `json:"name,omitempty"`
 	OrgId         string    `json:"org_id,omitempty"`
+	Overdraft     float64   `json:"overdraft"`
+	TrafficPolicy uint32    `json:"traffic_policy"`
 	IsDeactivated bool      `json:"is_deactivated,omitempty"`
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }

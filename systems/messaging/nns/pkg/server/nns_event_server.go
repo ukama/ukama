@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -75,6 +83,18 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
+
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"):
+		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = l.handleNodeReleaseEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -112,14 +132,15 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 	}
 
 	_, err = l.Nns.Set(context.Background(), &pb.SetNodeIPRequest{
-		NodeId:   msg.GetNodeId(),
-		NodeIp:   msg.GetMeshIp(),
-		MeshIp:   msg.GetMeshIp(),
-		NodePort: msg.GetNodePort(),
-		MeshPort: msg.GetMeshPort(),
-		Org:      l.Org,
-		Network:  nodeInfo.Network,
-		Site:     nodeInfo.Site,
+		NodeId:       msg.GetNodeId(),
+		NodeIp:       msg.GetMeshIp(),
+		MeshIp:       msg.GetMeshIp(),
+		NodePort:     msg.GetNodePort(),
+		MeshPort:     msg.GetMeshPort(),
+		Org:          l.Org,
+		Network:      nodeInfo.Network,
+		Site:         nodeInfo.Site,
+		MeshHostName: msg.GetMeshHostName(),
 	})
 
 	if err != nil {
@@ -165,7 +186,7 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, msg.Network, msg.Site, orgNet.NodeIp, orgNet.NodePort, orgNet.MeshPort)
+	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, msg.Network, msg.Site, orgNet.NodeIp, orgNet.MeshHostName, orgNet.NodePort, orgNet.MeshPort)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
@@ -193,7 +214,7 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, "", "", orgNet.NodeIp, orgNet.NodePort, orgNet.MeshPort)
+	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, "", "", orgNet.NodeIp, orgNet.MeshHostName, orgNet.NodePort, orgNet.MeshPort)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err

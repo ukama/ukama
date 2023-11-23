@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <signal.h>
@@ -20,6 +19,7 @@
 extern SpaceList *gSpaceList;
 extern void json_free(JsonObj** json);
 extern bool json_serialize_add_capp_to_array(JsonObj **json,
+                                             char *space,
                                              char *name,
                                              char *tag,
                                              char *status,
@@ -30,7 +30,7 @@ static char *capp_status_str(int status) {
     char *str;
 
     switch(status) {
-    case CAPP_RUNTIME_NO_EXEC:
+    case CAPP_RUNTIME_PEND:
         str = "Pending";
         break;
     case CAPP_RUNTIME_EXEC:
@@ -38,6 +38,12 @@ static char *capp_status_str(int status) {
         break;
     case CAPP_RUNTIME_DONE:
         str = "Done";
+        break;
+    case CAPP_RUNTIME_FAILURE:
+        str = "Failure";
+        break;
+    case CAPP_RUNTIME_UNKNOWN:
+        str = "Unknown";
         break;
     default:
         str = "Unknown";
@@ -185,7 +191,7 @@ int web_service_cb_get_status(const URequest *request,
     if (capp->runtime) {
             status = capp->runtime->status;
     } else {
-            status = CAPP_RUNTIME_NO_EXEC;
+            status = CAPP_RUNTIME_PEND;
     }
 
     if (status == -1) {
@@ -229,14 +235,15 @@ int web_service_cb_get_all_capps_status(const URequest *request,
              cappList=cappList->next) {
 
             if (cappList->capp->runtime) {
-                status = capp_status_str(cappList->capp->runtime);
+                status = capp_status_str(cappList->capp->runtime->status);
                 pid    = cappList->capp->runtime->pid;
             } else {
-                status = capp_status_str(CAPP_RUNTIME_NO_EXEC);
+                status = capp_status_str(CAPP_RUNTIME_PEND);
                 pid    = 0;
             }
 
             json_serialize_add_capp_to_array(&json,
+                                             spacePtr->space->name,
                                              cappList->capp->name,
                                              cappList->capp->tag,
                                              status, pid);
@@ -347,7 +354,8 @@ int web_service_cb_post_terminate(const URequest *request,
         return U_CALLBACK_CONTINUE;
     } else {
         /* already done or not executing */
-        if (capp->runtime->status == CAPP_RUNTIME_NO_EXEC ||
+        if (capp->runtime->status == CAPP_RUNTIME_PEND ||
+            capp->runtime->status == CAPP_RUNTIME_FAILURE ||
             capp->runtime->status == CAPP_RUNTIME_DONE) {
             ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));

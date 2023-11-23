@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package queue
 
 import (
@@ -47,7 +55,7 @@ func (p *QueuePublisher) Publish(key string, payload proto.Message) error {
 			err <- e
 		}
 
-		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s\n Message: \n %+v", p.name, p.instanceId, p.q, payload)
+		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s Key: %s \n Message: \n %+v", p.name, p.instanceId, p.q, key, payload)
 		err <- nil
 	}(err)
 

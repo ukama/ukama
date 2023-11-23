@@ -1,8 +1,17 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
 	"context"
 	"fmt"
+	"net"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
@@ -38,12 +47,17 @@ func (n *NnsServer) Get(c context.Context, req *pb.GetNodeIPRequest) (*pb.GetNod
 func (n *NnsServer) Set(c context.Context, req *pb.SetNodeIPRequest) (*pb.SetNodeIPResponse, error) {
 	log.Infof("Seting Ip for: %s", req.GetNodeId())
 
-	err := n.nns.Set(c, req.GetNodeId(), req.GetMeshIp())
+	i := net.ParseIP(req.GetMeshIp())
+	if i == nil {
+		return nil, fmt.Errorf("not valid ip")
+	}
+
+	err := n.nns.Set(c, req.GetNodeId(), fmt.Sprintf("%s:%d", req.GetMeshIp(), req.MeshPort))
 	if err != nil {
 		return nil, fmt.Errorf("failed to add node-ip record to db. Error: %v", err)
 	}
 
-	err = n.nodeOrgMapping.Add(c, req.GetNodeId(), req.Org, req.Network, req.Site, req.NodeIp, req.NodePort, req.MeshPort)
+	err = n.nodeOrgMapping.Add(c, req.GetNodeId(), req.Org, req.Network, req.Site, req.NodeIp, req.MeshHostName, req.NodePort, req.MeshPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set org and network for node id %s. Error: %v", req.NodeId, err)
 	}
@@ -93,14 +107,15 @@ func (n *NnsServer) GetNodeOrgMapList(ctx context.Context, in *pb.NodeOrgMapList
 
 	for k, v := range maps {
 		nom := &pb.NodeOrgMap{
-			NodeId:     k,
-			NodeIp:     v.NodeIp,
-			NodePort:   v.NodePort,
-			MeshPort:   v.MeshPort,
-			Org:        v.Org,
-			Network:    v.Network,
-			Site:       v.Site,
-			Domainname: n.config.NodeDomain,
+			NodeId:       k,
+			NodeIp:       v.NodeIp,
+			NodePort:     v.NodePort,
+			MeshPort:     v.MeshPort,
+			Org:          v.Org,
+			Network:      v.Network,
+			Site:         v.Site,
+			Domainname:   n.config.NodeDomain,
+			MeshHostName: v.MeshHostName,
 		}
 		resp.Map = append(resp.Map, nom)
 	}
@@ -124,4 +139,22 @@ func (n *NnsServer) GetNodeIPMapList(ctx context.Context, in *pb.NodeIPMapListRe
 		resp.Map = append(resp.Map, e)
 	}
 	return resp, nil
+}
+
+func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshIPRequest) (*pb.GetMeshIPResponse, error) {
+	log.Infof("Getting Mesh IP for node %s", req.NodeId)
+	orgMap, err := n.nodeOrgMapping.Get(c, req.NodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	mesh, err := n.nodeOrgMapping.GetMesh(c, orgMap.MeshHostName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetMeshIPResponse{
+		Ip:   *mesh,
+		Port: orgMap.MeshPort,
+	}, nil
 }

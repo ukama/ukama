@@ -1,14 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
- *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
 /*
- * config.h
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 #ifndef MESH_CONFIG_H
@@ -18,8 +13,9 @@
 
 typedef struct {
 
-	char *websocketPort;   /* to accept nodes via websocket */
-	char *servicesPort;    /* to accept services */
+    char *bindingIP;      /* binding IP for websocket */
+	char *websocketPort;  /* to accept nodes via websocket */
+	char *servicesPort;   /* to accept services */
 
 	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
 	char *amqpPort;       /* Port where AMQP exchange is listening */
@@ -30,6 +26,9 @@ typedef struct {
 
 	char *certFile;       /* CA Cert file name. */
 	char *keyFile;        /* Key file name.*/
+
+    char *orgName;        /* Ukama organization name */
+    char *orgID;          /* and its ID */
 
     char *logLevel;
 } Config;

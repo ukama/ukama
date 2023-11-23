@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <string.h>
@@ -14,6 +13,7 @@
 #include <stdlib.h>
 #include <jansson.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "starter.h"
 #include "config.h"
@@ -121,14 +121,35 @@ static bool execute_capp(void *arg) {
         return USYS_FALSE;
     } else if (pid == 0) {
 
-        execvpe(runtime->cmd, runtime->argv, runtime->env);
-        exit(0);
+        if (execvpe(runtime->cmd, runtime->argv, runtime->env) == -1) {
+            perror("execvpe error");
+            exit(EXIT_FAILURE);
+        }
+        exit(EXIT_SUCCESS);
     } else {
 
         int status;
+
         runtime->pid = pid;
         waitpid(pid, &status, 0);
-        runtime->status = CAPP_RUNTIME_DONE;
+
+        if (WIFEXITED(status)) {
+            usys_log_debug("%s: exited normally with status %d",
+                           capp->name, WEXITSTATUS(status));
+            runtime->status = CAPP_RUNTIME_DONE;
+        } else if (WIFSIGNALED(status)) {
+            usys_log_debug("%s: terminated by signal: %d",
+                           capp->name, WTERMSIG(status));
+            runtime->status = CAPP_RUNTIME_FAILURE;
+        } else if (WIFSTOPPED(status)) {
+            usys_log_debug("%s: stopped by signal: %d",
+                           capp->name, WSTOPSIG(status));
+            runtime->status = CAPP_RUNTIME_FAILURE;
+        } else {
+            usys_log_debug("%s: uknown exit status: %d",
+                           capp->name, status);
+            runtime->status = CAPP_RUNTIME_UNKNOWN;
+        }
     }
 
     return USYS_TRUE;
@@ -170,13 +191,10 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
     capp->runtime = runtime;
     log_runtime(capp->runtime, argc, envc);
 
-    /* thread up */
     pthread_create(&thread,
                    NULL,
                    execute_capp,
                    (void *)capp);
-
-    pthread_join(thread, NULL);
 
     return USYS_TRUE;
 }
@@ -199,15 +217,89 @@ static bool create_and_run_capps(Capp *capp, int *error) {
     return setup_and_execute_capp(capp, error);
 }
 
+static CappList *reverse_link_list(CappList *head) {
+
+    CappList *prev = NULL;
+    CappList *current = head;
+    CappList *next = NULL;
+
+    while (current != NULL) {
+        next = current->next;
+        current->next = prev;
+        prev = current;
+        current = next;
+    }
+
+    return prev;
+}
+
+static bool is_capp_running(Capp *capp, int wait, int maxRetry) {
+
+    int count = 0;
+
+    do {
+        if (ping_capp(capp->name)) {
+            usys_log_debug("%s capp state is RUN/Active", capp->name);
+            return USYS_TRUE;
+        }
+
+        sleep(wait);
+        count ++;
+    } while (count < maxRetry);
+
+    usys_log_debug("%s capp run max out. Retried: %d timeout: %d",
+                   capp->name, maxRetry, wait);
+    return USYS_FALSE;
+}
+
+static void terminate_capp(Capp *capp) {
+
+    CappRuntime *runtime;
+
+    runtime = capp->runtime;
+
+    if (runtime == NULL)   return;
+    if (runtime->pid == 0) return;
+
+    kill(runtime->pid, SIGKILL);
+    usys_log_debug("%s capp killed via SIGKILL", capp->name);
+
+    /* reset runtime */
+    runtime->status = CAPP_RUNTIME_PEND;
+    runtime->pid    = 0;
+
+}
+
+static bool check_for_dependant_capps(Space *space, char *name) {
+
+    CappList *cappList = NULL;
+
+    for (cappList=space->cappList; cappList; cappList=cappList->next) {
+
+        /* ignore itself */
+        if (strcasecmp(cappList->capp->name, name) == 0) continue;
+
+        if (cappList->capp->depend != NULL) {
+            if (strcmp(cappList->capp->depend->name, name) == 0 &&
+                strcmp(cappList->capp->depend->state, STATE_DONE) == 0) {
+                return USYS_TRUE;
+            }
+        }
+    }
+
+    return USYS_FALSE;
+}
+
 void run_space_all_capps(Space *space) {
 
     CappList *cappList = NULL;
     int error=0;
-    
-    for (cappList=space->cappList;
-         cappList;
-         cappList=cappList->next) {
 
+    space->cappList = reverse_link_list(space->cappList);
+
+    for (cappList=space->cappList; cappList; cappList=cappList->next) {
+
+    retry:
         if (cappList->capp->fetch == CAPP_PKG_NOT_FOUND) continue;
 
         /* skip if already running or done */
@@ -217,7 +309,7 @@ void run_space_all_capps(Space *space) {
                 continue;
         }
 
-        if (create_and_run_capps(cappList->capp, &error)) {
+        if (create_and_run_capps(cappList->capp, &error) == USYS_FALSE) {
             usys_log_error("Unable to execute capp: %s:%s Error: %d",
                            cappList->capp->name,
                            cappList->capp->tag,
@@ -226,9 +318,44 @@ void run_space_all_capps(Space *space) {
             continue;
         }
 
-        usys_log_debug("Executing capp: %s:%s",
-                       cappList->capp->name,
-                       cappList->capp->tag);
+        /* for 'boot' space, each capp must be in run (or done) state
+         * before moving we move to execute the next one */
+        if (strcasecmp(space->name, SPACE_BOOT) == 0) {
+
+            int status;
+
+            /* any capp waiting on this to be done? */
+            if (check_for_dependant_capps(space, cappList->capp->name)) {
+                /* wait for program to exit */
+                waitpid(cappList->capp->runtime->pid, &status, 0);
+
+                if (cappList->capp->runtime->status != CAPP_RUNTIME_DONE) {
+                    /* retry */
+                    cappList->capp->runtime->status = CAPP_RUNTIME_PEND;
+                    cappList->capp->runtime->pid    = 0;
+
+                    usys_log_error("%s capp failed. Retrying",
+                                   cappList->capp->name);
+
+                    goto retry;
+                } else {
+                    continue;
+                }
+            }
+
+            /* make sure capp is running - 200 on /v1/ping */
+            if (is_capp_running(cappList->capp, WAIT_TIME, MAX_RETRIES)) {
+                usys_log_debug("Executing capp: %s:%s",
+                               cappList->capp->name,
+                               cappList->capp->tag);
+                continue;
+            }
+
+            /* Unable to get the capp running, kill and retry.
+             * Could get stuck here forever */
+            terminate_capp(cappList->capp);
+            goto retry;
+        }
     }
 }
 
@@ -240,7 +367,7 @@ void fetch_unpack_run(Space *space, Config *config) {
     int      ret=0;
     int      httpStatus=0;
 
-    char runMe[MAX_BUFFER]      = {0};
+    char runMe[MAX_BUFFER] = {0};
 
     for (cappList=space->cappList;
          cappList;

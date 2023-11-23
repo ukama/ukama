@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include <string.h>
@@ -79,7 +78,17 @@ static void add_capp_to_space_list(SpaceList **spaceList,
             newCappList->capp->space   = strdup(cPtr->space);
             newCappList->capp->restart = cPtr->restart;
             newCappList->capp->runtime = NULL;
-            
+
+            if (cPtr->dependencyCapp) {
+                newCappList->capp->depend =
+                    (CappDepend *)calloc(1, sizeof(CappDepend));
+
+                newCappList->capp->depend->name =
+                    cPtr->dependencyCapp;
+                newCappList->capp->depend->state =
+                    cPtr->dependencyState;
+            }
+
             newCappList->next = currentSpaceList->space->cappList;
             currentSpaceList->space->cappList = newCappList;
             
@@ -87,18 +96,18 @@ static void add_capp_to_space_list(SpaceList **spaceList,
         }
         currentSpaceList = currentSpaceList->next;
     }
-    
-    /* Space not found, create a new space and add capp to the 
+
+    /* Space not found, create a new space and add capp to the
      * cappList of the new space
      */
     newSpace         = (Space *)malloc(sizeof(Space));
     newSpace->name   = strdup(spaceName);
     newSpace->rootfs = NULL;
-    
+
     newSpace->cappList  = (CappList *)malloc(sizeof(CappList));
     newCappList         = newSpace->cappList;
     newCappList->capp   = (Capp *)malloc(sizeof(Capp));
-    
+
     newCappList->capp->name    = strdup(cPtr->name);
     newCappList->capp->tag     = strdup(cPtr->tag);
     newCappList->capp->rootfs  = NULL;
@@ -106,11 +115,11 @@ static void add_capp_to_space_list(SpaceList **spaceList,
     newCappList->capp->restart = cPtr->restart;
     newCappList->capp->runtime = NULL;
     newSpace->cappList->next   = NULL;
-    
+
     newSpaceList        = (SpaceList *)malloc(sizeof(SpaceList));
     newSpaceList->space = newSpace;
     newSpaceList->next  = *spaceList;
-    
+
     *spaceList = newSpaceList;
 }
 

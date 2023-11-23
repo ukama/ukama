@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #ifndef USYS_FILE_H_
@@ -229,6 +228,10 @@ int usys_file_write_number(void *fname, void *data, off_t offset,
  * @param  fd
  */
 void usys_file_close(int fd);
+
+int usys_find_service_port(char *serviceName);
+
+void usys_find_ukama_service_address(char **address);
 
 #ifdef __cplusplus
 }

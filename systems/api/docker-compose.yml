@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+ api:
+  build: ./api-gateway
+  ports:
+   - '8878:8080'
+  restart: always
+  environment:
+   - BYPASS_AUTH_MODE=true
+  networks:
+   - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -11,13 +19,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"

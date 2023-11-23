@@ -69,6 +69,8 @@ services:
 
  msgclient-init:
   build: ../services/msgClient
+  ports:
+   - '9000:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-init

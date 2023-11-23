@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <pthread.h>
@@ -19,6 +18,7 @@
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
+#include "usys_services.h"
 
 SpaceList *gSpaceList = NULL;
 
@@ -28,11 +28,7 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "port",          required_argument, 0, 'p' },
     { "logs",          required_argument, 0, 'l' },
-    { "notify-port",   required_argument, 0, 'n' },
-    { "noded-port",    required_argument, 0, 'd' },
-    { "wimc-port",     required_argument, 0, 'w' },
     { "manifest-file", required_argument, 0, 'm' },
     { "help",          no_argument, 0, 'h' },
     { "version",       no_argument, 0, 'v' },
@@ -59,17 +55,13 @@ void usage() {
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-p, --port <port>             Local listening port");
-    usys_puts("-n, --notify-port <port>      Notify.d port");
-    usys_puts("-d, --noded-port  <port>      Node.d port");
-    usys_puts("-w, --wimc-port   <port>      Wimc.d port");
     usys_puts("-m, --manifest-file <file>    Manifest file");
     usys_puts("-v, --version                 Software version");
 }
 
 void fetch_and_update(void *config) {
 
-    SpaceList *spacePtr=NULL;
+    SpaceList *spacePtr = NULL;
 
     while (USYS_TRUE) {
         /* for each capp, with missing pkg, run a thred which fetch via wimc,
@@ -97,17 +89,13 @@ int main(int argc, char **argv) {
 
     int opt, optIdx;
     char *debug        = DEF_LOG_LEVEL;
-    char *port         = DEF_SERVICE_PORT;
-    char *notifyPort   = DEF_NOTIFY_PORT;
-    char *nodedPort    = DEF_NODED_PORT;
-    char *wimcPort     = DEF_WIMC_PORT;
     char *manifestFile = DEF_MANIFEST_FILE;
     UInst  serviceInst; 
     Config serviceConfig = {0};
 
-    Manifest  *manifest=NULL;
-    SpaceList *spacePtr=NULL;
-    Space     *bootSpace=NULL;
+    Manifest  *manifest  = NULL;
+    SpaceList *spacePtr  = NULL;
+    Space     *bootSpace = NULL;
 
     pthread_t thread;
     
@@ -134,41 +122,9 @@ int main(int argc, char **argv) {
             usys_exit(0);
             break;
 
-        case 'p':
-            port = optarg;
-            if (!port) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
         case 'l':
             debug = optarg;
             set_log_level(debug);
-            break;
-
-        case 'n':
-            nodedPort = optarg;
-            if (!nodedPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
-        case 'd':
-            notifyPort = optarg;
-            if (!notifyPort) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
-        case 'w':
-            wimcPort = optarg;
-            if (!wimcPort) {
-                usage();
-                usys_exit(0);
-            }
             break;
 
         case 'm':
@@ -186,12 +142,20 @@ int main(int argc, char **argv) {
     }
 
     /* Service config update */
-    serviceConfig.servicePort  = usys_atoi(port);
-    serviceConfig.nodedPort    = usys_atoi(nodedPort);
-    serviceConfig.notifydPort  = usys_atoi(notifyPort);
-    serviceConfig.wimcPort     = usys_atoi(wimcPort);
+    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
+    serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.wimcPort     = usys_find_service_port(SERVICE_WIMC);
     serviceConfig.manifestFile = strdup(manifestFile);
     serviceConfig.nodeID       = NULL;
+
+    if (!serviceConfig.servicePort ||
+        !serviceConfig.nodedPort   ||
+        !serviceConfig.notifydPort ||
+        !serviceConfig.wimcPort) {
+        usys_log_error("Unable to determine the port for services");
+        usys_exit(1);
+    }
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 
@@ -199,7 +163,35 @@ int main(int argc, char **argv) {
     signal(SIGINT, handle_sigint);
 
     /* Read and handle spaces/capps from the manifest file */
-    read_manifest_file(&manifest, serviceConfig.manifestFile);
+    if (!read_manifest_file(&manifest, serviceConfig.manifestFile)) {
+        usys_log_error("Error with manifest file: %s",
+                       serviceConfig.manifestFile);
+
+        if (start_web_service(&serviceConfig,
+                              &serviceInst) != USYS_TRUE) {
+            usys_log_error("Webservice failed to setup for clients. Exiting.");
+            exit(1);
+        }
+
+        pause();
+        goto done;
+    }
+
+    if (validate_capp_dependency(&manifest) == USYS_FALSE) {
+
+        usys_log_error("Invalid manifest file: %s",
+                       serviceConfig.manifestFile);
+
+        if (start_web_service(&serviceConfig,
+                              &serviceInst) != USYS_TRUE) {
+            usys_log_error("Webservice failed to setup for clients. Exiting.");
+            exit(1);
+        }
+
+        pause();
+        goto done;
+    }
+
     process_manifest_file(&gSpaceList, manifest);
     print_spaces_list(gSpaceList);
 
@@ -215,7 +207,7 @@ int main(int argc, char **argv) {
 
     /* start all the apps - boot is reserved space and is
      * started first. Reboot is also reserved and only executed
-     * when the system is booting up
+     * when the system is rebooting
      */
     if (find_matching_space(&gSpaceList, SPACE_BOOT, &bootSpace)) {
         run_space_all_capps(bootSpace);
@@ -239,7 +231,7 @@ int main(int argc, char **argv) {
         run_space_all_capps(spacePtr->space);
     }
 
-    /* for each capp, with missing pkg, run a thred which fetch via wimc,
+    /* for each capp, with missing pkg, run a thread which fetch via wimc,
      *  unpack into its space rootfs and run.
      */
     for (spacePtr = gSpaceList;
@@ -270,7 +262,7 @@ int main(int argc, char **argv) {
     pause();
 
 done:
-    free(manifest);
+    free_manifest(manifest);
     usys_log_debug("Exiting %s ...", SERVICE_NAME);
 
     return USYS_TRUE;

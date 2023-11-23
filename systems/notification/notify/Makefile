@@ -1,3 +1,9 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
+
 include ../../config.mk
   
 .PHONY: integration.test test
@@ -22,7 +28,6 @@ deps:
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/vektra/mockery/v2/.../
 
-
 gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 		notify.proto
@@ -31,9 +36,7 @@ gen:
 
 
 clean:
-	rm pb/gen/*.go
-	rm mocks/*.go
-
+	rm -rf ./bin/
 
 # integration tests
 integration.test:

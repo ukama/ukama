@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /*
@@ -26,7 +25,6 @@
 /* Some defaults */
 #define DEF_CONFIG_FILE      "config.toml"
 #define DEF_NODED_HOST       "localhost"
-#define DEF_NODED_PORT       "8095"
 #define DEF_MESH_CONFIG      "/conf/mesh/config.toml"
 #define DEF_REMOTE_IP_FILE   "/conf/mesh/ip_file"
 #define DEF_BOOTSTRAP_SERVER "kickstart.ukama.com"
@@ -40,7 +38,7 @@
 typedef struct {
 
 	char *nodedHost;       /* Host where node.d is running (hostname) */
-	char *nodedPort;       /* Port where node.d is listening */
+	int   nodedPort;       /* Port where node.d is listening */
 	char *meshConfig;      /* Mesh.d configuration file */
 	char *remoteIPFile;    /* file storing the remote server IP */
 	char *bootstrapServer; /* Bootstrap server */

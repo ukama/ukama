@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <jansson.h>
@@ -20,6 +19,8 @@
 #include "usys_log.h"
 #include "usys_types.h"
 #include "usys_mem.h"
+#include "usys_api.h"
+#include "usys_services.h"
 
 static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
 
@@ -180,4 +181,53 @@ done:
     }
 
     return ret;
+}
+
+bool ping_capp(char *name) {
+
+    bool status = USYS_FALSE;
+    int port, httpStatus;
+    CURL *curl = NULL;
+    CURLcode res;
+    struct curl_slist *headers = NULL;
+    char url[MAX_BUFFER] = {0};
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        usys_log_error("%s: Unable to initialize curl", name);
+        return USYS_FALSE;
+    }
+
+    port = usys_find_service_port(name);
+    if (port <= 0) {
+        usys_log_error("Unable to find service in /etc/services: %s", name);
+        return USYS_FALSE;
+    }
+
+    sprintf(url, "http://localhost:%d/v1/ping", port);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+
+    res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        usys_log_error("Error sending ping. URL: %s Error: %s",
+                       url, curl_easy_strerror(res));
+        status = USYS_FALSE;
+    } else {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
+        if (httpStatus != HttpStatus_OK) {
+            usys_log_error("Recevied wrong status for ping request: %s",
+                           HttpStatusStr(httpStatus));
+            status = USYS_FALSE;
+        } else {
+            status = USYS_TRUE;
+        }
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return status;
 }

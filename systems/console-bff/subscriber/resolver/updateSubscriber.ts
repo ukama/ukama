@@ -1,6 +1,13 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 
-import { Authentication } from "../../common/auth";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+
 import { CBooleanResponse } from "../../common/types";
 import { Context } from "../context";
 import { UpdateSubscriberInputDto } from "./types";
@@ -8,7 +15,6 @@ import { UpdateSubscriberInputDto } from "./types";
 @Resolver()
 export class UpdateSubscriberResolver {
   @Mutation(() => CBooleanResponse)
-  @UseMiddleware(Authentication)
   async updateSubscriber(
     @Arg("subscriberId") subscriberId: string,
     @Arg("data") data: UpdateSubscriberInputDto,

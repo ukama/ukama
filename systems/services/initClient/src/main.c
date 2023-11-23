@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /*
@@ -95,14 +94,18 @@ void signal_term_handler(void) {
 	if (state == NULL) exit(1);
 
 	/* un-register the system */
-	if (send_request_to_init(REQ_UNREGISTER, state->config, state->config->systemOrg, NULL,
+	if (send_request_to_init(REQ_UNREGISTER,
+                             state->config,
+                             state->config->systemOrg, NULL,
 							 &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
 		log_error("Error registrating with the init system");
 	}
 
 	if (globalInit) {
-		if (send_request_to_init(REQ_UNREGISTER, state->config, state->config->systemOrg, NULL,
-				&response, REGISTER_TO_GLOBAL_INIT) != TRUE) {
+		if (send_request_to_init(REQ_UNREGISTER,
+                                 state->config,
+                                 state->config->systemOrg, NULL,
+                                 &response, REGISTER_TO_GLOBAL_INIT) != TRUE) {
 			log_error("Error registrating with the init system");
 		}
 	}
@@ -143,35 +146,6 @@ void catch_sigterm(void) {
     sigaction(SIGTERM, &saction, NULL);
 }
 
-int store_cache_uuid(char *fileName, char* uuid, int global) {
-	SystemRegistrationId *sysReg = NULL;
-	if (!parse_cache_uuid(fileName, sysReg)) {
-		/* Parsing Failed this means problem with file */
-		sysReg = (SystemRegistrationId*)calloc(1, sizeof(SystemRegistrationId));
-	}
-
-	if (!sysReg) {
-		return FALSE;
-	}
-
-	if (global) {
-		if (sysReg->globalUUID) free(sysReg->globalUUID);
-		sysReg->globalUUID = strdup(uuid);
-	} else {
-		if (sysReg->localUUID) free(sysReg->localUUID);
-		sysReg->localUUID = strdup(uuid);
-	}
-
-	log_debug("Creating file %s", fileName);
-	if (!create_temp_file_and_store_uuid(fileName, sysReg)) {
-		return FALSE;
-	}
-	return TRUE;
-}
-/*
- * create_temp_file_and_store_uuid --
- *
- */
 int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg) {
 
 	json_t *json = NULL;
@@ -204,7 +178,36 @@ int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg
 	return TRUE;
 }
 
+int store_cache_uuid(char *fileName, char* uuid, int global) {
+
+	SystemRegistrationId *sysReg = NULL;
+
+	if (!parse_cache_uuid(fileName, sysReg)) {
+		/* Parsing Failed this means problem with file */
+		sysReg = (SystemRegistrationId*)calloc(1, sizeof(SystemRegistrationId));
+	}
+
+	if (!sysReg) {
+		return FALSE;
+	}
+
+	if (global) {
+		if (sysReg->globalUUID) free(sysReg->globalUUID);
+		sysReg->globalUUID = strdup(uuid);
+	} else {
+		if (sysReg->localUUID) free(sysReg->localUUID);
+		sysReg->localUUID = strdup(uuid);
+	}
+
+	log_debug("Creating file %s", fileName);
+	if (!create_temp_file_and_store_uuid(fileName, sysReg)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
 int register_system(Config *config, int global){
+
 	int regStatus=REG_STATUS_NONE;
 	char *response=NULL;
 	char *cacheUUID=NULL, *systemUUID=NULL;
@@ -228,8 +231,12 @@ int register_system(Config *config, int global){
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
-			if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
+		log_info("Sending registration request for system %s for org %s",
+                 config->systemName,
+                 config->systemOrg);
+        if (send_request_to_init(REQ_UPDATE,
+                                 config,config->systemOrg,
+                                 NULL, &response, global) != TRUE) {
 				log_error("Error updating with the init system");
 				return FALSE;
 			}
@@ -238,24 +245,33 @@ int register_system(Config *config, int global){
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 	case REG_STATUS_NO_MATCH:
 		/* first time registering */
-		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
-		if (send_request_to_init(REQ_REGISTER, config, config->systemOrg, NULL, &response, global)
-				!= TRUE) {
+		log_info("Sending registration request for system %s for org %s",
+                 config->systemName,
+                 config->systemOrg);
+		if (send_request_to_init(REQ_REGISTER,
+                                 config, config->systemOrg,
+                                 NULL, &response, global) != TRUE) {
 			log_error("Error registering with the init system");
 			return FALSE;
 		}
 
 		/* read the UUID and log it into tempfile. */
-		if (deserialize_response(REQ_REGISTER, &queryResponse,
-				response) != TRUE) {
+		if (deserialize_response(REQ_REGISTER,
+                                 &queryResponse,
+                                 response) != TRUE) {
 			log_error("Error deserialize the registration response. Str: %s",
-					response);
+                      response);
 			return FALSE;
 		}
-		log_info("Storing registration response for system %s for org %s in %s", config->systemName, config->systemOrg, config->tempFile);
-		store_cache_uuid(config->tempFile,
-				queryResponse->systemID, global);
 
+		log_info("Storing registration response for system %s for org %s in %s",
+                 config->systemName,
+                 config->systemOrg,
+                 config->tempFile);
+        
+		store_cache_uuid(config->tempFile, 
+                         queryResponse->systemID,
+                         global);
 		break;
 
 	default:
@@ -264,8 +280,8 @@ int register_system(Config *config, int global){
 
 	if (queryResponse) free_query_response(queryResponse);
 	if (response)      free(response);
-	return TRUE;
 
+	return TRUE;
 }
 
 int register_to_inits(Config *config) {
@@ -374,18 +390,29 @@ int main (int argc, char *argv[]) {
 	log_debug("initClient running ...");
 
 	if (config->systemDNS) {
-		/* Start thread : Need a cleanup so that it's always dns no IP as arg for system */
+		/* Start thread : Need a cleanup so that it's always 
+         * dns no IP as arg for system */
 		pthread_create(&child, NULL, refresh_lookup, config);
 		pthread_join (child, (void **)&childStatus);
 	} else {
-		getchar(); /* For now. */
+        pause();
 	}
 
-	log_debug("Goodbye ... ");
+	log_debug("Exiting initClient ... ");
 
-	send_request_to_init(REQ_UNREGISTER, config, config->systemOrg, NULL, &response, REGISTER_TO_LOCAL_INIT);
+	send_request_to_init(REQ_UNREGISTER,
+                         config,
+                         config->systemOrg,
+                         NULL,
+                         &response,
+                         REGISTER_TO_LOCAL_INIT);
 	if (config->globalInitSystemEnable) {
-		send_request_to_init(REQ_UNREGISTER, config, config->systemOrg, NULL, &response, REGISTER_TO_GLOBAL_INIT);
+		send_request_to_init(REQ_UNREGISTER,
+                             config,
+                             config->systemOrg,
+                             NULL,
+                             &response,
+                             REGISTER_TO_GLOBAL_INIT);
 	}
 
 	if (child) {

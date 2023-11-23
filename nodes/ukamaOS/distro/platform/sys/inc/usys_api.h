@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #ifndef USYS_API_H_
@@ -777,6 +776,10 @@ static inline double usys_round(double x) {
  */
 static inline double usys_time(time_t *t) {
     return time(t);
+}
+
+static inline USysServiceEntry* usys_get_service_by_name(char *name) {
+    return getservbyname(name, NULL);
 }
 
 #ifdef __cplusplus

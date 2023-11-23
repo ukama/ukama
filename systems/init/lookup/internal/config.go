@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package internal
 
 import (
@@ -25,8 +33,9 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.lookup.organization.create"},
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.init.lookup.organization.create",
+				"event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"},
 		},
 	}
 }

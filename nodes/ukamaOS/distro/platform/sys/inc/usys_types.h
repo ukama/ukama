@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #ifndef USYS_SYS_TYPES_H
@@ -44,6 +43,7 @@ extern "C" {
 #include <linux/sctp.h>
 #include <linux/types.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <sys/ioctl.h>
@@ -56,8 +56,9 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <netdb.h>
 
-/* Macro's for boolean values */
+    /* Macro's for boolean values */
 #define USYS_FALSE        false
 #define USYS_TRUE         true
 
@@ -75,6 +76,8 @@ typedef uint64_t USysMachineWord;
 #else
 typedef uint32_t USysMachineWord;
 #endif
+
+typedef struct servent USysServiceEntry;
 
 /**
  * @typedef USysMutex

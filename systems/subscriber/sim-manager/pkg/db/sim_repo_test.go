@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
@@ -5,13 +13,14 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
@@ -355,9 +364,9 @@ func TestSimRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

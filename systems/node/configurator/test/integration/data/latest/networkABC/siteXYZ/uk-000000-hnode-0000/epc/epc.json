@@ -1,0 +1,7 @@
+{
+    "name": "epc.json",
+    "version": "0.0.1",
+    "config": {
+        "ip": "0.0.0.0"
+    }
+}

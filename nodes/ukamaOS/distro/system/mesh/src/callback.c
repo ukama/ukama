@@ -1,14 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
- *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
 /*
- * Callback functions for various endpoints and REST methods.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
 #include <ulfius.h>
@@ -44,9 +39,6 @@ extern void websocket_incoming_message(const URequest *request,
 extern void  websocket_onclose(const URequest *request, WSManager *manager,
 							   void *data);
 
-/*
- * Ulfius main callback function, calls the websocket manager and closes.
- */
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
 	int ret;
@@ -89,45 +81,17 @@ int callback_websocket (const URequest *request, UResponse *response,
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_not_allowed -- 
- *
- */
-int callback_not_allowed(const URequest *request, UResponse *response,
+int callback_not_allowed(const URequest *request,
+                         UResponse *response,
 						 void *user_data) {
   
-	ulfius_set_string_body_response(response, 403, "Operation not allowed\n");
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_default_websocket -- default callback for no-match
- *
- */
-int callback_default_websocket(const URequest *request, UResponse *response,
-							   void *user_data) {
-
-	ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
-	return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_default -- default callback for no-match
- *
- */
-int callback_default_webservice(const URequest *request, UResponse *response,
-								void *data) {
-
-	ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
-	return U_CALLBACK_CONTINUE;
-}
-
-/*
- * split_strings --
- *
- */
-static void split_strings(char *input, char **str1, char **str2,
-                          char *delimiter) {
+static void split_strings(char *input, char **str1, char **str2, char *delimiter) {
 
     char *token=NULL;
 
@@ -143,14 +107,11 @@ static void split_strings(char *input, char **str1, char **str2,
     }
 }
 
-/*
- * callback_webservice --
- *
- */
-int callback_webservice(const URequest *request, UResponse *response,
-						void *data) {
+int callback_forward_service(const URequest *request,
+                             UResponse *response,
+                             void *data) {
 
-	int ret, statusCode=200;
+	int ret;
 	char *destHost=NULL, *destPort=NULL, *service=NULL;
     char *requestStr=NULL, *url=NULL;
     char ip[INET_ADDRSTRLEN]={0}, sourcePort[MAX_BUFFER]={0};
@@ -165,7 +126,8 @@ int callback_webservice(const URequest *request, UResponse *response,
     service  = u_map_get(request->map_header, "User-Agent");
     split_strings(url, &destHost, &destPort, ":");
     if (destHost == NULL || destPort == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
@@ -174,8 +136,10 @@ int callback_webservice(const URequest *request, UResponse *response,
                                       service, sourcePort);
 	if (ret == FALSE && requestStr == NULL) {
 		log_error("Failed to convert request to JSON");
-		statusCode = 400;
-		goto done;
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
 	} else {
 		log_debug("Forward request JSON: %s", requestStr);
 	}
@@ -195,8 +159,29 @@ int callback_webservice(const URequest *request, UResponse *response,
     log_debug("Response from System Code: %d len: %d Data: %s",
               map->code, map->size, map->data);
 
- done:
     ulfius_set_string_body_response(response, map->code, (char *)map->data);
 
 	return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
+
+    return U_CALLBACK_CONTINUE;
 }

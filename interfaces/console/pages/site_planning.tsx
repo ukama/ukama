@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   Draft,
@@ -163,11 +171,11 @@ const Page = () => {
     onCompleted: (data) => {
       if (data.getDrafts.length > 0) {
         if (!selectedDraft) {
-          // setSelectedDraft(data.getDrafts[0]);
+          setSelectedDraft(data.getDrafts[0]);
         } else {
-          // setSelectedDraft(
-          //   data.getDrafts.find((d) => d.id === selectedDraft?.id),
-          // );
+          setSelectedDraft(
+            data.getDrafts.find((d) => d.id === selectedDraft?.id),
+          );
         }
       } else {
         setSelectedDraft(undefined);
@@ -180,7 +188,7 @@ const Page = () => {
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
-      // setSelectedDraft(data.addDraft);
+      setSelectedDraft(data.addDraft);
       refetchDrafts();
       showAlert(
         'add-drafts-success',
@@ -448,7 +456,7 @@ const Page = () => {
 
   const handleDraftSelected = (draftId: string) => {
     const d = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
-    // setSelectedDraft(d);
+    setSelectedDraft(d);
   };
 
   const handleDraftUpdated = (id: string, draft: string) => {
@@ -597,7 +605,10 @@ const Page = () => {
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
-        <PageContainer radius={'5px'} sx={{ padding: 0, mt: '12px' }}>
+        <PageContainer
+          radius={'5px'}
+          sx={{ padding: 0, mt: '12px', height: '100% !important' }}
+        >
           <Map
             width={800}
             zoom={zoom}

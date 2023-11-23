@@ -28,6 +28,7 @@ type NnsClient interface {
 	Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error)
 	GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error)
 	GetNodeIPMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error)
+	GetMesh(ctx context.Context, in *GetMeshIPRequest, opts ...grpc.CallOption) (*GetMeshIPResponse, error)
 }
 
 type nnsClient struct {
@@ -92,6 +93,15 @@ func (c *nnsClient) GetNodeIPMapList(ctx context.Context, in *NodeIPMapListReque
 	return out, nil
 }
 
+func (c *nnsClient) GetMesh(ctx context.Context, in *GetMeshIPRequest, opts ...grpc.CallOption) (*GetMeshIPResponse, error) {
+	out := new(GetMeshIPResponse)
+	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/GetMesh", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NnsServer is the server API for Nns service.
 // All implementations must embed UnimplementedNnsServer
 // for forward compatibility
@@ -102,6 +112,7 @@ type NnsServer interface {
 	Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error)
 	GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error)
 	GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error)
+	GetMesh(context.Context, *GetMeshIPRequest) (*GetMeshIPResponse, error)
 	mustEmbedUnimplementedNnsServer()
 }
 
@@ -126,6 +137,9 @@ func (UnimplementedNnsServer) GetNodeOrgMapList(context.Context, *NodeOrgMapList
 }
 func (UnimplementedNnsServer) GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeIPMapList not implemented")
+}
+func (UnimplementedNnsServer) GetMesh(context.Context, *GetMeshIPRequest) (*GetMeshIPResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMesh not implemented")
 }
 func (UnimplementedNnsServer) mustEmbedUnimplementedNnsServer() {}
 
@@ -248,6 +262,24 @@ func _Nns_GetNodeIPMapList_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Nns_GetMesh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMeshIPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).GetMesh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.messaging.nns.v1.Nns/GetMesh",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).GetMesh(ctx, req.(*GetMeshIPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Nns_ServiceDesc is the grpc.ServiceDesc for Nns service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +310,10 @@ var Nns_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNodeIPMapList",
 			Handler:    _Nns_GetNodeIPMapList_Handler,
+		},
+		{
+			MethodName: "GetMesh",
+			Handler:    _Nns_GetMesh_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

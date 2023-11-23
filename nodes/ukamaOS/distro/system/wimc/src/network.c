@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 #include <ulfius.h>
 #include <stdlib.h>
@@ -66,10 +65,10 @@ static void setup_webservice_endpoints(Config *config,
 int start_web_service(Config *config, UInst *serviceInst) {
 
     if (ulfius_init_instance(serviceInst,
-                             atoi(config->servicePort),
+                             config->servicePort,
                              NULL,
                              NULL) != U_OK) {
-        usys_log_error("Error initializing instance for webservice port %s",
+        usys_log_error("Error initializing instance for webservice port %d",
                        config->servicePort);
         return USYS_FALSE;
     }
@@ -81,7 +80,7 @@ int start_web_service(Config *config, UInst *serviceInst) {
     setup_webservice_endpoints(config, serviceInst);
 
     if (!start_framework(config, serviceInst)) {
-        usys_log_error("Failed to start webservices on port: %s",
+        usys_log_error("Failed to start webservices on port: %d",
                        config->servicePort);
         return USYS_FALSE;
     }

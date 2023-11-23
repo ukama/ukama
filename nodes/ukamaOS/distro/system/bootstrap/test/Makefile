@@ -1,52 +1,67 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# Copyright (c) 2021-present, Ukama Inc.
-# All rights reserved.
-#
-# This source code is licensed under the XXX-style license found in the
-# LICENSE file in the root directory of this source tree. An additional grant
-# of patent rights can be found in the PATENTS file in the same directory.
-#
+# Copyright (c) 2022-present, Ukama Inc.
 
-#
-# Makefile for a mock bootstrap server
-#
+include ../../../../config.mk
 
-UKAMAOS=../../../..
-COMMON_DIR=$(UKAMAOS)/distro/system/common
-SRC_DIR=$(UKAMAOS)/distro/system/wimc/provider
-ULFIUS=$(COMMON_DIR)/third_party/ulfius/src
-ULFIUS_INC=$(COMMON_DIR)/third_party/ulfius/include
-COMMON_INC=$(COMMON_DIR)/inc
+TARGET_EXEC = bootstrap_server
 
-BUILD=./build
-SRC=./
-SRCS=$(wildcard $(SRC)/*.c)
-OBJS=$(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(SRCS))
-EXE=bootstrap_server
+UKAMAOS_ROOT = ../../../../
 
-CC=gcc
-CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
-LIBS=-lulfius -ljansson -lorcania -lcurl
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
-.PHONY: all run clean
+# Packages needed to compile target
+VENDOR_PKG = tomlc curl jansson ulfius libuuid
 
-all: $(EXE)
+# Setting up various compile and link flags
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I../../common/inc
+CFLAGS+=-D_REENTRANT
 
-libulfius:
-	cd $(ULFIUS) && $(MAKE) static GNUTLSFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 UWSCFLAG=1 && cp libulfius.a $(SRC_DIR)/$(BUILD)
+LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-L$(VENDOR_LIB64)
 
-$(EXE): $(BUILD) $(OBJS)
-	$(CC) $(OBJS) -o $(BUILD)/$@ $(LDFLAGS) $(LIBS)
-	echo "Binary available at: $(BUILD)/$(EXE)"
+# Libraries needed
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls
+ULFIUS_LIB+=-lnettle -lhogweed -lp11-kit -lz
+CURL_LIB=-lcurl -lssl -lcrypto
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-ljansson
+LIBS+=-luuid
+LIBS+=-lpthread
+LIBS+=-ltoml
 
-$(BUILD)/%.o: $(SRC)/%.c $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
+# Soruce files
+CFILES   = $(wildcard ./*.c)
+OBJFILES = $(CFILES:.c=.o)
 
-$(BUILD):
-	mkdir -p $@
+XCC := $(XGCCPATH)$(XGCC)
+XLD := $(XGCCPATH)$(XLD)
 
-run: $(EXE)
-	$<
+.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
+
+bootstrap_server: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+
+$(VENDOR_PKG):
+	$(MAKE) -C $(VENDOR_DIR) $@
+
+%.o: %.c
+	$(XCC) $(CFLAGS) -c $< -o $@
+
+all: bootstrap_server
 
 clean:
-	rm -rf $(BUILD);
+	rm -f $(TARGET_EXEC) $(OBJFILES)

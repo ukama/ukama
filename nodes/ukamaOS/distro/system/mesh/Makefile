@@ -1,47 +1,60 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
 # Copyright (c) 2021-present, Ukama Inc.
-# All rights reserved.
-
-#
-# Makefile for the mesh.d
-#
 
 include ../../../config.mk
 
 TARGET_EXEC = mesh.d
 
-VENDOR_DIR   = ../../vendor
+UKAMAOS_ROOT = ../../../
+
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
 VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
-# Packages needed to compile target.
-VENDOR_PKG = tomlc curl jansson ulfius amqp libuuid
+PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform/
+PLATFORM_BUILD   = $(PLATFORM_DIR)/build/
+PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
+PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
+PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
-# Setting up various compile and link flags.
+# Packages needed to compile target
+VENDOR_PKG = tomlc curl jansson ulfius libuuid amqp
+PLATFORM = platform
+
+# Setting up various compile and link flags
 CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I$(PLATFORM_INC_SYS)
+CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
+CFLAGS+=-I./inc/common/
+CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
-CFLAGS+=-DTEST_EMBED_CERT
 
 LDFLAGS+=-L${VENDOR_LIB} 
-LDFLAGS+=-L${VENDOR_LIB64}
+LDFLAGS+=-L$(VENDOR_LIB64)
+LDFLAGS+=-L$(PLATFORM_LIB)
 
-# Libraries needed.
+# Libraries needed
+CURL_LIB=-lcurl -lssl -lcrypto
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
-CURL_LIB=-lcurl -lssl -lcrypto
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
-LIBS+=-ljansson
-LIBS+=-luuid
-LIBS+=-lpthread
 LIBS+=-ltoml
+LIBS+=-ljansson
+LIBS+=-lpthread
+LIBS+=-luuid
+LIBS+=-lusys
 
-# Soruce files.
+# Soruce files
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
@@ -52,15 +65,20 @@ XLD := $(XGCCPATH)$(XLD)
 
 mesh: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@
 
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
+
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
+all: mesh
+
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES);
+	rm -f $(TARGET_EXEC) $(OBJFILES)

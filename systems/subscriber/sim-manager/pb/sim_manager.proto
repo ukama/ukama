@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen";
@@ -33,6 +41,7 @@ message AllocateSimRequest {
     string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
     string networkId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
     string simType = 5;
+    uint32 trafficPolicy = 6 [json_name = "traffic_policy"];
 }
 
 message AllocateSimResponse {
@@ -151,9 +160,11 @@ message Sim {
     string type = 9;
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 12;
-    google.protobuf.Timestamp lastActivatedOn = 13 ;
-    uint64 activationsCount = 14;
-    uint64 deactivationsCount = 15;
-    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
+    uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
+    google.protobuf.Timestamp firstActivatedOn = 13;
+    google.protobuf.Timestamp lastActivatedOn = 14 ;
+    uint64 activationsCount = 15;
+    uint64 deactivationsCount = 16;
+    google.protobuf.Timestamp allocatedAt = 17 [json_name = "allocated_at"];
+    string syncStatus = 18 [json_name = "sync_status"];
 }

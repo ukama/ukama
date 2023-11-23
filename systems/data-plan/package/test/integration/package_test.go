@@ -1,6 +1,14 @@
 //go:build integration
 // +build integration
 
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package integration
 
 import (
@@ -8,15 +16,16 @@ import (
 	"testing"
 	"time"
 
-	rconf "github.com/num30/config"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
+
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	"google.golang.org/grpc"
-
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type TestConfig struct {
@@ -34,17 +43,17 @@ func init() {
 
 	err := reader.Read(tConfig)
 	if err != nil {
-		logrus.Fatalf("Failed to read config: %v", err)
+		log.Fatalf("Failed to read config: %v", err)
 	}
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("Config: %+v\n", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("Config: %+v\n", tConfig)
 }
 func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
 	conn, c, err := CreatePackageClient()
 	if err != nil {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
@@ -103,7 +112,7 @@ func Test_FullFlow(t *testing.T) {
 }
 
 func CreatePackageClient() (*grpc.ClientConn, pb.PackagesServiceClient, error) {
-	logrus.Infoln("Connecting to Sim Manager ", tConfig.ServiceHost)
+	log.Infoln("Connecting to Sim Manager ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))

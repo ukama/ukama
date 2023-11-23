@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -7,9 +15,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/queue"
-	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 )
 
 type MsgClientServer struct {

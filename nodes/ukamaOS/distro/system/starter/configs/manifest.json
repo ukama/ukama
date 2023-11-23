@@ -3,23 +3,37 @@
     "target": "ukma-xx-xx-xxxx",
 
     "spaces" : [
-        { "name" : "boot" },
+        { "name" : "boot" },   
         { "name" : "services" },
-        { "name" : "reboot" }
+        { "name" : "reboot" }  
     ],
-    
+
     "capps": [
-        {
-            "name"   : "mesh",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
+      {
+          "name"   : "init",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "boot"
         },
-        {
-            "name"   : "mesh",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "reboot"
-        }
+
+     {
+          "name"   : "mesh",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "boot",
+	     "depends_on" : [
+             {
+                  "capp"  : "init",
+			      "state" : "done"
+		      }
+	      ]
+     },
+
+     {
+          "name"   : "init",
+          "tag"    : "latest",
+          "restart": "yes",
+          "space"  : "services"
+     }
     ]
 }

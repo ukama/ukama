@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <stdio.h>
@@ -20,10 +19,11 @@
 #include "usys_types.h"
 
 bool json_serialize_add_capp_to_array(JsonObj **json,
-                                         char *name,
-                                         char *tag,
-                                         char *status,
-                                         int  pid) {
+                                      char *space,
+                                      char *name,
+                                      char *tag,
+                                      char *status,
+                                      int  pid) {
 
     JsonObj *jArray = NULL;
     JsonObj *jCapp  = NULL;
@@ -37,6 +37,7 @@ bool json_serialize_add_capp_to_array(JsonObj **json,
         jCapp = json_object();
         if (jCapp == NULL) return USYS_FALSE;
 
+        json_object_set_new(jCapp, JTAG_SPACE,  json_string(space));
         json_object_set_new(jCapp, JTAG_NAME,   json_string(name));
         json_object_set_new(jCapp, JTAG_TAG,    json_string(tag));
         json_object_set_new(jCapp, JTAG_STATUS, json_string(status));

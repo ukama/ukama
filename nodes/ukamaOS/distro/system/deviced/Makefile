@@ -1,9 +1,8 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
 # Copyright (c) 2022-present, Ukama Inc.
-# All rights reserved.
-
-#
-# Makefile for the bootstrap client
-#
 
 include ../../../config.mk
 
@@ -25,6 +24,7 @@ PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
 VENDOR_PKG = tomlc curl jansson ulfius libuuid
+PLATFORM = platform
 
 # Setting up various compile and link flags
 CFLAGS=-c
@@ -60,13 +60,15 @@ OBJFILES = $(CFILES:.c=.o)
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
+.PHONY: $(TARGET_EXEC)
 
-bootstrap: $(TARGET_EXEC)
+deviced: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
 
 $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@ 
@@ -74,7 +76,7 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: bootstrap
+all: deviced
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)

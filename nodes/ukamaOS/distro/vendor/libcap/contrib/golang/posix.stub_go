@@ -1,5 +1,0 @@
-
-func main() {
-	log.Print("Running pure Go test")
-	ptest()
-}

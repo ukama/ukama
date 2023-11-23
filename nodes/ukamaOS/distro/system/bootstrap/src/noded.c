@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2022-present, Ukama Inc.
  */
 
 /* Functions related to node.d */
@@ -28,7 +27,7 @@ struct Response {
 };
 
 /* Function def. */
-static char *create_noded_url(char *host, char *port);
+static char *create_noded_url(char *host, int port);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 								void *userp);
 static long send_request_to_noded(char *nodedURL, struct Response *response);
@@ -38,15 +37,15 @@ static int process_response_from_noded(char *response,	char **uuid);
  * create_noded_url --
  *
  */
-static char *create_noded_url(char *host, char *port) {
+static char *create_noded_url(char *host, int port) {
 
 	char *url=NULL;
 
-	if (host == NULL || port == NULL) return NULL;
+	if (host == NULL || port == 0) return NULL;
 
 	url = (char *)malloc(MAX_URL_LEN);
 	if (url) {
-		sprintf(url, "%s:%s/%s/%s", host, port, NODED_PATH, NODE_INFO_EP);
+		sprintf(url, "%s:%d/%s/%s", host, port, NODED_PATH, NODE_INFO_EP);
 	}
 
 	return url;
@@ -165,13 +164,13 @@ static long send_request_to_noded(char *nodedURL, struct Response *response) {
  * get_nodeID_from_noded -- get NodeID
  *
  */
-int get_nodeID_from_noded(char **nodeID, char *host, char *port) {
+int get_nodeID_from_noded(char **nodeID, char *host, int port) {
 
 	int ret=FALSE;
 	char *nodedURL=NULL;
 	struct Response response;
 
-	if (host == NULL || port == NULL) return FALSE;
+	if (host == NULL || port == 0) return FALSE;
 
 	*nodeID = NULL;
 	nodedURL = create_noded_url(host, port);

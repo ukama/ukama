@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
@@ -6,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	int_db "github.com/ukama/ukama/systems/data-plan/package/pkg/db"
-
 	"github.com/ukama/ukama/systems/common/ukama"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	int_db "github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 )
 
 type UkamaDbMock struct {
@@ -290,5 +298,4 @@ func Test_Package_GetByOrg(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
 	})
-
 }

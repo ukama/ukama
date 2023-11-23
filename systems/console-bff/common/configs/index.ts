@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 import "dotenv/config";
 
 export const VERSION = process.env.VERSION || "v1";
@@ -22,6 +30,7 @@ export const AUTH_URL = process.env.AUTH_URL || "";
 export const STORAGE_KEY = process.env.STORAGE_KEY || "";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK || "";
+export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS || "";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT || "8000");
@@ -40,3 +49,4 @@ export const ALERT_PORT = parseInt(process.env.ALERT_PORT || "5050");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT || "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT || "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT || "5053");
+export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT || "5054");
