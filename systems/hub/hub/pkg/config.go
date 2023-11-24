@@ -25,6 +25,7 @@ type Config struct {
 	Service           *config.Service
 	Queue             *config.Queue     `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	OrgName           string
 }
 
 type MinioConfig struct {

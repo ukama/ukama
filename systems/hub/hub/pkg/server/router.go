@@ -44,6 +44,7 @@ type Router struct {
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
 	chunker               pkg.Chunker
+	orgName               string
 	msgbus                mb.MsgBusServiceClient
 	baseRoutingKey        msgbus.RoutingKeyBuilder
 }
@@ -58,7 +59,7 @@ func (r *Router) Run() {
 }
 
 func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker, storageTimeout time.Duration,
-	msgBus mb.MsgBusServiceClient) *Router {
+	orgName string, msgBus mb.MsgBusServiceClient) *Router {
 	f := rest.NewFizzRouter(config, pkg.ServiceName, version.Version, pkg.IsDebugMode, "")
 	r := &Router{
 		fizz:                  f,
@@ -66,8 +67,10 @@ func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker
 		storage:               storage,
 		storageRequestTimeout: storageTimeout,
 		chunker:               chunker,
+		orgName:               orgName,
 		msgbus:                msgBus,
-		baseRoutingKey:        msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		// baseRoutingKey:        msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 
 	r.init()
