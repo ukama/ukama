@@ -51,7 +51,8 @@ services:
    - MSGCLIENT_HOST=msgclient-notification:9095
    - NOTIFY_SERVICE_HOST=notify
    - NOTIFY_SERVICE_PORT=9090
-   - ORGNAME=${UKAMA_ORG_NAME}
+   # - ORGNAME=${UKAMA_ORG_NAME}
+   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -100,16 +101,20 @@ services:
    dockerfile: ./Dockerfile
    context: ../services/initClient
   environment:
-   - ENV_SYSTEM_ORG=${UKAMA_ORG_NAME}
+   # - ENV_SYSTEM_ORG=${UKAMA_ORG_NAME}
+   - ENV_SYSTEM_ORG=ukama-test-org
    - ENV_SYSTEM_NAME=notification
-   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_SYSTEM_PORT=8889
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   # - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_SYSTEM_DNS=api-gateway-notification
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071
    - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_CLIENT_PORT=9091
-   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
   restart: always
   networks:
    - ukama-net
