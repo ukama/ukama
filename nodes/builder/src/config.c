@@ -275,20 +275,22 @@ static int read_build_config(Config *config, char *fileName,
         goto done;
     }
 
-    ret = read_build_table(buildRootfs, config, TABLE_BUILD_ROOTFS);
-    if (ret == FALSE) {
-        log_error("[%s] section parsing error in config file: %s\n",
-                  TABLE_BUILD_ROOTFS, fileName);
-        clear_config(config, BUILD_ONLY);
-        goto done;
+    if (buildRootfs) {
+        if (read_build_table(buildRootfs, config, TABLE_BUILD_ROOTFS) == FALSE) {
+            log_error("[%s] section parsing error in config file: %s\n",
+                      TABLE_BUILD_ROOTFS, fileName);
+            clear_config(config, BUILD_ONLY);
+            goto done;
+        }
     }
 
-    ret = read_build_table(buildConf, config, TABLE_BUILD_CONF);
-    if (ret == FALSE) {
-        log_error("[%s] section parsing error in config file: %s\n",
-                  TABLE_BUILD_CONF, fileName);
-        clear_config(config, BUILD_ONLY);
-        goto done;
+    if (buildConf) {
+        if (read_build_table(buildConf, config, TABLE_BUILD_CONF) == FALSE) {
+            log_error("[%s] section parsing error in config file: %s\n",
+                      TABLE_BUILD_CONF, fileName);
+            clear_config(config, BUILD_ONLY);
+            goto done;
+        }
     }
 
     if (buildMisc) {
@@ -365,13 +367,13 @@ int read_config_file(Config *config, char *fileName) {
     /* get all mandatory tables for build and capp */
     if (!get_table(fileData, TABLE_BUILD_FROM,    &buildFrom))    goto done;
     if (!get_table(fileData, TABLE_BUILD_COMPILE, &buildCompile)) goto done;
-    if (!get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs))  goto done;
-    if (!get_table(fileData, TABLE_BUILD_CONF,    &buildConf))    goto done;
     if (!get_table(fileData, TABLE_CAPP_EXEC,     &cappExec))     goto done;
     if (!get_table(fileData, TABLE_CAPP_OUTPUT,   &cappOutput))   goto done;
 
     /* non-mandatory. */
     get_table(fileData, TABLE_BUILD_MISC, &buildMisc);
+    get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs);
+    get_table(fileData, TABLE_BUILD_CONF,    &buildConf);
 
     ret = read_build_config(config, fileName, buildFrom, buildCompile,
                             buildRootfs, buildConf, buildMisc);
