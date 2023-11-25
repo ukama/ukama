@@ -7,7 +7,7 @@
 include ../../../config.mk
 
 # Targets
-TARGETBIN:=noded
+TARGETBIN:=node.d
 INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
