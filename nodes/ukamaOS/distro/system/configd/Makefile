@@ -7,7 +7,7 @@
 include ../../../config.mk
 
 # Targets
-TARGET:=configd
+TARGET:=config.d
 
 DISTRO_DIR:=../..
 
