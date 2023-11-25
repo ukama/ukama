@@ -14,8 +14,8 @@
 	mkdir="/conf"
 
 [build-conf]
-        from="/nodes/manifest.json"
-        to="/manifest.json"
+    from="/nodes/manifest.json"
+    to="/manifest.json"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
