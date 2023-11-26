@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2021-present, Ukama Inc.
 
-TARGET_EXEC  = capp
+TARGET_EXEC  = builder
 UKAMAOS_ROOT = ../ukamaOS
 
 include $(UKAMAOS_ROOT)/config.mk
@@ -50,7 +50,7 @@ XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC)
 
-capp: $(TARGET_EXEC)
+builder: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
