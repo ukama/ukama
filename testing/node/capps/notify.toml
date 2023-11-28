@@ -1,0 +1,30 @@
+
+#
+# Config file to build notify.d for the Ukama's Virtual Node.
+#
+
+# Base image to use to build container. Examples are alpine, Ubuntu, etc.
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/distro/system/notifyd"
+	cmd="make"
+	bin_from="/distro/system/notifyd/build/notifyd"
+	bin_to="/sbin/"
+
+# for [program:<exec>] in supervisor.conf
+[capp-exec]
+	name="notifyd"
+	version="latest"
+	autostart="false"
+	autorestart="false"
+	startretries=5
+	bin="notifyd"
+	path="/sbin" # path where the exec should be. Matches build.bin_to
+	group="service"
+
+# Nothing to see here. Move on
