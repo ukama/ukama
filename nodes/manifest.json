@@ -1,0 +1,88 @@
+{
+    "version": "0.1",
+    "target": "ukma-xx-xx-xxxx",
+
+    "spaces" : [
+        { "name" : "boot" },   
+        { "name" : "services" },
+        { "name" : "reboot" }  
+    ],
+
+    "capps": [
+        {
+            "name"   : "noded",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot"
+        },
+        {
+            "name"   : "bootstrap",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot",
+	        "depends_on" : [
+                {
+                    "capp"  : "node",
+			        "state" : "active"
+		        }
+	        ]
+        },
+        {
+            "name"   : "meshd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot",
+	        "depends_on" : [
+                {
+                    "capp"  : "bootstrap",
+			        "state" : "done"
+		        }
+	        ]
+        },
+
+        {
+            "name"   : "wimcd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "configd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "metricsd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "lookoutd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "deviced",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "configd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+        {
+            "name"   : "notifyd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        }
+    ]
+}
+
+

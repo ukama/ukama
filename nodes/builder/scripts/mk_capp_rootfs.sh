@@ -10,7 +10,7 @@
 # Used by the capp utility program
 
 # Base parameters
-UKAMA_OS=`realpath ../../.`
+UKAMA_OS=`realpath ../ukamaOS`
 SYS_ROOT=${UKAMA_OS}/distro/
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
 BB_ROOT=${UKAMA_OS}/distro/system/busybox
@@ -22,7 +22,7 @@ DEF_ROOTFS=_ukama_minimal_rootfs/
 OS_NAME="ukamaOS"
 OS_ID="ukama"
 OS_VERSION_ID="0.0.1"
-OS_PRETTY_NAME="UkamaOS V0.0.1"
+OS_PRETTY_NAME="ukamaOS V0.0.1"
 OS_HOME_URL="http://www.ukama.com/"
 
 #Various network related parameters

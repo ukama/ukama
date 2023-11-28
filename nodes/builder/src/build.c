@@ -63,11 +63,15 @@ int build_capp(Config *config) {
   sprintf(runMe, "%s cp %s %s", SCRIPT, build->binFrom, build->binTo);
   if (system(runMe) < 0) return FALSE;
 
-  sprintf(runMe, "%s mkdir %s", SCRIPT, build->mkdir);
-  if (system(runMe) < 0) return FALSE;
+  if (build->mkdir) {
+      sprintf(runMe, "%s mkdir %s", SCRIPT, build->mkdir);
+      if (system(runMe) < 0) return FALSE;
+  }
 
-  sprintf(runMe, "%s cp %s %s", SCRIPT, build->from, build->to);
-  if (system(runMe) < 0) return FALSE;
+  if (build->from && build->to) {
+      sprintf(runMe, "%s cp %s %s", SCRIPT, build->from, build->to);
+      if (system(runMe) < 0) return FALSE;
+  }
 
   if (build->miscFrom && build->miscTo) {
     sprintf(runMe, "%s cp %s %s", SCRIPT, build->miscFrom, build->miscTo);
