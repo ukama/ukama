@@ -22,7 +22,7 @@
             "space"  : "boot",
 	        "depends_on" : [
                 {
-                    "capp"  : "node",
+                    "capp"  : "noded",
 			        "state" : "active"
 		        }
 	        ]
