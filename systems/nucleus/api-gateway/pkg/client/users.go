@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	pbusers "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type Users struct {
@@ -48,10 +50,12 @@ func (r *Users) Close() {
 	r.conn.Close()
 }
 
-func (r *Users) Get(userId string) (*pbusers.GetResponse, error) {
+func (r *Users) Get(userId string, token string) (*pbusers.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	context.WithValue(ctx, "X-Session-Token", token)
 	defer cancel()
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "X-Session-Token", token)
 	return r.client.Get(ctx, &pbusers.GetRequest{UserId: userId})
 }
 

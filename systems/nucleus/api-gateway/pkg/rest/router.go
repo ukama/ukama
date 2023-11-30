@@ -166,7 +166,10 @@ func (r *Router) getUserByEmailHandler(c *gin.Context, req *GetByEmailRequest) (
 
 // Users handlers
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(req.UserId)
+	token := c.Request.Header.Get("X-Session-Token")
+	fmt.Println("API CTX: ", c.Request.Header)
+
+	return r.clients.User.Get(req.UserId, token)
 }
 
 func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {

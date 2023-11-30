@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/nucleus/user/pkg/db"
@@ -19,6 +20,7 @@ import (
 	pkgP "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -111,6 +113,8 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	fmt.Println("GRPC Metadata: ", md)
 	uuid, err := uuid.FromString(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
