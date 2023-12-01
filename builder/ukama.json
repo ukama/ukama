@@ -1,0 +1,30 @@
+{
+  "setup": {
+    "interface": "eth0",
+    "hostOS": "linux",
+    "ukamaRoot": "path_to_ukama_repo",
+    "ukamaAuth": "path_to_ukama_auth_repo"
+  },
+  "build": {
+    "build-nodes": {
+      "count": "4",
+      "ids": "random"
+    },
+    "build-systems": {
+      "list": "auth,services,init,nucleus"
+    },
+    "build-interfaces": {
+      "list": "console"
+    }
+  },
+  "deploy": {
+    "setup": {
+      "email": "kashif@ukama.com",
+      "name": "kashif",
+      "org-name": "ukama-test",
+      "org-ID": "FBC2A80D-339E-4D3C-ACAA-329DD3D1B221"
+    },
+    "systems": "auth, services, init, nucleus",
+    "nodes": "all"
+  }
+}
