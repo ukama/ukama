@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.3'
 services:
  postgresd-registry:
   image: postgres:13.3
@@ -148,7 +148,7 @@ services:
  initclient-registry:
   build:
    dockerfile: ./Dockerfile
-   context: ../services/initClient
+   context: ../services/initClientsalman-init
   environment:
    - ENV_SYSTEM_ORG=ukama-org
    - ENV_DNS_REFRESH_TIME_PERIOD=30
