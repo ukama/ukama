@@ -1,3 +1,6 @@
+# How to run example
+# ./status.sh "init,services,registry"
+
 #!/bin/bash
 
 RED='\033[0;31m'
@@ -29,7 +32,7 @@ while true; do
             DOCKER_PS_OUTPUT_NEW+=("$line")
         done <<< "$DOCKER_PS_OUTPUT"
         NEW_OBJECT=$(echo "${DOCKER_PS_OUTPUT_NEW[@]}" | jq -s 'reduce .[] as $item ({}; .ID += [$item.ID] | .Names += [$item.Names] | .Networks += [$item.Networks] | .Status += [$item.Status])')
-        echo -e "${BLUE}Names\t\t\t\tStatus${NC}"
+        echo "${BLUE}Names\t\t\t\tStatus${NC}"
         NAMES=($(jq -r '.Names[]' <<< "$NEW_OBJECT"))
         STATUSES=($(jq -r '.Status[]' <<< "$NEW_OBJECT"))
         INDEX=0

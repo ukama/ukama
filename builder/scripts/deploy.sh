@@ -1,3 +1,6 @@
+# How to run example
+# ./deploy.sh ../deploy_config.json
+
 #!/bin/bash
 
 RED='\033[0;31m'
@@ -17,7 +20,7 @@ ORGNAME=$(jq -r '.setup["org-name"]' "$1")
 ORGID=$(jq -r '.setup["org-id"]' "$1")
 SYSTEMS=$(jq -r '.systems' "$1")
 KEY=$(jq -r '.key' "$1")
-METADATA=$(jq -c '.' metadata.json)
+METADATA=$(jq -c '.' ../metadata.json)
 MAILERHOST=$(jq -r '.mailer.host' "$1")
 MAILERPORT=$(jq -r '.mailer.port' "$1")
 MAILERUSERNAME=$(jq -r '.mailer.username' "$1")
@@ -54,9 +57,10 @@ function run_docker_compose() {
     set_env
     echo -e "$TAG Running $2 docker compose..."
     cd $1
-    docker-compose down  > /dev/null 2>&1
-    docker-compose build > /dev/null 2>&1
-    docker-compose up -d   > /dev/null 2>&1
+    # docker-compose down  > /dev/null 2>&1
+    # docker-compose build > /dev/null 2>&1
+    # docker-compose up -d   > /dev/null 2>&1
+    docker compose up --build -d > /dev/null 2>&1
     echo -e "$TAG $2 docker container is up"
 }
 
@@ -94,15 +98,15 @@ if [[ $SYSTEMS != *"auth-services"* ]]; then
     echo "Please add auth-services in the systems array in the deploy_config JSON file."
 else
     auth=$(echo "$METADATA" | jq -c --arg AUTHSYSKEY "$AUTHSYSKEY" '.[$AUTHSYSKEY]')
-    export COMPOSE_PROJECT_NAME="$(echo "$auth" | jq -r '.key')"
     # Run docker compose for ukama-auth
+    export COMPOSE_PROJECT_NAME="$(echo "$auth" | jq -r '.key')"
     run_docker_compose "$(echo "$auth" | jq -r '.path')" "$(echo "$auth" | jq -r '.name')"
-    # cd ../
-    # register_user
+    cd ../ukama/builder/scripts
+    register_user
 fi
 
 #Navigate to Ukama repo
-cd ./ukama/systems
+cd ../../systems
 
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS_ARRAY[@]}"; do

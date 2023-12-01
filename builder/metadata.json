@@ -67,6 +67,6 @@
  "auth-services": {
   "key": "auth-services",
   "name": "Ukama Auth Services",
-  "path": "../ukama-auth"
+  "path": "../../../ukama-auth"
  }
 }
