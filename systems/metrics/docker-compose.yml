@@ -38,7 +38,7 @@ services:
    - MSGCLIENT_HOST=msgclient-metrics:9095
    - EXPORTER_SERVICE_HOST=exporter
    - EXPORTER_SERVICE_PORT=9092
-   - ORGNAME=ukama-test-org
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net

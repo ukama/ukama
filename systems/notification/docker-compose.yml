@@ -44,7 +44,7 @@ services:
    - MSGCLIENT_HOST=msgclient-notification:9095
    - NOTIFY_SERVICE_HOST=notify
    - NOTIFY_SERVICE_PORT=9090
-   - ORGNAME=${UKAMA_ORG_NAME}
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -86,7 +86,7 @@ services:
    dockerfile: ./Dockerfile
    context: ../services/initClient
   environment:
-   - ENV_SYSTEM_ORG=${UKAMA_ORG_NAME}
+   - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
    - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_SYSTEM_PORT=8889

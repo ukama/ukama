@@ -21,11 +21,11 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - SIM_SERVICE_HOST=sim
    - SIM_SERVICE_PORT=9090
-   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -42,12 +42,12 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
    - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
-   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -66,6 +66,7 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - KEY=${KEY}
+   - ORGNAME=${ORGNAME}
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
@@ -73,7 +74,6 @@ services:
    - DATAPLAN=http://${LOCAL_HOST_IP}:8074
    - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
    - ORGHOST=http://${LOCAL_HOST_IP}:8060
-   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
