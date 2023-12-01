@@ -82,9 +82,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  image: salman-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification

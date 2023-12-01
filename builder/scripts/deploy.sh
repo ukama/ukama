@@ -55,17 +55,17 @@ function set_env() {
 
 function run_docker_compose() {
     set_env
-    echo -e "$TAG Running $2 docker compose..."
+    echo  "$TAG Running $2 docker compose..."
     cd $1
     # docker-compose down  > /dev/null 2>&1
     # docker-compose build > /dev/null 2>&1
     # docker-compose up -d   > /dev/null 2>&1
     docker compose up --build -d > /dev/null 2>&1
-    echo -e "$TAG $2 docker container is up"
+    echo  "$TAG $2 docker container is up"
 }
 
 function register_user() {
-    echo -e "$TAG Signing up Owner user"
+    echo  "$TAG Signing up Owner user"
     flow=$(curl --location --silent 'http://localhost:4434/self-service/registration/api')
     action=$(echo $flow | jq -r '.ui.action')
     response=$(curl --location --request POST "$action" \
@@ -82,11 +82,11 @@ function register_user() {
 
     identity=$(echo $response | jq -r '.session.identity')
     OWNERAUTHID=$(echo $identity | jq -r '.id')
-    echo -e "$TAG User register with ${GREEN}AUTH ID = $OWNERAUTHID${NC}"
-    echo -e "$TAG Please verify your email address by visiting ${GREEN}http://localhost:4436${NC}"
+    echo  "$TAG User register with ${GREEN}AUTH ID = $OWNERAUTHID${NC}"
+    echo  "$TAG Please verify your email address by visiting ${GREEN}http://localhost:4436${NC}"
 }
 
-if [ $# -eq 0 ]; then
+if [ $# q 0 ]; then
     echo "No arguments provided. Please provide the path to the deploy_config JSON file."
     exit 1
 fi
@@ -120,7 +120,7 @@ for SYSTEM in "${SYSTEMS_ARRAY[@]}"; do
     "init")
         sleep 2
         ## Connect to init-lookup db and add org in orgs table
-        echo -e "$TAG Add org in lookup..."
+        echo  "$TAG Add org in lookup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"

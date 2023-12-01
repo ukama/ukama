@@ -10,10 +10,10 @@ BLUE='\033[38;5;39m'
 NC='\033[0m'
 IFS=',' read -r -a SYSTEMS <<< "$1"
 
-echo -e "$TAG Checking Docker container status..."
+echo "$TAG Checking Docker container status..."
 while true; do
     for PROJECT_NAME in "${SYSTEMS[@]}"; do
-        DOCKER_PS_OUTPUT=$(docker ps -a --no-trunc --filter "label=com.docker.compose.project=$PROJECT_NAME" --filter "network=services_dev-net" --format "{{json . }}" | jq -c 'if (.Networks | test(":")) then (.Networks |= fromjson) else . end | {ID: .ID, Names: .Names, Networks: .Networks, Status: .Status}')
+        DOCKER_PS_OUTPUT=$(docker ps -a --no-trunc --filter "label=com.docker.compose.project="$PROJECT_NAME"" --filter "network=services_dev-net" --format "{{json . }}" | jq -c 'if (.Networks | test(":")) then (.Networks |= fromjson) else . end | {ID: .ID, Names: .Names, Networks: .Networks, Status: .Status}')
         if [ -z "$DOCKER_PS_OUTPUT" ]; then
             echo "DOCKER_PS_OUTPUT is null. Skipping..."
             continue
