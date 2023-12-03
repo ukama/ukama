@@ -6,7 +6,7 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-if [ "$1" = "systems" ]; then
+if [ "$1" = "system" ]; then
 
     cd "$2" || exit 1
 
