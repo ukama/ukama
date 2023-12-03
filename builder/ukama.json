@@ -2,8 +2,8 @@
   "setup": {
     "network-interface": "eth0",
     "build-os": "linux",
-    "ukama-repo": "path_to_ukama_repo",
-    "auth-repo": "path_to_ukama_auth_repo"
+    "ukama-repo": "/home/kashif/work/ukama/repos/ukama",
+    "auth-repo": "/home/kashif/work/ukama/repos/ukama-auth"
   },
 
   "build": {
@@ -12,7 +12,7 @@
       "ids": "random"
     },
     "systems": {
-      "list": "auth,services,init,nucleus"
+      "list": "ukama-auth,services,init,nucleus,"
     },
     "interfaces": {
       "list": "console"
@@ -26,7 +26,7 @@
       "org-name": "ukama-test",
       "org-id": "FBC2A80D-339E-4D3C-ACAA-329DD3D1B221"
     },
-    "systems": "auth, services, init, nucleus",
+    "systems": "ukama-auth,services,init,nucleus,",
     "nodes": "all"
   }
 }

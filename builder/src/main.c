@@ -17,6 +17,9 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
+/* build.c */
+extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
+
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
     { "config-file", required_argument, 0, 'c' },
@@ -102,6 +105,14 @@ int main(int argc, char **argv) {
     if (read_config_file(&config, configFile) != USYS_TRUE) {
         usys_log_error("Unable to read builder's config file: %s",
                        configFile);
+        goto done;
+    }
+
+    /* build all systems */
+    if (!build_all_systems(config->build->systemsList,
+                           config->setup->ukamaRepo,
+                           config->setup->authRepo)) {
+        usys_log_error("Build error. Exiting ...");
         goto done;
     }
     
