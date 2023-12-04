@@ -59,8 +59,9 @@ chroot /mnt/image /bin/bash <<'EOL'
     apt-get update
     apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic syslinux
 
-    # Add custom installation commands here
-    # e.g., apt-get install -y your-package-name
+    mkdir -p /capps/pkgs
+    mkdir -p /capps/rootfs
+    mkdir -p /capps/registry
 EOL
 
 # Unmount filesystems
