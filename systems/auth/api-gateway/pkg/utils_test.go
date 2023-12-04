@@ -42,7 +42,7 @@ func TestGetUserTraitsFromSession(t *testing.T) {
 	}
 
 	s := &ory.Session{
-		Identity: identity,
+		Identity: &identity,
 	}
 
 	expectedUserTraits := &UserTraits{
@@ -80,12 +80,14 @@ func TestGetUserTraitsFromSession(t *testing.T) {
 }
 
 func TestGenerateJWT(t *testing.T) {
-	session := "user123"
+	session := "session_token"
+	id := "user123"
+	sessionKey := session + "-" + id
 	expiresAt := "2023-04-17T12:00:00Z"
 	authenticatedAt := "2023-04-16T12:00:00Z"
 	key := "secret"
 
-	tokenString, err := GenerateJWT(&session, expiresAt, authenticatedAt, key)
+	tokenString, err := GenerateJWT(&session, id, expiresAt, authenticatedAt, key)
 	if err != nil {
 		t.Fatalf("Unexpected error generating JWT: %v", err)
 	}
@@ -108,7 +110,7 @@ func TestGenerateJWT(t *testing.T) {
 	// Verify the claims in the token
 	claims := token.Claims.(jwt.MapClaims)
 
-	if session != claims["session"] {
+	if sessionKey != claims["session"] {
 		t.Errorf("Unexpected session value: got %s, want %s", claims["session"], session)
 	}
 
@@ -129,7 +131,7 @@ func TestValidateToken(t *testing.T) {
 	key := "secret"
 	token := "user123"
 	a := time.Now()
-	tokenString, err := GenerateJWT(&token, a.Add(time.Second*2).Format(time.RFC1123), a.Format(time.RFC1123), key)
+	tokenString, err := GenerateJWT(&token, "token", a.Add(time.Second*2).Format(time.RFC1123), a.Format(time.RFC1123), key)
 	if err != nil {
 		t.Fatalf("Unexpected error generating JWT: %v", err)
 	}
@@ -150,10 +152,12 @@ func TestGetSessionFromToken(t *testing.T) {
 
 	// Generate a JWT token
 	key := "secret"
-	token := "user123"
+	sessionStr := "session"
+	token := "token"
+	st := sessionStr + "-" + token
 	a := time.Now()
 	e := a.Add(time.Second * 2).Format(time.RFC1123)
-	tokenString, err := GenerateJWT(&token, e, a.Format(time.RFC1123), key)
+	tokenString, err := GenerateJWT(&sessionStr, token, e, a.Format(time.RFC1123), key)
 	if err != nil {
 		t.Fatalf("Unexpected error generating JWT: %v", err)
 	}
@@ -167,7 +171,7 @@ func TestGetSessionFromToken(t *testing.T) {
 	}
 
 	// Validate that the session object was correctly parsed from the token
-	if session.Session != token || session.ExpiresAt != e || session.AuthenticatedAt != a.Format(time.RFC1123) {
+	if session.Session != st || session.ExpiresAt != e || session.AuthenticatedAt != a.Format(time.RFC1123) {
 		t.Fatalf("Unexpected session object: %+v", session)
 	}
 

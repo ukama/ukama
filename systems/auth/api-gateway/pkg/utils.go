@@ -85,7 +85,7 @@ func GenerateJWT(s *string, i string, e string, a string, k string) (string, err
 	claims["expires_at"] = e
 	claims["authenticated_at"] = a
 
-	tokenString, err := token.SignedString([]byte("SecretYouShouldHide"))
+	tokenString, err := token.SignedString([]byte(k))
 
 	if err != nil {
 		return "", err
