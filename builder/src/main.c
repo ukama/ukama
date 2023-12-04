@@ -19,6 +19,7 @@
 
 /* build.c */
 extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
+extern bool build_nodes(int count, char *list, char *repo);
 
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
@@ -112,10 +113,17 @@ int main(int argc, char **argv) {
     if (!build_all_systems(config->build->systemsList,
                            config->setup->ukamaRepo,
                            config->setup->authRepo)) {
-        usys_log_error("Build error. Exiting ...");
+        usys_log_error("Build (systems) error. Exiting ...");
         goto done;
     }
-    
+
+    /* build node(s) */
+    if (!build_nodes(config->build->nodeCount,
+                     config->setup->ukamaRepo,
+                     config->build->nodeIDsList)) {
+        usys_log_error("Build (node) error. Exiting ...");
+    }
+
 done:
     free_config(config);
     return USYS_TRUE;

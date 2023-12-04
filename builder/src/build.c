@@ -21,6 +21,7 @@
 #define MAX_BUFFER  1024
 #define DELIMINATOR ","
 #define UKAMA_AUTH  "ukama-auth"
+#define DEF_NODE_ID "ukma-sa0001-tnode-a1-1234"
 
 static bool build_system(char *name, char *path) {
 
@@ -63,6 +64,28 @@ bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo) {
 
         systemName = strtok(NULL, DELIMINATOR);
     }
+
+    return USYS_TRUE;
+}
+
+bool build_nodes(int count, char *repo, char *list) {
+
+    char *nodeID = NULL;
+    char runMe[MAX_BUFFER] = {0};
+
+    if (count != 1 ) {
+        usys_log_error("Currently supporting single node creation");
+        return USYS_FALSE;
+    }
+
+    if (strcmp(list, "random") == 0) {
+        nodeID = DEF_NODE_ID;
+    } else {
+        nodeID = list;
+    }
+
+    sprintf(runMe, "%s node %s %s", SCRIPT, repo, nodeID);
+    if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
 }
