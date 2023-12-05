@@ -92,11 +92,12 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 
 	errStatus := crest.ErrorMessage{}
 
+	req := r.C.R()
 	if b != nil {
-		r.C.R().SetError(&errStatus).SetBody(b)
+		req = r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err := r.C.R().SetError(&errStatus).Post(url)
+	resp, err := req.Post(url)
 	if err != nil {
 		log.Errorf("Failed to send api request. error: %s", err.Error())
 		log.Infof("errorStatus: %v", errStatus)
@@ -120,11 +121,12 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 
 	errStatus := crest.ErrorMessage{}
 
+	req := r.C.R()
 	if b != nil {
-		r.C.R().SetError(&errStatus).SetBody(b)
+		req = r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err := r.C.R().SetError(&errStatus).Put(url)
+	resp, err := req.Put(url)
 	if err != nil {
 		log.Errorf("Failed to send api request. error: %s", err.Error())
 		log.Infof("errorStatus: %v", errStatus)
@@ -148,11 +150,12 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 
 	errStatus := crest.ErrorMessage{}
 
+	req := r.C.R()
 	if b != nil {
-		r.C.R().SetError(&errStatus).SetBody(b)
+		req = r.C.R().SetError(&errStatus).SetBody(b)
 	}
 
-	resp, err := r.C.R().SetError(&errStatus).Put(url)
+	resp, err := req.Patch(url)
 	if err != nil {
 		log.Errorf("Failed to send api request. error: %s", err.Error())
 		log.Infof("errorStatus: %v", errStatus)

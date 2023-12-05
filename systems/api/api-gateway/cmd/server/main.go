@@ -29,11 +29,11 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	networkClient := client.NewNetworkClientSet(rest.NewNetworkClient(svcConf.HttpServices.Network))
-	packageClient := client.NewPackageClientSet(rest.NewPackageClient(svcConf.HttpServices.Network))
-	simClient := client.NewSimClientSet(rest.NewSimClient(svcConf.HttpServices.Network),
-		rest.NewSubscriberClient(svcConf.HttpServices.Subscriber))
-	nodeClient := client.NewNodeClientSet(rest.NewNodeClient(svcConf.HttpServices.Network))
+	networkClient := client.NewNetworkClientSet(rest.NewNetworkClient(svcConf.HttpServices.RegistryHost))
+	packageClient := client.NewPackageClientSet(rest.NewPackageClient(svcConf.HttpServices.DataPlanHost))
+	simClient := client.NewSimClientSet(rest.NewSimClient(svcConf.HttpServices.SubscriberHost),
+		rest.NewSubscriberClient(svcConf.HttpServices.SubscriberHost))
+	nodeClient := client.NewNodeClientSet(rest.NewNodeClient(svcConf.HttpServices.RegistryHost))
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
