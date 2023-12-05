@@ -8,13 +8,11 @@
 
 package client
 
-import (
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
-)
+import cclient "github.com/ukama/ukama/systems/common/rest/client"
 
 type Node interface {
-	GetNode(string) (*rest.NodeInfo, error)
-	RegisterNode(string, string, string, string) (*rest.NodeInfo, error)
+	GetNode(string) (*cclient.NodeInfo, error)
+	RegisterNode(string, string, string, string) (*cclient.NodeInfo, error)
 	AttachNode(string, string, string) error
 	DetachNode(string) error
 	AddNodeToSite(string, string, string) error
@@ -23,10 +21,10 @@ type Node interface {
 }
 
 type node struct {
-	nc rest.NodeClient
+	nc cclient.NodeClient
 }
 
-func NewNodeClientSet(nd rest.NodeClient) Node {
+func NewNodeClientSet(nd cclient.NodeClient) Node {
 	n := &node{
 		nc: nd,
 	}
@@ -34,7 +32,7 @@ func NewNodeClientSet(nd rest.NodeClient) Node {
 	return n
 }
 
-func (n *node) GetNode(id string) (*rest.NodeInfo, error) {
+func (n *node) GetNode(id string) (*cclient.NodeInfo, error) {
 	node, err := n.nc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -43,8 +41,8 @@ func (n *node) GetNode(id string) (*rest.NodeInfo, error) {
 	return node, nil
 }
 
-func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*rest.NodeInfo, error) {
-	node, err := n.nc.Add(rest.AddNodeRequest{
+func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*cclient.NodeInfo, error) {
+	node, err := n.nc.Add(cclient.AddNodeRequest{
 		NodeId: nodeId,
 		Name:   nodeName,
 		OrgId:  orgId,
@@ -58,7 +56,7 @@ func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*rest.NodeIn
 }
 
 func (n *node) AttachNode(id, left, right string) error {
-	err := n.nc.Attach(id, rest.AttachNodesRequest{
+	err := n.nc.Attach(id, cclient.AttachNodesRequest{
 		AmpNodeL: left,
 		AmpNodeR: right,
 	})
@@ -79,7 +77,7 @@ func (n *node) DetachNode(id string) error {
 }
 
 func (n *node) AddNodeToSite(id, networkId, siteId string) error {
-	err := n.nc.AddToSite(id, rest.AddToSiteRequest{
+	err := n.nc.AddToSite(id, cclient.AddToSiteRequest{
 		NetworkId: networkId,
 		SiteId:    siteId,
 	})

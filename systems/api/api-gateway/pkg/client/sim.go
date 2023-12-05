@@ -11,25 +11,25 @@ package client
 import (
 	"net/http"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/types"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 )
 
 type Sim interface {
-	GetSim(string) (*rest.SimInfo, error)
+	GetSim(string) (*cclient.SimInfo, error)
 	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
-		string, string, string, string, uint32) (*rest.SimInfo, error)
+		string, string, string, string, uint32) (*cclient.SimInfo, error)
 }
 
 type sim struct {
-	smc rest.SimClient
-	sbc rest.SubscriberClient
+	smc cclient.SimClient
+	sbc cclient.SubscriberClient
 }
 
-func NewSimClientSet(sm rest.SimClient, sb rest.SubscriberClient) Sim {
+func NewSimClientSet(sm cclient.SimClient, sb cclient.SubscriberClient) Sim {
 	s := &sim{
 		smc: sm,
 		sbc: sb,
@@ -38,7 +38,7 @@ func NewSimClientSet(sm rest.SimClient, sb rest.SubscriberClient) Sim {
 	return s
 }
 
-func (s *sim) GetSim(id string) (*rest.SimInfo, error) {
+func (s *sim) GetSim(id string) (*cclient.SimInfo, error) {
 	sim, err := s.smc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -67,10 +67,10 @@ func (s *sim) GetSim(id string) (*rest.SimInfo, error) {
 
 func (s *sim) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
 	email, phoneNumber, address, dob, proofOfID, idSerial, packageId, simType,
-	simToken string, trafficPolicy uint32) (*rest.SimInfo, error) {
+	simToken string, trafficPolicy uint32) (*cclient.SimInfo, error) {
 	if subscriberId == "" {
 		subscriber, err := s.sbc.Add(
-			rest.AddSubscriberRequest{
+			cclient.AddSubscriberRequest{
 				OrgId:                 orgId,
 				NetworkId:             networkId,
 				FirstName:             firstName,
@@ -91,7 +91,7 @@ func (s *sim) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
 		subscriberId = subscriber.SubscriberId.String()
 	}
 
-	sim, err := s.smc.Add(rest.AddSimRequest{
+	sim, err := s.smc.Add(cclient.AddSimRequest{
 		SubscriberId:  subscriberId,
 		NetworkId:     networkId,
 		PackageId:     packageId,

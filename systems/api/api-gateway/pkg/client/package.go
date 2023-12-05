@@ -11,24 +11,24 @@ package client
 import (
 	"net/http"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/types"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 )
 
 type Package interface {
-	GetPackage(string) (*rest.PackageInfo, error)
+	GetPackage(string) (*cclient.PackageInfo, error)
 	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
-		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*rest.PackageInfo, error)
+		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*cclient.PackageInfo, error)
 }
 
 type datapackage struct {
-	pc rest.PackageClient
+	pc cclient.PackageClient
 }
 
-func NewPackageClientSet(pkg rest.PackageClient) Package {
+func NewPackageClientSet(pkg cclient.PackageClient) Package {
 	p := &datapackage{
 		pc: pkg,
 	}
@@ -36,7 +36,7 @@ func NewPackageClientSet(pkg rest.PackageClient) Package {
 	return p
 }
 
-func (p *datapackage) GetPackage(id string) (*rest.PackageInfo, error) {
+func (p *datapackage) GetPackage(id string) (*cclient.PackageInfo, error) {
 	pkg, err := p.pc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -66,9 +66,9 @@ func (p *datapackage) GetPackage(id string) (*rest.PackageInfo, error) {
 func (p *datapackage) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
 	simType, apn, pType string, duration uint64, markup, amount, overdraft float64, trafficPolicy uint32,
-	networks []string) (*rest.PackageInfo, error) {
+	networks []string) (*cclient.PackageInfo, error) {
 
-	pkg, err := p.pc.Add(rest.AddPackageRequest{
+	pkg, err := p.pc.Add(cclient.AddPackageRequest{
 		Name:          name,
 		OrgId:         orgId,
 		OwnerId:       ownerId,
