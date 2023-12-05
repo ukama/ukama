@@ -74,6 +74,8 @@ elif [ "$1" = "node" ]; then
     mock_sysfs_for_noded $node_id
 
     # update /etc/services to add ports
+    cp ${ukama_root}/nodes/ukamaOS/distro/scripts/files/services \
+       /mnt/${node_id}/etc/services
 
     # umount the image
     umount /mnt/${node_id}
