@@ -543,12 +543,7 @@ const Manage = () => {
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
-      <LoadingWrapper
-        width="100%"
-        radius="small"
-        isLoading={isLoading}
-        cstyle={{ backgroundColor: isLoading ? colors.white : 'transparent' }}
-      >
+      <LoadingWrapper width="100%" radius="medium" isLoading={isLoading}>
         <>
           {menu === 'manage-members' && (
             <Member

@@ -116,10 +116,10 @@ const Layout = ({
                     },
                   }),
               height: '100%',
-              backgroundColor: (theme) =>
-                theme.palette.mode === 'light'
-                  ? colors.black10
-                  : colors.nightGrey,
+              // backgroundColor: (theme) =>
+              //   theme.palette.mode === 'light'
+              //     ? colors.black10
+              //     : colors.nightGrey,
             }}
           >
             <LoadingWrapper
@@ -129,19 +129,21 @@ const Layout = ({
               height={isLoading ? '90vh' : '100%'}
             >
               <Stack height={'100%'} direction={'column'}>
-                {page !== '404' && page !== 'Unauthorized' && (
-                  <Box>
-                    <Stack
-                      direction={'row'}
-                      alignItems={'center'}
-                      spacing={{ xs: 4, md: 10.5 }}
-                    >
-                      {isFullScreen && <BackButton title="BACK TO CONSOLE" />}
-                      <Typography variant="h5">{page}</Typography>
-                    </Stack>
-                    <Divider sx={{ my: 1 }} />
-                  </Box>
-                )}
+                {page !== '404' &&
+                  page !== 'Unauthorized' &&
+                  page != 'OnBoarding' && (
+                    <Box>
+                      <Stack
+                        direction={'row'}
+                        alignItems={'center'}
+                        spacing={{ xs: 4, md: 10.5 }}
+                      >
+                        {isFullScreen && <BackButton title="BACK TO CONSOLE" />}
+                        <Typography variant="h5">{page}</Typography>
+                      </Stack>
+                      <Divider sx={{ my: 1 }} />
+                    </Box>
+                  )}
 
                 {children}
               </Stack>

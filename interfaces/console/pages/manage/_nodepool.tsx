@@ -34,7 +34,7 @@ const NodePool = ({
         py: 3,
         px: 4,
         width: '100%',
-        borderRadius: '5px',
+        borderRadius: '10px',
         height: 'calc(100vh - 200px)',
       }}
     >

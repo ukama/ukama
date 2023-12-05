@@ -6,15 +6,19 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { user } from '@/app-recoil';
 import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/styles/theme';
+import { TUser } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
+import { useRecoilValue } from 'recoil';
 
 const Logo = dynamic(() =>
   import('../../../public/svg/Logo').then((module) => ({
@@ -71,11 +75,16 @@ const IconStyle = {
 };
 
 const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
+  const _user = useRecoilValue<TUser>(user);
+  const isManager =
+    _user.role === 'ADMIN' || _user.role === 'OWNER' ? true : false;
   return (
     <AppBar
       open={isOpen}
       isloading={`${isLoading}`}
       sx={{
+        py: 1,
+        height: 'fit-content',
         justifyContent: 'center',
         boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
       }}
@@ -83,20 +92,29 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
       <LoadingWrapper
         radius="none"
         isLoading={isLoading}
-        height={isOpen ? '60px' : '44px'}
+        height={isOpen ? '52px' : '44px'}
       >
         <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>
           <HorizontalContainerJustify>
             <IconButton onClick={() => onNavigate('Home', '/home')}>
               <Logo width={'100%'} height={'28px'} color={colors.white} />
             </IconButton>
-            <Stack direction={'row'} spacing={1.75}>
-              {/* <IconButton
-                onClick={() => onNavigate('Manage', '/manage')}
-                sx={{ ...IconStyle }}
-              >
-                <ManageAccountsIcon />
-              </IconButton> */}
+            <Stack direction={'row'} alignItems={'center'} spacing={1.75}>
+              {isManager && (
+                <IconButton
+                  onClick={() => onNavigate('Manage', '/manage')}
+                  sx={{
+                    ...IconStyle,
+                    '.MuiSvgIcon-root': {
+                      width: '28px',
+                      height: '28px',
+                      fill: colors.white,
+                    },
+                  }}
+                >
+                  <ManageAccountsIcon />
+                </IconButton>
+              )}
               <IconButton
                 onClick={() => onNavigate('Settings', '/settings')}
                 sx={{ ...IconStyle }}

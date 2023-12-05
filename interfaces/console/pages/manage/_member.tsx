@@ -83,7 +83,7 @@ const Member: React.FC<IMember> = ({
         px: 4,
         width: '100%',
         overflow: 'hidden',
-        borderRadius: '5px',
+        borderRadius: '10px',
         height: 'calc(100vh - 200px)',
       }}
     >

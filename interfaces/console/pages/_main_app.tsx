@@ -141,6 +141,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         route.pathname === '/manage' ||
           route.pathname === '/settings' ||
           route.pathname === '/unauthorized' ||
+          route.pathname === '/onboarding' ||
           getTitleFromPath(route.pathname, route.query['id'] as string) ===
             '404',
       );
@@ -178,6 +179,19 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handleGoToLogin();
     }
   }, [_user]);
+
+  useEffect(() => {
+    if (networksLoading && orgsLoading && userLoading && !skeltonLoading)
+      setSkeltonLoading(true);
+    else if (!networksLoading && !orgsLoading && !userLoading && skeltonLoading)
+      setSkeltonLoading(false);
+  }, [
+    networksLoading,
+    orgsLoading,
+    userLoading,
+    skeltonLoading,
+    setSkeltonLoading,
+  ]);
 
   const handleGoToLogin = () => {
     resetData();
