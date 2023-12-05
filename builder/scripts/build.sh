@@ -30,6 +30,8 @@ mock_sysfs_for_noded() {
             --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 \
             --f mfgdata/schema/mask.json
     EOL
+
+    exit
 }
 
 if [ "$1" = "system" ]; then
@@ -62,16 +64,14 @@ elif [ "$1" = "node" ]; then
     ./build-capps.sh ${ukama_root} || exit 1
 
     # copy the apps and manifest.json into the os image
-    mkdir -p /mnt/${NODE_ID} || exit 1
-    mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${NODE_ID} || exit 1
+    mkdir -p /mnt/${node_id} || exit 1
+    mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${node_id} || exit 1
 
     cp -r ./pkgs /mnt/${node_id}/capps/
     cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}
 
     # setup everything needed by node.d
     mock_sysfs_for_noded $node_id
-
-    # modify systemd config to start starter.d
 
     # update /etc/services to add ports
 

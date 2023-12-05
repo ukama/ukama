@@ -62,6 +62,24 @@ chroot /mnt/image /bin/bash <<'EOL'
     mkdir -p /capps/pkgs
     mkdir -p /capps/rootfs
     mkdir -p /capps/registry
+
+    # create systemd service for the starter.d program
+    cat > /etc/systemd/system/starterd.service << EOF
+    [Unit]
+    Description=Ukama's capp starter.d
+    After=network.target
+
+    [Service]
+    ExecStart=/sbin/starter.d --manifest-file /manifest.conf
+    Type=simple
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+
+    # Enable the service
+    systemctl enable starterd.service
+
 EOL
 
 # Unmount filesystems
