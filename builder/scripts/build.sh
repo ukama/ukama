@@ -6,6 +6,32 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
+mock_sysfs_for_noded() {
+
+    id = $1
+
+    chroot /mnt/${id} /bin/bash <<'EOL'
+        set -e
+
+        apt-get update
+        apt-get install -y git
+
+        git clone https://github.com/ukama/ukama.git
+        cd ukama/nodes/ukamaOS/distro/system/noded
+
+        ./utils/prepare_env.sh -u tnode -u anode
+        ./build/genSchema --u ${id} --n com --m UK-SA9001-COM-A1-1103  \
+            --f mfgdata/schema/com.json --n trx --m UK-SA9001-TRX-A1-1103 \
+            --f mfgdata/schema/trx.json --n mask --m UK-SA9001-MSK-A1-1103 \
+            --f mfgdata/schema/mask.json
+
+        ./build/genInventory --n com --m UK-SA9001-COM-A1-1103 \
+            --f mfgdata/schema/com.json -n trx --m UK-SA9001-TRX-A1-1103 \
+            --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 \
+            --f mfgdata/schema/mask.json
+    EOL
+}
+
 if [ "$1" = "system" ]; then
 
     cd "$2" || exit 1
@@ -39,14 +65,19 @@ elif [ "$1" = "node" ]; then
     mkdir -p /mnt/${NODE_ID} || exit 1
     mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${NODE_ID} || exit 1
 
-    cp -r ./pkgs /mnt/${NODE_ID}/capps/
-    cp ${ukama_root}/nodes/manifest.json /mnt/${NODE_ID}
+    cp -r ./pkgs /mnt/${node_id}/capps/
+    cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}
+
+    # setup everything needed by node.d
+    mock_sysfs_for_noded $node_id
 
     # modify systemd config to start starter.d
 
+    # update /etc/services to add ports
+
     # umount the image
-    umount /mnt/${NODE_ID}
-    rmdir  /mnt/${NODE_ID}
+    umount /mnt/${node_id}
+    rmdir  /mnt/${node_id}
 
 else
     echo "Invalid argument: $1. Use 'systems' or 'node'."
