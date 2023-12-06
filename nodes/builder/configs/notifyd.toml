@@ -1,0 +1,33 @@
+[build-from]
+	rootfs="default"     # default is busybox minimal capp config
+	contained="default"  # default namespace, cgroup, etc.
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/notifyd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/notifyd/notify.d"
+	bin_to="/sbin"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+    from="/nodes/configs/capps/notifyd/status.map"
+    to="/conf/notify_status.map"
+
+# Following are use to create config.json file which is used by starter.d to start 
+# the capp within ukamaOS and pkg everything
+[capp-exec]
+	name="notifyd"
+	version="latest"
+	bin="notify.d"
+	path="/sbin" # path where the exec should be. Mathches build.bin_to
+	args="--map-file /conf/notify_status.map"
+	
+# Final output format for capp
+[capp-output]
+	format="tar.gz"
+
+# Nothing to see here. Move on.

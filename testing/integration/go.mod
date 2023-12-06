@@ -60,7 +60,7 @@ require (
 	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/nucleus/api-gateway v0.0.0-20231120232738-43be07acafcf
+	github.com/ukama/ukama/systems/nucleus/api-gateway v0.0.0-20231128003745-707896415f30
 	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/api-gateway v0.0.0-00010101000000-000000000000
