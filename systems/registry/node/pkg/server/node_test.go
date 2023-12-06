@@ -22,8 +22,6 @@ import (
 	"gorm.io/gorm"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	opb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	omocks "github.com/ukama/ukama/systems/nucleus/org/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
@@ -38,13 +36,12 @@ func TestNodeServer_Add(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
 	nodeStatusRepo := &mocks.NodeStatusRepo{}
-	orgService := &mocks.OrgClientProvider{}
 	networkService := &mocks.NetworkClientProvider{}
 
 	const nodeName = "node-A"
 	const nodeType = "hnode"
 
-	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, orgService, networkService, orgId)
+	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, networkService, orgId)
 
 	node := &db.Node{
 		Id:    nodeId,
@@ -63,20 +60,6 @@ func TestNodeServer_Add(t *testing.T) {
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("NodeStateValid", func(t *testing.T) {
-		// Arrange
-		orgClient := orgService.On("GetClient").
-			Return(&omocks.OrgServiceClient{}, nil).
-			Once().
-			ReturnArguments.Get(0).(*omocks.OrgServiceClient)
-
-		orgClient.On("Get", mock.Anything,
-			&opb.GetRequest{Id: orgId.String()}).
-			Return(&opb.GetResponse{
-				Org: &opb.Organization{
-					Id: orgId.String(),
-				},
-			}, nil).Once()
-
 		// Act
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
 			NodeId: nodeId,
@@ -108,7 +91,7 @@ func TestNodeServer_Get(t *testing.T) {
 				Type: ukama.NODE_ID_TYPE_HOMENODE,
 			}, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -128,7 +111,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -143,7 +126,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
