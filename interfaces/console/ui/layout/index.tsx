@@ -29,6 +29,7 @@ interface ILayoutProps {
   handlePageChange: Function;
   networks: NetworkDto[] | undefined;
   children: React.ReactNode;
+  handleAddNetwork: Function;
   handleNetworkChange: Function;
 }
 
@@ -41,6 +42,7 @@ const Layout = ({
   placeholder,
   isFullScreen,
   handlePageChange,
+  handleAddNetwork,
   handleNetworkChange,
 }: ILayoutProps) => {
   const theme = useTheme();
@@ -81,6 +83,7 @@ const Layout = ({
             isDarkMode={isDarkMode}
             placeholder={placeholder}
             networks={networks || []}
+            handleAddNetwork={handleAddNetwork}
             handleNetworkChange={handleNetworkChange}
           />
         )}

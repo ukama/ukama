@@ -10,7 +10,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -1548,6 +1548,8 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string };
+
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1559,6 +1561,13 @@ export type GetSitesQueryVariables = Exact<{
 
 
 export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', networkId: string, sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string }> } };
+
+export type AddNetworkMutationVariables = Exact<{
+  data: AddNetworkInputDto;
+}>;
+
+
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -1873,6 +1882,15 @@ export const UserFragmentDoc = gql`
   authId
   isDeactivated
   registeredSince
+}
+    `;
+export const UNetworkFragmentDoc = gql`
+    fragment UNetwork on NetworkDto {
+  id
+  name
+  orgId
+  isDeactivated
+  createdAt
 }
     `;
 export const LinkFragmentDoc = gql`
@@ -3561,15 +3579,11 @@ export const GetNetworksDocument = gql`
   getNetworks {
     orgId
     networks {
-      id
-      name
-      orgId
-      isDeactivated
-      createdAt
+      ...UNetwork
     }
   }
 }
-    `;
+    ${UNetworkFragmentDoc}`;
 
 /**
  * __useGetNetworksQuery__
@@ -3639,6 +3653,39 @@ export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
 export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
 export type GetSitesLazyQueryHookResult = ReturnType<typeof useGetSitesLazyQuery>;
 export type GetSitesQueryResult = Apollo.QueryResult<GetSitesQuery, GetSitesQueryVariables>;
+export const AddNetworkDocument = gql`
+    mutation AddNetwork($data: AddNetworkInputDto!) {
+  addNetwork(data: $data) {
+    ...UNetwork
+  }
+}
+    ${UNetworkFragmentDoc}`;
+export type AddNetworkMutationFn = Apollo.MutationFunction<AddNetworkMutation, AddNetworkMutationVariables>;
+
+/**
+ * __useAddNetworkMutation__
+ *
+ * To run a mutation, you first call `useAddNetworkMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddNetworkMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addNetworkMutation, { data, loading, error }] = useAddNetworkMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddNetworkMutation(baseOptions?: Apollo.MutationHookOptions<AddNetworkMutation, AddNetworkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddNetworkMutation, AddNetworkMutationVariables>(AddNetworkDocument, options);
+      }
+export type AddNetworkMutationHookResult = ReturnType<typeof useAddNetworkMutation>;
+export type AddNetworkMutationResult = Apollo.MutationResult<AddNetworkMutation>;
+export type AddNetworkMutationOptions = Apollo.BaseMutationOptions<AddNetworkMutation, AddNetworkMutationVariables>;
 export const AddDraftDocument = gql`
     mutation AddDraft($data: AddDraftInput!) {
   addDraft(data: $data) {

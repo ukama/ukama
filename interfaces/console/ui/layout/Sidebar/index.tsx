@@ -58,6 +58,7 @@ interface ISidebarProps {
   placeholder: string;
   onNavigate: Function;
   networks: NetworkDto[];
+  handleAddNetwork: Function;
   handleNetworkChange: Function;
 }
 
@@ -69,6 +70,7 @@ const Sidebar = ({
   isDarkMode,
   placeholder,
   networks = [],
+  handleAddNetwork,
   handleNetworkChange,
 }: ISidebarProps) => {
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -94,6 +96,7 @@ const Sidebar = ({
               list={getDropDownData()}
               placeholder={placeholder}
               handleOnChange={handleNetworkChange}
+              handleAddNetwork={handleAddNetwork}
             />
           </Box>
           <Divider sx={{ m: 0 }} />

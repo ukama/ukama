@@ -5,13 +5,13 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { NodeTypeEnum } from '@/generated';
 import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
 import { TNodeSiteTree, TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
+import { COUNTRIES } from './countries';
 const getTitleFromPath = (path: string, id: string) => {
   switch (path) {
     case '/home':
@@ -514,6 +514,7 @@ export const isMetricValue = (key: string, metrics: MetricsRes) => {
 };
 
 export {
+  COUNTRIES,
   calculateCenterLatLng,
   convertToWeeksOrMonths,
   doesHttpOnlyCookieExist,

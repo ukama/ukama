@@ -16,12 +16,14 @@ import {
   user,
 } from '@/app-recoil';
 import {
+  useAddNetworkMutation,
   useGetMemberLazyQuery,
   useGetNetworksQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
+import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -42,6 +44,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     useRecoilState<TSnackMessage>(snackbarMessage);
   const [skeltonLoading, setSkeltonLoading] =
     useRecoilState<boolean>(isSkeltonLoading);
+  const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
@@ -109,6 +112,18 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         show: true,
       });
     },
+  });
+
+  const [
+    addNetwork,
+    {
+      data: addNetworkData,
+      error: addNetworkError,
+      loading: addNetworkLoading,
+    },
+  ] = useAddNetworkMutation({
+    onCompleted: (data) => {},
+    onError: (error) => {},
   });
 
   const [getOrgs, { data: orgsData, error: orgsError, loading: orgsLoading }] =
@@ -202,14 +217,18 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   const handlePageChange = (page: string) => setPage(page);
   const handleNetworkChange = (id: string) => {
-    setCommonData({
-      ..._commonData,
-      networkId: id,
-      networkName:
-        networksData?.getNetworks.networks.filter((n) => n.id === id)[0].name ??
-        '',
-    });
+    if (id) {
+      setCommonData({
+        ..._commonData,
+        networkId: id,
+        networkName:
+          networksData?.getNetworks.networks.filter((n) => n.id === id)[0]
+            .name ?? '',
+      });
+    }
   };
+
+  const handleAddNetworkAction = () => setShowAddNetwork(true);
 
   return (
     <Layout
@@ -223,8 +242,19 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
       networks={networksData?.getNetworks.networks}
+      handleAddNetwork={handleAddNetworkAction}
     >
       <Component {...pageProps} />
+      <AddNetworkDialog
+        isClosable={true}
+        description={'Add network in organization'}
+        title={'Add Network'}
+        isOpen={showAddNetwork}
+        labelSuccessBtn={'Submit'}
+        labelNegativeBtn={'Cancel'}
+        handleSuccessAction={() => {}}
+        handleCloseAction={() => setShowAddNetwork(false)}
+      />
     </Layout>
   );
 };

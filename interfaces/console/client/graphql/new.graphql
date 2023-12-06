@@ -560,15 +560,19 @@ query GetUser($userId: String!) {
 
 ### Networks Start ###
 
+fragment UNetwork on NetworkDto {
+  id
+  name
+  orgId
+  isDeactivated
+  createdAt
+}
+
 query getNetworks {
   getNetworks {
     orgId
     networks {
-      id
-      name
-      orgId
-      isDeactivated
-      createdAt
+      ...UNetwork
     }
   }
 }
@@ -583,6 +587,12 @@ query getSites($networkId: String!) {
       isDeactivated
       createdAt
     }
+  }
+}
+
+mutation AddNetwork($data: AddNetworkInputDto!) {
+  addNetwork(data: $data) {
+    ...UNetwork
   }
 }
 

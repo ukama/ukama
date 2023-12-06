@@ -8,13 +8,22 @@
 
 import colors from '@/styles/theme/colors';
 import { SelectItemType } from '@/types';
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import Add from '@mui/icons-material/Add';
+import {
+  Button,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@mui/material';
 
 interface IBasicDropdown {
   value: string;
   placeholder: string;
   isLoading?: boolean;
   handleOnChange: Function;
+  handleAddNetwork: Function;
   list: SelectItemType[];
 }
 const BasicDropdown = ({
@@ -22,6 +31,7 @@ const BasicDropdown = ({
   list,
   placeholder,
   handleOnChange,
+  handleAddNetwork,
 }: IBasicDropdown) => (
   <FormControl sx={{ width: '100%' }} size="small">
     {!value && (
@@ -50,6 +60,35 @@ const BasicDropdown = ({
           {item.label}
         </MenuItem>
       ))}
+      {list?.length === 0 && <MenuItem disabled>No network found!</MenuItem>}
+      <Divider sx={{ width: '100%', height: '1px' }} />
+      <Button
+        startIcon={<Add sx={{ color: colors.black70 }} />}
+        sx={{
+          px: 2,
+          py: 1,
+          color: 'textPrimary',
+          typography: 'body1',
+          fontWeight: 400,
+          display: 'flex',
+          cursor: 'pointer',
+          textTransform: 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ':hover': {
+            backgroundColor: colors.primaryMain02,
+          },
+          ':hover .MuiSvgIcon-root': {
+            fill: colors.primaryMain,
+          },
+        }}
+        onClick={(e) => {
+          handleAddNetwork();
+          e.stopPropagation();
+        }}
+      >
+        Add new network
+      </Button>
     </Select>
   </FormControl>
 );
