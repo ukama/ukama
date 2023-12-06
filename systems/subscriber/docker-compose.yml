@@ -46,7 +46,7 @@ services:
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
-   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
    - ORGNAME=ukama-test-org
   restart: always
   networks:

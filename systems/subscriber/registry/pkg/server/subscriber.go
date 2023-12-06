@@ -10,21 +10,24 @@ package server
 
 import (
 	"context"
+	"fmt"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	validate "github.com/ukama/ukama/systems/common/validation"
-	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	validate "github.com/ukama/ukama/systems/common/validation"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type SubcriberServer struct {
@@ -34,30 +37,32 @@ type SubcriberServer struct {
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRegistryServiceServer
 	simManagerService client.SimManagerClientProvider
-	network           client.NetworkInfoClient
+	networkClient     cclient.NetworkClient
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.NetworkInfoClient) *SubcriberServer {
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, networkClient cclient.NetworkClient) *SubcriberServer {
 	return &SubcriberServer{
 		orgName:              orgName,
 		subscriberRepo:       subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,
-		network:              network,
+		networkClient:        networkClient,
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	logrus.Infof("Adding subscriber: %v", req)
+	log.Infof("Adding subscriber: %v", req)
+
 	var dob string
+
 	networkId, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of network uuid. Error %s", err.Error())
 	}
-	orgId, err := uuid.FromString(req.GetOrgId())
 
+	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
@@ -71,9 +76,16 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	subscriberId := uuid.NewV4()
-	err = s.network.ValidateNetwork(networkId.String(), orgId.String())
+
+	networkInfo, err := s.networkClient.Get(networkId.String())
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
+	}
+
+	if orgId.String() != networkInfo.OrgId {
+		log.Error("Missing network.")
+
+		return nil, fmt.Errorf("Network mismatch")
 	}
 
 	subscriber := &db.Subscriber{
@@ -93,77 +105,84 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
-		logrus.Error("error while adding subscriber" + err.Error())
+		log.Error("error while adding subscriber" + err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
-
 	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
+
 	err = s.msgbus.PublishRequest(route, subscriberPb)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
 	}
 
 	return &pb.AddSubscriberResponse{
 		Subscriber: subscriberPb,
 	}, nil
-
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-
 	subscriberIdReq := req.GetSubscriberId()
+
 	subscriberId, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid subscriberId format: %v", err.Error())
 	}
 
-	logrus.Infof("Getting subscriber with ID: %v", subscriberId)
+	log.Infof("Getting subscriber with ID: %v", subscriberId)
+
 	subscriber, err := s.subscriberRepo.Get(subscriberId)
 	if err != nil {
-		logrus.Errorf("Error while getting subscriber: %s", err.Error())
+		log.Errorf("Error while getting subscriber: %s", err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Errorf("Error while calling SimManagerServiceClient: %s", err.Error())
+		log.Errorf("Error while calling SimManagerServiceClient: %s", err.Error())
+
 		return nil, err
 	}
 
 	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
-		SubscriberId: subscriberId.String(),
-	})
+		SubscriberId: subscriberId.String()})
 	if err != nil {
-		logrus.Errorf("Error while getting Sims by subscriber: %s", err.Error())
+		log.Errorf("Error while getting Sims by subscriber: %s", err.Error())
+
 		return nil, err
 	}
 
 	resp := &pb.GetSubscriberResponse{
 		Subscriber: dbSubscriberToPbSubscriber(subscriber, pbManagerSimsToPbSubscriberSims(simRep.Sims)),
 	}
+
 	return resp, nil
 }
 
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
-	logrus.Infof("List all subscribers")
+	log.Infof("List all subscribers")
 
 	subscribers, err := s.subscriberRepo.ListSubscribers()
 	if err != nil {
-		logrus.WithError(err).Error("error while getting all subscribers")
+		log.WithError(err).Error("error while getting all subscribers")
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
 	}
 
 	simManagerClient, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Errorf("Failed to call SimManagerServiceClient. Error: %s", err.Error())
+		log.Errorf("Failed to call SimManagerServiceClient. Error: %s", err.Error())
+
 		return nil, err
 	}
 
 	simRep, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{})
 	if err != nil {
-		logrus.Errorf("Failed to get Sims by subscriber. Error: %s", err.Error())
+		log.Errorf("Failed to get Sims by subscriber. Error: %s", err.Error())
+
 		return nil, err
 	}
 
@@ -205,9 +224,12 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 
 	return subscriberList, nil
 }
+
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	log.Infof("Get subscribers by network: %v ", req)
+
 	networkIdReq := req.GetNetworkId()
-	logrus.Infof("Get subscribers by network: %v ", networkIdReq)
+
 	networkId, err := uuid.FromString(networkIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid networkId: %s", err.Error())
@@ -215,19 +237,22 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 
 	subscribers, err := s.subscriberRepo.GetByNetwork(networkId)
 	if err != nil {
-		logrus.WithError(err).Error("error while getting subscribers by network")
+		log.WithError(err).Error("error while getting subscribers by network")
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
 	}
 
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+		log.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+
 		return nil, err
 	}
 
 	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkId: networkIdReq})
 	if err != nil {
-		logrus.Errorf("Failed to get Sims by network. Error: %s", err.Error())
+		log.Errorf("Failed to get Sims by network. Error: %s", err.Error())
+
 		return nil, err
 	}
 
@@ -238,13 +263,16 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 
 	return subscriberList, nil
 }
+
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
-	logrus.Infof("Updating subscriber: %v", req)
+	log.Infof("Updating subscriber: %v", req)
+
 	subscriberId, err := uuid.FromString(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
+
 	subscriber := &db.Subscriber{
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
@@ -256,16 +284,18 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 	err = s.subscriberRepo.Update(subscriberId, *subscriber)
 	if err != nil {
-		logrus.Errorf("error while updating subscriber" + err.Error())
+		log.Errorf("error while updating subscriber" + err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 
 	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
+
 	err = s.msgbus.PublishRequest(route, subscriberPb)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
 	}
 
 	return &pb.UpdateSubscriberResponse{}, nil
@@ -278,17 +308,23 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
-	logrus.Infof("Delete Subscriber : %v ", subscriberId)
+
+	log.Infof("Delete Subscriber : %v ", subscriberId)
+
 	err = s.subscriberRepo.Delete(subscriberId)
 	if err != nil {
-		logrus.WithError(err).Error("error while deleting subscriber")
+		log.WithError(err).Error("error while deleting subscriber")
+
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
+
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
+
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
 	return &pb.DeleteSubscriberResponse{}, nil
 }
 
@@ -304,6 +340,7 @@ func dbSubScribersToPbSubscribers(subscriber []db.Subscriber, sims []*pb.Sim) []
 		}
 		res = append(res, dbSubscriberToPbSubscriber(&u, subscriberSims))
 	}
+
 	return res
 }
 func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*pb.Sim {
@@ -327,6 +364,7 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*pb.Sim {
 
 		res = append(res, ss)
 	}
+
 	return res
 }
 
@@ -349,5 +387,4 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		UpdatedAt:             s.UpdatedAt.String(),
 		Dob:                   s.DOB,
 	}
-
 }
