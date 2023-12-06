@@ -31,6 +31,7 @@ import (
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -43,7 +44,7 @@ type SimManagerServer struct {
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
-	packageClient             providers.PackageClient
+	packageClient             cclient.PackageClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
@@ -52,21 +53,21 @@ type SimManagerServer struct {
 	org                       string
 	orgName                   string
 	pushMetricHost            string
-	notificationClient        providers.NotificationClient
-	networkClient             providers.NetworkClientProvider
+	mailerClient              cclient.MailerClient
+	networkClient             cclient.NetworkClient
 	pb.UnimplementedSimManagerServiceServer
 }
 
 func NewSimManagerServer(
 	orgName string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, packageClient providers.PackageClient,
+	agentFactory adapters.AgentFactory, packageClient cclient.PackageClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
 	msgBus mb.MsgBusServiceClient,
 	org string,
 	pushMetricHost string,
-	notificationClient providers.NotificationClient,
-	networkClient providers.NetworkClientProvider,
+	mailerClient cclient.MailerClient,
+	networkClient cclient.NetworkClient,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -82,7 +83,7 @@ func NewSimManagerServer(
 		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
-		notificationClient:        notificationClient,
+		mailerClient:              mailerClient,
 		networkClient:             networkClient,
 	}
 }
@@ -116,7 +117,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	packageInfo, err := s.packageClient.GetPackageInfo(packageID.String())
+	packageInfo, err := s.packageClient.Get(packageID.String())
 	// think about how to handle different types of rest errors
 	if err != nil {
 		return nil, err
@@ -180,7 +181,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of subscriber's network uuid. Error %s", err.Error())
 	}
 
-	netInfo, err := s.networkClient.GetNetwork(remoteSubResp.Subscriber.NetworkId)
+	netInfo, err := s.networkClient.Get(remoteSubResp.Subscriber.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
@@ -284,7 +285,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
-		err = s.notificationClient.SendEmail(providers.SendEmailReq{
+		err = s.mailerClient.SendEmail(cclient.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
 			TemplateName: "sim-allocation",
 			Values: map[string]interface{}{
@@ -489,7 +490,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	pkgInfo, err := s.packageClient.GetPackageInfo(packageID.String())
+	pkgInfo, err := s.packageClient.Get(packageID.String())
 	if err != nil {
 		return nil, err
 	}

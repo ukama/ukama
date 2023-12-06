@@ -11,20 +11,17 @@ package adapters
 import (
 	"context"
 
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 )
 
 type OperatorAgentAdaper struct {
 	host    string
 	isDebug bool
-	client  providers.OperatorClient
+	client  cclient.OperatorClient
 }
 
 func NewOperatorAgentAdapter(operatorAgentHost string, debug bool) (*OperatorAgentAdaper, error) {
-	c, err := providers.NewOperatorClient(operatorAgentHost, debug)
-	if err != nil {
-		return nil, err
-	}
+	c := cclient.NewOperatorClient(operatorAgentHost)
 
 	return &OperatorAgentAdaper{
 		host:    operatorAgentHost,

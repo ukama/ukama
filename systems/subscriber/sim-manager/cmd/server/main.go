@@ -31,6 +31,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -102,17 +103,10 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient, err := providers.NewPackageClient(serviceConfig.DataPlan, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
-			serviceConfig.DataPlan, err)
-	}
-	nucleusP := providers.NewNetworkClientProvider(serviceConfig.NetworkHost, serviceConfig.DebugMode)
+	pckgClient := cclient.NewPackageClient(serviceConfig.DataPlanHost)
+	netClient := cclient.NewNetworkClient(serviceConfig.RegistryHost)
+	notificationClient := cclient.NewMailerClient(serviceConfig.NotificationHost)
 
-	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
-	}
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,
 		db.NewSimRepo(gormDB),
@@ -126,7 +120,7 @@ func runGrpcServer(gormDB sql.Db) {
 		serviceConfig.Org,
 		serviceConfig.PushMetricHost,
 		notificationClient,
-		nucleusP,
+		netClient,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)
