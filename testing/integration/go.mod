@@ -44,23 +44,23 @@ replace github.com/ukama/ukama/systems/billing/invoice => ../../systems/billing/
 
 require (
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
-	github.com/go-faker/faker/v4 v4.1.1
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-faker/faker/v4 v4.2.0
+	github.com/go-resty/resty/v2 v2.10.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/num30/config v0.1.2
-	github.com/rabbitmq/amqp091-go v1.8.1
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/ukama/ukama/systems/billing/invoice v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/data-plan/api-gateway v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
-	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/nucleus/api-gateway v0.0.0-20230906175655-ca7ed9166ea5
+	github.com/ukama/ukama/systems/nucleus/api-gateway v0.0.0-20231128003745-707896415f30
 	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/api-gateway v0.0.0-00010101000000-000000000000
@@ -75,7 +75,7 @@ require (
 	github.com/wagslane/go-rabbitmq v0.12.4
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apimachinery v0.28.1
+	k8s.io/apimachinery v0.28.4
 )
 
 require (
@@ -97,7 +97,7 @@ require (
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iamolegga/enviper v1.4.0 // indirect
@@ -107,7 +107,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.1 // indirect
+	github.com/jackc/pgx/v5 v5.4.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -143,18 +143,18 @@ require (
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
-	google.golang.org/grpc v1.58.0 // indirect
+	google.golang.org/grpc v1.59.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.2 // indirect
-	gorm.io/gorm v1.25.4 // indirect
+	gorm.io/driver/postgres v1.5.4 // indirect
+	gorm.io/gorm v1.25.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )

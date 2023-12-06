@@ -25,6 +25,8 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
+const OrgName = "testorg"
+
 func init() {
 	pkg.IsDebugMode = true
 }
@@ -36,7 +38,7 @@ func Test_RouterPing(t *testing.T) {
 
 	defconf := pkg.NewConfig(pkg.ServiceName)
 
-	r := NewRouter(defconf, nil).fizz.Engine()
+	r := NewRouter(defconf, OrgName, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -58,7 +60,7 @@ func Test_RouterPut(t *testing.T) {
 	defconf.Distribution.Chunk.Stores[0] = "./test/data/store"
 
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-	r := NewRouter(defconf, msgbusClient).fizz.Engine()
+	r := NewRouter(defconf, OrgName, msgbusClient).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -77,7 +79,7 @@ func Test_RouterPutNoStore(t *testing.T) {
 
 	defconf := pkg.NewConfig(pkg.ServiceName)
 
-	r := NewRouter(defconf, nil).fizz.Engine()
+	r := NewRouter(defconf, OrgName, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

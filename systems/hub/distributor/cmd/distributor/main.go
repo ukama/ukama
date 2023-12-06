@@ -79,14 +79,14 @@ func startChunkRequestServer(ctx context.Context) {
 		instanceId = uuid.NewV4().String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	r := server.NewRouter(serviceConfig, mbClient)
+	r := server.NewRouter(serviceConfig, serviceConfig.OrgName, mbClient)
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 

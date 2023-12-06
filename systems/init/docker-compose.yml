@@ -23,7 +23,7 @@ services:
    - MSGCLIENT_HOST=msgclient-init:9095
    - LOOKUP_SERVICE_HOST=lookup
    - LOOKUP_SERVICE_PORT=9090
-   - ORGNAME=ukama-org
+   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -81,7 +81,7 @@ services:
    - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
    - SHOVEL_SRCURI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SHOVEL_DESTURI=amqp://user:password@192.168.0.26:5672
-   - ORGNAME=ukama-org
+   - ORGNAME=ukama-test-org
    - MASTERORGNAME=ukama
    - MSGBUS_MANAGEMENTURI=http://${LOCAL_HOST_IP}:15672
    - MSGBUS_USER=guest

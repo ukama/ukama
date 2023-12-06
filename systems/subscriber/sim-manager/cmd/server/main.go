@@ -11,6 +11,10 @@ package main
 import (
 	"os"
 
+	"github.com/num30/config"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -21,10 +25,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
-
-	"github.com/num30/config"
-	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"

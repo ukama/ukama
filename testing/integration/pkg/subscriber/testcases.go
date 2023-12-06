@@ -21,6 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
@@ -107,7 +108,7 @@ func InitializeData() *InitData {
 	d.Sys = NewSubscriberClient(d.Host)
 	d.Reg = registry.NewRegistryClient(d.RegHost)
 	d.Nuc = nucleus.NewNucleusClient(d.NucHost)
-	d.EncKey = config.Key
+	d.EncKey = config.EncryptKey
 	d.SimType = "test"
 	d.OrgId = config.OrgId
 	d.OrgName = config.OrgName
@@ -237,7 +238,8 @@ var TC_simpool_upload = &test.TestCase{
 		*/
 		a := tc.GetWorkflowData().(*InitData)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("upload").SetObject("sim").MustBuild())
 		return nil
 	},
 
@@ -366,20 +368,17 @@ var TC_registry_add_subscriber = &test.TestCase{
 	Description: "Add subscriber to registry",
 	Data:        &rpb.AddSubscriberResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqSubscriberAddReq.NetworkId = a.NetworkId
 		a.reqSubscriberAddReq.OrgId = a.OrgId
 		tc.SaveWorkflowData(a)
-		// log.Tracef("Setting up watcher for %s", tc.Name)
-		// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("registry").SetAction("create").SetObject("subscriber").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -392,7 +391,6 @@ var TC_registry_add_subscriber = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*rpb.AddSubscriberResponse)
@@ -408,15 +406,12 @@ var TC_registry_add_subscriber = &test.TestCase{
 	},
 
 	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Here we save any data required to be saved from the test case
-		Cleanup any test specific data
-		*/
 		resp := tc.GetData().(*rpb.AddSubscriberResponse)
 		a := tc.GetWorkflowData().(*InitData)
 		a.SubscriberId = resp.Subscriber.SubscriberId
 		tc.SaveWorkflowData(a)
 
-		//tc.Watcher.Stop()
+		tc.Watcher.Stop()
 		return nil
 	},
 }
@@ -427,9 +422,6 @@ var TC_registry_get_subscriber = &test.TestCase{
 	Data:        &rpb.GetSubscriberResponse{},
 
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqSubscriberGetReq.SubscriberId = a.SubscriberId
 		tc.SaveWorkflowData(a)
@@ -437,7 +429,6 @@ var TC_registry_get_subscriber = &test.TestCase{
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -450,7 +441,6 @@ var TC_registry_get_subscriber = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		resp := tc.GetData().(*rpb.GetSubscriberResponse)
@@ -472,9 +462,6 @@ var TC_manager_allocate_sim = &test.TestCase{
 	Description: "Allocating a sim to subscriber",
 	Data:        &mpb.AllocateSimResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqAllocateSimReq.NetworkId = a.NetworkId
 		a.reqAllocateSimReq.PackageId = a.PackageId
@@ -484,7 +471,8 @@ var TC_manager_allocate_sim = &test.TestCase{
 
 		tc.SaveWorkflowData(a)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("allocate").SetObject("sim").MustBuild())
 		return nil
 	},
 
@@ -682,9 +670,6 @@ var TC_manager_activate_sim = &test.TestCase{
 	Description: "Activate a sim of subscriber",
 	Data:        &mpb.ToggleSimStatusResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.SimStatus = "active"
 		a.reqActivateDeactivateSimReq.SimId = a.SimId
@@ -918,20 +903,17 @@ var TC_manager_set_active_package_for_sim = &test.TestCase{
 	Description: "Set active package for a sim",
 	Data:        &mpb.SetActivePackageResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-		/* Setup required for test case
-		Initialize any test specific data if required
-		*/
 		a := tc.GetWorkflowData().(*InitData)
 		a.reqSetActivePackageForSimReq.SimId = a.SimId
 		a.reqSetActivePackageForSimReq.PackageId = a.ActivePackageId
 		tc.SaveWorkflowData(a)
 		log.Tracef("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.activepackage"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("activepackage").SetObject("sim").MustBuild())
 		return nil
 	},
 
 	Fxn: func(ctx context.Context, tc *test.TestCase) error {
-		/* Test Case */
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
@@ -944,7 +926,6 @@ var TC_manager_set_active_package_for_sim = &test.TestCase{
 	},
 
 	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-		/* Check for possible failures during test case */
 		check := false
 
 		if tc.Watcher.Expections() {

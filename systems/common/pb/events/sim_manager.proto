@@ -44,7 +44,8 @@ message SimAllocation {
     string type = 9;
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
-    uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
+    string packageId = 12 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+    uint32 trafficPolicy = 13 [json_name = "traffic_policy"];
 }
 
 

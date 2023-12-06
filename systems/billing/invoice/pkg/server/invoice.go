@@ -15,41 +15,44 @@ import (
 	"path/filepath"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
-
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/client"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	"github.com/ukama/ukama/systems/common/grpc"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
 const defaultTemplate = "templates/invoice.html.tmpl"
 const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
-	invoiceRepo    db.InvoiceRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	invoiceRepo      db.InvoiceRepo
+	subscriberClient client.SubscriberClient
+	msgbus           mb.MsgBusServiceClient
+	baseRoutingKey   msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient client.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
-		invoiceRepo:    invoiceRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		invoiceRepo:      invoiceRepo,
+		subscriberClient: subscriberClient,
+		msgbus:           msgBus,
+		baseRoutingKey:   msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -76,8 +79,14 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 
+	subscriberInfo, err := i.subscriberClient.Get(subscriberId.String())
+	if err != nil {
+		return nil, err
+	}
+
 	invoice := &db.Invoice{
 		SubscriberId: subscriberId,
+		NetworkId:    subscriberInfo.NetworkId,
 	}
 
 	log.Infof("Adding invoice for subscriber: %s", subscriberId)
@@ -164,6 +173,26 @@ func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscr
 	return resp, nil
 }
 
+func (i *InvoiceServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	networkId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
+	}
+
+	invoices, err := i.invoiceRepo.GetByNetwork(networkId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invoices")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkId: req.NetworkId,
+		Invoices:  dbInvoicesToPbInvoices(invoices),
+	}
+
+	return resp, nil
+}
+
 func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting invoice %s", req.InvoiceId)
 
@@ -218,6 +247,7 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	inv := &pb.Invoice{
 		Id:           invoice.Id.String(),
 		SubscriberId: invoice.SubscriberId.String(),
+		NetworkId:    invoice.NetworkId.String(),
 		Period:       timestamppb.New(invoice.Period),
 		IsPaid:       invoice.IsPaid,
 		CreatedAt:    timestamppb.New(invoice.CreatedAt),

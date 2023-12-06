@@ -14,8 +14,6 @@ services:
 
  org:
   build: ./org
-  ports:
-   - '9061:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus
@@ -23,7 +21,7 @@ services:
    - DB_USER=postgres
    - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
    - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-   - ORGNAME=ukama-org
+   - ORGNAME=ukama-test-org
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-nucleus:9095
    - ORG_SERVICE_HOST=org
@@ -39,8 +37,6 @@ services:
 
  user:
   build: ./user
-  ports:
-   - '9062:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus
@@ -58,7 +54,7 @@ services:
    - USER_SERVICE_PORT=9090
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
    - ORG=org:9090
-   - ORGNAME=ukama-org
+   - ORGNAME=ukama-test-org
    # - HSSHOST=hss:9090
    # - SIMMANAGER_HOST=simmanager:9090
    # - SIMMANAGER_TIMEOUT=3s
@@ -89,8 +85,6 @@ services:
 
  msgclient-nucleus:
   build: ../services/msgClient
-  ports:
-   - '9095:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-nucleus
@@ -109,7 +103,7 @@ services:
    dockerfile: ./Dockerfile
    context: ../services/initClient
   environment:
-   - ENV_SYSTEM_ORG=ukama-org
+   - ENV_SYSTEM_ORG=ukama-test-org
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=nucleus
    - ENV_SYSTEM_DNS=api-gateway-nucleus

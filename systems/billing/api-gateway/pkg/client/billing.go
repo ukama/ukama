@@ -12,12 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
-
-	"google.golang.org/grpc"
 )
 
 type Billing struct {
@@ -56,12 +55,13 @@ func NewBilling(invoiceHost, fileHost string, timeout time.Duration) *Billing {
 	}
 }
 
-func NewBillingFromClient(invoiceClient pb.InvoiceServiceClient) *Billing {
+func NewBillingFromClient(invoiceClient pb.InvoiceServiceClient, pdfClient PdfClient) *Billing {
 	return &Billing{
 		invoiceHost:   "localhost",
 		timeout:       1 * time.Second,
 		conn:          nil,
 		invoiceClient: invoiceClient,
+		pdfClient:     pdfClient,
 	}
 }
 
@@ -98,7 +98,7 @@ func (b *Billing) GetInvoice(invoiceId string, AsPDF bool) (*pb.GetResponse, err
 	return res, nil
 }
 
-func (r *Billing) GetInvoices(subscriberId string) (*pb.GetBySubscriberResponse, error) {
+func (r *Billing) GetInvoicesBySubscriber(subscriberId string) (*pb.GetBySubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -111,6 +111,24 @@ func (r *Billing) GetInvoices(subscriberId string) (*pb.GetBySubscriberResponse,
 
 	if res.Invoices == nil {
 		return &pb.GetBySubscriberResponse{Invoices: []*pb.Invoice{}, SubscriberId: subscriberId}, nil
+	}
+
+	return res, nil
+}
+
+func (r *Billing) GetInvoicesByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.invoiceClient.GetByNetwork(ctx,
+		&pb.GetByNetworkRequest{NetworkId: networkId})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Invoices == nil {
+		return &pb.GetByNetworkResponse{Invoices: []*pb.Invoice{}, NetworkId: networkId}, nil
 	}
 
 	return res, nil

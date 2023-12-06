@@ -13,10 +13,10 @@ import (
 	"fmt"
 	"net/url"
 
-	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
+	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 )
 
 type BillingClient struct {
@@ -62,7 +62,7 @@ func (s *BillingClient) GetPlan(planCode string) (*bilutil.Plan, error) {
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
-		return nil, fmt.Errorf("GetCustomer failure: %w", err)
+		return nil, fmt.Errorf("GetPlan failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), rsp)

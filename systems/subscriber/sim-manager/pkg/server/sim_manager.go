@@ -257,23 +257,24 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
 	}
 
+	sim.Package = *firstPackage
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
 	evt := &epb.SimAllocation{
-		Id:            sim.Id.String(),
-		SubscriberId:  sim.SubscriberId.String(),
-		OrgId:         sim.OrgId.String(),
-		NetworkId:     sim.NetworkId.String(),
-		DataPlanId:    sim.Package.PackageId.String(),
-		Iccid:         sim.Iccid,
-		Msisdn:        sim.Msisdn,
-		Imsi:          sim.Imsi,
-		Type:          sim.Type.String(),
-		Status:        sim.Status.String(),
-		TrafficPolicy: sim.TrafficPolicy,
-		IsPhysical:    sim.IsPhysical,
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		NetworkId:    sim.NetworkId.String(),
+		OrgId:        sim.OrgId.String(),
+		DataPlanId:   sim.Package.PackageId.String(),
+		Iccid:        sim.Iccid,
+		Msisdn:       sim.Msisdn,
+		Imsi:         sim.Imsi,
+		Type:         sim.Type.String(),
+		Status:       sim.Status.String(),
+		IsPhysical:   sim.IsPhysical,
+		PackageId:    sim.Package.Id.String(),
 	}
 
 	err = s.msgbus.PublishRequest(route, evt)
