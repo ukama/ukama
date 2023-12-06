@@ -187,7 +187,9 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 			url, resp.StatusCode(), errMsg.Error)
 
 		return nil, fmt.Errorf("rest api DELETE failure with error: %w",
-			&ErrorStatus{StatusCode: resp.StatusCode()})
+			ErrorStatus{StatusCode: resp.StatusCode(),
+				Msg: errMsg.Error,
+			})
 	}
 
 	return resp, nil
@@ -199,5 +201,5 @@ type ErrorStatus struct {
 }
 
 func (e ErrorStatus) Error() string {
-	return e.Msg
+	return fmt.Sprintf("%d:%s", e.StatusCode, e.Msg)
 }
