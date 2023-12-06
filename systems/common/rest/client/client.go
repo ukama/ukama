@@ -89,9 +89,9 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 }
 
 func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R()
+	req := r.C.R().SetError(&crest.ErrorResponse{})
 	if b != nil {
-		req = r.C.R().SetError(&crest.ErrorResponse{}).SetBody(b)
+		req = req.SetBody(b)
 	}
 
 	resp, err := req.Post(url)
@@ -117,9 +117,9 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 }
 
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R()
+	req := r.C.R().SetError(&crest.ErrorResponse{})
 	if b != nil {
-		req = r.C.R().SetError(&crest.ErrorResponse{}).SetBody(b)
+		req = req.SetBody(b)
 	}
 
 	resp, err := req.Put(url)
@@ -145,9 +145,9 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 }
 
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R()
+	req := r.C.R().SetError(&crest.ErrorResponse{})
 	if b != nil {
-		req = r.C.R().SetError(&crest.ErrorResponse{}).SetBody(b)
+		req = req.SetBody(b)
 	}
 
 	resp, err := req.Patch(url)
@@ -173,19 +173,18 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 }
 
 func (r *Resty) Delete(url string) (*resty.Response, error) {
-	errStatus := crest.ErrorMessage{}
-
-	resp, err := r.C.R().SetError(&errStatus).Delete(url)
+	resp, err := r.C.R().SetError(&crest.ErrorResponse{}).Delete(url)
 	if err != nil {
 		log.Errorf("Failed to send DELETE api request with  error: %s", err.Error())
-		log.Infof("errorStatus: %v", errStatus)
 
 		return nil, err
 	}
 
+	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform DELETE operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errStatus.Message)
+			url, resp.StatusCode(), errMsg.Error)
 
 		return nil, fmt.Errorf("rest api DELETE failure with error: %w",
 			&ErrorStatus{StatusCode: resp.StatusCode()})
@@ -200,5 +199,5 @@ type ErrorStatus struct {
 }
 
 func (e ErrorStatus) Error() string {
-	return fmt.Sprintf("%s", e.Msg)
+	return e.Msg
 }
