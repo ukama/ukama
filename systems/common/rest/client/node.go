@@ -95,7 +95,7 @@ func (n *nodeClient) Add(req AddNodeRequest) (*NodeInfo, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+		return nil, fmt.Errorf("request marshal error. error: %w", err)
 	}
 
 	node := Node{}

@@ -15,6 +15,9 @@ gen:
 	mockery --all --recursive --dir ./
 
 
+clean:
+	rm mocks/*.go
+
 test:
 	go test -v ./...
 

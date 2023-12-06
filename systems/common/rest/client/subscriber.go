@@ -82,7 +82,7 @@ func (s *subscriberClient) Add(req AddSubscriberRequest) (*SubscriberInfo, error
 
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+		return nil, fmt.Errorf("request marshal error. error: %w", err)
 	}
 
 	subscriber := Subscriber{}
