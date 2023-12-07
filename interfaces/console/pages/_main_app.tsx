@@ -89,6 +89,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     data: networksData,
     error: networksError,
     loading: networksLoading,
+    refetch: refetchNetworks,
   } = useGetNetworksQuery({
     skip: _commonData?.orgId === '',
     fetchPolicy: 'cache-and-network',
@@ -116,7 +117,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   const [addNetwork, { loading: addNetworkLoading }] = useAddNetworkMutation({
     onCompleted: () => {
-      refc
+      refetchNetworks();
       setSnackbarMessage({
         id: 'add-networks-success',
         message: 'Network added successfully',
