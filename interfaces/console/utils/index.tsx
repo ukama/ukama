@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { NodeTypeEnum } from '@/generated';
 import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
