@@ -18,6 +18,6 @@
 #define DEF_CONFIG_FILE  "ukama.json"
 
 
-#define MAX_CONFIG_FILE_SIZE 1024
+#define MAX_CONFIG_FILE_SIZE 4096
 
 #endif /* BUILDER_H_ */

@@ -24,9 +24,6 @@
 #define JTAG_COUNT              "count"
 #define JTAG_IDS                "ids"
 #define JTAG_LIST               "list"
-#define JTAG_EMAIL              "email"
-#define JTAG_NAME               "name"
-#define JTAG_ORG_NAME           "org-name"
-#define JTAG_ORG_ID             "org-id"
+#define JTAG_ENV                "env"
 
 #endif /* JSON_TYPES_H_ */

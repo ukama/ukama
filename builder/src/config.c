@@ -71,7 +71,11 @@ static bool deserialize_config_file(Config **config, json_t *json) {
     json_t *jNodes  = NULL;
     json_t *jSystems     = NULL;
     json_t *jInterfaces  = NULL;
-    json_t *jDeploySetup = NULL;
+    json_t *jDeployEnv   = NULL;
+
+    int count = 0;
+    const char *key = NULL;
+    json_t *value = NULL;
 
     jSetup = json_object_get(json, JTAG_SETUP);
     jBuild = json_object_get(json, JTAG_BUILD);
@@ -90,10 +94,9 @@ static bool deserialize_config_file(Config **config, json_t *json) {
         return USYS_FALSE;
     }
     
-    jDeploySetup = json_object_get(jDeploy, JTAG_SETUP);
-    if (jDeploySetup == NULL) {
-        usys_log_error("Missing deploy setup in <deploy>");
-        return USYS_FALSE;
+    jDeployEnv = json_object_get(jDeploy, JTAG_ENV);
+    if (jDeployEnv == NULL) {
+        usys_log_debug("No env variable define in <deploy>");
     }
 
     *config = (Config *)calloc(1, sizeof(Config));
@@ -115,6 +118,15 @@ static bool deserialize_config_file(Config **config, json_t *json) {
 
         return USYS_FALSE;
     } 
+
+    jDeployEnv = json_object_get(jDeploy, JTAG_ENV);
+    if (jDeployEnv == NULL) {
+        usys_log_debug("No env variable define in <deploy>");
+    } else {
+        (*config)->deploy->envCount     = json_object_size(jDeployEnv);
+        (*config)->deploy->keyValuePair =
+            calloc((*config)->deploy->envCount, sizeof(KeyValuePair));
+    }
 
     /* setup */
     ret |= get_json_entry(jSetup, JTAG_NETWORK_INTERFACE, JSON_STRING,
@@ -149,15 +161,13 @@ static bool deserialize_config_file(Config **config, json_t *json) {
     }
 
     /* deploy */
-    ret |= get_json_entry(jDeploySetup, JTAG_EMAIL, JSON_STRING,
-                          &(*config)->deploy->email, NULL);
-    ret |= get_json_entry(jDeploySetup, JTAG_NAME, JSON_STRING,
-                          &(*config)->deploy->name, NULL);
-    ret |= get_json_entry(jDeploySetup, JTAG_ORG_NAME, JSON_STRING,
-                          &(*config)->deploy->orgName, NULL);
-    ret |= get_json_entry(jDeploySetup, JTAG_ORG_ID, JSON_STRING,
-                          &(*config)->deploy->orgID, NULL);
-
+    json_object_foreach(jDeployEnv, key, value) {
+        if (json_is_string(value)) {
+            (*config)->deploy->keyValuePair[count].key   = strdup(key);
+            (*config)->deploy->keyValuePair[count].value = strdup(json_string_value(value));
+            count++;
+        }
+    }
     ret |= get_json_entry(jDeploy, JTAG_SYSTEMS, JSON_STRING,
                           &(*config)->deploy->systemsList, NULL);
     ret |= get_json_entry(jDeploy, JTAG_NODES, JSON_STRING,
@@ -230,6 +240,8 @@ bool read_config_file(Config **config, char *fileName) {
 
 void free_config(Config *config) {
 
+    int count;
+
     if (config == NULL) return;
 
     if (config->setup) {
@@ -246,11 +258,12 @@ void free_config(Config *config) {
     }
 
     if (config->deploy) {
-        usys_free(config->deploy->email);
-        usys_free(config->deploy->name);
-        usys_free(config->deploy->orgName);
-        usys_free(config->deploy->orgID);
 
+        for (count = 0; count < config->deploy->envCount; count++) {
+            usys_free(config->deploy->keyValuePair[count].key);
+            usys_free(config->deploy->keyValuePair[count].value);
+        }
+        usys_free(config->deploy->keyValuePair);
         usys_free(config->deploy->systemsList);
         usys_free(config->deploy->nodeIDsList);
     }
@@ -261,4 +274,3 @@ void free_config(Config *config) {
 
     usys_free(config);
 }
-
