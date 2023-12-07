@@ -18,9 +18,7 @@
 #include "usys_types.h"
 
 #define SCRIPT      "./scripts/build.sh"
-#define MAX_BUFFER  1024
-#define DELIMINATOR ","
-#define UKAMA_AUTH  "ukama-auth"
+
 #define DEF_NODE_ID "ukma-sa0001-tnode-a1-1234"
 
 static bool build_system(char *name, char *path) {

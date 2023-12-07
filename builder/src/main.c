@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
                        configFile);
         goto done;
     }
-
+#if 0
     /* build all systems */
     if (!build_all_systems(config->build->systemsList,
                            config->setup->ukamaRepo,
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
                      config->build->nodeIDsList)) {
         usys_log_error("Build (node) error. Exiting ...");
     }
-
+#endif
 done:
     free_config(config);
     return USYS_TRUE;

@@ -11,6 +11,11 @@
 
 #include <stdbool.h>
 
+typedef struct {
+    char *key;
+    char *value;
+} KeyValuePair;
+
 typedef struct setupConfig_ {
 
     char *networkInterface;
@@ -29,10 +34,8 @@ typedef struct buildConfig_ {
 
 typedef struct deployConfig_ {
 
-    char *email;
-    char *name;
-    char *orgName;
-    char *orgID;
+    int          envCount;
+    KeyValuePair *keyValuePair;
 
     char *systemsList;
     char *nodeIDsList;
