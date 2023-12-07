@@ -9,26 +9,26 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import {
+  PackagesResDto,
   SubscribersResDto,
-  useUpdateSubscriberMutation,
-  useGetSubscriberLazyQuery,
-  useDeleteSimMutation,
-  useGetSimsBySubscriberLazyQuery,
-  useGetPackagesForSimLazyQuery,
-  useGetPackagesQuery,
-  useGetSimpoolStatsQuery,
-  useGetSubscribersByNetworkQuery,
-  useAddSubscriberMutation,
-  useGetSimLazyQuery,
   useAddPackageToSimMutation,
+  useAddSubscriberMutation,
+  useAllocateSimMutation,
+  useDeleteSimMutation,
   useDeleteSubscriberMutation,
   useGetNetworksQuery,
+  useGetPackagesForSimLazyQuery,
+  useGetPackagesQuery,
+  useGetSimLazyQuery,
+  useGetSimpoolStatsQuery,
+  useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
+  useGetSitesQuery,
+  useGetSubscriberLazyQuery,
+  useGetSubscribersByNetworkQuery,
   useSetActivePackageForSimMutation,
   useToggleSimStatusMutation,
-  PackagesResDto,
-  useAllocateSimMutation,
-  useGetSitesQuery,
+  useUpdateSubscriberMutation,
 } from '@/generated';
 import {
   ContainerMax,
@@ -39,11 +39,11 @@ import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
 import AddSubscriberDialog from '@/ui/molecules/AddSubscriber';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
-import SubscriberDetails from '@/ui/molecules/SubscriberDetails';
-import TopUpData from '@/ui/molecules/TopUpData';
+import DeleteConfirmation from '@/ui/molecules/DeleteDialog';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
-import DeleteConfirmation from '@/ui/molecules/DeleteDialog';
+import SubscriberDetails from '@/ui/molecules/SubscriberDetails';
+import TopUpData from '@/ui/molecules/TopUpData';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import { AlertColor, Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
@@ -729,7 +729,11 @@ const Page = () => {
             loading={updateSubscriberLoading || deleteSimLoading}
             handleDeleteSubscriber={handleDeleteSubscriberModal}
             simStatusLoading={toggleSimStatusLoading}
-            currentSite={sitesData?.getSites?.sites[0].name}
+            currentSite={
+              sitesData?.getSites?.sites.length > 0
+                ? sitesData?.getSites?.sites[0].name
+                : '-'
+            }
           />
           <TopUpData
             isToPup={isToPupData}

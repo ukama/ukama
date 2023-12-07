@@ -18,16 +18,16 @@ const getTitleFromPath = (path: string, id: string) => {
       return 'Home';
     case '/settings':
       return 'Settings';
-    // case '/sites':
-    //   return 'Sites';
+    case '/sites':
+      return 'Sites';
     case '/nodes':
       return 'Nodes';
     case '/nodes/[id]':
       return `Nodes > ${id}`;
     case '/subscribers':
       return 'Subscribers';
-    case '/site_planning':
-      return 'Site Planning';
+    // case '/site_planning':
+    //   return 'Site Planning';
     case '/manage':
       return 'Manage';
     case '/onboarding':
