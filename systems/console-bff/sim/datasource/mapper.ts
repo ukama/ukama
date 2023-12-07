@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { SIM_TYPES } from "../../common/enums";
 import {
   SimAPIResDto,

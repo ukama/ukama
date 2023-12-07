@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
@@ -18,7 +17,6 @@ export class GetSubscribersByNetworkResolver {
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<SubscribersResDto> {
-    console.log("GET SUB NETWORKS: ", networkId);
     const { dataSources } = ctx;
     return await dataSources.dataSource.getSubscribersByNetwork(networkId);
   }

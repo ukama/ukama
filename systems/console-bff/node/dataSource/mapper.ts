@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Node, NodeSite, Nodes } from "../resolvers/types";
 
 export const parseNodesRes = (res: any): Nodes => {
