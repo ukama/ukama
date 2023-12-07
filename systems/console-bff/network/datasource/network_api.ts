@@ -54,7 +54,16 @@ class NetworkApi extends RESTDataSource {
 
   addNetwork = async (req: AddNetworkInputDto): Promise<NetworkDto> => {
     return this.post(`/${VERSION}/networks`, {
-      body: req,
+      body: {
+        allowed_countries: req.countries,
+        allowed_networks: req.networks,
+        budget: req.budget,
+        network_name: req.name,
+        org: req.org,
+        overdraft: 0,
+        payment_links: true,
+        traffic_policy: 0,
+      },
     }).then(res => dtoToNetworkDto(res));
   };
 

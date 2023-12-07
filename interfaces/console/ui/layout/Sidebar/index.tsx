@@ -85,7 +85,7 @@ const Sidebar = ({
     <UkamaDrawer
       open={isOpen}
       variant="permanent"
-      style={{ marginTop: 60, height: '100%' }}
+      style={{ marginTop: 46, height: '100%' }}
     >
       <LoadingWrapper isLoading={isLoading} radius="none">
         <Stack direction={'column'}>

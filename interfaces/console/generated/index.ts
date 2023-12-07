@@ -30,7 +30,10 @@ export type AddMemberInputDto = {
 };
 
 export type AddNetworkInputDto = {
-  network_name: Scalars['String']['input'];
+  budget: Scalars['Float']['input'];
+  countries?: InputMaybe<Array<Scalars['String']['input']>>;
+  name: Scalars['String']['input'];
+  networks?: InputMaybe<Array<Scalars['String']['input']>>;
   org: Scalars['String']['input'];
 };
 
@@ -568,10 +571,13 @@ export type MutationUploadSimsArgs = {
 
 export type NetworkDto = {
   __typename?: 'NetworkDto';
+  budget: Scalars['Float']['output'];
+  countries: Array<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isDeactivated: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  networks: Array<Scalars['String']['output']>;
   orgId: Scalars['String']['output'];
 };
 
@@ -1548,12 +1554,12 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string };
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string }> } };
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
 export type GetSitesQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -1567,7 +1573,7 @@ export type AddNetworkMutationVariables = Exact<{
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string } };
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -1891,6 +1897,8 @@ export const UNetworkFragmentDoc = gql`
   orgId
   isDeactivated
   createdAt
+  countries
+  networks
 }
     `;
 export const LinkFragmentDoc = gql`

@@ -566,6 +566,8 @@ fragment UNetwork on NetworkDto {
   orgId
   isDeactivated
   createdAt
+  countries
+  networks
 }
 
 query getNetworks {

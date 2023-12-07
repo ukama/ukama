@@ -92,7 +92,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
       <LoadingWrapper
         radius="none"
         isLoading={isLoading}
-        height={isOpen ? '52px' : '44px'}
+        height={isOpen ? '46px' : '44px'}
       >
         <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>
           <HorizontalContainerJustify>

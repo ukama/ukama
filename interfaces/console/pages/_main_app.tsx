@@ -114,16 +114,24 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     },
   });
 
-  const [
-    addNetwork,
-    {
-      data: addNetworkData,
-      error: addNetworkError,
-      loading: addNetworkLoading,
+  const [addNetwork, { loading: addNetworkLoading }] = useAddNetworkMutation({
+    onCompleted: () => {
+      refc
+      setSnackbarMessage({
+        id: 'add-networks-success',
+        message: 'Network added successfully',
+        type: 'success',
+        show: true,
+      });
     },
-  ] = useAddNetworkMutation({
-    onCompleted: (data) => {},
-    onError: (error) => {},
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-networks-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
   });
 
   const [getOrgs, { data: orgsData, error: orgsError, loading: orgsLoading }] =
@@ -230,6 +238,30 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   const handleAddNetworkAction = () => setShowAddNetwork(true);
 
+  const handleAddNetwork = (values: any) => {
+    const countriesName =
+      values.countries.length > 0
+        ? values.countries.map((item: any) => item.name)
+        : [];
+    const networkNames =
+      values.networks.length > 0
+        ? values.networks.map((item: any) => item.name)
+        : [];
+    addNetwork({
+      variables: {
+        data: {
+          name: values.name,
+          budget: values.budget,
+          networks: networkNames,
+          org: _commonData.orgName,
+          countries: countriesName,
+        },
+      },
+    }).finally(() => {
+      setShowAddNetwork(false);
+    });
+  };
+
   return (
     <Layout
       page={page}
@@ -246,13 +278,14 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     >
       <Component {...pageProps} />
       <AddNetworkDialog
-        isClosable={true}
-        description={'Add network in organization'}
         title={'Add Network'}
         isOpen={showAddNetwork}
         labelSuccessBtn={'Submit'}
         labelNegativeBtn={'Cancel'}
-        handleSuccessAction={() => {}}
+        loading={addNetworkLoading}
+        handleSuccessAction={handleAddNetwork}
+        description={'Add network in organization'}
+        networks={networksData?.getNetworks.networks || []}
         handleCloseAction={() => setShowAddNetwork(false)}
       />
     </Layout>

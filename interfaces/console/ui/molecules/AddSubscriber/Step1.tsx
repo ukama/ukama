@@ -1,19 +1,16 @@
-import React from 'react';
-import {
-  Button,
-  TextField,
-  Paper,
-  Switch,
-  Radio,
-  Typography,
-  Stack,
-  Grid,
-} from '@mui/material';
 import { globalUseStyles } from '@/styles/global';
 import colors from '@/styles/theme/colors';
-import { Formik, Form } from 'formik';
+import {
+  Button,
+  Grid,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Form, Formik } from 'formik';
+import React, { useState } from 'react';
 import * as Yup from 'yup';
-import { useState } from 'react';
 import SimTypeRadio from './simTypeComp';
 
 const validationSchema = Yup.object({
