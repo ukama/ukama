@@ -17,7 +17,12 @@
 
 #define DEF_CONFIG_FILE  "ukama.json"
 
-
 #define MAX_CONFIG_FILE_SIZE 4096
+#define MAX_LINE_LENGTH      256
+#define MAX_VARIABLES        64
+#define MAX_BUFFER           1024
+
+#define DELIMINATOR ","
+#define UKAMA_AUTH  "ukama-auth"
 
 #endif /* BUILDER_H_ */
