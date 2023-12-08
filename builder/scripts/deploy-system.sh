@@ -63,6 +63,11 @@ if [ "$1" = "system" ]; then
     esac
 
     cd $pwd
+
+elif [ "$1" = "node" ]; then
+    image_file=$2.img
+    sudo qemu-system-x86_64 -hda ${image_file} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
+         -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" || exit 1
 fi
 
 exit 0

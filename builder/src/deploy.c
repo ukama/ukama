@@ -164,3 +164,20 @@ bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authR
 
     return USYS_TRUE;
 }
+
+bool deploy_node(char *id) {
+
+    char *nodeID = NULL;
+    char runMe[MAX_BUFFER] = {0};
+
+    if (strcmp(id, "random") == 0) {
+        nodeID = DEF_NODE_ID;
+    } else {
+        nodeID = id;
+    }
+
+    sprintf(runMe, "%s node %s", SCRIPT, nodeID);
+    if (system(runMe) < 0) return USYS_FALSE;
+
+    return USYS_TRUE;
+}

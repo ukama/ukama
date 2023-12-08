@@ -21,6 +21,10 @@
 extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
 extern bool build_nodes(int count, char *list, char *repo);
 
+/* deploy.c */
+extern bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
+extern bool deploy_node(char *id);
+
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
     { "config-file", required_argument, 0, 'c' },
@@ -108,7 +112,7 @@ int main(int argc, char **argv) {
                        configFile);
         goto done;
     }
-#if 0
+
     /* build all systems */
     if (!build_all_systems(config->build->systemsList,
                            config->setup->ukamaRepo,
@@ -122,8 +126,23 @@ int main(int argc, char **argv) {
                      config->setup->ukamaRepo,
                      config->build->nodeIDsList)) {
         usys_log_error("Build (node) error. Exiting ...");
+        goto done;
     }
-#endif
+
+    usys_log_debug("Deploying the node(s) and system(s) ...");
+
+    if (!deploy_node(config->build->nodeIDsList)) {
+        usys_log_error("Unable to deploy the node. Existing ...");
+        goto done;
+    }
+
+    if (!deploy_all_systems(config->deploy,
+                            config->setup->ukamaRepo,
+                            config->setup->authRepo)) {
+        usys_log_error("Unable to deploy the system. Exiting ...");
+        goto done;
+    }
+
 done:
     free_config(config);
     return USYS_TRUE;

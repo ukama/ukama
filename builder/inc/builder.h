@@ -24,5 +24,6 @@
 
 #define DELIMINATOR ","
 #define UKAMA_AUTH  "ukama-auth"
+#define DEF_NODE_ID "ukma-sa0001-tnode-a1-1234"
 
 #endif /* BUILDER_H_ */

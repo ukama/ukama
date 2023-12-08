@@ -106,7 +106,7 @@ rm -f $ISO_FILE
 #
 # QEMU command would be:
 # sudo qemu-system-x86_64 -hda ${IMG_FILE} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
-# -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1
+# -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1"
 mkdir -p /mnt/${NODE_ID}
 mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${NODE_ID}
 
