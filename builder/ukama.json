@@ -3,7 +3,8 @@
     "network-interface": "eth0",
     "build-os": "linux",
     "ukama-repo": "/home/kashif/work/ukama/repos/ukama",
-    "auth-repo": "/home/kashif/work/ukama/repos/ukama-auth"
+    "auth-repo": "/home/kashif/work/ukama/repos/ukama-auth",
+    "status-interval" : "10"
   },
 
   "build": {
