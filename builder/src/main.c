@@ -26,6 +26,11 @@ extern bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char
 extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_node(char *id);
 
+#define CMD_BUILD  1
+#define CMD_DEPLOY 2
+#define CMD_STATUS 3
+#define CMD_ALL    4
+
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
     { "config-file", required_argument, 0, 'c' },
@@ -50,7 +55,7 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: builder [options]");
+    usys_puts("Usage: builder [build | deploy | status] [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
@@ -61,10 +66,21 @@ void usage() {
 int main(int argc, char **argv) {
 
     int opt, optIdx;
+    int cmd = CMD_ALL;
     char *debug      = DEF_LOG_LEVEL;
     char *configFile = DEF_CONFIG_FILE;
 
     Config *config = NULL;
+
+    if (strcasecmp(argv[1], "build") == 0) {
+        cmd = CMD_BUILD;
+    } else if (strcasecmp(argv[1], "deploy") == 0) {
+        cmd = CMD_DEPLOY;
+    } else if (strcasecmp(argv[1], "status") == 0) {
+        cmd = CMD_STATUS;
+    } else {
+        cmd = CMD_ALL;
+    }
 
     /* Parsing command line args. */
     while (true) {
@@ -114,38 +130,46 @@ int main(int argc, char **argv) {
         goto done;
     }
 
-    /* build all systems */
-    if (!build_all_systems(config->build->systemsList,
-                           config->setup->ukamaRepo,
-                           config->setup->authRepo)) {
-        usys_log_error("Build (systems) error. Exiting ...");
-        goto done;
+    if (cmd == CMD_ALL || cmd == CMD_BUILD) {
+
+        /* build all systems */
+        if (!build_all_systems(config->build->systemsList,
+                               config->setup->ukamaRepo,
+                               config->setup->authRepo)) {
+            usys_log_error("Build (systems) error. Exiting ...");
+            goto done;
+        }
+
+        /* build node(s) */
+        if (!build_nodes(config->build->nodeCount,
+                         config->setup->ukamaRepo,
+                         config->build->nodeIDsList)) {
+            usys_log_error("Build (node) error. Exiting ...");
+            goto done;
+        }
     }
 
-    /* build node(s) */
-    if (!build_nodes(config->build->nodeCount,
-                     config->setup->ukamaRepo,
-                     config->build->nodeIDsList)) {
-        usys_log_error("Build (node) error. Exiting ...");
-        goto done;
+    if (cmd == CMD_ALL || cmd == CMD_DEPLOY) {
+
+        usys_log_debug("Deploying the node(s) and system(s) ...");
+
+        if (!deploy_node(config->build->nodeIDsList)) {
+            usys_log_error("Unable to deploy the node. Existing ...");
+            goto done;
+        }
+
+        if (!deploy_all_systems(config->deploy,
+                                config->setup->ukamaRepo,
+                                config->setup->authRepo)) {
+            usys_log_error("Unable to deploy the system. Exiting ...");
+            goto done;
+        }
     }
 
-    usys_log_debug("Deploying the node(s) and system(s) ...");
-
-    if (!deploy_node(config->build->nodeIDsList)) {
-        usys_log_error("Unable to deploy the node. Existing ...");
-        goto done;
+    if (cmd == CMD_ALL || cmd == CMD_STATUS) {
+        display_all_systems_status(config->deploy->systemsList,
+                                   config->setup->statusInterval);
     }
-
-    if (!deploy_all_systems(config->deploy,
-                            config->setup->ukamaRepo,
-                            config->setup->authRepo)) {
-        usys_log_error("Unable to deploy the system. Exiting ...");
-        goto done;
-    }
-
-    display_all_systems_status(config->deploy->systemsList,
-                               config->setup->statusInterval);
 
 done:
     free_config(config);
