@@ -18,7 +18,8 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-#define SCRIPT "./scripts/deploy-system.sh"
+#define DEPLOY_SCRIPT "./scripts/deploy-system.sh"
+#define STATUS_SCRIPT "./scripts/status.sh"
 
 void toLowerCase(char *str) {
     while (*str) {
@@ -125,7 +126,7 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
         }
     }
 
-    sprintf(runMe, "%s system %s %s", SCRIPT, name, path);
+    sprintf(runMe, "%s system %s %s", DEPLOY_SCRIPT, name, path);
     if (system(runMe) < 0) return USYS_FALSE;
 
     usys_free(envs);
@@ -176,7 +177,17 @@ bool deploy_node(char *id) {
         nodeID = id;
     }
 
-    sprintf(runMe, "%s node %s", SCRIPT, nodeID);
+    sprintf(runMe, "%s node %s", DEPLOY_SCRIPT, nodeID);
+    if (system(runMe) < 0) return USYS_FALSE;
+
+    return USYS_TRUE;
+}
+
+bool display_all_systems_status(char *systems, int interval) {
+
+    char runMe[MAX_BUFFER] = {0};
+
+    sprintf(runMe, "%s %s %d", STATUS_SCRIPT, systems, interval);
     if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;

@@ -1,7 +1,10 @@
-# How to run example
-# ./status.sh "init,services,registry"
-
 #!/bin/bash
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2023-present, Ukama Inc.
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -46,6 +49,7 @@ while true; do
             INDEX=$((INDEX+1))
         done
     done
-    sleep 5
+
+    sleep $2
     clear
 done

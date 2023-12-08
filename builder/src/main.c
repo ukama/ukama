@@ -23,6 +23,7 @@ extern bool build_nodes(int count, char *list, char *repo);
 
 /* deploy.c */
 extern bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
+extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_node(char *id);
 
 static UsysOption longOptions[] = {
@@ -142,6 +143,9 @@ int main(int argc, char **argv) {
         usys_log_error("Unable to deploy the system. Exiting ...");
         goto done;
     }
+
+    display_all_systems_status(config->deploy->systemsList,
+                               config->setup->statusInterval);
 
 done:
     free_config(config);

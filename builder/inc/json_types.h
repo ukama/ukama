@@ -18,6 +18,7 @@
 #define JTAG_INTERFACES "interfaces"
 
 #define JTAG_NETWORK_INTERFACE  "network-interface"
+#define JTAG_STATUS_INTERVAL    "status-interval"
 #define JTAG_BUILD_OS           "build-os"
 #define JTAG_UKAMA_REPO         "ukama-repo"
 #define JTAG_AUTH_REPO          "auth-repo"

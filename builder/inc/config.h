@@ -22,6 +22,7 @@ typedef struct setupConfig_ {
     char *buildOS;
     char *ukamaRepo;
     char *authRepo;
+    int  statusInterval;
 } SetupConfig;
 
 typedef struct buildConfig_ {

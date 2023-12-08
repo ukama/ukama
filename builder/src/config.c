@@ -137,6 +137,8 @@ static bool deserialize_config_file(Config **config, json_t *json) {
                           &(*config)->setup->ukamaRepo, NULL);
     ret |= get_json_entry(jSetup, JTAG_AUTH_REPO, JSON_STRING,
                           &(*config)->setup->authRepo, NULL);
+    ret |= get_json_entry(jSetup, JTAG_STATUS_INTERVAL, JSON_INTEGER,
+                          NULL, &(*config)->setup->statusInterval);
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing <setup>");
         free_config(*config);
