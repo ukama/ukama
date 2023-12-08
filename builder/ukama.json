@@ -4,7 +4,7 @@
     "build-os": "linux",
     "ukama-repo": "/home/kashif/work/ukama/repos/ukama",
     "auth-repo": "/home/kashif/work/ukama/repos/ukama-auth",
-    "status-interval" : "10"
+    "status-interval" : 10
   },
 
   "build": {
