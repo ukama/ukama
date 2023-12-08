@@ -122,9 +122,9 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
             }
         }
     }
-    
-	sprintf(runMe, "%s system %s", SCRIPT, path);
-	if (system(runMe) < 0) return USYS_FALSE;
+
+    sprintf(runMe, "%s system %s %s", SCRIPT, name, path);
+    if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
 }
