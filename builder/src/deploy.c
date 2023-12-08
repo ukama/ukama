@@ -106,12 +106,14 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
 
         return USYS_FALSE;
     }
-    
+
     /* setup env variables */
     for (i = 0; i < count; i++) {
         for (j = 0; j < deployConfig->envCount; j++) {
             if (strcasecmp(deployConfig->keyValuePair[i].key,
-                           envs[i]) == 0) {
+                           envs[i]) == 0 ||
+                ((strcasecmp(name, "init") == 0 ||
+                  strcasecmp(name, "ukama-auth") == 0)) ) {
                 if (setenv(deployConfig->keyValuePair[i].key,
                            deployConfig->keyValuePair[i].value, 1) == -1) {
                     usys_log_error("Unable to set env variable");
@@ -126,6 +128,7 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
     sprintf(runMe, "%s system %s %s", SCRIPT, name, path);
     if (system(runMe) < 0) return USYS_FALSE;
 
+    usys_free(envs);
     return USYS_TRUE;
 }
 
