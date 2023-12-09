@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/billing/invoice/mocks"
-	"github.com/ukama/ukama/systems/billing/invoice/pkg/client"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -25,7 +24,8 @@ import (
 	"gorm.io/gorm"
 
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const OrgName = "testorg"
@@ -133,12 +133,12 @@ func TestInvoiceServer_Add(t *testing.T) {
 		}
 
 		invoiceRepo := &mocks.InvoiceRepo{}
-		subscriberClient := &mocks.SubscriberClient{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		subscriberClient := &cmocks.SubscriberClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		invoiceRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
-		subscriberClient.On("Get", subscriberId.String()).Return(&client.SubscriberInfo{
+		subscriberClient.On("Get", subscriberId.String()).Return(&cclient.SubscriberInfo{
 			SubscriberId: subscriberId,
 			NetworkId:    uuid.NewV4(),
 		}, nil).Once()
@@ -162,7 +162,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 	t.Run("SubscriberIsNotValid", func(t *testing.T) {
 		// Arrange
 		invoiceRepo := &mocks.InvoiceRepo{}
-		subscriberClient := &mocks.SubscriberClient{}
+		subscriberClient := &cmocks.SubscriberClient{}
 
 		var raw = `{
 	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
@@ -274,7 +274,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 		var raw = "+{}"
 
 		invoiceRepo := &mocks.InvoiceRepo{}
-		subscriberClient := &mocks.SubscriberClient{}
+		subscriberClient := &cmocks.SubscriberClient{}
 
 		s := server.NewInvoiceServer(OrgName, invoiceRepo, subscriberClient, nil)
 
@@ -566,7 +566,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 		var invoiceId = uuid.NewV4()
 
 		invoiceRepo := &mocks.InvoiceRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()

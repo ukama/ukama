@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
-	"github.com/ukama/ukama/systems/billing/invoice/pkg/client"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/util"
@@ -34,6 +33,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const defaultTemplate = "templates/invoice.html.tmpl"
@@ -41,13 +41,13 @@ const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
 	invoiceRepo      db.InvoiceRepo
-	subscriberClient client.SubscriberClient
+	subscriberClient cclient.SubscriberClient
 	msgbus           mb.MsgBusServiceClient
 	baseRoutingKey   msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient client.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient cclient.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
 		invoiceRepo:      invoiceRepo,
 		subscriberClient: subscriberClient,
