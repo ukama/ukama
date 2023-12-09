@@ -21,7 +21,6 @@ import (
 	"github.com/ukama/ukama/systems/registry/invitation/cmd/version"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -72,7 +71,8 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	mailerClient := cclient.NewMailerClient(serviceConfig.NotificationHost)
-	nucleusP := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
+	orgClient := cclient.NewOrgClient(serviceConfig.OrgRegistryHost)
+	userClient := cclient.NewUserClient(serviceConfig.OrgRegistryHost)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
 		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
@@ -81,7 +81,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
 		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
-		mailerClient, nucleusP, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
+		mailerClient, orgClient, userClient, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
