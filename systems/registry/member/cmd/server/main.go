@@ -12,28 +12,26 @@ import (
 	"errors"
 	"os"
 
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/uuid"
-	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 
-	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/member/cmd/version"
 	"github.com/ukama/ukama/systems/registry/member/pkg"
-
-	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
-	"github.com/ukama/ukama/systems/registry/member/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/member/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -70,7 +68,6 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -82,12 +79,18 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
-	p := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	memberServer := server.NewMemberServer(serviceConfig.OrgName, db.NewMemberRepo(gormdb),
-		p, mbClient, serviceConfig.PushGateway, id)
 
-	logrus.Debugf("MessageBus Client is %+v", mbClient)
+	orgClient := cclient.NewOrgClient(serviceConfig.OrgRegistryHost)
+	userClient := cclient.NewUserClient(serviceConfig.OrgRegistryHost)
+
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName,
+		instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
+	memberServer := server.NewMemberServer(serviceConfig.OrgName, db.NewMemberRepo(gormdb),
+		orgClient, userClient, mbClient, serviceConfig.PushGateway, id)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterMemberServiceServer(s, memberServer)
@@ -99,13 +102,12 @@ func runGrpcServer(gormdb sql.Db) {
 
 	_ = memberServer.PushOrgMemberCountMetric(id)
 
-	initMemberDB(gormdb, p)
+	initMemberDB(gormdb, orgClient, userClient)
 
 	waitForExit()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
@@ -118,8 +120,8 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
-	go func() {
 
+	go func() {
 		sig := <-sigs
 		log.Info(sig)
 		done <- true
@@ -130,7 +132,7 @@ func waitForExit() {
 	log.Infof("exiting service %s", pkg.ServiceName)
 }
 
-func initMemberDB(d sql.Db, p providers.NucleusClientProvider) {
+func initMemberDB(d sql.Db, orgClient cclient.OrgClient, userClient cclient.UserClient) {
 	mDB := d.GetGormDb()
 	if mDB.Migrator().HasTable(&db.Member{}) {
 		if err := mDB.First(&db.Member{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
@@ -144,25 +146,25 @@ func initMemberDB(d sql.Db, p providers.NucleusClientProvider) {
 			}
 
 			/* TODO: validate the user from user services */
-			u, err := p.GetUserById(serviceConfig.OwnerId)
+			user, err := userClient.GetById(serviceConfig.OwnerId)
 			if err != nil {
 				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
 			}
 
-			o, err := p.GetOrgByName(serviceConfig.OrgName)
+			org, err := orgClient.Get(serviceConfig.OrgName)
 			if err != nil {
 				log.Fatalf("Failed to connect to org service for validation of owner %s. Error: %v", serviceConfig.OrgName, err)
 			}
 
-			if u.User.Id != o.Org.Owner {
-				log.Fatalf("Failed to validate user %s as owner of org %+v.", serviceConfig.OwnerId, o)
+			if user.Id != org.Owner {
+				log.Fatalf("Failed to validate user %s as owner of org %+v.", serviceConfig.OwnerId, org)
 			}
 
-			if u.User.IsDeactivated {
+			if user.IsDeactivated {
 				log.Fatalf("User is %s is in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
-			if o.Org.IsDeactivated {
+			if org.IsDeactivated {
 				log.Fatalf("Org is %s in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
@@ -172,7 +174,7 @@ func initMemberDB(d sql.Db, p providers.NucleusClientProvider) {
 				Role:        db.RoleType(pb.RoleType_OWNER),
 			}
 			if err := mDB.Transaction(func(tx *gorm.DB) error {
-				err := p.UpdateOrgToUser(o.Org.Id, member.UserId.String())
+				err := orgClient.AddUser(org.Id, member.UserId.String())
 				if err != nil {
 					return err
 				}
