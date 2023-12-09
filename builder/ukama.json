@@ -9,7 +9,7 @@
 
   "build": {
     "nodes": {
-      "count": "4",
+      "count": 1,
       "ids": "random"
     },
     "systems": {
