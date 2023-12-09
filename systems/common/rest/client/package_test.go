@@ -226,7 +226,7 @@ func TestPackageClient_Add(t *testing.T) {
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testPackageClient.Add(
+		p, err := testPackageClient.Add(
 			client.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
@@ -250,7 +250,7 @@ func TestPackageClient_Add(t *testing.T) {
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, p)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -264,7 +264,7 @@ func TestPackageClient_Add(t *testing.T) {
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testPackageClient.Add(
+		p, err := testPackageClient.Add(
 			client.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
@@ -288,6 +288,6 @@ func TestPackageClient_Add(t *testing.T) {
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, p)
 	})
 }

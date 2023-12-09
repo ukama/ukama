@@ -194,14 +194,14 @@ func TestSubscriberClient_Add(t *testing.T) {
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testSubscriberClient.Add(
+		s, err := testSubscriberClient.Add(
 			client.AddSubscriberRequest{
 				OrgId:    testUuid,
 				LastName: "Foo"},
 		)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, s)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {

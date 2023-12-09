@@ -47,10 +47,10 @@ func TestOrgClient_Get(t *testing.T) {
 		// so that the test stays a unit test e.g no server/org call.
 		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testOrgClient.Get(testUuid)
+		o, err := testOrgClient.Get(testUuid)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, n.Id)
+		assert.Equal(tt, testUuid, o.Id)
 	})
 
 	t.Run("OrgNotFound", func(tt *testing.T) {
@@ -68,10 +68,10 @@ func TestOrgClient_Get(t *testing.T) {
 
 		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testOrgClient.Get(testUuid)
+		o, err := testOrgClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, o)
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -90,10 +90,10 @@ func TestOrgClient_Get(t *testing.T) {
 
 		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testOrgClient.Get(testUuid)
+		o, err := testOrgClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, o)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -107,9 +107,9 @@ func TestOrgClient_Get(t *testing.T) {
 
 		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		n, err := testOrgClient.Get(testUuid)
+		o, err := testOrgClient.Get(testUuid)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, n)
+		assert.Nil(tt, o)
 	})
 }
