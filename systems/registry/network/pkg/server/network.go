@@ -17,7 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
-	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,6 +27,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -39,20 +39,20 @@ type NetworkServer struct {
 	netRepo        db.NetRepo
 	orgRepo        db.OrgRepo
 	siteRepo       db.SiteRepo
-	orgService     providers.OrgClientProvider
+	orgClient      cclient.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
 }
 
 func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
+	orgService cclient.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,
 		orgRepo:        orgRepo,
 		siteRepo:       siteRepo,
-		orgService:     orgService,
+		orgClient:      orgService,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
@@ -68,33 +68,28 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	if err != nil {
 		log.Infof("lookup for org %s remotely", orgName)
 
-		// svc, err := n.orgService.GetClient()
-		// if err != nil {
-		// 	return nil, err
-		// }
-
-		remoteOrg, err := n.orgService.GetByName(orgName)
+		remoteOrg, err := n.orgClient.Get(orgName)
 		if err != nil {
 			return nil, err
 		}
 
 		// What should we do if the remote org exists but is deactivated?
 		// For now we simply abort.
-		if remoteOrg.Org.IsDeactivated {
+		if remoteOrg.IsDeactivated {
 			return nil, status.Errorf(codes.FailedPrecondition,
 				"org is deactivated: cannot add network to it")
 		}
 
-		remoteOrgID, err := uuid.FromString(remoteOrg.Org.Id)
+		remoteOrgId, err := uuid.FromString(remoteOrg.Id)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid remote org id: %v", err)
 		}
 
-		log.Infof("Adding remove org %s to local org repo", orgName)
+		log.Infof("Adding remote org %s to local org repo", orgName)
 		org = &db.Org{
-			Id:          remoteOrgID,
-			Name:        remoteOrg.Org.Name,
-			Deactivated: remoteOrg.Org.IsDeactivated}
+			Id:          remoteOrgId,
+			Name:        remoteOrg.Name,
+			Deactivated: remoteOrg.IsDeactivated}
 
 		err = n.orgRepo.Add(org)
 		if err != nil {
@@ -155,12 +150,12 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 }
 
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	netID, err := uuid.FromString(req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	nt, err := n.netRepo.Get(netID)
+	nt, err := n.netRepo.Get(netId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -183,12 +178,12 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 }
 
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	orgID, err := uuid.FromString(req.OrgId)
+	orgId, err := uuid.FromString(req.OrgId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	ntwks, err := n.netRepo.GetByOrg(orgID)
+	ntwks, err := n.netRepo.GetByOrg(orgId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
@@ -230,14 +225,14 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 }
 
 func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
-	netID, err := uuid.FromString(req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
 	// We need to improve ukama/common/sql for more sql errors like foreign keys violations
 	// which will allow us to skip these extra calls to DBs
-	ntwk, err := n.netRepo.Get(netID)
+	ntwk, err := n.netRepo.Get(netId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -271,12 +266,12 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
-	siteID, err := uuid.FromString(req.SiteId)
+	siteId, err := uuid.FromString(req.SiteId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	site, err := n.siteRepo.Get(siteID)
+	site, err := n.siteRepo.Get(siteId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
@@ -286,12 +281,12 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
-	netID, err := uuid.FromString(req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	ntwk, err := n.netRepo.Get(netID)
+	ntwk, err := n.netRepo.Get(netId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -306,12 +301,12 @@ func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByName
 }
 
 func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesByNetworkRequest) (*pb.GetSitesByNetworkResponse, error) {
-	netID, err := uuid.FromString(req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	ntwk, err := n.netRepo.Get(netID)
+	ntwk, err := n.netRepo.Get(netId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
