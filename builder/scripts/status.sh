@@ -15,6 +15,16 @@ IFS=',' read -r -a SYSTEMS <<< "$1"
 
 #echo "$TAG Checking Docker container status..."
 while true; do
+
+    clear
+
+    if pgrep qemu-system-x86_64 > /dev/null
+    then
+        printf "Ukama Node is ${GREEN}running ${NC}\n"
+    else
+        printf "Ukama Node is ${RED}not running ${NC}\n"
+    fi
+
     for PROJECT_NAME in "${SYSTEMS[@]}"; do
 
         printf "System: $PROJECT_NAME \n"
@@ -52,5 +62,4 @@ while true; do
     done
 
     sleep $2
-    clear
 done

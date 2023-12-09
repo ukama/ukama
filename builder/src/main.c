@@ -147,6 +147,11 @@ int main(int argc, char **argv) {
             usys_log_error("Build (node) error. Exiting ...");
             goto done;
         }
+
+        if (cmd == CMD_BUILD) {
+            free_config(config);
+            return USYS_TRUE;
+        }
     }
 
     if (cmd == CMD_ALL || cmd == CMD_DEPLOY) {
@@ -163,6 +168,11 @@ int main(int argc, char **argv) {
                                 config->setup->authRepo)) {
             usys_log_error("Unable to deploy the system. Exiting ...");
             goto done;
+        }
+
+        if (cmd == CMD_DEPLOY) {
+            free_config(config);
+            return USYS_TRUE;
         }
     }
 
