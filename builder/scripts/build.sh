@@ -10,7 +10,8 @@ mock_sysfs_for_noded() {
 
     id = $1
 
-    chroot /mnt/${id} /bin/bash <<'EOL'
+    chroot /mnt/${id} /bin/bash <<EOF
+
         set -e
 
         apt-get update
@@ -29,7 +30,7 @@ mock_sysfs_for_noded() {
             --f mfgdata/schema/com.json -n trx --m UK-SA9001-TRX-A1-1103 \
             --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 \
             --f mfgdata/schema/mask.json
-    EOL
+EOF
 
     exit
 }
@@ -58,12 +59,15 @@ elif [ "$1" = "node" ]; then
     node_id    = $3
 
     # create bootable os image
+    echo "Creating bootsable OS image"
     ./mkimage.sh ${node_id}        || exit 1
 
     # build all the capps
+    echo "Building all apps"
     ./build-capps.sh ${ukama_root} || exit 1
 
     # copy the apps and manifest.json into the os image
+    echo "Copying apps and manifesto to the OS image"
     mkdir -p /mnt/${node_id} || exit 1
     mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${node_id} || exit 1
 
@@ -71,15 +75,18 @@ elif [ "$1" = "node" ]; then
     cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}
 
     # setup everything needed by node.d
+    echo "mocking FS for node.d"
     mock_sysfs_for_noded $node_id
 
     # update /etc/services to add ports
+    echo "Adding all the apps to /etc/services"
     cp ${ukama_root}/nodes/ukamaOS/distro/scripts/files/services \
        /mnt/${node_id}/etc/services
 
     # umount the image
     umount /mnt/${node_id}
     rmdir  /mnt/${node_id}
+    echo "All done"
 
 else
     echo "Invalid argument: $1. Use 'systems' or 'node'."
