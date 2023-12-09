@@ -14,18 +14,19 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
+	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
+
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
@@ -33,20 +34,21 @@ type InvitationServer struct {
 	pb.UnimplementedInvitationServiceServer
 	iRepo                db.InvitationRepo
 	nucleusSystem        providers.NucleusClientProvider
-	notification         providers.NotificationClient
+	mailerClient         cclient.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	baseRoutingKey       msgbus.RoutingKeyBuilder
-	msgbus               mb.MsgBusServiceClient
-	orgName              string
-	TemplateName         string
+	// unused?
+	// baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus       mb.MsgBusServiceClient
+	orgName      string
+	TemplateName string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cclient.MailerClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
-		notification:         notification,
+		mailerClient:         mailerClient,
 		invitationExpiryTime: invitationExpiryTime,
 		authLoginbaseURL:     authLoginbaseURL,
 		nucleusSystem:        nucleusSystem,
@@ -79,7 +81,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	err = i.notification.SendEmail(providers.SendEmailReq{
+	err = i.mailerClient.SendEmail(cclient.SendEmailReq{
 		To:           []string{req.GetEmail()},
 		TemplateName: i.TemplateName,
 		Values: map[string]interface{}{
@@ -223,22 +225,23 @@ func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationBy
 	}, nil
 }
 
-func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-	switch role {
-	case pb.RoleType_ADMIN:
-		return db.Admin
-	case pb.RoleType_VENDOR:
-		return db.Vendor
-	case pb.RoleType_USERS:
-		return db.Users
-	case pb.RoleType_OWNER:
-		return db.Owner
-	case pb.RoleType_EMPLOYEE:
-		return db.Employee
-	default:
-		return db.Users
-	}
-}
+// unused?
+// func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
+// switch role {
+// case pb.RoleType_ADMIN:
+// return db.Admin
+// case pb.RoleType_VENDOR:
+// return db.Vendor
+// case pb.RoleType_USERS:
+// return db.Users
+// case pb.RoleType_OWNER:
+// return db.Owner
+// case pb.RoleType_EMPLOYEE:
+// return db.Employee
+// default:
+// return db.Users
+// }
+// }
 
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{

@@ -35,6 +35,7 @@ gen:
 
 clean:
 	rm pb/gen/*.go
+	rm mocks/*.go
 
 server:
 	go run cmd/server/main.go
