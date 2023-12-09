@@ -34,6 +34,8 @@ type Org struct {
 
 type OrgClient interface {
 	Get(name string) (*OrgInfo, error)
+	AddUser(orgId string, userId string) error
+	RemoveUser(orgId string, userId string) error
 }
 
 type orgClient struct {
@@ -76,4 +78,30 @@ func (o *orgClient) Get(name string) (*OrgInfo, error) {
 	log.Infof("Org Info: %+v", org.OrgInfo)
 
 	return org.OrgInfo, nil
+}
+
+func (o *orgClient) AddUser(orgId string, userId string) error {
+	log.Debugf("Adding user %q to org %q", userId, orgId)
+
+	_, err := o.R.Put(o.u.String()+OrgEndpoint+"/"+orgId+"/users/"+userId, nil)
+	if err != nil {
+		log.Errorf("AddUser failure. error: %s", err.Error())
+
+		return fmt.Errorf("AddUser failure: %w", err)
+	}
+
+	return nil
+}
+
+func (o *orgClient) RemoveUser(orgId string, userId string) error {
+	log.Debugf("Removing user %q from org %q", userId, orgId)
+
+	_, err := o.R.Delete(o.u.String() + OrgEndpoint + "/" + orgId + "/users/" + userId)
+	if err != nil {
+		log.Errorf("RemoveUser failure. error: %s", err.Error())
+
+		return fmt.Errorf("RemoveUser failure: %w", err)
+	}
+
+	return nil
 }

@@ -12,6 +12,24 @@ type OrgClient struct {
 	mock.Mock
 }
 
+// AddUser provides a mock function with given fields: orgId, userId
+func (_m *OrgClient) AddUser(orgId string, userId string) error {
+	ret := _m.Called(orgId, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(orgId, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: name
 func (_m *OrgClient) Get(name string) (*client.OrgInfo, error) {
 	ret := _m.Called(name)
@@ -40,6 +58,24 @@ func (_m *OrgClient) Get(name string) (*client.OrgInfo, error) {
 	}
 
 	return r0, r1
+}
+
+// RemoveUser provides a mock function with given fields: orgId, userId
+func (_m *OrgClient) RemoveUser(orgId string, userId string) error {
+	ret := _m.Called(orgId, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(orgId, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewOrgClient creates a new instance of OrgClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

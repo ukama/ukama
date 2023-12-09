@@ -113,3 +113,114 @@ func TestOrgClient_Get(t *testing.T) {
 		assert.Nil(tt, o)
 	})
 }
+
+func TestOrgClient_AddUser(t *testing.T) {
+	t.Run("OrgAndUserFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 201,
+				Header:     make(http.Header),
+			}
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.AddUser(testUuid, testUuid)
+
+		assert.NoError(tt, err)
+	})
+
+	t.Run("OrgOrUserNotFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 404,
+				Header:     make(http.Header),
+			}
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.AddUser(testUuid, testUuid)
+
+		assert.Error(tt, err)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
+			return nil
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.AddUser(testUuid, testUuid)
+
+		assert.Error(tt, err)
+	})
+}
+
+func TestOrgClient_RemoveUser(t *testing.T) {
+	t.Run("OrgAndUserFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 200,
+				Header:     make(http.Header),
+			}
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.RemoveUser(testUuid, testUuid)
+
+		assert.NoError(tt, err)
+	})
+
+	t.Run("OrgOrUserNotFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 404,
+				Header:     make(http.Header),
+			}
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.RemoveUser(testUuid, testUuid)
+
+		assert.Error(tt, err)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+			return nil
+		}
+
+		testOrgClient := client.NewOrgClient("")
+
+		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		err := testOrgClient.RemoveUser(testUuid, testUuid)
+
+		assert.Error(tt, err)
+	})
+}
