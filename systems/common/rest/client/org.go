@@ -54,12 +54,12 @@ func NewOrgClient(h string) *orgClient {
 	}
 }
 
-func (n *orgClient) Get(name string) (*OrgInfo, error) {
+func (o *orgClient) Get(name string) (*OrgInfo, error) {
 	log.Debugf("Getting org: %v", name)
 
 	org := Org{}
 
-	resp, err := n.R.Get(n.u.String() + OrgEndpoint + "/" + name)
+	resp, err := o.R.Get(o.u.String() + OrgEndpoint + "/" + name)
 	if err != nil {
 		log.Errorf("GetOrg failure. error: %s", err.Error())
 

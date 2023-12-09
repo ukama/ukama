@@ -56,12 +56,12 @@ func NewUserClient(h string) *userClient {
 	}
 }
 
-func (n *userClient) GetById(id string) (*UserInfo, error) {
+func (u *userClient) GetById(id string) (*UserInfo, error) {
 	log.Debugf("Getting user: %v", id)
 
 	user := User{}
 
-	resp, err := n.R.Get(n.u.String() + UserEndpoint + "/" + id)
+	resp, err := u.R.Get(u.u.String() + UserEndpoint + "/" + id)
 	if err != nil {
 		log.Errorf("GetUser failure. error: %s", err.Error())
 
@@ -80,12 +80,12 @@ func (n *userClient) GetById(id string) (*UserInfo, error) {
 	return user.UserInfo, nil
 }
 
-func (n *userClient) GetByEmail(email string) (*UserInfo, error) {
+func (u *userClient) GetByEmail(email string) (*UserInfo, error) {
 	log.Debugf("Getting user: %v", email)
 
 	user := User{}
 
-	resp, err := n.R.Get(n.u.String() + UserEndpoint + "/email/" + email)
+	resp, err := u.R.Get(u.u.String() + UserEndpoint + "/email/" + email)
 	if err != nil {
 		log.Errorf("GetUser failure. error: %s", err.Error())
 
