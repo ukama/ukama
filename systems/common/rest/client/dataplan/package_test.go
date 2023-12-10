@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client_test
+package dataplan_test
 
 import (
 	"bytes"
@@ -16,15 +16,17 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
+
+const testUuid = "03cb753f-5e03-4c97-8e47-625115476c72"
 
 func TestPackageClient_Get(t *testing.T) {
 	t.Run("PackageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint+"/"+testUuid)
 
 			// fake package info
 			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true}}`
@@ -41,7 +43,7 @@ func TestPackageClient_Get(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -55,7 +57,7 @@ func TestPackageClient_Get(t *testing.T) {
 
 	t.Run("PackageNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -63,7 +65,7 @@ func TestPackageClient_Get(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -75,7 +77,7 @@ func TestPackageClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -84,7 +86,7 @@ func TestPackageClient_Get(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -96,12 +98,12 @@ func TestPackageClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint+"/"+testUuid)
 
 			return nil
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -116,7 +118,7 @@ func TestPackageClient_Add(t *testing.T) {
 	t.Run("PackageAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint)
 
 			// fake package info
 			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true}}`
@@ -134,14 +136,14 @@ func TestPackageClient_Add(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Add(
-			client.AddPackageRequest{
+			dataplan.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
@@ -169,7 +171,7 @@ func TestPackageClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint)
 
 			return &http.Response{
 				StatusCode: 500,
@@ -179,12 +181,12 @@ func TestPackageClient_Add(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Add(
-			client.AddPackageRequest{
+			dataplan.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
@@ -212,7 +214,7 @@ func TestPackageClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -222,12 +224,12 @@ func TestPackageClient_Add(t *testing.T) {
 			}
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Add(
-			client.AddPackageRequest{
+			dataplan.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
@@ -255,17 +257,17 @@ func TestPackageClient_Add(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.PackageEndpoint)
+			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint)
 
 			return nil
 		}
 
-		testPackageClient := client.NewPackageClient("")
+		testPackageClient := dataplan.NewPackageClient("")
 
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Add(
-			client.AddPackageRequest{
+			dataplan.AddPackageRequest{
 				Name:        "Monthly Data",
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
@@ -290,4 +292,10 @@ func TestPackageClient_Add(t *testing.T) {
 		assert.Error(tt, err)
 		assert.Nil(tt, p)
 	})
+}
+
+type RoundTripFunc func(req *http.Request) *http.Response
+
+func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return r(req), nil
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package nucleus
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const OrgEndpoint = "/v1/orgs"
@@ -40,7 +41,7 @@ type OrgClient interface {
 
 type orgClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewOrgClient(h string) *orgClient {
@@ -52,7 +53,7 @@ func NewOrgClient(h string) *orgClient {
 
 	return &orgClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

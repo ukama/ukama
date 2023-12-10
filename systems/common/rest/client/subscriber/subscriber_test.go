@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client_test
+package subscriber_test
 
 import (
 	"bytes"
@@ -16,14 +16,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 func TestSubscriberClient_Get(t *testing.T) {
 	t.Run("SubscriberFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint+"/"+testUuid)
 
 			// fake subscriber info
 			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
@@ -41,7 +41,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -55,7 +55,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 
 	t.Run("SubscriberNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -64,7 +64,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -76,7 +76,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -86,7 +86,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -98,12 +98,12 @@ func TestSubscriberClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint+"/"+testUuid)
 
 			return nil
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -118,7 +118,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 	t.Run("NetworkAdded", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint)
 
 			// fake subscriber info
 			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
@@ -136,14 +136,14 @@ func TestSubscriberClient_Add(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Add(
-			client.AddSubscriberRequest{
+			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
 				LastName: "Foo"},
 		)
@@ -154,7 +154,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint)
 
 			return &http.Response{
 				StatusCode: 500,
@@ -164,12 +164,12 @@ func TestSubscriberClient_Add(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Add(
-			client.AddSubscriberRequest{
+			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
 				LastName: "Foo"},
 		)
@@ -180,7 +180,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -190,12 +190,12 @@ func TestSubscriberClient_Add(t *testing.T) {
 			}
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Add(
-			client.AddSubscriberRequest{
+			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
 				LastName: "Foo"},
 		)
@@ -206,17 +206,17 @@ func TestSubscriberClient_Add(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.SubscriberEndpoint)
+			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint)
 
 			return nil
 		}
 
-		testSubscriberClient := client.NewSubscriberClient("")
+		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		testSubscriberClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Add(
-			client.AddSubscriberRequest{
+			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
 				LastName: "Foo"},
 		)

@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client_test
+package notification_test
 
 import (
 	"bytes"
@@ -16,14 +16,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/notification"
 )
 
 func TestMailerClient_Send(t *testing.T) {
 	t.Run("MailSent", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.MailerEndpoint+"/sendEmail")
+			assert.Equal(tt, req.URL.String(), notification.MailerEndpoint+"/sendEmail")
 
 			// Send mock response
 			return &http.Response{
@@ -35,14 +35,14 @@ func TestMailerClient_Send(t *testing.T) {
 			}
 		}
 
-		testMailerClient := client.NewMailerClient("")
+		testMailerClient := notification.NewMailerClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
 		testMailerClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testMailerClient.SendEmail(
-			client.SendEmailReq{
+			notification.SendEmailReq{
 				To:           []string{"johndoe@example.com"},
 				TemplateName: "mail.html.tmpl",
 				Values:       map[string]interface{}{},
@@ -53,7 +53,7 @@ func TestMailerClient_Send(t *testing.T) {
 
 	t.Run("InvalidResponseHeader", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.MailerEndpoint+"/sendEmail")
+			assert.Equal(tt, req.URL.String(), notification.MailerEndpoint+"/sendEmail")
 
 			return &http.Response{
 				StatusCode: 500,
@@ -63,12 +63,12 @@ func TestMailerClient_Send(t *testing.T) {
 			}
 		}
 
-		testMailerClient := client.NewMailerClient("")
+		testMailerClient := notification.NewMailerClient("")
 
 		testMailerClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testMailerClient.SendEmail(
-			client.SendEmailReq{
+			notification.SendEmailReq{
 				To:           []string{"johndoe@example.com"},
 				TemplateName: "mail.html.tmpl",
 				Values:       map[string]interface{}{},
@@ -79,17 +79,17 @@ func TestMailerClient_Send(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.MailerEndpoint+"/sendEmail")
+			assert.Equal(tt, req.URL.String(), notification.MailerEndpoint+"/sendEmail")
 
 			return nil
 		}
 
-		testMailerClient := client.NewMailerClient("")
+		testMailerClient := notification.NewMailerClient("")
 
 		testMailerClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		err := testMailerClient.SendEmail(
-			client.SendEmailReq{
+			notification.SendEmailReq{
 				To:           []string{"johndoe@example.com"},
 				TemplateName: "mail.html.tmpl",
 				Values:       map[string]interface{}{},
@@ -97,4 +97,10 @@ func TestMailerClient_Send(t *testing.T) {
 
 		assert.Error(tt, err)
 	})
+}
+
+type RoundTripFunc func(req *http.Request) *http.Response
+
+func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return r(req), nil
 }

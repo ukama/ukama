@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package subscriber
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -60,7 +61,7 @@ type SubscriberClient interface {
 
 type subscriberClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewSubscriberClient(h string) *subscriberClient {
@@ -72,7 +73,7 @@ func NewSubscriberClient(h string) *subscriberClient {
 
 	return &subscriberClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

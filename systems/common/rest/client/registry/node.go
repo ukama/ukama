@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package registry
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const NodeEndpoint = "/v1/nodes"
@@ -74,7 +75,7 @@ type NodeClient interface {
 
 type nodeClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewNodeClient(h string) *nodeClient {
@@ -85,7 +86,7 @@ func NewNodeClient(h string) *nodeClient {
 
 	return &nodeClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package notification
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const MailerEndpoint = "/v1/mailer"
@@ -30,7 +31,7 @@ type MailerClient interface {
 
 type mailerClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewMailerClient(h string) *mailerClient {
@@ -42,7 +43,7 @@ func NewMailerClient(h string) *mailerClient {
 
 	return &mailerClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

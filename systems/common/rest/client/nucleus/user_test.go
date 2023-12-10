@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client_test
+package nucleus_test
 
 import (
 	"bytes"
@@ -16,14 +16,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/nucleus"
 )
 
 func TestUserClient_GetById(t *testing.T) {
 	t.Run("UserFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/"+testUuid)
 
 			// fake user info
 			user := `{"user":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "email": "john@example.com"}}`
@@ -41,7 +41,7 @@ func TestUserClient_GetById(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/user call.
@@ -55,7 +55,7 @@ func TestUserClient_GetById(t *testing.T) {
 
 	t.Run("UserNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -64,7 +64,7 @@ func TestUserClient_GetById(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -76,7 +76,7 @@ func TestUserClient_GetById(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/"+testUuid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -86,7 +86,7 @@ func TestUserClient_GetById(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -98,12 +98,12 @@ func TestUserClient_GetById(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/"+testUuid)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/"+testUuid)
 
 			return nil
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -120,7 +120,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 	t.Run("UserFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/email/"+testEmail)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/email/"+testEmail)
 
 			// fake user info
 			user := `{"user":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "email": "john@example.com"}}`
@@ -138,7 +138,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/user call.
@@ -152,7 +152,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 
 	t.Run("UserNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/email/"+testEmail)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/email/"+testEmail)
 
 			return &http.Response{
 				StatusCode: 404,
@@ -161,7 +161,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -173,7 +173,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/email/"+testEmail)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/email/"+testEmail)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -183,7 +183,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 			}
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -195,12 +195,12 @@ func TestUserClient_GetByEmail(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), client.UserEndpoint+"/email/"+testEmail)
+			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/email/"+testEmail)
 
 			return nil
 		}
 
-		testUserClient := client.NewUserClient("")
+		testUserClient := nucleus.NewUserClient("")
 
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 

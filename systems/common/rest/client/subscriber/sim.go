@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package subscriber
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const SimEndpoint = "/v1/sims"
@@ -54,7 +55,7 @@ type SimClient interface {
 
 type simClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewSimClient(h string) *simClient {
@@ -66,7 +67,7 @@ func NewSimClient(h string) *simClient {
 
 	return &simClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

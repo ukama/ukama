@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package dataplan
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const PackageEndpoint = "/v1/packages"
@@ -81,7 +82,7 @@ type PackageClient interface {
 
 type packageClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewPackageClient(h string) *packageClient {
@@ -93,7 +94,7 @@ func NewPackageClient(h string) *packageClient {
 
 	return &packageClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 

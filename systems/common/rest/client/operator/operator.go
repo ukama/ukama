@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package operator
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
 const OperatorEndpoint = "/v1/sims"
@@ -37,7 +38,7 @@ type OperatorClient interface {
 
 type operatorClient struct {
 	u *url.URL
-	R *Resty
+	R *client.Resty
 }
 
 func NewOperatorClient(h string) *operatorClient {
@@ -49,7 +50,7 @@ func NewOperatorClient(h string) *operatorClient {
 
 	return &operatorClient{
 		u: u,
-		R: NewResty(),
+		R: client.NewResty(),
 	}
 }
 
