@@ -26,7 +26,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
@@ -84,7 +84,7 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	nodeClient := cclient.NewNodeClient(serviceConfig.Registry)
+	nodeClient := creg.NewNodeClient(serviceConfig.Registry)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig.Dns)

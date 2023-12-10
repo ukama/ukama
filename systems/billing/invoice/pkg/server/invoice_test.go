@@ -25,7 +25,7 @@ import (
 
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 const OrgName = "testorg"
@@ -138,7 +138,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 
 		invoiceRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
-		subscriberClient.On("Get", subscriberId.String()).Return(&cclient.SubscriberInfo{
+		subscriberClient.On("Get", subscriberId.String()).Return(&csub.SubscriberInfo{
 			SubscriberId: subscriberId,
 			NetworkId:    uuid.NewV4(),
 		}, nil).Once()

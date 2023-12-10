@@ -33,7 +33,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 const defaultTemplate = "templates/invoice.html.tmpl"
@@ -41,13 +41,13 @@ const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
 	invoiceRepo      db.InvoiceRepo
-	subscriberClient cclient.SubscriberClient
+	subscriberClient csub.SubscriberClient
 	msgbus           mb.MsgBusServiceClient
 	baseRoutingKey   msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient cclient.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient csub.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
 		invoiceRepo:      invoiceRepo,
 		subscriberClient: subscriberClient,

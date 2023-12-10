@@ -18,19 +18,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 type NnsEventServer struct {
 	orgName    string
 	Nns        *NnsServer
-	NodeClient cclient.NodeClient
+	NodeClient creg.NodeClient
 	Org        string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNnsEventServer(orgName string, c cclient.NodeClient, s *NnsServer, o string) *NnsEventServer {
+func NewNnsEventServer(orgName string, c creg.NodeClient, s *NnsServer, o string) *NnsEventServer {
 
 	return &NnsEventServer{
 		orgName:    orgName,
@@ -124,12 +124,12 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		log.Errorf("Failed to get org and network. Error: %+v", err)
 		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
 
-		nodeInfo = &cclient.NodeInfo{
+		nodeInfo = &creg.NodeInfo{
 			Id:    msg.GetNodeId(),
 			OrgId: l.Org,
 		}
 
-		nodeInfo.Site = cclient.SiteInfo{}
+		nodeInfo.Site = creg.SiteInfo{}
 		nodeInfo.Site.NodeId = msg.GetNodeId()
 		nodeInfo.Site.SiteId = ""
 		nodeInfo.Site.NetworkId = ""

@@ -27,7 +27,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -75,7 +75,7 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),
 		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
-		cclient.NewOrgClient(serviceConfig.OrgHost), mbClient, serviceConfig.PushGateway)
+		cnucl.NewOrgClient(serviceConfig.OrgHost), mbClient, serviceConfig.PushGateway)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

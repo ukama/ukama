@@ -17,6 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
 	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 const (
@@ -25,15 +26,15 @@ const (
 )
 
 type Network interface {
-	GetNetwork(string) (*cclient.NetworkInfo, error)
-	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*cclient.NetworkInfo, error)
+	GetNetwork(string) (*creg.NetworkInfo, error)
+	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*creg.NetworkInfo, error)
 }
 
 type network struct {
-	nc cclient.NetworkClient
+	nc creg.NetworkClient
 }
 
-func NewNetworkClientSet(ntwk cclient.NetworkClient) Network {
+func NewNetworkClientSet(ntwk creg.NetworkClient) Network {
 	n := &network{
 		nc: ntwk,
 	}
@@ -41,7 +42,7 @@ func NewNetworkClientSet(ntwk cclient.NetworkClient) Network {
 	return n
 }
 
-func (n *network) GetNetwork(id string) (*cclient.NetworkInfo, error) {
+func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 	net, err := n.nc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -70,8 +71,8 @@ func (n *network) GetNetwork(id string) (*cclient.NetworkInfo, error) {
 
 func (n *network) CreateNetwork(orgName, NetworkName string, allowedCountries,
 	allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32,
-	paymentLinks bool) (*cclient.NetworkInfo, error) {
-	net, err := n.nc.Add(cclient.AddNetworkRequest{
+	paymentLinks bool) (*creg.NetworkInfo, error) {
+	net, err := n.nc.Add(creg.AddNetworkRequest{
 		OrgName:          orgName,
 		NetName:          NetworkName,
 		AllowedCountries: allowedCountries,

@@ -30,7 +30,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -105,7 +105,7 @@ func runGrpcServer(gormDB sql.Db) {
 	invoiceServer := server.NewInvoiceServer(
 		serviceConfig.OrgName,
 		db.NewInvoiceRepo(gormDB),
-		cclient.NewSubscriberClient(serviceConfig.SubscriberHost),
+		csub.NewSubscriberClient(serviceConfig.SubscriberHost),
 		mbClient,
 	)
 

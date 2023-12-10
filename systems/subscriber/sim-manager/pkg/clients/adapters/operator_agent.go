@@ -11,17 +11,17 @@ package adapters
 import (
 	"context"
 
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cop "github.com/ukama/ukama/systems/common/rest/client/operator"
 )
 
 type OperatorAgentAdaper struct {
 	host    string
 	isDebug bool
-	client  cclient.OperatorClient
+	client  cop.OperatorClient
 }
 
 func NewOperatorAgentAdapter(operatorAgentHost string, debug bool) (*OperatorAgentAdaper, error) {
-	c := cclient.NewOperatorClient(operatorAgentHost)
+	c := cop.NewOperatorClient(operatorAgentHost)
 
 	return &OperatorAgentAdaper{
 		host:    operatorAgentHost,

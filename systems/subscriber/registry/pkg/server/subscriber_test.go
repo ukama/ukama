@@ -20,7 +20,7 @@ import (
 	"gorm.io/gorm"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/types"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -51,7 +51,7 @@ func TestAdd(t *testing.T) {
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		networkClient.On("Get", netId).
-			Return(&cclient.NetworkInfo{
+			Return(&creg.NetworkInfo{
 				Id:         netId,
 				OrgId:      "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 				Name:       "net-1",

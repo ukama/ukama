@@ -24,7 +24,7 @@ import (
 	"gorm.io/gorm"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -109,7 +109,7 @@ func TestNetworkServer_Add(t *testing.T) {
 		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		orgClient.On("Get", orgName).Return(
-			&cclient.OrgInfo{
+			&cnucl.OrgInfo{
 				Id:            orgId.String(),
 				Name:          orgName,
 				IsDeactivated: false,

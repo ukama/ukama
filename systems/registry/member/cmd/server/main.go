@@ -29,7 +29,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
@@ -80,8 +80,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
 
-	orgClient := cclient.NewOrgClient(serviceConfig.OrgRegistryHost)
-	userClient := cclient.NewUserClient(serviceConfig.OrgRegistryHost)
+	orgClient := cnucl.NewOrgClient(serviceConfig.OrgRegistryHost)
+	userClient := cnucl.NewUserClient(serviceConfig.OrgRegistryHost)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName,
 		instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -132,7 +132,7 @@ func waitForExit() {
 	log.Infof("exiting service %s", pkg.ServiceName)
 }
 
-func initMemberDB(d sql.Db, orgClient cclient.OrgClient, userClient cclient.UserClient) {
+func initMemberDB(d sql.Db, orgClient cnucl.OrgClient, userClient cnucl.UserClient) {
 	mDB := d.GetGormDb()
 	if mDB.Migrator().HasTable(&db.Member{}) {
 		if err := mDB.First(&db.Member{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {

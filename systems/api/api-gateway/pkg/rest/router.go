@@ -24,7 +24,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
@@ -133,40 +135,40 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	}
 }
 
-func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*cclient.NetworkInfo, error) {
+func (r *Router) postNetwork(c *gin.Context, req *AddNetworkReq) (*creg.NetworkInfo, error) {
 	return r.network.CreateNetwork(req.OrgName, req.NetName, req.AllowedCountries,
 		req.AllowedNetworks, req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
-func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*cclient.NetworkInfo, error) {
+func (r *Router) getNetwork(c *gin.Context, req *GetNetworkReq) (*creg.NetworkInfo, error) {
 	return r.network.GetNetwork(req.NetworkId)
 }
 
-func (r *Router) postPackage(c *gin.Context, req *AddPackageReq) (*cclient.PackageInfo, error) {
+func (r *Router) postPackage(c *gin.Context, req *AddPackageReq) (*cdplan.PackageInfo, error) {
 	return r.pkg.AddPackage(req.Name, req.OrgId, req.OwnerId, req.From, req.To, req.BaserateId, req.Active,
 		req.Flatrate, req.SmsVolume, req.VoiceVolume, req.DataVolume, req.VoiceUnit, req.DataUnit, req.SimType,
 		req.Apn, req.Type, req.Duration, req.Markup, req.Amount, req.Overdraft, req.TrafficPolicy, req.Networks)
 }
 
-func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*cclient.PackageInfo, error) {
+func (r *Router) getPackage(c *gin.Context, req *GetPackageReq) (*cdplan.PackageInfo, error) {
 	return r.pkg.GetPackage(req.PackageId)
 }
 
-func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*cclient.SimInfo, error) {
+func (r *Router) postSim(c *gin.Context, req *AddSimReq) (*csub.SimInfo, error) {
 	return r.sim.ConfigureSim(req.SubscriberId, req.OrgId, req.NetworkId, req.FirstName,
 		req.LastName, req.Email, req.PhoneNumber, req.Address, req.Dob, req.ProofOfIdentification,
 		req.IdSerial, req.PackageId, req.SimType, req.SimToken, req.TrafficPolicy)
 }
 
-func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*cclient.SimInfo, error) {
+func (r *Router) getSim(c *gin.Context, req *GetSimReq) (*csub.SimInfo, error) {
 	return r.sim.GetSim(req.Id)
 }
 
-func (r *Router) getNode(c *gin.Context, req *GetNodeRequest) (*cclient.NodeInfo, error) {
+func (r *Router) getNode(c *gin.Context, req *GetNodeRequest) (*creg.NodeInfo, error) {
 	return r.node.GetNode(req.NodeId)
 }
 
-func (r *Router) postNode(c *gin.Context, req *AddNodeRequest) (*cclient.NodeInfo, error) {
+func (r *Router) postNode(c *gin.Context, req *AddNodeRequest) (*creg.NodeInfo, error) {
 	return r.node.RegisterNode(req.NodeId, req.Name, req.OrgId, req.State)
 }
 

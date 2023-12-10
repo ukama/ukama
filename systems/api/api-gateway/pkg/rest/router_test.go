@@ -27,7 +27,9 @@ import (
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 const (
@@ -87,7 +89,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		netInfo := &cclient.NetworkInfo{
+		netInfo := &creg.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
@@ -111,7 +113,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netId := uuid.NewV4()
 
-		netInfo := &cclient.NetworkInfo{
+		netInfo := &creg.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
@@ -205,7 +207,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			PaymentLinks:     paymentLinks,
 		}
 
-		netInfo := &cclient.NetworkInfo{
+		netInfo := &creg.NetworkInfo{
 			Id:   netId.String(),
 			Name: netName,
 		}
@@ -284,7 +286,7 @@ func TestRouter_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		pkgInfo := &cclient.PackageInfo{
+		pkgInfo := &cdplan.PackageInfo{
 			Id:   pkgId.String(),
 			Name: pkgName,
 		}
@@ -308,7 +310,7 @@ func TestRouter_GetPackage(t *testing.T) {
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		pkgId := uuid.NewV4()
 
-		pkgInfo := &cclient.PackageInfo{
+		pkgInfo := &cdplan.PackageInfo{
 			Id:   pkgId.String(),
 			Name: pkgName,
 		}
@@ -431,7 +433,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Networks:      networks,
 		}
 
-		pkgInfo := &cclient.PackageInfo{
+		pkgInfo := &cdplan.PackageInfo{
 			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
@@ -544,7 +546,7 @@ func TestRouter_GetSim(t *testing.T) {
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		simInfo := &cclient.SimInfo{
+		simInfo := &csub.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
@@ -568,7 +570,7 @@ func TestRouter_GetSim(t *testing.T) {
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
 		simId := uuid.NewV4()
 
-		simInfo := &cclient.SimInfo{
+		simInfo := &csub.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
@@ -679,7 +681,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 
 		sim.SubscriberId = subscriberId.String()
 
-		simInfo := &cclient.SimInfo{
+		simInfo := &csub.SimInfo{
 			Id:           simId.String(),
 			SubscriberId: subscriberId.String(),
 		}
@@ -746,7 +748,7 @@ func TestRouter_GetNode(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
 
-		nodeInfo := &cclient.NodeInfo{
+		nodeInfo := &creg.NodeInfo{
 			Id:   nodeId,
 			Name: nodeName,
 		}
@@ -827,7 +829,7 @@ func TestRouter_RegisterNode(t *testing.T) {
 			State:  state,
 		}
 
-		nodeInfo := &cclient.NodeInfo{
+		nodeInfo := &creg.NodeInfo{
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),

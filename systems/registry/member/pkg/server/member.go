@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
@@ -32,8 +32,8 @@ import (
 type MemberServer struct {
 	pb.UnimplementedMemberServiceServer
 	mRepo          db.MemberRepo
-	orgClient      cclient.OrgClient
-	userClient     cclient.UserClient
+	orgClient      cnucl.OrgClient
+	userClient     cnucl.UserClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
@@ -41,7 +41,7 @@ type MemberServer struct {
 	OrgName        string
 }
 
-func NewMemberServer(orgName string, mRepo db.MemberRepo, orgClient cclient.OrgClient, userClient cclient.UserClient,
+func NewMemberServer(orgName string, mRepo db.MemberRepo, orgClient cnucl.OrgClient, userClient cnucl.UserClient,
 	msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID) *MemberServer {
 
 	return &MemberServer{

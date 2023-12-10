@@ -23,7 +23,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -37,10 +37,10 @@ type SubcriberServer struct {
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRegistryServiceServer
 	simManagerService client.SimManagerClientProvider
-	networkClient     cclient.NetworkClient
+	networkClient     creg.NetworkClient
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, networkClient cclient.NetworkClient) *SubcriberServer {
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, networkClient creg.NetworkClient) *SubcriberServer {
 	return &SubcriberServer{
 		orgName:              orgName,
 		subscriberRepo:       subscriberRepo,

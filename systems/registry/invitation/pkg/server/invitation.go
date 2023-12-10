@@ -25,16 +25,17 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
 type InvitationServer struct {
 	pb.UnimplementedInvitationServiceServer
 	iRepo                db.InvitationRepo
-	orgClient            cclient.OrgClient
-	userClient           cclient.UserClient
-	mailerClient         cclient.MailerClient
+	orgClient            cnucl.OrgClient
+	userClient           cnucl.UserClient
+	mailerClient         cnotif.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
 	// unused?
@@ -44,8 +45,8 @@ type InvitationServer struct {
 	TemplateName string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cclient.MailerClient,
-	orgClient cclient.OrgClient, userClient cclient.UserClient, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
+	orgClient cnucl.OrgClient, userClient cnucl.UserClient, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
@@ -84,7 +85,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	err = i.mailerClient.SendEmail(cclient.SendEmailReq{
+	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
 		To:           []string{req.GetEmail()},
 		TemplateName: i.TemplateName,
 		Values: map[string]interface{}{

@@ -26,7 +26,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
@@ -70,9 +71,9 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mailerClient := cclient.NewMailerClient(serviceConfig.NotificationHost)
-	orgClient := cclient.NewOrgClient(serviceConfig.OrgRegistryHost)
-	userClient := cclient.NewUserClient(serviceConfig.OrgRegistryHost)
+	mailerClient := cnotif.NewMailerClient(serviceConfig.NotificationHost)
+	orgClient := cnucl.NewOrgClient(serviceConfig.OrgRegistryHost)
+	userClient := cnucl.NewUserClient(serviceConfig.OrgRegistryHost)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
 		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,

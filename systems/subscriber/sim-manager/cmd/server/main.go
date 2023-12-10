@@ -31,7 +31,9 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -103,9 +105,9 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient := cclient.NewPackageClient(serviceConfig.DataPlanHost)
-	netClient := cclient.NewNetworkClient(serviceConfig.RegistryHost)
-	notificationClient := cclient.NewMailerClient(serviceConfig.NotificationHost)
+	pckgClient := cdplan.NewPackageClient(serviceConfig.DataPlanHost)
+	netClient := creg.NewNetworkClient(serviceConfig.RegistryHost)
+	notificationClient := cnotif.NewMailerClient(serviceConfig.NotificationHost)
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,

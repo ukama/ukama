@@ -27,7 +27,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
@@ -39,14 +39,14 @@ type NetworkServer struct {
 	netRepo        db.NetRepo
 	orgRepo        db.OrgRepo
 	siteRepo       db.SiteRepo
-	orgClient      cclient.OrgClient
+	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
 }
 
 func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService cclient.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
+	orgService cnucl.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,

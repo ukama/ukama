@@ -21,6 +21,7 @@ import (
 
 	crest "github.com/ukama/ukama/systems/common/rest"
 	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 func TestCient_GetNode(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCient_GetNode(t *testing.T) {
 
 	t.Run("NodeFound", func(t *testing.T) {
 		nodeClient.On("Get", nodeId).
-			Return(&cclient.NodeInfo{
+			Return(&creg.NodeInfo{
 				Id:   nodeId,
 				Name: nodeName,
 			}, nil).Once()
@@ -87,12 +88,12 @@ func TestCient_RegisterNode(t *testing.T) {
 	n := client.NewNodeClientSet(nodeClient)
 
 	t.Run("NodeRegistered", func(t *testing.T) {
-		nodeClient.On("Add", cclient.AddNodeRequest{
+		nodeClient.On("Add", creg.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
 			State:  state,
-		}).Return(&cclient.NodeInfo{
+		}).Return(&creg.NodeInfo{
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
@@ -108,7 +109,7 @@ func TestCient_RegisterNode(t *testing.T) {
 	})
 
 	t.Run("NodeNotRegistered", func(t *testing.T) {
-		nodeClient.On("Add", cclient.AddNodeRequest{
+		nodeClient.On("Add", creg.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
@@ -134,7 +135,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("Attach", nodeId, cclient.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, creg.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(nil).Once()
@@ -147,7 +148,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeNotAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("Attach", nodeId, cclient.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, creg.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(errors.New("some error")).Once()
@@ -209,7 +210,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("AddToSite", nodeId, cclient.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, creg.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(nil).Once()
@@ -222,7 +223,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeNotAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("AddToSite", nodeId, cclient.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, creg.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(errors.New("some error")).Once()

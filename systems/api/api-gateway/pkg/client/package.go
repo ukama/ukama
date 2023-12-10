@@ -15,20 +15,20 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 )
 
 type Package interface {
-	GetPackage(string) (*cclient.PackageInfo, error)
+	GetPackage(string) (*cdplan.PackageInfo, error)
 	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
-		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*cclient.PackageInfo, error)
+		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*cdplan.PackageInfo, error)
 }
 
 type datapackage struct {
-	pc cclient.PackageClient
+	pc cdplan.PackageClient
 }
 
-func NewPackageClientSet(pkg cclient.PackageClient) Package {
+func NewPackageClientSet(pkg cdplan.PackageClient) Package {
 	p := &datapackage{
 		pc: pkg,
 	}
@@ -36,7 +36,7 @@ func NewPackageClientSet(pkg cclient.PackageClient) Package {
 	return p
 }
 
-func (p *datapackage) GetPackage(id string) (*cclient.PackageInfo, error) {
+func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 	pkg, err := p.pc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -66,9 +66,9 @@ func (p *datapackage) GetPackage(id string) (*cclient.PackageInfo, error) {
 func (p *datapackage) AddPackage(name, orgId, ownerId, from, to, baserateId string,
 	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
 	simType, apn, pType string, duration uint64, markup, amount, overdraft float64, trafficPolicy uint32,
-	networks []string) (*cclient.PackageInfo, error) {
+	networks []string) (*cdplan.PackageInfo, error) {
 
-	pkg, err := p.pc.Add(cclient.AddPackageRequest{
+	pkg, err := p.pc.Add(cdplan.AddPackageRequest{
 		Name:          name,
 		OrgId:         orgId,
 		OwnerId:       ownerId,

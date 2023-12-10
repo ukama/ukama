@@ -31,7 +31,9 @@ import (
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -44,7 +46,7 @@ type SimManagerServer struct {
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
-	packageClient             cclient.PackageClient
+	packageClient             cdplan.PackageClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
@@ -53,21 +55,21 @@ type SimManagerServer struct {
 	org                       string
 	orgName                   string
 	pushMetricHost            string
-	mailerClient              cclient.MailerClient
-	networkClient             cclient.NetworkClient
+	mailerClient              cnotif.MailerClient
+	networkClient             creg.NetworkClient
 	pb.UnimplementedSimManagerServiceServer
 }
 
 func NewSimManagerServer(
 	orgName string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, packageClient cclient.PackageClient,
+	agentFactory adapters.AgentFactory, packageClient cdplan.PackageClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
 	msgBus mb.MsgBusServiceClient,
 	org string,
 	pushMetricHost string,
-	mailerClient cclient.MailerClient,
-	networkClient cclient.NetworkClient,
+	mailerClient cnotif.MailerClient,
+	networkClient creg.NetworkClient,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -285,7 +287,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
-		err = s.mailerClient.SendEmail(cclient.SendEmailReq{
+		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
 			TemplateName: "sim-allocation",
 			Values: map[string]interface{}{

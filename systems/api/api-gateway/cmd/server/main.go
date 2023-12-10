@@ -20,7 +20,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 var svcConf *pkg.Config
@@ -29,11 +31,11 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	networkClient := client.NewNetworkClientSet(cclient.NewNetworkClient(svcConf.HttpServices.RegistryHost))
-	packageClient := client.NewPackageClientSet(cclient.NewPackageClient(svcConf.HttpServices.DataPlanHost))
-	simClient := client.NewSimClientSet(cclient.NewSimClient(svcConf.HttpServices.SubscriberHost),
-		cclient.NewSubscriberClient(svcConf.HttpServices.SubscriberHost))
-	nodeClient := client.NewNodeClientSet(cclient.NewNodeClient(svcConf.HttpServices.RegistryHost))
+	networkClient := client.NewNetworkClientSet(creg.NewNetworkClient(svcConf.HttpServices.RegistryHost))
+	packageClient := client.NewPackageClientSet(cdplan.NewPackageClient(svcConf.HttpServices.DataPlanHost))
+	simClient := client.NewSimClientSet(csub.NewSimClient(svcConf.HttpServices.SubscriberHost),
+		csub.NewSubscriberClient(svcConf.HttpServices.SubscriberHost))
+	nodeClient := client.NewNodeClientSet(creg.NewNodeClient(svcConf.HttpServices.RegistryHost))
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {

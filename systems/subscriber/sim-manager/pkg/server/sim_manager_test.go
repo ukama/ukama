@@ -26,7 +26,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -313,7 +314,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				OrgId:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
@@ -321,7 +322,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		netClient.On("Get", networkID.String()).
-			Return(&cclient.NetworkInfo{
+			Return(&creg.NetworkInfo{
 				OrgId:         orgID.String(),
 				IsDeactivated: false,
 				TrafficPolicy: 0,
@@ -470,7 +471,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		packageClient.On("Get", packageID.String()).
 			Return(
-				&cclient.PackageInfo{
+				&cdplan.PackageInfo{
 					OrgId:    uuid.NewV4().String(),
 					IsActive: true,
 					Duration: 3600,
@@ -522,7 +523,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				OrgId:    orgID.String(),
 				IsActive: false,
 				Duration: 3600,
@@ -575,7 +576,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		packageClient.On("Get", packageID.String()).
 			Return(
-				&cclient.PackageInfo{
+				&cdplan.PackageInfo{
 					OrgId:    orgID.String(),
 					IsActive: true,
 					Duration: 3600,
@@ -864,7 +865,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			ReturnArguments.Get(0).(*db.Sim)
 
 		pkgInfo := packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:       packageID.String(),
 				OrgId:    orgID.String(),
 				IsActive: true,
@@ -872,7 +873,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				SimType:  db.SimTypeTest.String(),
 			}, nil).
 			Once().
-			ReturnArguments.Get(0).(*cclient.PackageInfo)
+			ReturnArguments.Get(0).(*cdplan.PackageInfo)
 
 		pkg := &sims.Package{
 			SimId:     sim.Id,
@@ -943,7 +944,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			Once()
 
 		packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:       packageID.String(),
 				OrgId:    orgID.String(),
 				IsActive: false,
@@ -988,7 +989,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			Once()
 
 		packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:       packageID.String(),
 				OrgId:    uuid.NewV4().String(),
 				IsActive: true,
@@ -1033,7 +1034,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			Once()
 
 		packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:       packageID.String(),
 				OrgId:    orgID.String(),
 				IsActive: true,
@@ -1079,14 +1080,14 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			ReturnArguments.Get(0).(*db.Sim)
 
 		pkgInfo := packageClient.On("Get", packageID.String()).
-			Return(&cclient.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:       packageID.String(),
 				OrgId:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
 				SimType:  db.SimTypeTest.String(),
 			}, nil).Once().
-			ReturnArguments.Get(0).(*cclient.PackageInfo)
+			ReturnArguments.Get(0).(*cdplan.PackageInfo)
 
 		pkg := &sims.Package{
 			SimId:     sim.Id,
