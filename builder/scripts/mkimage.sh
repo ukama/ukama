@@ -21,8 +21,8 @@ IMG_SIZE="5G"
 # Step 0: make sure have all the right packages
 apt-get update
 apt-get install -y qemu-kvm qemu virt-manager virt-viewer libvirt-daemon-system \
-        libvirt-clients bridge-utils debootstrap \
-        extlinux kpartx 
+      libvirt-clients bridge-utils debootstrap \
+      extlinux kpartx
 
 # Step 1: Download Ubuntu ISO
 echo "Downloading Ubuntu 20.04 (focal) ISO..."
@@ -39,7 +39,7 @@ mkfs.ext4 ${LOOP_DEVICE}p1
 
 # Mount the partition
 mkdir -p /mnt/image
-mount ${LOOP_DEVICE}p1 /mnt/image
+mount ${LOOP_DEVICE}p1 /mnt/image || { echo "Unable to mount the partition"; exit 1;}
 
 # Step 3: Install Ubuntu on the Disk Image
 echo "Installing Ubuntu on the disk..."
@@ -50,6 +50,7 @@ mount --bind /dev  /mnt/image/dev
 mount --bind /proc /mnt/image/proc
 mount --bind /sys  /mnt/image/sys
 
+echo "Installing packages on the disk ..."
 chroot /mnt/image /bin/bash <<'EOL'
     set -e	
     export DEBIAN_FRONTEND=noninteractive
@@ -100,19 +101,22 @@ EOF
 umount /mnt/image
 losetup -d $LOOP_DEVICE
 rm -f $ISO_FILE
+sleep 5
 
 # Step 5: mount the image and extract kenerl and initramFS. This will
 # be needed by QEMU to run the image.
 #
 # QEMU command would be:
 # sudo qemu-system-x86_64 -hda ${IMG_FILE} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
-# -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1"
+    # -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1"
+echo "Extracting kernel and initRAMfs from the OS image"
 mkdir -p /mnt/${NODE_ID}
 mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${NODE_ID}
 
 cp /mnt/${NODE_ID}/boot/vmlinuz-*    .
 cp /mnt/${NODE_ID}/boot/initrd.img-* .
 
+echo "Cleanup and done!"
 # Unmount the image
 umount /mnt/${NODE_ID}
 rmdir /mnt/${NODE_ID}

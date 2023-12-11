@@ -55,8 +55,8 @@ if [ "$1" = "system" ]; then
 
 elif [ "$1" = "node" ]; then
 
-    ukama_root = $2
-    node_id    = $3
+    ukama_root=$2
+    node_id=$3
 
     # create bootable os image
     echo "Creating bootsable OS image"

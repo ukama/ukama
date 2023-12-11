@@ -17,7 +17,7 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-#define SCRIPT      "./scripts/build.sh"
+#define SCRIPT      "./build.sh"
 
 static bool build_system(char *name, char *path) {
 
@@ -25,7 +25,7 @@ static bool build_system(char *name, char *path) {
 
 	if (name == NULL || path == NULL) return USYS_FALSE;
 
-	sprintf(runMe, "%s system %s", SCRIPT, path);
+	sprintf(runMe, "cd scripts; %s system %s; cd -", SCRIPT, path);
 	if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
@@ -80,7 +80,7 @@ bool build_nodes(int count, char *repo, char *list) {
         nodeID = list;
     }
 
-    sprintf(runMe, "%s node %s %s", SCRIPT, repo, nodeID);
+    sprintf(runMe, "cd scripts; sudo %s node %s %s; cd -", SCRIPT, repo, nodeID);
     if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
