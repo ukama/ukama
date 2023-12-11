@@ -270,7 +270,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       placeholder={'Select Network'}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
-      networks={networksData?.getNetworks.networks}
+      networks={networksData?.getNetworks.networks || []}
       handleAddNetwork={handleAddNetworkAction}
     >
       <Component {...pageProps} />

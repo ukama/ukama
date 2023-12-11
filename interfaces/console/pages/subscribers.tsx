@@ -730,6 +730,7 @@ const Page = () => {
             handleDeleteSubscriber={handleDeleteSubscriberModal}
             simStatusLoading={toggleSimStatusLoading}
             currentSite={
+              sitesData?.getSites?.sites &&
               sitesData?.getSites?.sites.length > 0
                 ? sitesData?.getSites?.sites[0].name
                 : '-'

@@ -564,6 +564,7 @@ fragment UNetwork on NetworkDto {
   id
   name
   orgId
+  budget
   isDeactivated
   createdAt
   countries
@@ -597,8 +598,6 @@ mutation AddNetwork($data: AddNetworkInputDto!) {
     ...UNetwork
   }
 }
-
-
 
 ### Networks End ###
 

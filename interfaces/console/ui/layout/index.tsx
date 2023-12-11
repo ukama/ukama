@@ -27,7 +27,7 @@ interface ILayoutProps {
   isDarkMode: boolean;
   isFullScreen: boolean;
   handlePageChange: Function;
-  networks: NetworkDto[] | undefined;
+  networks: NetworkDto[];
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;

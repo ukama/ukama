@@ -1554,12 +1554,12 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> };
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
 export type GetSitesQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -1573,7 +1573,7 @@ export type AddNetworkMutationVariables = Exact<{
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -1895,6 +1895,7 @@ export const UNetworkFragmentDoc = gql`
   id
   name
   orgId
+  budget
   isDeactivated
   createdAt
   countries
