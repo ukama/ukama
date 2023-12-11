@@ -108,7 +108,7 @@ const AddNetworkDialog = ({
                   fullWidth
                   name={'name'}
                   size="medium"
-                  placeholder="Mesh"
+                  placeholder="network-name"
                   label={'Network name'}
                   InputLabelProps={{
                     shrink: true,

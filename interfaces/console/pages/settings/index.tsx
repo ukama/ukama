@@ -6,8 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { commonData } from '@/app-recoil';
 import { SETTING_MENU } from '@/constants';
 import colors from '@/styles/theme/colors';
+import { TCommonData } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   Divider,
@@ -19,10 +21,11 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
+import { useRecoilState } from 'recoil';
 
-const PersonalSettings = dynamic(() => import('./_personalSetting'));
+const PersonalSetting = dynamic(() => import('./_personalSetting'));
 const Billing = dynamic(() => import('./_billing'));
-const NetworkSettings = dynamic(() => import('./_networkSetting'));
+const NetworkSetting = dynamic(() => import('./_networkSetting'));
 const Alerts = dynamic(() => import('./_alerts'));
 const ConsoleSettings = dynamic(() => import('./_consoleSetting'));
 
@@ -42,7 +45,7 @@ const ManageMenu = ({
       py: 2,
       px: 2,
       width: 258,
-      maxHeight: 224,
+      maxHeight: 272,
       overflow: 'auto',
       height: 'inderit',
       borderRadius: '4px',
@@ -86,7 +89,12 @@ const ManageMenu = ({
 export default function Page() {
   const [menu, setMenu] = useState('personal-settings');
   const [isLoading, setIsLoading] = useState(false);
+  const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const onMenuItemClick = (id: string) => setMenu(id);
+
+  const handleDeleteNetwork = () => {};
+
+  const handleUpdateNetwork = (name: string) => {};
 
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -102,7 +110,14 @@ export default function Page() {
         cstyle={{ backgroundColor: isLoading ? colors.white : 'transparent' }}
       >
         <>
-          {menu === 'personal-settings' && <PersonalSettings />}
+          {menu === 'network-settings' && (
+            <NetworkSetting
+              name={_commonData.networkName}
+              handleSubmit={handleUpdateNetwork}
+              handleDeleteNetwork={handleDeleteNetwork}
+            />
+          )}
+          {menu === 'personal-settings' && <PersonalSetting />}
           {menu === 'billing' && <Billing />}
           {/* {menu === 'network-settings' && <NetworkSettings />}
           {menu === 'alerts' && <Alerts />} */}

@@ -598,6 +598,8 @@ mutation AddNetwork($data: AddNetworkInputDto!) {
   }
 }
 
+
+
 ### Networks End ###
 
 # PLANNING TOOL GRAPH

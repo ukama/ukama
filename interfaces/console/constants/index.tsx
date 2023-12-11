@@ -20,6 +20,7 @@ const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
 const SETTING_MENU = [
   { id: 'personal-settings', name: 'My Account' },
+  { id: 'network-settings', name: 'Network' },
   { id: 'billing', name: 'Billing' },
   { id: 'appearance', name: 'Appearance' },
 ];
