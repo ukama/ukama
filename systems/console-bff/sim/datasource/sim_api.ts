@@ -80,7 +80,7 @@ class SimApi extends RESTDataSource {
       if (req.iccid) {
         const token = generateTokenFromIccid(
           req.iccid,
-          process.env.ENCRYPTION_KEY || ""
+          process.env.ENCRYPTION_KEY ?? ""
         );
         return token;
       }

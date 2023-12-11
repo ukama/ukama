@@ -14,7 +14,7 @@ import { HTTP401Error, Messages } from "../errors";
 export class Authentication implements MiddlewareInterface<any> {
   async use({ context }: ResolverData<any>, next: NextFn): Promise<void> {
     if (context.req.headers !== undefined) {
-      const token = context.req.headers["x-session-token"] || "";
+      const token = context.req.headers["x-session-token"] ?? "";
       const cookie =
         context.req.headers.cookie &&
         context.req.headers.cookie.includes("ukama_session")

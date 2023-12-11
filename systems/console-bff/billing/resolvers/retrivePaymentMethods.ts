@@ -47,8 +47,8 @@ export class RetrivePaymentMethodsResolver {
           funding: ele.card?.funding,
           exp_year: ele.card?.exp_year,
           exp_month: ele.card?.exp_month,
-          country: ele.card?.country || undefined,
-          cvc_check: ele.card?.checks?.cvc_check || undefined,
+          country: ele.card?.country ?? undefined,
+          cvc_check: ele.card?.checks?.cvc_check ?? undefined,
         });
       } else {
         list.push({

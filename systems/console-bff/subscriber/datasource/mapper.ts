@@ -34,7 +34,7 @@ export const dtoToSubscriberResDto = (
       activationsCount: sim.activations_count,
       firstActivatedOn: sim.first_activated_on,
       deactivationsCount: sim.deactivations_count,
-    })) || [];
+    })) ?? [];
   return {
     sim: sims,
     email: res.subscriber.email,
