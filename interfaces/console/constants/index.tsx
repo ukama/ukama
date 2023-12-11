@@ -18,6 +18,8 @@ import { DataTableWithOptionColumns } from './tableColumns';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
+const IPFY_URL = 'https://api.ipify.org/?format=json';
+const IP_API_BASE_URL = 'https://ipapi.co';
 const SETTING_MENU = [
   { id: 'personal-settings', name: 'My Account' },
   { id: 'network-settings', name: 'Network' },
@@ -1631,41 +1633,6 @@ const SIM_VARIANT = [
 ];
 
 export { NodeAppLogs, NodeApps, SimCardData } from './stubData';
-export {
-  APP_VERSION,
-  BASIC_MENU_ACTIONS,
-  BILLING_PLANS,
-  BillingDialogList,
-  BillingTabs,
-  COPY_RIGHTS,
-  DEACTIVATE_EDIT_ACTION_MENU,
-  DEFAULT_RESPONSE,
-  DRAWER_WIDTH,
-  DataTableWithOptionColumns,
-  HealtChartsConfigure,
-  LANGUAGE_OPTIONS,
-  MASK_BY_TYPE,
-  MASK_PLACEHOLDERS,
-  MONTH_FILTER,
-  NODE_ACTIONS_BUTTONS,
-  NODE_IMAGES,
-  NODE_TYPE,
-  NodePageTabs,
-  NodeResourcesTabConfigure,
-  RF_NODES,
-  ROAMING_SELECT,
-  SETTING_MENU,
-  SIDEBAR_MENU1,
-  SIDEBAR_MENU2,
-  SIM_VARIANT,
-  STATS_OPTIONS,
-  STATS_PERIOD,
-  TABLE_EXPORT_OPTIONS,
-  TIME_FILTER,
-  TimeZones,
-  TooltipsText,
-  UserActivation,
-};
 
 const NODE_IMAGES = {
   tnode:
@@ -1715,3 +1682,41 @@ const BillingDialogList = [
       'Your payment and preferences have been set up successfully! You can change your settings at any time.',
   },
 ];
+
+export {
+  APP_VERSION,
+  BASIC_MENU_ACTIONS,
+  BILLING_PLANS,
+  BillingDialogList,
+  BillingTabs,
+  COPY_RIGHTS,
+  DEACTIVATE_EDIT_ACTION_MENU,
+  DEFAULT_RESPONSE,
+  DRAWER_WIDTH,
+  DataTableWithOptionColumns,
+  HealtChartsConfigure,
+  IPFY_URL,
+  IP_API_BASE_URL,
+  LANGUAGE_OPTIONS,
+  MASK_BY_TYPE,
+  MASK_PLACEHOLDERS,
+  MONTH_FILTER,
+  NODE_ACTIONS_BUTTONS,
+  NODE_IMAGES,
+  NODE_TYPE,
+  NodePageTabs,
+  NodeResourcesTabConfigure,
+  RF_NODES,
+  ROAMING_SELECT,
+  SETTING_MENU,
+  SIDEBAR_MENU1,
+  SIDEBAR_MENU2,
+  SIM_VARIANT,
+  STATS_OPTIONS,
+  STATS_PERIOD,
+  TABLE_EXPORT_OPTIONS,
+  TIME_FILTER,
+  TimeZones,
+  TooltipsText,
+  UserActivation,
+};

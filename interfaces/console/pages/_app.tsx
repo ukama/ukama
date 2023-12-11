@@ -9,6 +9,7 @@
 'use client';
 import { commonData, isDarkmode, snackbarMessage } from '@/app-recoil';
 import client from '@/client/ApolloClient';
+import { IPFY_URL, IP_API_BASE_URL } from '@/constants';
 import { theme } from '@/styles/theme';
 import { MyAppProps, TCommonData, TSnackMessage } from '@/types';
 import AuthWrapper from '@/ui/wrappers/authWrapper';
@@ -27,13 +28,13 @@ const clientSideEmotionCache = createEmotionCache();
 const SNACKBAR_TIMEOUT = 5000;
 
 const getMetaInfo = async () => {
-  return await fetch('https://api.ipify.org/?format=json', {
+  return await fetch(IPFY_URL, {
     method: 'GET',
   })
     .then((response) => response.text())
     .then((data) => JSON.parse(data))
     .then((data) =>
-      fetch(`https://ipapi.co/${data.ip}/json/`, {
+      fetch(`${IP_API_BASE_URL}/${data.ip}/json/`, {
         method: 'GET',
       }),
     )
