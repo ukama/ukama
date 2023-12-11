@@ -127,7 +127,7 @@ const startServer = async () => {
       const user: UserResDto = await userApi.auth(kId);
       if (user.uuid) {
         const whoamiRes: WhoamiDto = await userApi.whoami(user.uuid);
-        res.setHeader("Access-Control-Allow-Origin", "http://localhost:4455");
+        res.setHeader("Access-Control-Allow-Origin", AUTH_APP_URL);
         res.setHeader("Access-Control-Allow-Credentials", "true");
         res.send(whoamiRes);
         return;

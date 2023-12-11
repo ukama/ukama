@@ -1,8 +1,5 @@
-import { NetworkDto } from '@/generated';
-import { COUNTRIES } from '@/utils';
 import CloseIcon from '@mui/icons-material/Close';
 import {
-  Autocomplete,
   Button,
   Dialog,
   DialogContent,
@@ -20,7 +17,7 @@ type AddNetworkDialogProps = {
   title: string;
   isOpen: boolean;
   loading: boolean;
-  networks: NetworkDto[];
+  // networks: NetworkDto[];
   description: string;
   isClosable?: boolean;
   handleCloseAction: any;
@@ -45,7 +42,7 @@ const validationSchema = Yup.object({
       /^[a-z0-9\-]*$/,
       'Network name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
     ),
-  budget: Yup.number().required('Network budget is required'),
+  budget: Yup.number().default(0),
 });
 
 const initialValues: AddNetworkForm = {
@@ -59,7 +56,7 @@ const AddNetworkDialog = ({
   title,
   isOpen,
   loading,
-  networks,
+  // networks,
   description,
   labelSuccessBtn,
   labelNegativeBtn,
@@ -107,96 +104,21 @@ const AddNetworkDialog = ({
                 {description && (
                   <Typography variant="body1">{description}</Typography>
                 )}
-                <Stack direction={'row'} width={'100%'} spacing={2} mt={1}>
-                  <TextField
-                    sx={{ width: '50%' }}
-                    name={'name'}
-                    size="medium"
-                    placeholder="Mesh"
-                    label={'Network name'}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.name}
-                    helperText={touched.name && errors.name}
-                    error={touched.name && Boolean(errors.name)}
-                    id={'name'}
-                  />
-                  <TextField
-                    sx={{ width: '50%' }}
-                    name={'budget'}
-                    id={'budget'}
-                    size="medium"
-                    type="number"
-                    placeholder="100"
-                    label={'Network budget'}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    onBlur={handleBlur}
-                    value={values.budget}
-                    onChange={handleChange}
-                    helperText={touched.budget && Boolean(errors.budget)}
-                    error={touched.budget && Boolean(errors.budget)}
-                  />
-                </Stack>
-                <Autocomplete
-                  multiple
-                  options={COUNTRIES}
-                  getOptionLabel={(option) => option.name}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Allowed Countries"
-                      placeholder="Country"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  )}
-                  sx={{
-                    width: '100%',
-                    mt: 1,
-                    p: 0,
-                    '.MuiOutlinedInput-root': {
-                      p: '4px',
-                    },
+                <TextField
+                  fullWidth
+                  name={'name'}
+                  size="medium"
+                  placeholder="Mesh"
+                  label={'Network name'}
+                  InputLabelProps={{
+                    shrink: true,
                   }}
-                  id={'countries'}
                   onBlur={handleBlur}
-                  onChange={(_, value: any) =>
-                    setFieldValue('countries', value)
-                  }
-                />
-                <Autocomplete
-                  multiple
-                  options={networks.length > 0 ? networks : []}
-                  getOptionLabel={(option: NetworkDto) =>
-                    option ? option.name : 'No network available'
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Allowed Networks"
-                      placeholder="Network"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      value={values.networks}
-                    />
-                  )}
-                  sx={{
-                    width: '100%',
-                    mt: 1,
-                    '.MuiOutlinedInput-root': {
-                      p: '4px',
-                    },
-                  }}
-                  id={'networks'}
-                  onBlur={handleBlur}
-                  onChange={(_, value: any) => setFieldValue('networks', value)}
+                  onChange={handleChange}
+                  value={values.name}
+                  helperText={touched.name && errors.name}
+                  error={touched.name && Boolean(errors.name)}
+                  id={'name'}
                 />
                 <Stack
                   width="100%"
@@ -227,3 +149,97 @@ const AddNetworkDialog = ({
 };
 
 export default AddNetworkDialog;
+
+{
+  /* <Stack direction={'row'} width={'100%'} spacing={2} mt={1}>
+      <TextField
+        fullWidth
+        name={'name'}
+        size="medium"
+        placeholder="Mesh"
+        label={'Network name'}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        onBlur={handleBlur}
+        onChange={handleChange}
+        value={values.name}
+        helperText={touched.name && errors.name}
+        error={touched.name && Boolean(errors.name)}
+        id={'name'}
+      />
+      <TextField
+        sx={{ width: '50%' }}
+        name={'budget'}
+        id={'budget'}
+        size="medium"
+        type="number"
+        placeholder="100"
+        label={'Network budget'}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        onBlur={handleBlur}
+        value={values.budget}
+        onChange={handleChange}
+        helperText={touched.budget && Boolean(errors.budget)}
+        error={touched.budget && Boolean(errors.budget)}
+      />
+    </Stack>
+    <Autocomplete
+      multiple
+      options={COUNTRIES}
+      getOptionLabel={(option) => option.name}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Allowed Countries"
+          placeholder="Country"
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      )}
+      sx={{
+        width: '100%',
+        mt: 1,
+        p: 0,
+        '.MuiOutlinedInput-root': {
+          p: '4px',
+        },
+      }}
+      id={'countries'}
+      onBlur={handleBlur}
+      onChange={(_, value: any) =>
+        setFieldValue('countries', value)
+      }
+    /> 
+    <Autocomplete
+      multiple
+      options={networks.length > 0 ? networks : []}
+      getOptionLabel={(option: NetworkDto) =>
+        option ? option.name : 'No network available'
+      }
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Allowed Networks"
+          placeholder="Network"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          value={values.networks}
+        />
+      )}
+      sx={{
+        width: '100%',
+        mt: 1,
+        '.MuiOutlinedInput-root': {
+          p: '4px',
+        },
+      }}
+      id={'networks'}
+      onBlur={handleBlur}
+      onChange={(_, value: any) => setFieldValue('networks', value)}
+    /> */
+}

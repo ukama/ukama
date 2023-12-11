@@ -240,22 +240,18 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const handleAddNetworkAction = () => setShowAddNetwork(true);
 
   const handleAddNetwork = (values: any) => {
-    const countriesName =
-      values.countries.length > 0
-        ? values.countries.map((item: any) => item.name)
-        : [];
-    const networkNames =
-      values.networks.length > 0
-        ? values.networks.map((item: any) => item.name)
-        : [];
+    // const countriesName =
+    //   values.countries.length > 0
+    //     ? values.countries.map((item: any) => item.name)
+    //     : [];
     addNetwork({
       variables: {
         data: {
           name: values.name,
           budget: values.budget,
-          networks: networkNames,
+          networks: values.networks,
           org: _commonData.orgName,
-          countries: countriesName,
+          countries: values.countries,
         },
       },
     }).finally(() => {
@@ -286,7 +282,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         loading={addNetworkLoading}
         handleSuccessAction={handleAddNetwork}
         description={'Add network in organization'}
-        networks={networksData?.getNetworks.networks || []}
+        // networks={networksData?.getNetworks.networks || []}
         handleCloseAction={() => setShowAddNetwork(false)}
       />
     </Layout>
