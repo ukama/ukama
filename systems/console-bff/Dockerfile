@@ -7,7 +7,6 @@ COPY package*.json yarn.lock ./
 ENV NODE_ENV production
 ENV NODE_ENV PLANNING_TOOL_DB=$PLANNING_TOOL_DB
 RUN yarn install --frozen-lockfile --ignore-scripts
-RUN yarn  build
 
 COPY . .
 
