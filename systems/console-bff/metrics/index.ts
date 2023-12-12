@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -30,10 +29,12 @@ import {
   PLAYGROUND_URL,
 } from "../common/configs";
 import { logger } from "../common/logger";
+import { storeInStorage } from "../common/storage";
 import resolvers from "./resolvers";
 
 const app = express();
 const httpServer = createServer(app);
+storeInStorage("UkamaMetrics", "running");
 
 const runServer = async () => {
   const ts = await tq.buildSchema({
@@ -74,6 +75,9 @@ const runServer = async () => {
   });
 
   await server.start();
+  app.get("/ping", (_, res) => {
+    res.send("pong");
+  });
   app.use(
     "/graphql",
     cors({

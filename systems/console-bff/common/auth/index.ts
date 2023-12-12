@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { MiddlewareInterface, NextFn, ResolverData } from "type-graphql";
 import { Service } from "typedi";
 
@@ -15,7 +14,7 @@ import { HTTP401Error, Messages } from "../errors";
 export class Authentication implements MiddlewareInterface<any> {
   async use({ context }: ResolverData<any>, next: NextFn): Promise<void> {
     if (context.req.headers !== undefined) {
-      const token = context.req.headers["x-session-token"] || "";
+      const token = context.req.headers["x-session-token"] ?? "";
       const cookie =
         context.req.headers.cookie &&
         context.req.headers.cookie.includes("ukama_session")

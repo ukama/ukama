@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { GraphQLError } from "graphql";
 
 import { NUCLEUS_API_GW, VERSION } from "../../common/configs";
 import { OrgDto, OrgsResDto } from "../resolver/types";
@@ -17,23 +15,19 @@ class OrgApi extends RESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/orgs`);
     return this.get(`/${VERSION}/orgs`, {
       params: {
         user_uuid: userId,
       },
-    })
-      .then(res => dtoToOrgsResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToOrgsResDto(res));
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    return this.get(`/${VERSION}/orgs/${orgName}`)
-      .then(res => dtoToOrgResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/orgs/${orgName}`);
+    return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
+      dtoToOrgResDto(res)
+    );
   };
 }
 

@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { OrgDto } from "../../org/resolver/types";
 import {
   UserAPIResDto,

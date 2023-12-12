@@ -5,19 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { NonEmptyArray } from "type-graphql";
 
 import { AddPackageToSimResolver } from "./addPackagetoSim";
 import { AllocateSimResolver } from "./allocateSim";
 import { DeleteSimResolver } from "./delete";
 import { GetSimByNetworkResolver } from "./getByNetwork";
-import { GetSimBySubscriberResolver } from "./getBySubscriber";
 import { GetDataUsageResolver } from "./getDataUsage";
 import { GetPackagesForSimResolver } from "./getPackagesForSim";
 import { GetSimResolver } from "./getSim";
 import { GetSimPoolStatsResolver } from "./getSimPoolStats";
 import { GetSimsResolver } from "./getSims";
+import { GetSimsBySubscriberResolver } from "./getSimsBySubscriber";
 import { RemovePackageForSimResolver } from "./removePackageForSim";
 import { SetActivePackageForSimResolver } from "./setActivePackageForSim";
 import { ToggleSimStatusResolver } from "./toggleSimStatus";
@@ -28,7 +27,7 @@ const resolvers: NonEmptyArray<any> = [
   AllocateSimResolver,
   DeleteSimResolver,
   GetSimByNetworkResolver,
-  GetSimBySubscriberResolver,
+  GetSimsBySubscriberResolver,
   GetDataUsageResolver,
   GetPackagesForSimResolver,
   GetSimResolver,

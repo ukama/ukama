@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
@@ -159,4 +158,16 @@ export class SubMetricByTabInput {
 
   @Field()
   from: number;
+}
+
+@ObjectType()
+export class StatsMetric {
+  @Field()
+  activeSubscriber: number;
+
+  @Field()
+  averageSignalStrength: number;
+
+  @Field()
+  averageThroughput: number;
 }

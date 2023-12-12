@@ -11,7 +11,21 @@ const nextConfig = {
   experimental: {
     appDir: false,
   },
-  output: 'standalone',
+  env: {
+    NEXT_PUBLIC_METRIC_URL: '',
+    NEXT_PUBLIC_METRIC_WEBSOCKET_URL: '',
+  },
+  output: 'node .next/standalone/server.js',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ukama-site-assets.s3.amazonaws.com',
+        port: '',
+        pathname: '/images/**',
+      },
+    ],
+  },
   async redirects() {
     return [
       {

@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 
 import { Authentication } from "../../common/auth";
@@ -19,7 +18,7 @@ import {
 export class RemovePackageForSimResolver {
   @Mutation(() => RemovePackageFromSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async removePackageForSim(
     @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: Context
   ): Promise<RemovePackageFromSimResDto> {

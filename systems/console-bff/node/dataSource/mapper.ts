@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Node, NodeSite, Nodes } from "../resolvers/types";
 
 export const parseNodesRes = (res: any): Nodes => {
@@ -25,7 +24,7 @@ const parseAttached = (res: any): Node[] => {
     : [];
 };
 
-const parseSite = (res: any): NodeSite | undefined => {
+const parseSite = (res: any): NodeSite => {
   return res.site
     ? {
         nodeId: res.site.nodeId,
@@ -33,7 +32,12 @@ const parseSite = (res: any): NodeSite | undefined => {
         addedAt: res.site.added_at,
         networkId: res.site.network_id,
       }
-    : undefined;
+    : {
+        nodeId: null,
+        siteId: null,
+        addedAt: null,
+        networkId: null,
+      };
 };
 
 export const parseNodeRes = (res: any): Node => {

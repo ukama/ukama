@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import {
   NetworkAPIResDto,
   NetworkDto,
@@ -51,8 +50,11 @@ export const dtoToNetworksDto = (res: NetworksAPIResDto): NetworksResDto => {
       id: network.id,
       name: network.name,
       orgId: network.org_id,
+      budget: network.budget,
       isDeactivated: network.is_deactivated,
       createdAt: network.created_at,
+      countries: network.allowed_countries,
+      networks: network.allowed_networks,
     });
   });
   return {
@@ -66,7 +68,10 @@ export const dtoToNetworkDto = (res: NetworkAPIResDto): NetworkDto => {
     id: res.network.id,
     name: res.network.name,
     orgId: res.network.org_id,
+    budget: res.network.budget,
     isDeactivated: res.network.is_deactivated,
     createdAt: res.network.created_at,
+    countries: res.network.allowed_countries,
+    networks: res.network.allowed_networks,
   };
 };

@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

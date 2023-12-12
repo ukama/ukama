@@ -19,30 +19,59 @@ const client = new ApolloClient({
 
 export default client;
 
-const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_METRIC_URL,
-});
+const httpLink = (headers: any) =>
+  new HttpLink({
+    uri: process.env.NEXT_PUBLIC_METRICS_URL,
+    credentials: 'include',
+    headers: {
+      ...headers,
+    },
+  });
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL || '',
+    url: process.env.NEXT_PUBLIC_METRICS_WEBSOCKET_URL || '',
   }),
 );
 
-const splitLink = split(
-  ({ query }) => {
-    const definition = getMainDefinition(query);
-    return (
-      definition.kind === 'OperationDefinition' &&
-      definition.operation === 'subscription'
-    );
-  },
-  wsLink,
-  httpLink,
-);
+export const MetricLink = () => {
+  const _commonData = {
+    orgId: '',
+    userId: '',
+    orgName: '',
+  };
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    let data = localStorage.getItem('recoil-persist');
+    if (data) {
+      let parsedData = JSON.parse(data);
+      if (parsedData['commonData']) {
+        _commonData.orgId = parsedData['commonData']['orgId'];
+        _commonData.userId = parsedData['commonData']['userId'];
+        _commonData.orgName = parsedData['commonData']['orgName'];
+      }
+    }
+  }
+  return split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === 'OperationDefinition' &&
+        definition.operation === 'subscription'
+      );
+    },
+
+    wsLink,
+    httpLink({
+      'org-id': _commonData.orgId,
+      'user-id': _commonData.userId,
+      'org-name': _commonData.orgName,
+    }),
+  );
+};
 
 export const metricsClient = new ApolloClient({
-  link: splitLink,
+  link: MetricLink(),
   cache: new InMemoryCache(),
   credentials: 'include',
 });

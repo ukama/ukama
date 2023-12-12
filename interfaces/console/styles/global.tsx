@@ -129,7 +129,7 @@ const SkeletonRoundedCard = styled(Skeleton)(() => ({
   height: '100%',
   borderRadius: '10px',
   display: 'inline-block',
-  backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  backgroundColor: 'rgba(0, 0, 0, 0.15)',
 }));
 
 const ContainerMax = styled(Box)(() => ({

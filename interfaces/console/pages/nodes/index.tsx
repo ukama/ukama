@@ -10,7 +10,6 @@ import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
 import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
-import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import AddNodeDialog from '@/ui/molecules/AddNode';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
@@ -20,11 +19,6 @@ import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-
-const AVAILABLE_NODES = [
-  { id: 'node-1', name: 'Node 1', isChecked: false },
-  { id: 'node-2', name: 'Node 2', isChecked: false },
-];
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
@@ -80,19 +74,18 @@ export default function Page() {
 
   useEffect(() => {
     if (search.length > 3) {
-      const nodes: Node[] | undefined = nodesData?.getNodes.nodes.filter(
-        (node) => {
+      const _nodes: Node[] =
+        nodesData?.getNodes.nodes.filter((node) => {
           const s = search.toLowerCase();
           if (
             node.name.toLowerCase().includes(s) ||
             node.name.toLowerCase().includes(s)
           )
             return node;
-        },
-      );
-      setNodes(nodes);
+        }) || [];
+      setNodes(_nodes);
     } else if (search.length === 0) {
-      setNodes(nodesData?.getNodes.nodes);
+      setNodes(nodesData?.getNodes.nodes || []);
     }
   }, [search]);
 
@@ -126,16 +119,16 @@ export default function Page() {
   };
 
   const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
+  const isLoading = nodesLoading || availableNodeLoading;
 
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={nodesLoading}
-        cstyle={{
-          backgroundColor: nodesLoading ? colors.white : 'transparent',
-        }}
+        height={isLoading ? '85vh' : '100%'}
+        isLoading={isLoading}
+        cstyle={{ marginTop: isLoading ? '18px' : '0px' }}
       >
         <PageContainer>
           <Stack

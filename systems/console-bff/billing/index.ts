@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 

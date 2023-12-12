@@ -171,10 +171,12 @@ const Page = () => {
     onCompleted: (data) => {
       if (data.getDrafts.length > 0) {
         if (!selectedDraft) {
-          setSelectedDraft(data.getDrafts[0]);
+          setSelectedDraft((data.getDrafts[0] as Draft) ?? undefined);
         } else {
           setSelectedDraft(
-            data.getDrafts.find((d) => d.id === selectedDraft?.id),
+            data.getDrafts.find(
+              (d: any) => d.id === selectedDraft?.id,
+            ) as Draft,
           );
         }
       } else {
@@ -188,7 +190,7 @@ const Page = () => {
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
-      setSelectedDraft(data.addDraft);
+      setSelectedDraft((data.addDraft as Draft) ?? undefined);
       refetchDrafts();
       showAlert(
         'add-drafts-success',
@@ -455,7 +457,7 @@ const Page = () => {
   };
 
   const handleDraftSelected = (draftId: string) => {
-    const d = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
+    const d: any = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
     setSelectedDraft(d);
   };
 

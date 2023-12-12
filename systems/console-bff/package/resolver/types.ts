@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()

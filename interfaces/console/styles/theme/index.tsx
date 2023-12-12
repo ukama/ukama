@@ -85,13 +85,6 @@ const theme = (isDarkmode: boolean) =>
             },
           },
         },
-        MuiSkeleton: {
-          styleOverrides: {
-            root: {
-              backgroundColor: 'transparent',
-            },
-          },
-        },
         MuiFormLabel: {
           styleOverrides: {
             root: {

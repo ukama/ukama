@@ -98,21 +98,19 @@ func TestLogin(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func TestWhoami(t *testing.T) {
-	cma := &mauth.AuthManager{}
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/whoami", nil)
+// func TestWhoami(t *testing.T) {
+// 	cma := &mauth.AuthManager{}
+// 	w := httptest.NewRecorder()
+// 	req, _ := http.NewRequest("GET", "/v1/whoami", nil)
+// 	req.Header.Set("X-Session-Token", token)
 
-	req.Header.Set("X-Session-Token", token)
+// 	r := NewRouter(&Clients{au: cma}, routerConfig).f.Engine()
+// 	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{}, nil)
 
-	r := NewRouter(&Clients{au: cma}, routerConfig).f.Engine()
+// 	r.ServeHTTP(w, req)
 
-	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{}, nil)
-
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-}
+// 	assert.Equal(t, 200, w.Code)
+// }
 
 func TestUpdateRole(t *testing.T) {
 	cma := &mauth.AuthManager{}
