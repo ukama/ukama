@@ -104,11 +104,17 @@ function register_user() {
     echo  "$TAG Please verify your email address by visiting ${GREEN}http://localhost:4436${NC}"
 }
 
-sort_systems() {
+sort_systems_by_dependency() {
     IFS=', ' read -r -a SYSTEMS_ARRAY <<< "$SYS"
 
     if [[ ! " ${SYSTEMS_ARRAY[@]} " =~ " services " ]] || [[ ! " ${SYSTEMS_ARRAY[@]} " =~ " auth-services " ]]; then
         echo "Error: 'services' and 'auth-services' are required in the systems array in the deploy_config JSON file."
+        exit 1
+    fi
+
+    if [[ " ${SYSTEMS_ARRAY[@]} " =~ " billing " ]] && ([[ ! " ${SYSTEMS_ARRAY[@]} " =~ " dataplan " ]] || 
+        [[ ! " ${SYSTEMS_ARRAY[@]} " =~ " subscriber " ]] || [[ ! " ${SYSTEMS_ARRAY[@]} " =~ " notification " ]]); then
+        echo "Error: 'billing' depend on dataplan, subscriber and notification, please make sure these systems are added in the deploy_config JSON file."
         exit 1
     fi
 
@@ -123,13 +129,19 @@ sort_systems() {
           echo "4 $key"
       elif [ "$key" == "registry" ]; then
           echo "5 $key"
-      else
+      elif [ "$key" == "dataplan" ]; then
           echo "6 $key"
+      elif [ "$key" == "subscriber" ]; then
+          echo "7 $key"
+      elif [ "$key" == "notification" ]; then
+          echo "8 $key"
+      else
+          echo "9 $key"
       fi
     done | sort -n -k1,1 | cut -d' ' -f2-))
 }
 
-sort_systems
+sort_systems_by_dependency
 
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do

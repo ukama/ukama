@@ -1,8 +1,5 @@
 version: '3.9'
 
-volumes:
- postgress-data:
-
 services:
  rabbitmq:
   image: rabbitmq:3-management
@@ -88,3 +85,11 @@ services:
   restart: always
   depends_on:
    - postgresd
+
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net
+
+volumes:
+ postgress-data:
