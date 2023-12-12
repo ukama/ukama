@@ -2,7 +2,7 @@ FROM node:lts-alpine
 
 WORKDIR /
 
-COPY package*.json yarn.lock 
+COPY package*.json yarn.lock ./
 
 ENV NODE_ENV production
 ENV NODE_ENV PLANNING_TOOL_DB=$PLANNING_TOOL_DB
