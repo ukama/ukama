@@ -5,6 +5,8 @@ RUN yarn install --frozen-lockfile --ignore-scripts
 
 FROM base AS build
 WORKDIR /
+ENV NODE_ENV production
+ENV NODE_ENV PLANNING_TOOL_DB=$PLANNING_TOOL_DB
 COPY . .
 RUN yarn build
 
