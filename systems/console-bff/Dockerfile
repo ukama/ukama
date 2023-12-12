@@ -1,28 +1,21 @@
-FROM node:18-alpine
+FROM node:lts-alpine AS base
+WORKDIR /
+COPY package*.json yarn.lock ./
+RUN yarn install --frozen-lockfile --ignore-scripts
 
-# Create app directory
-WORKDIR /usr/src/app
-
-# Install app dependencies
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
-
-# Bundle app source
+FROM base AS build
+WORKDIR /
 COPY . .
+RUN yarn build
 
-# Create a new user 'nodeuser' and switch to it
-RUN adduser -D nodeuser
-USER nodeuser
-
-# Install supervisor
-USER root
-RUN apk update && apk add supervisor
+FROM base AS release
+WORKDIR /
+ENV NODE_ENV production
+ENV NODE_ENV PLANNING_TOOL_DB=$PLANNING_TOOL_DB
+COPY --from=build . .
+RUN apk update && apk add --no-cache supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir -p /var/log/
-USER nodeuser
-
-# Expose ports
 EXPOSE 4000 4001
 
-# Start the app
 CMD ["/usr/bin/supervisord"]

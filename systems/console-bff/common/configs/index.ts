@@ -27,7 +27,7 @@ export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL ?? "";
 // UTILS
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";
-export const STORAGE_KEY = process.env.STORAGE_KEY ?? "";
+export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
