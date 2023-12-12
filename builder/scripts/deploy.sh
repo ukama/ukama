@@ -13,6 +13,7 @@ root_dir=$(pwd)
 # Parse the JSON file and initialize the variables
 MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
+BILLINGSYSKEY="billing"
 OWNEREMAIL=$(jq -r '.setup.email' "$1")
 OWNERNAME=$(jq -r '.setup.name' "$1")
 ORGNAME=$(jq -r '.setup["org-name"]' "$1")
@@ -136,6 +137,12 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     cd $root_dir
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
+    fi
+    if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
+        cd ./billing/provider
+        chmod +x start_provider.sh
+        ./start_provider.sh
+        cd ../..
     fi
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
     export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
