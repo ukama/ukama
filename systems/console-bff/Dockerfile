@@ -4,8 +4,8 @@ FROM node:18-alpine
 WORKDIR /usr/src/app
 
 # Install app dependencies
-COPY package*.json ./
-RUN yarn install
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 # Bundle app source
 COPY . .

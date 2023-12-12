@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
 import { NODE_STATUS } from "../../common/enums";
@@ -19,7 +20,7 @@ const getRandomNodeState = () => {
     NODE_STATUS.ONBOARDED,
     NODE_STATUS.UNDEFINED,
   ];
-  return nodeStates[Math.floor(Math.random() * nodeStates.length)];
+  return nodeStates[Math.floor(crypto.randomInt(1, nodeStates.length))];
 };
 
 @Resolver()
@@ -51,7 +52,7 @@ export class GetNodesLocationResolver {
     const nodes: NodeLocation[] = [];
     for (let i = 0; i < 8; i++) {
       const randomLocation =
-        locations[Math.floor(Math.random() * locations.length)];
+        locations[Math.floor(crypto.randomInt(1, locations.length))];
       nodes.push({
         id: "node" + i,
         lat: randomLocation.split(",")[0].trim(),

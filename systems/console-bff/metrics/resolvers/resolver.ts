@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import crypto from "crypto";
 import {
   Arg,
   Args,
@@ -111,9 +112,9 @@ class MetricResolvers {
   @Query(() => StatsMetric)
   async getStatsMetric() {
     return {
-      activeSubscriber: Math.floor(Math.random() * 30),
-      averageThroughput: Math.floor(Math.random() * 50),
-      averageSignalStrength: Math.floor(Math.random() * 90),
+      activeSubscriber: Math.floor(crypto.randomInt(1, 30)),
+      averageThroughput: Math.floor(crypto.randomInt(1, 50)),
+      averageSignalStrength: Math.floor(crypto.randomInt(1, 90)),
     };
   }
 

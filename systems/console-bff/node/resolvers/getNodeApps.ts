@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
 import { NodeApps, NodeAppsChangeLogInput } from "./types";
@@ -21,8 +22,8 @@ export class GetNodeAppsResolver {
     };
     for (let i = type[data.type]; i > 0; i--) {
       apps.apps.push({
-        cpu: `${Math.floor(Math.random() * 100)}%`,
-        memory: `${Math.floor(Math.random() * 100)}MB`,
+        cpu: `${Math.floor(crypto.randomInt(1, 100))}%`,
+        memory: `${Math.floor(crypto.randomInt(1, 100))}MB`,
         name: `App ${i}`,
         date: Math.floor(new Date().getTime() / 1000 - 1000 * (10 - i)),
         version: `${i}.0.0`,

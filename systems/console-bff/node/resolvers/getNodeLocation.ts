@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
 import { NODE_STATUS } from "../../common/enums";
@@ -37,7 +38,7 @@ export class GetNodeLocationResolver {
       "37.7514871501036 , -122.49702703770673",
     ];
     const randomLocation =
-      locations[Math.floor(Math.random() * locations.length)];
+      locations[Math.floor(crypto.randomInt(1, locations.length))];
     return {
       id: data.id,
       lat: randomLocation.split(",")[0].trim(),
