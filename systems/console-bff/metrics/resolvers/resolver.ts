@@ -144,7 +144,7 @@ class MetricResolvers {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
       subKey = subKey.slice(0, -1);
-      subKey.split(",").map((key: string) => {
+      subKey.split(",").forEach((key: string) => {
         const workerData = {
           type: key,
           orgId,
@@ -265,7 +265,7 @@ class MetricResolvers {
       });
       worker.on("exit", (code: any) => {
         const keys = getGraphsKeyByType(type, nodeId);
-        keys.map(async (key: string) => {
+        keys.forEach(async (key: string) => {
           await removeKeyFromStorage(`${orgId}/${userId}/${key}/${from}`);
         });
         logger.info(

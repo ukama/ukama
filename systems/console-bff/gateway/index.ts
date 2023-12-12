@@ -114,28 +114,49 @@ const startServer = async () => {
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
 
-  app.get("/ping", async (_, res) => {
-    const r = await fetch(`localhost:${METRICS_PORT}/ping`);
-    if (r.status === 200) res.send("pong");
-    else res.send(new HTTP500Error("Metrics service ping failed"));
+  app.get("/ping", (_, res) => {
+    fetch(`localhost:${METRICS_PORT}/ping`)
+      .then(r => {
+        if (r.status === 200) res.send("pong");
+        else res.send(new HTTP500Error("Metrics service ping failed"));
+      })
+      .catch(err => {
+        res.send(new HTTP500Error("Metrics service ping failed: " + err));
+      });
   });
 
-  app.get("/get-user", async (req, res) => {
+  app.get("/get-user", (req, res) => {
     const kId = req.query["kid"] as string;
     if (kId) {
       const userApi = new UserApi();
-      const user: UserResDto = await userApi.auth(kId);
-      if (user.uuid) {
-        const whoamiRes: WhoamiDto = await userApi.whoami(user.uuid);
-        res.setHeader("Access-Control-Allow-Origin", AUTH_APP_URL);
-        res.setHeader("Access-Control-Allow-Credentials", "true");
-        res.send(whoamiRes);
-        return;
-      }
+      userApi
+        .auth(kId)
+        .then((user: UserResDto) => {
+          if (user.uuid) {
+            userApi
+              .whoami(user.uuid)
+              .then((whoamiRes: WhoamiDto) => {
+                res.setHeader("Access-Control-Allow-Origin", AUTH_APP_URL);
+                res.setHeader("Access-Control-Allow-Credentials", "true");
+                res.send(whoamiRes);
+              })
+              .catch(err => {
+                logger.error(err);
+                res.send(new HTTP500Error("Failed to get user details"));
+              });
+          } else {
+            res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
+          }
+        })
+        .catch(err => {
+          logger.error(err);
+          res.send(new HTTP500Error("Failed to authenticate user"));
+        });
+    } else {
+      res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
     }
-    res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
-    return;
   });
+
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
 
