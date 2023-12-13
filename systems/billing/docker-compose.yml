@@ -1,8 +1,5 @@
 version: '3.9'
 
-volumes:
- postgress-data:
-
 services:
  rabbitmq:
   image: rabbitmq:3-management
@@ -66,7 +63,7 @@ services:
    - COLLECTOR_SERVICE_HOST=billing-collector
    - COLLECTOR_SERVICE_PORT=9090
    - LAGOAPIKEY=${LAGO_API_KEY}
-   - LAGOHOST=${DOCKER_HOST_IP}
+   - LAGOHOST=${LOCAL_HOST_IP}
   restart: always
   depends_on:
    - postgresd
@@ -84,7 +81,15 @@ services:
    - MSGCLIENT_HOST=msg-client-billing:9095
    - INVOICE_SERVICE_HOST=billing-invoice
    - INVOICE_SERVICE_PORT=9090
-   - ORGNAME=ukama-test-org
+   - ORGNAME=${ORGNAME}
   restart: always
   depends_on:
    - postgresd
+
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net
+
+volumes:
+ postgress-data:
