@@ -13,7 +13,7 @@ set -e  # Exit immediately if a command exits with a non-zero status.
 
 NODE_ID=$1
 
-UBUNTU_ISO_URL="https://releases.ubuntu.com/20.04/ubuntu-20.04.6-live-server-amd64.iso"
+UBUNTU_ISO_URL="https://releases.ubuntu.com/22.04/ubuntu-22.04.3-live-server-amd64.iso"
 ISO_FILE="ubuntu.iso"
 IMG_FILE="$NODE_ID.img"
 IMG_SIZE="5G"
@@ -25,7 +25,7 @@ apt-get install -y qemu-kvm qemu virt-manager virt-viewer libvirt-daemon-system 
       extlinux kpartx
 
 # Step 1: Download Ubuntu ISO
-echo "Downloading Ubuntu 20.04 (focal) ISO..."
+echo "Downloading Ubuntu 22.04 (jammy) ISO..."
 wget $UBUNTU_ISO_URL -O $ISO_FILE || { echo "Failed to download ISO"; exit 1; }
 
 # Step 2: Create a Raw Disk Image, format, parition and mount 
@@ -43,7 +43,7 @@ mount ${LOOP_DEVICE}p1 /mnt/image || { echo "Unable to mount the partition"; exi
 
 # Step 3: Install Ubuntu on the Disk Image
 echo "Installing Ubuntu on the disk..."
-debootstrap --arch amd64 focal /mnt/image || { echo "Debootstrap failed"; exit 1; }
+debootstrap --arch amd64 jammy /mnt/image || { echo "Debootstrap failed"; exit 1; }
 
 # Mounting necessary filesystems and setting up chroot
 mount --bind /dev  /mnt/image/dev
@@ -58,7 +58,7 @@ chroot /mnt/image /bin/bash <<'EOL'
     update-locale LANG=en_US.UTF-8
     debconf-set-selections <<< "grub-pc grub-pc/install_devices_empty boolean true"
     apt-get update
-    apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic syslinux
+    apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic
 
     mkdir -p /capps/pkgs
     mkdir -p /capps/rootfs
