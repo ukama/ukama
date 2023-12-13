@@ -71,7 +71,7 @@ chroot /mnt/image /bin/bash <<'EOL'
     After=network.target
 
     [Service]
-    ExecStart=/sbin/starter.d --manifest-file /manifest.conf
+    ExecStart=/sbin/starter.d --manifest-file /manifest.json
     Type=simple
 
     [Install]
