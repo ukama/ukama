@@ -30,6 +30,19 @@ mock_sysfs_for_noded() {
 EOF
 }
 
+install_starter_capp() {
+
+    path=$1
+
+    chroot $path /bin/bash <<EOF
+
+        cd /capps/pkgs/
+        tar zxvf starterd_latest.tar.gz starterd_latest/sbin/starter.d .
+        mv starterd_latest/sbin/starter.d /sbin/
+        rm -rf starterd_latest/
+EOF
+}
+
 if [ "$1" = "system" ]; then
 
     cd "$2" || exit 1
@@ -67,12 +80,15 @@ elif [ "$1" = "node" ]; then
     ./build-capps.sh ${ukama_root} || exit 1
 
     # copy the apps and manifest.json into the os image
-    echo "Copying apps and manifesto to the OS image"
+    echo "Copying apps, installing starter.d and manifesto to the OS image"
     mkdir -p /mnt/${node_id} || exit 1
     mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
 
     cp -r ./pkgs /mnt/${node_id}/capps/
     cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}/
+
+    # install the starter.d app
+    install_starter_app /mnt/${node_id}/
 
     echo "Copy Ukama sys and vendor libs to the OS image"
     cp ${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so \
