@@ -8,31 +8,26 @@
 
 mock_sysfs_for_noded() {
 
-    id = $1
+    id=$1
 
     chroot /mnt/${id} /bin/bash <<EOF
 
-        set -e
+        cd ukama/
 
         apt-get update
-        apt-get install -y git
+        apt-get install libjansson4 libmicrohttpd12 libcurl4 -y
 
-        git clone https://github.com/ukama/ukama.git
-        cd ukama/nodes/ukamaOS/distro/system/noded
-
-        ./utils/prepare_env.sh -u tnode -u anode
-        ./build/genSchema --u ${id} --n com --m UK-SA9001-COM-A1-1103  \
+        ./prepare_env.sh -u tnode -u anode
+        ./genSchema --u ${id} --n com --m UK-SA9001-COM-A1-1103  \
             --f mfgdata/schema/com.json --n trx --m UK-SA9001-TRX-A1-1103 \
             --f mfgdata/schema/trx.json --n mask --m UK-SA9001-MSK-A1-1103 \
             --f mfgdata/schema/mask.json
 
-        ./build/genInventory --n com --m UK-SA9001-COM-A1-1103 \
+        ./genInventory --n com --m UK-SA9001-COM-A1-1103 \
             --f mfgdata/schema/com.json -n trx --m UK-SA9001-TRX-A1-1103 \
             --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 \
             --f mfgdata/schema/mask.json
 EOF
-
-    exit
 }
 
 if [ "$1" = "system" ]; then
@@ -58,9 +53,14 @@ elif [ "$1" = "node" ]; then
     ukama_root=$2
     node_id=$3
 
+    if [ -d /mnt/$node_id ]; then
+        umount /mnt/$node_id
+        rmdir /mnt/${node_id} || { echo "Unable to remove /mnt/$node_id"; exit 1; }
+    fi
+
     # create bootable os image
     echo "Creating bootsable OS image"
-    ./mkimage.sh ${node_id}        || exit 1
+    ./mkimage.sh ${node_id}   || { echo "Unable to make OS image"; exit 1; }
 
     # build all the capps
     echo "Building all apps"
@@ -69,13 +69,27 @@ elif [ "$1" = "node" ]; then
     # copy the apps and manifest.json into the os image
     echo "Copying apps and manifesto to the OS image"
     mkdir -p /mnt/${node_id} || exit 1
-    mount -o loop,offset=$((512*2048)) ${IMG_FILE} /mnt/${node_id} || exit 1
+    mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
 
     cp -r ./pkgs /mnt/${node_id}/capps/
-    cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}
+    cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}/
+
+    echo "Copy Ukama sys and vendor libs to the OS image"
+    cp ${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so \
+       /mnt/${node_id}/lib/x86_64-linux-gnu/
+    cp -rf ${ukama_root}/nodes/ukamaOS/distro/vendor/build/lib/* \
+       /mnt/${node_id}/lib/x86_64-linux-gnu/
 
     # setup everything needed by node.d
     echo "mocking FS for node.d"
+    mkdir /mnt/${node_id}/ukama/
+    cp -rf ${ukama_root}/nodes/ukamaOS/distro/system/noded/build/* \
+       /mnt/${node_id}/ukama/
+    cp -rf ${ukama_root}/nodes/ukamaOS/distro/system/noded/mfgdata \
+       /mnt/${node_id}/ukama/
+    cp ${ukama_root}/nodes/ukamaOS/distro/system/noded/utils/prepare_env.sh \
+       /mnt/${node_id}/ukama/
+
     mock_sysfs_for_noded $node_id
 
     # update /etc/services to add ports
