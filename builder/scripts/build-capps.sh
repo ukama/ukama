@@ -6,7 +6,7 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-UKAMA_ROOT=$1
+export UKAMA_ROOT=$1
 CONFIG_DIR=${UKAMA_ROOT}/nodes/builder/configs/
 
 CWD=`pwd`
