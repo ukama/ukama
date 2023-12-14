@@ -199,6 +199,74 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
     return USYS_TRUE;
 }
 
+static bool copyFile(const char *srcPath, const char *destPath) {
+
+    FILE *srcFile, *destFile;
+    char buffer[MAX_BUFFER] = {0};
+    size_t bytesRead;
+
+    srcFile  = fopen(srcPath, "rb");
+    destFile = fopen(destPath, "wb");
+    if (!srcFile || !destFile) {
+        usys_log_error("Error opening source [%s] and/or dest [%s]",
+                       srcPath, destPath);
+        return USYS_FALSE;
+    }
+
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0) {
+        fwrite(buffer, 1, bytesRead, destFile);
+    }
+
+    fclose(srcFile);
+    fclose(destFile);
+
+    return USYS_TRUE;
+}
+
+static bool copyFolder(char *folderName) {
+
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(folderName);
+    if (!dir) {
+        usys_log_error("Unable to open folder: %s", folderName);
+        return USYS_FALSE;
+    }
+
+    while ((entry = readdir(dir))) {
+        if (entry->d_type == DT_REG) {
+            char srcPath[1024];
+            char destPath[1024];
+
+            snprintf(srcPath, sizeof(srcPath), "%s/%s", folderName, entry->d_name);
+            snprintf(destPath, sizeof(destPath), "/%s", entry->d_name);
+
+            struct stat st;
+            if (stat(destPath, &st) == -1) {
+                if (!copyFile(srcPath, destPath)) return USYS_FALSE;
+            }
+        }
+    }
+    closedir(dir);
+
+    return USYS_TRUE;
+}
+
+static bool install_capp(char *rootPath) {
+
+    char configFolder[MAX_BUFFER] = {0};
+    char sbinFolder[MAX_BUFFER] = {0};
+
+    sprintf(configFolder, "%s/conf/", rootPath);
+    sprintf(sbinFolder,   "%s/sbin/", rootPath);
+
+    if (copyFolder(configFolder) == USYS_FALSE) return USYS_FALSE;
+    if (copyFolder(sbinFolder)   == USYS_FALSE) return USYS_FALSE;
+
+    return USYS_TRUE;
+}
+
 static bool create_and_run_capps(Capp *capp, int *error) {
 
     char *configFileName = NULL;
@@ -208,6 +276,12 @@ static bool create_and_run_capps(Capp *capp, int *error) {
     configFileName = (char *)calloc(1, strlen(capp->rootfs) +
                                     strlen(DEF_CAPP_CONFIG_FILE) + 2);
     sprintf(configFileName, "%s/%s", capp->rootfs, DEF_CAPP_CONFIG_FILE);
+
+    if (!install_capp(capp->rootfs)) {
+        usys_log_error("Unable to install app at config and sbin");
+        free(configFileName);
+        return USYS_FALSE;
+    }
 
     if (!process_capp_config_file(&capp->config, configFileName)) {
         free(configFileName);
