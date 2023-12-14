@@ -7,6 +7,9 @@
  */
 import "dotenv/config";
 
+export const PAYMENT_ACCESS_TOKEN = process.env.PAYMENT_ACCESS_TOKEN ?? "";
+export const PAYMENT_BASE_URL = process.env.PAYMENT_BASE_URL ?? "";
+
 export const VERSION = process.env.VERSION ?? "v1";
 
 // API GWs
@@ -18,6 +21,7 @@ export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW ?? "";
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const DATA_API_GW = process.env.DATA_API_GW ?? "";
 export const BILLING_API_GW = process.env.BILLING_API_GW ?? "";
+export const PAYMENT_API_GW = process.env.PAYMENT_API_GW ?? "";
 
 // FRONTEND URLS
 export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "";
@@ -50,6 +54,7 @@ export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
+export const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5055");
 
 export const SUB_GRAPH_LIST = [
   { name: "org", url: `http://localhost:${ORG_PORT}`, isPingedSuccess: false },
@@ -97,6 +102,11 @@ export const SUB_GRAPH_LIST = [
   {
     name: "planning",
     url: `http://localhost:${PLANNING_SERVICE_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "payment",
+    url: `http://localhost:${PAYMENT_PORT}`,
     isPingedSuccess: false,
   },
 ];

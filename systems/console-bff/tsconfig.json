@@ -15,7 +15,8 @@
     "subscriber",
     "package",
     "invitation",
-    "member"
+    "member",
+    "payment",
   ],
   "compilerOptions": {
     /* Basic Options */

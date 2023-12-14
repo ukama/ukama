@@ -8,29 +8,28 @@
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 
-import { parseHeaders } from "../common/utils";
-import SubGraphServer from "./../common/apollo";
-import { BILLING_PORT } from "./../common/configs";
-import { logger } from "./../common/logger";
-import BillingAPI from "./datasource/billing_api";
+import SubGraphServer from "../common/apollo";
+import { PAYMENT_PORT } from "../common/configs";
+import { logger } from "../common/logger";
+import PaymentAPI from "./datasource/payment_api";
 import resolvers from "./resolvers";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
   await startStandaloneServer(server, {
-    context: async ({ req }) => {
+    context: async () => {
       return {
-        headers: parseHeaders(req.headers),
+        // headers: parseHeaders(req.headers),
         dataSources: {
-          dataSource: new BillingAPI(),
+          dataSource: new PaymentAPI(),
         },
       };
     },
-    listen: { port: BILLING_PORT },
+    listen: { port: PAYMENT_PORT },
   });
 
   logger.info(
-    `🚀 Ukama Billing service running at http://localhost:${BILLING_PORT}/graphql`
+    `🚀 Ukama Payment service running at http://localhost:${PAYMENT_PORT}/graphql`
   );
 };
 
