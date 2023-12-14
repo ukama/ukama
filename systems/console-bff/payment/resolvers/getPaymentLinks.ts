@@ -11,18 +11,22 @@ import { Arg, Query, Resolver } from "type-graphql";
 
 import { PAYMENT_ACCESS_TOKEN, PAYMENT_BASE_URL } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { PaymentLinks } from "./types";
+import { PaymentLinks, PaymentLinksInput } from "./types";
 
 @Resolver()
 export class GetPaymentLinks {
   @Query(() => PaymentLinks)
   async getPaymentLinks(
-    @Arg("redirectUrl") redirectUrl: string
+    @Arg("data") data: PaymentLinksInput
   ): Promise<PaymentLinks> {
     const redirectURLs: any = [];
-    const data = JSON.stringify({
+    const payload = JSON.stringify({
       depositId: randomUUID(),
-      returnUrl: redirectUrl,
+      returnUrl: data.redirectUrl,
+      amount: `${data.amount}`,
+      country: data.country,
+      msisdn: data.msisdn,
+      reason: data.reason,
     });
 
     const config = {
@@ -33,7 +37,7 @@ export class GetPaymentLinks {
         Authorization: `Bearer ${PAYMENT_ACCESS_TOKEN}`,
         "Content-Type": "application/json",
       },
-      data: data,
+      data: payload,
     };
 
     await axios

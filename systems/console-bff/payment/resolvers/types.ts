@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class LinksDTO {
@@ -23,4 +23,22 @@ export class LinksDTO {
 export class PaymentLinks {
   @Field(() => [LinksDTO])
   links: LinksDTO[];
+}
+
+@InputType()
+export class PaymentLinksInput {
+  @Field()
+  amount: number;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  country: string;
+
+  @Field()
+  reason: string;
+
+  @Field()
+  redirectUrl: string;
 }

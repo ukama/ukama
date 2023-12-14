@@ -11,6 +11,7 @@ import "reflect-metadata";
 import SubGraphServer from "../common/apollo";
 import { PAYMENT_PORT } from "../common/configs";
 import { logger } from "../common/logger";
+// import { parseGatewayHeaders } from "../common/utils";
 import PaymentAPI from "./datasource/payment_api";
 import resolvers from "./resolvers";
 
@@ -19,7 +20,7 @@ const runServer = async () => {
   await startStandaloneServer(server, {
     context: async () => {
       return {
-        // headers: parseHeaders(req.headers),
+        // headers: parseGatewayHeaders(req.headers),
         dataSources: {
           dataSource: new PaymentAPI(),
         },
