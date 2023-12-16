@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,25 +8,44 @@
 
 mock_sysfs_for_noded() {
 
-    id=$1
+    repo=$1
+    node_id=$2
 
-    chroot /mnt/${id} /bin/bash <<EOF
+    mkdir -p /mnt/${node_id}/ukama/mocksysfs/
+    cp -p ./mocksysfs.sh /mnt/${node_id}/ukama/mocksysfs/
 
-        cd ukama/
+    cd ${repo}/nodes/ukamaOS/distro/system/noded; make
+    cp -rfp * /mnt/${node_id}/ukama/mocksysfs/
+    make clean
+    cd -
 
-        apt-get update
-        apt-get install libjansson4 libmicrohttpd12 libcurl4 -y
+    chroot /mnt/${node_id} /bin/bash <<EOF
 
-        ./prepare_env.sh -u tnode -u anode
-        ./genSchema --u ${id} --n com --m UK-SA9001-COM-A1-1103  \
-            --f mfgdata/schema/com.json --n trx --m UK-SA9001-TRX-A1-1103 \
-            --f mfgdata/schema/trx.json --n mask --m UK-SA9001-MSK-A1-1103 \
-            --f mfgdata/schema/mask.json
+    # Create systemd service file
+    cat > /etc/systemd/system/mocksysfs.service <<EOL
+        [Unit]
+        Description=Mock sysfs for Ukama Node
+        Before=starterd.service
 
-        ./genInventory --n com --m UK-SA9001-COM-A1-1103 \
-            --f mfgdata/schema/com.json -n trx --m UK-SA9001-TRX-A1-1103 \
-            --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 \
-            --f mfgdata/schema/mask.json
+        [Service]
+        Type=oneshot
+        ExecStart=/ukama/mocksysfs.sh
+
+        [Install]
+        WantedBy=multi-user.target
+EOL
+
+    # Check if the service file creation was successful
+    if [ ! -f /etc/systemd/system/mocksysfs.service ]; then
+        echo "Error: Failed to create systemd service file."
+        exit 1
+    fi
+
+    # Enable the service
+    systemctl enable mocksysfs.service || {
+        echo "Error: Failed to enable mocksysfs.service."
+        exit 1
+    }
 EOF
 }
 
@@ -99,14 +118,7 @@ elif [ "$1" = "node" ]; then
     # setup everything needed by node.d
     echo "mocking FS for node.d"
     mkdir /mnt/${node_id}/ukama/
-    cp -rf ${ukama_root}/nodes/ukamaOS/distro/system/noded/build/* \
-       /mnt/${node_id}/ukama/
-    cp -rf ${ukama_root}/nodes/ukamaOS/distro/system/noded/mfgdata \
-       /mnt/${node_id}/ukama/
-    cp ${ukama_root}/nodes/ukamaOS/distro/system/noded/utils/prepare_env.sh \
-       /mnt/${node_id}/ukama/
-
-    mock_sysfs_for_noded $node_id
+    mock_sysfs_for_noded $ukama_root $node_id
 
     # update /etc/services to add ports
     echo "Adding all the apps to /etc/services"
