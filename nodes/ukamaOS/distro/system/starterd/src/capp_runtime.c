@@ -199,39 +199,39 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
     return USYS_TRUE;
 }
 
-static bool copyFile(const char *srcPath, const char *destPath) {
+static bool copy_file(const char *srcPath, const char *destPath) {
 
-    FILE *srcFile, *destFile;
-    char buffer[MAX_BUFFER] = {0};
-    size_t bytesRead;
+    char runMe[MAX_BUFFER] = {0};
 
-    srcFile  = fopen(srcPath, "rb");
-    destFile = fopen(destPath, "wb");
-    if (!srcFile || !destFile) {
-        usys_log_error("Error opening source [%s] and/or dest [%s]",
-                       srcPath, destPath);
+    usys_log_debug("Copying from %s to %s", srcPath, destPath);
+
+    sprintf(runMe, "/bin/cp -p %s %s", srcPath, destPath);
+    if (system(runMe) != 0) {
+        usys_log_error("Unable to cp from: %s to: %s", srcPath, destPath);
         return USYS_FALSE;
     }
-
-    while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0) {
-        fwrite(buffer, 1, bytesRead, destFile);
-    }
-
-    fclose(srcFile);
-    fclose(destFile);
 
     return USYS_TRUE;
 }
 
-static bool copyFolder(char *folderName) {
+static bool copy_folder(char *srcFolder, char *destFolder) {
 
     DIR *dir;
     struct dirent *entry;
+    struct stat destStat;
 
-    dir = opendir(folderName);
+    dir = opendir(srcFolder);
     if (!dir) {
-        usys_log_error("Unable to open folder: %s", folderName);
+        usys_log_error("Unable to open folder: %s", srcFolder);
         return USYS_FALSE;
+    }
+
+    /* check if destination folder exist */
+    if (stat(destFolder, &destStat) != 0) {
+        if (mkdir(destFolder, 0777) != 0) {
+            usys_log_error("Unable to create dest folder: %s", destFolder);
+            return USYS_FALSE;
+        }
     }
 
     while ((entry = readdir(dir))) {
@@ -239,15 +239,19 @@ static bool copyFolder(char *folderName) {
             char srcPath[1024];
             char destPath[1024];
 
-            snprintf(srcPath, sizeof(srcPath), "%s/%s", folderName, entry->d_name);
-            snprintf(destPath, sizeof(destPath), "/%s", entry->d_name);
+            snprintf(srcPath, sizeof(srcPath), "%s/%s",
+                     srcFolder, entry->d_name);
+            snprintf(destPath, sizeof(destPath), "%s/%s",
+                     destFolder, entry->d_name);
 
-            struct stat st;
-            if (stat(destPath, &st) == -1) {
-                if (!copyFile(srcPath, destPath)) return USYS_FALSE;
+            if (!copy_file(srcPath, destPath)) {
+                usys_log_error("Unable to copy from: %s to: %s",
+                               srcPath, destPath);
+                return USYS_FALSE;
             }
         }
     }
+
     closedir(dir);
 
     return USYS_TRUE;
@@ -261,8 +265,14 @@ static bool install_capp(char *rootPath) {
     sprintf(configFolder, "%s/conf/", rootPath);
     sprintf(sbinFolder,   "%s/sbin/", rootPath);
 
-    if (copyFolder(configFolder) == USYS_FALSE) return USYS_FALSE;
-    if (copyFolder(sbinFolder)   == USYS_FALSE) return USYS_FALSE;
+    if (copy_folder(configFolder, "/conf") == USYS_FALSE) {
+        usys_log_debug("No config for %s. Skipping", rootPath);
+    }
+
+    if (copy_folder(sbinFolder, "/sbin") == USYS_FALSE) {
+        usys_log_error("No binary files for %s", rootPath);
+        return USYS_FALSE;
+    }
 
     return USYS_TRUE;
 }
