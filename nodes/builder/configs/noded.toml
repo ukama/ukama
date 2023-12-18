@@ -17,6 +17,7 @@
 	version="latest"
 	bin="node.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
+        args="--propertyConfig /ukama/mocksysfs/mfgdata/property/property.json"
 	
 # Final output format for capp
 [capp-output]
