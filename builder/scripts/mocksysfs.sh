@@ -8,6 +8,15 @@
 
 node_id=$1
 
+if [ -z "$node_id" ]; then
+    if [ -s "/ukama/nodeid" ]; then
+        node_id=$(cat /ukama/nodeid)
+    else
+        echo "Error: No argument passed and /ukama/nodeid is empty"
+        exit 1
+    fi
+fi
+
 # mock sysfs under /tmp/sys 
 ./utils/prepare_env.sh -u tnode -u anode || exit 1
 

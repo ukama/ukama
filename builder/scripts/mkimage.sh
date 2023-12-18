@@ -64,6 +64,9 @@ chroot /mnt/image /bin/bash <<'EOL'
     mkdir -p /capps/rootfs
     mkdir -p /capps/registry
 
+    mkdir -p /ukama
+    echo $NODE_ID > /ukama/nodeid
+
     # create systemd service for the starter.d program
     cat > /etc/systemd/system/starterd.service << EOF
     [Unit]
