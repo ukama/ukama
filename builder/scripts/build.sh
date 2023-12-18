@@ -71,6 +71,13 @@ if [ "$1" = "system" ]; then
         cd "$dir" || exit 1
         go mod tidy
         make clean
+        make gen
+        cd - || exit 1
+    done
+
+    find . -type f -name 'go.mod' | while read -r modfile; do
+        dir=$(dirname "$modfile")
+        cd "$dir" || exit 1
         make
         cd - || exit 1
     done
