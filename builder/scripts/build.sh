@@ -62,15 +62,6 @@ install_starter_capp() {
 EOF
 }
 
-gen_flag=0
-for arg in "$@"
-do
-    if [ "$arg" = "-gen" ]; then
-        gen_flag=1
-        break
-    fi
-done
-
 if [ "$1" = "system" ]; then
 
     cd "$2" || exit 1
@@ -78,21 +69,8 @@ if [ "$1" = "system" ]; then
     find . -type f -name 'go.mod' | while read -r modfile; do
         dir=$(dirname "$modfile")
         cd "$dir" || exit 1
-        export GOPATH=$HOME/go
-        export PATH=$PATH:/usr/local/go/bin
-        export PATH=$PATH:$GOPATH/bin
         go mod tidy
-        if [ $gen_flag -eq 1 ]; then
-            echo "Generating mocks for $dir"
-            make clean
-            make gen
-        fi
-        cd - || exit 1
-    done
-
-    find . -type f -name 'go.mod' | while read -r modfile; do
-        dir=$(dirname "$modfile")
-        cd "$dir" || exit 1
+        make clean
         make
         cd - || exit 1
     done
