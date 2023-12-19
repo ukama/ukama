@@ -26,7 +26,7 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	rm -rf ./bin/ 
+	rm -rf ./bin/
+
 server:
 	go run cmd/main.go
-    

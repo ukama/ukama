@@ -37,7 +37,7 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 	
 clean:
-	rm pb/gen/*.go
+	rm -rf bin/
 
 docs:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep-I ./pb -I ../../common/pb -I ../../common/pb/dep --doc_out=. --doc_opt=./../../template.tmpl,README.md pb/*.proto & sh ./../../generate-dir-tree.sh $(PWD)

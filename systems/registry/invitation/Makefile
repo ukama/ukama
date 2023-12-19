@@ -34,20 +34,14 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
-	rm pb/gen/*.go
+	rm -rf bin/
 
 server:
 	go run cmd/server/main.go
 	
-# integration tests
-
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
 
-
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
-
-
-
 
