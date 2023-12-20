@@ -8,16 +8,13 @@ include ../../config.mk
   
 .PHONY: integration.test test
 
-
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/notify/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/notify cmd/server/main.go
 
-
 # Go test
 test:
 	go test -v ./...
-
 
 # Go lint
 lint:
@@ -38,15 +35,11 @@ gen:
 clean:
 	rm -rf ./bin/
 
-# integration tests
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
-
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
-# Build Mock
 mock: 
 	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/listener.go
-

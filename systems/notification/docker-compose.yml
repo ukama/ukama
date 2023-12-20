@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.3'
 
 services:
 
@@ -51,8 +51,7 @@ services:
    - MSGCLIENT_HOST=msgclient-notification:9095
    - NOTIFY_SERVICE_HOST=notify
    - NOTIFY_SERVICE_PORT=9090
-   # - ORGNAME=${UKAMA_ORG_NAME}
-   - ORGNAME=ukama-test-org
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -97,12 +96,9 @@ services:
 
 
  initclient-notification:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  image: salman-init
   environment:
-   # - ENV_SYSTEM_ORG=${UKAMA_ORG_NAME}
-   - ENV_SYSTEM_ORG=ukama-test-org
+   - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    # - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}

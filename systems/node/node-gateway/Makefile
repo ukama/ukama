@@ -22,7 +22,7 @@ gen:
 	mockery --all --recursive
 
 clean:
-	rm mocks/*.go
+	rm -rf bin/
 
 # integration tests
 
@@ -35,5 +35,3 @@ integration.build:
 
 server:
 	go run cmd/main.go
-
-

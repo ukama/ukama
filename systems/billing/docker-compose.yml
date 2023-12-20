@@ -81,13 +81,12 @@ services:
    - MSGCLIENT_HOST=msg-client-billing:9095
    - INVOICE_SERVICE_HOST=billing-invoice
    - INVOICE_SERVICE_PORT=9090
-   - ORGNAME=ukama-test-org
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
   depends_on:
    - postgresd-billing
-
 
 networks:
  ukama-net:

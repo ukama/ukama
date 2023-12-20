@@ -22,18 +22,14 @@ gen:
 	mockery --all --recursive
 
 clean:
-	rm mocks/*.go
-
-# integration tests
+	rm -rf bin/
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
-
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
 server:
 	go run cmd/main.go
-
 

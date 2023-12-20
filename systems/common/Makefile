@@ -14,7 +14,6 @@ gen:
 			   
 	mockery --all --recursive --dir ./
 
-
 test:
 	go test -v ./...
 

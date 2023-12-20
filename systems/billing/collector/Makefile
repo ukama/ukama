@@ -29,12 +29,10 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	# rm pb/gen/*.go
-	rm mocks/*.go
+	rm -rf bin/
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
-
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration

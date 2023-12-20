@@ -199,6 +199,84 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
     return USYS_TRUE;
 }
 
+static bool copy_file(const char *srcPath, const char *destPath) {
+
+    char runMe[MAX_BUFFER] = {0};
+
+    usys_log_debug("Copying from %s to %s", srcPath, destPath);
+
+    sprintf(runMe, "/bin/cp -p %s %s", srcPath, destPath);
+    if (system(runMe) != 0) {
+        usys_log_error("Unable to cp from: %s to: %s", srcPath, destPath);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
+
+static bool copy_folder(char *srcFolder, char *destFolder) {
+
+    DIR *dir;
+    struct dirent *entry;
+    struct stat destStat;
+
+    dir = opendir(srcFolder);
+    if (!dir) {
+        usys_log_error("Unable to open folder: %s", srcFolder);
+        return USYS_FALSE;
+    }
+
+    /* check if destination folder exist */
+    if (stat(destFolder, &destStat) != 0) {
+        if (mkdir(destFolder, 0777) != 0) {
+            usys_log_error("Unable to create dest folder: %s", destFolder);
+            return USYS_FALSE;
+        }
+    }
+
+    while ((entry = readdir(dir))) {
+        if (entry->d_type == DT_REG) {
+            char srcPath[1024];
+            char destPath[1024];
+
+            snprintf(srcPath, sizeof(srcPath), "%s/%s",
+                     srcFolder, entry->d_name);
+            snprintf(destPath, sizeof(destPath), "%s/%s",
+                     destFolder, entry->d_name);
+
+            if (!copy_file(srcPath, destPath)) {
+                usys_log_error("Unable to copy from: %s to: %s",
+                               srcPath, destPath);
+                return USYS_FALSE;
+            }
+        }
+    }
+
+    closedir(dir);
+
+    return USYS_TRUE;
+}
+
+static bool install_capp(char *rootPath) {
+
+    char configFolder[MAX_BUFFER] = {0};
+    char sbinFolder[MAX_BUFFER] = {0};
+
+    sprintf(configFolder, "%s/conf/", rootPath);
+    sprintf(sbinFolder,   "%s/sbin/", rootPath);
+
+    if (copy_folder(configFolder, "/conf") == USYS_FALSE) {
+        usys_log_debug("No config for %s. Skipping", rootPath);
+    }
+
+    if (copy_folder(sbinFolder, "/sbin") == USYS_FALSE) {
+        usys_log_error("No binary files for %s", rootPath);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
+
 static bool create_and_run_capps(Capp *capp, int *error) {
 
     char *configFileName = NULL;
@@ -208,6 +286,12 @@ static bool create_and_run_capps(Capp *capp, int *error) {
     configFileName = (char *)calloc(1, strlen(capp->rootfs) +
                                     strlen(DEF_CAPP_CONFIG_FILE) + 2);
     sprintf(configFileName, "%s/%s", capp->rootfs, DEF_CAPP_CONFIG_FILE);
+
+    if (!install_capp(capp->rootfs)) {
+        usys_log_error("Unable to install app at config and sbin");
+        free(configFileName);
+        return USYS_FALSE;
+    }
 
     if (!process_capp_config_file(&capp->config, configFileName)) {
         free(configFileName);

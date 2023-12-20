@@ -1,0 +1,51 @@
+version: '3.9'
+services:
+ postgresd-auth:
+  image: postgres:13.3
+  ports:
+   - '5410:5432'
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
+
+ api-gateway:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./api-gateway
+  restart: always
+  ports:
+   - '8076:8080'
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+   # - CORS_ALLOWALLORIGINS=true
+   # - CORS_ALLOWORIGINS=""
+
+ msgclient-auth:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-auth
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=auth
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-auth
+
+networks:
+ ukama-net:
+  external: true
+  name: services_dev-net
+
+volumes:
+ postgress-data:
