@@ -21,17 +21,38 @@ export class NodeStatus {
 
 @ObjectType()
 export class NodeSite {
-  @Field()
+  @Field({ nullable: true })
   nodeId: string;
 
-  @Field()
+  @Field({ nullable: true })
   siteId: string;
 
-  @Field()
+  @Field({ nullable: true })
   networkId: string;
 
-  @Field()
+  @Field({ nullable: true })
   addedAt: string;
+}
+
+@ObjectType()
+export class AttachedNodes {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  orgId: string;
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+
+  @Field(() => NodeSite)
+  site: NodeSite;
+
+  @Field(() => NodeStatus)
+  status: NodeStatus;
 }
 @ObjectType()
 export class Node {
@@ -47,11 +68,11 @@ export class Node {
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
 
-  @Field(() => [Node])
-  attached: Node[];
+  @Field(() => [AttachedNodes])
+  attached: AttachedNodes[];
 
-  @Field(() => NodeSite, { nullable: true })
-  site?: NodeSite;
+  @Field(() => NodeSite)
+  site: NodeSite;
 
   @Field(() => NodeStatus)
   status: NodeStatus;
@@ -141,6 +162,54 @@ export class NodeState {
   state: NODE_STATUS;
 }
 
+@ObjectType()
+export class AppChangeLog {
+  @Field()
+  version: string;
+
+  @Field()
+  date: number;
+}
+
+@ObjectType()
+export class AppChangeLogs {
+  @Field(() => [AppChangeLog])
+  logs: AppChangeLog[];
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+}
+
+@ObjectType()
+export class NodeApp {
+  @Field()
+  name: string;
+
+  @Field()
+  date: number;
+
+  @Field()
+  version: string;
+
+  @Field()
+  cpu: string;
+
+  @Field()
+  memory: string;
+
+  @Field()
+  notes: string;
+}
+
+@ObjectType()
+export class NodeApps {
+  @Field(() => [NodeApp])
+  apps: NodeApp[];
+
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+}
+
 @ArgsType()
 @InputType()
 export class UpdateNodeInput {
@@ -149,4 +218,45 @@ export class UpdateNodeInput {
 
   @Field()
   name: string;
+}
+
+@ArgsType()
+@InputType()
+export class NodeAppsChangeLogInput {
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
+}
+
+@ObjectType()
+export class NodeLocation {
+  @Field()
+  id: string;
+
+  @Field()
+  lat: string;
+
+  @Field()
+  lng: string;
+
+  @Field(() => NODE_STATUS)
+  state: NODE_STATUS;
+}
+
+@ArgsType()
+@InputType()
+export class NodesInput {
+  @Field()
+  networkId: string;
+
+  @Field(() => NODE_STATUS)
+  nodeFilterState: NODE_STATUS;
+}
+
+@ObjectType()
+export class NodesLocation {
+  @Field()
+  networkId: string;
+
+  @Field(() => [NodeLocation])
+  nodes: NodeLocation[];
 }

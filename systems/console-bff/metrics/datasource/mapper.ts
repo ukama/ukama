@@ -34,7 +34,7 @@ export const parseLatestMetricRes = (
   args: GetLatestMetricInput
 ): LatestMetricRes => {
   const data = res.data.result[0];
-  if (data && data.value && data.value.length > 0) {
+  if (data?.value?.length > 0) {
     return {
       success: true,
       msg: "success",
@@ -50,7 +50,7 @@ export const parseLatestMetricRes = (
 
 export const parseMetricRes = (res: any, type: string): MetricRes => {
   const data = res.data.result[0];
-  if (data && data.values && data.values.length > 0) {
+  if (data?.values?.length > 0) {
     return {
       type: type,
       success: true,
@@ -69,8 +69,7 @@ export const parseNodeMetricRes = (
 ): MetricRes => {
   if (code === 404) return getEmptyMetric(args);
   const { result } = data.data;
-  const hasValues =
-    result && result[0] && result[0].values && result[0].values.length > 0;
+  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
 
   return hasValues
     ? {
@@ -106,7 +105,7 @@ export const parsePromethRes = (
     (item: any) => item.metric.nodeid === args.nodeId
   )[0];
 
-  if (metric && metric.values && metric.values.length > 0) {
+  if (metric?.values?.length > 0) {
     return {
       type: args.type,
       success: true,

@@ -50,13 +50,13 @@ export class ApiMethodDataDto {
   @Field(() => API_METHOD_TYPE)
   type: API_METHOD_TYPE;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   params?: any;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   headers?: any;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   body?: any;
 }
 

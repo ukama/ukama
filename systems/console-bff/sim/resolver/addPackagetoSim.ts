@@ -15,11 +15,11 @@ import { AddPackageSimResDto, AddPackageToSimInputDto } from "./types";
 export class AddPackageToSimResolver {
   @Mutation(() => AddPackageSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async addPackageToSim(
     @Arg("data") data: AddPackageToSimInputDto,
     @Ctx() ctx: Context
   ): Promise<AddPackageSimResDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.addPackegeToSim(data);
+    return await dataSources.dataSource.addPackageToSim(data);
   }
 }

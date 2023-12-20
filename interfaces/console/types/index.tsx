@@ -146,6 +146,7 @@ export type TCommonData = {
   orgId: string;
   userId: string;
   orgName: string;
+  metaData: any;
 };
 
 export interface MyAppProps extends AppProps {

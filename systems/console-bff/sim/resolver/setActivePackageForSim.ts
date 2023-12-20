@@ -5,9 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
-
-import { Authentication } from "../../common/auth";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { Context } from "../context";
 import {
   SetActivePackageForSimInputDto,
@@ -17,8 +15,7 @@ import {
 @Resolver()
 export class SetActivePackageForSimResolver {
   @Mutation(() => SetActivePackageForSimResDto)
-  @UseMiddleware(Authentication)
-  async getSim(
+  async setActivePackageForSim(
     @Arg("data") data: SetActivePackageForSimInputDto,
     @Ctx() ctx: Context
   ): Promise<SetActivePackageForSimResDto> {

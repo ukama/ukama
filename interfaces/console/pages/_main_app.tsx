@@ -16,12 +16,14 @@ import {
   user,
 } from '@/app-recoil';
 import {
+  useAddNetworkMutation,
   useGetMemberLazyQuery,
-  useGetNetworksLazyQuery,
+  useGetNetworksQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
+import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -42,6 +44,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     useRecoilState<TSnackMessage>(snackbarMessage);
   const [skeltonLoading, setSkeltonLoading] =
     useRecoilState<boolean>(isSkeltonLoading);
+  const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
@@ -82,10 +85,13 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       },
     });
 
-  const [
-    getNetworks,
-    { data: networksData, error: networksError, loading: networksLoading },
-  ] = useGetNetworksLazyQuery({
+  const {
+    data: networksData,
+    error: networksError,
+    loading: networksLoading,
+    refetch: refetchNetworks,
+  } = useGetNetworksQuery({
+    skip: _commonData?.orgId === '',
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (
@@ -106,7 +112,26 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         type: 'error',
         show: true,
       });
-      setSkeltonLoading(false);
+    },
+  });
+
+  const [addNetwork, { loading: addNetworkLoading }] = useAddNetworkMutation({
+    onCompleted: () => {
+      refetchNetworks();
+      setSnackbarMessage({
+        id: 'add-networks-success',
+        message: 'Network added successfully',
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-networks-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
@@ -122,6 +147,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
     if (orgId && orgName) {
       setCommonData({
+        metaData: {},
         orgId,
         orgName,
         userId,
@@ -138,6 +164,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       setIsFullScreen(
         route.pathname === '/manage' ||
           route.pathname === '/settings' ||
+          route.pathname === '/unauthorized' ||
+          route.pathname === '/onboarding' ||
           getTitleFromPath(route.pathname, route.query['id'] as string) ===
             '404',
       );
@@ -152,6 +180,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [route]);
 
   useEffect(() => {
+    if (!_commonData.userId || (!_commonData.orgId && !_commonData.orgName)) {
+      route.push('/unauthorized');
+    }
+
     if (_commonData.userId) {
       getUser({
         variables: {
@@ -159,11 +191,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         },
       });
     }
-    if (_commonData.orgId) {
-      setSkeltonLoading(true);
-      getNetworks();
-    }
-  }, [commonData]);
+  }, [_commonData]);
 
   useEffect(() => {
     if (!userLoading && userData && userData.getUser && _user.id) {
@@ -176,6 +204,19 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     }
   }, [_user]);
 
+  useEffect(() => {
+    if (networksLoading && orgsLoading && userLoading && !skeltonLoading)
+      setSkeltonLoading(true);
+    else if (!networksLoading && !orgsLoading && !userLoading && skeltonLoading)
+      setSkeltonLoading(false);
+  }, [
+    networksLoading,
+    orgsLoading,
+    userLoading,
+    skeltonLoading,
+    setSkeltonLoading,
+  ]);
+
   const handleGoToLogin = () => {
     resetData();
     resetPageName();
@@ -185,12 +226,36 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   const handlePageChange = (page: string) => setPage(page);
   const handleNetworkChange = (id: string) => {
-    setCommonData({
-      ..._commonData,
-      networkId: id,
-      networkName:
-        networksData?.getNetworks.networks.filter((n) => n.id === id)[0].name ??
-        '',
+    if (id) {
+      setCommonData({
+        ..._commonData,
+        networkId: id,
+        networkName:
+          networksData?.getNetworks.networks.filter((n) => n.id === id)[0]
+            .name ?? '',
+      });
+    }
+  };
+
+  const handleAddNetworkAction = () => setShowAddNetwork(true);
+
+  const handleAddNetwork = (values: any) => {
+    // const countriesName =
+    //   values.countries.length > 0
+    //     ? values.countries.map((item: any) => item.name)
+    //     : [];
+    addNetwork({
+      variables: {
+        data: {
+          name: values.name,
+          budget: values.budget,
+          networks: values.networks,
+          org: _commonData.orgName,
+          countries: values.countries,
+        },
+      },
+    }).finally(() => {
+      setShowAddNetwork(false);
     });
   };
 
@@ -199,13 +264,27 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       page={page}
       isFullScreen={isFullScreen}
       isDarkMode={_isDarkMod}
-      isLoading={false}
+      isLoading={
+        networksLoading || orgsLoading || userLoading || skeltonLoading
+      }
       placeholder={'Select Network'}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
-      networks={networksData?.getNetworks.networks}
+      networks={networksData?.getNetworks.networks || []}
+      handleAddNetwork={handleAddNetworkAction}
     >
       <Component {...pageProps} />
+      <AddNetworkDialog
+        title={'Add Network'}
+        isOpen={showAddNetwork}
+        labelSuccessBtn={'Submit'}
+        labelNegativeBtn={'Cancel'}
+        loading={addNetworkLoading}
+        handleSuccessAction={handleAddNetwork}
+        description={'Add network in organization'}
+        // networks={networksData?.getNetworks.networks || []}
+        handleCloseAction={() => setShowAddNetwork(false)}
+      />
     </Layout>
   );
 };

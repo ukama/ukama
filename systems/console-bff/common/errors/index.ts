@@ -59,9 +59,9 @@ export const axiosErrorHandler = (error: any): ErrorType => {
 
 export const checkError = (error: any): boolean => {
   if (
-    error.code ||
-    error.message ||
-    error.description ||
+    error.code ??
+    error.message ??
+    error.description ??
     error?.response?.data?.error
   )
     return true;

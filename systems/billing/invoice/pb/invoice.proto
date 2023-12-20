@@ -13,7 +13,6 @@ option go_package = "github.com/ukama/ukama/systems/billing/invoice/pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
-// import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 
 
@@ -23,6 +22,7 @@ service InvoiceService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
+    rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
     // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
@@ -56,6 +56,16 @@ message GetBySubscriberResponse{
     repeated Invoice invoices = 2;
 }
 
+
+message GetByNetworkRequest{
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+}
+
+message GetByNetworkResponse{
+    string networkId = 1 [json_name = "network_id"];
+    repeated Invoice invoices = 2;
+}
+
 message DeleteRequest{
     string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
 }
@@ -67,10 +77,11 @@ message DeleteResponse{
 message Invoice {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    google.protobuf.Timestamp period = 3;
-    RawInvoice rawInvoice = 4 [json_name = "raw_invoice"];
-    bool isPaid = 5 [json_name = "is_paid"];
-    google.protobuf.Timestamp createdAt = 6 [json_name = "created_at"];
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    google.protobuf.Timestamp period = 4;
+    RawInvoice rawInvoice = 5 [json_name = "raw_invoice"];
+    bool isPaid = 6 [json_name = "is_paid"];
+    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }
 
 

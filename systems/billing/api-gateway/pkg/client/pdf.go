@@ -13,8 +13,9 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const FileServerEndpoint = "/pdf/"

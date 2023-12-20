@@ -18,7 +18,7 @@ import {
 export class RemovePackageForSimResolver {
   @Mutation(() => RemovePackageFromSimResDto)
   @UseMiddleware(Authentication)
-  async getSim(
+  async removePackageForSim(
     @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: Context
   ): Promise<RemovePackageFromSimResDto> {

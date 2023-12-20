@@ -65,6 +65,7 @@ var _regex_SimAllocation_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-
 var _regex_SimAllocation_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_SimAllocation_DataPlanId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_SimAllocation_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+var _regex_SimAllocation_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *SimAllocation) Validate() error {
 	if !_regex_SimAllocation_Id.MatchString(this.Id) {
@@ -99,6 +100,12 @@ func (this *SimAllocation) Validate() error {
 	}
 	if !_regex_SimAllocation_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))
+	}
+	if !_regex_SimAllocation_PackageId.MatchString(this.PackageId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
+	}
+	if this.PackageId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
 	return nil
 }

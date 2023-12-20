@@ -5,20 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
-import { GetPackagesForSimInputDto, GetPackagesForSimResDto } from "./types";
+import { GetPackagesForSimInputDto, GetSimPackagesDtoAPI } from "./types";
 
 @Resolver()
 export class GetPackagesForSimResolver {
-  @Query(() => GetPackagesForSimResDto)
-  @UseMiddleware(Authentication)
-  async getSim(
+  @Query(() => GetSimPackagesDtoAPI)
+  async getPackagesForSim(
     @Arg("data") data: GetPackagesForSimInputDto,
     @Ctx() ctx: Context
-  ): Promise<GetPackagesForSimResDto> {
+  ): Promise<GetSimPackagesDtoAPI> {
     const { dataSources } = ctx;
 
     return await dataSources.dataSource.getPackagesForSim(data);

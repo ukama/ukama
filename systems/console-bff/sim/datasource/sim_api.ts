@@ -13,14 +13,15 @@ import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
   AddPackageToSimInputDto,
+  AllocateSimAPIDto,
   AllocateSimInputDto,
   DeleteSimInputDto,
   DeleteSimResDto,
   GetPackagesForSimInputDto,
-  GetPackagesForSimResDto,
   GetSimByNetworkInputDto,
   GetSimBySubscriberIdInputDto,
   GetSimInputDto,
+  GetSimPackagesDtoAPI,
   RemovePackageFormSimInputDto,
   RemovePackageFromSimResDto,
   SetActivePackageForSimInputDto,
@@ -31,16 +32,24 @@ import {
   SimPoolStatsDto,
   SimStatusResDto,
   SimsResDto,
+  SubscriberToSimsDto,
   ToggleSimStatusInputDto,
   UploadSimsInputDto,
   UploadSimsResDto,
 } from "../resolver/types";
-import { dtoToSimDetailsDto, dtoToSimResDto, dtoToSimsDto } from "./mapper";
+import {
+  dtoToAllocateSimResDto,
+  dtoToSimDetailsDto,
+  dtoToSimResDto,
+  dtoToSimsDto,
+} from "./mapper";
 
-const version = "/v1/simpool";
+const VERSION = "v1";
+const SIMPOOL = "simpool";
+const SIM = "sim";
 
 class SimApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW + version;
+  baseURL = SUBSCRIBER_API_GW;
 
   uploadSims = async (req: UploadSimsInputDto): Promise<UploadSimsResDto> => {
     return this.put(`/upload`, {
@@ -48,59 +57,76 @@ class SimApi extends RESTDataSource {
         data: req.data,
         sim_type: req.simType,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
-  };
-
-  allocateSim = async (req: AllocateSimInputDto): Promise<SimDto> => {
-    const token = generateTokenFromIccid(
-      req.iccid,
-      process.env.ENCRYPTION_KEY || ""
-    );
-    return this.put(``, {
-      body: {
-        ...req,
-        sim_token: token,
-      },
-    })
-      .then(res => dtoToSimResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   toggleSimStatus = async (
     req: ToggleSimStatusInputDto
   ): Promise<SimStatusResDto> => {
-    return this.put(``, {
+    return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
+      body: { status: req.status },
+    })
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        throw new GraphQLError(err);
+      });
+  };
+  allocateSim = async (
+    req: AllocateSimInputDto
+  ): Promise<AllocateSimAPIDto> => {
+    const getToken = (): string | null => {
+      if (req.iccid) {
+        const token = generateTokenFromIccid(
+          req.iccid,
+          process.env.ENCRYPTION_KEY ?? ""
+        );
+        return token;
+      }
+
+      return null;
+    };
+    const requestBody = {
+      ...req,
+      ...(req.iccid ? { sim_token: getToken() } : {}),
+    };
+
+    return this.post(`/${VERSION}/${SIM}`, {
       body: {
-        simId: req.simId,
-        status: req.status,
+        ...requestBody,
       },
     })
-      .then(res => res)
+      .then(res => {
+        this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+        this.getPackagesForSim({ sim_id: res.sim.id })
+          .then((response: any) => {
+            this.setActivePackageForSim({
+              sim_id: res.sim.id,
+              package_id: response.packages[0].id,
+            });
+          })
+          .catch((error: any) => {
+            throw new GraphQLError(error);
+          });
+
+        return dtoToAllocateSimResDto(res);
+      })
       .catch(err => {
         throw new GraphQLError(err);
       });
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {
-    return this.get(``, {
+    return this.get(`/${VERSION}/${SIM}/${req.simId}`, {
       params: {
         simId: req.simId,
       },
-    })
-      .then(res => dtoToSimResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimResDto(res));
   };
 
   getSims = async (type: string): Promise<SimsResDto> => {
-    return this.get(`/sims/${type}`)
+    return this.get(`/${VERSION}/${SIMPOOL}/sims/${type}`)
       .then(res => dtoToSimsDto(res))
       .catch(err => {
         throw new GraphQLError(err);
@@ -114,20 +140,6 @@ class SimApi extends RESTDataSource {
     };
   };
 
-  getSimBySubscriberId = async (
-    req: GetSimBySubscriberIdInputDto
-  ): Promise<SimDetailsDto> => {
-    return this.put(``, {
-      body: {
-        subscriberId: req.subscriberId,
-      },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
-  };
-
   getSimByNetworkId = async (
     req: GetSimByNetworkInputDto
   ): Promise<SimDetailsDto> => {
@@ -135,11 +147,7 @@ class SimApi extends RESTDataSource {
       body: {
         networkId: req.networkId,
       },
-    })
-      .then(res => dtoToSimDetailsDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => dtoToSimDetailsDto(res));
   };
 
   deleteSim = async (req: DeleteSimInputDto): Promise<DeleteSimResDto> => {
@@ -147,25 +155,17 @@ class SimApi extends RESTDataSource {
       body: {
         simId: req.simId,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
-  addPackegeToSim = async (
+  addPackageToSim = async (
     req: AddPackageToSimInputDto
   ): Promise<AddPackageSimResDto> => {
     return this.put(``, {
       body: {
         ...req,
       },
-    })
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    }).then(res => res);
   };
 
   removePackageFromSim = async (
@@ -175,21 +175,23 @@ class SimApi extends RESTDataSource {
       body: {
         ...req,
       },
-    })
+    }).then(res => res);
+  };
+
+  getPackagesForSim = async (
+    req: GetPackagesForSimInputDto
+  ): Promise<GetSimPackagesDtoAPI> => {
+    return this.get(`/${VERSION}/${SIM}/packages/${req.sim_id}`)
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);
       });
   };
 
-  getPackagesForSim = async (
-    req: GetPackagesForSimInputDto
-  ): Promise<GetPackagesForSimResDto> => {
-    return this.put(``, {
-      body: {
-        simId: req.simId,
-      },
-    })
+  getSimsBySubscriberId = async (
+    req: GetSimBySubscriberIdInputDto
+  ): Promise<SubscriberToSimsDto> => {
+    return this.get(`/sim/subscriber/${req.subscriberId}`)
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);
@@ -197,21 +199,20 @@ class SimApi extends RESTDataSource {
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`)
-      .then(res => res)
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (
     req: SetActivePackageForSimInputDto
   ): Promise<SetActivePackageForSimResDto> => {
-    return this.put(``, {
-      body: {
-        ...req,
-      },
-    })
+    return this.patch(
+      `/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`,
+      {
+        body: {
+          ...req,
+        },
+      }
+    )
       .then(res => res)
       .catch(err => {
         throw new GraphQLError(err);

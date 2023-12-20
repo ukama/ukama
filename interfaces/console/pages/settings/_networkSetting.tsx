@@ -6,31 +6,24 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { ROAMING_SELECT } from '@/constants';
-import {
-  Divider,
-  FormControlLabel,
-  Grid,
-  MenuItem,
-  Paper,
-  Radio,
-  RadioGroup,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { colors } from '@/styles/theme';
+import EditableTextField from '@/ui/molecules/EditableTextField';
+import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
-export default function NetworkSettings() {
-  const [esim, setEsim] = useState('all');
-  const [networkSettings, setNetworkSettings] = useState<any>({
-    networkType: localStorage['networkType'] || 'private',
-    roamingOption: localStorage['roamingOption'] || false,
-  });
+interface INetworkSetting {
+  name: string;
+  handleSubmit: Function;
+  handleDeleteNetwork: Function;
+}
 
-  const handleTimezoneChange = (event: any) => {
-    setEsim(event.target.value);
-  };
+const NetworkSetting = ({
+  name,
+  handleSubmit,
+  handleDeleteNetwork,
+}: INetworkSetting) => {
+  const [value, setValue] = useState(name);
+
   return (
     <Paper
       sx={{
@@ -38,16 +31,17 @@ export default function NetworkSettings() {
         px: 4,
         width: '100%',
         borderRadius: '4px',
+        position: 'relative',
         height: 'calc(100vh - 200px)',
       }}
     >
-      <Grid container spacing={2}>
+      <Grid container spacing={2} pb={5}>
         <Grid item container spacing={2}>
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Network Name</Typography>
           </Grid>
-          <Grid item xs={12} md={8}>
-            <Grid item xs={12} sm={10} md={8}>
+          <Grid item xs={12} md={8} spacing={2}>
+            <Stack direction={'column'} spacing={3}>
               <Typography
                 variant="body2"
                 sx={{
@@ -55,72 +49,26 @@ export default function NetworkSettings() {
                   lineHeight: '19px',
                 }}
               >
-                This is the name that shows up on xyz. You can edit this again
-                at any point.
+                You can edit this again at any point.
               </Typography>
-            </Grid>
-            <Grid item xs={12} sm={10} md={8}>
-              <TextField
-                fullWidth
-                id="name"
-                name="name"
-                disabled={true}
-                variant="standard"
-                value={'Network X'}
-                label={'NETWORK NAME'}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  disableUnderline: true,
-                }}
+              <EditableTextField
+                type="text"
+                value={name}
+                isEditable={true}
+                label="NETWORK NAME"
+                handleOnChange={(e: any) => setValue(e.target.value)}
               />
-            </Grid>
+              <Button
+                variant="contained"
+                sx={{ width: '20%', bgcolor: colors.red }}
+                onClick={() => handleDeleteNetwork()}
+              >
+                Delete Network
+              </Button>
+            </Stack>
           </Grid>
         </Grid>
-        <Divider sx={{ width: '100%' }} />
-        <Grid item container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <Typography variant="h6">Network Type</Typography>
-          </Grid>
-          <Grid item container xs={12} md={8}>
-            <Grid item xs={12} sm={10} md={8}>
-              <Typography
-                variant="body2"
-                sx={{
-                  mb: '18px',
-                  lineHeight: '19px',
-                }}
-              >
-                Policy regarding network switching & explain how it’ll change
-                after hardware is actually shipped.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={10} md={8}>
-              <RadioGroup
-                aria-label="networkType"
-                defaultValue={networkSettings.networkType}
-                name="radio-buttons-group"
-                onChange={(event: any) => {
-                  setNetworkSettings({
-                    networkType: event.target.value,
-                  });
-                  localStorage.setItem('networkType', event.target.value);
-                }}
-              >
-                <FormControlLabel
-                  value="public"
-                  control={<Radio />}
-                  label="Public Network"
-                />
-                <FormControlLabel
-                  value="private"
-                  control={<Radio />}
-                  label="Private Network"
-                />
-              </RadioGroup>
-            </Grid>
-          </Grid>
-        </Grid>
-        <Divider sx={{ width: '100%' }} />
+        {/* <Divider sx={{ width: '100%' }} />
         <Grid item container spacing={2}>
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Roaming Options</Typography>
@@ -178,8 +126,27 @@ export default function NetworkSettings() {
               </TextField>
             </Grid>
           </Grid>
-        </Grid>
+        </Grid> */}
       </Grid>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          position: 'absolute',
+          bottom: 32,
+          right: 32,
+        }}
+      >
+        <Button
+          variant="contained"
+          sx={{ width: 'fit-content' }}
+          onClick={() => handleSubmit(value)}
+        >
+          Save
+        </Button>
+      </Box>
     </Paper>
   );
-}
+};
+export default NetworkSetting;

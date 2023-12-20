@@ -159,3 +159,15 @@ export class SubMetricByTabInput {
   @Field()
   from: number;
 }
+
+@ObjectType()
+export class StatsMetric {
+  @Field()
+  activeSubscriber: number;
+
+  @Field()
+  averageSignalStrength: number;
+
+  @Field()
+  averageThroughput: number;
+}

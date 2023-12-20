@@ -36,6 +36,7 @@ type Router struct {
 	port           int
 	Store          pkg.StoreConfig
 	Chunk          pkg.ChunkConfig
+	orgName        string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
@@ -49,15 +50,16 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, msgBus mb.MsgBusServiceClient) *Router {
+func NewRouter(config *pkg.Config, orgName string, msgBus mb.MsgBusServiceClient) *Router {
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode, "")
 
 	r := &Router{fizz: f,
 		port:           config.Server.Port,
 		Store:          config.Distribution.StoreCfg,
 		Chunk:          config.Distribution.Chunk,
+		orgName:        orgName,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 
 	chunks := f.Group(ChunksPath, "ChunksServer", "Chunks Server for content to be distributed")

@@ -12,35 +12,33 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/num30/config"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
-	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
-
+	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
-
-	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
-
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
-	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	nuc "github.com/ukama/ukama/testing/integration/pkg/nucleus"
+	reg "github.com/ukama/ukama/testing/integration/pkg/registry"
 	subs "github.com/ukama/ukama/testing/integration/pkg/subscriber"
 )
+
+var config *pkg.Config
 
 var errTestFailure = errors.New("test failure")
 
@@ -48,8 +46,10 @@ type BillingData struct {
 	SimType string `default:"ukama_data"`
 
 	BillingClient *billing.BillingClient
-	Host          string
+	ProviderHost  string
+	BillingKey    string
 	MbHost        string
+	SystemName    string
 
 	DataPlanClient *dplan.DataplanClient
 	DplanHost      string
@@ -72,26 +72,27 @@ type BillingData struct {
 	SimId            string
 	ActivePackageId  string
 
-	NucleusClient *nuc.NucleusClient
+	NucleusClient  *nuc.NucleusClient
 	RegistryClient *reg.RegistryClient
 	RegHost        string
 	OwnerName      string
 	OwnerEmail     string
 	OwnerPhone     string
-	OrgName        string
-	OwnerId        string
 	OrgId          string
+	OrgName        string
+	OrgOwnerId     string
+	OwnerId        string
 	NetworkName    string
 	NetworkId      string
 
 	// API requests
 	reqAddUser                 napi.AddUserRequest
-	reqAddOrg                  napi.AddOrgRequest
 	reqAddNetwork              rapi.AddNetworkRequest
 	reqUploadBaseRates         dapi.UploadBaseRatesRequest
 	reqGetBaseRatesByCountry   dapi.GetBaseRatesByCountryRequest
 	reqGetBaseRate             dapi.GetBaseRateRequest
 	reqSetDefaultMarkupRequest dapi.SetDefaultMarkupRequest
+	reqGetMarkup               dapi.GetMarkupRequest
 	reqSetMarkup               dapi.SetMarkupRequest
 	reqAddPackage              dapi.AddPackageRequest
 	reqSubscriberAdd           sapi.SubscriberAddReq
@@ -102,68 +103,52 @@ type BillingData struct {
 	reqActivateDeactivateSim   sapi.ActivateDeactivateSimReq
 }
 
-var serviceConfig = pkg.NewConfig()
-
-func init() {
-	log.SetLevel(log.InfoLevel)
-	log.SetOutput(os.Stderr)
-
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
-	if err != nil {
-		log.Fatalf("Error reading config file. Error: %v", err)
-	} else if serviceConfig.DebugMode {
-		// output config in debug mode
-		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
-			log.Infof("Config:\n%s", string(b))
-		}
-	}
-
-}
-
 func InitializeData() *BillingData {
 	d := &BillingData{}
+	d.SystemName = "billing"
+
+	config = pkg.NewConfig()
+
+	// To run this workflow, you need to export your own BILLINGKEY, which is the same as the LAGO_API_KEY
+	// you are using to run the billing system.
+	utils.LoadConfigVarsFromEnv(d.SystemName, config)
 
 	d.SimType = "test"
+	d.ProviderHost = config.System.BillingProvider
+	d.MbHost = config.System.MessageBus
+	d.BillingKey = config.BillingKey
+	d.BillingClient = billing.NewBillingClient(d.ProviderHost, d.BillingKey)
 
-	d.Host = "http://localhost:3000"
-	d.MbHost = "amqp://guest:guest@localhost:5672/"
-
-	d.BillingClient = billing.NewBillingClient(d.Host, serviceConfig.Key)
-
-	d.DplanHost = "http://localhost:8080"
+	d.DplanHost = config.System.Dataplan
 	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
 	d.BaseRateId = make([]string, 8)
 	d.Country = "The lunar maria"
-
 	d.Provider = "ABC Tel"
 
-	d.SubsHost = "http://localhost:8081"
+	d.SubsHost = config.System.Subscriber
 	d.SubscriberClient = subs.NewSubscriberClient(d.SubsHost)
-	d.EncriptKey = "the-key-has-to-be-32-bytes-long!"
+	d.EncriptKey = config.EncryptKey
 	d.SubscriberName = faker.FirstName()
-	// d.SubscriberEmail = strings.ToLower(faker.FirstName() + "_" + faker.LastName() + "@example.com")
 	d.SubscriberEmail = strings.ToLower(faker.Email())
 	d.SubscriberPhone = faker.Phonenumber()
 
-	d.RegHost = "http://localhost:8082"
+	d.RegHost = config.System.Registry
+	d.OrgId = config.OrgId
+	d.OrgName = config.OrgName
+	d.OrgOwnerId = config.OrgOwnerId
 	d.RegistryClient = reg.NewRegistryClient(d.RegHost)
 	d.OwnerName = strings.ToLower(faker.FirstName())
 	d.OwnerEmail = strings.ToLower(faker.Email())
 	d.OwnerPhone = strings.ToLower(faker.Phonenumber())
-	d.OrgName = strings.ToLower(faker.FirstName() + "-org")
 	d.NetworkName = strings.ToLower(faker.FirstName()) + "-net"
 
-	d.reqAddUser = napi.AddUserRequest{
-		Name:  d.OwnerName,
-		Email: d.OwnerEmail,
-		Phone: d.OwnerPhone,
-	}
+	d.NucleusClient = nuc.NewNucleusClient(config.System.Nucleus)
 
-	d.reqAddOrg = napi.AddOrgRequest{
-		OrgName:     d.OrgName,
-		Owner:       d.OwnerId,
-		Certificate: utils.RandomBase64String(2048),
+	d.reqAddUser = napi.AddUserRequest{
+		Name:   d.OwnerName,
+		Email:  d.OwnerEmail,
+		Phone:  d.OwnerPhone,
+		AuthId: faker.UUIDHyphenated(),
 	}
 
 	d.reqAddNetwork = rapi.AddNetworkRequest{
@@ -172,9 +157,9 @@ func InitializeData() *BillingData {
 	}
 
 	d.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
-		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
+		EffectiveAt: utils.GenerateUTCFutureDate(time.Second * 2),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
-		EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
+		EndAt:       utils.GenerateUTCFutureDate(365 * 24 * time.Hour),
 		SimType:     d.SimType,
 	}
 
@@ -186,6 +171,10 @@ func InitializeData() *BillingData {
 
 	d.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
 		Markup: float64(utils.RandomInt(50)),
+	}
+
+	d.reqGetMarkup = dapi.GetMarkupRequest{
+		OwnerId: d.OwnerId,
 	}
 
 	d.reqSetMarkup = dapi.SetMarkupRequest{
@@ -244,19 +233,6 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			assert.Equal(t, d.OwnerPhone, aUserResp.User.Phone)
 		}
 
-		d.OwnerId = aUserResp.User.Id
-
-		// Add new org
-		d.reqAddOrg.Owner = d.OwnerId
-
-		aOrgResp, err := d.NucleusClient.AddOrg(d.reqAddOrg)
-		if assert.NoError(t, err) {
-			assert.NotNil(t, aOrgResp)
-			assert.Equal(t, d.OrgName, aOrgResp.Org.Name)
-		}
-
-		d.OrgId = aOrgResp.Org.Id
-
 		// Add new network
 		aNetResp, err := d.RegistryClient.AddNetwork(d.reqAddNetwork)
 		if assert.NoError(t, err) {
@@ -288,16 +264,17 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 
 		d.BaserateId = gbResp.Rates[0].Uuid
 
-		// Set markup
-		d.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
-			Markup: float64(utils.RandomInt(50)),
-		}
+		// Get markup, set default if not present
+		d.reqGetMarkup.OwnerId = d.OrgOwnerId
+		_, err = d.DataPlanClient.DataPlanGetUserMarkup(d.reqGetMarkup)
+		if err != nil {
+			// Set markup
+			d.reqSetMarkup.OwnerId = d.OrgOwnerId
 
-		d.reqSetMarkup.OwnerId = d.OwnerId
-
-		mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkup)
-		if assert.NoError(t, err) {
-			assert.NotNil(t, mResp)
+			mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkup)
+			if assert.NoError(t, err) {
+				assert.NotNil(t, mResp)
+			}
 		}
 
 		// Upload sims to sim pool
@@ -331,16 +308,17 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("package").SetActionCreate().SetObject("package").MustBuild())
 
 			// Add a new package
 			a.reqAddPackage = dapi.AddPackageRequest{
-				OwnerId:    a.OwnerId,
+				OwnerId:    a.OrgOwnerId,
 				OrgId:      a.OrgId,
 				Name:       faker.FirstName() + "-monthly-pack",
 				SimType:    a.SimType,
-				From:       utils.GenerateFutureDate(24 * time.Hour),
-				To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
+				From:       utils.GenerateUTCFutureDate(24 * time.Hour),
+				To:         utils.GenerateUTCFutureDate(30 * 24 * time.Hour),
 				BaserateId: a.BaserateId,
 				SmsVolume:  100,
 				DataVolume: 1024,
@@ -426,7 +404,8 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.subscriber.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("registry").SetAction("create").SetObject("subscriber").MustBuild())
 
 			// Add new subscriber
 			a.reqSubscriberAdd.NetworkId = a.NetworkId
@@ -512,7 +491,8 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("allocate").SetObject("sim").MustBuild())
 
 			// Allocate new sim to subscriber
 			a.reqAllocateSim.NetworkId = a.NetworkId
@@ -604,8 +584,9 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost,
-				[]string{"event.cloud.simmanager.package.activate",
-					"event.cloud.simmanager.sim.activepackage"})
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("activepackage").SetObject("sim").MustBuild())
+			// []string{"event.cloud.simmanager.package.activate",
+			// "event.cloud.simmanager.sim.activepackage"}
 
 			// Get the sim
 			a.reqGetSim.SimId = a.SimId

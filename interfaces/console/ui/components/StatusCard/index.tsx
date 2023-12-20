@@ -8,15 +8,7 @@
 
 import { RoundedCard } from '@/styles/global';
 import { SelectItemType } from '@/types';
-import {
-  Box,
-  Grid,
-  MenuItem,
-  Select,
-  Theme,
-  Typography,
-  useMediaQuery,
-} from '@mui/material';
+import { Box, Grid, Theme, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import LoadingWrapper from '../../molecules/LoadingWrapper';
 
@@ -119,7 +111,7 @@ const StatusCard = ({
                   <Typography variant="subtitle2">{title}</Typography>
                 </Grid>
                 <Grid item xs={5} display="none" justifyContent="flex-end">
-                  <Select
+                  {/* <Select
                     value={option}
                     disableUnderline
                     variant="standard"
@@ -136,7 +128,7 @@ const StatusCard = ({
                         <Typography variant="body1">{label}</Typography>
                       </MenuItem>
                     ))}
-                  </Select>
+                  </Select> */}
                 </Grid>
               </Grid>
               <Grid item container alignItems="baseline">

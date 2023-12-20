@@ -15,6 +15,6 @@ export class GetNodesResolver {
   @Query(() => Nodes)
   async getNodes(@Arg("data") data: GetNodesInput, @Ctx() context: Context) {
     const { dataSources } = context;
-    return await dataSources.dataSource.getNodes(data?.isFree || false);
+    return await dataSources.dataSource.getNodes(data?.isFree ?? false);
   }
 }

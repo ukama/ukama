@@ -9,9 +9,9 @@
 package db
 
 import (
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"gorm.io/gorm"
 )
 
@@ -19,6 +19,7 @@ type InvoiceRepo interface {
 	Add(invoice *Invoice, nestedFunc func(*Invoice, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invoice, error)
 	GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error)
+	GetByNetwork(networkId uuid.UUID) ([]Invoice, error)
 
 	// Update(orgId uint, network *Network) error
 	Delete(invoiceId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
@@ -70,6 +71,18 @@ func (i *invoiceRepo) GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error)
 	var invoices []Invoice
 
 	result := db.Where(&Invoice{SubscriberId: subscriberId}).Find(&invoices)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return invoices, nil
+}
+
+func (i *invoiceRepo) GetByNetwork(networkId uuid.UUID) ([]Invoice, error) {
+	db := i.Db.GetGormDb()
+	var invoices []Invoice
+
+	result := db.Where(&Invoice{NetworkId: networkId}).Find(&invoices)
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -14,20 +14,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 
+	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
-	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
-
-	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
+	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 )
 
 const (
@@ -55,7 +54,8 @@ type Clients struct {
 type billing interface {
 	AddInvoice(rawInvoice string) (*pb.AddResponse, error)
 	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
-	GetInvoices(subscriber string) (*pb.GetBySubscriberResponse, error)
+	GetInvoicesBySubscriber(subscriber string) (*pb.GetBySubscriberResponse, error)
+	GetInvoicesByNetwork(network string) (*pb.GetByNetworkResponse, error)
 	RemoveInvoice(invoiceId string) error
 	GetInvoicePDF(invoiceId string) ([]byte, error)
 }
@@ -63,6 +63,7 @@ type billing interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Billing = client.NewBilling(endpoints.Invoice, endpoints.Files, endpoints.Timeout)
+
 	return c
 }
 
@@ -129,17 +130,37 @@ func (r *Router) GetInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) (*pb.
 	return r.clients.Billing.GetInvoice(req.InvoiceId, asPDF)
 }
 
-func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) (*pb.GetBySubscriberResponse, error) {
-	subscriberId, ok := c.GetQuery("subscriber")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "subscriber is a mandatory query parameter"}
+func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) ([]*pb.Invoice, error) {
+	var invoices []*pb.Invoice
+	var err error
+
+	subscriberId, sOK := c.GetQuery("subscriber")
+	networkId, nOK := c.GetQuery("network")
+
+	if sOK == nOK {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "either subscriber or network must be provided as a mandatory query parameter, but not both"}
 	}
 
-	return r.clients.Billing.GetInvoices(subscriberId)
+	if sOK {
+		res, sErr := r.clients.Billing.GetInvoicesBySubscriber(subscriberId)
+		if sErr == nil {
+			invoices = res.Invoices
+		}
+		err = sErr
+	} else {
+		res, nErr := r.clients.Billing.GetInvoicesByNetwork(networkId)
+		if nErr == nil {
+			invoices = res.Invoices
+		}
+		err = nErr
+	}
+
+	return invoices, err
 }
 
-func (r *Router) postInvoiceHandler(c *gin.Context, req *HandleWebHookRequest) error {
+func (r *Router) postInvoiceHandler(c *gin.Context, req *WebHookRequest) error {
 	log.Infof("Webhook event of type %q for object %q received form billing provider",
 		req.WebhookType, req.ObjectType)
 

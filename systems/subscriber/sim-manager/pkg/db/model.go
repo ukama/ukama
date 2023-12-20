@@ -13,9 +13,10 @@ import (
 	"strconv"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
 )
 
 type Sim struct {

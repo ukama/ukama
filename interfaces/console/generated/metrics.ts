@@ -1,11 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -18,7 +10,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
+  ID: { input: string; output: string; }
   String: { input: string; output: string; }
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
@@ -94,6 +86,7 @@ export type Query = {
   getMetricByTab: MetricsRes;
   getMetricRange: MetricRes;
   getNodeRangeMetric: MetricRes;
+  getStatsMetric: StatsMetric;
 };
 
 
@@ -114,6 +107,13 @@ export type QueryGetMetricRangeArgs = {
 
 export type QueryGetNodeRangeMetricArgs = {
   data: GetMetricRangeInput;
+};
+
+export type StatsMetric = {
+  __typename?: 'StatsMetric';
+  activeSubscriber: Scalars['Float']['output'];
+  averageSignalStrength: Scalars['Float']['output'];
+  averageThroughput: Scalars['Float']['output'];
 };
 
 export type Subscription = {
@@ -194,6 +194,11 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
 
 
 export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+
+export type GetStatsMetricQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetStatsMetricQuery = { __typename?: 'Query', getStatsMetric: { __typename?: 'StatsMetric', activeSubscriber: number, averageSignalStrength: number, averageThroughput: number } };
 
 
 export const GetLatestMetricDocument = gql`
@@ -448,3 +453,39 @@ export function useGetMetricByTabSubSubscription(baseOptions: Apollo.Subscriptio
       }
 export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
 export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
+export const GetStatsMetricDocument = gql`
+    query GetStatsMetric {
+  getStatsMetric {
+    activeSubscriber
+    averageSignalStrength
+    averageThroughput
+  }
+}
+    `;
+
+/**
+ * __useGetStatsMetricQuery__
+ *
+ * To run a query within a React component, call `useGetStatsMetricQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStatsMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStatsMetricQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetStatsMetricQuery(baseOptions?: Apollo.QueryHookOptions<GetStatsMetricQuery, GetStatsMetricQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(GetStatsMetricDocument, options);
+      }
+export function useGetStatsMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStatsMetricQuery, GetStatsMetricQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(GetStatsMetricDocument, options);
+        }
+export type GetStatsMetricQueryHookResult = ReturnType<typeof useGetStatsMetricQuery>;
+export type GetStatsMetricLazyQueryHookResult = ReturnType<typeof useGetStatsMetricLazyQuery>;
+export type GetStatsMetricQueryResult = Apollo.QueryResult<GetStatsMetricQuery, GetStatsMetricQueryVariables>;

@@ -26,6 +26,7 @@ const colors = {
 
   black: '#000000',
   black54: '#0000008a',
+  black40: '#E0E0E0',
   black70: '#6B6E73',
   black60: '#999999',
   black38: '#9E9E9E',

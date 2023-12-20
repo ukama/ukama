@@ -13,14 +13,16 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
-	tapb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	tapb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
 const (

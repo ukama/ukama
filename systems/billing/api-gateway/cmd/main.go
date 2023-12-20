@@ -11,14 +11,13 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 
-	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/rest"
-
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	"github.com/ukama/ukama/systems/common/config"
 )
 
 var svcConf = pkg.NewConfig()

@@ -208,7 +208,7 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	if err != nil {
 		return nil, err
 	}
-	token, err := pkg.GenerateJWT(res.SessionToken, res.Session.GetExpiresAt().Format(http.TimeFormat), res.Session.GetAuthenticatedAt().Format(http.TimeFormat), p.config.k)
+	token, err := pkg.GenerateJWT(res.SessionToken, res.Session.Id, res.Session.GetExpiresAt().Format(http.TimeFormat), res.Session.GetAuthenticatedAt().Format(http.TimeFormat), p.config.k)
 	if err != nil {
 		return nil, err
 	}

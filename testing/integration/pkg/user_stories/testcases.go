@@ -27,6 +27,7 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/validation"
 	dapi "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 	napi "github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/rest"
@@ -201,7 +202,8 @@ var Story_add_org = &test.TestCase{
 		}
 
 		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.nucleus.org.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("nucleus").SetOrgName(a.OrgName).SetService("org").SetAction("add").SetObject("org").MustBuild())
 
 		a.reqGetUser = napi.GetUserRequest{
 			UserId: a.UserId,
@@ -343,7 +345,7 @@ var Story_add_user = &test.TestCase{
 
 		log.Debugf("Setting up watcher for %s", tc.Name)
 		tc.Watcher = utils.SetupWatcher(a.MbHost,
-			[]string{"event.cloud.users.user.add"})
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("nucleus").SetOrgName(a.OrgName).SetService("user").SetAction("add").SetObject("user").MustBuild())
 
 		a.reqGetOrg = napi.GetOrgRequest{
 			OrgName: config.OrgName,
@@ -476,7 +478,8 @@ var Story_add_network = &test.TestCase{
 		}
 
 		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.network.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("registry").SetOrgName(a.OrgName).SetService("network").SetAction("add").SetObject("network").MustBuild())
 
 		a.reqGetOrg = napi.GetOrgRequest{
 			OrgName: a.OrgName,
@@ -622,7 +625,8 @@ var Story_add_network_failed = &test.TestCase{
 		}
 
 		log.Debugf("Setting up watcher for %s", tc.Name)
-		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.network.create"})
+		tc.Watcher = utils.SetupWatcher(a.MbHost,
+			msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("registry").SetOrgName(a.OrgName).SetService("network").SetAction("add").SetObject("network").MustBuild())
 
 		a.reqGetNetworks = rapi.GetNetworksRequest{
 			OrgUuid: a.OrgId,
@@ -674,7 +678,8 @@ func Story_add_node(typ string) *test.TestCase {
 			}
 
 			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("registry").SetOrgName(a.OrgName).SetService("node").SetAction("create").SetObject("node").MustBuild())
 
 			a.reqGetOrg = napi.GetOrgRequest{
 				OrgName: a.OrgName,
@@ -807,7 +812,8 @@ func Story_add_node_to_site(typ string) *test.TestCase {
 			}
 
 			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.add.site"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("registry").SetOrgName(a.OrgName).SetService("node").SetAction("assign").SetObject("node").MustBuild())
 
 			var nId = ""
 			if typ == "parent" {
@@ -929,15 +935,10 @@ func Story_attach_node() *test.TestCase {
 		Description: "Attch amplifier nodes with tower node",
 		Data:        &nodepb.AttachNodesResponse{},
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-			// Prepare the data for the test case
 			a, err := getWorkflowData(tc)
 			if err != nil {
 				return err
 			}
-
-			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.node.attach"})
-
 			a.reqAttachNode = rapi.AttachNodesRequest{
 				ParentNode: a.NodeId,
 				AmpNodeL:   a.lNodeId,
@@ -995,9 +996,6 @@ func Story_attach_node() *test.TestCase {
 		},
 
 		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			// Here we save any data required to be saved from the
-			// test case Cleanup any test specific data
-
 			resp, ok := tc.GetData().(*nodepb.AttachNodesResponse)
 			if !ok {
 				log.Errorf("Invalid data type for Workflow data.")
@@ -1012,7 +1010,6 @@ func Story_attach_node() *test.TestCase {
 
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-			tc.Watcher.Stop()
 
 			return nil
 		},
@@ -1030,9 +1027,6 @@ func Story_invite_add() *test.TestCase {
 			if err != nil {
 				return err
 			}
-
-			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.invitation.add"})
 
 			a.reqAddInvite = rapi.AddInvitationRequest{
 				Org:   a.OrgName,
@@ -1126,7 +1120,6 @@ func Story_invite_add() *test.TestCase {
 			a.invitationId = resp.Invitation.Id
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-			tc.Watcher.Stop()
 
 			return nil
 		},
@@ -1144,10 +1137,6 @@ func Story_invite_status_update() *test.TestCase {
 			if err != nil {
 				return err
 			}
-
-			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.invitation.status.update"})
-
 			a.reqUpdateInvitation = rapi.UpdateInvitationRequest{
 				InvitationId: a.invitationId,
 				Status:       invpb.StatusType_name[int32(invpb.StatusType_Accepted)],
@@ -1233,7 +1222,6 @@ func Story_invite_status_update() *test.TestCase {
 
 			tc.SaveWorkflowData(a)
 			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
-			tc.Watcher.Stop()
 
 			return nil
 		},
@@ -1253,7 +1241,8 @@ func Story_member_add() *test.TestCase {
 			}
 
 			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.registry.member.add"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("registry").SetOrgName(a.OrgName).SetService("member").SetActionCreate().SetObject("member").MustBuild())
 
 			a.reqAddMember = rapi.MemberRequest{
 				UserUuid: a.invitedUserId,
@@ -1346,12 +1335,10 @@ func Story_upload_baserate() *test.TestCase {
 		Description: "Add base rate provided by third parties",
 		Data:        &bpb.UploadBaseRatesResponse{},
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("upload").SetObject("sim").MustBuild())
 
 			a.reqUploadBaseRates = dapi.UploadBaseRatesRequest{
 				EffectiveAt: utils.GenerateUTCFutureDate(time.Second * 2),
@@ -1512,7 +1499,8 @@ func Story_markup() *test.TestCase {
 			*/
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.markup.user.add"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("rate").SetActionUpdate().SetObject("set").MustBuild())
 
 			a.reqGetMarkupForUser = dapi.GetMarkupRequest{
 				OwnerId: a.OrgOwnerId,
@@ -1630,12 +1618,11 @@ func Story_package() *test.TestCase {
 		Description: "Add package in an org",
 		Data:        &ppb.AddPackageResponse{},
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("dataplan").SetOrgName(a.OrgName).SetService("package").SetActionCreate().SetObject("package").MustBuild())
+
 			a.reqAddPackage = dapi.AddPackageRequest{
 				OwnerId:    a.OrgOwnerId,
 				OrgId:      a.OrgId,
@@ -1753,7 +1740,8 @@ func Story_Simpool() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simpool.upload"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("sim").SetAction("upload").SetObject("sim").MustBuild())
 			a.reqSimPoolUploadSimReq = sapi.SimPoolUploadSimReq{
 				SimType: a.simType,
 				Data:    string(subscriber.CreateSimPool(MAX_POOL, &a.ICCID)),
@@ -1864,19 +1852,20 @@ func Story_Subscriber() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.registry.add"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("registry").SetAction("create").SetObject("subscriber").MustBuild())
 			a.reqAddSubscriber = sapi.SubscriberAddReq{
-				// Dob:                   utils.GenerateRandomUTCPastDate(2005),
-				// Phone:                 strings.ToLower(faker.Phonenumber()),
-				Email: strings.ToLower(faker.Email()),
-				// IdSerial:              faker.UUIDDigit(),
+				Email:     strings.ToLower(faker.Email()),
 				FirstName: faker.FirstName(),
 				LastName:  faker.LastName(),
+				NetworkId: a.NetworkId,
+				OrgId:     a.OrgId,
+				// Dob:                   utils.GenerateRandomUTCPastDate(2005),
+				// Phone:                 strings.ToLower(faker.Phonenumber()),
+				// IdSerial:              faker.UUIDDigit(),
 				// Gender:                faker.Gender(),
 				// Address:               faker.Name(),
-				NetworkId: a.NetworkId,
 				// ProofOfIdentification: "passport",
-				OrgId: a.OrgId,
 			}
 			fmt.Println("ADD SUB BODY: ", a.reqAddSubscriber)
 
@@ -1963,9 +1952,10 @@ func Story_Sim_Allocate() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.allocate"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("allocate").SetObject("sim").MustBuild())
 
-			token, err := smutil.GenerateTokenFromIccid(a.ICCID[0], config.Key)
+			token, err := smutil.GenerateTokenFromIccid(a.ICCID[0], config.EncryptKey)
 			if err != nil {
 				return fmt.Errorf("failed to generate token from iccid %v", err)
 			}
@@ -2069,8 +2059,8 @@ func Story_add_sim_package() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.add"})
-
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("addpackage").SetObject("sim").MustBuild())
 			a.reqAddPackage = dapi.AddPackageRequest{
 				OwnerId:    a.OrgOwnerId,
 				OrgId:      a.OrgId,
@@ -2173,7 +2163,8 @@ func Story_activate_sim() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.active"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("activate").SetObject("sim").MustBuild())
 
 			a.reqSetActivePackage = sapi.SetActivePackageForSimReq{
 				SimId:     a.SimId,
@@ -2263,7 +2254,8 @@ func Story_active_sim_package() *test.TestCase {
 		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			a := tc.GetWorkflowData().(*UserStoriesData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.subscriber.sim.package.active"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("subscriber").SetOrgName(a.OrgName).SetService("simmanager").SetAction("activepackage").SetObject("sim").MustBuild())
 
 			a.reqSetActivePackage = sapi.SetActivePackageForSimReq{
 				SimId:     a.SimId,
