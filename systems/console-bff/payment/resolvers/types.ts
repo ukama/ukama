@@ -42,3 +42,27 @@ export class PaymentLinksInput {
   @Field()
   redirectUrl: string;
 }
+
+@ObjectType()
+export class TokenParserDto {
+  @Field()
+  id: string;
+
+  @Field()
+  orgName: string;
+
+  @Field()
+  for: string;
+
+  @Field()
+  countryCode: string;
+
+  @Field()
+  phoneNumber: string;
+
+  @Field()
+  amount: number;
+
+  @Field()
+  currency: string;
+}

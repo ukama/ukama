@@ -5,12 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import axios from "axios";
 import { randomUUID } from "crypto";
+import fs from "fs";
+import jwt from "jsonwebtoken";
 import { Arg, Query, Resolver } from "type-graphql";
 
-import { PAYMENT_ACCESS_TOKEN, PAYMENT_BASE_URL } from "../../common/configs";
-import { logger } from "../../common/logger";
 import { PaymentLinks, PaymentLinksInput } from "./types";
 
 @Resolver()
@@ -19,40 +18,44 @@ export class GetPaymentLinks {
   async getPaymentLinks(
     @Arg("data") data: PaymentLinksInput
   ): Promise<PaymentLinks> {
+    const privateKey = fs.readFileSync("./private_key.pem");
+    const token = jwt.sign(
+      {
+        data: {
+          id: randomUUID(),
+          amount: data.amount,
+          msisdn: data.msisdn,
+          country: data.country,
+          currency: "GHS",
+          reason: data.reason,
+        },
+        sub: "payment",
+        iat: Math.floor(new Date().getTime() / 1000),
+        nbf: Math.floor(new Date().getTime() / 1000),
+        exp: 90000,
+        token: "session_token",
+      },
+      privateKey,
+      { algorithm: "RS256" }
+    );
+
     const redirectURLs: any = [];
-    const payload = JSON.stringify({
-      depositId: randomUUID(),
-      returnUrl: data.redirectUrl,
-      amount: `${data.amount}`,
-      country: data.country,
-      msisdn: data.msisdn,
-      reason: data.reason,
+    redirectURLs.push({
+      title: "Mobile money",
+      type: "mobile_money",
+      link: `http://localhost:3000/mobile_money?token=${token}`,
+    });
+    redirectURLs.push({
+      title: "Stripe",
+      type: "stripe_payment",
+      link: `http://localhost:3000/stripe_payment?token=${token}`,
+    });
+    redirectURLs.push({
+      title: "Cash",
+      type: "cash",
+      link: ``,
     });
 
-    const config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: PAYMENT_BASE_URL,
-      headers: {
-        Authorization: `Bearer ${PAYMENT_ACCESS_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      data: payload,
-    };
-
-    await axios
-      .request(config)
-      .then(response => {
-        redirectURLs.push({
-          title: "Mobile money",
-          type: "mobile_money",
-          link: response.data.redirectUrl,
-        });
-      })
-      .catch(error => {
-        logger.error(error);
-      });
-    logger.info(redirectURLs);
     return { links: redirectURLs };
   }
 }

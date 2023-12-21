@@ -8,7 +8,8 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { GetPaymentLinks } from "./getPaymentLinks";
+import { TokenParserResolver } from "./tokenParser";
 
-const resolvers: NonEmptyArray<any> = [GetPaymentLinks];
+const resolvers: NonEmptyArray<any> = [GetPaymentLinks, TokenParserResolver];
 
 export default resolvers;

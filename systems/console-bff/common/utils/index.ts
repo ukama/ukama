@@ -5,6 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import parsePhoneNumberFromString from "libphonenumber-js";
+
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { Meta, THeaders } from "../types";
@@ -129,7 +131,18 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   }
 };
 
+const formatPhoneNumber = (phoneNumberString: string) => {
+  const phoneNumber = parsePhoneNumberFromString(phoneNumberString, "US");
+  return phoneNumber ? phoneNumber.formatNational() : "";
+};
+const formatCountryCode = (phoneNumberString: string) => {
+  const phoneNumber = parsePhoneNumberFromString(phoneNumberString, "US");
+  return phoneNumber ? `+${phoneNumber.countryCallingCode}` : "";
+};
+
 export {
+  formatCountryCode,
+  formatPhoneNumber,
   getGraphsKeyByType,
   getPaginatedOutput,
   getStripeIdByUserId,
