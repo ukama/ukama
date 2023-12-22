@@ -40,7 +40,7 @@ if [ "$1" = "system" ]; then
 
     system=$2
     path=$3
-    pwd=`cwd`
+    cwd=`pwd`
     
     cd "$path" || exit 1
 
@@ -62,7 +62,7 @@ if [ "$1" = "system" ]; then
             ;;
     esac
 
-    cd $pwd
+    cd $cwd
 
 elif [ "$1" = "node" ]; then
     image_file=$2.img
