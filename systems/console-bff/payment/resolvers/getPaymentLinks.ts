@@ -19,25 +19,27 @@ export class GetPaymentLinks {
     @Arg("data") data: PaymentLinksInput
   ): Promise<PaymentLinks> {
     const privateKey = fs.readFileSync("./private_key.pem");
-    const token = jwt.sign(
-      {
-        data: {
-          id: randomUUID(),
-          amount: data.amount,
-          msisdn: data.msisdn,
-          country: data.country,
-          currency: "GHS",
-          reason: data.reason,
-        },
-        sub: "payment",
-        iat: Math.floor(new Date().getTime() / 1000),
-        nbf: Math.floor(new Date().getTime() / 1000),
-        exp: 90000,
-        token: "session_token",
-      },
-      privateKey,
-      { algorithm: "RS256" }
-    );
+    const payload = {
+      id: randomUUID(),
+      amount: data.amount,
+      msisdn: data.msisdn,
+      country: data.country,
+      currency: "GHS",
+      reason: data.reason,
+    };
+    const nonce = {
+      sub: "payment",
+      iat: Math.floor(new Date().getTime() / 1000),
+      nbf: Math.floor(new Date().getTime() / 1000),
+      exp: 90000,
+      token: "session_token",
+    };
+    const obj = {
+      data: payload,
+      ...nonce,
+    };
+
+    const token = jwt.sign(obj, privateKey, { algorithm: "RS256" });
 
     const redirectURLs: any = [];
     redirectURLs.push({
