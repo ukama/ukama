@@ -45,7 +45,7 @@ if [ "$1" = "system" ]; then
     cd "$path" || exit 1
 
     echo  "$TAG Running $system ..."
-    docker compose up -d > /dev/null 2>&1
+    docker-compose up -d > /dev/null 2>&1
     echo  "$TAG $system is up ..."
 
     case $system in
