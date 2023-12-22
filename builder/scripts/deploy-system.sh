@@ -13,6 +13,23 @@ BLUE='\033[38;5;39m'
 NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
 
+set_env() {
+
+    json_file=$1
+
+    export OWNEREMAIL=$(jq -r '.deploy.env.owneremail' "$json_file")
+    export OWNERNAME=$(jq -r '.deploy.env.ownername' "$json_file")
+    export ORGNAME=$(jq -r '.deploy.env.orgname' "$json_file")
+    export ORGID=$(jq -r '.deploy.env.orgid' "$json_file")
+    export KEY=$(jq -r '.deploy.env.key' "$json_file")
+    export MAILERHOST=$(jq -r '.deploy.env.mailer_host' "$json_file")
+    export MAILERPORT=$(jq -r '.deploy.env.mailer_port' "$json_file")
+    export MAILERUSERNAME=$(jq -r '.deploy.env.mailer_username' "$json_file")
+    export MAILERPASSWORD=$(jq -r '.deploy.env.mailer_password' "$json_file")
+    export LAGOAPIKEY=$(jq -r '.deploy.env.lago-api-key' "$json_file")
+    export LOCAL_HOST_IP=$(jq -r '.deploy.env.local_host_ip' "$json_file")
+}
+
 register_user() {
     echo  "$TAG Signing up Owner user"
     flow=$(curl --location --silent 'http://localhost:4434/self-service/registration/api')
@@ -40,8 +57,10 @@ if [ "$1" = "system" ]; then
 
     system=$2
     path=$3
+    json_file=$4
     cwd=`pwd`
-    
+
+    set_env $json_file
     cd "$path" || exit 1
 
     echo  "$TAG Running $system ..."

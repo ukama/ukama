@@ -59,7 +59,9 @@ bool isVariablePresent(Config *config, char *varName) {
     return USYS_FALSE;
 }
 
-static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
+static bool deploy_system(char *configFile,
+                          DeployConfig *deployConfig,
+                          char *name, char *path) {
 
 	char runMe[MAX_BUFFER]     = {0};
     char fileName[MAX_BUFFER]  = {0};
@@ -140,14 +142,17 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
         }
     }
 
-    sprintf(runMe, "%s system %s %s", DEPLOY_SCRIPT, name, path);
+    sprintf(runMe, "%s system %s %s %s", DEPLOY_SCRIPT, name, path, configFile);
     if (system(runMe) < 0) return USYS_FALSE;
 
     FREE_ENVS(envs, MAX_VARIABLES);
     return USYS_TRUE;
 }
 
-bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authRepo) {
+bool deploy_all_systems(char *configFilename,
+                        DeployConfig *deployConfig,
+                        char *ukamaRepo,
+                        char *authRepo) {
 
     char list[MAX_BUFFER] = {0};
     char systemPath[MAX_BUFFER] = {0};
@@ -160,14 +165,14 @@ bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authR
     while (systemName != NULL) {
 
         if (strcasecmp(systemName, UKAMA_AUTH) == 0) {
-            if (!deploy_system(deployConfig, systemName, authRepo)) {
+            if (!deploy_system(configFilename, deployConfig, systemName, authRepo)) {
                 usys_log_error("Build failed: %s path: %s",
                                systemName, authRepo);
                 return USYS_FALSE;
             }
         } else {
             sprintf(systemPath, "%s/systems/%s/", ukamaRepo, systemName);
-            if (!deploy_system(deployConfig, systemName, systemPath)) {
+            if (!deploy_system(configFilename, deployConfig, systemName, systemPath)) {
                 usys_log_error("Build failed: %s path: %s",
                                systemName, systemPath);
                 return USYS_FALSE;

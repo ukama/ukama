@@ -44,6 +44,7 @@ typedef struct deployConfig_ {
 
 typedef struct config_ {
 
+    char        *fileName;
     SetupConfig *setup;
     BuildConfig *build;
     DeployConfig *deploy;

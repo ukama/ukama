@@ -233,6 +233,7 @@ bool read_config_file(Config **config, char *fileName) {
     }
 
     if (buffer) free(buffer);
+    if (config) (*config)->fileName = strdup(fileName);
 
     fclose(fp);
     json_decref(json);
@@ -270,6 +271,7 @@ void free_config(Config *config) {
         usys_free(config->deploy->nodeIDsList);
     }
 
+    usys_free(config->fileName);
     usys_free(config->setup);
     usys_free(config->build);
     usys_free(config->deploy);

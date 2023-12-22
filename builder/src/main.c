@@ -22,7 +22,7 @@ extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo
 extern bool build_nodes(int count, char *list, char *repo);
 
 /* deploy.c */
-extern bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
+extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
 extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_node(char *id);
 
@@ -163,7 +163,8 @@ int main(int argc, char **argv) {
             goto done;
         }
 
-        if (!deploy_all_systems(config->deploy,
+        if (!deploy_all_systems(config->fileName,
+                                config->deploy,
                                 config->setup->ukamaRepo,
                                 config->setup->authRepo)) {
             usys_log_error("Unable to deploy the system. Exiting ...");
