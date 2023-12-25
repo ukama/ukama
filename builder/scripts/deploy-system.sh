@@ -84,9 +84,15 @@ if [ "$1" = "system" ]; then
     cd $cwd
 
 elif [ "$1" = "node" ]; then
+
     image_file=$2.img
+
+    # so we can shutdown QEMU gracefully
+    sudo apt-get install qemu-guest-agent
+
     sudo qemu-system-x86_64 -hda ${image_file} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
-         -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" || exit 1
+         -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" \
+         -qmp tcp:0:3333,server,nowait &
 fi
 
 exit 0

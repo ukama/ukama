@@ -26,10 +26,16 @@ extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *uka
 extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_node(char *id);
 
+/* shutdown.c */
+extern bool shutdown_all_nodes_and_systems(char *nodeID,
+                                           char *systems,
+                                           char *ukamaRepo,
+                                           char *authRepo);
 #define CMD_BUILD  1
 #define CMD_DEPLOY 2
 #define CMD_STATUS 3
 #define CMD_ALL    4
+#define CMD_DOWN   5
 
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
@@ -55,7 +61,7 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: builder [build | deploy | status] [options]");
+    usys_puts("Usage: builder [build | deploy | status | down] [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
@@ -81,6 +87,8 @@ int main(int argc, char **argv) {
     } else if (strcasecmp(argv[1], "help") == 0 ){
         usage();
         usys_exit(0);
+    } else if (strcasecmp(argv[1], "down") == 0) {
+        cmd = CMD_DOWN;
     } else {
         cmd = CMD_ALL;
     }
@@ -142,7 +150,7 @@ int main(int argc, char **argv) {
             usys_log_error("Build (systems) error. Exiting ...");
             goto done;
         }
-#if 0
+
         /* build node(s) */
         if (!build_nodes(config->build->nodeCount,
                          config->setup->ukamaRepo,
@@ -150,7 +158,7 @@ int main(int argc, char **argv) {
             usys_log_error("Build (node) error. Exiting ...");
             goto done;
         }
-#endif
+
         if (cmd == CMD_BUILD) {
             free_config(config);
             return USYS_TRUE;
@@ -160,12 +168,12 @@ int main(int argc, char **argv) {
     if (cmd == CMD_ALL || cmd == CMD_DEPLOY) {
 
         usys_log_debug("Deploying the node(s) and system(s) ...");
-#if 0
+
         if (!deploy_node(config->build->nodeIDsList)) {
             usys_log_error("Unable to deploy the node. Existing ...");
             goto done;
         }
-#endif
+
         if (!deploy_all_systems(config->fileName,
                                 config->deploy,
                                 config->setup->ukamaRepo,
@@ -183,6 +191,16 @@ int main(int argc, char **argv) {
     if (cmd == CMD_ALL || cmd == CMD_STATUS) {
         display_all_systems_status(config->deploy->systemsList,
                                    config->setup->statusInterval);
+    }
+
+    if (cmd == CMD_ALL || cmd == CMD_DOWN) {
+        if (shutdown_all_nodes_and_systems(config->deploy->nodeIDsList,
+                                           config->deploy->systemsList,
+                                           config->setup->ukamaRepo,
+                                           config->setup->authRepo)) {
+            usys_log_error("Shutdown FAILED");
+            goto done;
+        }
     }
 
 done:
