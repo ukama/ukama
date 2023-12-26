@@ -28,6 +28,7 @@ const Billing = dynamic(() => import('./_billing'));
 const NetworkSetting = dynamic(() => import('./_networkSetting'));
 const Alerts = dynamic(() => import('./_alerts'));
 const ConsoleSettings = dynamic(() => import('./_consoleSetting'));
+const NodeSettings = dynamic(() => import('./_nodeSettings'));
 
 interface IManageMenu {
   selectedId: string;
@@ -118,9 +119,11 @@ export default function Page() {
             />
           )}
           {menu === 'personal-settings' && <PersonalSetting />}
+          {menu === 'node-settings' && <NodeSettings />}
+
           {menu === 'billing' && <Billing />}
-          {/* {menu === 'network-settings' && <NetworkSettings />}
-          {menu === 'alerts' && <Alerts />} */}
+          {/* {menu === 'network-settings' && <NetworkSettings />}*/}
+          {/* {menu === 'alerts' && <Alerts />}  */}
           {menu === 'appearance' && <ConsoleSettings />}
         </>
       </LoadingWrapper>
