@@ -27,15 +27,18 @@ extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_node(char *id);
 
 /* shutdown.c */
-extern bool shutdown_all_nodes_and_systems(char *nodeID,
-                                           char *systems,
-                                           char *ukamaRepo,
-                                           char *authRepo);
+extern bool shutdown_all_systems(char *systems, char *ukamaRepo, char *authRepo);
+extern bool shutdown_node(char *id);
+
 #define CMD_BUILD  1
 #define CMD_DEPLOY 2
 #define CMD_STATUS 3
 #define CMD_ALL    4
 #define CMD_DOWN   5
+
+#define TARGET_ALL     1
+#define TARGET_NODES   2
+#define TARGET_SYSTEMS 3
 
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
@@ -61,7 +64,8 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: builder [build | deploy | status | down] [options]");
+    usys_puts("Usage: builder [nodes | systems]  "
+              "[build | deploy | status | down] [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
@@ -69,29 +73,60 @@ void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
+void processArguments(int argc, char *argv[], int *target, int *cmd) {
+
+    bool isTargetSet = USYS_FALSE;
+    bool isCmdSet    = USYS_FALSE;
+
+    *target = TARGET_ALL;
+    *cmd    = CMD_ALL;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcasecmp(argv[i], "nodes") == 0 ||
+            strcasecmp(argv[i], "systems") == 0) {
+
+            if (!isTargetSet) {
+                if (strcasecmp(argv[1], "nodes") == 0) {
+                    *target = TARGET_NODES;
+                } else if (strcasecmp(argv[i], "systems") == 0) {
+                    *target = TARGET_SYSTEMS;
+                }
+                isTargetSet = USYS_TRUE;
+            }
+        } else if (strcasecmp(argv[i], "build") == 0 ||
+                   strcasecmp(argv[i], "deploy") == 0 ||
+                   strcasecmp(argv[i], "status") == 0 ||
+                   strcasecmp(argv[i], "down") == 0) {
+
+            if (!isCmdSet) {
+                if (strcasecmp(argv[1], "build") == 0) {
+                    *cmd = CMD_BUILD;
+                } else if (strcasecmp(argv[1], "deploy") == 0) {
+                    *cmd = CMD_DEPLOY;
+                } else if (strcasecmp(argv[1], "status") == 0) {
+                    *cmd = CMD_STATUS;
+                } else if (strcasecmp(argv[1], "down") == 0) {
+                    *cmd = CMD_DOWN;
+                }
+                isCmdSet = USYS_TRUE;
+            }
+        } else if (strcasecmp(argv[i], "help") == 0) {
+            usage();
+            usys_exit(0);
+        }
+    }
+}
+
 int main(int argc, char **argv) {
 
     int opt, optIdx;
-    int cmd = CMD_ALL;
+    int cmd = CMD_ALL, target = TARGET_ALL;
     char *debug      = DEF_LOG_LEVEL;
     char *configFile = DEF_CONFIG_FILE;
 
     Config *config = NULL;
 
-    if (strcasecmp(argv[1], "build") == 0) {
-        cmd = CMD_BUILD;
-    } else if (strcasecmp(argv[1], "deploy") == 0) {
-        cmd = CMD_DEPLOY;
-    } else if (strcasecmp(argv[1], "status") == 0) {
-        cmd = CMD_STATUS;
-    } else if (strcasecmp(argv[1], "help") == 0 ){
-        usage();
-        usys_exit(0);
-    } else if (strcasecmp(argv[1], "down") == 0) {
-        cmd = CMD_DOWN;
-    } else {
-        cmd = CMD_ALL;
-    }
+    processArguments(argc, argv, &cmd, &target);
 
     /* Parsing command line args. */
     while (true) {
@@ -143,20 +178,22 @@ int main(int argc, char **argv) {
 
     if (cmd == CMD_ALL || cmd == CMD_BUILD) {
 
-        /* build all systems */
-        if (!build_all_systems(config->build->systemsList,
-                               config->setup->ukamaRepo,
-                               config->setup->authRepo)) {
-            usys_log_error("Build (systems) error. Exiting ...");
-            goto done;
+        if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
+            if (!build_all_systems(config->build->systemsList,
+                                   config->setup->ukamaRepo,
+                                   config->setup->authRepo)) {
+                usys_log_error("Build (systems) error. Exiting ...");
+                goto done;
+            }
         }
 
-        /* build node(s) */
-        if (!build_nodes(config->build->nodeCount,
-                         config->setup->ukamaRepo,
-                         config->build->nodeIDsList)) {
-            usys_log_error("Build (node) error. Exiting ...");
-            goto done;
+        if (target == TARGET_ALL || target == TARGET_NODES) {
+            if (!build_nodes(config->build->nodeCount,
+                             config->setup->ukamaRepo,
+                             config->build->nodeIDsList)) {
+                usys_log_error("Build (node) error. Exiting ...");
+                goto done;
+            }
         }
 
         if (cmd == CMD_BUILD) {
@@ -169,17 +206,21 @@ int main(int argc, char **argv) {
 
         usys_log_debug("Deploying the node(s) and system(s) ...");
 
-        if (!deploy_node(config->build->nodeIDsList)) {
-            usys_log_error("Unable to deploy the node. Existing ...");
-            goto done;
+        if (target == TARGET_ALL || target == TARGET_NODES) {
+            if (!deploy_node(config->build->nodeIDsList)) {
+                usys_log_error("Unable to deploy the node. Existing ...");
+                goto done;
+            }
         }
 
-        if (!deploy_all_systems(config->fileName,
-                                config->deploy,
-                                config->setup->ukamaRepo,
-                                config->setup->authRepo)) {
-            usys_log_error("Unable to deploy the system. Exiting ...");
-            goto done;
+        if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
+            if (!deploy_all_systems(config->fileName,
+                                    config->deploy,
+                                    config->setup->ukamaRepo,
+                                    config->setup->authRepo)) {
+                usys_log_error("Unable to deploy the system. Exiting ...");
+                goto done;
+            }
         }
 
         if (cmd == CMD_DEPLOY) {
@@ -194,12 +235,21 @@ int main(int argc, char **argv) {
     }
 
     if (cmd == CMD_ALL || cmd == CMD_DOWN) {
-        if (shutdown_all_nodes_and_systems(config->deploy->nodeIDsList,
-                                           config->deploy->systemsList,
-                                           config->setup->ukamaRepo,
-                                           config->setup->authRepo)) {
-            usys_log_error("Shutdown FAILED");
-            goto done;
+
+        if (target == TARGET_ALL || target == TARGET_NODES) {
+            if (!shutdown_node(config->deploy->nodeIDsList)) {
+                usys_log_error("Node Shutdown FAILED: %s Try manually",
+                               config->deploy->nodeIDsList);
+            }
+        }
+
+        if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
+            if (!shutdown_all_systems(config->deploy->systemsList,
+                                      config->setup->ukamaRepo,
+                                      config->setup->authRepo)) {
+                usys_log_error("Systems Shutdown FAILED");
+                goto done;
+            }
         }
     }
 
@@ -207,4 +257,3 @@ done:
     free_config(config);
     return USYS_TRUE;
 }
-

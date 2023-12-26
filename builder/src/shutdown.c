@@ -37,20 +37,14 @@ bool shutdown_node(char *id) {
     return USYS_TRUE;
 }
 
-bool shutdown_all_nodes_and_systems(char *nodeID,
-                                    char *systems,
-                                    char *ukamaRepo,
-                                    char *authRepo) {
+bool shutdown_all_systems(char *systems,
+                          char *ukamaRepo,
+                          char *authRepo) {
 
     char runMe[2*MAX_BUFFER+1] = {0};
     char list[MAX_BUFFER] = {0};
     char systemPath[MAX_BUFFER] = {0};
     char *systemName = NULL;
-
-    if (!shutdown_node(nodeID)) {
-        usys_log_error("Unable to shutdown node with IDs: %s Try manually",
-                       nodeID);
-    }
 
     strncpy(list, systems, strlen(systems));
     list[strlen(systems) - 1] = '\0';
