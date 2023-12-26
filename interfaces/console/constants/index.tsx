@@ -163,6 +163,11 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
   { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
+export const NODE_SETTINGS_TABLE_COLUMN: any[] = [
+  { id: 'node', label: 'Node', minWidth: 160 },
+  { id: 'id', label: 'ID #', minWidth: 180 },
+  { id: 'site', label: 'Site', minWidth: 140 },
+];
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
