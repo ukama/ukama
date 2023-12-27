@@ -162,6 +162,14 @@ static bool deserialize_config_file(Config **config, json_t *json) {
         return USYS_FALSE;
     }
 
+    /* optional params - images */
+    get_json_entry(jNodes, JTAG_KERNEL_IMAGE, JSON_STRING,
+                   &(*config)->build->kernelImage, NULL);
+    get_json_entry(jNodes, JTAG_INITRAM_IMAGE, JSON_STRING,
+                   &(*config)->build->initRAMImage, NULL);
+    get_json_entry(jNodes, JTAG_DISK_IMAGE, JSON_STRING,
+                   &(*config)->build->diskImage, NULL);
+
     /* deploy */
     json_object_foreach(jDeployEnv, key, value) {
         if (json_is_string(value)) {
@@ -258,6 +266,9 @@ void free_config(Config *config) {
         usys_free(config->build->nodeIDsList);
         usys_free(config->build->systemsList);
         usys_free(config->build->interfacesList);
+        usys_free(config->build->kernelImage);
+        usys_free(config->build->initRAMImage);
+        usys_free(config->build->diskImage);
     }
 
     if (config->deploy) {

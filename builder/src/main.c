@@ -6,6 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "builder.h"
 #include "config.h"
 
@@ -39,6 +42,8 @@ extern bool shutdown_node(char *id);
 #define TARGET_ALL     1
 #define TARGET_NODES   2
 #define TARGET_SYSTEMS 3
+
+#define IS_S3_PATH(source) (strncmp((source), "s3://", 5) == 0 ? USYS_TRUE : USYS_FALSE)
 
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
@@ -117,6 +122,64 @@ void processArguments(int argc, char *argv[], int *target, int *cmd) {
     }
 }
 
+void extract_filename(const char *path, char *filename, size_t size) {
+
+    const char *lastSlash = strrchr(path, '/');
+
+    if (lastSlash) {
+        strncpy(filename, lastSlash + 1, size);
+        filename[size - 1] = '\0';
+    } else {
+        strncpy(filename, path, size);
+    }
+}
+
+bool is_s3path_and_fetch(char *source, char *dest) {
+
+    char runMe[2*1024+1] = {0};
+    char fileName[1024] = {0};
+
+    extract_filename(source, fileName, sizeof(fileName));
+    snprintf(runMe, sizeof(runMe), "aws s3 cp %s %s/%s",
+             source, dest, fileName);
+
+    if (system(runMe) == 0) {
+        usys_log_debug("File successfully copied from S3 to local"
+                       "%s -> %s", source, dest);
+        return USYS_TRUE;
+    } else {
+        usys_log_error("Unable to copy from S3 (%s) to local (%s)",
+                       source, dest);
+        return USYS_FALSE;
+    }
+}
+
+bool fetch_all_s3_files(char *kernel, char *initRAM, char *disk) {
+
+    if (IS_S3_PATH(kernel)) {
+        if (!is_s3path_and_fetch(kernel, "./scripts")) {
+            usys_log_error("Unable to fetch: %s", kernel);
+            return USYS_FALSE;
+        }
+    }
+
+    if (IS_S3_PATH(initRAM)) {
+        if (!is_s3path_and_fetch(initRAM, "./scripts")) {
+            usys_log_error("Unable to fetch: %s", initRAM);
+            return USYS_FALSE;
+        }
+    }
+
+    if (IS_S3_PATH(disk)) {
+        if (!is_s3path_and_fetch(disk, "./scripts")) {
+            usys_log_error("Unable to fetch: %s", disk);
+            return USYS_FALSE;
+        }
+    }
+
+    return USYS_TRUE;
+}
+
 int main(int argc, char **argv) {
 
     int opt, optIdx;
@@ -188,17 +251,31 @@ int main(int argc, char **argv) {
         }
 
         if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!build_nodes(config->build->nodeCount,
-                             config->setup->ukamaRepo,
-                             config->build->nodeIDsList)) {
-                usys_log_error("Build (node) error. Exiting ...");
-                goto done;
-            }
-        }
 
-        if (cmd == CMD_BUILD) {
-            free_config(config);
-            return USYS_TRUE;
+            if (config->build->kernelImage != NULL &&
+                config->build->initRAMImage != NULL &&
+                config->build->diskImage != NULL) {
+
+                if (!fetch_all_s3_files(config->build->kernelImage,
+                                        config->build->initRAMImage,
+                                        config->build->diskImage)) {
+                    usys_log_error("Unable to fetch img files");
+                    goto done;
+                }
+
+            } else {
+                if (!build_nodes(config->build->nodeCount,
+                                 config->setup->ukamaRepo,
+                                 config->build->nodeIDsList)) {
+                    usys_log_error("Build (node) error. Exiting ...");
+                    goto done;
+                }
+            }
+
+            if (cmd == CMD_BUILD) {
+                free_config(config);
+                return USYS_TRUE;
+            }
         }
     }
 

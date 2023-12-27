@@ -29,6 +29,9 @@ typedef struct buildConfig_ {
 
     int  nodeCount;
     char *nodeIDsList;
+    char *kernelImage;
+    char *initRAMImage;
+    char *diskImage;
     char *systemsList;
     char *interfacesList;
 } BuildConfig;
