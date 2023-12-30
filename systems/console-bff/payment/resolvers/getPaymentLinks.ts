@@ -24,7 +24,7 @@ export class GetPaymentLinks {
       amount: data.amount,
       msisdn: data.msisdn,
       country: data.country,
-      currency: "GHS",
+      currency: data.currency,
       reason: data.reason,
     };
     const nonce = {

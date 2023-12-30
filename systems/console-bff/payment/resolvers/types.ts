@@ -37,6 +37,9 @@ export class PaymentLinksInput {
   country: string;
 
   @Field()
+  currency: string;
+
+  @Field()
   reason: string;
 
   @Field()
