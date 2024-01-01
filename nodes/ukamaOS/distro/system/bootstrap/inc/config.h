@@ -20,7 +20,6 @@
 #define NODED_PORT       "noded-port"
 #define MESH_CONFIG      "mesh-config"
 #define REMOTE_IP_FILE   "remote-ip-file"
-#define BOOTSTRAP_SERVER "bootstrap-server"
 
 /* Some defaults */
 #define DEF_CONFIG_FILE      "config.toml"
