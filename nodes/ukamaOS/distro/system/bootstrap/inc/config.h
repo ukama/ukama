@@ -27,7 +27,8 @@
 #define DEF_NODED_HOST       "localhost"
 #define DEF_MESH_CONFIG      "/conf/mesh/config.toml"
 #define DEF_REMOTE_IP_FILE   "/conf/mesh/ip_file"
-#define DEF_BOOTSTRAP_SERVER "kickstart.ukama.com"
+#define DEF_BOOTSTRAP_SERVER "kickstart.ukama.com:5555"
+#define DEF_BOOTSTRAP_FILE   "/ukama/bootstrap"
 
 #define MAX_BUFFER 256
 

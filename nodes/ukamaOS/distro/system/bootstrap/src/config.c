@@ -6,10 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Functions related to config
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -19,10 +15,6 @@
 #include "toml.h"
 #include "log.h"
 
-/*
- * parse_config -- process [config] stuff
- *
- */
 int parse_config(Config *config, toml_table_t *configData) {
 
 	int ret=FALSE;
@@ -65,16 +57,6 @@ int parse_config(Config *config, toml_table_t *configData) {
 		config->remoteIPFile = strdup(remoteIPFile.u.s);
 	}
 
-	/* bootstrap-server */
-	bootstrapServer = toml_string_in(configData, BOOTSTRAP_SERVER);
-	if (!bootstrapServer.ok) {
-		log_debug("[%s] is missing, setting to default: %s", BOOTSTRAP_SERVER,
-				  DEF_BOOTSTRAP_SERVER);
-		config->bootstrapServer = strdup(DEF_BOOTSTRAP_SERVER);
-	} else {
-		config->bootstrapServer = strdup(bootstrapServer.u.s);
-	}
-
 	if (nodedHost.ok)       free(nodedHost.u.s);
 	if (meshConfig.ok)      free(meshConfig.u.s);
 	if (remoteIPFile.ok)    free(remoteIPFile.u.s);
@@ -83,10 +65,37 @@ int parse_config(Config *config, toml_table_t *configData) {
 	return ret;
 }
 
-/*
- * process_config_file -- read and parse the config file
- *
- */
+bool read_bootstrap_server_info(char **buffer) {
+
+    FILE *file = NULL;
+    long length = 0;
+
+    if ((file = fopen(DEF_BOOTSTRAP_FILE, "r")) == NULL) {
+        log_error("Error opening bootstrap file: %s %s",
+                  DEF_BOOTSTRAP_FILE, strerror(errno));
+        return FALSE;
+    }
+
+    fseek(file, 0, SEEK_END);
+    length = ftell(file);
+    rewind(file);
+
+    *buffer = (char *)malloc((length + 1) * sizeof(char));
+    if (*buffer == NULL) {
+        log_error("Memory allocation failed: %s",
+                  (length + 1) * sizeof(char));
+        fclose(file);
+        return FALSE;
+    }
+
+    fread(*buffer, sizeof(char), length, file);
+    buffer[length] = '\0';
+
+    fclose(file);
+
+    return TRUE;
+}
+
 int process_config_file(char *fileName, Config *config) {
 
 	FILE *fp;
@@ -116,16 +125,21 @@ int process_config_file(char *fileName, Config *config) {
 		return FALSE;
 	}
 
-	parse_config(config, configData);
+	if (!parse_config(config, configData)) {
+        log_error("Unable to prase config file: %s", fileName);
+        toml_free(fileData);
+        return FALSE;
+    }
+
+    if (!read_bootstrap_server_info(&config->bootstrapServer)) {
+        log_debug("Unable to read bootstrap server info");
+        config->bootstrapServer = strdup(DEF_BOOTSTRAP_SERVER);
+    }
 
 	toml_free(fileData);
 	return TRUE;
 }
 
-/*
- * print_config -- print the config
- *
- */
 void print_config(Config *config) {
 
 	if (config == NULL) return;
@@ -149,10 +163,6 @@ void print_config(Config *config) {
 	}
 }
 
-/*
- * clear_config --
- *
- */
 void clear_config(Config *config) {
 
 	if (!config) return;
