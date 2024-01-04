@@ -9,11 +9,12 @@
 import { CurrentBillColumns } from '@/constants/tableColumns';
 import { NoBillYet } from '@/public/svg';
 import { RoundedCard } from '@/styles/global';
-import { Grid, Stack, Typography } from '@mui/material';
+import { Grid, Stack, Box, Typography } from '@mui/material';
 import CurrentBill from '../CurrentBill';
 import NotificationContainer from '../NotificationContainer';
 import SimpleDataTable from '../SimpleDataTable';
 import TableHeader from '../TableHeader';
+import CurrentPlanTab from '../CurrentPlanTab';
 
 interface ICurrentBillTab {
   data: any;
@@ -46,7 +47,9 @@ const CurrentBillTab = ({
         /> */}
         <NotificationContainer />
       </Grid>
-
+      <Grid xs={12} item>
+        <CurrentPlanTab />
+      </Grid>
       <Grid xs={12} item>
         <RoundedCard radius="4px">
           <TableHeader

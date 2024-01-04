@@ -11,6 +11,7 @@ import { BillingTabs } from '@/constants';
 import { colors } from '@/styles/theme';
 import BillHistoryTab from '@/ui/molecules/BillHistoryTab';
 import CurrentBillTab from '@/ui/molecules/CurrentBillTab';
+import CurrentPlanTab from '@/ui/molecules/CurrentPlanTab';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import TabPanel from '@/ui/molecules/TabPanel';
 import {
