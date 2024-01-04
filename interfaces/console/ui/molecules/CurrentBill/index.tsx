@@ -21,13 +21,14 @@ const CurrentBill = ({ amount, loading }: CurrentBillProps) => {
         <Stack direction="column" spacing={1.4} alignItems="flex-start">
           <Stack direction="row" width={'100%'} justifyContent="space-between">
             <Typography variant="body2" fontWeight={600}>
-              Billing Month
+              Month bill
             </Typography>
             <Typography variant="caption">06/14/2022 - 07/14/2022</Typography>
           </Stack>
 
           <Typography variant="caption">
-            Detailed bill breakdown available below.
+            Community console cloud plan - free usage on own network, billed per
+            roaming usage ($5/GB, prorated by MB).
           </Typography>
           <Divider sx={{ width: '100%' }} />
           <Typography variant="h4" sx={{ m: '18px 0px' }}>
