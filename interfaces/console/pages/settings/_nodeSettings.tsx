@@ -12,7 +12,7 @@ import { LinkStyle } from '@/styles/global';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import { NODE_SETTINGS_TABLE_COLUMN } from '@/constants';
-
+import NodeActionDialog from '@/ui/molecules/NodeActionDialog';
 import {
   Button,
   FormControlLabel,
@@ -25,16 +25,35 @@ import {
   Paper,
   Stack,
 } from '@mui/material';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 interface Device {
   id: number;
   name: string;
+  assigned: boolean;
 }
 
+const LoadingTypography = () => {
+  const [dots, setDots] = useState('');
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setDots((prevDots) => (prevDots.length < 3 ? prevDots + '.' : ''));
+    }, 500);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  return (
+    <Typography variant="body1" sx={{ color: `${colors.black70}` }}>
+      Saving{dots}
+    </Typography>
+  );
+};
 export default function NodeSettings() {
   const [selectedDevices, setSelectedDevices] = useState<number[]>([]);
-
+  const [openNodeActionDialog, setOpenNodeActionDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const handleCheckboxChange = (deviceId: number) => {
     const isSelected = selectedDevices.includes(deviceId);
     setSelectedDevices((prevSelected) =>
@@ -45,14 +64,40 @@ export default function NodeSettings() {
   };
 
   const devices: Device[] = [
-    { id: 1, name: 'Device 1' },
-    { id: 2, name: 'Device 2' },
-    { id: 3, name: 'Device 3' },
+    { id: 1, name: 'Device 1', assigned: false },
+    { id: 2, name: 'Device 2', assigned: true },
+    { id: 3, name: 'Device 3', assigned: false },
   ];
 
   const handleAssignToNetwork = () => {
-    // Implement your logic to assign selected nodes to the network
-    console.log('Assigned to network:', selectedDevices);
+    setOpenNodeActionDialog(true);
+    setIsSaving(true); // Start the animation
+
+    const isAnyAssigned = selectedDevices.some(
+      (deviceId) => devices.find((device) => device.id === deviceId)?.assigned,
+    );
+
+    if (isAnyAssigned) {
+      // Implement your logic to unassign selected devices from the network
+      console.log('Unassigned from network:', selectedDevices);
+    } else {
+      // Implement your logic to assign selected devices to the network
+      console.log('Assigned to network:', selectedDevices);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenNodeActionDialog(false);
+  };
+
+  const handleConfirm = () => {
+    setIsSaving(false); // Start the animation
+    handleAssignToNetwork();
+    handleCloseDialog();
+  };
+
+  const handleCancel = () => {
+    handleCloseDialog();
   };
 
   return (
@@ -80,13 +125,17 @@ export default function NodeSettings() {
               <Stack direction="column" spacing={2}>
                 <Typography variant="h6">Assign network nodes</Typography>
                 <Stack direction={'row'} spacing={1} alignItems={'center'}>
-                  <AutorenewIcon sx={{ color: `${colors.black70}` }} />
-                  <Typography
-                    variant="body1"
-                    sx={{ color: `${colors.black70}` }}
-                  >
-                    Saving
-                  </Typography>
+                  {isSaving && (
+                    <>
+                      <AutorenewIcon
+                        sx={{
+                          color: `${colors.black70}`,
+                        }}
+                      />
+
+                      <LoadingTypography />
+                    </>
+                  )}
                 </Stack>
               </Stack>
             </Grid>
@@ -133,7 +182,11 @@ export default function NodeSettings() {
                         }
                       />
                     }
-                    label={`Available nodes (${devices.length})`}
+                    label={
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {`Available nodes (${devices.length})`}
+                      </Typography>
+                    }
                   />
                   {devices.map((device) => (
                     <FormControlLabel
@@ -150,7 +203,13 @@ export default function NodeSettings() {
                 </FormGroup>
                 <Box mt={2}>
                   <Button variant="contained" onClick={handleAssignToNetwork}>
-                    Assign to Network
+                    {selectedDevices.some(
+                      (deviceId) =>
+                        devices.find((device) => device.id === deviceId)
+                          ?.assigned,
+                    )
+                      ? 'Unassign Device'
+                      : 'Assign to Network'}
                   </Button>
                 </Box>
               </Box>
@@ -173,6 +232,22 @@ export default function NodeSettings() {
             </Grid>
           </Grid>
         </Grid>
+        <NodeActionDialog
+          open={openNodeActionDialog}
+          onClose={handleCloseDialog}
+          title="Continue unassigning node from network?"
+          content="This node will be returned to your organization’s node pool, and will not provide coverage until reassigned to a network."
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          buttonText={
+            selectedDevices.some(
+              (deviceId) =>
+                devices.find((device) => device.id === deviceId)?.assigned,
+            )
+              ? 'Unassign Device'
+              : 'Assign to Network'
+          }
+        />
       </LoadingWrapper>
     </Paper>
   );

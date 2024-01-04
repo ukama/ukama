@@ -122,6 +122,8 @@ export default function Page() {
           {menu === 'node-settings' && <NodeSettings />}
 
           {menu === 'billing' && <Billing />}
+          {menu === 'general-settings' && <Billing />}
+
           {/* {menu === 'network-settings' && <NetworkSettings />}*/}
           {/* {menu === 'alerts' && <Alerts />}  */}
           {menu === 'appearance' && <ConsoleSettings />}
