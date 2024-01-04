@@ -22,10 +22,8 @@ const IPFY_URL = 'https://api.ipify.org/?format=json';
 const IP_API_BASE_URL = 'https://ipapi.co';
 const SETTING_MENU = [
   { id: 'personal-settings', name: 'My Account' },
-  { id: 'network-settings', name: 'Network' },
+  { id: 'network-settings', name: 'General' },
   { id: 'node-settings', name: 'Nodes' },
-  { id: 'general-settings', name: 'General' },
-
   { id: 'billing', name: 'Billing' },
   { id: 'appearance', name: 'Appearance' },
 ];

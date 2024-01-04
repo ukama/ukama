@@ -8,7 +8,18 @@
 
 import { colors } from '@/styles/theme';
 import EditableTextField from '@/ui/molecules/EditableTextField';
-import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Switch,
+  Grid,
+  Divider,
+  InputAdornment,
+  Paper,
+  TextField,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
 
 interface INetworkSetting {
@@ -22,7 +33,22 @@ const NetworkSetting = ({
   handleSubmit,
   handleDeleteNetwork,
 }: INetworkSetting) => {
-  const [value, setValue] = useState(name);
+  const [value, setValue] = useState('Democratic Republic of the Congo');
+  const [isEditing, setIsEditing] = useState(false);
+  const [textValue, setTextValue] = useState(name);
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveClick = () => {
+    setIsEditing(false);
+    // Perform save action or update state as needed
+  };
+
+  const handleChange = (event: any) => {
+    setTextValue(event.target.value);
+  };
 
   return (
     <Paper
@@ -38,9 +64,9 @@ const NetworkSetting = ({
       <Grid container spacing={2} pb={5}>
         <Grid item container spacing={2}>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6">Network Name</Typography>
+            <Typography variant="h6">Network details</Typography>
           </Grid>
-          <Grid item xs={12} md={8} spacing={2}>
+          <Grid item xs={12} md={4} spacing={2}>
             <Stack direction={'column'} spacing={3}>
               <Typography
                 variant="body2"
@@ -51,20 +77,80 @@ const NetworkSetting = ({
               >
                 You can edit this again at any point.
               </Typography>
+
+              <TextField
+                value={textValue}
+                onChange={handleChange}
+                disabled={!isEditing}
+                required
+                label="NETWORK NAME"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {isEditing ? (
+                        <Button
+                          onClick={handleSaveClick}
+                          variant="text"
+                          sx={{ color: colors.primaryMain }}
+                        >
+                          Save
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleEditClick}
+                          variant="text"
+                          sx={{ color: colors.primaryMain }}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
               <EditableTextField
                 type="text"
-                value={name}
+                value={value}
                 isEditable={true}
-                label="NETWORK NAME"
+                label="NETWORK COUNTRY"
                 handleOnChange={(e: any) => setValue(e.target.value)}
               />
               <Button
                 variant="contained"
-                sx={{ width: '20%', bgcolor: colors.red }}
+                sx={{ width: '60%', bgcolor: colors.red }}
                 onClick={() => handleDeleteNetwork()}
               >
                 Delete Network
               </Button>
+            </Stack>
+          </Grid>
+          <Grid item xs={12}>
+            <Divider />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6">Roaming options</Typography>
+          </Grid>
+          <Grid item xs={12} md={4} spacing={2}>
+            <Stack direction={'column'} spacing={3}>
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: '18px',
+                  lineHeight: '19px',
+                }}
+              >
+                Roaming is when you use cellular data outside your Ukama
+                network, for [INSERT RATE HERE]. Roaming is by default an
+                available option for all, and can be adjusted based on
+                individual subscriber, unless you chose to disable roaming for
+                all.
+              </Typography>
+              <Stack direction="row" spacing={1} alignItems={'center'}>
+                <Switch disabled />
+                <Typography variant="body1" color="initial">
+                  Disable roaming for all
+                </Typography>
+              </Stack>
             </Stack>
           </Grid>
         </Grid>
@@ -128,24 +214,6 @@ const NetworkSetting = ({
           </Grid>
         </Grid> */}
       </Grid>
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          position: 'absolute',
-          bottom: 32,
-          right: 32,
-        }}
-      >
-        <Button
-          variant="contained"
-          sx={{ width: 'fit-content' }}
-          onClick={() => handleSubmit(value)}
-        >
-          Save
-        </Button>
-      </Box>
     </Paper>
   );
 };
