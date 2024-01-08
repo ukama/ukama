@@ -62,7 +62,7 @@ func (r *NetworkRegistry) Close() {
 }
 
 func (r *NetworkRegistry) AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string,
-	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error) {
+	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool, country  string, city string ,language string, currency string) (*netpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -75,6 +75,10 @@ func (r *NetworkRegistry) AddNetwork(orgName, netName string, allowedCountries, 
 		Overdraft:        overdraft,
 		TrafficPolicy:    trafficPolicy,
 		PaymentLinks:     paymentLinks,
+		Country: country,
+		City: city,
+		Language: language,
+		Currency: currency,
 	})
 
 	if err != nil {
