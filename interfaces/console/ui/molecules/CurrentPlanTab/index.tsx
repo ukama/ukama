@@ -61,7 +61,6 @@ const CurrentPlanTab = () => {
                 $ 20.30
               </Typography>
             </Grid>
-
             <Box>
               <Button
                 aria-controls="dropdown-menu"

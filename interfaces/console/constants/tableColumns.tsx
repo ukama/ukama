@@ -25,8 +25,16 @@ const CurrentBillColumns: ColumnsWithOptions[] = [
     label: 'Name',
   },
   {
+    id: 'category',
+    label: 'Category',
+  },
+  {
     id: 'rate',
     label: 'Data used',
+  },
+  {
+    id: 'Datarate',
+    label: 'Data rate',
   },
   {
     id: 'subtotal',
