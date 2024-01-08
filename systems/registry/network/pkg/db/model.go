@@ -9,6 +9,8 @@
 package db
 
 import (
+	"database/sql/driver"
+	"strconv"
 	"time"
 
 	"github.com/lib/pq"
@@ -27,10 +29,11 @@ type Org struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
+
 type Network struct {
-	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name             string    `gorm:"uniqueIndex:network_name_org_idx"`
-	OrgId            uuid.UUID `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
+	Id               uuid.UUID   `gorm:"primaryKey;type:uuid"`
+	Name             string      `gorm:"uniqueIndex:network_name_org_idx"`
+	OrgId            uuid.UUID   `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
 	Org              *Org
 	Deactivated      bool
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
@@ -39,12 +42,15 @@ type Network struct {
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
+	Country          string        `json:"country"`
+	City             string        `json:"city"`
+	Language         LanguageType  
+	Currency         string        `json:"currency"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	SyncStatus       types.SyncStatus
 }
-
 type Site struct {
 	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex:site_name_network_idx"`
@@ -54,4 +60,50 @@ type Site struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
+
+type LanguageType uint8
+
+
+const (
+	UnknownLanguage  LanguageType = iota
+	English  = 1
+	French = 2
+)
+
+
+func (l *LanguageType) Scan(value interface{}) error {
+	*l = LanguageType(uint8(value.(int64)))
+	return nil
+}
+
+func (l LanguageType) Value() (driver.Value, error) {
+	return int64(l), nil
+}
+
+func (l LanguageType) String() string {
+	t := map[LanguageType]string{0: "unknown", 1: "french", 2: "english"}
+
+	v, ok := t[l]
+	if !ok {
+		return t[0]
+	}
+
+	return v
+}
+
+func ParseType(value string) LanguageType {
+	i, err := strconv.Atoi(value)
+	if err == nil {
+		return LanguageType(i)
+	}
+
+	t := map[string]LanguageType{"unknown": 0, "french": 1, "english": 2}
+
+	v, ok := t[value]
+	if !ok {
+		return LanguageType(0)
+	}
+
+	return LanguageType(v)
 }

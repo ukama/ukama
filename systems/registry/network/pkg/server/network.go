@@ -111,6 +111,10 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Overdraft:        req.Overdraft,
 		TrafficPolicy:    req.TrafficPolicy,
 		PaymentLinks:     req.PaymentLinks,
+		Language: db.ParseType(req.Language),
+		City:req.City,
+		Currency: req.Currency,
+		Country: req.Country,
 		SyncStatus:       types.SyncStatusPending,
 	}
 
@@ -135,7 +139,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		AllowedNetworks:  network.AllowedNetworks,
 		Budget:           network.Budget,
 		Overdraft:        network.Overdraft,
-		TrafficPolicy:    network.TrafficPolicy,
+		TrafficPolicy:    network.TrafficPolicy,		
 		PaymentLinks:     network.PaymentLinks,
 		IsDeactivated:    network.Deactivated,
 	}
