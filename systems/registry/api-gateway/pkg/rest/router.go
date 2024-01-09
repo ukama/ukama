@@ -52,11 +52,9 @@ type Clients struct {
 }
 
 type network interface {
-	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64,
-		trafficPolicy uint32, paymentLinks bool ) (*netpb.AddResponse, error)
+	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
-
 	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
 	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)

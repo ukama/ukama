@@ -32,9 +32,9 @@ type Config struct {
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string
-	Country          string `default:"Democratic Republic of the Congo"`
-	Language         string `default:"en"`
-	Currency         string `default:"usd"`
+	Country          string `default:"{}"`
+	Language         string `default:"{}"`
+	Currency         string `default:"{}"`
 }
 
 var NetworkMetric = []metric.MetricConfig{
