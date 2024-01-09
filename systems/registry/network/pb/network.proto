@@ -48,7 +48,6 @@ message AddRequest{
     string currency = 9 [json_name = "currency"];
     string language = 10 [json_name = "language"];
     string city = 11 [json_name = "city"];
-    string country = 12 [json_name = "country"];
 }
 
 message AddResponse{

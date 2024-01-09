@@ -43,10 +43,12 @@ type NetworkServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
+	country 	   string
+
 }
 
 func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, country string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,
@@ -56,6 +58,7 @@ func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, si
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
+		country: country,
 	}
 }
 
@@ -111,10 +114,9 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Overdraft:        req.Overdraft,
 		TrafficPolicy:    req.TrafficPolicy,
 		PaymentLinks:     req.PaymentLinks,
-		Language: db.ParseType(req.Language),
+		Country: n.country,
 		City:req.City,
 		Currency: req.Currency,
-		Country: req.Country,
 		SyncStatus:       types.SyncStatusPending,
 	}
 

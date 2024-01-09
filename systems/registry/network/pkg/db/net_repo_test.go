@@ -11,6 +11,7 @@ package db_test
 import (
 	"database/sql"
 	extsql "database/sql"
+	"fmt"
 	"log"
 	"regexp"
 	"testing"
@@ -343,13 +344,14 @@ func Test_NetRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
-
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+		
+			mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(network.Id, network.Name, network.OrgId, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				 sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-
+		
 		mock.ExpectCommit()
 
 		dialector := postgres.New(postgres.Config{
@@ -367,7 +369,7 @@ func Test_NetRepo_Add(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-
+fmt.Println("NET",network)
 		// Act
 		err = r.Add(&network, nil)
 
