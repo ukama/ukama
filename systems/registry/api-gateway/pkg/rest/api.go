@@ -51,10 +51,6 @@ type AddNetworkRequest struct {
 	Overdraft        float64  `json:"overdraft"`
 	TrafficPolicy    uint32   `json:"traffic_policy"`
 	PaymentLinks     bool     `example:"true" json:"payment_links"`
-	Language 		 string    `json:"language"`
-	City 			 string 	`json:"city"`
-	Country			 string 	`json:"country"`
-	Currency		 string		`json:"currency"`
 }
 
 type GetSiteRequest struct {

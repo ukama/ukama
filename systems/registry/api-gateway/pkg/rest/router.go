@@ -53,7 +53,7 @@ type Clients struct {
 
 type network interface {
 	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64,
-		trafficPolicy uint32, paymentLinks bool, country string , city string, language string, currency string ) (*netpb.AddResponse, error)
+		trafficPolicy uint32, paymentLinks bool ) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 
@@ -303,7 +303,7 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
 	return r.clients.Network.AddNetwork(req.OrgName, req.NetName, req.AllowedCountries, req.AllowedNetworks,
-		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks, req.Country, req.Currency,req.City,req.Language)
+		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
