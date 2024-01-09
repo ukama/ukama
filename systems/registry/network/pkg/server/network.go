@@ -43,12 +43,13 @@ type NetworkServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
-	country 	   string
-
+	country        string
+	language       string
+	currency       string
 }
 
 func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, country string) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, country string, language string, currency string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,
@@ -58,7 +59,9 @@ func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, si
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
-		country: country,
+		country:        country,
+		language:       language,
+		currency:       currency,
 	}
 }
 
@@ -114,9 +117,9 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Overdraft:        req.Overdraft,
 		TrafficPolicy:    req.TrafficPolicy,
 		PaymentLinks:     req.PaymentLinks,
-		Country: n.country,
-		City:req.City,
-		Currency: req.Currency,
+		Country:          n.country,
+		Currency:         n.currency,
+		Language:         db.ParseType(n.language),
 		SyncStatus:       types.SyncStatusPending,
 	}
 
@@ -141,7 +144,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		AllowedNetworks:  network.AllowedNetworks,
 		Budget:           network.Budget,
 		Overdraft:        network.Overdraft,
-		TrafficPolicy:    network.TrafficPolicy,		
+		TrafficPolicy:    network.TrafficPolicy,
 		PaymentLinks:     network.PaymentLinks,
 		IsDeactivated:    network.Deactivated,
 	}

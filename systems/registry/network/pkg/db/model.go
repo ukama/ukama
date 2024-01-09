@@ -43,7 +43,6 @@ type Network struct {
 	TrafficPolicy    uint32
 	PaymentLinks     bool
 	Country          string        `json:"country"`
-	City             string        `json:"city"`
 	Language         LanguageType  
 	Currency         string        `json:"currency"`
 	CreatedAt        time.Time
@@ -67,8 +66,8 @@ type LanguageType uint8
 
 const (
 	UnknownLanguage  LanguageType = iota
-	English  = 1
-	French = 2
+	EN  = 1
+	FR = 2
 )
 
 
@@ -82,7 +81,7 @@ func (l LanguageType) Value() (driver.Value, error) {
 }
 
 func (l LanguageType) String() string {
-	t := map[LanguageType]string{0: "unknown", 1: "french", 2: "english"}
+	t := map[LanguageType]string{0: "unknown", 1: "fr", 2: "en"}
 
 	v, ok := t[l]
 	if !ok {
@@ -98,7 +97,7 @@ func ParseType(value string) LanguageType {
 		return LanguageType(i)
 	}
 
-	t := map[string]LanguageType{"unknown": 0, "french": 1, "english": 2}
+	t := map[string]LanguageType{"unknown": 0, "fr": 1, "en": 2}
 
 	v, ok := t[value]
 	if !ok {

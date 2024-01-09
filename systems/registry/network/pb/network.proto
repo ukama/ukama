@@ -45,9 +45,6 @@ message AddRequest{
     double overdraft = 6;
     uint32 trafficPolicy = 7 [json_name = "traffic_policy"];;
     bool paymentLinks = 8 [json_name = "payment_links"];
-    string currency = 9 [json_name = "currency"];
-    string language = 10 [json_name = "language"];
-    string city = 11 [json_name = "city"];
 }
 
 message AddResponse{
