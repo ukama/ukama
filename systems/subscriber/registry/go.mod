@@ -10,7 +10,6 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.3
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.2
@@ -25,6 +24,7 @@ require (
 )
 
 require (
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
