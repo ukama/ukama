@@ -1,0 +1,35 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+
+
+message Payment {
+    string id = 1;
+    string itemId = 2;
+    string itemType = 3 [json_name = "item_type"];
+    string amount = 4;
+    string currency = 5;
+    string paymentMethod = 6 [json_name = "payment_method"];
+    google.protobuf.Timestamp paidAt = 7 [json_name = "paid_at"];
+    string payerName = 8 [json_name = "payer_name"];
+    string payerEmail = 9 [json_name = "payer_email"];
+    string payerPhone = 10 [json_name = "payer_phone"];
+    string correspondant = 11;
+    string country = 12;
+    string description = 13;
+    string status = 14;
+}
