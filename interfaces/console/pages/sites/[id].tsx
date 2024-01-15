@@ -52,30 +52,9 @@ export default function Page() {
 
   return (
     <>
-      <LoadingWrapper
-        radius="small"
-        width={'100%'}
-        isLoading={false}
-        cstyle={{
-          backgroundColor: false ? colors.white : 'transparent',
-        }}
-      >
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography variant="h6"> My sites</Typography>
-          </Grid>
-          <Grid item xs={6} container justifyContent={'flex-end'}>
-            <Button variant="contained" onClick={handleAddSite}>
-              ADD SITE
-            </Button>
-          </Grid>
-          {fakeData.map((site, index) => (
-            <Grid item xs={4} key={index}>
-              <SiteCard sites={[site]} />
-            </Grid>
-          ))}
-        </Grid>
-      </LoadingWrapper>
+      <Typography variant="body1" color="initial">
+        hello{' '}
+      </Typography>
     </>
   );
 }

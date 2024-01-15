@@ -29,7 +29,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites }) => {
               {(site.towerStatus === 'offline' ||
                 site.nodeStatus === 'offline' ||
                 site.batteryStatus === 'notCharging') && (
-                <ErrorIcon sx={{ color: colors.red }} />
+                <ErrorIcon sx={{ color: colors.red, fontSize: 18 }} />
               )}
             </Stack>
 
