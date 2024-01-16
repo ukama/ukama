@@ -67,7 +67,7 @@ class NetworkApi extends RESTDataSource {
     }).then(res => dtoToNetworkDto(res));
   };
 
-  addSite = async (
+  addSiteToNetwork = async (
     networkId: string,
     req: AddSiteInputDto
   ): Promise<SiteDto> => {

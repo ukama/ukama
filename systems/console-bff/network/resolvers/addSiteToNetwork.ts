@@ -11,7 +11,7 @@ import { Context } from "../context";
 import { AddSiteInputDto, SiteDto } from "./types";
 
 @Resolver()
-export class AddSiteResolver {
+export class AddSiteToNetworkResolver {
   @Query(() => SiteDto)
   async addSite(
     @Arg("networkId") networkId: string,
@@ -19,6 +19,6 @@ export class AddSiteResolver {
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.addSite(networkId, data);
+    return dataSources.dataSource.addSiteToNetwork(networkId, data);
   }
 }
