@@ -8,12 +8,21 @@
 
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+import { useState } from 'react';
 // import Map from '@/ui/molecules/MapComponent';
-import { Grid, Typography, Button } from '@mui/material';
+import { Grid, Typography, AlertColor, Button } from '@mui/material';
 import SiteCard from '@/ui/molecules/SiteCard';
 import Link from 'next/link';
+import AddSiteDialog from '@/ui/molecules/AddSiteDialog';
+import { NetworkDto, useAddSiteMutation } from '@/generated';
+import { useSetRecoilState } from 'recoil';
+import { TSnackMessage } from '@/types';
+import { snackbarMessage } from '@/app-recoil';
 
 export default function Page() {
+  const [isAddSiteDialogOpen, setIsAddSiteDialogOpen] = useState(false);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+
   interface SiteInt {
     name: string;
     details: string;
@@ -49,8 +58,49 @@ export default function Page() {
       numberOfPersonsConnected: 5,
     },
   ];
-  const handleAddSite = () => {};
+  const mockNetwork: NetworkDto[] = [
+    {
+      __typename: 'NetworkDto',
+      budget: 1000000.0,
+      countries: ['Country1', 'Country2', 'Country3'],
+      createdAt: '2022-01-16T12:00:00Z',
+      id: '1234567890',
+      isDeactivated: 'false',
+      name: 'Sample Network',
+      networks: ['Network1', 'Network2', 'Network3'],
+      orgId: 'organization123',
+    },
+  ];
+  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'site-added-success',
+        message: 'Site added successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'site-added-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
+  const handleAddSite = async (data: any) => {
+    setIsAddSiteDialogOpen(true);
+    // await addSite({
+    //   variables: {
+    //     data: {
+    //       site: data.site,
+    //     },
+    //   },
+    // });
+  };
+  const handleCloseAction = () => setIsAddSiteDialogOpen(false);
   return (
     <>
       <LoadingWrapper
@@ -72,12 +122,20 @@ export default function Page() {
           </Grid>
           {fakeData.map((site, index) => (
             <Grid item xs={4} key={index}>
-              <Link href={`sites/${site.name}`} unselectable="on">
+              <Link href={`sites/687687`}>
                 <SiteCard sites={[site]} />
               </Link>
             </Grid>
           ))}
         </Grid>
+        <AddSiteDialog
+          isOpen={isAddSiteDialogOpen}
+          title={'ADD SITE'}
+          description=""
+          handleCloseAction={handleCloseAction}
+          networks={mockNetwork}
+          handleAddSite={handleAddSite}
+        />
       </LoadingWrapper>
     </>
   );

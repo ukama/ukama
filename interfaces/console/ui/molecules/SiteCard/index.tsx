@@ -1,9 +1,18 @@
-import React from 'react';
-import { Grid, Typography, Box, Stack } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Grid,
+  Typography,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+} from '@mui/material';
 import { RoundedCard } from '@/styles/global';
 import { PersonIcon, TowerIcon, NodeIcon, BatteryIcon } from '../SvgIcons';
 import ErrorIcon from '@mui/icons-material/Error';
 import { colors } from '@/styles/theme';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 interface Site {
   name: string;
@@ -16,14 +25,29 @@ interface Site {
 
 interface SiteCardProps {
   sites: Site[];
+  handleDeleteSite: Function;
 }
 
-const SiteCard: React.FC<SiteCardProps> = ({ sites }) => {
+const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event: any) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDelete = () => {
+    handleDeleteSite();
+    handleMenuClose();
+  };
   return (
     <RoundedCard>
       {sites.map((site, index) => (
         <Grid container spacing={1} key={index} alignItems={'center'}>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <Stack direction="row" spacing={1} alignItems={'center'}>
               <Typography variant="h5">{site.name}</Typography>
               {(site.towerStatus === 'offline' ||
@@ -32,9 +56,21 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites }) => {
                 <ErrorIcon sx={{ color: colors.red, fontSize: 18 }} />
               )}
             </Stack>
-
             <Typography variant="body2">{site.details}</Typography>
           </Grid>
+          <Grid item xs={6} container justifyContent={'flex-end'}>
+            <IconButton onClick={handleMenuOpen}>
+              <MoreVertIcon />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleDelete}>Delete</MenuItem>
+            </Menu>
+          </Grid>
+
           <Grid item xs={2}>
             <Stack direction={'row'} spacing={1} alignItems={'center'}>
               <PersonIcon />
