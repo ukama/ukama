@@ -29,11 +29,10 @@ type Org struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
-
 type Network struct {
-	Id               uuid.UUID   `gorm:"primaryKey;type:uuid"`
-	Name             string      `gorm:"uniqueIndex:network_name_org_idx"`
-	OrgId            uuid.UUID   `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
+	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name             string    `gorm:"uniqueIndex:network_name_org_idx"`
+	OrgId            uuid.UUID `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
 	Org              *Org
 	Deactivated      bool
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
@@ -42,9 +41,9 @@ type Network struct {
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
-	Country          string        `json:"country"`
-	Language         LanguageType  
-	Currency         string        `json:"currency"`
+	Country          string `json:"country"`
+	Language         LanguageType
+	Currency         string `json:"currency"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
@@ -63,13 +62,11 @@ type Site struct {
 
 type LanguageType uint8
 
-
 const (
-	UnknownLanguage  LanguageType = iota
-	EN  = 1
-	FR = 2
+	UnknownLanguage LanguageType = iota
+	EN                           = 1
+	FR                           = 2
 )
-
 
 func (l *LanguageType) Scan(value interface{}) error {
 	*l = LanguageType(uint8(value.(int64)))
