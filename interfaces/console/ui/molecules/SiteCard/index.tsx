@@ -47,6 +47,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
   return (
     <RoundedCard>
       {sites.map((site, index) => (
+        // <Link href={`sites/687687`}>
         <Grid container spacing={1} key={index} alignItems={'center'}>
           <Grid item xs={12} sm={6}>
             <Stack direction="row" spacing={1} alignItems={'center'}>
