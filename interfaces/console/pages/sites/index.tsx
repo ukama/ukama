@@ -101,6 +101,7 @@ export default function Page() {
     // });
   };
   const handleCloseAction = () => setIsAddSiteDialogOpen(false);
+  const handleDeleteSite = () => {};
   return (
     <>
       <LoadingWrapper
@@ -121,9 +122,9 @@ export default function Page() {
             </Button>
           </Grid>
           {fakeData.map((site, index) => (
-            <Grid item xs={4} key={index}>
+            <Grid item xs={12} key={index} md={6} lg={4}>
               <Link href={`sites/687687`}>
-                <SiteCard sites={[site]} />
+                <SiteCard sites={[site]} handleDeleteSite={handleDeleteSite} />
               </Link>
             </Grid>
           ))}

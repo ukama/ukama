@@ -43,11 +43,12 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
     handleDeleteSite();
     handleMenuClose();
   };
+
   return (
     <RoundedCard>
       {sites.map((site, index) => (
         <Grid container spacing={1} key={index} alignItems={'center'}>
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             <Stack direction="row" spacing={1} alignItems={'center'}>
               <Typography variant="h5">{site.name}</Typography>
               {(site.towerStatus === 'offline' ||
@@ -58,7 +59,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
             </Stack>
             <Typography variant="body2">{site.details}</Typography>
           </Grid>
-          <Grid item xs={6} container justifyContent={'flex-end'}>
+          <Grid item xs={12} sm={6} container justifyContent={'flex-end'}>
             <IconButton onClick={handleMenuOpen}>
               <MoreVertIcon />
             </IconButton>
@@ -71,7 +72,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
             </Menu>
           </Grid>
 
-          <Grid item xs={2}>
+          <Grid item xs={6} sm={2}>
             <Stack direction={'row'} spacing={1} alignItems={'center'}>
               <PersonIcon />
               <Typography variant="caption">
@@ -79,19 +80,19 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
               </Typography>
             </Stack>
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={6} sm={3}>
             <Stack direction={'row'} spacing={1} alignItems={'center'}>
               <NodeIcon status={site.nodeStatus} />
               <Typography variant="caption">{`${site.nodeStatus}`}</Typography>
             </Stack>
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={6} sm={4}>
             <Stack direction={'row'} spacing={1} alignItems={'center'}>
               <BatteryIcon status={site.batteryStatus} />
               <Typography variant="caption">{`${site.batteryStatus}`}</Typography>
             </Stack>
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={6} sm={3}>
             <Stack direction={'row'} spacing={1} alignItems={'center'}>
               <TowerIcon status={site.towerStatus} />
               <Typography variant="caption">{`${site.towerStatus}`}</Typography>
