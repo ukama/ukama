@@ -18,7 +18,6 @@ import {
 import React, { useState } from 'react';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { NetworkDto } from '@/generated';
 
 type AddSiteDialogProps = {
   title: string;
@@ -26,7 +25,7 @@ type AddSiteDialogProps = {
   description: string;
   handleCloseAction: any;
   handleAddSite: Function;
-  networks: NetworkDto[];
+  networks: any[];
 };
 
 interface SiteFormValues {

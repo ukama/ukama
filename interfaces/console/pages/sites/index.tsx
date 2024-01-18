@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { commonData, snackbarMessage } from '@/app-recoil';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { useState } from 'react';
@@ -13,10 +14,14 @@ import { useState } from 'react';
 import { Grid, Typography, AlertColor, Button } from '@mui/material';
 import SiteCard from '@/ui/molecules/SiteCard';
 import AddSiteDialog from '@/ui/molecules/AddSiteDialog';
-import { NetworkDto, useAddSiteMutation } from '@/generated';
-import { useSetRecoilState } from 'recoil';
-import { TSnackMessage } from '@/types';
-import { snackbarMessage } from '@/app-recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { TCommonData, TSnackMessage } from '@/types';
+import {
+  useGetAllSitesQuery,
+  NetworkDto,
+  useGetNetworksQuery,
+  useAddSiteMutation,
+} from '@/generated';
 import DeleteConfirmation from '@/ui/molecules/DeleteSiteDialog';
 
 export default function Page() {
@@ -24,6 +29,7 @@ export default function Page() {
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [siteId, setSiteId] = useState<any>();
+  const _commonData = useRecoilValue<TCommonData>(commonData);
 
   interface SiteInt {
     id: string;
@@ -35,35 +41,6 @@ export default function Page() {
     numberOfPersonsConnected: number;
   }
 
-  const fakeData: SiteInt[] = [
-    {
-      id: '9eb408c6-cdf0-4bc3-8802-6f546b7bede1',
-      name: 'Site 1',
-      details: 'Details for Site 1',
-      batteryStatus: 'charging',
-      nodeStatus: 'online',
-      towerStatus: 'online',
-      numberOfPersonsConnected: 3,
-    },
-    {
-      id: '7eb408c6-cdf0-4bc3-8802-6f546b7bede1',
-      name: 'Site 2',
-      details: 'Details for Site 2',
-      batteryStatus: 'notCharging',
-      nodeStatus: 'offline',
-      towerStatus: 'offline',
-      numberOfPersonsConnected: 5,
-    },
-    {
-      id: '9ec408c6-cdf0-4bc3-8802-6f546b7bede1',
-      name: 'Site 2',
-      details: 'Details for Site 2',
-      batteryStatus: 'charging',
-      nodeStatus: 'offline',
-      towerStatus: 'offline',
-      numberOfPersonsConnected: 5,
-    },
-  ];
   const mockNetwork: NetworkDto[] = [
     {
       __typename: 'NetworkDto',
@@ -77,6 +54,20 @@ export default function Page() {
       orgId: 'organization123',
     },
   ];
+  const { data: sitesData, loading: sitesLoading } = useGetAllSitesQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      networkId: _commonData.networkId,
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'nodes-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: () => {
       setSnackbarMessage({
@@ -95,7 +86,18 @@ export default function Page() {
       });
     },
   });
+  const { data: networkList, loading: netLoading } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
 
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   const handleAddSite = async (data: any) => {
     setIsAddSiteDialogOpen(true);
     // await addSite({
@@ -118,16 +120,12 @@ export default function Page() {
     setIsConfirmationOpen(false);
   };
 
-  const handleOpenConfirmation = () => {
-    // Open the confirmation dialog
-    setIsConfirmationOpen(true);
-  };
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={false}
+        isLoading={sitesLoading || netLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
@@ -141,7 +139,7 @@ export default function Page() {
               ADD SITE
             </Button>
           </Grid>
-          {fakeData.map((site, index) => (
+          {sitesData?.getAllSites.sites.map((site, index) => (
             <Grid item xs={12} key={index} md={6} lg={4}>
               <SiteCard sites={[site]} handleDeleteSite={handleDeleteSite} />
             </Grid>
@@ -152,7 +150,7 @@ export default function Page() {
           title={'ADD SITE'}
           description=""
           handleCloseAction={handleCloseAction}
-          networks={mockNetwork}
+          networks={networkList?.getNetworks?.networks ?? []}
           handleAddSite={handleAddSite}
         />
         <DeleteConfirmation

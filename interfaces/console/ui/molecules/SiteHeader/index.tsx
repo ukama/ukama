@@ -109,7 +109,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                         fontSize="small"
                       />
                     )}
-                    <Typography variant="body1">{name}</Typography>
+                    <Typography variant="h6">{name}</Typography>
                   </Stack>
                 </MenuItem>
               ))}
@@ -123,7 +123,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                 Add site
               </Button>
             </Select>
-            <Typography variant="body1">
+            <Typography variant="h6">
               {`is ${siteHealth} for ${
                 sites.find((s) => s.name === selectedSite)?.duration
               }`}

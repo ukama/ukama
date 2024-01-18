@@ -23,7 +23,7 @@ import {
   useGetSimpoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
-  useGetSitesQuery,
+  useGetAllSitesQuery,
   useGetSubscriberLazyQuery,
   useGetSubscribersByNetworkQuery,
   useSetActivePackageForSimMutation,
@@ -276,7 +276,7 @@ const Page = () => {
     },
   });
 
-  const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
+  const { data: sitesData, loading: sitesLoading } = useGetAllSitesQuery({
     variables: {
       networkId: _commonData.networkId,
     },
@@ -730,9 +730,9 @@ const Page = () => {
             handleDeleteSubscriber={handleDeleteSubscriberModal}
             simStatusLoading={toggleSimStatusLoading}
             currentSite={
-              sitesData?.getSites?.sites &&
-              sitesData?.getSites?.sites.length > 0
-                ? sitesData?.getSites?.sites[0].name
+              sitesData?.getAllSites?.sites &&
+              sitesData?.getAllSites?.sites.length > 0
+                ? sitesData?.getAllSites?.sites[0].name
                 : '-'
             }
           />

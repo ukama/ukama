@@ -32,10 +32,30 @@ fragment node on Node {
     state
   }
 }
+fragment networkSite on SiteDto {
+  id
+  name
+  networkId
+  isDeactivated
+  createdAt
+}
 
 query getNode($data: NodeInput!) {
   getNode(data: $data) {
     ...node
+  }
+}
+
+query getAllSites($networkId: String!) {
+  getAllSites(networkId: $networkId) {
+    sites {
+      ...networkSite
+    }
+  }
+}
+query getSingleSite($siteId: String!, $networkId: String!) {
+  getSingleSite(siteId: $siteId, networkId: $networkId) {
+    ...networkSite
   }
 }
 
@@ -576,19 +596,6 @@ query getNetworks {
     orgId
     networks {
       ...UNetwork
-    }
-  }
-}
-
-query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
-    networkId
-    sites {
-      id
-      name
-      networkId
-      isDeactivated
-      createdAt
     }
   }
 }

@@ -13,6 +13,9 @@ import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import SiteHeader from '@/ui/molecules/SiteHeader';
 import SiteOverallHealth from '@/ui/molecules/SiteHealth';
 import { Grid, Paper, Stack, Typography } from '@mui/material';
+import { RoundedCard } from '@/styles/global';
+import { SitePowerStatus } from '@/ui/molecules/SvgIcons';
+import GroupIcon from '@mui/icons-material/Group';
 
 const sites: Site[] = [
   { name: 'site1', health: 'online', duration: '3 days' },
@@ -54,25 +57,52 @@ export default function Page() {
         />
 
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} sm={4}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
+          <Grid item xs={3}>
+            <RoundedCard>
+              <Typography variant="h6" gutterBottom sx={{ py: 1 }}>
                 Site details
               </Typography>
               <Stack direction="column" spacing={2}>
                 <Stack direction="row" spacing={2} alignItems={'center'}>
                   <Typography variant="subtitle1">Date created:</Typography>
-                  <Typography variant="subtitle1"> July 13 2023</Typography>
+                  <Typography variant="body2"> July 13 2023</Typography>
                 </Stack>
                 <Stack direction="row" spacing={2} alignItems={'center'}>
-                  <Typography variant="subtitle1"> Address:</Typography>
-                  <Typography variant="subtitle1"> 1000 Nelson Way</Typography>
+                  <Typography variant="subtitle1"> Location:</Typography>
+                  <Typography variant="body2"> 1000 Nelson Way</Typography>
+                </Stack>
+                <Stack direction="row" spacing={2} alignItems={'center'}>
+                  <Typography variant="subtitle1"> Nodes:</Typography>
+                  <Typography variant="body2"> 1000</Typography>
                 </Stack>
               </Stack>
-            </Paper>
+            </RoundedCard>
           </Grid>
-          <Grid item xs={12} sm={8}>
-            {/* <Map site={''} users={0} /> */}
+
+          <Grid item xs={6}>
+            <RoundedCard>
+              <Typography variant="h6" sx={{ py: 1 }}>
+                Site overview
+              </Typography>
+              <Stack direction="row" spacing={2} alignItems={'center'}>
+                <Stack direction="row" spacing={1} alignItems={'center'}>
+                  <SitePowerStatus />
+                  <Typography variant="body1">Input power</Typography>
+                  <SitePowerStatus />
+                  <Typography variant="body1">Storage</Typography>
+                  <SitePowerStatus />
+                  <Typography variant="body1">Consumption</Typography>
+                </Stack>
+              </Stack>
+            </RoundedCard>
+          </Grid>
+          <Grid item xs={3}>
+            <RoundedCard>
+              <Stack direction="row" spacing={1}>
+                <GroupIcon />
+                <Typography variant="body1">22</Typography>
+              </Stack>
+            </RoundedCard>
           </Grid>
 
           <Grid item xs={12}>
