@@ -16,6 +16,11 @@ import { Grid, Paper, Stack, Typography } from '@mui/material';
 import { RoundedCard } from '@/styles/global';
 import { SitePowerStatus } from '@/ui/molecules/SvgIcons';
 import GroupIcon from '@mui/icons-material/Group';
+import { useRouter } from 'next/router';
+import { useGetSingleSiteQuery } from '@/generated';
+import { TCommonData, TSnackMessage } from '@/types';
+import { commonData, snackbarMessage } from '@/app-recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const sites: Site[] = [
   { name: 'site1', health: 'online', duration: '3 days' },
@@ -25,6 +30,10 @@ const sites: Site[] = [
 
 export default function Page() {
   const handleSiteSelect = (site: any): void => {};
+  const router = useRouter();
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+
   const handleAddSite = () => {
     // Logic to add a new site
   };
@@ -39,6 +48,21 @@ export default function Page() {
     { label: 'Power', value: '100 W' },
     { label: 'Voltage', value: '12 V' },
   ];
+  const { data: getSiteData, loading: getSiteLoading } = useGetSingleSiteQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      siteId: router.query['id'] as string,
+      networkId: _commonData.networkId,
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'node-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
   return (
     <>
       <LoadingWrapper
