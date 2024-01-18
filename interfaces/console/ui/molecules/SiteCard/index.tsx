@@ -13,8 +13,10 @@ import { PersonIcon, TowerIcon, NodeIcon, BatteryIcon } from '../SvgIcons';
 import ErrorIcon from '@mui/icons-material/Error';
 import { colors } from '@/styles/theme';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Link from 'next/link';
 
 interface Site {
+  id: string;
   name: string;
   details: string;
   batteryStatus: 'charging' | 'notCharging';
@@ -25,7 +27,7 @@ interface Site {
 
 interface SiteCardProps {
   sites: Site[];
-  handleDeleteSite: Function;
+  handleDeleteSite: (siteId?: string) => void;
 }
 
 const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
@@ -39,27 +41,35 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
     setAnchorEl(null);
   };
 
-  const handleDelete = () => {
-    handleDeleteSite();
+  const handleDelete = (siteId?: string) => {
+    handleDeleteSite(siteId);
     handleMenuClose();
   };
 
   return (
     <RoundedCard>
       {sites.map((site, index) => (
-        // <Link href={`sites/687687`}>
-        <Grid container spacing={1} key={index} alignItems={'center'}>
-          <Grid item xs={12} sm={6}>
-            <Stack direction="row" spacing={1} alignItems={'center'}>
-              <Typography variant="h5">{site.name}</Typography>
-              {(site.towerStatus === 'offline' ||
-                site.nodeStatus === 'offline' ||
-                site.batteryStatus === 'notCharging') && (
-                <ErrorIcon sx={{ color: colors.red, fontSize: 18 }} />
-              )}
-            </Stack>
-            <Typography variant="body2">{site.details}</Typography>
-          </Grid>
+        <Grid container spacing={1} alignItems={'center'} key={index}>
+          <Link
+            href={`sites/${site.id}`}
+            passHref
+            legacyBehavior
+            replace
+            unselectable="on"
+          >
+            <Grid item xs={12} sm={6} sx={{ cursor: 'pointer' }}>
+              <Stack direction="row" spacing={1} alignItems={'center'}>
+                <Typography variant="h5">{site.name}</Typography>
+                {(site.towerStatus === 'offline' ||
+                  site.nodeStatus === 'offline' ||
+                  site.batteryStatus === 'notCharging') && (
+                  <ErrorIcon sx={{ color: colors.red, fontSize: 18 }} />
+                )}
+              </Stack>
+              <Typography variant="body2">{site.details}</Typography>
+            </Grid>
+          </Link>
+
           <Grid item xs={12} sm={6} container justifyContent={'flex-end'}>
             <IconButton onClick={handleMenuOpen}>
               <MoreVertIcon />
@@ -69,7 +79,7 @@ const SiteCard: React.FC<SiteCardProps> = ({ sites, handleDeleteSite }) => {
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
             >
-              <MenuItem onClick={handleDelete}>Delete</MenuItem>
+              <MenuItem onClick={() => handleDelete(site.id)}>Delete</MenuItem>
             </Menu>
           </Grid>
 

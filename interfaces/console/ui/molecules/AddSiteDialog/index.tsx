@@ -11,6 +11,7 @@ import {
   Select,
   Stack,
   TextField,
+  InputLabel,
   Typography,
   Grid,
 } from '@mui/material';
@@ -110,6 +111,7 @@ const AddSiteDialog: React.FC<AddSiteDialogProps> = ({
                     />
                   </Grid>
                   <Grid item xs={12}>
+                    <InputLabel id="network-select-label">Network</InputLabel>
                     <Select
                       fullWidth
                       label="Network"
@@ -117,6 +119,10 @@ const AddSiteDialog: React.FC<AddSiteDialogProps> = ({
                       onChange={(e) =>
                         setSelectedNetwork(e.target.value as string)
                       }
+                      inputProps={{
+                        name: 'network',
+                        id: 'network-select',
+                      }}
                     >
                       {networks.map((network) => (
                         <MenuItem key={network.id} value={network.id}>
@@ -135,7 +141,11 @@ const AddSiteDialog: React.FC<AddSiteDialogProps> = ({
                   alignItems="center"
                   justifyContent={'space-between'}
                 >
-                  <Button type="submit" variant="contained">
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isAddButtonDisabled}
+                  >
                     Add site
                   </Button>
                 </Stack>
