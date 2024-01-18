@@ -9,18 +9,18 @@ import { NonEmptyArray } from "type-graphql";
 
 import { AddNetworkResolver } from "./addNetwork";
 import { AddSiteToNetworkResolver } from "./addSiteToNetwork";
+import { GetAllSitesResolver } from "./getAllSites";
 import { GetNetworkResolver } from "./getNetwork";
 import { GetNetworksResolver } from "./getNetworks";
-import { GetSiteResolver } from "./getSite";
-import { GetSitesResolver } from "./getSites";
+import { GetSingleSiteResolver } from "./getSingleSite";
 
 const resolvers: NonEmptyArray<any> = [
   AddNetworkResolver,
   AddSiteToNetworkResolver,
   GetNetworkResolver,
   GetNetworksResolver,
-  GetSiteResolver,
-  GetSitesResolver,
+  GetSingleSiteResolver,
+  GetAllSitesResolver,
 ];
 
 export default resolvers;
