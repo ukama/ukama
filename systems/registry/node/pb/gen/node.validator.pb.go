@@ -31,6 +31,11 @@ func (this *AddNodeRequest) Validate() error {
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
+	if this.Location != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Location); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Location", err)
+		}
+	}
 	return nil
 }
 func (this *AddNodeResponse) Validate() error {
@@ -144,6 +149,11 @@ func (this *UpdateNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	if this.Location != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Location); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Location", err)
+		}
+	}
 	return nil
 }
 func (this *UpdateNodeResponse) Validate() error {
@@ -202,6 +212,9 @@ func (this *ReleaseNodeFromSiteResponse) Validate() error {
 func (this *NodeStatus) Validate() error {
 	return nil
 }
+func (this *Location) Validate() error {
+	return nil
+}
 
 var _regex_Site_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Site_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
@@ -245,6 +258,11 @@ func (this *Node) Validate() error {
 	if this.Status != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Status); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Status", err)
+		}
+	}
+	if this.Location != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Location); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Location", err)
 		}
 	}
 	if this.Site != nil {

@@ -92,6 +92,11 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Conn:   db.Unknown,
 			State:  db.Undefined,
 		},
+		Location: &db.NodeLocation{
+			NodeId: nId.StringLowercase(),
+			Latitude: req.Location.Latitude,
+			Longitude: req.Location.Longitude,
+		},
 		Type: nId.GetNodeType(),
 		Name: req.Name,
 	}
@@ -264,8 +269,13 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 	nodeUpdates := &db.Node{
 		Id:   nodeId.StringLowercase(),
 		Name: req.Name,
+		Location: &db.NodeLocation{
+			NodeId: nodeId.StringLowercase(),
+			Latitude: req.Location.Latitude,
+			Longitude: req.Location.Longitude,
+		},
 	}
-
+	
 	err = n.nodeRepo.Update(nodeUpdates, nil)
 	if err != nil {
 		duplErr := processNodeDuplErrors(err, req.NodeId)

@@ -59,7 +59,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func TestNodeRepo_Add(t *testing.T) {
 	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
+	
 	var db *extsql.DB
 
 	node := nodedb.Node{
@@ -67,6 +67,7 @@ func TestNodeRepo_Add(t *testing.T) {
 		Name:  "node-1",
 		OrgId: uuid.NewV4(),
 		Type:  "hnode",
+		
 	}
 
 	db, mock, err := sqlmock.New() // mock sql.DB
@@ -150,6 +151,10 @@ func TestNodeRepo_Get(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
 			WithArgs(nodeId).
 			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+		WithArgs(nodeId).
+		WillReturnRows(row)
 
 		// Act
 		node, err := r.Get(nodeId)

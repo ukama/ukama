@@ -43,6 +43,8 @@ func TestNodeServer_Add(t *testing.T) {
 
 	const nodeName = "node-A"
 	const nodeType = "hnode"
+	var longitude float64 =-118.2437
+	var latitude float64 = 34.0522
 
 	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, orgService, networkService, orgId)
 
@@ -55,6 +57,11 @@ func TestNodeServer_Add(t *testing.T) {
 			NodeId: nodeId,
 			Conn:   db.Unknown,
 			State:  db.Undefined,
+		},
+		Location: &db.NodeLocation{
+			NodeId: nodeId,
+			Longitude: longitude,
+			Latitude: latitude ,
 		},
 	}
 
@@ -81,6 +88,10 @@ func TestNodeServer_Add(t *testing.T) {
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
+			Location: &pb.Location{
+				Longitude: longitude,
+				Latitude:latitude ,
+			},
 		})
 
 		// Assert

@@ -27,6 +27,7 @@ type Node struct {
 	ParentNodeId *string    `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
 	Attached     []*Node    `gorm:"foreignKey:ParentNodeId"`
 	Site         Site
+	Location     *NodeLocation 
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -38,9 +39,16 @@ type NodeStatus struct {
 	Conn   Connectivity `gorm:"type:uint;not null"`
 	State  NodeState    `gorm:"type:uint;not null"`
 }
+type NodeLocation struct {
+	gorm.Model
+	NodeId string       `gorm:"uniqueIndex:nodestatus_idx,expression:lower(node_id),where:deleted_at is null"`
+	Latitude  float64 `gorm:"type:double"`
+	Longitude float64 `gorm:"type:double"`
+}
 
 type Connectivity uint8
 type NodeState uint8
+
 
 const (
 	Undefined   NodeState = iota
@@ -62,6 +70,7 @@ func (e *NodeState) Scan(value interface{}) error {
 
 	return nil
 }
+
 
 func (e NodeState) Value() (driver.Value, error) {
 	return int64(e), nil
