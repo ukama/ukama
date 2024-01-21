@@ -18,9 +18,8 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { TCommonData, TSnackMessage } from '@/types';
 import {
   useGetAllSitesQuery,
-  NetworkDto,
   useGetNetworksQuery,
-  useAddSiteMutation,
+  useAddSiteToNetworkMutation,
 } from '@/generated';
 import DeleteConfirmation from '@/ui/molecules/DeleteSiteDialog';
 
@@ -31,29 +30,6 @@ export default function Page() {
   const [siteId, setSiteId] = useState<any>();
   const _commonData = useRecoilValue<TCommonData>(commonData);
 
-  interface SiteInt {
-    id: string;
-    name: string;
-    details: string;
-    batteryStatus: 'charging' | 'notCharging';
-    nodeStatus: 'online' | 'offline';
-    towerStatus: 'online' | 'offline';
-    numberOfPersonsConnected: number;
-  }
-
-  const mockNetwork: NetworkDto[] = [
-    {
-      __typename: 'NetworkDto',
-      budget: 1000000.0,
-      countries: ['Country1', 'Country2', 'Country3'],
-      createdAt: '2022-01-16T12:00:00Z',
-      id: '1234567890',
-      isDeactivated: 'false',
-      name: 'Sample Network',
-      networks: ['Network1', 'Network2', 'Network3'],
-      orgId: 'organization123',
-    },
-  ];
   const { data: sitesData, loading: sitesLoading } = useGetAllSitesQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -68,7 +44,7 @@ export default function Page() {
       });
     },
   });
-  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
+  const [addSite, { loading: addSiteLoading }] = useAddSiteToNetworkMutation({
     onCompleted: () => {
       setSnackbarMessage({
         id: 'site-added-success',
@@ -76,6 +52,7 @@ export default function Page() {
         type: 'success' as AlertColor,
         show: true,
       });
+      setIsAddSiteDialogOpen(false);
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -98,15 +75,15 @@ export default function Page() {
       });
     },
   });
-  const handleAddSite = async (data: any) => {
-    setIsAddSiteDialogOpen(true);
-    // await addSite({
-    //   variables: {
-    //     data: {
-    //       site: data.site,
-    //     },
-    //   },
-    // });
+  const handleAddSite = async (values: any, network: string) => {
+    addSite({
+      variables: {
+        networkId: network,
+        data: {
+          site: values.site,
+        },
+      },
+    });
   };
   const handleDelete = async () => {};
   const handleCloseAction = () => setIsAddSiteDialogOpen(false);
@@ -116,16 +93,16 @@ export default function Page() {
     setSiteId(siteId);
   };
   const handleCancel = () => {
-    // Handle cancel operation or close the confirmation dialog
     setIsConfirmationOpen(false);
   };
+  const handleAddSiteAction = () => setIsAddSiteDialogOpen(true);
 
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={sitesLoading || netLoading}
+        isLoading={sitesLoading || netLoading || addSiteLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
@@ -135,7 +112,7 @@ export default function Page() {
             <Typography variant="h6"> My sites</Typography>
           </Grid>
           <Grid item xs={6} container justifyContent={'flex-end'}>
-            <Button variant="contained" onClick={handleAddSite}>
+            <Button variant="contained" onClick={handleAddSiteAction}>
               ADD SITE
             </Button>
           </Grid>

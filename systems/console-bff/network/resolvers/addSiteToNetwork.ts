@@ -5,15 +5,15 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
 import { AddSiteInputDto, SiteDto } from "./types";
 
 @Resolver()
 export class AddSiteToNetworkResolver {
-  @Query(() => SiteDto)
-  async addSite(
+  @Mutation(() => SiteDto)
+  async AddSiteToNetwork(
     @Arg("networkId") networkId: string,
     @Arg("data") data: AddSiteInputDto,
     @Ctx() ctx: Context

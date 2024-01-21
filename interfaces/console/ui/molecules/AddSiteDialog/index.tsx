@@ -24,7 +24,7 @@ type AddSiteDialogProps = {
   isOpen: boolean;
   description: string;
   handleCloseAction: any;
-  handleAddSite: Function;
+  handleAddSite: (values: SiteFormValues, network: string) => void;
   networks: any[];
 };
 
@@ -65,12 +65,8 @@ const AddSiteDialog: React.FC<AddSiteDialogProps> = ({
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        //Loading...
         onSubmit={async (values) => {
-          await handleAddSite({
-            ...values,
-            selectedNetwork,
-          });
+          handleAddSite(values, selectedNetwork);
         }}
       >
         {({

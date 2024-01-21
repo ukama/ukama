@@ -7,35 +7,66 @@
  */
 
 import { colors } from '@/styles/theme';
-import { Site } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 // import Map from '@/ui/molecules/MapComponent';
 import SiteHeader from '@/ui/molecules/SiteHeader';
 import SiteOverallHealth from '@/ui/molecules/SiteHealth';
-import { Grid, Paper, Stack, Typography } from '@mui/material';
+import { AlertColor, Grid, Paper, Stack, Typography } from '@mui/material';
 import { RoundedCard } from '@/styles/global';
 import { SitePowerStatus } from '@/ui/molecules/SvgIcons';
+import SiteDetailsCard from '@/ui/molecules/SiteDetailsCard';
 import GroupIcon from '@mui/icons-material/Group';
 import { useRouter } from 'next/router';
-import { useGetSingleSiteQuery } from '@/generated';
+import AddSiteDialog from '@/ui/molecules/AddSiteDialog';
+import {
+  useGetNetworksQuery,
+  useGetSingleSiteQuery,
+  useGetAllSitesQuery,
+  useGetNodesForSiteLazyQuery,
+  useAddSiteToNetworkMutation,
+} from '@/generated';
 import { TCommonData, TSnackMessage } from '@/types';
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-
-const sites: Site[] = [
-  { name: 'site1', health: 'online', duration: '3 days' },
-  { name: 'site2', health: 'offline', duration: '1 week' },
-  { name: 'site3', health: 'online', duration: '2 days' },
-];
+import { useState } from 'react';
 
 export default function Page() {
-  const handleSiteSelect = (site: any): void => {};
   const router = useRouter();
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [numberOfNodesForSite, setNumberOfNodesForSite] = useState<number>();
+  const [siteId, setSiteId] = useState<string>();
+  const [isAddSiteDialogOpen, setIsAddSiteDialogOpen] = useState(false);
+  const handleCloseAction = () => setIsAddSiteDialogOpen(false);
+  const [addSite, { loading: addSiteLoading }] = useAddSiteToNetworkMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'site-added-success',
+        message: 'Site added successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      setIsAddSiteDialogOpen(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'site-added-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
-  const handleAddSite = () => {
-    // Logic to add a new site
+  const handleAddSite = (values: any, network: string) => {
+    addSite({
+      variables: {
+        networkId: network,
+        data: {
+          site: values.site,
+        },
+      },
+    });
   };
   const handleSiteRestart = () => {
     // Logic to restart a site
@@ -48,10 +79,11 @@ export default function Page() {
     { label: 'Power', value: '100 W' },
     { label: 'Voltage', value: '12 V' },
   ];
+
   const { data: getSiteData, loading: getSiteLoading } = useGetSingleSiteQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
-      siteId: router.query['id'] as string,
+      siteId: (router.query['id'] as string) ?? siteId,
       networkId: _commonData.networkId,
     },
     onError: (err) => {
@@ -63,45 +95,87 @@ export default function Page() {
       });
     },
   });
+
+  const { data: getAllSite, loading: getSitesLoading } = useGetAllSitesQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      networkId: _commonData.networkId,
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'site-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+  const [getNodesForSite, { loading: NodesForSiteLoading }] =
+    useGetNodesForSiteLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setNumberOfNodesForSite(data.getNodesForSite.nodes.length);
+      },
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'nodesForSite-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+  const { data: networkList, loading: netLoading } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const handleAddSiteAction = () => setIsAddSiteDialogOpen(true);
+
+  const handleOnSiteSelect = (siteId: string) => {
+    setSiteId(siteId);
+    getNodesForSite({
+      variables: {
+        siteId: siteId ?? '',
+      },
+    });
+  };
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={false}
+        isLoading={
+          getSiteLoading ||
+          getSitesLoading ||
+          NodesForSiteLoading ||
+          addSiteLoading ||
+          netLoading
+        }
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
         <SiteHeader
-          sites={sites}
-          sitesAction={handleSiteSelect}
-          addSiteAction={handleAddSite}
+          sites={getAllSite?.getAllSites.sites}
+          addSiteAction={handleAddSiteAction}
           restartSiteAction={handleSiteRestart}
+          onSiteSelect={handleOnSiteSelect}
         />
 
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={3}>
-            <RoundedCard>
-              <Typography variant="h6" gutterBottom sx={{ py: 1 }}>
-                Site details
-              </Typography>
-              <Stack direction="column" spacing={2}>
-                <Stack direction="row" spacing={2} alignItems={'center'}>
-                  <Typography variant="subtitle1">Date created:</Typography>
-                  <Typography variant="body2"> July 13 2023</Typography>
-                </Stack>
-                <Stack direction="row" spacing={2} alignItems={'center'}>
-                  <Typography variant="subtitle1"> Location:</Typography>
-                  <Typography variant="body2"> 1000 Nelson Way</Typography>
-                </Stack>
-                <Stack direction="row" spacing={2} alignItems={'center'}>
-                  <Typography variant="subtitle1"> Nodes:</Typography>
-                  <Typography variant="body2"> 1000</Typography>
-                </Stack>
-              </Stack>
-            </RoundedCard>
-          </Grid>
+          <SiteDetailsCard
+            dateCreated={getSiteData?.getSingleSite.createdAt || ''}
+            location={`1000 Nelson Way`}
+            numberOfNodes={numberOfNodesForSite || 0}
+          />
 
           <Grid item xs={6}>
             <RoundedCard>
@@ -124,7 +198,9 @@ export default function Page() {
             <RoundedCard>
               <Stack direction="row" spacing={1}>
                 <GroupIcon />
-                <Typography variant="body1">22</Typography>
+                <Typography variant="body1">
+                  {numberOfNodesForSite || 0}
+                </Typography>
               </Stack>
             </RoundedCard>
           </Grid>
@@ -143,6 +219,14 @@ export default function Page() {
                 batteryHealth={'good'}
                 backhaulHealth={'good'}
                 batteryInfo={batteryInfo}
+              />
+              <AddSiteDialog
+                isOpen={isAddSiteDialogOpen}
+                title={'ADD SITE'}
+                description=""
+                handleCloseAction={handleCloseAction}
+                networks={networkList?.getNetworks?.networks ?? []}
+                handleAddSite={handleAddSite}
               />
             </Paper>
           </Grid>

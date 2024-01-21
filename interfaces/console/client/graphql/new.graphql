@@ -59,6 +59,18 @@ query getSingleSite($siteId: String!, $networkId: String!) {
   }
 }
 
+mutation AddSiteToNetwork($data: AddSiteInputDto!, $networkId: String!) {
+  AddSiteToNetwork(data: $data, networkId: $networkId) {
+    ...networkSite
+  }
+}
+
+mutation addNode($data: AddNodeInput!) {
+  addNode(data: $data) {
+    ...node
+  }
+}
+
 query getNodes($data: GetNodesInput!) {
   getNodes(data: $data) {
     nodes {
@@ -75,6 +87,13 @@ query getNodesByNetwork($networkId: String!) {
   }
 }
 
+query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
 mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {
     id

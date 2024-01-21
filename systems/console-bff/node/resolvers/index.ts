@@ -7,6 +7,7 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetNodesForSiteResolver } from "./GetNodesForSite";
 import { AddNodeResolver } from "./addNode";
 import { AddNodeToSiteResolver } from "./addNodeToSite";
 import { AttachNodeResolver } from "./attachNode";
@@ -31,6 +32,7 @@ const resolvers: NonEmptyArray<any> = [
   UpdateNodeResolver,
   DetachNodeResolver,
   GetNodeAppsResolver,
+  GetNodesForSiteResolver,
   AddNodeToSiteResolver,
   GetNodeLocationResolver,
   UpdateNodeStateResolver,

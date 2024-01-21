@@ -18,29 +18,22 @@ import {
 } from '@mui/material';
 import { FiberManualRecord, Add } from '@mui/icons-material';
 import { colors } from '@/styles/theme';
-
-type Site = {
-  name: string;
-  health: 'online' | 'offline';
-  duration: string;
-};
+import { SiteDto } from '@/generated';
 
 type SiteHeaderProps = {
-  sites: Site[];
-  sitesAction: (site: Site) => void;
+  sites?: SiteDto[];
   addSiteAction: () => void;
   restartSiteAction: () => void;
+  onSiteSelect: (siteId: string) => void; // New prop for passing selected site ID to parent
 };
 
 const SiteHeader: React.FC<SiteHeaderProps> = ({
-  sites,
-  sitesAction,
+  sites = [],
   addSiteAction,
+  onSiteSelect,
   restartSiteAction,
 }) => {
-  const [selectedSite, setSelectedSite] = React.useState('site1');
-  const [siteHealth, setSiteHealth] = React.useState('online');
-  const [isSiteSelected, setIsSiteSelected] = React.useState(false);
+  const [selectedSite, setSelectedSite] = React.useState('');
 
   const handleSiteChange = (e: any) => {
     e.stopPropagation();
@@ -48,13 +41,13 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
     if (selectedValue === undefined) {
       return;
     } else {
-      setIsSiteSelected(true);
-      const selectedSite = sites.find((site) => site.name === selectedValue);
+      const selectedSite = sites.find((site) => site.id === selectedValue);
       if (selectedSite) {
-        sitesAction(selectedSite);
+        onSiteSelect(selectedSite.id);
       }
     }
     setSelectedSite(selectedValue);
+    onSiteSelect(selectedSite);
   };
 
   return (
@@ -80,7 +73,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
               }}
               displayEmpty
             >
-              {sites.map(({ name, health }) => (
+              {sites.map(({ name, isDeactivated }) => (
                 <MenuItem
                   key={name}
                   value={name}
@@ -98,7 +91,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                   }}
                 >
                   <Stack direction={'row'} alignItems={'center'} spacing={1}>
-                    {health === 'online' ? (
+                    {isDeactivated ? (
                       <FiberManualRecord
                         htmlColor={colors.green}
                         fontSize="small"
@@ -123,11 +116,6 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                 Add site
               </Button>
             </Select>
-            <Typography variant="h6">
-              {`is ${siteHealth} for ${
-                sites.find((s) => s.name === selectedSite)?.duration
-              }`}
-            </Typography>
           </Stack>
         </Grid>
 
