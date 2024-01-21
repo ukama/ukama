@@ -7,7 +7,6 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { GetNodesForSiteResolver } from "./GetNodesForSite";
 import { AddNodeResolver } from "./addNode";
 import { AddNodeToSiteResolver } from "./addNodeToSite";
 import { AttachNodeResolver } from "./attachNode";
@@ -19,6 +18,7 @@ import { GetNodeAppsResolver } from "./getNodeApps";
 import { GetNodeLocationResolver } from "./getNodeLocation";
 import { GetNodesResolver } from "./getNodes";
 import { GetNodesByNetworkResolver } from "./getNodesByNetwork";
+import { GetNodesForSiteResolver } from "./getNodesForSite";
 import { GetNodesLocationResolver } from "./getNodesLocation";
 import { ReleaseNodeFromSiteResolver } from "./releaseNodeFromSite";
 import { UpdateNodeResolver } from "./updateNode";
