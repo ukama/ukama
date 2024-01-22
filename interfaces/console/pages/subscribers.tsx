@@ -36,6 +36,7 @@ import {
   VerticalContainer,
 } from '@/styles/global';
 import { colors } from '@/styles/theme';
+import TabPanel from '@/ui/molecules/TabPanel';
 import { TCommonData, TSnackMessage } from '@/types';
 import AddSubscriberDialog from '@/ui/molecules/AddSubscriber';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
@@ -45,10 +46,10 @@ import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import SubscriberDetails from '@/ui/molecules/SubscriberDetails';
 import TopUpData from '@/ui/molecules/TopUpData';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
-import { AlertColor, Stack } from '@mui/material';
+import { AlertColor, Stack, Box, Typography, Tabs, Tab } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-
+import BasePlan from '@/ui/molecules/BasePlan';
 const Page = () => {
   const [search, setSearch] = useState<string>('');
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -68,6 +69,7 @@ const Page = () => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
+  const [selectedTab, setSelectedTab] = useState<number>(0);
   const [subcriberInfo, setSubscriberInfo] = useState<any>();
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -648,8 +650,16 @@ const Page = () => {
       });
     }
   };
+
+  const onTabSelected = (_: any, value: number) => {
+    setSelectedTab(value);
+  };
   return (
     <Stack direction={'column'}>
+      <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
+        <Tab label="MY SUBSCRIBERS" id="tab-my-subscribers" />
+        <Tab label="ANALYTICS" id="tab-analytics" />
+      </Tabs>
       <LoadingWrapper
         radius="small"
         width={'100%'}
@@ -660,92 +670,112 @@ const Page = () => {
             : 'transparent',
         }}
       >
-        <PageContainer
-          sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
-        >
-          <PageContainerHeader
-            title={'My subscribers'}
-            subtitle={`${subscriber.subscribers.length}`}
-            buttonTitle={'Add Subscriber'}
-            handleButtonAction={handleAddSubscriberModal}
-            onSearchChange={(e: string) => setSearch(e)}
-            search={search}
-          />
-          <VerticalContainer>
-            <ContainerMax mt={4.5}>
-              <DataTableWithOptions
-                icon={SubscriberIcon}
-                isRowClickable={false}
-                columns={SUBSCRIBER_TABLE_COLUMNS}
-                dataset={structureData(subscriber)}
-                menuOptions={SUBSCRIBER_TABLE_MENU}
-                onMenuItemClick={onTableMenuItem}
-                emptyViewLabel={'No subscribers yet!'}
-                getSelectedNetwork={getSelectedNetwork}
-                networkList={networkList?.getNetworks?.networks ?? []}
+        <TabPanel id={'tab-my-subscribers'} value={selectedTab} index={0}>
+          <PageContainer
+            sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
+          >
+            <Box component="div">
+              <Typography variant="h6">Data plans </Typography>
+              <BasePlan
+                subscriberCount={subscriber?.subscribers?.length}
+                dataPlans={packages?.packages}
               />
-            </ContainerMax>
-          </VerticalContainer>
-          <AddSubscriberDialog
-            onSuccess={subscriberSuccess}
-            open={isAddSubscriberDialogOpen}
-            handleRoamingInstallation={handleRoamingInstallation}
-            onClose={OnCloseAddSubcriber}
-            qrCode={qrCode}
-            submitButtonState={
-              addSubscriberLoading || allocateSimLoading || packagesLoading
-            }
-            sims={
-              simList?.sims?.filter(
-                (sim: { isPhysical: string }) => sim.isPhysical === 'true',
-              ) || []
-            }
-            pkgList={packages.packages}
-            loading={
-              addSubscriberLoading ||
-              allocateSimLoading ||
-              packagesLoading ||
-              toggleSimStatusLoading
-              // activatePackageSimLoading
-            }
-            pSimCount={simStatData?.getSimPoolStats.physical}
-            eSimCount={simStatData?.getSimPoolStats.physical}
-          />
-          <DeleteConfirmation
-            open={isConfirmationOpen}
-            onDelete={handleDeleteSubscriber}
-            onCancel={handleCancel}
-            itemName={deletedSubscriber}
-            loading={deleteSubscriberLoading}
-          />
-          <SubscriberDetails
-            ishowSubscriberDetails={isSubscriberDetailsOpen}
-            handleClose={handleCloseSubscriberDetails}
-            subscriberId={selectedSubscriber}
-            onCancel={handleCloseSubscriberDetails}
-            subscriberInfo={subcriberInfo}
-            handleSimActionOption={handleSimAction}
-            handleUpdateSubscriber={handleUpdateSubscriber}
-            loading={updateSubscriberLoading || deleteSimLoading}
-            handleDeleteSubscriber={handleDeleteSubscriberModal}
-            simStatusLoading={toggleSimStatusLoading}
-            currentSite={
-              sitesData?.getSites?.sites &&
-              sitesData?.getSites?.sites.length > 0
-                ? sitesData?.getSites?.sites[0].name
-                : '-'
-            }
-          />
-          <TopUpData
-            isToPup={isToPupData}
-            onCancel={handleCloseTopUp}
-            subscriberId={topUpDetails.subscriberId}
-            handleTopUp={handleTopUp}
-            loadingTopUp={packagesLoading || addPackageToSimLoading}
-            packages={packages.packages}
-            sims={subscriberSimList || []}
-          />
-        </PageContainer>
+            </Box>
+          </PageContainer>
+          <PageContainer
+            sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
+          >
+            <PageContainerHeader
+              title={'My subscribers'}
+              subtitle={`${subscriber.subscribers.length}`}
+              buttonTitle={'Add Subscriber'}
+              handleButtonAction={handleAddSubscriberModal}
+              onSearchChange={(e: string) => setSearch(e)}
+              search={search}
+            />
+            <VerticalContainer>
+              <ContainerMax mt={4.5}>
+                <DataTableWithOptions
+                  icon={SubscriberIcon}
+                  isRowClickable={false}
+                  columns={SUBSCRIBER_TABLE_COLUMNS}
+                  dataset={structureData(subscriber)}
+                  menuOptions={SUBSCRIBER_TABLE_MENU}
+                  onMenuItemClick={onTableMenuItem}
+                  emptyViewLabel={'No subscribers yet! 100 SIMs left in pool.'}
+                  getSelectedNetwork={getSelectedNetwork}
+                  networkList={networkList?.getNetworks?.networks ?? []}
+                />
+              </ContainerMax>
+            </VerticalContainer>
+            <AddSubscriberDialog
+              onSuccess={subscriberSuccess}
+              open={isAddSubscriberDialogOpen}
+              handleRoamingInstallation={handleRoamingInstallation}
+              onClose={OnCloseAddSubcriber}
+              qrCode={qrCode}
+              submitButtonState={
+                addSubscriberLoading || allocateSimLoading || packagesLoading
+              }
+              sims={
+                simList?.sims?.filter(
+                  (sim: { isPhysical: string }) => sim.isPhysical === 'true',
+                ) || []
+              }
+              pkgList={packages.packages}
+              loading={
+                addSubscriberLoading ||
+                allocateSimLoading ||
+                packagesLoading ||
+                toggleSimStatusLoading
+                // activatePackageSimLoading
+              }
+              pSimCount={simStatData?.getSimPoolStats.physical}
+              eSimCount={simStatData?.getSimPoolStats.physical}
+            />
+            <DeleteConfirmation
+              open={isConfirmationOpen}
+              onDelete={handleDeleteSubscriber}
+              onCancel={handleCancel}
+              itemName={deletedSubscriber}
+              loading={deleteSubscriberLoading}
+            />
+            <SubscriberDetails
+              ishowSubscriberDetails={isSubscriberDetailsOpen}
+              handleClose={handleCloseSubscriberDetails}
+              subscriberId={selectedSubscriber}
+              onCancel={handleCloseSubscriberDetails}
+              subscriberInfo={subcriberInfo}
+              handleSimActionOption={handleSimAction}
+              handleUpdateSubscriber={handleUpdateSubscriber}
+              loading={updateSubscriberLoading || deleteSimLoading}
+              handleDeleteSubscriber={handleDeleteSubscriberModal}
+              simStatusLoading={toggleSimStatusLoading}
+              currentSite={
+                sitesData?.getSites?.sites &&
+                sitesData?.getSites?.sites.length > 0
+                  ? sitesData?.getSites?.sites[0].name
+                  : '-'
+              }
+            />
+            <TopUpData
+              isToPup={isToPupData}
+              onCancel={handleCloseTopUp}
+              subscriberId={topUpDetails.subscriberId}
+              handleTopUp={handleTopUp}
+              loadingTopUp={packagesLoading || addPackageToSimLoading}
+              packages={packages.packages}
+              sims={subscriberSimList || []}
+            />
+          </PageContainer>
+        </TabPanel>
+        <TabPanel id={'tab-analytics'} value={selectedTab} index={1}>
+          <PageContainer
+            sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
+          >
+            <Typography variant="h6">Yearly overview</Typography>
+          </PageContainer>
+        </TabPanel>
       </LoadingWrapper>
     </Stack>
   );
