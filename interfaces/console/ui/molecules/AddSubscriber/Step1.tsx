@@ -102,7 +102,7 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                   handleSimTypeChange={handleSimTypeChange}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={6} >
                 <SimTypeRadio
                   simType="pSim"
                   label="pSIM"
