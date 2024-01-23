@@ -50,6 +50,9 @@ import { AlertColor, Stack, Box, Typography, Tabs, Tab } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import BasePlan from '@/ui/molecules/BasePlan';
+import SubscriberOverView from '@/ui/molecules/SubscriberOverView';
+import SubscriberSummary from '@/ui/molecules/SubscriberSummary';
+
 const Page = () => {
   const [search, setSearch] = useState<string>('');
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -773,8 +776,14 @@ const Page = () => {
           <PageContainer
             sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
           >
-            <Typography variant="h6">Yearly overview</Typography>
+            <SubscriberOverView revenuePerYear={200} />
           </PageContainer>
+          <SubscriberSummary
+            total={200}
+            monthlySales={23}
+            returning={0}
+            averageSale={0}
+          />
         </TabPanel>
       </LoadingWrapper>
     </Stack>

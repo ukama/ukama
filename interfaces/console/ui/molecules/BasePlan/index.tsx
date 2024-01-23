@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, Stack, Typography, Box } from '@mui/material';
 import GroupIcon from '@mui/icons-material/Group';
 import { colors } from '@/styles/theme';
@@ -12,7 +12,7 @@ interface BasePlanProps {
 const BasePlan: React.FC<BasePlanProps> = ({ subscriberCount, dataPlans }) => {
   if (dataPlans.length === 0) {
     return (
-      <div style={{ minHeight: '200px', paddingTop: 60 }}>
+      <div style={{ minHeight: '200px', paddingTop: 100 }}>
         <Typography variant="body1" align="center">
           No data plan yet.
         </Typography>

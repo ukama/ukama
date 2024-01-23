@@ -20,3 +20,4 @@ export { PagePlaceholderSvg } from './PagePlaceholderSvg';
 export { NoBillYet } from './NoBillYet';
 export { NodeIcon } from './NodeIcon';
 export { SiteHealth } from './SiteHealth';
+export { SalesIcon } from './SalesIcon';

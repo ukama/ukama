@@ -34,7 +34,6 @@ interface SubscriberDialogProps {
   submitButtonState: boolean;
   packages: PackageDto[];
   sims: SimDto[];
-
   selectedSimType: string;
 }
 
@@ -72,6 +71,7 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
       isButtonDisabled = !plan || !simIccid;
       return isButtonDisabled;
     };
+
     const isButtonDisabled = getButtonState();
     return (
       <>

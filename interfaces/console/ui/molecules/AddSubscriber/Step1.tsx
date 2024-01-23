@@ -47,8 +47,11 @@ const Step1: React.FC<SubscriberDialogProps> = ({
 
   const [selectedSimType, setSelectedSimType] = useState<string>('eSim');
   const [roamingStatus, setRoamingStatus] = useState<boolean>(false);
-  const handleSimTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedSimType(event.target.value);
+
+  const handleSimTypeChange = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedSimType(value);
   };
 
   return (
@@ -102,7 +105,7 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                   handleSimTypeChange={handleSimTypeChange}
                 />
               </Grid>
-              <Grid item xs={6} >
+              <Grid item xs={6}>
                 <SimTypeRadio
                   simType="pSim"
                   label="pSIM"
