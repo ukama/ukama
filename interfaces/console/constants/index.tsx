@@ -148,6 +148,14 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
+export const HISTORY_SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  { id: 'date', label: 'Date', minWidth: 160 },
+  { id: 'subscriber', label: 'Subscriber', minWidth: 180 },
+  { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
+  { id: 'category', label: 'Category', minWidth: 140 },
+  { id: 'subtotal', label: 'Subtotal', align: 'right', minWidth: 80 },
+];
+
 export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   {
     id: 1,

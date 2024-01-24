@@ -15,10 +15,10 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import colors from '@/styles/theme/colors';
 
-interface SalesMetric {
+interface SubscriberMetric {
   label: string;
   value: number;
-  icon: React.ReactNode; // React Node for custom icons
+  icon: React.ReactNode;
 }
 
 interface SubscriberSummaryProps {
@@ -41,50 +41,48 @@ const SubscriberSummary: React.FC<SubscriberSummaryProps> = ({
     setSelectedDate(newDate);
   };
 
-  const salesMetrics: SalesMetric[] = [
+  const subscriberMetrics: SubscriberMetric[] = [
     {
       label: 'Monthly Sales',
       value: monthlySales,
       icon: <AttachMoneyIcon sx={{ color: colors.primaryMain }} />,
     },
     {
-      label: 'Total Sales',
+      label: 'New/total subscribers',
       value: total,
       icon: <PeopleAltIcon sx={{ color: colors.darkPurple }} />,
     },
     {
-      label: 'Returning Customers',
+      label: 'Returning subscribers',
       value: returning,
       icon: <PeopleAltIcon sx={{ color: colors.primaryMain }} />,
     },
-    { label: 'Average Sale', value: averageSale, icon: <BarChartIcon /> },
+    { label: 'Average sale/sub', value: averageSale, icon: <BarChartIcon /> },
   ];
   const filteredMetrics = selectedDate
-    ? salesMetrics.map((metric) => ({
-        ...metric,
-        value: Math.round(Math.random() * 1000), // Replace this with actual data fetching based on the selected date
+    ? subscriberMetrics.map((metric) => ({
+        ...metric, //
+        value: Math.round(Math.random() * 1000),
       }))
-    : salesMetrics;
+    : subscriberMetrics;
 
   return (
     <>
       <Grid container spacing={2} sx={{ marginTop: 2 }}>
         <Grid item xs={12}>
           <Stack direction="row" spacing={2} alignItems={'center'}>
-            <Typography variant="body1"> overview</Typography>
+            <Typography variant="body1"> Overview</Typography>
             <Select
+              autoWidth={true}
               value={selectedDate}
               onChange={handleDateChange}
               displayEmpty
-              sx={{ width: '10%' }}
             >
               <MenuItem value="" disabled>
                 Select Date
               </MenuItem>
-              {/* Add your date options here */}
               <MenuItem value="2024-01-23">2024-01-23</MenuItem>
               <MenuItem value="2024-01-24">2024-01-24</MenuItem>
-              {/* Add more date options as needed */}
             </Select>
           </Stack>
         </Grid>
@@ -104,7 +102,17 @@ const SubscriberSummary: React.FC<SubscriberSummaryProps> = ({
                 </IconButton>
                 <Stack direction="column" spacing={2}>
                   <Typography variant="subtitle2">{metric.label}</Typography>
-                  <Typography variant="h5">${metric.value}</Typography>
+                  <Typography variant="h5">
+                    {metric.label === 'Returning subscribers'
+                      ? `${metric.value} %`
+                      : metric.label === 'Monthly Sales'
+                      ? `$ ${metric.value}`
+                      : metric.label === 'New/total subscribers'
+                      ? `${metric.value}`
+                      : metric.label === 'Average sale/sub'
+                      ? `$ ${metric.value}`
+                      : metric.value}
+                  </Typography>
                 </Stack>
               </Stack>
             </RoundedCard>

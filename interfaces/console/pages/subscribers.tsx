@@ -7,7 +7,11 @@
  */
 
 import { commonData, snackbarMessage } from '@/app-recoil';
-import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
+import {
+  SUBSCRIBER_TABLE_COLUMNS,
+  HISTORY_SUBSCRIBER_TABLE_COLUMNS,
+  SUBSCRIBER_TABLE_MENU,
+} from '@/constants';
 import {
   PackagesResDto,
   SubscribersResDto,
@@ -52,6 +56,7 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import BasePlan from '@/ui/molecules/BasePlan';
 import SubscriberOverView from '@/ui/molecules/SubscriberOverView';
 import SubscriberSummary from '@/ui/molecules/SubscriberSummary';
+import HistoryIcon from '@mui/icons-material/History';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
@@ -657,6 +662,31 @@ const Page = () => {
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
   };
+  const dummyData = [
+    {
+      date: '2024-01-24',
+      subscriber: 'John Doe',
+      dataPlan: 'Basic',
+      category: 'Personal',
+      subtotal: 50.0,
+    },
+    {
+      date: '2024-01-25',
+      subscriber: 'Jane Smith',
+      dataPlan: 'Premium',
+      category: 'Business',
+      subtotal: 75.0,
+    },
+    {
+      date: '2024-01-26',
+      subscriber: 'Bob Johnson',
+      dataPlan: 'Standard',
+      category: 'Family',
+      subtotal: 60.0,
+    },
+    // Add more dummy data as needed
+  ];
+
   return (
     <Stack direction={'column'}>
       <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
@@ -784,6 +814,24 @@ const Page = () => {
             returning={0}
             averageSale={0}
           />
+          <PageContainer
+            sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
+          >
+            <Typography variant="h6">Purchase history</Typography>
+            <ContainerMax mt={4.5}>
+              <DataTableWithOptions
+                icon={HistoryIcon}
+                isRowClickable={false}
+                columns={HISTORY_SUBSCRIBER_TABLE_COLUMNS}
+                dataset={dummyData}
+                menuOptions={SUBSCRIBER_TABLE_MENU}
+                onMenuItemClick={onTableMenuItem}
+                emptyViewLabel={'No purchase history yet.'}
+                getSelectedNetwork={getSelectedNetwork}
+                networkList={networkList?.getNetworks?.networks ?? []}
+              />
+            </ContainerMax>
+          </PageContainer>
         </TabPanel>
       </LoadingWrapper>
     </Stack>
