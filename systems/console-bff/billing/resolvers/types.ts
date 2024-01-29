@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class CurrentBillDto {
@@ -94,6 +94,167 @@ export class CreateCustomerDto {
 
   @Field()
   email: string;
+}
+
+@ObjectType()
+export class Fee {
+  @Field(() => Int)
+  amountCents: number;
+
+  @Field()
+  amountCurrency: string;
+
+  @Field(() => Int)
+  vatAmountCents: number;
+
+  @Field()
+  vatAmountCurrency: string;
+
+  @Field(() => Int)
+  totalAmountCents: number;
+
+  @Field()
+  totalAmountCurrency: string;
+
+  @Field(() => Int)
+  eventsCount: number;
+
+  @Field(() => Float)
+  units: number;
+
+  @Field(() => FeeItem)
+  item: FeeItem;
+}
+
+@ObjectType()
+export class FeeItem {
+  @Field()
+  type: string;
+
+  @Field()
+  code: string;
+
+  @Field()
+  name: string;
+}
+@ObjectType()
+export class RawInvoiceDto {
+  @Field()
+  issuingDate: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  paymentStatus: string;
+
+  @Field(() => Int)
+  amountCents: number;
+
+  @Field()
+  amountCurrency: string;
+
+  @Field(() => Int)
+  vatAmountCents: number;
+
+  @Field()
+  vatAmountCurrency: string;
+
+  @Field(() => Int)
+  totalAmountCents: number;
+
+  @Field()
+  totalAmountCurrency: string;
+
+  @Field()
+  fileURL: string;
+
+  // Assuming Customer, Subscription, and Fee are also GraphQL types
+  @Field(() => Customer)
+  customer: Customer;
+
+  @Field(() => [Subscription])
+  subscriptions: Subscription[];
+
+  @Field(() => [Fee])
+  fees: Fee[];
+}
+export class Subscription {
+  @Field()
+  externalCustomerId: string;
+
+  @Field()
+  externalId: string;
+
+  @Field()
+  planCode: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  createdAt: string;
+
+  @Field()
+  startedAt: string;
+
+  @Field()
+  canceledAt: string;
+
+  @Field()
+  terminatedAt: string;
+}
+@ObjectType()
+export class Customer {
+  @Field()
+  externalId: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  addressLine1: string;
+
+  @Field()
+  legalName: string;
+
+  @Field()
+  legalNumber: string;
+
+  @Field()
+  phone: string;
+
+  @Field(() => Float)
+  vatRate: number;
+
+  @Field()
+  createdAt: string;
+}
+@ObjectType()
+export class InvoiceDto {
+  @Field()
+  id: string;
+
+  @Field()
+  susbcriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  period: Date;
+
+  @Field()
+  rawInvoice: string;
+
+  @Field()
+  isPaid: boolean;
+
+  @Field()
+  createdAt: Date;
 }
 
 @ObjectType()
