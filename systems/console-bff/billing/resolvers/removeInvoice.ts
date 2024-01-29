@@ -11,7 +11,7 @@ import { CBooleanResponse } from "../../common/types";
 import { Context } from "../context";
 
 @Resolver()
-export class DeleteInvoiceResolver {
+export class RemoveInvoiceResolver {
   @Mutation(() => CBooleanResponse)
   async removeInvoice(
     @Arg("invoiceId") invoiceId: string,

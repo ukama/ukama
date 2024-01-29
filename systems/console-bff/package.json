@@ -18,6 +18,7 @@
     "gateway-dev": "nodemon --watch \"gateway/**\" --ext \"ts,json,graphql\" --exec \"ts-node gateway/index.ts\"",
     "network-dev": "nodemon --watch \"network/**\" --ext \"ts,json,graphql\" --exec \"ts-node network/index.ts\"",
     "member-dev": "nodemon --watch \"member/**\" --ext \"ts,json,graphql\" --exec \"ts-node member/index.ts\"",
+    "billing-dev": "nodemon --watch \"billing/**\" --ext \"ts,json,graphql\" --exec \"ts-node billing/index.ts\"",
     "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"ts-node node/index.ts\"",
     "subscriber-dev": "nodemon --watch \"subscriber/**\" --ext \"ts,json,graphql\" --exec \"ts-node subscriber/index.ts\"",
     "sim-dev": "nodemon --watch \"sim/**\" --ext \"ts,json,graphql\" --exec \"ts-node sim/index.ts\"",

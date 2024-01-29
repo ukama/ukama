@@ -86,99 +86,7 @@ export class StripeCustomer {
   @Field()
   email: string;
 }
-
-@InputType()
-export class CreateCustomerDto {
-  @Field()
-  name: string;
-
-  @Field()
-  email: string;
-}
-
 @ObjectType()
-export class Fee {
-  @Field(() => Int)
-  amountCents: number;
-
-  @Field()
-  amountCurrency: string;
-
-  @Field(() => Int)
-  vatAmountCents: number;
-
-  @Field()
-  vatAmountCurrency: string;
-
-  @Field(() => Int)
-  totalAmountCents: number;
-
-  @Field()
-  totalAmountCurrency: string;
-
-  @Field(() => Int)
-  eventsCount: number;
-
-  @Field(() => Float)
-  units: number;
-
-  @Field(() => FeeItem)
-  item: FeeItem;
-}
-
-@ObjectType()
-export class FeeItem {
-  @Field()
-  type: string;
-
-  @Field()
-  code: string;
-
-  @Field()
-  name: string;
-}
-@ObjectType()
-export class RawInvoiceDto {
-  @Field()
-  issuingDate: string;
-
-  @Field()
-  status: string;
-
-  @Field()
-  paymentStatus: string;
-
-  @Field(() => Int)
-  amountCents: number;
-
-  @Field()
-  amountCurrency: string;
-
-  @Field(() => Int)
-  vatAmountCents: number;
-
-  @Field()
-  vatAmountCurrency: string;
-
-  @Field(() => Int)
-  totalAmountCents: number;
-
-  @Field()
-  totalAmountCurrency: string;
-
-  @Field()
-  fileURL: string;
-
-  // Assuming Customer, Subscription, and Fee are also GraphQL types
-  @Field(() => Customer)
-  customer: Customer;
-
-  @Field(() => [Subscription])
-  subscriptions: Subscription[];
-
-  @Field(() => [Fee])
-  fees: Fee[];
-}
 export class Subscription {
   @Field()
   externalCustomerId: string;
@@ -233,6 +141,98 @@ export class Customer {
   @Field()
   createdAt: string;
 }
+
+@InputType()
+export class CreateCustomerDto {
+  @Field()
+  name: string;
+
+  @Field()
+  email: string;
+}
+@ObjectType()
+export class FeeItem {
+  @Field()
+  type: string;
+
+  @Field()
+  code: string;
+
+  @Field()
+  name: string;
+}
+@ObjectType()
+export class Fee {
+  @Field(() => Int)
+  amountCents: number;
+
+  @Field()
+  amountCurrency: string;
+
+  @Field(() => Int)
+  vatAmountCents: number;
+
+  @Field()
+  vatAmountCurrency: string;
+
+  @Field(() => Int)
+  totalAmountCents: number;
+
+  @Field()
+  totalAmountCurrency: string;
+
+  @Field(() => Int)
+  eventsCount: number;
+
+  @Field(() => Float)
+  units: number;
+
+  @Field(() => FeeItem)
+  item: FeeItem;
+}
+
+@ObjectType()
+export class RawInvoiceDto {
+  @Field()
+  issuingDate: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  paymentStatus: string;
+
+  @Field(() => Int)
+  amountCents: number;
+
+  @Field()
+  amountCurrency: string;
+
+  @Field(() => Int)
+  vatAmountCents: number;
+
+  @Field()
+  vatAmountCurrency: string;
+
+  @Field(() => Int)
+  totalAmountCents: number;
+
+  @Field()
+  totalAmountCurrency: string;
+
+  @Field()
+  fileURL: string;
+
+  @Field(() => Customer)
+  customer: Customer;
+
+  @Field(() => [Subscription])
+  subscriptions: Subscription[];
+
+  @Field(() => [Fee])
+  fees: Fee[];
+}
+
 @ObjectType()
 export class InvoiceDto {
   @Field()
@@ -247,8 +247,8 @@ export class InvoiceDto {
   @Field()
   period: Date;
 
-  @Field()
-  rawInvoice: string;
+  @Field(() => RawInvoiceDto)
+  rawInvoice: RawInvoiceDto;
 
   @Field()
   isPaid: boolean;
