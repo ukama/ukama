@@ -730,3 +730,87 @@ mutation Coverage($siteId: String!, $data: CoverageInput!) {
     ...site
   }
 }
+### Billing Start ###
+fragment invoice on InvoiceDto {
+  id
+  subscriberId
+  networkId
+  period
+  rawInvoice {
+    issuingDate
+    status
+    paymentStatus
+    amountCents
+    amountCurrency
+    vatAmountCents
+    vatAmountCurrency
+    totalAmountCents
+    totalAmountCurrency
+    fileURL
+    customer {
+      externalId
+      name
+      email
+      addressLine1
+      legalName
+      legalNumber
+      phone
+      vatRate
+      createdAt
+    }
+    subscriptions {
+      externalCustomerId
+      externalId
+      planCode
+      status
+      createdAt
+      startedAt
+      canceledAt
+      terminatedAt
+    }
+    fees {
+      amountCents
+      amountCurrency
+      vatAmountCents
+      vatAmountCurrency
+      totalAmountCents
+      totalAmountCurrency
+      eventsCount
+      units
+      item {
+        type
+        code
+        name
+      }
+    }
+  }
+  isPaid
+  createdAt
+}
+
+query getInvoiceByNetwork($networkId: String!) {
+  getInvoiceByNetwork(networkId: $networkId) {
+    invoices {
+      ...invoice
+    }
+  }
+}
+
+query getInvoiceBySubscriber($subscriber: String!) {
+  getInvoiceBySubscriber(subscriber: $subscriber) {
+    invoices {
+      ...invoice
+    }
+  }
+}
+
+query getInvoice($invoiceId: String!) {
+  getInvoice(invoiceId: $invoiceId) {
+    ...invoice
+  }
+}
+
+mutation removeInvoice($invoiceId: String!) {
+  removeInvoice(invoiceId: $invoiceId) {
+  }
+}
