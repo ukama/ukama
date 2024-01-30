@@ -13,6 +13,23 @@ BLUE='\033[38;5;39m'
 NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
 
+set_env() {
+
+    json_file=$1
+
+    export OWNEREMAIL=$(jq -r '.deploy.env.owneremail' "$json_file")
+    export OWNERNAME=$(jq -r '.deploy.env.ownername' "$json_file")
+    export ORGNAME=$(jq -r '.deploy.env.orgname' "$json_file")
+    export ORGID=$(jq -r '.deploy.env.orgid' "$json_file")
+    export KEY=$(jq -r '.deploy.env.key' "$json_file")
+    export MAILERHOST=$(jq -r '.deploy.env.mailer_host' "$json_file")
+    export MAILERPORT=$(jq -r '.deploy.env.mailer_port' "$json_file")
+    export MAILERUSERNAME=$(jq -r '.deploy.env.mailer_username' "$json_file")
+    export MAILERPASSWORD=$(jq -r '.deploy.env.mailer_password' "$json_file")
+    export LAGOAPIKEY=$(jq -r '.deploy.env.lago_api_key' "$json_file")
+    export LOCAL_HOST_IP=$(jq -r '.deploy.env.local_host_ip' "$json_file")
+}
+
 register_user() {
     echo  "$TAG Signing up Owner user"
     flow=$(curl --location --silent 'http://localhost:4434/self-service/registration/api')
@@ -40,12 +57,14 @@ if [ "$1" = "system" ]; then
 
     system=$2
     path=$3
-    pwd=`cwd`
-    
+    json_file=$4
+    cwd=`pwd`
+
+    set_env $json_file
     cd "$path" || exit 1
 
     echo  "$TAG Running $system ..."
-    docker compose up -d > /dev/null 2>&1
+    docker-compose up -d > /dev/null 2>&1
     echo  "$TAG $system is up ..."
 
     case $system in
@@ -62,12 +81,18 @@ if [ "$1" = "system" ]; then
             ;;
     esac
 
-    cd $pwd
+    cd $cwd
 
 elif [ "$1" = "node" ]; then
+
     image_file=$2.img
+
+    # so we can shutdown QEMU gracefully
+    sudo apt-get install qemu-guest-agent
+
     sudo qemu-system-x86_64 -hda ${image_file} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
-         -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" || exit 1
+         -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" \
+         -qmp tcp:0:3333,server,nowait &
 fi
 
 exit 0

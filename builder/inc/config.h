@@ -29,6 +29,9 @@ typedef struct buildConfig_ {
 
     int  nodeCount;
     char *nodeIDsList;
+    char *kernelImage;
+    char *initRAMImage;
+    char *diskImage;
     char *systemsList;
     char *interfacesList;
 } BuildConfig;
@@ -44,6 +47,7 @@ typedef struct deployConfig_ {
 
 typedef struct config_ {
 
+    char        *fileName;
     SetupConfig *setup;
     BuildConfig *build;
     DeployConfig *deploy;

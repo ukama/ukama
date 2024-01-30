@@ -92,7 +92,7 @@ elif [ "$1" = "node" ]; then
 
     # create bootable os image
     echo "Creating bootsable OS image"
-    ./mkimage.sh ${node_id}   || { echo "Unable to make OS image"; exit 1; }
+    ./mkimage.sh ${node_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
 
     # build all the capps
     echo "Building all apps"
