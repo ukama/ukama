@@ -41,6 +41,12 @@ class NodeAPI extends RESTDataSource {
       parseNodesRes(res)
     );
   }
+  async getNodesForSite(siteId: string): Promise<Nodes> {
+    return this.get(`/${VERSION}/${NODES}/sites/${siteId}`).then(res =>
+      parseNodesRes(res)
+    );
+  }
+
   async deleteNodeFromOrg(args: NodeInput): Promise<DeleteNode> {
     return this.delete(`/${VERSION}/${NODES}/${args.id}/sites`).then(() =>
       this.delete(`${args.id}`).then(() => {

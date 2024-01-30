@@ -11,15 +11,15 @@ import { Context } from "../context";
 import { SiteDto } from "./types";
 
 @Resolver()
-export class GetSiteResolver {
+export class GetSingleSiteResolver {
   @Query(() => SiteDto)
-  async getSite(
+  async getSingleSite(
     @Arg("networkId") networkId: string,
     @Arg("siteId") siteId: string,
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
     const { dataSources } = ctx;
 
-    return dataSources.dataSource.getSite(networkId, siteId);
+    return dataSources.dataSource.getSingleSite(networkId, siteId);
   }
 }

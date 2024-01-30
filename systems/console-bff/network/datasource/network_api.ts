@@ -40,13 +40,16 @@ class NetworkApi extends RESTDataSource {
     );
   };
 
-  getSites = async (networkId: string): Promise<SitesResDto> => {
+  getAllSites = async (networkId: string): Promise<SitesResDto> => {
     return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
       dtoToSitesDto(res)
     );
   };
 
-  getSite = async (siteId: string, networkId: string): Promise<SiteDto> => {
+  getSingleSite = async (
+    siteId: string,
+    networkId: string
+  ): Promise<SiteDto> => {
     return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
       res => dtoToSiteDto(res)
     );
@@ -67,7 +70,7 @@ class NetworkApi extends RESTDataSource {
     }).then(res => dtoToNetworkDto(res));
   };
 
-  addSite = async (
+  addSiteToNetwork = async (
     networkId: string,
     req: AddSiteInputDto
   ): Promise<SiteDto> => {

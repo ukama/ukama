@@ -10,9 +10,10 @@ package client
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -59,7 +60,7 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, orgId, state string , longitude ,latitude float64) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
@@ -67,6 +68,10 @@ func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, 
 		NodeId: nodeId,
 		Name:   name,
 		OrgId:  orgId,
+		Location: &pb.Location{
+			Latitude:latitude ,
+			Longitude:latitude ,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -161,13 +166,17 @@ func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeRespo
 	return res, nil
 }
 
-func (n *Node) UpdateNode(nodeId string, name string) (*pb.UpdateNodeResponse, error) {
+func (n *Node) UpdateNode(nodeId string, name string, longitude ,latitude float64) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.UpdateNode(ctx, &pb.UpdateNodeRequest{
 		NodeId: nodeId,
 		Name:   name,
+		Location: &pb.Location{
+			Latitude:latitude ,
+			Longitude:latitude ,
+		},
 	})
 	if err != nil {
 		return nil, err

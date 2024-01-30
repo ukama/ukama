@@ -13,7 +13,7 @@ import {
   NodeStatusEnum,
   useGetNodesByNetworkQuery,
   useGetNodesLocationQuery,
-  useGetSitesQuery,
+  useGetAllSitesQuery,
 } from '@/generated';
 import { useGetStatsMetricQuery } from '@/generated/metrics';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
@@ -47,7 +47,7 @@ export default function Page() {
     NodeStatusEnum.Undefined,
   );
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
+  const { data: networkRes, loading: networkLoading } = useGetAllSitesQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
       networkId: _commonData?.networkId,

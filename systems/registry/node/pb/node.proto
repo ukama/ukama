@@ -40,6 +40,7 @@ message AddNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
     string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string name = 3;
+    Location location = 4;
 }
 
 message AddNodeResponse{
@@ -105,6 +106,7 @@ message  UpdateNodeStateRequest{
 message  UpdateNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     string name = 2;
+    Location location = 3;
 }
 
 message UpdateNodeResponse {
@@ -160,6 +162,10 @@ message NodeStatus {
     string state = 2; 
 }
 
+message Location {
+    double latitude = 1;
+    double longitude = 2;
+}
 
 message Site {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
@@ -174,7 +180,8 @@ message Node {
     string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string type = 4;
     NodeStatus status = 5;
-    Site site = 6;
-    repeated Node attached = 7;
-    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
+    Location location =6;
+    Site site = 7;
+    repeated Node attached = 8;
+    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
 }

@@ -8,19 +8,17 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import {
-  SetActivePackageForSimInputDto,
-  SetActivePackageForSimResDto,
-} from "./types";
+import { AddSiteInputDto, SiteDto } from "./types";
 
 @Resolver()
-export class SetActivePackageForSimResolver {
-  @Mutation(() => SetActivePackageForSimResDto)
-  async setActivePackageForSim(
-    @Arg("data") data: SetActivePackageForSimInputDto,
+export class AddSiteToNetworkResolver {
+  @Mutation(() => SiteDto)
+  async AddSiteToNetwork(
+    @Arg("networkId") networkId: string,
+    @Arg("data") data: AddSiteInputDto,
     @Ctx() ctx: Context
-  ): Promise<SetActivePackageForSimResDto> {
+  ): Promise<SiteDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.setActivePackageForSim(data);
+    return dataSources.dataSource.addSiteToNetwork(networkId, data);
   }
 }

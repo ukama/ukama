@@ -306,6 +306,7 @@ export type MembersResDto = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  AddSiteToNetwork: SiteDto;
   addDraft: Draft;
   addLink: Draft;
   addMember: MemberDto;
@@ -347,6 +348,12 @@ export type Mutation = {
   updateSite: Draft;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
+};
+
+
+export type MutationAddSiteToNetworkArgs = {
+  data: AddSiteInputDto;
+  networkId: Scalars['String']['input'];
 };
 
 
@@ -748,7 +755,7 @@ export type PackagesResDto = {
 
 export type Query = {
   __typename?: 'Query';
-  addSite: SiteDto;
+  getAllSites: SitesResDto;
   getAppsChangeLog: AppChangeLogs;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
@@ -766,6 +773,7 @@ export type Query = {
   getNodeLocation: NodeLocation;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
+  getNodesForSite: Nodes;
   getNodesLocation: NodesLocation;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
@@ -776,8 +784,7 @@ export type Query = {
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
   getSimsBySubscriber: SubscriberToSimsDto;
-  getSite: SiteDto;
-  getSites: SitesResDto;
+  getSingleSite: SiteDto;
   getSubscriber: SubscriberDto;
   getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
   getSubscribersByNetwork: SubscribersResDto;
@@ -786,8 +793,7 @@ export type Query = {
 };
 
 
-export type QueryAddSiteArgs = {
-  data: AddSiteInputDto;
+export type QueryGetAllSitesArgs = {
   networkId: Scalars['String']['input'];
 };
 
@@ -852,6 +858,11 @@ export type QueryGetNodesByNetworkArgs = {
 };
 
 
+export type QueryGetNodesForSiteArgs = {
+  siteId: Scalars['String']['input'];
+};
+
+
 export type QueryGetNodesLocationArgs = {
   data: NodesInput;
 };
@@ -887,14 +898,9 @@ export type QueryGetSimsBySubscriberArgs = {
 };
 
 
-export type QueryGetSiteArgs = {
+export type QueryGetSingleSiteArgs = {
   networkId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
-};
-
-
-export type QueryGetSitesArgs = {
-  networkId: Scalars['String']['input'];
 };
 
 
@@ -1215,12 +1221,44 @@ export type WhoamiDto = {
 
 export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
+export type NetworkSiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string };
+
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
 export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+
+export type GetAllSitesQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetAllSitesQuery = { __typename?: 'Query', getAllSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string }> } };
+
+export type GetSingleSiteQueryVariables = Exact<{
+  siteId: Scalars['String']['input'];
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetSingleSiteQuery = { __typename?: 'Query', getSingleSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string } };
+
+export type AddSiteToNetworkMutationVariables = Exact<{
+  data: AddSiteInputDto;
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type AddSiteToNetworkMutation = { __typename?: 'Mutation', AddSiteToNetwork: { __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string } };
+
+export type AddNodeMutationVariables = Exact<{
+  data: AddNodeInput;
+}>;
+
+
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
@@ -1235,6 +1273,13 @@ export type GetNodesByNetworkQueryVariables = Exact<{
 
 
 export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+
+export type GetNodesForSiteQueryVariables = Exact<{
+  siteId: Scalars['String']['input'];
+}>;
+
+
+export type GetNodesForSiteQuery = { __typename?: 'Query', getNodesForSite: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1256,13 +1301,6 @@ export type DetachhNodeMutationVariables = Exact<{
 
 
 export type DetachhNodeMutation = { __typename?: 'Mutation', detachhNode: { __typename?: 'CBooleanResponse', success: boolean } };
-
-export type AddNodeMutationVariables = Exact<{
-  data: AddNodeInput;
-}>;
-
-
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -1561,13 +1599,6 @@ export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
-export type GetSitesQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
-}>;
-
-
-export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', networkId: string, sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string, createdAt: string }> } };
-
 export type AddNetworkMutationVariables = Exact<{
   data: AddNetworkInputDto;
 }>;
@@ -1711,6 +1742,15 @@ export const NodeFragmentDoc = gql`
     connectivity
     state
   }
+}
+    `;
+export const NetworkSiteFragmentDoc = gql`
+    fragment networkSite on SiteDto {
+  id
+  name
+  networkId
+  isDeactivated
+  createdAt
 }
     `;
 export const MemberFragmentDoc = gql`
@@ -2001,6 +2041,146 @@ export function useGetNodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
 export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
 export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
 export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
+export const GetAllSitesDocument = gql`
+    query getAllSites($networkId: String!) {
+  getAllSites(networkId: $networkId) {
+    sites {
+      ...networkSite
+    }
+  }
+}
+    ${NetworkSiteFragmentDoc}`;
+
+/**
+ * __useGetAllSitesQuery__
+ *
+ * To run a query within a React component, call `useGetAllSitesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllSitesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllSitesQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetAllSitesQuery(baseOptions: Apollo.QueryHookOptions<GetAllSitesQuery, GetAllSitesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllSitesQuery, GetAllSitesQueryVariables>(GetAllSitesDocument, options);
+      }
+export function useGetAllSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllSitesQuery, GetAllSitesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllSitesQuery, GetAllSitesQueryVariables>(GetAllSitesDocument, options);
+        }
+export type GetAllSitesQueryHookResult = ReturnType<typeof useGetAllSitesQuery>;
+export type GetAllSitesLazyQueryHookResult = ReturnType<typeof useGetAllSitesLazyQuery>;
+export type GetAllSitesQueryResult = Apollo.QueryResult<GetAllSitesQuery, GetAllSitesQueryVariables>;
+export const GetSingleSiteDocument = gql`
+    query getSingleSite($siteId: String!, $networkId: String!) {
+  getSingleSite(siteId: $siteId, networkId: $networkId) {
+    ...networkSite
+  }
+}
+    ${NetworkSiteFragmentDoc}`;
+
+/**
+ * __useGetSingleSiteQuery__
+ *
+ * To run a query within a React component, call `useGetSingleSiteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSingleSiteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSingleSiteQuery({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSingleSiteQuery(baseOptions: Apollo.QueryHookOptions<GetSingleSiteQuery, GetSingleSiteQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSingleSiteQuery, GetSingleSiteQueryVariables>(GetSingleSiteDocument, options);
+      }
+export function useGetSingleSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSingleSiteQuery, GetSingleSiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSingleSiteQuery, GetSingleSiteQueryVariables>(GetSingleSiteDocument, options);
+        }
+export type GetSingleSiteQueryHookResult = ReturnType<typeof useGetSingleSiteQuery>;
+export type GetSingleSiteLazyQueryHookResult = ReturnType<typeof useGetSingleSiteLazyQuery>;
+export type GetSingleSiteQueryResult = Apollo.QueryResult<GetSingleSiteQuery, GetSingleSiteQueryVariables>;
+export const AddSiteToNetworkDocument = gql`
+    mutation AddSiteToNetwork($data: AddSiteInputDto!, $networkId: String!) {
+  AddSiteToNetwork(data: $data, networkId: $networkId) {
+    ...networkSite
+  }
+}
+    ${NetworkSiteFragmentDoc}`;
+export type AddSiteToNetworkMutationFn = Apollo.MutationFunction<AddSiteToNetworkMutation, AddSiteToNetworkMutationVariables>;
+
+/**
+ * __useAddSiteToNetworkMutation__
+ *
+ * To run a mutation, you first call `useAddSiteToNetworkMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddSiteToNetworkMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addSiteToNetworkMutation, { data, loading, error }] = useAddSiteToNetworkMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useAddSiteToNetworkMutation(baseOptions?: Apollo.MutationHookOptions<AddSiteToNetworkMutation, AddSiteToNetworkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddSiteToNetworkMutation, AddSiteToNetworkMutationVariables>(AddSiteToNetworkDocument, options);
+      }
+export type AddSiteToNetworkMutationHookResult = ReturnType<typeof useAddSiteToNetworkMutation>;
+export type AddSiteToNetworkMutationResult = Apollo.MutationResult<AddSiteToNetworkMutation>;
+export type AddSiteToNetworkMutationOptions = Apollo.BaseMutationOptions<AddSiteToNetworkMutation, AddSiteToNetworkMutationVariables>;
+export const AddNodeDocument = gql`
+    mutation addNode($data: AddNodeInput!) {
+  addNode(data: $data) {
+    ...node
+  }
+}
+    ${NodeFragmentDoc}`;
+export type AddNodeMutationFn = Apollo.MutationFunction<AddNodeMutation, AddNodeMutationVariables>;
+
+/**
+ * __useAddNodeMutation__
+ *
+ * To run a mutation, you first call `useAddNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addNodeMutation, { data, loading, error }] = useAddNodeMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddNodeMutation(baseOptions?: Apollo.MutationHookOptions<AddNodeMutation, AddNodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddNodeMutation, AddNodeMutationVariables>(AddNodeDocument, options);
+      }
+export type AddNodeMutationHookResult = ReturnType<typeof useAddNodeMutation>;
+export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
+export type AddNodeMutationOptions = Apollo.BaseMutationOptions<AddNodeMutation, AddNodeMutationVariables>;
 export const GetNodesDocument = gql`
     query getNodes($data: GetNodesInput!) {
   getNodes(data: $data) {
@@ -2075,6 +2255,43 @@ export function useGetNodesByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHook
 export type GetNodesByNetworkQueryHookResult = ReturnType<typeof useGetNodesByNetworkQuery>;
 export type GetNodesByNetworkLazyQueryHookResult = ReturnType<typeof useGetNodesByNetworkLazyQuery>;
 export type GetNodesByNetworkQueryResult = Apollo.QueryResult<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>;
+export const GetNodesForSiteDocument = gql`
+    query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodesForSiteQuery__
+ *
+ * To run a query within a React component, call `useGetNodesForSiteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesForSiteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesForSiteQuery({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *   },
+ * });
+ */
+export function useGetNodesForSiteQuery(baseOptions: Apollo.QueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
+      }
+export function useGetNodesForSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
+        }
+export type GetNodesForSiteQueryHookResult = ReturnType<typeof useGetNodesForSiteQuery>;
+export type GetNodesForSiteLazyQueryHookResult = ReturnType<typeof useGetNodesForSiteLazyQuery>;
+export type GetNodesForSiteQueryResult = Apollo.QueryResult<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {
@@ -2174,39 +2391,6 @@ export function useDetachhNodeMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DetachhNodeMutationHookResult = ReturnType<typeof useDetachhNodeMutation>;
 export type DetachhNodeMutationResult = Apollo.MutationResult<DetachhNodeMutation>;
 export type DetachhNodeMutationOptions = Apollo.BaseMutationOptions<DetachhNodeMutation, DetachhNodeMutationVariables>;
-export const AddNodeDocument = gql`
-    mutation addNode($data: AddNodeInput!) {
-  addNode(data: $data) {
-    ...node
-  }
-}
-    ${NodeFragmentDoc}`;
-export type AddNodeMutationFn = Apollo.MutationFunction<AddNodeMutation, AddNodeMutationVariables>;
-
-/**
- * __useAddNodeMutation__
- *
- * To run a mutation, you first call `useAddNodeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddNodeMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addNodeMutation, { data, loading, error }] = useAddNodeMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useAddNodeMutation(baseOptions?: Apollo.MutationHookOptions<AddNodeMutation, AddNodeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddNodeMutation, AddNodeMutationVariables>(AddNodeDocument, options);
-      }
-export type AddNodeMutationHookResult = ReturnType<typeof useAddNodeMutation>;
-export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
-export type AddNodeMutationOptions = Apollo.BaseMutationOptions<AddNodeMutation, AddNodeMutationVariables>;
 export const ReleaseNodeFromSiteDocument = gql`
     mutation releaseNodeFromSite($data: NodeInput!) {
   releaseNodeFromSite(data: $data) {
@@ -3620,48 +3804,6 @@ export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
 export type GetNetworksLazyQueryHookResult = ReturnType<typeof useGetNetworksLazyQuery>;
 export type GetNetworksQueryResult = Apollo.QueryResult<GetNetworksQuery, GetNetworksQueryVariables>;
-export const GetSitesDocument = gql`
-    query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
-    networkId
-    sites {
-      id
-      name
-      networkId
-      isDeactivated
-      createdAt
-    }
-  }
-}
-    `;
-
-/**
- * __useGetSitesQuery__
- *
- * To run a query within a React component, call `useGetSitesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetSitesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSitesQuery({
- *   variables: {
- *      networkId: // value for 'networkId'
- *   },
- * });
- */
-export function useGetSitesQuery(baseOptions: Apollo.QueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
-      }
-export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
-        }
-export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
-export type GetSitesLazyQueryHookResult = ReturnType<typeof useGetSitesLazyQuery>;
-export type GetSitesQueryResult = Apollo.QueryResult<GetSitesQuery, GetSitesQueryVariables>;
 export const AddNetworkDocument = gql`
     mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
