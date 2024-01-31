@@ -14,8 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/db"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/rest"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
@@ -30,9 +29,9 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	repo, err := db.InitializeDataBase(svcConf.DB)
+	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge)
 	if err != nil {
-		log.Fatalf("Failed to create db: %v", err)
+		log.Fatalf("Failed to create controller: %v", err)
 	}
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
@@ -41,9 +40,7 @@ func main() {
 	}
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	pc := client.NewPolicyControllerClient(svcConf.HttpServices.Policy)
-
-	r := rest.NewRouter(pc, repo, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	r.Run()
 
 }

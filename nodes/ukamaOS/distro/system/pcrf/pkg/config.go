@@ -20,6 +20,7 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                string
+	Bridge            string `default:"data-br0"`
 	Server            rest.HttpConfig
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Auth              *config.Auth   `mapstructure:"auth"`

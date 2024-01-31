@@ -18,8 +18,8 @@ import (
 
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/db"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz/openapi"
 
@@ -30,10 +30,9 @@ import (
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f      *fizz.Fizz
-	policy client.PolicyController
-	config *RouterConfig
-	r      *db.Repo
+	f          *fizz.Fizz
+	controller *controller.Controller
+	config     *RouterConfig
 }
 
 type RouterConfig struct {
@@ -42,11 +41,10 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-func NewRouter(p client.PolicyController, repo *db.Repo, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(ctr *controller.Controller, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
-		policy: p,
-		config: config,
-		r:      repo,
+		controller: ctr,
+		config:     config,
 	}
 
 	if !config.debugMode {
@@ -118,7 +116,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		policy := pcrf.Group("/policy", "Policy", "policy")
 		policy.POST("", formatDoc("Configure Policy", "Configure a new policy"), tonic.Handler(r.addPolicy, http.StatusCreated))
 		policy.GET("/:imsi", formatDoc("Get Sim", "Get a specific sim"), tonic.Handler(r.getPolicy, http.StatusOK))
-		policy.DELETE("", formatDoc("Delete Policy", "Delete a policy"), tonic.Handler(r.deletePolicy, http.StatusOK))
+		policy.DELETE("", formatDoc("Delete Policy", "Delete a policy"), tonic.Handler(r.removePolicy, http.StatusOK))
 
 		// re-route
 		route := pcrf.Group("/reroute", "Reroute", "rerouting IP address")
@@ -128,44 +126,44 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	}
 }
 
-func (r *Router) createSession(c *gin.Context, req *CreateSession) error {
-	return r.session.CreateSession(req)
+func (r *Router) createSession(c *gin.Context, req *controller.CreateSession) error {
+	return r.controller.CreateSession(req)
 }
 
-func (r *Router) endSession(c *gin.Context, req *EndSession) error {
-	return r.session.EndSession(req)
+func (r *Router) endSession(c *gin.Context, req *controller.EndSession) error {
+	return r.controller.EndSession(req)
 }
 
-func (r *Router) getSessionByID(c *gin.Context, req *GetSessionByID) (*db.Session, error) {
-	return r.session.EndSession(req)
+func (r *Router) getSessionByID(c *gin.Context, req *controller.GetSessionByID) (*store.Session, error) {
+	return r.controller.EndSession(req)
 }
 
-func (r *Router) getCDRById(c *gin.Context, req *GetCDRById) (*CDR, error) {
-	return r.cdr.GetCDRById(req)
+func (r *Router) getCDRById(c *gin.Context, req *controller.GetCDRById) (**controller.CDR, error) {
+	return r.controller.GetCDRById(req)
 }
 
-func (r *Router) getCDRByImsi(c *gin.Context, req *GetCDRByImsi) (*CDR, error) {
-	return r.cdr.GetCDRByImsi(req)
+func (r *Router) getCDRByImsi(c *gin.Context, req *controller.GetCDRByImsi) (**controller.CDR, error) {
+	return r.controller.GetCDRByImsi(req)
 }
 
-func (r *Router) getPolicy(c *gin.Context, req *PolicyByImsi) (Policy, error) {
-	return r.policy.GetPolicy(req.Imsi)
+func (r *Router) getPolicy(c *gin.Context, req *controller.PolicyByImsi) (*controller.Policy, error) {
+	return r.controller.GetPolicy(req.Imsi)
 }
 
-func (r *Router) addPolicy(c *gin.Context, req *AddPolicyByImsi) error {
-	return r.policy.AddPolicy(req)
+func (r *Router) addPolicy(c *gin.Context, req *controller.AddPolicyByImsi) error {
+	return r.controller.AddPolicy(req)
 }
 
-func (r *Router) deletePolicy(c *gin.Context, req *PolicyByImsi) error {
-	return r.policy.DeletePolicy(req)
+func (r *Router) removePolicy(c *gin.Context, req *controller.PolicyByImsi) error {
+	return r.controller.RemovePolicy(req)
 }
 
-func (r *Router) getReroute(c *gin.Context) (Reroute, error) {
-	return r.reroute.GetPolicy()
+func (r *Router) getReroute(c *gin.Context) (*controller.Reroute, error) {
+	return r.controller.GetPolicy()
 }
 
-func (r *Router) updateReroute(c *gin.Context, req *Reroute) error {
-	return r.reroute.UpdateReroute(req)
+func (r *Router) updateReroute(c *gin.Context, req *controller.Reroute) error {
+	return r.controller.UpdateReroute(req)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

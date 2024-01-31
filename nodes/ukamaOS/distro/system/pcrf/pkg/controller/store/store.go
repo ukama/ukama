@@ -1,31 +1,26 @@
-package db
+package store
 
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 )
 
-type Repo struct {
+type Store struct {
 	db *sql.DB
 }
 
-type store interface {
-
-} 
 // Initialization of the SQLite database and tables (assumed to be done separately)
 // var db *sql.DB
 
 // Function to create tables if they don't exist
 
-var db *sql.DB
 
-func InitializeDataBase(name string) (*Repo, error) {
-	repo := &repo{}
+func NewStore(name string) (*Store, error) {
+	repo := &Store{}
 	// Open the SQLite database file
 	database, err := sql.Open("sqlite3", name)
 	if err != nil {
@@ -44,9 +39,9 @@ func InitializeDataBase(name string) (*Repo, error) {
 }
 
 // Function to create tables if they don't exist
-func createTables() error {
+func (s *Store) createTables() error {
 	// Create Policies table
-	_, err := db.Exec(`
+	_, err := s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS policies (
 			id INTEGER PRIMARY KEY,
 			data INTEGER,
@@ -60,7 +55,7 @@ func createTables() error {
 	}
 
 	// Create ReRoutes table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS reroutes (
 			id INTEGER PRIMARY KEY,
 			ipaddr TEXT
@@ -72,7 +67,7 @@ func createTables() error {
 	}
 
 	// Create Subscribers table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS subscribers (
 			id INTEGER PRIMARY KEY,
 			imsi TEXT
@@ -84,7 +79,7 @@ func createTables() error {
 	}
 
 	// Create Usages table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS usages (
 			id INTEGER PRIMARY KEY,
 			subscriber_id INTEGER,
@@ -98,7 +93,7 @@ func createTables() error {
 	}
 
 	// Create Meters table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS meters (
 			id INTEGER PRIMARY KEY,
 			rate INTEGER,
@@ -111,7 +106,7 @@ func createTables() error {
 	}
 
 	// Create Flows table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS flows (
 			id INTEGER PRIMARY KEY,
 			table INTEGER,
@@ -129,7 +124,7 @@ func createTables() error {
 	}
 
 	// Create Sessions table
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS sessions (
 			id INTEGER PRIMARY KEY,
 			subscriber_id INTEGER,
@@ -157,7 +152,7 @@ func createTables() error {
 
 // CRUD operations for Policy entity
 
-func CreateDefaultPolicy() (*Policy, error) {
+func (s *Store) CreateDefaultPolicy() (*Policy, error) {
 	policy := Policy{
 		ID:   1,
 		Data: 0,
@@ -175,7 +170,7 @@ func CreateDefaultPolicy() (*Policy, error) {
 
 // CRUD operations for ReRoute entity
 
-func CreateDefaultReRoute() (*ReRoute, error) {
+func (s *Store) CreateDefaultReRoute() (*ReRoute, error) {
 	reroute := ReRoute{
 		ID:     1,
 		Ipaddr: "192.168.0.14",
@@ -191,7 +186,7 @@ func CreateDefaultReRoute() (*ReRoute, error) {
 
 // CRUD operations for Subscriber entity
 
-func CreateSubscriber(imsi string) (*Subscriber, error) {
+func (s *Store) CreateSubscriber(imsi string) (*Subscriber, error) {
 	subscriber := Subscriber{
 		Imsi: imsi,
 	}
@@ -231,7 +226,7 @@ func CreateSubscriber(imsi string) (*Subscriber, error) {
 
 // CRUD operations for Session entity
 
-func CreateSession(subscriber *Subscriber, imsi string, ueIpAddr string) (*Session, error) {
+func (s *Store) CreateSession(subscriber *Subscriber, imsi string, ueIpAddr string) (*Session, error) {
 	session := Session{
 		Subscriber: subscriber,
 		UeIpaddr:   ueIpAddr,
@@ -293,7 +288,7 @@ func CreateSession(subscriber *Subscriber, imsi string, ueIpAddr string) (*Sessi
 	return &session, nil
 }
 
-func EndSession(session *Session) error {
+func (s *Store) EndSession(session *Session) error {
 	// Update session with TX, RX, and Total bytes
 	session.TxBytes = /* Set TX bytes */;
 	session.RXBytes = /* Set RX bytes */;
@@ -324,10 +319,10 @@ func EndSession(session *Session) error {
 // Queries
 // Queries
 
-func GetUsageByImsi(imsi string) (*Usage, error) {
+func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 	var usage Usage
 
-	err := db.QueryRow("SELECT * FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)", imsi).
+	err := s.db.QueryRow("SELECT * FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)", imsi).
 		Scan(&usage.ID, &usage.Subscriber.ID, &usage.Data)
 	if err != nil {
 		return nil, err
@@ -336,10 +331,10 @@ func GetUsageByImsi(imsi string) (*Usage, error) {
 	return &usage, nil
 }
 
-func GetPolicyByID(policyID int) (*Policy, error) {
+func (s *Store) GetPolicyByID(policyID int) (*Policy, error) {
 	var policy Policy
 
-	err := db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).
+	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).
 		Scan(&policy.ID, &policy.Data, &policy.Dlbr, &policy.Ulbr)
 	if err != nil {
 		return nil, err
@@ -348,10 +343,10 @@ func GetPolicyByID(policyID int) (*Policy, error) {
 	return &policy, nil
 }
 
-func GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
+func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 	var policy Policy
 
-	err := db.QueryRow(`
+	err := s.db.QueryRow(`
 		SELECT * FROM policies
 		WHERE id = 1 AND (SELECT data FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)) >= 2000000000
 	`, imsi).
@@ -363,10 +358,10 @@ func GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 	return &policy, nil
 }
 
-func GetSessionByID(sessionID int) (*Session, error) {
+func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 	var session Session
 
-	err := db.QueryRow("SELECT * FROM sessions WHERE id = ?", sessionID).
+	err := s.db.QueryRow("SELECT * FROM sessions WHERE id = ?", sessionID).
 		Scan(&session.ID, &session.Subscriber.ID, &session.UeIpaddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RXBytes, &session.TotalBytes, &session.TXMeterId.ID, &session.RXMeterId.ID, &session.State)
 	if err != nil {
 		return nil, err
@@ -392,10 +387,10 @@ func GetSessionByID(sessionID int) (*Session, error) {
 	return &session, nil
 }
 
-func GetSessionsByImsi(imsi string) ([]Session, error) {
+func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	var sessions []Session
 
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT * FROM sessions
 		WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)
 	`, imsi)
@@ -434,10 +429,10 @@ func GetSessionsByImsi(imsi string) ([]Session, error) {
 	return sessions, nil
 }
 
-func GetActiveSessionByImsi(imsi string) (*Session, error) {
+func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
 	var session Session
 
-	err := db.QueryRow(`
+	err := s.db.QueryRow(`
 		SELECT * FROM sessions
 		WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND state = 1
 	`, imsi).
@@ -466,10 +461,10 @@ func GetActiveSessionByImsi(imsi string) (*Session, error) {
 	return &session, nil
 }
 
-func GetAllActiveSessions() ([]Session, error) {
+func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	var sessions []Session
 
-	rows, err := db.Query("SELECT * FROM sessions WHERE state = 1")
+	rows, err := s.db.Query("SELECT * FROM sessions WHERE state = 1")
 	if err != nil {
 		return nil, err
 	}
@@ -498,8 +493,8 @@ func GetAllActiveSessions() ([]Session, error) {
 
 // Update operations
 
-func UpdateReroute(reRoute *ReRoute) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateReroute(reRoute *ReRoute) error {
+	_, err := s.db.Exec(`
 		UPDATE reroutes
 		SET ipaddr = ?
 		WHERE id = ?;
@@ -507,8 +502,8 @@ func UpdateReroute(reRoute *ReRoute) error {
 	return err
 }
 
-func UpdateSubscriber(subscriber *Subscriber) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateSubscriber(subscriber *Subscriber) error {
+	_, err := s.db.Exec(`
 		UPDATE subscribers
 		SET imsi = ?
 		WHERE id = ?;
@@ -516,8 +511,8 @@ func UpdateSubscriber(subscriber *Subscriber) error {
 	return err
 }
 
-func UpdatePolicy(policy *Policy) error {
-	_, err := db.Exec(`
+func (s *Store) UpdatePolicy(policy *Policy) error {
+	_, err := s.db.Exec(`
 		UPDATE policies
 		SET data = ?, dlbr = ?, ulbr = ?
 		WHERE id = ?; 
@@ -525,8 +520,8 @@ func UpdatePolicy(policy *Policy) error {
 		return err
 }
 
-func UpdateUsage(usage *Usage) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateUsage(usage *Usage) error {
+	_, err := s.db.Exec(`
 		UPDATE usages
 		SET data = ?
 		WHERE id = ?;
@@ -534,8 +529,8 @@ func UpdateUsage(usage *Usage) error {
 	return err
 }
 
-func UpdateMeter(meter *Meter) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateMeter(meter *Meter) error {
+	_, err := s.db.Exec(`
 		UPDATE meters
 		SET rate = ?, type = ?
 		WHERE id = ?;
@@ -543,8 +538,8 @@ func UpdateMeter(meter *Meter) error {
 	return err
 }
 
-func UpdateFlow(flow *Flow) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateFlow(flow *Flow) error {
+	_, err := s.db.Exec(`
 		UPDATE flows
 		SET table = ?, priority = ?, ueipaddr = ?, reroute_id = ?, meter_id = ?
 		WHERE id = ?;
@@ -552,8 +547,8 @@ func UpdateFlow(flow *Flow) error {
 	return err
 }
 
-func UpdateSession(session *Session) error {
-	_, err := db.Exec(`
+func (s *Store) UpdateSession(session *Session) error {
+	_, err := s.db.Exec(`
 		UPDATE sessions
 		SET ueipaddr = ?, starttime = ?, endtime = ?, txbytes = ?, rxbytes = ?, totalbytes = ?, txmeter_id = ?, rxmeter_id = ?, state = ?
 		WHERE id = ?;
@@ -566,18 +561,18 @@ func UpdateSession(session *Session) error {
 
 // CRUD operations for Policy entity
 
-func InsertPolicy(policy *Policy) error {
-	_, err := db.Exec(`
+func (s *Store) InsertPolicy(policy *Policy) error {
+	_, err := s.db.Exec(`
 		INSERT INTO policies (id, data, dlbr, ulbr)
 		VALUES (?, ?, ?, ?);
 	`, policy.ID, policy.Data, policy.Dlbr, policy.Ulbr)
 	return err
 }
 
-func GetPolicyByID(policyID int) (*Policy, error) {
+func (s *Store) GetPolicyByID(policyID int) (*Policy, error) {
 	var policy Policy
 
-	err := db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).
+	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).
 		Scan(&policy.ID, &policy.Data, &policy.Dlbr, &policy.Ulbr)
 	if err != nil {
 		return nil, err
@@ -588,18 +583,18 @@ func GetPolicyByID(policyID int) (*Policy, error) {
 
 // CRUD operations for ReRoute entity
 
-func InsertReRoute(reRoute *ReRoute) error {
-	_, err := db.Exec(`
+func (s *Store) InsertReRoute(reRoute *ReRoute) error {
+	_, err := s.db.Exec(`
 		INSERT INTO reroutes (id, ipaddr)
 		VALUES (?, ?);
 	`, reRoute.ID, reRoute.Ipaddr)
 	return err
 }
 
-func GetReRouteByID(reRouteID int) (*ReRoute, error) {
+func (s *Store) GetReRouteByID(reRouteID int) (*ReRoute, error) {
 	var reRoute ReRoute
 
-	err := db.QueryRow("SELECT * FROM reroutes WHERE id = ?", reRouteID).
+	err := s.db.QueryRow("SELECT * FROM reroutes WHERE id = ?", reRouteID).
 		Scan(&reRoute.ID, &reRoute.Ipaddr)
 	if err != nil {
 		return nil, err
