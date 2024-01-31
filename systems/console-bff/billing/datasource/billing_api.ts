@@ -14,36 +14,39 @@ import { billHistoryDtoToDto, dtoToDto } from "./mapper";
 const version = "/v1/invoices";
 class BillingAPI extends RESTDataSource {
   baseURL = BILLING_API_GW + version;
-  public getCurrentBill = async (): Promise<BillResponse> => {
+  getCurrentBill = async (): Promise<BillResponse> => {
     return this.get("/current").then(res => dtoToDto(res));
   };
 
-  public getBillHistory = async (): Promise<BillHistoryDto[]> => {
+  getBillHistory = async (): Promise<BillHistoryDto[]> => {
     return this.get("/history").then(res => billHistoryDtoToDto(res));
   };
 
   getInvoice = async (invoiceId: string): Promise<InvoiceDto> => {
     return this.get(`/${VERSION}/invoice/${invoiceId}`).then(res => res);
   };
-  GetInvoicesBySubscriber = async (
+  getInvoicesBySubscriber = async (
     subscriberId: string
   ): Promise<InvoiceDto[]> => {
     return this.get(`/${VERSION}?subscriber=${subscriberId}`).then(res => res);
   };
-  GetInvoicesByNetwork = async (networkId: string): Promise<InvoiceDto[]> => {
+  getInvoicesByNetwork = async (networkId: string): Promise<InvoiceDto[]> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}`);
     return this.get(`/${VERSION}?network=${networkId}`).then(res => res);
   };
-  GetInvoicePDF = async (invoiceId: string): Promise<any> => {
+  getInvoicePDF = async (invoiceId: string): Promise<any> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}`);
     return this.get(`/${VERSION}/pdf/${invoiceId}`).then(res => res);
   };
 
-  AddInvoice = async (rawInvoice: string): Promise<InvoiceDto> => {
+  addInvoice = async (rawInvoice: string): Promise<InvoiceDto> => {
+    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}`);
     return this.post(`/${VERSION}`, {
       body: rawInvoice,
     }).then(res => res);
   };
 
-  RemoveInvoice = async (invoiceId: string): Promise<any> => {
+  removeInvoice = async (invoiceId: string): Promise<any> => {
     return this.delete(`/${VERSION}/${invoiceId}`).then(res => res);
   };
 }

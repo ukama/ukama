@@ -13,11 +13,11 @@ import { InvoiceDto } from "./types";
 @Resolver()
 export class GetInvoiceByNetworkResolver {
   @Query(() => InvoiceDto)
-  async getInvoiceByNetwork(
+  async getInvoicesByNetwork(
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<InvoiceDto[]> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.GetInvoicesByNetwork(networkId);
+    return dataSources.dataSource.getInvoicesByNetwork(networkId);
   }
 }

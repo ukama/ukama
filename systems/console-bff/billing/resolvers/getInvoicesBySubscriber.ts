@@ -13,11 +13,11 @@ import { InvoiceDto } from "./types";
 @Resolver()
 export class GetInvoiceBySubscriberResolver {
   @Query(() => InvoiceDto)
-  async getInvoiceBySubscriber(
+  async getInvoicesBySubscriber(
     @Arg("subscriberId") subscriberId: string,
     @Ctx() ctx: Context
   ): Promise<InvoiceDto[]> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.GetInvoicesBySubscriber(subscriberId);
+    return dataSources.dataSource.getInvoicesBySubscriber(subscriberId);
   }
 }

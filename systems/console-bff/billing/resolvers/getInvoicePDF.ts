@@ -18,6 +18,6 @@ export class GetInvoiceByNetworkResolver {
     @Ctx() ctx: Context
   ): Promise<any> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.GetInvoicePDF(invoiceId);
+    return dataSources.dataSource.getInvoicePDF(invoiceId);
   }
 }

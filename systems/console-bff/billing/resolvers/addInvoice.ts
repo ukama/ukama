@@ -18,6 +18,6 @@ export class AddInvoiceResolver {
     @Ctx() ctx: Context
   ): Promise<InvoiceDto> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.AddInvoice(rawInvoice);
+    return dataSources.dataSource.addInvoice(rawInvoice);
   }
 }

@@ -18,6 +18,6 @@ export class RemoveInvoiceResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.RemoveInvoice(invoiceId);
+    return await dataSources.dataSource.removeInvoice(invoiceId);
   }
 }

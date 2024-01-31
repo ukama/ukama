@@ -809,8 +809,3 @@ query getInvoice($invoiceId: String!) {
     ...invoice
   }
 }
-
-mutation removeInvoice($invoiceId: String!) {
-  removeInvoice(invoiceId: $invoiceId) {
-  }
-}
