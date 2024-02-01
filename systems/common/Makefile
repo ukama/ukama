@@ -11,12 +11,8 @@ gen:
  			   pb/events/*.proto
 	protoc -I ./pb/dep -I ./pb  --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
  			   pb/msgclient/*.proto
-			   
+
 	mockery --all --recursive --dir ./
-
-
-clean:
-	rm mocks/*.go
 
 test:
 	go test -v ./...

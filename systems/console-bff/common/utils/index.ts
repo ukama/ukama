@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { Meta, THeaders } from "../types";
@@ -40,14 +39,14 @@ const parseHeaders = (reqHeader: any): THeaders => {
     throw new HTTP401Error(Messages.HEADER_ERR_ORG_NAME);
   }
 
-  if (reqHeader.get("x-session-token") || reqHeader.get("cookie")) {
+  if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
     if (reqHeader.get("x-session-token")) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;
     } else {
       const cookie: string = reqHeader.get("cookie");
       const cookies = cookie.split(";");
       const session: string =
-        cookies.find(item => (item.includes("ukama_session") ? item : "")) ||
+        cookies.find(item => (item.includes("ukama_session") ? item : "")) ??
         "";
       headers.auth.Cookie = session;
     }
@@ -60,22 +59,19 @@ const parseHeaders = (reqHeader: any): THeaders => {
 const parseGatewayHeaders = (reqHeader: any): THeaders => {
   return {
     auth: {
-      Authorization: reqHeader["x-session-token"] || "",
-      Cookie: reqHeader["cookie"] || "",
+      Authorization: reqHeader["x-session-token"] ?? "",
+      Cookie: reqHeader["cookie"] ?? "",
     },
-    orgId: reqHeader["orgid"] || "",
-    userId: reqHeader["userid"] || "",
-    orgName: reqHeader["orgname"] || "",
+    orgId: reqHeader["orgid"] ?? "",
+    userId: reqHeader["userid"] ?? "",
+    orgName: reqHeader["orgname"] ?? "",
   };
 };
 
 const getStripeIdByUserId = (uid: string): string => {
-  switch (uid) {
-    case "d0a36c51-6a66-4187-b786-72a9e09bf7a4":
-      return "cus_MFTZKUVOGtI2fU";
-    default:
-      return "cus_MFTZKUVOGtI2fU";
-  }
+  return uid === "d0a36c51-6a66-4187-b786-72a9e09bf7a4"
+    ? "cus_MFTZKUVOGtI2fU"
+    : "";
 };
 
 const getPaginatedOutput = (

@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.3'
 services:
  postgresd:
   image: postgres:13.3
@@ -21,11 +21,11 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - SIM_SERVICE_HOST=sim
    - SIM_SERVICE_PORT=9090
-   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -42,6 +42,7 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
@@ -66,6 +67,7 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - KEY=${KEY}
+   - ORGNAME=${ORGNAME}
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090

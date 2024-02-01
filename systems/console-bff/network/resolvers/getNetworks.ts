@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";

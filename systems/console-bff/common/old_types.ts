@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { IsOptional } from "class-validator";
 import { Request } from "express";
 import "reflect-metadata";
@@ -51,13 +50,13 @@ export class ApiMethodDataDto {
   @Field(() => API_METHOD_TYPE)
   type: API_METHOD_TYPE;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   params?: any;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   headers?: any;
 
-  @Field(() => String || Object || null, { nullable: true })
+  @Field(() => String ?? Object ?? null, { nullable: true })
   body?: any;
 }
 

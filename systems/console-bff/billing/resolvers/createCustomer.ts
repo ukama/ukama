@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import Stripe from "stripe";
 import { Arg, Mutation, Resolver } from "type-graphql";
 
@@ -31,8 +30,8 @@ export class CreateCustomerResolver {
 
     return {
       id: customer.id,
-      name: customer?.name || "name",
-      email: customer?.email || "email",
+      name: customer?.name ?? "name",
+      email: customer?.email ?? "email",
     };
   }
 }

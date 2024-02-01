@@ -5,10 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import winston from "winston";
-
-("use strict");
 
 const logger = winston.createLogger({
   transports: [new winston.transports.Console()],

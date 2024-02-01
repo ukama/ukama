@@ -58,6 +58,7 @@ interface ISidebarProps {
   placeholder: string;
   onNavigate: Function;
   networks: NetworkDto[];
+  handleAddNetwork: Function;
   handleNetworkChange: Function;
 }
 
@@ -69,6 +70,7 @@ const Sidebar = ({
   isDarkMode,
   placeholder,
   networks = [],
+  handleAddNetwork,
   handleNetworkChange,
 }: ISidebarProps) => {
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -83,7 +85,7 @@ const Sidebar = ({
     <UkamaDrawer
       open={isOpen}
       variant="permanent"
-      style={{ marginTop: 60, height: '100%' }}
+      style={{ marginTop: 46, height: '100%' }}
     >
       <LoadingWrapper isLoading={isLoading} radius="none">
         <Stack direction={'column'}>
@@ -94,6 +96,7 @@ const Sidebar = ({
               list={getDropDownData()}
               placeholder={placeholder}
               handleOnChange={handleNetworkChange}
+              handleAddNetwork={handleAddNetwork}
             />
           </Box>
           <Divider sx={{ m: 0 }} />

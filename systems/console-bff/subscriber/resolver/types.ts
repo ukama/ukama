@@ -5,8 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
-import { IsEmail, IsPhoneNumber } from "class-validator";
+import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
@@ -115,27 +114,27 @@ export class SubscribersAPIResDto {
 
 @InputType()
 export class SubscriberInputDto {
-  @Field()
-  address: string;
+  @Field({ nullable: true })
+  address?: string;
 
-  @Field()
-  dob: string;
+  @Field({ nullable: true })
+  dob?: string;
 
   @Field()
   @IsEmail()
   email: string;
 
-  @Field()
-  first_name: string;
+  @Field({ nullable: true })
+  first_name?: string;
 
-  @Field()
-  last_name: string;
+  @Field({ nullable: true })
+  last_name?: string;
 
-  @Field()
-  gender: string;
+  @Field({ nullable: true })
+  gender?: string;
 
-  @Field()
-  id_serial: string;
+  @Field({ nullable: true })
+  id_serial?: string;
 
   @Field()
   network_id: string;
@@ -143,12 +142,11 @@ export class SubscriberInputDto {
   @Field()
   org_id: string;
 
-  @Field()
-  @IsPhoneNumber()
-  phone: string;
+  @Field({ nullable: true })
+  phone?: string;
 
-  @Field()
-  proof_of_identification: string;
+  @Field({ nullable: true })
+  proof_of_identification?: string;
 }
 
 @ObjectType()
@@ -225,7 +223,7 @@ export class SubscriberDto {
   gender: string;
 
   @Field()
-  idSerial: string;
+  idSerial?: string;
 
   @Field()
   networkId: string;
@@ -239,8 +237,8 @@ export class SubscriberDto {
   @Field()
   proofOfIdentification: string;
 
-  @Field(() => [SubscriberSimDto])
-  sim: SubscriberSimDto[];
+  @Field(() => [SubscriberSimDto], { nullable: true })
+  sim?: SubscriberSimDto[];
 }
 
 @ObjectType()
@@ -262,7 +260,9 @@ export class UpdateSubscriberInputDto {
   id_serial: string;
 
   @Field({ nullable: true })
-  @IsPhoneNumber()
+  first_name: string;
+
+  @Field({ nullable: true })
   phone: string;
 
   @Field({ nullable: true })

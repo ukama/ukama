@@ -78,11 +78,10 @@ func GetUserTraitsFromSession(orgId string, s *ory.Session) (*UserTraits, error)
 	}, nil
 }
 
-func GenerateJWT(s *string, e string, a string, k string) (string, error) {
+func GenerateJWT(s *string, i string, e string, a string, k string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-
-	claims["session"] = s
+	claims["session"] = *s + "-" + i
 	claims["expires_at"] = e
 	claims["authenticated_at"] = a
 

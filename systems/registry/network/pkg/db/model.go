@@ -9,6 +9,8 @@
 package db
 
 import (
+	"database/sql/driver"
+	"strconv"
 	"time"
 
 	"github.com/lib/pq"
@@ -39,12 +41,14 @@ type Network struct {
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
+	Country          string `json:"country"`
+	Language         LanguageType
+	Currency         string `json:"currency"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	SyncStatus       types.SyncStatus
 }
-
 type Site struct {
 	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex:site_name_network_idx"`
@@ -54,4 +58,48 @@ type Site struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
+
+type LanguageType uint8
+
+const (
+	UnknownLanguage LanguageType = iota
+	EN                           = 1
+	FR                           = 2
+)
+
+func (l *LanguageType) Scan(value interface{}) error {
+	*l = LanguageType(uint8(value.(int64)))
+	return nil
+}
+
+func (l LanguageType) Value() (driver.Value, error) {
+	return int64(l), nil
+}
+
+func (l LanguageType) String() string {
+	t := map[LanguageType]string{0: "unknown", 1: "fr", 2: "en"}
+
+	v, ok := t[l]
+	if !ok {
+		return t[0]
+	}
+
+	return v
+}
+
+func ParseType(value string) LanguageType {
+	i, err := strconv.Atoi(value)
+	if err == nil {
+		return LanguageType(i)
+	}
+
+	t := map[string]LanguageType{"unknown": 0, "fr": 1, "en": 2}
+
+	v, ok := t[value]
+	if !ok {
+		return LanguageType(0)
+	}
+
+	return LanguageType(v)
 }

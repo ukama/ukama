@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import Stripe from "stripe";
 import { Ctx, Query, Resolver } from "type-graphql";
 
@@ -28,8 +27,8 @@ export class GetStripeCustomerResolver {
     );
     return {
       id: customer.id,
-      name: customer?.name || "name",
-      email: customer?.email || "email",
+      name: customer?.name ?? "name",
+      email: customer?.email ?? "email",
     };
   }
 }

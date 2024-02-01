@@ -22,9 +22,6 @@
 #include "server.h"
 #include "log.h"
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
@@ -46,11 +43,8 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * send_request_to_server
- *
- */
-static long send_request_to_server(char *url, Response *response,
+static long send_request_to_server(char *url,
+                                   Response *response,
                                    char **retStr) {
 
 	long resCode=0;
@@ -79,6 +73,7 @@ static long send_request_to_server(char *url, Response *response,
 	if (res != CURLE_OK) {
 		log_error("Error sending request to server at URL %s: %s", url,
 				  curl_easy_strerror(res));
+        *retStr = NULL;
 	} else {
 		/* get status code */
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resCode);
@@ -92,10 +87,6 @@ static long send_request_to_server(char *url, Response *response,
 	return resCode;
 }
 
-/*
- * process_response_from_server --
- *
- */
 static int process_response_from_server(char *response, ServerInfo *server) {
 
 	int ret=FALSE;
@@ -184,13 +175,15 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
 
     int backoffTime=1;
     int maxBackoff, backoffInterval;
-    char *responseStr;
+    char *responseStr = NULL;
 
     srand(time(NULL));
 
     do {
-        if (send_request_to_init(bootstrapServer, uuid, server, &responseStr) ==
-            TRUE) {
+        if (send_request_to_init(bootstrapServer,
+                                 uuid,
+                                 server,
+                                 &responseStr) == TRUE) {
             return;
         }
 
@@ -200,7 +193,8 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
 
         printf("Error: %s. Retrying the boostrap in  %d seconds.\n",
                responseStr, backoffInterval);
-        free(responseStr);
+
+        if (responseStr) free(responseStr);
         sleep(backoffInterval);
 
         backoffTime = (backoffTime < MAX_BACKOFF) ? backoffTime+1 : MAX_BACKOFF;

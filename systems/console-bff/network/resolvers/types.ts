@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Field, InputType, ObjectType } from "type-graphql";
 
 import { NETWORK_STATUS } from "../../common/enums";
@@ -61,10 +60,19 @@ export class NetworkAPIDto {
   org_id: string;
 
   @Field()
+  budget: number;
+
+  @Field()
   is_deactivated: string;
 
   @Field()
   created_at: string;
+
+  @Field(() => [String])
+  allowed_countries: string[];
+
+  @Field(() => [String])
+  allowed_networks: string[];
 }
 @ObjectType()
 export class NetworkAPIResDto {
@@ -93,10 +101,19 @@ export class NetworkDto {
   orgId: string;
 
   @Field()
+  budget: number;
+
+  @Field()
   isDeactivated: string;
 
   @Field()
   createdAt: string;
+
+  @Field(() => [String])
+  countries: string[];
+
+  @Field(() => [String])
+  networks: string[];
 }
 
 @ObjectType()
@@ -153,10 +170,19 @@ export class SitesAPIResDto {
 @InputType()
 export class AddNetworkInputDto {
   @Field()
-  network_name: string;
+  name: string;
 
   @Field()
   org: string;
+
+  @Field()
+  budget: number;
+
+  @Field(() => [String], { nullable: true })
+  countries: string[];
+
+  @Field(() => [String], { nullable: true })
+  networks: string[];
 }
 
 @InputType()

@@ -15,14 +15,12 @@ test: integration.test
 	go test -v ./...
 
 gen:
-					  
 	mockery --all --recursive --dir ./internal
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm -rf bin/
 
-# Go lint
 lint:
 	golangci-lint run
 
@@ -43,5 +41,3 @@ integration.build:
 
 server:
 	go run cmd/msgClient/main.go
-
-

@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { Arg, Ctx, PubSub, PubSubEngine, Query, Resolver } from "type-graphql";
 
 import { PaginationDto } from "../../common/types";

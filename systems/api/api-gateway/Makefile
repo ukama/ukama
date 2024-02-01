@@ -26,7 +26,7 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	rm mocks/*.go
+	rm -rf bin/
 
 server:
 	go run cmd/server/main.go

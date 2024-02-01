@@ -1,0 +1,47 @@
+{
+  "setup": {
+    "network-interface": "eth0",
+    "build-os": "linux",
+    "ukama-repo": "/home/kashif/work/ukama/repos/ukama",
+    "auth-repo": "/home/kashif/work/ukama/repos/ukama-auth",
+    "status-interval" : 10
+  },
+
+  "build": {
+    "nodes": {
+      "count": 1,
+      "ids" : "random",
+      "kernel-image" : "s3://path/to/vmlinuz.img",
+      "initram-image" : "s3://path/to/initrd.img",
+      "disk-image" : "s3://path/to/ukma-xxx-xxx-xxx.img"
+    },
+    "systems": {
+      "list": "ukama-auth,services,init,nucleus,"
+    },
+    "interfaces": {
+      "list": "console"
+    }
+  },
+
+  "deploy": {
+    "env" : {
+        "ownerid" : "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f",
+        "ownerauthid" : "909390bf-43ea-4fa7-8d5e-3e837679ba58",
+        "ownername" : "test",
+        "owneremail" : "test@ukama.com",
+        "orgid" : "fbc2a80d-339e-4d3c-acaa-329dd1b22100",
+        "orgname" : "ukama-org",
+        "key" : "this-key-has-to-be-32-bytes-long",
+        "mailer_port" : "465",
+        "mailer_host" : "smtp.gmail.com",
+        "mailer_password" : "smtp_password",
+        "mailer_username" : "smtp",
+        "mailer_from" : "test@ukama.com",
+        "templatespath" : "member-invite",
+        "lago_api_key" : "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
+        "masterorgname" : "ukama"
+    },
+    "systems": "ukama-auth,services,init,nucleus,",
+    "nodes": "all"
+  }
+}

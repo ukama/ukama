@@ -20,12 +20,11 @@ test:
 deps:
 	go get github.com/vektra/mockery/v2/.../
 
-
 gen:
 	mockery --all --recursive
 
 clean:
-	rm pb/gen/*.go
+	rm -rf bin/
 
 server:
 	go run cmd/server/main.go

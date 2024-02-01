@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginInlineTrace } from "@apollo/server/plugin/inlineTrace";
 import { startStandaloneServer } from "@apollo/server/standalone";

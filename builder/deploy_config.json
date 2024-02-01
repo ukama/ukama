@@ -1,0 +1,17 @@
+{
+ "setup": {
+  "email": "salman@ukama.com",
+  "name": "Salman",
+  "org-name": "ukama-test",
+  "org-id": "FBC2A80D-339E-4D3C-ACAA-329DD3D1B221"
+ },
+ "mailer": {
+  "host": "smtp.gmail.com",
+  "port": 465,
+  "username": "smtp",
+  "password": "smtp_password"
+ },
+ "key": "the-key-has-to-be-32-bytes-long!",
+ "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
+ "systems": "auth-services, services, init, nucleus, registry, dataplan, subscriber"
+}

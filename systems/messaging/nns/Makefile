@@ -24,7 +24,6 @@ deps:
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/vektra/mockery/v2/.../
 
-
 gen:
 	mkdir ./pb/gen -p
 
@@ -43,15 +42,11 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
-	rm pb/gen/*.go
-	rm mocks/*.go
-
+	rm -rf bin/
 
 # integration tests
-
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
-
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration

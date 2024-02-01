@@ -20,11 +20,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 const defaultTimeZone = 'Pacific Standard Time';
 // localStorage['timeZone']? localStorage['timeZone']:'Pacific Standard Time'
 
 export default function PersonalSettings() {
+  const router = useRouter();
   const [language, setLanguage] = useState('en');
   const [timezone, setTimezone] = useState(defaultTimeZone);
 
@@ -38,7 +40,12 @@ export default function PersonalSettings() {
     // localStorage.setItem('timeZone', event.target.value);
   };
 
-  const handleAccountSettings = () => {};
+  const handleAccountSettings = () => {
+    router.push(
+      `${process.env.NEXT_PUBLIC_AUTH_APP_URL}/auth/userAccountSettings`,
+    );
+  };
+
   return (
     <Paper
       sx={{
