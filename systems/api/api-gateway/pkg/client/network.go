@@ -12,11 +12,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
 	"github.com/ukama/ukama/systems/common/types"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 const (
@@ -24,29 +25,16 @@ const (
 	pendingRequestMsg = "partial content. request is still ongoing"
 )
 
-func handleRestErrorStatus(err error) error {
-	e := rest.ErrorStatus{}
-
-	if errors.As(err, &e) {
-		return crest.HttpError{
-			HttpCode: e.StatusCode,
-			Message:  err.Error(),
-		}
-	}
-
-	return err
-}
-
 type Network interface {
-	GetNetwork(string) (*rest.NetworkInfo, error)
-	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*rest.NetworkInfo, error)
+	GetNetwork(string) (*creg.NetworkInfo, error)
+	CreateNetwork(string, string, []string, []string, float64, float64, uint32, bool) (*creg.NetworkInfo, error)
 }
 
 type network struct {
-	nc rest.NetworkClient
+	nc creg.NetworkClient
 }
 
-func NewNetworkClientSet(ntwk rest.NetworkClient) Network {
+func NewNetworkClientSet(ntwk creg.NetworkClient) Network {
 	n := &network{
 		nc: ntwk,
 	}
@@ -54,7 +42,7 @@ func NewNetworkClientSet(ntwk rest.NetworkClient) Network {
 	return n
 }
 
-func (n *network) GetNetwork(id string) (*rest.NetworkInfo, error) {
+func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 	net, err := n.nc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -69,7 +57,7 @@ func (n *network) GetNetwork(id string) (*rest.NetworkInfo, error) {
 		}
 	}
 
-	if net.SyncStatus == types.SyncStatusPending.String() {
+	if net.SyncStatus == types.SyncStatusPending.String() || net.SyncStatus == types.SyncStatusProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return net, crest.HttpError{
@@ -83,8 +71,8 @@ func (n *network) GetNetwork(id string) (*rest.NetworkInfo, error) {
 
 func (n *network) CreateNetwork(orgName, NetworkName string, allowedCountries,
 	allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32,
-	paymentLinks bool) (*rest.NetworkInfo, error) {
-	net, err := n.nc.Add(rest.AddNetworkRequest{
+	paymentLinks bool) (*creg.NetworkInfo, error) {
+	net, err := n.nc.Add(creg.AddNetworkRequest{
 		OrgName:          orgName,
 		NetName:          NetworkName,
 		AllowedCountries: allowedCountries,
@@ -99,4 +87,17 @@ func (n *network) CreateNetwork(orgName, NetworkName string, allowedCountries,
 	}
 
 	return net, nil
+}
+
+func handleRestErrorStatus(err error) error {
+	e := cclient.ErrorStatus{}
+
+	if errors.As(err, &e) {
+		return crest.HttpError{
+			HttpCode: e.StatusCode,
+			Message:  err.Error(),
+		}
+	}
+
+	return err
 }

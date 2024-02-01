@@ -14,13 +14,14 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
+	"github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 )
 
 func TestCient_GetPackage(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusCompleted", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&rest.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusCompleted.String(),
@@ -50,7 +51,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusPending", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&rest.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusPending.String(),
@@ -69,7 +70,7 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageFoundAndStatusFailed", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(&rest.PackageInfo{
+			Return(&cdplan.PackageInfo{
 				Id:         packageId.String(),
 				Name:       pkgName,
 				SyncStatus: types.SyncStatusFailed.String(),
@@ -88,7 +89,7 @@ func TestCient_GetPackage(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(nil,
 				fmt.Errorf("GetNetwork failure: %w",
-					rest.ErrorStatus{StatusCode: 404})).Once()
+					cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		pkgInfo, err := p.GetPackage(packageId.String())
 
@@ -143,7 +144,7 @@ func TestCient_AddPackage(t *testing.T) {
 	p := client.NewPackageClientSet(pkgClient)
 
 	t.Run("PackageCreatedAndStatusUpdated", func(t *testing.T) {
-		pkgClient.On("Add", rest.AddPackageRequest{
+		pkgClient.On("Add", cdplan.AddPackageRequest{
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,
@@ -166,7 +167,7 @@ func TestCient_AddPackage(t *testing.T) {
 			Overdraft:     overdraft,
 			TrafficPolicy: trafficPolicy,
 			Networks:      networks,
-		}).Return(&rest.PackageInfo{
+		}).Return(&cdplan.PackageInfo{
 			Id:            pkgId.String(),
 			Name:          pkgName,
 			OrgId:         orgId,
@@ -203,7 +204,7 @@ func TestCient_AddPackage(t *testing.T) {
 	})
 
 	t.Run("PackageNotCreated", func(t *testing.T) {
-		pkgClient.On("Add", rest.AddPackageRequest{
+		pkgClient.On("Add", cdplan.AddPackageRequest{
 			Name:          pkgName,
 			OrgId:         orgId,
 			OwnerId:       ownerId,

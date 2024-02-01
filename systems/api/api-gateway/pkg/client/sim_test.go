@@ -15,13 +15,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
+	"github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 func TestCient_GetSim(t *testing.T) {
@@ -34,7 +35,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusCompleted", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&rest.SimInfo{
+			Return(&csub.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusCompleted.String(),
@@ -51,7 +52,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusPending", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&rest.SimInfo{
+			Return(&csub.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusPending.String(),
@@ -70,7 +71,7 @@ func TestCient_GetSim(t *testing.T) {
 
 	t.Run("SimFoundAndStatusFailed", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
-			Return(&rest.SimInfo{
+			Return(&csub.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				SyncStatus:   types.SyncStatusFailed.String(),
@@ -89,7 +90,7 @@ func TestCient_GetSim(t *testing.T) {
 		simClient.On("Get", simId.String()).
 			Return(nil,
 				fmt.Errorf("GetSim failure: %w",
-					rest.ErrorStatus{StatusCode: 404})).Once()
+					cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		simInfo, err := s.GetSim(simId.String())
 
@@ -139,7 +140,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	s := client.NewSimClientSet(simClient, subscriberClient)
 
 	t.Run("SimAndSubscriberCreatedAndStatusUpdated", func(t *testing.T) {
-		subscriberClient.On("Add", rest.AddSubscriberRequest{
+		subscriberClient.On("Add", csub.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
 			FirstName:             firstName,
@@ -151,7 +152,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 			ProofOfIdentification: proofOfID,
 			IdSerial:              idSerial,
 		}).
-			Return(&rest.SubscriberInfo{
+			Return(&csub.SubscriberInfo{
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
@@ -165,14 +166,14 @@ func TestCient_ConfigureSim(t *testing.T) {
 				IdSerial:              idSerial,
 			}, nil).Once()
 
-		simClient.On("Add", rest.AddSimRequest{
+		simClient.On("Add", csub.AddSimRequest{
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			PackageId:     packageId.String(),
 			SimType:       simType,
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
-			Return(&rest.SimInfo{
+			Return(&csub.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				NetworkId:    networkId.String(),
@@ -194,7 +195,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 
 	t.Run("SimCreatedAndStatusUpdated", func(t *testing.T) {
 		subscriberClient.On("Get", subscriberId.String()).
-			Return(&rest.SubscriberInfo{
+			Return(&csub.SubscriberInfo{
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
@@ -208,14 +209,14 @@ func TestCient_ConfigureSim(t *testing.T) {
 				IdSerial:              idSerial,
 			}, nil).Once()
 
-		simClient.On("Add", rest.AddSimRequest{
+		simClient.On("Add", csub.AddSimRequest{
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			PackageId:     packageId.String(),
 			SimType:       simType,
 			SimToken:      simToken,
 			TrafficPolicy: trafficPolicy}).
-			Return(&rest.SimInfo{
+			Return(&csub.SimInfo{
 				Id:           simId.String(),
 				SubscriberId: subscriberId.String(),
 				NetworkId:    networkId.String(),
@@ -236,7 +237,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	})
 
 	t.Run("SubscriberNotCreated", func(t *testing.T) {
-		subscriberClient.On("Add", rest.AddSubscriberRequest{
+		subscriberClient.On("Add", csub.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
 			FirstName:             firstName,
@@ -262,7 +263,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		subscriberClient.On("Get", subscriberId.String()).
 			Return(nil, nil).Once()
 
-		simClient.On("Add", rest.AddSimRequest{
+		simClient.On("Add", csub.AddSimRequest{
 			SubscriberId: subscriberId.String(),
 			NetworkId:    networkId.String(),
 			PackageId:    packageId.String(),

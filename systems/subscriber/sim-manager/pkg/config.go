@@ -34,16 +34,15 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
 	Key               string
-	DataPlan          string `default:"http://data-plan:8080"`
 	Registry          string `default:"registry:9090"`
 	SimPool           string `default:"sim:9090"`
 	TestAgent         string `default:"testagent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
-	OrgHost           string `default:"http://nucleus:8080"`
 	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
-	PushMetricHost    string `default:"http://localhost:9091"`
+	RegistryHost      string `default:"http://registry-api-gw:8080"`
+	DataPlanHost      string `default:"http://data-plan:8080"`
 	NotificationHost  string `default:"http://192.168.1.81:8089"`
-	NetworkHost       string `default:"http://registry-api-gw:8080"`
+	PushMetricHost    string `default:"http://localhost:9091"`
 	OrgName           string
 }
 

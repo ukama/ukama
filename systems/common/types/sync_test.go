@@ -25,10 +25,10 @@ func TestSyncStatus(t *testing.T) {
 	})
 
 	t.Run("SyncStatusValidNumber", func(tt *testing.T) {
-		syncStatus := types.ParseStatus("2")
+		syncStatus := types.ParseStatus("3")
 
 		assert.NotNil(t, syncStatus)
-		assert.Equal(t, uint8(syncStatus), uint8(2))
+		assert.Equal(t, uint8(syncStatus), uint8(3))
 		assert.Equal(t, syncStatus.String(), "completed")
 	})
 

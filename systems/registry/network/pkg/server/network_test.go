@@ -13,20 +13,128 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/network/mocks"
-	"github.com/ukama/ukama/systems/registry/network/pkg/db"
-
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"gorm.io/gorm"
 
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/network/mocks"
+	"github.com/ukama/ukama/systems/registry/network/pkg/db"
+
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
 const OrgName = "testorg"
+
+func TestNetworkServer_Add(t *testing.T) {
+	t.Run("OrgFound", func(t *testing.T) {
+		// Arrange
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+
+		const netName = "network-1"
+		const orgName = "org-1"
+
+		var orgId = uuid.NewV4()
+		var netCount = int64(1)
+
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		network := &db.Network{
+			Name:       netName,
+			OrgId:      orgId,
+			SyncStatus: types.SyncStatusPending,
+		}
+
+		orgRepo.On("GetByName", orgName).Return(
+			&db.Org{
+				Id:          orgId,
+				Name:        orgName,
+				Deactivated: false,
+			}, nil).Once()
+
+		netRepo.On("GetNetworkCount", mock.Anything).Return(netCount, nil).Once()
+		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, nil, msgbusClient, "", "", "", "")
+
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			Name:    netName,
+			OrgName: orgName,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, netName, res.Network.Name)
+		assert.Equal(t, orgId.String(), res.Network.OrgId)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("OrgNotFound", func(t *testing.T) {
+		// Arrange
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+		orgClient := &cmocks.OrgClient{}
+
+		const netName = "network-1"
+		const orgName = "org-1"
+
+		var orgId = uuid.NewV4()
+		var netCount = int64(1)
+
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		netRepo.On("GetNetworkCount", mock.Anything).Return(netCount, nil).Once()
+
+		org := &db.Org{
+			Id:          orgId,
+			Name:        orgName,
+			Deactivated: false,
+		}
+
+		network := &db.Network{
+			Name:       netName,
+			OrgId:      orgId,
+			SyncStatus: types.SyncStatusPending,
+		}
+
+		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		orgClient.On("Get", orgName).Return(
+			&cnucl.OrgInfo{
+				Id:            orgId.String(),
+				Name:          orgName,
+				IsDeactivated: false,
+			}, nil).Once()
+
+		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
+
+		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, orgClient, msgbusClient, "", "", "", "")
+
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			Name:    netName,
+			OrgName: orgName,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, netName, res.Network.Name)
+		assert.Equal(t, orgId.String(), res.Network.OrgId)
+		netRepo.AssertExpectations(t)
+	})
+}
 
 func TestNetworkServer_Get(t *testing.T) {
 	t.Run("Network found", func(t *testing.T) {
@@ -37,7 +145,7 @@ func TestNetworkServer_Get(t *testing.T) {
 		countries := pq.StringArray{"USA"}
 
 		netRepo := &mocks.NetRepo{}
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo.On("Get", netId).Return(
 			&db.Network{Id: netId,
@@ -63,7 +171,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 	t.Run("Network not found", func(t *testing.T) {
 		var netId = uuid.NewV4()
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 
@@ -84,7 +192,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		var netId = uuid.NewV4()
 		const orgName = "org-1"
 		const netName = "network-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 
@@ -109,7 +217,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 	t.Run("Org or Network not found", func(t *testing.T) {
 		const orgName = "org-1"
 		const netName = "network-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 
@@ -130,7 +238,7 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 		var netId = uuid.NewV4()
 		var orgId = uuid.NewV4()
 		const netName = "network-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 		orgRepo := &mocks.OrgRepo{}
@@ -160,7 +268,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 		const orgName = "org-1"
 		orgId := uuid.NewV4()
 		const netName = "network-1"
-		msgclientRepo := &mbmocks.MsgBusServiceClient{}
+		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 		orgRepo := &mocks.OrgRepo{}
@@ -185,7 +293,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 		const orgName = "org-1"
 		orgId := uuid.NewV4()
 		const netName = "network-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 		orgRepo := &mocks.OrgRepo{}
@@ -209,7 +317,7 @@ func TestNetworkServer_AddSite(t *testing.T) {
 		var orgId = uuid.NewV4()
 		const netName = "network-1"
 		const siteName = "site-A"
-		msgclientRepo := &mbmocks.MsgBusServiceClient{}
+		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 		siteRepo := &mocks.SiteRepo{}
@@ -254,7 +362,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 	t.Run("Site exists", func(t *testing.T) {
 		var siteId = uuid.NewV4()
 		const siteName = "site-A"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		siteRepo := &mocks.SiteRepo{}
 
@@ -278,7 +386,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 
 	t.Run("Site not found", func(t *testing.T) {
 		var siteId = uuid.NewV4()
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		siteRepo := &mocks.SiteRepo{}
 
@@ -301,7 +409,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 		var orgId = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "net-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		siteRepo := &mocks.SiteRepo{}
 		netRepo := &mocks.NetRepo{}
@@ -336,7 +444,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 		var orgId = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "net-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		siteRepo := &mocks.SiteRepo{}
 		netRepo := &mocks.NetRepo{}
@@ -366,7 +474,7 @@ func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 		var orgId = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "network-1"
-		msgcRepo := &mbmocks.MsgBusServiceClient{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 		siteRepo := &mocks.SiteRepo{}

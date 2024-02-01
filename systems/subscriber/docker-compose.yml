@@ -47,7 +47,8 @@ services:
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
-   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
+   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
@@ -71,9 +72,9 @@ services:
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
    - NOTIFICATIONHOST=http://${LOCAL_HOST_IP}:8058
-   - DATAPLAN=http://${LOCAL_HOST_IP}:8074
-   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
-   - ORGHOST=http://${LOCAL_HOST_IP}:8060
+   - DATAPLANHOST=http://${LOCAL_HOST_IP}:8074
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
+   - ORGNAME=ukama-test-org
   restart: always
   networks:
    - ukama-net
