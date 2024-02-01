@@ -51,7 +51,7 @@ func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 		}
 	}
 
-	if pkg.SyncStatus == types.SyncStatusPending.String() {
+	if pkg.SyncStatus == types.SyncStatusPending.String() || pkg.SyncStatus == types.SyncStatusProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return pkg, crest.HttpError{

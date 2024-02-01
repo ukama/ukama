@@ -57,7 +57,7 @@ func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 		}
 	}
 
-	if net.SyncStatus == types.SyncStatusPending.String() {
+	if net.SyncStatus == types.SyncStatusPending.String() || net.SyncStatus == types.SyncStatusProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return net, crest.HttpError{

@@ -53,7 +53,7 @@ func (s *sim) GetSim(id string) (*csub.SimInfo, error) {
 		}
 	}
 
-	if sim.SyncStatus == types.SyncStatusPending.String() {
+	if sim.SyncStatus == types.SyncStatusPending.String() || sim.SyncStatus == types.SyncStatusProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return sim, crest.HttpError{
