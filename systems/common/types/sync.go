@@ -18,6 +18,7 @@ type SyncStatus uint8
 const (
 	SyncStatusUnknown SyncStatus = iota
 	SyncStatusPending
+	SyncStatusProcessing
 	SyncStatusCompleted
 	SyncStatusFailed
 )
@@ -33,7 +34,7 @@ func (s SyncStatus) Value() (driver.Value, error) {
 }
 
 func (s SyncStatus) String() string {
-	t := map[SyncStatus]string{0: "unknown", 1: "pending", 2: "completed", 3: "failed"}
+	t := map[SyncStatus]string{0: "unknown", 1: "pending", 2: "processing", 3: "completed", 4: "failed"}
 
 	v, ok := t[s]
 	if !ok {
@@ -49,7 +50,7 @@ func ParseStatus(value string) SyncStatus {
 		return SyncStatus(i)
 	}
 
-	t := map[string]SyncStatus{"unknown": 0, "pending": 1, "completed": 2, "failed": 3}
+	t := map[string]SyncStatus{"unknown": 0, "pending": 1, "processing": 2, "completed": 3, "failed": 4}
 
 	v, ok := t[value]
 	if !ok {
