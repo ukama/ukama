@@ -6,7 +6,7 @@ import (
 
 type datapath struct {
 	ovs     *OvsSwitch
-	ueCount int
+	ueCount uint32
 }
 
 type DataPath interface {
@@ -28,13 +28,13 @@ func InitDataPath(name, ip, netType string) (*datapath, error) {
 }
 
 func (d *datapath) AddNewDataPath(ip string) error {
-	err := c.ovs.AddUEDataPath()
+	err := d.ovs.AddUEDataPath()
 	if err != nil {
 		log.Errorf("Failed to add datapath for UE %s. Error: %v", ip, err.Error())
 		return err
 	}
 
-	c.ueCount++
+	d.ueCount++
 	return nil
 }
 
@@ -44,12 +44,12 @@ func (d *datapath) DeleteDataPath(ip string) error {
 		log.Errorf("Failed to delete datapath for UE %s. Error: %v", ip, err.Error())
 		return err
 	}
+	d.ueCount--
 	return nil
 }
 
-func (d *datapath) DataPathCount() error {
-
-	return nil
+func (d *datapath) DataPathCount() uint32 {
+	return d.ueCount
 }
 
 func (d *datapath) DataPathStats() error {
