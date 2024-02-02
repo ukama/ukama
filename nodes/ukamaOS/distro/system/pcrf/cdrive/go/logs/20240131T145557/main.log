@@ -1,0 +1,32 @@
+2024-01-31 14:55:57.963 [info] update#setState idle
+2024-01-31 14:56:27.943 [info] update#setState checking for updates
+2024-01-31 14:56:28.005 [info] update#setState idle
+2024-01-31 14:57:07.694 [error] [UtilityProcess id: 1, type: fileWatcher, pid: 1669007]: crashed with code 15 and reason 'killed'
+2024-01-31 14:57:07.700 [info] Extension host with pid 1669026 exited with code: 0, signal: unknown.
+2024-01-31 15:56:27.948 [info] update#setState checking for updates
+2024-01-31 15:56:28.076 [info] update#setState idle
+2024-01-31 16:56:27.953 [info] update#setState checking for updates
+2024-01-31 16:56:28.132 [info] update#setState idle
+2024-01-31 17:46:16.304 [info] Extension host with pid 1669176 exited with code: 0, signal: unknown.
+2024-01-31 17:56:27.956 [info] update#setState checking for updates
+2024-01-31 17:56:28.082 [info] update#setState idle
+2024-01-31 18:56:27.966 [info] update#setState checking for updates
+2024-01-31 18:56:28.108 [info] update#setState idle
+2024-01-31 19:56:27.970 [info] update#setState checking for updates
+2024-01-31 19:56:28.151 [info] update#setState idle
+2024-01-31 20:56:27.974 [info] update#setState checking for updates
+2024-01-31 20:56:28.127 [info] update#setState idle
+2024-01-31 21:56:27.977 [info] update#setState checking for updates
+2024-01-31 21:56:28.121 [info] update#setState idle
+2024-01-31 22:56:27.986 [info] update#setState checking for updates
+2024-01-31 22:56:28.158 [info] update#setState idle
+2024-01-31 23:56:27.988 [info] update#setState checking for updates
+2024-01-31 23:56:28.154 [info] update#setState idle
+2024-02-01 00:56:27.991 [info] update#setState checking for updates
+2024-02-01 00:56:28.144 [info] update#setState idle
+2024-02-01 01:56:27.995 [info] update#setState checking for updates
+2024-02-01 01:56:28.176 [info] update#setState idle
+2024-02-01 02:56:27.998 [info] update#setState checking for updates
+2024-02-01 02:56:28.169 [info] update#setState idle
+2024-02-01 03:56:28.000 [info] update#setState checking for updates
+2024-02-01 03:56:28.195 [info] update#setState available for download

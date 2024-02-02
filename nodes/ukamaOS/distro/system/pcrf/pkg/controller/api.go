@@ -52,9 +52,11 @@ type AddPolicyByImsi struct {
 }
 
 type Policy struct {
-	Ulbr uint64 `json:"ulbr" validate:"required"`
-	Dlbr uint64 `json:"dlbr" validate:"required"`
-	Data uint64 `json:"data" validate:"required"`
+	Ulbr      uint64 `json:"ulbr" validate:"required"`
+	Dlbr      uint64 `json:"dlbr" validate:"required"`
+	Data      uint64 `json:"data" validate:"required"`
+	StartTime int64  `json:"start_time" validate:"required"`
+	EndTime   int64  `json:"end_time" validate:"required"`
 }
 
 type Reroute struct {

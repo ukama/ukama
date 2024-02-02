@@ -1,0 +1,42 @@
+Tools environment: GOPATH=/root/go
+Installing 1 tool at /root/go/bin
+  gopls
+
+Installing golang.org/x/tools/gopls@latest (/root/go/bin/gopls) SUCCEEDED
+
+All tools successfully installed. You are ready to Go. :)
+Tools environment: GOPATH=/root/go
+Installing 1 tool at /root/go/bin
+  dlv
+
+Tools environment: GOPATH=/root/go
+Installing 1 tool at /root/go/bin
+  dlv
+
+Installing github.com/go-delve/delve/cmd/dlv@latest (/root/go/bin/dlv) SUCCEEDED
+
+All tools successfully installed. You are ready to Go. :)
+Installing github.com/go-delve/delve/cmd/dlv@latest (/root/go/bin/dlv) SUCCEEDED
+
+All tools successfully installed. You are ready to Go. :)
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF
+Starting linting the current package at /home/vishal/cdrive/go/src/vthakur7f/ovsOF

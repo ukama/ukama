@@ -18,16 +18,18 @@ const (
 )
 
 type Subscriber struct {
-	ID     int
-	Imsi   string
-	Policy []Policy
+	ID       int
+	Imsi     string
+	PolicyID Policy
 }
 
 type Policy struct {
-	ID   int /* Define by package ID */
-	Data uint64
-	Dlbr uint64
-	Ulbr uint64
+	ID        int /* Define by package ID */
+	Data      uint64
+	Dlbr      uint64
+	Ulbr      uint64
+	StartTime int64
+	EndTime   int64
 }
 
 type Usage struct {

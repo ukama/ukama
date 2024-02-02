@@ -42,11 +42,13 @@ func NewStore(name string) (*Store, error) {
 func (s *Store) createTables() error {
 	// Create Policies table
 	_, err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISTS policies (
-			id INTEGER PRIMARY KEY,
-			data INTEGER,
-			dlbr INTEGER,
-			ulbr INTEGER
+		CREATE TABLE IF NOT EXISTS Policy (
+			ID INTEGER PRIMARY KEY AUTOINCREMENT,
+			Data INTEGER,
+			Dlbr INTEGER,
+			Ulbr INTEGER,
+			StartTime INTEGER,
+			EndTime INTEGER
 		);
 	`)
 	if err != nil {
@@ -158,6 +160,8 @@ func (s *Store) CreateDefaultPolicy() (*Policy, error) {
 		Data: 0,
 		Dlbr: 5000,
 		Ulbr: 1000,
+		StartTime: 0,
+		EndTime: 0,
 	}
 
 	err := InsertPolicy(&policy)
@@ -186,7 +190,7 @@ func (s *Store) CreateDefaultReRoute() (*ReRoute, error) {
 
 // CRUD operations for Subscriber entity
 
-func (s *Store) CreateSubscriber(imsi string) (*Subscriber, error) {
+func (s *Store) CreateSubscriberSample(imsi string) (*Subscriber, error) {
 	subscriber := Subscriber{
 		Imsi: imsi,
 	}
@@ -604,3 +608,65 @@ func (s *Store) GetReRouteByID(reRouteID int) (*ReRoute, error) {
 }
 
 // ... (similar CRUD operations for other entities)
+func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
+
+
+	query := "SELECT ID, Imsi FROM Subscriber WHERE Imsi = ?"
+	row := s.db.QueryRow(query, imsi)
+
+	var subscriber Subscriber
+	err = row.Scan(&subscriber.ID, &subscriber.Imsi)
+	if err != nil {
+		// Subscriber not found
+		return nil, fmt.Errorf("Subscriber not found: %v", err)
+	}
+
+	return &subscriber,nil
+}
+
+func (s *Store) CreateSubscriberOrUpdatePolicy(imsi string) {
+	
+	// Check if the subscriber already exists
+	var subscriberID int
+	err = s.db.QueryRow("SELECT ID FROM Subscriber WHERE Imsi = ?", imsi).Scan(&subscriberID)
+
+	if err == nil && subscriberID != 0 {
+		// Subscriber already exists, update the policy
+		updatePolicy(subscriberID)
+		fmt.Printf("Subscriber with Imsi %s already exists. Policy updated.\n", imsi)
+	} else {
+		// Create a new subscriber
+		insertSubscriberSQL := `
+			INSERT INTO Subscriber (Imsi)
+			VALUES (?)
+		`
+
+		result, err := s.db.Exec(insertSubscriberSQL, imsi)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Get the ID of the last inserted Subscriber
+		newSubscriberID, err := result.LastInsertId()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("New subscriber with Imsi %s created. ID: %d\n", imsi, newSubscriberID)
+
+		// Assign a policy to the new subscriber
+		createAndAssignPolicy(int(newSubscriberID))
+		fmt.Printf("Policy assigned to the new subscriber.\n")
+	}
+}
+
+func (s *Store)	CreatePolicy(p *Policy) error {
+/* Only create policy if doesn't exist */
+/* Policy Id comes from the remote policy controller */
+return nil
+}
+
+func (s * Store) CreateSubscriber(imsi string, p *Policy) error {
+	/* Only create subscriber if doesn't exist */ 
+	return nil
+}

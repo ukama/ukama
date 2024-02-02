@@ -13,41 +13,41 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/rest"
-
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
 )
 
 const PolicyEndpoint = "/v1/policy/imsi/"
 const CDREndpoint = "/v1/cdr/imsi/"
 
-type PolicyController interface {
+type RemoteController interface {
 	GetPolicy(imsi string) (*rest.Policy, error)
 	PushCdr(cdr rest.CDR) error
 }
 
-type policyControllerClient struct {
+type remoteControllerClient struct {
 	u *url.URL
 	R *Resty
 }
 
-func NewPolicyControllerClient(h string) *policyControllerClient {
+func NewRemoteControllerClient(h string) (*remoteControllerClient, error) {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Errorf("Can't parse  %s url. Error: %s", h, err.Error())
+		return nil, err
 	}
 
-	return &policyControllerClient{
+	return &remoteControllerClient{
 		u: u,
 		R: NewResty(),
-	}
+	}, nil
 }
 
-func (p *policyControllerClient) PushCdr(req rest.CDR) error {
+func (r *remoteControllerClient) PushCdr(req controller.CDR) error {
 	log.Debugf("Posting  CDR: %v", req)
 
-	url := p.u.String() + "/" + CDREndpoint + req.Imsi
+	url := r.u.String() + "/" + CDREndpoint + req.Imsi
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -55,7 +55,7 @@ func (p *policyControllerClient) PushCdr(req rest.CDR) error {
 		return fmt.Errorf("Marshal CDR request failure for imsi : %d. Error %s", req.Imsi, err.Error())
 	}
 
-	resp, err := p.R.Post(url, b)
+	resp, err := r.R.Post(url, b)
 	if err != nil {
 		log.Errorf("Post CDR failure. error: %s", err.Error())
 		return fmt.Errorf("Post CDR failure: %w", err)
@@ -64,11 +64,11 @@ func (p *policyControllerClient) PushCdr(req rest.CDR) error {
 	return nil
 }
 
-func (p *policyControllerClient) GetPolicy(imsi string) (*rest.Policy, error) {
+func (r *remoteControllerClient) GetPolicy(imsi string) (*rest.Policy, error) {
 	log.Debugf("Getting policy for ismi: %s", imsi)
 
 	policy := &rest.Policy{}
-	resp, err := p.R.GetPolicy(p.u.String() + PolicyEndpoint + "/" + imsi)
+	resp, err := r.R.GetPolicy(r.u.String() + PolicyEndpoint + "/" + imsi)
 	if err != nil {
 		log.Errorf("GetPolicy failure. error: %s", err.Error())
 
