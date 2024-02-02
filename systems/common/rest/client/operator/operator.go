@@ -25,7 +25,7 @@ const (
 type OperatorClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
-	GetUsages(iccid, cdrType, from, to string) (*OperatorUsage, error)
+	GetUsages(iccid, cdrType, from, to string) (map[string]Usage, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
 	TerminateSim(iccid string) error

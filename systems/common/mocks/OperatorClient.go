@@ -109,23 +109,23 @@ func (_m *OperatorClient) GetSimInfo(iccid string) (*operator.OperatorSimInfo, e
 }
 
 // GetUsages provides a mock function with given fields: iccid, cdrType, from, to
-func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string) (*operator.OperatorUsage, error) {
+func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string) (map[string]operator.Usage, error) {
 	ret := _m.Called(iccid, cdrType, from, to)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsages")
 	}
 
-	var r0 *operator.OperatorUsage
+	var r0 map[string]operator.Usage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*operator.OperatorUsage, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (map[string]operator.Usage, error)); ok {
 		return rf(iccid, cdrType, from, to)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *operator.OperatorUsage); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string) map[string]operator.Usage); ok {
 		r0 = rf(iccid, cdrType, from, to)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*operator.OperatorUsage)
+			r0 = ret.Get(0).(map[string]operator.Usage)
 		}
 	}
 
