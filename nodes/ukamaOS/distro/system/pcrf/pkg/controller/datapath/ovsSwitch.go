@@ -1,6 +1,7 @@
 package datapath
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -105,6 +106,9 @@ func NewOvsSwitch(bridgeName, localIP, netType string) (*OvsSwitch, error) {
 		log.Fatalf("Failed to get input Table")
 		return nil, fmt.Errorf("failed to get input Table for switch")
 	}
+
+	// Enable monitoring
+	sw.ofActor.Switch.EnableMonitor()
 	log.Infof("Switch connected. Creating tables..")
 
 	return sw, nil
@@ -205,7 +209,7 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	return f, nil
 }
 
-func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMeter uint32, oprationType int) error {
+func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, oprationType int) error {
 
 	ip := net.ParseIP(ipString)
 	if ip == nil {
@@ -219,7 +223,7 @@ func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMete
 		log.Errorf("Failed to create RX flow for the UE %s with meter id %d. Error %s", ipString, rxMeter, err.Error())
 		return err
 	}
-
+	rxF.CookieID = rxCookie
 	rxF = addActionsToFlow(rxF, rxMeter)
 
 	/* Submit flow */
@@ -236,7 +240,7 @@ func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMete
 		log.Errorf("Failed to create TX flow for the UE %s with meter id %d. Error %s", ipString, txMeter, err.Error())
 		return err
 	}
-
+	txF.CookieID = txCookie
 	/* Add actions */
 	txF = addActionsToFlow(txF, txMeter)
 
@@ -250,8 +254,8 @@ func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMete
 	return nil
 }
 
-func (o *OvsSwitch) AddFlowForUE(ipString string, rxMeter, txMeter uint32) error {
-	err := o.updateFlowForUE(ipString, rxMeter, txMeter, openflow15.FC_ADD)
+func (o *OvsSwitch) AddFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error {
+	err := o.updateFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie, openflow15.FC_ADD)
 	if err != nil {
 		log.Errorf("failed to add flow for UE %s. Error: %s", ipString, err.Error())
 		return err
@@ -386,7 +390,7 @@ func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
 	return nil
 }
 
-func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txRate, burstSize uint32) error {
+func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error {
 
 	/* Create Meters */
 	err := o.CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize)
@@ -396,7 +400,7 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 	}
 
 	/* Add Flows */
-	err = o.AddFlowForUE(ipString, rxMeter, txMeter)
+	err = o.AddFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie)
 	if err != nil {
 		log.Errorf("Failed to create flows for UE %s. Error: %v", ipString, err)
 		o.DeleteMetersForUE(rxMeter, txMeter)
@@ -406,7 +410,7 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 	return nil
 }
 
-func (o *OvsSwitch) DelteUEDataPath(ipString string, rxMeter, txMeter uint32) error {
+func (o *OvsSwitch) DeleteUEDataPath(ipString string, rxMeter, txMeter uint32) error {
 
 	/* Delete Flows */
 	err := o.DeleteFlowForUE(ipString)
@@ -424,4 +428,110 @@ func (o *OvsSwitch) DelteUEDataPath(ipString string, rxMeter, txMeter uint32) er
 	}
 
 	return nil
+}
+
+func parseStats(s openflow15.Stats) (uint64, uint64, error) {
+	bc := new(openflow15.PBCountStatField)
+	pc := new(openflow15.PBCountStatField)
+	n := 2
+
+	data, err := s.MarshalBinary()
+	if err != nil {
+		log.Errorf("Failed to marshal data. Error %s", err.Error())
+		return 0, 0, err
+	}
+
+	s.Length = binary.BigEndian.Uint16(data[n:])
+	n += 2
+	log.Infof("Stats Length %d", s.Length)
+	for n < int(s.Length) {
+		var f util.Message
+		var size uint16 = 0
+		log.Infof("Stats Field value %v", data[n+2]>>1)
+		switch data[n+2] >> 1 {
+		case openflow15.XST_OFB_DURATION:
+			fallthrough
+		case openflow15.XST_OFB_IDLE_TIME:
+			f = new(openflow15.TimeStatField)
+			size = f.Len()
+
+		case openflow15.XST_OFB_FLOW_COUNT:
+			f = new(openflow15.FlowCountStatField)
+			size = f.Len()
+
+		case openflow15.XST_OFB_PACKET_COUNT:
+			log.Infof("Received PBCountStatField offset %d", n)
+			err = pc.UnmarshalBinary(data[n:])
+			if err != nil {
+				log.Errorf("Failed to unmarshal Stats's Field data %+v", data[n:])
+				return 0, 0, err
+			}
+			size = pc.Len()
+
+		case openflow15.XST_OFB_BYTE_COUNT:
+			log.Infof("Received PBCountStatField offset %d", n)
+			err = bc.UnmarshalBinary(data[n:])
+			if err != nil {
+				log.Errorf("Failed to unmarshal Stats's Field data %v", data[n:])
+				return 0, 0, err
+			}
+			size = bc.Len()
+		default:
+			return fmt.Errorf("Received unknown Stats field: %v", data[n+2]>>1)
+		}
+		n += int(size)
+	}
+
+	return bc.Count, pc.Count, nil
+}
+
+func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
+
+	var bc uint64 = 0
+	var pc uint64 = 0
+	cookieMask := uint64(0xffffffffffffffff)
+
+	stats, err := o.Switch.DumpFlowStats(cookieID, &cookieMask, nil, nil)
+	if err != nil {
+		log.Errorf("Error getting  stats %s", err.Error())
+		return err
+	}
+
+	for _, stat := range stats {
+		if stat.Cookie == cookieID {
+			log.Infof("found the flow stats for cookie 0x%x. Stats: %v", cookieID, stat.Stats)
+			bc, pc, err := parseStats(stat.Stats)
+			if err != nil {
+				log.Errorf("Failed to get stats for flow %d (0x%x)", cookieID, cookieID)
+				return 0, 0, err
+			}
+
+		}
+
+	}
+	log.Infof("Stats for flow %v are %v", f.Match, stats)
+	return bc, pc, nil
+}
+
+func (o *OvsSwitch) DataPathUEStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
+
+	var rxBc uint64 = 0
+	var rxPc uint64 = 0
+	var tabwriter uint64 = 0
+	var txPc uint64 = 0
+	cookieMask := uint64(0xffffffffffffffff)
+
+	rxBC, rxPC, err := o.dataPathStats(rxCookieID)
+	if err != nil {
+		log.Errorf("Error getting RX path stats %s", err.Error())
+		return err
+	}
+
+	txBC, txPC, err := o.dataPathStats(txCookieID)
+	if err != nil {
+		log.Errorf("Error getting tx pathstats %s", err.Error())
+		return err
+	}
+
+	return rxBC, rxPC, txBC, txPC, nil
 }
