@@ -17,7 +17,7 @@ import (
 )
 
 func TestStatusType(t *testing.T) {
-	t.Run("SyncStatusValidString", func(tt *testing.T) {
+	t.Run("StatusTypeValidString", func(tt *testing.T) {
 		status := ukama.ParseStatusType("pending")
 
 		assert.NotNil(t, status)
@@ -25,7 +25,7 @@ func TestStatusType(t *testing.T) {
 		assert.Equal(t, uint8(status), uint8(1))
 	})
 
-	t.Run("SyncStatusValidNumber", func(tt *testing.T) {
+	t.Run("StatusTypeValidNumber", func(tt *testing.T) {
 		status := ukama.ParseStatusType("3")
 
 		assert.NotNil(t, status)
@@ -33,7 +33,7 @@ func TestStatusType(t *testing.T) {
 		assert.Equal(t, status.String(), "completed")
 	})
 
-	t.Run("SyncStatusNonValidString", func(tt *testing.T) {
+	t.Run("StatusTypeNonValidString", func(tt *testing.T) {
 		status := ukama.ParseStatusType("failure")
 
 		assert.NotNil(t, status)
@@ -41,7 +41,7 @@ func TestStatusType(t *testing.T) {
 		assert.Equal(t, uint8(status), uint8(0))
 	})
 
-	t.Run("SyncStatusNonValidNumber", func(tt *testing.T) {
+	t.Run("StatusTypeNonValidNumber", func(tt *testing.T) {
 		status := ukama.StatusType(uint8(10))
 
 		assert.NotNil(t, status)
