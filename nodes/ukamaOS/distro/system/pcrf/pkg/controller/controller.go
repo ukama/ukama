@@ -14,7 +14,7 @@ type Controller struct {
 	store   *store.Store
 	sw      string
 	session string
-	rc      *client.RemoteController
+	rc      client.RemoteController
 }
 
 func NewController(db string, sw string, remote string) (*Controller, error) {

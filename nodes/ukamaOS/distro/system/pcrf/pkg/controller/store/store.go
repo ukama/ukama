@@ -59,7 +59,7 @@ func (s *Store) createTables() error {
 	// Create ReRoutes table
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS reroutes (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			ipaddr TEXT
 		);
 	`)
@@ -71,7 +71,7 @@ func (s *Store) createTables() error {
 	// Create Subscribers table
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS subscribers (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			imsi TEXT
 		);
 	`)
@@ -83,7 +83,7 @@ func (s *Store) createTables() error {
 	// Create Usages table
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS usages (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			subscriber_id INTEGER,
 			data INTEGER,
 			FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
@@ -97,7 +97,7 @@ func (s *Store) createTables() error {
 	// Create Meters table
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS meters (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			rate INTEGER,
 			type INTEGER
 		);
@@ -110,8 +110,9 @@ func (s *Store) createTables() error {
 	// Create Flows table
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS flows (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			table INTEGER,
+			cookie INTEGER CHECK(cookie >= 0),
 			priority INTEGER,
 			ueipaddr TEXT,
 			reroute_id INTEGER,
@@ -153,7 +154,6 @@ func (s *Store) createTables() error {
 }
 
 // CRUD operations for Policy entity
-
 func (s *Store) CreateDefaultPolicy() (*Policy, error) {
 	policy := Policy{
 		ID:   1,
@@ -189,7 +189,6 @@ func (s *Store) CreateDefaultReRoute() (*ReRoute, error) {
 }
 
 // CRUD operations for Subscriber entity
-
 func (s *Store) CreateSubscriberSample(imsi string) (*Subscriber, error) {
 	subscriber := Subscriber{
 		Imsi: imsi,
@@ -427,7 +426,7 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 			return nil, err
 		}
 
-		sessions = append(sessions, session)subscriber.Imsi
+		sessions = append(sessions, session)
 	}
 
 	return sessions, nil

@@ -14,23 +14,25 @@ import (
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
 const PolicyEndpoint = "/v1/policy/imsi/"
 const CDREndpoint = "/v1/cdr/imsi/"
 
 type RemoteController interface {
-	GetPolicy(imsi string) (*rest.Policy, error)
-	PushCdr(cdr rest.CDR) error
+	GetPolicy(imsi string) (*api.Policy, error)
+	PushCdr(cdr api.CDR) error
 }
 
 type remoteControllerClient struct {
-	u *url.URL
-	R *Resty
+	u     *url.URL
+	R     *rest.RestClient
+	debug bool
 }
 
-func NewRemoteControllerClient(h string) (*remoteControllerClient, error) {
+func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, error) {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -39,12 +41,13 @@ func NewRemoteControllerClient(h string) (*remoteControllerClient, error) {
 	}
 
 	return &remoteControllerClient{
-		u: u,
-		R: NewResty(),
+		u:     u,
+		R:     rest.NewRestyClient(u, debug),
+		debug: debug,
 	}, nil
 }
 
-func (r *remoteControllerClient) PushCdr(req controller.CDR) error {
+func (r *remoteControllerClient) PushCdr(req api.CDR) error {
 	log.Debugf("Posting  CDR: %v", req)
 
 	url := r.u.String() + "/" + CDREndpoint + req.Imsi
@@ -52,23 +55,25 @@ func (r *remoteControllerClient) PushCdr(req controller.CDR) error {
 	b, err := json.Marshal(req)
 	if err != nil {
 		log.Errorf("Error marshalling CDR. error: %s", err.Error())
-		return fmt.Errorf("Marshal CDR request failure for imsi : %d. Error %s", req.Imsi, err.Error())
+		return fmt.Errorf("marshal CDR request failure for imsi : %s. Error %s", req.Imsi, err.Error())
 	}
 
-	resp, err := r.R.Post(url, b)
+	_, err = r.R.C.R().
+		SetBody(b).
+		Post(url)
 	if err != nil {
 		log.Errorf("Post CDR failure. error: %s", err.Error())
-		return fmt.Errorf("Post CDR failure: %w", err)
+		return fmt.Errorf("post CDR failure: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (r *remoteControllerClient) GetPolicy(imsi string) (*rest.Policy, error) {
+func (r *remoteControllerClient) GetPolicy(imsi string) (*api.Policy, error) {
 	log.Debugf("Getting policy for ismi: %s", imsi)
 
-	policy := &rest.Policy{}
-	resp, err := r.R.GetPolicy(r.u.String() + PolicyEndpoint + "/" + imsi)
+	policy := &api.Policy{}
+	resp, err := r.R.C.R().Get(r.u.String() + PolicyEndpoint + "/" + imsi)
 	if err != nil {
 		log.Errorf("GetPolicy failure. error: %s", err.Error())
 

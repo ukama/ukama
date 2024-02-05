@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package controller
+package api
 
 type CreateSession struct {
 	Imsi    string `json:"imsi" validate:"required"`
