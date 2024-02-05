@@ -165,3 +165,11 @@ type RemovePkgFromSimReq struct {
 	SimId     string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required"`
 }
+
+type GetUsagesReq struct {
+	SimId   string `form:"sim_id" json:"sim_id" query:"sim_id" binding:"required"`
+	SimType string `form:"sim_type" json:"sim_type" query:"sim_type" binding:"required"`
+	Type    string `form:"type" json:"type" query:"type" binding:"required"`
+	From    string `form:"from" json:"from" query:"from" binding:"required"`
+	To      string `to:"status" json:"to" query:"to" binding:"required"`
+}
