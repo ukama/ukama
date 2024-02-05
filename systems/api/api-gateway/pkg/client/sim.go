@@ -11,7 +11,7 @@ package client
 import (
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -44,7 +44,7 @@ func (s *sim) GetSim(id string) (*csub.SimInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if sim.SyncStatus == types.SyncStatusUnknown.String() || sim.SyncStatus == types.SyncStatusFailed.String() {
+	if sim.SyncStatus == ukama.StatusTypeUnknown.String() || sim.SyncStatus == ukama.StatusTypeFailed.String() {
 		log.Error(failedRequestMsg)
 
 		return nil, crest.HttpError{
@@ -53,7 +53,7 @@ func (s *sim) GetSim(id string) (*csub.SimInfo, error) {
 		}
 	}
 
-	if sim.SyncStatus == types.SyncStatusPending.String() || sim.SyncStatus == types.SyncStatusProcessing.String() {
+	if sim.SyncStatus == ukama.StatusTypePending.String() || sim.SyncStatus == ukama.StatusTypeProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return sim, crest.HttpError{

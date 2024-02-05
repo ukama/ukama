@@ -11,7 +11,7 @@ package client
 import (
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -42,7 +42,7 @@ func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if pkg.SyncStatus == types.SyncStatusUnknown.String() || pkg.SyncStatus == types.SyncStatusFailed.String() {
+	if pkg.SyncStatus == ukama.StatusTypeUnknown.String() || pkg.SyncStatus == ukama.StatusTypeFailed.String() {
 		log.Error(failedRequestMsg)
 
 		return nil, crest.HttpError{
@@ -51,7 +51,7 @@ func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 		}
 	}
 
-	if pkg.SyncStatus == types.SyncStatusPending.String() || pkg.SyncStatus == types.SyncStatusProcessing.String() {
+	if pkg.SyncStatus == ukama.StatusTypePending.String() || pkg.SyncStatus == ukama.StatusTypeProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return pkg, crest.HttpError{
