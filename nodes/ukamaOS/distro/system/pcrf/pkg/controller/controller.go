@@ -102,14 +102,14 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *CreateSession) error {
 	}
 
 	/* create session */
-	session, err := c.store.CreateSession(req.Imsi, req.Ip)
+	s, err := c.store.CreateSession(req.Imsi, req.Ip)
 	if err != nil {
 		log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.Imsi, err)
 		return err
 	}
 
 	/* start monitoring session */
-	err = c.session.StartMonitoring()
+	err = c.session.CreateSession(req.Imsi, req.Ip, s)
 	if err != nil {
 		log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.Imsi, err)
 		return err

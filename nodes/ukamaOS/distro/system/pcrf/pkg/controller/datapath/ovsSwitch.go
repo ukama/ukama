@@ -13,11 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type DataPath int
+type UeDataPath int
 
 const (
-	RX_PATH DataPath = 0
-	TX_PATH DataPath = 1
+	RX_PATH UeDataPath = 0
+	TX_PATH UeDataPath = 1
 )
 
 // OvsSwitch represents on OVS bridge instance
@@ -38,7 +38,7 @@ type OvsSwitch struct {
 	bridgeName string
 	Ip         string
 	netType    string
-	ofActor    *ofctrl.OfActor
+	ofActor    *OfActor
 	ctrler     *ofctrl.Controller
 }
 
@@ -209,7 +209,7 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	return f, nil
 }
 
-func (o *OvsSwitch) updateFlowForUE(a *OfActor, ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, oprationType int) error {
+func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, oprationType int) error {
 
 	ip := net.ParseIP(ipString)
 	if ip == nil {
@@ -275,7 +275,7 @@ func getFlowKey(m ofctrl.FlowMatch) string {
 	return string(jsonVal)
 }
 
-func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp DataPath) error {
+func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 	// openflow15 protocol to delete flows from the switch
 	flow := openflow15.NewFlowMod()
 	flow.TableId = 0
@@ -288,7 +288,7 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp DataPath) error {
 	} else if dp == RX_PATH {
 		flow.Match.AddField(*openflow15.NewIpv4DstField(ip, nil))
 	}
-	err := o.ofActor.Send(flow)
+	err := o.ofActor.Switch.Send(flow)
 	if err != nil {
 		log.Errorf("failed to delete flow for UE %v. Error: %s", ip, err.Error())
 		return err
@@ -296,7 +296,7 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp DataPath) error {
 	return nil
 }
 
-func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp DataPath) error {
+func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 
 	// Delete flow from the table
 	f := new(ofctrl.Flow)
@@ -477,7 +477,7 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 			}
 			size = bc.Len()
 		default:
-			return fmt.Errorf("Received unknown Stats field: %v", data[n+2]>>1)
+			return 0, 0, fmt.Errorf("Received unknown Stats field: %v", data[n+2]>>1)
 		}
 		n += int(size)
 	}
@@ -491,16 +491,16 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 	var pc uint64 = 0
 	cookieMask := uint64(0xffffffffffffffff)
 
-	stats, err := o.Switch.DumpFlowStats(cookieID, &cookieMask, nil, nil)
+	stats, err := o.ofActor.Switch.DumpFlowStats(cookieID, &cookieMask, nil, nil)
 	if err != nil {
 		log.Errorf("Error getting  stats %s", err.Error())
-		return err
+		return 0, 0, err
 	}
 
 	for _, stat := range stats {
 		if stat.Cookie == cookieID {
 			log.Infof("found the flow stats for cookie 0x%x. Stats: %v", cookieID, stat.Stats)
-			bc, pc, err := parseStats(stat.Stats)
+			bc, pc, err = parseStats(stat.Stats)
 			if err != nil {
 				log.Errorf("Failed to get stats for flow %d (0x%x)", cookieID, cookieID)
 				return 0, 0, err
@@ -509,28 +509,22 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 		}
 
 	}
-	log.Infof("Stats for flow %v are %v", f.Match, stats)
+
 	return bc, pc, nil
 }
 
 func (o *OvsSwitch) DataPathUEStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
 
-	var rxBc uint64 = 0
-	var rxPc uint64 = 0
-	var tabwriter uint64 = 0
-	var txPc uint64 = 0
-	cookieMask := uint64(0xffffffffffffffff)
-
 	rxBC, rxPC, err := o.dataPathStats(rxCookieID)
 	if err != nil {
 		log.Errorf("Error getting RX path stats %s", err.Error())
-		return err
+		return 0, 0, 0, 0, err
 	}
 
 	txBC, txPC, err := o.dataPathStats(txCookieID)
 	if err != nil {
 		log.Errorf("Error getting tx pathstats %s", err.Error())
-		return err
+		return 0, 0, 0, 0, err
 	}
 
 	return rxBC, rxPC, txBC, txPC, nil
