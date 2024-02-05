@@ -2,10 +2,11 @@ package session
 
 import (
 	"context"
+	"log"
 	"time"
 
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/datapath"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/datapath"
 )
 
 type Cache struct {
@@ -28,7 +29,10 @@ type SessionManger interface {
 }
 
 func NewSessionManager(store *store.Store, name, ip, netType string, period time.Duration) *sessionManager {
-	d := datapath.InitDataPath(name, ip, netType)
+	d, err := datapath.InitDataPath(name, ip, netType)
+	if err != nil {
+		log.Fatalf("error initializing session manager. Error: %s", err.Error())
+	}
 
 	s := &sessionManager{
 		d:      d,
@@ -40,5 +44,9 @@ func NewSessionManager(store *store.Store, name, ip, netType string, period time
 }
 
 func (s *sessionManager) CreateSesssion(ctx context.Context, ip string, imsi string) {
+
+	/* Add new data path */
+
+	/* Start session monitor thread */
 
 }

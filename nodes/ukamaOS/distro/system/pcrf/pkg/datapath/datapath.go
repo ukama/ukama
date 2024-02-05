@@ -12,7 +12,7 @@ type dataPath struct {
 type DataPath interface {
 	AddNewDataPath(ip string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error
 	DeleteDataPath(ip string, rxMeter, txMeter uint32) error
-	DataPathCount() error
+	DataPathCount() uint32
 	DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error)
 }
 
