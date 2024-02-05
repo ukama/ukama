@@ -17,7 +17,7 @@ type Controller struct {
 	rc      client.RemoteController
 }
 
-func NewController(db string, sw string, remote string) (*Controller, error) {
+func NewController(db string, sw string, remote string, debug bool) (*Controller, error) {
 	c := &Controller{}
 	store, err := store.NewStore(db)
 	if err != nil {
@@ -25,7 +25,7 @@ func NewController(db string, sw string, remote string) (*Controller, error) {
 		return nil, err
 	}
 
-	rc, err := client.NewRemoteControllerClient(remote)
+	rc, err := client.NewRemoteControllerClient(remote, debug)
 	if err != nil {
 		log.Errorf("Failed to create client: %v", err)
 		return nil, err
