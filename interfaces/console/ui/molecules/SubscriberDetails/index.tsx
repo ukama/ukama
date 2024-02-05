@@ -20,6 +20,9 @@ import TabsComponent from '@/ui/molecules/TabsComponent';
 import UserInfo from './userInfo';
 import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
+import { InvoiceDto, PackageDto } from '@/generated';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+
 interface SubscriberProps {
   onCancel: () => void;
   ishowSubscriberDetails: boolean;
@@ -42,6 +45,10 @@ interface SubscriberProps {
   handleDeleteSubscriber: (action: string, subscriberId: string) => void;
   loading: boolean;
   simStatusLoading: boolean;
+  billingCycle: InvoiceDto[];
+  dataPlans: PackageDto[];
+  billingCycleLoading: boolean;
+  dataPlanLoading: boolean;
 }
 
 const SubscriberDetails: React.FC<SubscriberProps> = ({
@@ -51,11 +58,15 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   handleClose,
   handleDeleteSubscriber,
   handleSimActionOption,
+  billingCycleLoading,
+  dataPlanLoading,
   packageName,
   bundle,
   loading,
   currentSite,
   simStatusLoading = false,
+  billingCycle = [] as InvoiceDto[],
+  dataPlans = [],
 }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [simAction, setSimAction] = useState<any>();
@@ -67,6 +78,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -101,12 +113,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     }
   }, [subscriberInfo]);
 
-  const handleSimEdit = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-  const handleEditName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFirstName(event.target.value);
-  };
   const handleSaveSubscriber = () => {
     setOnEditEmail(false);
     setOnEditName(false);
@@ -211,7 +217,12 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
           </Box>
 
           <Box component="div" role="tabpanel" hidden={selectedTab !== 3}>
-            <BillingCycle />
+            <BillingCycle
+              billingCycle={billingCycle || []}
+              dataPlans={dataPlans || []}
+              billingCycleLoading={billingCycleLoading}
+              dataPlanLoading={dataPlanLoading}
+            />
           </Box>
         </Box>
       </Box>

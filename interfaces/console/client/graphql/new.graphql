@@ -768,6 +768,12 @@ fragment invoice on InvoiceDto {
       canceledAt
       terminatedAt
     }
+    metadata {
+      createdAt
+      key
+      lagoId
+      value
+    }
     fees {
       amountCents
       amountCurrency
@@ -788,16 +794,16 @@ fragment invoice on InvoiceDto {
   createdAt
 }
 
-query getInvoiceByNetwork($networkId: String!) {
-  getInvoiceByNetwork(networkId: $networkId) {
+query getInvoicesByNetwork($networkId: String!) {
+  getInvoicesByNetwork(networkId: $networkId) {
     invoices {
       ...invoice
     }
   }
 }
 
-query getInvoiceBySubscriber($subscriber: String!) {
-  getInvoiceBySubscriber(subscriber: $subscriber) {
+query getInvoicesBySubscriber($subscriberId: String!) {
+  getInvoicesBySubscriber(subscriberId: $subscriberId) {
     invoices {
       ...invoice
     }

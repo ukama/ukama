@@ -8,15 +8,15 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { InvoiceDto } from "./types";
+import { InvoicesResponse } from "./types";
 
 @Resolver()
 export class GetInvoiceBySubscriberResolver {
-  @Query(() => InvoiceDto)
+  @Query(() => InvoicesResponse)
   async getInvoicesBySubscriber(
     @Arg("subscriberId") subscriberId: string,
     @Ctx() ctx: Context
-  ): Promise<InvoiceDto[]> {
+  ): Promise<InvoicesResponse> {
     const { dataSources } = ctx;
     return dataSources.dataSource.getInvoicesBySubscriber(subscriberId);
   }

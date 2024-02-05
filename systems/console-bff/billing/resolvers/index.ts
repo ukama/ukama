@@ -12,7 +12,7 @@ import { CreateCustomerResolver } from "./createCustomer";
 import { GetBillHistoryResolver } from "./getBillHistory";
 import { GetCurrentBillResolver } from "./getCurrentBill";
 import { GetInvoiceResolver } from "./getInvoice";
-import { GetInvoiceByNetworkResolver } from "./getInvoiceByNetwork";
+import { GetInvoicesByNetworkResolver } from "./getInvoicesByNetwork";
 import { GetInvoiceBySubscriberResolver } from "./getInvoicesBySubscriber";
 import { GetStripeCustomerResolver } from "./getStripeCustomer";
 import { RemoveInvoiceResolver } from "./removeInvoice";
@@ -21,7 +21,7 @@ import { RetrivePaymentMethodsResolver } from "./retrivePaymentMethods";
 const resolvers: NonEmptyArray<any> = [
   AttachPaymentWithCustomerResolver,
   CreateCustomerResolver,
-  GetInvoiceByNetworkResolver,
+  GetInvoicesByNetworkResolver,
   RemoveInvoiceResolver,
   GetInvoiceBySubscriberResolver,
   GetInvoiceResolver,

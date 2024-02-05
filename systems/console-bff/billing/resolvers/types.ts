@@ -190,6 +190,20 @@ export class Fee {
   @Field(() => FeeItem)
   item: FeeItem;
 }
+@ObjectType()
+export class MetadataItem {
+  @Field()
+  createdAt: string;
+
+  @Field()
+  key: string;
+
+  @Field(() => [Int])
+  lagoId: number[];
+
+  @Field()
+  value: string;
+}
 
 @ObjectType()
 export class RawInvoiceDto {
@@ -231,6 +245,9 @@ export class RawInvoiceDto {
 
   @Field(() => [Fee])
   fees: Fee[];
+
+  @Field(() => [MetadataItem], { nullable: true })
+  metadata?: MetadataItem[];
 }
 
 @ObjectType()
@@ -239,7 +256,7 @@ export class InvoiceDto {
   id: string;
 
   @Field()
-  susbcriberId: string;
+  subscriberId: string;
 
   @Field()
   networkId: string;
@@ -256,7 +273,11 @@ export class InvoiceDto {
   @Field()
   createdAt: Date;
 }
-
+@ObjectType()
+export class InvoicesResponse {
+  @Field(() => [InvoiceDto])
+  invoices: InvoiceDto[];
+}
 @ObjectType()
 export class StripePaymentMethods {
   @Field()

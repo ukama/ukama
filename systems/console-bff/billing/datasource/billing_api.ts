@@ -8,7 +8,12 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { BILLING_API_GW, VERSION } from "../../common/configs";
-import { BillHistoryDto, BillResponse, InvoiceDto } from "../resolvers/types";
+import {
+  BillHistoryDto,
+  BillResponse,
+  InvoiceDto,
+  InvoicesResponse,
+} from "../resolvers/types";
 import { billHistoryDtoToDto, dtoToDto } from "./mapper";
 
 const version = "/v1/invoices";
@@ -27,10 +32,12 @@ class BillingAPI extends RESTDataSource {
   };
   getInvoicesBySubscriber = async (
     subscriberId: string
-  ): Promise<InvoiceDto[]> => {
+  ): Promise<InvoicesResponse> => {
     return this.get(`/${VERSION}?subscriber=${subscriberId}`).then(res => res);
   };
-  getInvoicesByNetwork = async (networkId: string): Promise<InvoiceDto[]> => {
+  getInvoicesByNetwork = async (
+    networkId: string
+  ): Promise<InvoicesResponse> => {
     this.logger.info(`Request Url: ${this.baseURL}/${VERSION}`);
     return this.get(`/${VERSION}?network=${networkId}`).then(res => res);
   };
