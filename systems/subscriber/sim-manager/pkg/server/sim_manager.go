@@ -21,12 +21,11 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -142,8 +141,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	strType := strings.ToLower(req.GetSimType())
-	simType := sims.ParseType(strType)
-	pkgInfoSimType := sims.ParseType(packageInfo.SimType)
+	simType := ukama.ParseSimType(strType)
+	pkgInfoSimType := ukama.ParseSimType(packageInfo.SimType)
 
 	if simType != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -229,10 +228,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		Iccid:         poolSim.Iccid,
 		Msisdn:        poolSim.Msisdn,
 		Type:          simType,
-		Status:        sims.SimStatusInactive,
+		Status:        ukama.SimStatusInactive,
 		IsPhysical:    poolSim.IsPhysical,
 		TrafficPolicy: trafficPolicy,
-		SyncStatus:    types.SyncStatusPending,
+		SyncStatus:    ukama.StatusTypePending,
 	}
 
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
@@ -346,7 +345,7 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) (*pb.UsageResponse, error) {
 	log.Infof("Getting Usages matching: %v", req)
 
-	var simType sims.SimType
+	var simType ukama.SimType
 	var simIccid string
 
 	if req.SimId != "" {
@@ -358,8 +357,8 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 		simType = sim.Type
 		simIccid = sim.Iccid
 	} else {
-		simType = sims.ParseType(req.SimType)
-		if simType == db.SimTypeUnknown {
+		simType = ukama.ParseSimType(req.SimType)
+		if simType == ukama.SimTypeUnknown {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid value for sim type: %s", req.SimType)
 		}
@@ -368,7 +367,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", simType, req.SimId)
+			"failure to get agent for sim type: %q", simType)
 	}
 
 	u, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To)
@@ -384,7 +383,8 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 	usageProtoMsg, err := structpb.NewStruct(usage)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal,
+			"failed to marshall usages map response to proto message. Error %s", err)
 	}
 
 	return &pb.UsageResponse{Usage: usageProtoMsg}, nil
@@ -442,12 +442,12 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	log.Infof("Toggling status for sim: %v", req.GetSimId())
 
 	strStatus := strings.ToLower(req.Status)
-	simStatus := sims.ParseStatus(strStatus)
+	simStatus := ukama.ParseSimStatus(strStatus)
 
 	switch simStatus {
-	case sims.SimStatusActive:
+	case ukama.SimStatusActive:
 		return s.activateSim(ctx, req.SimId)
-	case sims.SimStatusInactive:
+	case ukama.SimStatusInactive:
 		return s.deactivateSim(ctx, req.SimId)
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -463,7 +463,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		return nil, err
 	}
 
-	if sim.Status != sims.SimStatusInactive {
+	if sim.Status != ukama.SimStatusInactive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for deletion", sim.Status)
 	}
@@ -481,7 +481,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 
 	simUpdates := &sims.Sim{
 		Id:     sim.Id,
-		Status: sims.SimStatusTerminated,
+		Status: ukama.SimStatusTerminated,
 	}
 
 	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
@@ -527,7 +527,8 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	if startDate.Before(time.Now()) {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package start date on the past: package start date is %s", startDate)
+			"cannot set package start date on the past: package start date is %s",
+			startDate)
 	}
 
 	sim, err := s.getSim(req.SimId)
@@ -556,11 +557,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid packageID: provided package does not belong to sim org issuer")
 	}
 
-	pkgInfoSimType := sims.ParseType(pkgInfo.SimType)
+	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
 
 	if sim.Type != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, pkgInfoSimType.String())
+			"invalid sim type: sim (%s) and packge (%s) sim types mismatch",
+			sim.Type, pkgInfoSimType.String())
 	}
 
 	pkg := &sims.Package{
@@ -632,7 +634,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	if sim.Status != sims.SimStatusActive {
+	if sim.Status != ukama.SimStatusActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set active package on non active sim: sim's status is is %s", sim.Status)
 	}
@@ -746,7 +748,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 		return nil, err
 	}
 
-	if sim.Status != sims.SimStatusInactive {
+	if sim.Status != ukama.SimStatusInactive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for activation", sim.Status)
 	}
@@ -764,7 +766,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 
 	simUpdates := &sims.Sim{
 		Id:               sim.Id,
-		Status:           sims.SimStatusActive,
+		Status:           ukama.SimStatusActive,
 		ActivationsCount: sim.ActivationsCount + 1,
 		LastActivatedOn:  time.Now(),
 	}
@@ -811,7 +813,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 		return nil, err
 	}
 
-	if sim.Status != sims.SimStatusActive {
+	if sim.Status != ukama.SimStatusActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for deactivation", sim.Status)
 	}
@@ -829,7 +831,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 
 	simUpdates := &sims.Sim{
 		Id:                 sim.Id,
-		Status:             sims.SimStatusInactive,
+		Status:             ukama.SimStatusInactive,
 		DeactivationsCount: sim.DeactivationsCount + 1}
 
 	err = s.simRepo.Update(simUpdates, nil)
