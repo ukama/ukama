@@ -8,6 +8,8 @@
 
 package api
 
+import "github.com/ukama/ukama/systems/common/uuid"
+
 type CreateSession struct {
 	Imsi    string `json:"imsi" validate:"required"`
 	ApnName string `json:"apn_name" validate:"required"`
@@ -52,13 +54,18 @@ type AddPolicyByImsi struct {
 }
 
 type Policy struct {
-	Ulbr      uint64 `json:"ulbr" validate:"required"`
-	Dlbr      uint64 `json:"dlbr" validate:"required"`
-	Data      uint64 `json:"data" validate:"required"`
-	StartTime int64  `json:"start_time" validate:"required"`
-	EndTime   int64  `json:"end_time" validate:"required"`
+	Uuid      uuid.UUID `json:"uuid" validate:"required"`
+	Ulbr      uint64    `json:"ulbr" validate:"required"`
+	Dlbr      uint64    `json:"dlbr" validate:"required"`
+	Data      uint64    `json:"data" validate:"required"`
+	StartTime int64     `json:"start_time" validate:"required"`
+	EndTime   int64     `json:"end_time" validate:"required"`
 }
 
 type Reroute struct {
 	Ip string `json:"ip" validate:"required"`
+}
+
+type Subscriber struct {
+	Imsi string `json:"imsi" validate:"required"`
 }

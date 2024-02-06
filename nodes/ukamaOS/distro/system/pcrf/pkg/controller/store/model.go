@@ -1,5 +1,7 @@
 package store
 
+import "github.com/ukama/ukama/systems/common/uuid"
+
 type PathType int
 
 const (
@@ -18,13 +20,13 @@ const (
 )
 
 type Subscriber struct {
-	ID       int
+	ID       uuid.UUID
 	Imsi     string
 	PolicyID Policy
 }
 
 type Policy struct {
-	ID        int /* Define by package ID */
+	ID        uuid.UUID
 	Data      uint64
 	Dlbr      uint64
 	Ulbr      uint64
@@ -35,6 +37,7 @@ type Policy struct {
 type Usage struct {
 	ID           int
 	SubscriberID Subscriber
+	Epoch        uint64
 	Data         uint64
 }
 
@@ -61,6 +64,7 @@ type Meter struct {
 
 type Flow struct {
 	ID        int
+	Cookie    uint64
 	Table     uint64
 	Priority  uint64
 	UeIpaddr  string
