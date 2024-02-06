@@ -357,7 +357,7 @@ func (s *Store) GetFlow(id uint32)  (*Flow, error) {
 
 
 /* Create a subscriber */
-func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
+func (s *Store) CreateSubscriber(imsi string, p *store.Policy) (*Subscriber, error) {
 	subscriber := Subscriber{
 		Imsi: imsi,
 	}
@@ -397,11 +397,28 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 
 // CRUD operations for Session entity
 func (s *Store) InsertSession(s *Sesssion) (*Session, error) {
-	_, err := s.db.Exec(`
+	res, err := s.db.Exec(`
 		INSERT INTO sessions (subscriber_id, apn_name, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state)
 		VALUES (s.SubsciberID, s.ApnName, s.UeIpaddr, s.StartTime, s.EndTime, s.TxBytes, s.RXBytes, s.TotalBytes, s.TXMeterId.ID, s.RXMeterId.ID, s.State);
 	`)
-	return err
+	if err != nil {
+		log.Errorf("Failed to insert session.Error %v", err)
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Errorf("Failed to get last inserted session. Error %v", err)
+		return nil, err
+	}
+
+	s,err := s.GetSessionByID(id)
+	if err != nil {
+		log.Errorf("Failed to get session. Error %v", err)
+		return nil, err
+	}
+
+	return s, err
 }
 
 func (s *Store) DeleteSession(s *Subscriber) error {
@@ -489,12 +506,12 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 		return nil, err
 	}
 
-	err = s.InsertSession(&session)
+	s, err = s.InsertSession(&session)
 	if err != nil {
 		return nil, err
 	}
 
-	return &session, nil
+	return s, nil
 }
 
 func (s *Store) EndSession(session *Session) error {
@@ -549,7 +566,7 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 	return &usage, nil
 }
 
-func (s *Store) GetPolicyByID(policyID int) (*Policy, error) {
+func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 
 	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
 )
@@ -61,24 +62,26 @@ func (c *Controller) validateSusbcriber(imsi string) error {
 	return nil
 }
 
-func (c *Controller) updateSubscriberPolicy(imsi string, p *store.Policy) error {
-
-	err := c.store.CreatePolicy(p)
+func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy) (*store.Subscriber, error) {
+	var sub *store.Subscriber
+	pol, err := c.store.CreatePolicy(p)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = c.store.CreateSubscriber(imsi, p)
+	sub, err = c.store.CreateSubscriber(imsi, pol)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return sub, nil
 }
 
-func (c *Controller) CreateSession(ctx *gin.Context, req *CreateSession) error {
+func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
+	var sub *store.Subscriber
+	var err error
 	/* validate subscriber*/
-	err := c.validateSusbcriber(req.Imsi)
+	err = c.validateSusbcriber(req.Imsi)
 	if err != nil {
 		/* Get subscriber policy from remote */
 		p, err := c.rc.GetPolicy(req.Imsi)
@@ -87,29 +90,22 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *CreateSession) error {
 			return err
 		}
 
-		err = c.updateSubscriberPolicy(req.Imsi, p)
+		sub, err = c.updateSubscriberPolicy(req.Imsi, p)
 		if err != nil {
 			log.Errorf("Failed to update subscriber %s with policy %d:Error: %v", req.Imsi, p.ID, err)
 			return err
 		}
 	}
 
-	/* setup bridge */
-	err = c.setUpBridge()
-	if err != nil {
-		log.Errorf("Failed to setup bridge for subscriber %s:Error: %v", req.Imsi, err)
-		return err
-	}
-
 	/* create session */
-	s, err := c.store.CreateSession(req.Imsi, req.Ip)
+	s, err := c.store.CreateSession(sub, req.Ip)
 	if err != nil {
 		log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.Imsi, err)
 		return err
 	}
 
 	/* start monitoring session */
-	err = c.session.CreateSession(req.Imsi, req.Ip, s)
+	err = c.session.CreateSession(s)
 	if err != nil {
 		log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.Imsi, err)
 		return err

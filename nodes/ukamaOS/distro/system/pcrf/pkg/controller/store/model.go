@@ -11,12 +11,20 @@ const (
 )
 
 type SessionState int
+type SessionSync int
 
 const (
-	Unkown     SessionState = iota
-	Active                  = 1
-	Terminated              = 2 /* Done by timeout if no changes in RX and Tx for 600 sec */
-	Completed               = 3
+	SessionUnkown     SessionState = iota
+	SessionActive                  = 1
+	SessionTerminated              = 2 /* Done by timeout if no changes in RX and Tx for 600 sec */
+	SessionCompleted               = 3
+)
+
+const (
+	SessionSyncUnkown    SessionSync = iota
+	SessionSyncPending               = 1 /* Session in progress */
+	SessionSyncReady                 = 2 /* Session completed now ready for sync */
+	SessionSyncCompleted             = 3 /* Sync is compeleted */
 )
 
 type Subscriber struct {
@@ -54,6 +62,7 @@ type Session struct {
 	TXMeterId    Meter
 	RXMeterId    Meter
 	State        SessionState
+	Sync
 }
 
 type Meter struct {
