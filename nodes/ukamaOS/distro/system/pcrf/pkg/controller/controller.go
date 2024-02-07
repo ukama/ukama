@@ -40,6 +40,66 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, debug bool) (*
 	return c, nil
 }
 
+func sessionResponse(s *store.Session) *api.SessionResponse {
+	return &api.SessionResponse{
+		ID:         s.ID,
+		Imsi:       s.SusbcriberID.Imsi,
+		ApnName:    s.ApnName,
+		UeIpaddr:   s.UeIpaddr,
+		StartTime:  s.StartTime,
+		EndTime:    s.EndTime,
+		TxBytes:    s.TxBytes,
+		RxBytes:    s.RxBytes,
+		TotalBytes: s.TotalBytes,
+		TxMeterId:  uint32(s.TXMeterId.ID),
+		RxMeterId:  uint32(s.RXMeterId.ID),
+		State:      s.State.String(),
+		Sync:       s.Sync.String(),
+	}
+}
+
+func policyResponse(p *store.Policy) *api.PolicyResponse {
+	return &api.PolicyResponse{
+		ID:        p.ID,
+		Data:      p.Data,
+		Dlbr:      p.Dlbr,
+		Ulbr:      p.Ulbr,
+		StartTime: p.StartTime,
+		EndTime:   p.EndTime,
+	}
+}
+
+func flowResponse(flows []*store.Flow) []*api.FlowResponse {
+	fr := make([]*api.FlowResponse, len(flows))
+	for i, flow := range flows {
+		fr[i] = &api.FlowResponse{
+			ID:        flow.ID,
+			Cookie:    flow.Cookie,
+			Table:     flow.Table,
+			Priority:  flow.Priority,
+			UeIpaddr:  flow.UeIpaddr,
+			ReRouting: flow.ReRouting.Ipaddr,
+			MeterID:   uint32(flow.MeterID.ID),
+		}
+	}
+	return fr
+}
+
+func reRouteResponse(route *store.ReRoute) *api.ReRouteResponse {
+	return &api.ReRouteResponse{
+		ID: route.ID,
+		Ip: route.Ipaddr,
+	}
+}
+
+func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
+	return &api.SubscriberResponse{
+		ID:       s.ID,
+		Imsi:     s.Imsi,
+		PolicyID: s.PolicyID.ID,
+	}
+}
+
 func (c *Controller) validateSusbcriber(imsi string) error {
 	/* Get subscriber policy by imsi*/
 	s, err := c.store.GetSubscriber(imsi)
@@ -128,22 +188,22 @@ func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
 	return nil
 }
 
-func (c *Controller) GetSessionByID(ctx *gin.Context, req *api.GetSessionByID) (*store.Session, error) {
+func (c *Controller) GetSessionByID(ctx *gin.Context, req *api.GetSessionByID) (*api.SessionResponse, error) {
 	s, err := c.store.GetSessionByID(int(req.ID))
 	if err != nil {
 		log.Errorf("failed to get session with id %d:Error: %v", req.ID, err)
 		return nil, err
 	}
-	return s, nil
+	return sessionResponse(s), nil
 }
 
-func (c *Controller) GetActiveSessionByImsi(ctx *gin.Context, req *api.GetSessionByImsi) (*store.Session, error) {
+func (c *Controller) GetActiveSessionByImsi(ctx *gin.Context, req *api.GetSessionByImsi) (*api.SessionResponse, error) {
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get active session for Imsi %s:Error: %v", req.Imsi, err)
 		return nil, err
 	}
-	return s, nil
+	return sessionResponse(s), nil
 }
 
 func (c *Controller) GetCDRBySessionId(ctx *gin.Context, req *api.GetCDRBySessionId) (*api.CDR, error) {
@@ -173,13 +233,13 @@ func (c *Controller) GetCDRByImsi(ctx *gin.Context, req *api.GetCDRByImsi) ([]*a
 	return cdrs, nil
 }
 
-func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.PolicyByImsi) (*store.Policy, error) {
+func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.PolicyByImsi) (*api.PolicyResponse, error) {
 	p, err := c.store.GetApplicablePolicyByImsi(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get policy for Imsi %s:Error: %v", req.Imsi, err.Error())
 		return nil, err
 	}
-	return p, nil
+	return policyResponse(p), nil
 }
 
 func (c *Controller) AddPolicy(ctx *gin.Context, req *api.AddPolicyByImsi) error {
@@ -204,7 +264,7 @@ func (c *Controller) AddPolicy(ctx *gin.Context, req *api.AddPolicyByImsi) error
 	return nil
 }
 
-func (c *Controller) GetFlowForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) ([]*store.Flow, error) {
+func (c *Controller) GetFlowForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) ([]*api.FlowResponse, error) {
 	var flows []*store.Flow
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
@@ -232,10 +292,10 @@ func (c *Controller) GetFlowForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) 
 	}
 	flows = append(flows, fTx)
 
-	return flows, nil
+	return flowResponse(flows), nil
 }
 
-func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*store.ReRoute, error) {
+func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*api.ReRouteResponse, error) {
 
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
@@ -261,7 +321,7 @@ func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*s
 		return nil, err
 	}
 
-	return r, nil
+	return reRouteResponse(r), nil
 }
 
 func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById) error {
@@ -277,16 +337,16 @@ func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById)
 	return nil
 }
 
-func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.Subscriber) (*store.Subscriber, error) {
+func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber) (*api.SubscriberResponse, error) {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get subscriber with imsi %s. Error: %s", req.Imsi, err.Error)
 		return nil, err
 	}
-	return s, nil
+	return subscriberResponse(s), nil
 }
 
-func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.Subscriber) error {
+func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscriber) error {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get subscriber with imsi %s. Error: %s", req.Imsi, err.Error)

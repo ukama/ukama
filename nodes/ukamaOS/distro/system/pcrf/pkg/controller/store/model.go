@@ -14,21 +14,21 @@ type SessionState int
 type SessionSync int
 
 const (
-	SessionUnkown     SessionState = iota
+	SessionUnknown    SessionState = iota
 	SessionActive                  = 1
 	SessionTerminated              = 2 /* Done by timeout if no changes in RX and Tx for 600 sec */
 	SessionCompleted               = 3
 )
 
 const (
-	SessionSyncUnkown    SessionSync = iota
+	SessionSyncUnknown   SessionSync = iota
 	SessionSyncPending               = 1 /* Session in progress */
 	SessionSyncReady                 = 2 /* Session completed now ready for sync */
 	SessionSyncCompleted             = 3 /* Sync is compeleted */
 )
 
 type Subscriber struct {
-	ID       uuid.UUID
+	ID       int
 	Imsi     string
 	PolicyID Policy
 }
@@ -85,4 +85,56 @@ type Flow struct {
 type ReRoute struct {
 	ID     int
 	Ipaddr string
+}
+
+func (s SessionSync) String() string {
+	switch s {
+	case SessionSyncPending:
+		return "SessionSyncPending"
+	case SessionSyncReady:
+		return "SessionSyncReady"
+	case SessionSyncCompleted:
+		return "SessionSyncCompleted"
+	default:
+		return "SessionSyncUnkown"
+	}
+}
+
+func ParseSessionSync(s string) SessionSync {
+	switch s {
+	case "SessionSyncPending":
+		return SessionSyncPending
+	case "SessionSyncReady":
+		return SessionSyncReady
+	case "SessionSyncCompleted":
+		return SessionSyncCompleted
+	default:
+		return SessionSyncUnknown
+	}
+}
+
+func (s SessionState) String() string {
+	switch s {
+	case SessionActive:
+		return "SessionActive"
+	case SessionTerminated:
+		return "SessionTerminated"
+	case SessionCompleted:
+		return "SessionCompleted"
+	default:
+		return "SessionUnknown"
+	}
+}
+
+func ParseSessionState(s string) SessionState {
+	switch s {
+	case "SessionActive":
+		return SessionActive
+	case "SessionTerminated":
+		return SessionTerminated
+	case "SessionCompleted":
+		return SessionCompleted
+	default:
+		return SessionUnknown
+	}
 }
