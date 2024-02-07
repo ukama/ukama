@@ -57,18 +57,19 @@ type Session struct {
 	StartTime    uint64
 	EndTime      uint64
 	TxBytes      uint64
-	RXBytes      uint64
+	RxBytes      uint64
 	TotalBytes   uint64
 	TXMeterId    Meter
 	RXMeterId    Meter
 	State        SessionState
-	Sync
+	Sync         SessionSync
 }
 
 type Meter struct {
-	ID   int
-	Rate uint64
-	Type PathType
+	ID        int
+	Rate      uint64
+	BurstSize uint64
+	Type      PathType
 }
 
 type Flow struct {

@@ -357,7 +357,15 @@ func (s *Store) GetFlow(id uint32)  (*Flow, error) {
 
 
 /* Create a subscriber */
-func (s *Store) CreateSubscriber(imsi string, p *store.Policy) (*Subscriber, error) {
+func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
+	
+	// Allocate default policy to the subscriber
+	sp, err := s.CreatePolicy(p)
+	if err != nil {
+		return nil, err
+	}
+
+		
 	subscriber := Subscriber{
 		Imsi: imsi,
 	}
@@ -378,16 +386,9 @@ func (s *Store) CreateSubscriber(imsi string, p *store.Policy) (*Subscriber, err
 		return nil, err
 	}
 
-	// Allocate default policy to the subscriber
-	defaultPolicy, err := CreatePolicy()
-	if err != nil {
-		return nil, err
-	}
+	subscriber.Policy =  *sp
 
-	subscriber.UsageID = initialUsage
-	subscriber.Policy = append(subscriber.Policy, *defaultPolicy)
-
-	err = UpdateSubscriber(&subscriber)
+	err = s.UpdateSubscriber(&subscriber, p.Uuid)
 	if err != nil {
 		return nil, err
 	}
@@ -439,29 +440,29 @@ func (s *Store) UpdateSessionUsage(session *Session) error {
 		UPDATE sessions
 		SET txbytes = ?, rxbytes = ?, totalbytes = ?
 		WHERE id = ?;
-	`, session.TxBytes, session.RXBytes, session.TotalBytes, session.ID)
+	`, session.TxBytes, session.RXBytes, (session.TxBytes+session.RxBytes), session.ID)
 	return err
 }
 
-func (s *Store) UpdateSession(session *Session) error {
+func (s *Store) UpdateSessionEndUsage(session *Session) error {
 	_, err := s.db.Exec(`
 		UPDATE sessions
-		SET endtime = ?, txbytes = ?, rxbytes = ?, totalbytes = ?, state = ?
+		SET endtime = ?, txbytes = ?, rxbytes = ?, totalbytes = ?, state = ?, sync= ?
 		WHERE id = ?;
-	`, session.EndTime, session.TxBytes, session.RXBytes, session.TotalBytes, session.State, session.ID)
+	`, session.EndTime, session.TxBytes, session.RXBytes, session.TotalBytes, session.State, session.Sync, session.ID)
 	return err
 }
 
-func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session, error) {
+func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session, *Flow, *Flow, error) {
 	
 	rxM , err := s.CreateMeter(subscriber, &subscriber.PolicyID, RX_PATH, ueIpAddr)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	txM , err := s.CreateMeter(subscriber, &subscriber.PolicyID, TX_PATH, ueIpAddr)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
  	session := Session{
@@ -492,35 +493,34 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 	// Check if Data in Usage is less than Policy for rerouting
 	if subscriber.UsageID.Data >= subscriber.Policy.Data {
 		log.Errof("can't create flows. UE %s has reached max data cap.", subscriber.Imsi)
-		return fmt.Errorf("max data cap exceeded")
+		return nil, nil, nil, fmt.Errorf("max data cap exceeded")
 	}
 
 	// Insert Flows
 	rxF, err := s.CreateFlow(&flowRX)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	txF, err := s.CreateFlow(&flowTX)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	s, err = s.InsertSession(&session)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
-	return s, nil
+	return s, rxF, txF, nil
 }
 
 func (s *Store) EndSession(session *Session) error {
 	// Update session with TX, RX, and Total bytes
-	// session.TxBytes = /* Set TX bytes */;
-	// session.RXBytes = /* Set RX bytes */;
 	session.EndTime = uint64(time.Now().Unix())
 	session.TotalBytes = session.TxBytes + session.RXBytes
 	session.State = Completed
+	session.Sync = SessionSyncReady
 
 	// Update Usage for the subscriber
 	subscriber, err := s.GetSubscriberByID(session.Subscriber.ID)
@@ -529,7 +529,7 @@ func (s *Store) EndSession(session *Session) error {
 	}
 	subscriber.UsageID.Data += session.TotalBytes
 
-	err = s.UpdateSession(session)
+	err = s.UpdateSessionEndUsage(session)
 	if err != nil {
 		return err
 	}
@@ -696,6 +696,33 @@ func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
 	return &session, nil
 }
 
+func (s *Store) GetFlowForMeter(id int) (*Flow, error) {
+	var f *Flow
+
+	err := s.db.QueryRow(`
+		SELECT * FROM flows
+		WHERE meter_id = (SELECT id FROM meters WHERE id = ?)
+	`, id).
+	Scan(&f.ID, &f.Cookie, &f.Table, &f.Priority, &f.UeIpaddr,&f.ReRouting.ID, &f.MeterID.ID )
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch associated Reeoute
+	f.ReRouting, err = s.GetReRouteByID(f.ReRouting.ID.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch associated Meters
+	f.MeterID, err = s.GetMeter(f.MeterID.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &f, nil
+}
+
 func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	var sessions []Session
 
@@ -824,6 +851,7 @@ func (s *Store) InsertSubscriber(s *api.Subscriber ) error {
 	return err
 }
 
+
 /* Update policy for Subscriber entity */
 func (s *Store) UpdateSubscriber(subscriber *Subscriber, p uuid.UUID) error {
 	_, err := s.db.Exec(`
@@ -833,7 +861,6 @@ func (s *Store) UpdateSubscriber(subscriber *Subscriber, p uuid.UUID) error {
 	`, p, subscriber.ID)
 	return err
 }
-
 
 /* Update policy for Subscriber entity */
 func (s *Store) DeleteSubscriber(subscriber *Subscriber) error {
@@ -882,10 +909,35 @@ func (s *Store) CreateSubscriberOrUpdatePolicy(s *api.Subscriber, p uuid.UUID) e
 			return err
 		}
 
+		/* Usage table */
+		err = InsertUsage(&Usage{
+			Subscriber: subscriber,
+			Data:       0,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		err = s.UpdateSubscriber(sub, p)
 		if err != nil {
 			return err
 		}
 		log.Infof("Policy %s assigned to the new subscriber %s.", p, sub.Imsi)
 	}
+}
+
+
+func PrepareCDR(s *Session) *api.CDR {
+	cdr := &api.CDR{
+		Session:    s.ID,
+		Imsi:       s.SusbcriberID.Imsi,
+		ApnName:    s.ApnName,
+		Ip:         s.UeIpaddr,
+		StartTime:  s.StartTime,
+		EndTime:    s.EndTime,
+		TxBytes:    s.TxBytes,
+		RxBytes:    s.RxBytes,
+		TotalBytes: s.TotalBytes,
+	}
+	return cdr
 }

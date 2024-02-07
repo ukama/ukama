@@ -20,11 +20,18 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                string
-	Bridge            string `default:"data-br0"`
+	Bridge            BrdigeConfig
 	Server            rest.HttpConfig
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
+}
+
+type BrdigeConfig struct {
+	Name    string `default:"br0"`
+	Ip      string `default:"10.0.0.1"`
+	NetType string
+	Period  time.Duration `default:"2s"`
 }
 
 type HttpEndpoints struct {

@@ -23,7 +23,7 @@ const CDREndpoint = "/v1/cdr/imsi/"
 
 type RemoteController interface {
 	GetPolicy(imsi string) (*api.Policy, error)
-	PushCdr(cdr api.CDR) error
+	PushCdr(cdr *api.CDR) error
 }
 
 type remoteControllerClient struct {
@@ -47,7 +47,7 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 	}, nil
 }
 
-func (r *remoteControllerClient) PushCdr(req api.CDR) error {
+func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	log.Debugf("Posting  CDR: %v", req)
 
 	url := r.u.String() + "/" + CDREndpoint + req.Imsi
