@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type StatusType uint8
@@ -52,7 +53,7 @@ func ParseStatusType(value string) StatusType {
 
 	t := map[string]StatusType{"unknown": 0, "pending": 1, "processing": 2, "completed": 3, "failed": 4}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return StatusType(0)
 	}

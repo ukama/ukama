@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type SimType uint8
@@ -50,7 +51,7 @@ func ParseSimType(value string) SimType {
 
 	t := map[string]SimType{"unknown": 0, "test": 1, "operator_data": 2, "ukama_data": 3}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return SimType(0)
 	}
@@ -95,7 +96,7 @@ func ParseSimStatus(value string) SimStatus {
 
 	t := map[string]SimStatus{"unknown": 0, "active": 1, "inactive": 2, "terminated": 3}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return SimStatus(0)
 	}
