@@ -17,10 +17,8 @@
 
 int parse_config(Config *config, toml_table_t *configData) {
 
-	int ret=FALSE;
 	toml_datum_t nodedHost;
 	toml_datum_t meshConfig, remoteIPFile;
-	toml_datum_t bootstrapServer;
 
 	/* sanity check */
 	if (config == NULL) return FALSE;
@@ -60,9 +58,8 @@ int parse_config(Config *config, toml_table_t *configData) {
 	if (nodedHost.ok)       free(nodedHost.u.s);
 	if (meshConfig.ok)      free(meshConfig.u.s);
 	if (remoteIPFile.ok)    free(remoteIPFile.u.s);
-	if (bootstrapServer.ok) free(bootstrapServer.u.s);
 
-	return ret;
+    return TRUE;
 }
 
 bool read_bootstrap_server_info(char **buffer) {
