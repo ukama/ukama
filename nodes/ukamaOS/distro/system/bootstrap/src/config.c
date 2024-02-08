@@ -158,6 +158,10 @@ void print_config(Config *config) {
 	if (config->bootstrapServer) {
 	    log_debug("bootstrap server: %s", config->bootstrapServer);
 	}
+
+    if (config->bootstrapPort) {
+        log_debug("bootstrap port: %d", config->bootstrapPort);
+    }
 }
 
 void clear_config(Config *config) {

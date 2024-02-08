@@ -46,24 +46,6 @@ static void usage() {
 	printf("--v, --version                      Version. \n");
 }
 
-static int find_noded_service_port() {
-
-    struct servent *entry = NULL;
-
-    entry = getservbyname("noded", NULL);
-    if (entry == NULL) {
-        log_error("Unable to find port entry for noded.d");
-        return 0;
-    }
-
-    log_debug("Noded entry found. Name: %s port: %d proto: %s",
-              entry->s_name,
-              ntohs(entry->s_port),
-              entry->s_proto);
-
-    return ntohs(entry->s_port);
-}
-
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
 
@@ -185,10 +167,10 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
-
     config->nodedPort = usys_find_service_port("node");
-    if (config->nodedPort == 0) {
-        log_error("Error getting noded port from service db");
+    config->bootstrapPort = usys_find_service_port("bootstrap");
+    if (config->nodedPort == 0 || config->bootstrapPort == 0) {
+        log_error("Error getting noded/bootstrap port from service db");
         exit(1);
     }
 	print_config(config);
@@ -203,6 +185,7 @@ int main (int argc, char **argv) {
 
 	/* Step-3: connect with the ukama bootstrap server */
     send_request_to_init_with_exponential_backoff(config->bootstrapServer,
+                                                  config->bootstrapPort,
                                                   nodeID, serverInfo);
 	
 	/* Step-4: read mesh config file, update server IP and certs */

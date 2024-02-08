@@ -36,9 +36,8 @@ typedef struct {
 	char *org;  /* Organization this Node belong's */
 } ServerInfo;
 
-int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
-                         char **response);
 void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
+                                                   int bootstrapPort,
                                                    char *uuid,
                                                    ServerInfo *server);
 void free_server_info(ServerInfo *server);

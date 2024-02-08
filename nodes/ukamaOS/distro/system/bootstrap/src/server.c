@@ -114,15 +114,9 @@ static int process_response_from_server(char *response, ServerInfo *server) {
 	return ret;
 }
 
-/*
- * send_request_to_init -- send request to the bootstrap at init system
- *                         1: if successful
- *                         0: if error
- *                        -1: if the nodeid is not found
- *
- */
-int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
-                         char **responseStr) {
+static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
+                                char *uuid, ServerInfo *server,
+                                char **responseStr) {
 
 	int ret=FALSE, respCode=0;
 	Response response = {NULL, 0};
@@ -131,8 +125,8 @@ int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
 	if (bootstrapServer == NULL || uuid == NULL) return FALSE;
 
     /* Create URL + request */
-	sprintf(url, "http://%s/%s/%s/%s", bootstrapServer, API_VERSION, EP_NODES,
-            uuid);
+	sprintf(url, "http://%s:%d/%s/%s/%s",
+            bootstrapServer, bootstrapPort, API_VERSION, EP_NODES, uuid);
 
     respCode = send_request_to_server(&url[0], &response, responseStr);
 
@@ -170,6 +164,7 @@ int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
  *
  */
 void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
+                                                   int bootstrapPort,
                                                    char *uuid,
                                                    ServerInfo *server) {
 
@@ -181,6 +176,7 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
 
     do {
         if (send_request_to_init(bootstrapServer,
+                                 bootstrapPort,
                                  uuid,
                                  server,
                                  &responseStr) == TRUE) {
