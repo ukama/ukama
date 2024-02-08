@@ -153,6 +153,7 @@ message UsageRequest {
 
 message UsageResponse {
     google.protobuf.Struct usage = 1;
+    google.protobuf.Struct cost = 2;
 }
 
 

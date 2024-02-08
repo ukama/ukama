@@ -20,7 +20,7 @@ import (
 type AgentAdapter interface {
 	BindSim(context.Context, string) (any, error)
 	GetSim(context.Context, string) (any, error)
-	GetUsages(context.Context, string, string, string, string) (any, error)
+	GetUsages(context.Context, string, string, string, string) (any, any, error)
 	ActivateSim(context.Context, string) error
 	DeactivateSim(context.Context, string) error
 	TerminateSim(context.Context, string) error

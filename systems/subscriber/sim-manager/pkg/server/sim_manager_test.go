@@ -143,7 +143,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 
 		agentAdapter.On("GetUsages", mock.Anything,
 			sim.Iccid, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(map[string]any{}, nil).Once()
+			Return(map[string]any{}, map[string]any{}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", nil, "", "", nil, nil)
@@ -201,7 +201,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 
 		agentAdapter.On("GetUsages", mock.Anything,
 			"", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(map[string]any{}, nil).Once()
+			Return(map[string]any{}, map[string]any{}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", nil, "", "", nil, nil)

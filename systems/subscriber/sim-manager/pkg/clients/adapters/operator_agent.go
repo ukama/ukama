@@ -42,7 +42,7 @@ func (o *OperatorAgentAdaper) GetSim(ctx context.Context, iccid string) (any, er
 	return o.client.GetSimInfo(iccid)
 }
 
-func (o *OperatorAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, to string) (any, error) {
+func (o *OperatorAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, to string) (any, any, error) {
 	// think of how to use ctx with restclient
 	return o.client.GetUsages(iccid, cdrType, from, to)
 }

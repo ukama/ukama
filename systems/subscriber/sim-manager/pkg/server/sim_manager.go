@@ -370,7 +370,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 			"failure to get agent for sim type: %q", simType)
 	}
 
-	u, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To)
+	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +378,13 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	usage, ok := u.(map[string]any)
 	if !ok {
 		return nil, status.Errorf(codes.Internal,
-			"an unexpected error has occured while packing usage response. Type is not map[string]any")
+			"an unexpected error has occured while unpacking usage response. Type is not map[string]any")
+	}
+
+	cost, ok := c.(map[string]any)
+	if !ok {
+		return nil, status.Errorf(codes.Internal,
+			"an unexpected error has occured while unpacking cost response. Type is not map[string]any")
 	}
 
 	usageProtoMsg, err := structpb.NewStruct(usage)
@@ -387,7 +393,16 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 			"failed to marshall usages map response to proto message. Error %s", err)
 	}
 
-	return &pb.UsageResponse{Usage: usageProtoMsg}, nil
+	costProtoMsg, err := structpb.NewStruct(cost)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to marshall cost map response to proto message. Error %s", err)
+	}
+
+	return &pb.UsageResponse{
+		Usage: usageProtoMsg,
+		Cost:  costProtoMsg,
+	}, nil
 }
 
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {

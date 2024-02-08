@@ -115,7 +115,7 @@ func (_m *AgentAdapter) GetSim(_a0 context.Context, _a1 string) (interface{}, er
 }
 
 // GetUsages provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4
-func (_m *AgentAdapter) GetUsages(_a0 context.Context, _a1 string, _a2 string, _a3 string, _a4 string) (interface{}, error) {
+func (_m *AgentAdapter) GetUsages(_a0 context.Context, _a1 string, _a2 string, _a3 string, _a4 string) (interface{}, interface{}, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4)
 
 	if len(ret) == 0 {
@@ -123,8 +123,9 @@ func (_m *AgentAdapter) GetUsages(_a0 context.Context, _a1 string, _a2 string, _
 	}
 
 	var r0 interface{}
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (interface{}, error)); ok {
+	var r1 interface{}
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (interface{}, interface{}, error)); ok {
 		return rf(_a0, _a1, _a2, _a3, _a4)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) interface{}); ok {
@@ -135,13 +136,21 @@ func (_m *AgentAdapter) GetUsages(_a0 context.Context, _a1 string, _a2 string, _
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) interface{}); ok {
 		r1 = rf(_a0, _a1, _a2, _a3, _a4)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(interface{})
+		}
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string) error); ok {
+		r2 = rf(_a0, _a1, _a2, _a3, _a4)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // TerminateSim provides a mock function with given fields: _a0, _a1
