@@ -21,7 +21,7 @@ func InitDataPath(name, ip, netType string) (*dataPath, error) {
 	d := &dataPath{ueCount: 0}
 	d.ovs, err = NewOvsSwitch(name, ip, netType)
 	if err != nil {
-		log.Errorf("error connecting bridge %s at %s .Error: %v", name, Ip, err)
+		log.Errorf("error connecting bridge %s at %s .Error: %v", name, ip, err)
 		return nil, err
 	}
 	return d, nil

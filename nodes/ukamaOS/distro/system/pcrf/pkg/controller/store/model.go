@@ -38,6 +38,7 @@ type Policy struct {
 	Data      uint64
 	Dlbr      uint64
 	Ulbr      uint64
+	Burst     uint64
 	StartTime int64
 	EndTime   int64
 }
@@ -45,31 +46,31 @@ type Policy struct {
 type Usage struct {
 	ID           int
 	SubscriberID Subscriber
-	Epoch        uint64
+	Updatedat    uint64
 	Data         uint64
 }
 
 type Session struct {
 	ID           int
-	SusbcriberID Subscriber
+	SubscriberID Subscriber
 	ApnName      string
-	UeIpaddr     string
+	UeIpAddr     string
 	StartTime    uint64
 	EndTime      uint64
 	TxBytes      uint64
 	RxBytes      uint64
 	TotalBytes   uint64
-	TXMeterId    Meter
-	RXMeterId    Meter
+	TxMeterID    Meter
+	RxMeterID    Meter
 	State        SessionState
 	Sync         SessionSync
 }
 
 type Meter struct {
-	ID        int
-	Rate      uint64
-	BurstSize uint64
-	Type      PathType
+	ID    int
+	Rate  uint64
+	Burst uint64
+	Type  PathType
 }
 
 type Flow struct {
@@ -77,14 +78,14 @@ type Flow struct {
 	Cookie    uint64
 	Table     uint64
 	Priority  uint64
-	UeIpaddr  string
+	UeIpAddr  string
 	ReRouting ReRoute
 	MeterID   Meter
 }
 
 type ReRoute struct {
 	ID     int
-	Ipaddr string
+	IpAddr string
 }
 
 func (s SessionSync) String() string {

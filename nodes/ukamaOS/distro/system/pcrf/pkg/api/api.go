@@ -48,8 +48,12 @@ type GetCDRByImsi struct {
 	Imsi string `json:"imsi" path:"imii" validate:"required"`
 }
 
-type PolicyByImsi struct {
+type GetPolicyByImsi struct {
 	Imsi string `json:"imsi" validate:"required"`
+}
+
+type GetPolicyByID struct {
+	ID string `json:"id" validate:"required"`
 }
 
 type GetReRouteByImsi struct {

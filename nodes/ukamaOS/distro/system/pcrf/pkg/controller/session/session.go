@@ -60,21 +60,21 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 	/* Read sats */
 	sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
 	if err != nil {
-		log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SusbcriberID.Imsi, err.Error())
+		log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		return err
 	}
 
 	/* Update to DB */
-	if lastStats == true {
+	if lastStats {
 		err = s.store.EndSession(sc.s)
 		if err != nil {
-			log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SusbcriberID.Imsi, err.Error())
+			log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		}
 	} else {
 
 		err = s.store.UpdateSessionUsage(sc.s)
 		if err != nil {
-			log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SusbcriberID.Imsi, err.Error())
+			log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		}
 
 	}
@@ -94,8 +94,8 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 	}
 
 	/* Add new data path */
-	err := s.d.AddNewDataPath(sc.s.UeIpaddr, uint32(sc.s.RXMeterId.ID), uint32(sc.s.TXMeterId.ID),
-		uint32(sc.s.TXMeterId.Rate), uint32(sc.s.RXMeterId.Rate), uint32(sc.s.RXMeterId.BurstSize),
+	err := s.d.AddNewDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID),
+		uint32(sc.s.TxMeterID.Rate), uint32(sc.s.RxMeterID.Rate), uint32(sc.s.RxMeterID.Burst),
 		sc.rxCookie, sc.txCookie)
 	if err != nil {
 		log.Errorf("Failed to add data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
@@ -134,7 +134,7 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 	}
 
 	/* Delete the UE Data path */
-	err = s.d.DeleteDataPath(sc.s.UeIpaddr, uint32(sc.s.RXMeterId.ID), uint32(sc.s.TXMeterId.ID))
+	err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
 	if err != nil {
 		log.Errorf("Failed to delete data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
 		/* TODO: Need to figure out way to stop traffic for UE
@@ -165,7 +165,7 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 
 func (s *sessionManager) StartSessionMonitor(ctx context.Context, imsi string) error {
 	sc := s.cache[imsi]
-	log.Infof("[SessionId %d ] Starting session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpaddr)
+	log.Infof("[SessionId %d ] Starting session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
 
 	sc.ctx, sc.cancel = context.WithCancel(context.Background())
 	s.cache[imsi] = sc
@@ -177,7 +177,7 @@ func (s *sessionManager) StartSessionMonitor(ctx context.Context, imsi string) e
 
 func (s *sessionManager) StopSessionMonitor(ctx context.Context, imsi string) error {
 	sc := s.cache[imsi]
-	log.Infof("[SessionId %d ] Stop session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpaddr)
+	log.Infof("[SessionId %d ] Stop session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
 
 	sc.cancel()
 
@@ -194,12 +194,12 @@ func (s *sessionManager) sessionMonitorRoutine(ctx context.Context, interval tim
 		case <-ticker.C:
 			// Perform your periodic task here
 			log.Infof("[SessionId %d ] Stat Collection", sc.s.ID)
-			_ = s.storeStats(sc.s.SusbcriberID.Imsi, false)
+			_ = s.storeStats(sc.s.SubscriberID.Imsi, false)
 
 		case <-ctx.Done():
 			// Context canceled, exit the goroutine
-			_ = s.storeStats(sc.s.SusbcriberID.Imsi, true)
-			log.Infof("[SessionId %d ] Exiting montoring for subscriber %s", sc.s.ID, sc.s.SusbcriberID.Imsi)
+			_ = s.storeStats(sc.s.SubscriberID.Imsi, true)
+			log.Infof("[SessionId %d ] Exiting montoring for subscriber %s", sc.s.ID, sc.s.SubscriberID.Imsi)
 			return
 		}
 	}

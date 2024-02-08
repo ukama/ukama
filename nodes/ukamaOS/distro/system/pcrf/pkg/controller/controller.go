@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/session"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Controller struct {
@@ -43,16 +44,16 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, debug bool) (*
 func sessionResponse(s *store.Session) *api.SessionResponse {
 	return &api.SessionResponse{
 		ID:         s.ID,
-		Imsi:       s.SusbcriberID.Imsi,
+		Imsi:       s.SubscriberID.Imsi,
 		ApnName:    s.ApnName,
-		UeIpaddr:   s.UeIpaddr,
+		UeIpaddr:   s.UeIpAddr,
 		StartTime:  s.StartTime,
 		EndTime:    s.EndTime,
 		TxBytes:    s.TxBytes,
 		RxBytes:    s.RxBytes,
 		TotalBytes: s.TotalBytes,
-		TxMeterId:  uint32(s.TXMeterId.ID),
-		RxMeterId:  uint32(s.RXMeterId.ID),
+		TxMeterId:  uint32(s.TxMeterID.ID),
+		RxMeterId:  uint32(s.RxMeterID.ID),
 		State:      s.State.String(),
 		Sync:       s.Sync.String(),
 	}
@@ -77,8 +78,8 @@ func flowResponse(flows []*store.Flow) []*api.FlowResponse {
 			Cookie:    flow.Cookie,
 			Table:     flow.Table,
 			Priority:  flow.Priority,
-			UeIpaddr:  flow.UeIpaddr,
-			ReRouting: flow.ReRouting.Ipaddr,
+			UeIpaddr:  flow.UeIpAddr,
+			ReRouting: flow.ReRouting.IpAddr,
 			MeterID:   uint32(flow.MeterID.ID),
 		}
 	}
@@ -88,7 +89,7 @@ func flowResponse(flows []*store.Flow) []*api.FlowResponse {
 func reRouteResponse(route *store.ReRoute) *api.ReRouteResponse {
 	return &api.ReRouteResponse{
 		ID: route.ID,
-		Ip: route.Ipaddr,
+		Ip: route.IpAddr,
 	}
 }
 
@@ -233,10 +234,25 @@ func (c *Controller) GetCDRByImsi(ctx *gin.Context, req *api.GetCDRByImsi) ([]*a
 	return cdrs, nil
 }
 
-func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.PolicyByImsi) (*api.PolicyResponse, error) {
+func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.GetPolicyByImsi) (*api.PolicyResponse, error) {
 	p, err := c.store.GetApplicablePolicyByImsi(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get policy for Imsi %s:Error: %v", req.Imsi, err.Error())
+		return nil, err
+	}
+	return policyResponse(p), nil
+}
+
+func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*api.PolicyResponse, error) {
+	id, err := uuid.FromString(req.ID)
+	if err != nil {
+		log.Errorf("invalid policy id. Error: %v", err.Error())
+		return nil, err
+	}
+
+	p, err := c.store.GetPolicyByID(id)
+	if err != nil {
+		log.Errorf("failed to get policy with ID %s:Error: %v", req.ID, err.Error())
 		return nil, err
 	}
 	return policyResponse(p), nil
@@ -264,7 +280,7 @@ func (c *Controller) AddPolicy(ctx *gin.Context, req *api.AddPolicyByImsi) error
 	return nil
 }
 
-func (c *Controller) GetFlowForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) ([]*api.FlowResponse, error) {
+func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) ([]*api.FlowResponse, error) {
 	var flows []*store.Flow
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
@@ -278,14 +294,14 @@ func (c *Controller) GetFlowForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) 
 		return nil, err
 	}
 
-	fRx, err := c.store.GetFlowForMeter(s.RXMeterId.ID)
+	fRx, err := c.store.GetFlowForMeter(s.RxMeterID.ID)
 	if err != nil {
 		log.Errorf("failed to get RX flow for Imsi %s:Error: %v", req.Imsi, err)
 		return nil, err
 	}
 	flows = append(flows, fRx)
 
-	fTx, err := c.store.GetFlowForMeter(s.TXMeterId.ID)
+	fTx, err := c.store.GetFlowForMeter(s.TxMeterID.ID)
 	if err != nil {
 		log.Errorf("failed to get TX flow for Imsi %s:Error: %v", req.Imsi, err)
 		return nil, err
@@ -309,7 +325,7 @@ func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*a
 		return nil, err
 	}
 
-	flow, err := c.store.GetFlowForMeter(s.TXMeterId.ID)
+	flow, err := c.store.GetFlowForMeter(s.TxMeterID.ID)
 	if err != nil {
 		log.Errorf("failed to get TX flow for Imsi %s:Error: %v", req.Imsi, err)
 		return nil, err
@@ -328,7 +344,7 @@ func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById)
 
 	err := c.store.UpdateReroute(&store.ReRoute{
 		ID:     int(req.Id),
-		Ipaddr: req.Ip,
+		IpAddr: req.Ip,
 	})
 	if err != nil {
 		log.Errorf("failed to update route for Id %d. Error: %s", req.Id, err.Error())
