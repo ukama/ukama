@@ -128,7 +128,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
 
 			// fake usage usage
-			usage := `{"usage":{"890000000000000001234":{"bytes_used": 28901234567, "cost": 100.99}}}`
+			usage := `{"usage":{"890000000000000001234": 28901234567}, "cost":{"890000000000000001234":100.99}}`
 
 			// Send mock response
 			return &http.Response{
@@ -147,11 +147,12 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 		// so that the test stays a unit test e.g no server/network call.
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		s, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
 
 		assert.NoError(tt, err)
-		assert.NotNil(tt, s[testIccid])
-		assert.Equal(tt, 100.99, s[testIccid].Cost)
+		assert.NotNil(tt, u[testIccid])
+		assert.NotNil(tt, c[testIccid])
+		assert.Equal(tt, 100.99, c[testIccid])
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -170,10 +171,11 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		s, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, s)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -188,10 +190,11 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		s, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
 
 		assert.Error(tt, err)
-		assert.Nil(tt, s)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
 	})
 }
 

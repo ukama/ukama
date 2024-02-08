@@ -25,7 +25,7 @@ const (
 type OperatorClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
-	GetUsages(iccid, cdrType, from, to string) (map[string]Usage, error)
+	GetUsages(iccid, cdrType, from, to string) (map[string]uint64, map[string]float64, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
 	TerminateSim(iccid string) error
@@ -78,7 +78,7 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	return sim.SimInfo, nil
 }
 
-func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]Usage, error) {
+func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]uint64, map[string]float64, error) {
 	log.Debugf("Getting operator sim info: %v", iccid)
 
 	usage := OperatorUsage{}
@@ -88,19 +88,19 @@ func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
 
-		return nil, fmt.Errorf("GetSimInfo failure: %w", err)
+		return nil, nil, fmt.Errorf("GetSimInfo failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &usage)
 	if err != nil {
 		log.Tracef("Failed to deserialize operator sim info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
+		return nil, nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
 	}
 
 	log.Infof("Operator Usage: %+v", usage.Usage)
 
-	return usage.Usage, nil
+	return usage.Usage, usage.Cost, nil
 }
 
 func (o *operatorClient) ActivateSim(iccid string) error {
@@ -151,11 +151,7 @@ type OperatorSim struct {
 	SimInfo *OperatorSimInfo `json:"sim"`
 }
 
-type Usage struct {
-	BytesUsed uint64  `json:"bytes_used,omitempty"`
-	Cost      float64 `json:"cost,omitempty"`
-}
-
 type OperatorUsage struct {
-	Usage map[string]Usage `json:"usage"`
+	Usage map[string]uint64  `json:"usage"`
+	Cost  map[string]float64 `json:"cost"`
 }
