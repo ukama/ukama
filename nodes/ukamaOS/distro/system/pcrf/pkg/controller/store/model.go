@@ -76,7 +76,7 @@ type Meter struct {
 type Flow struct {
 	ID        int
 	Cookie    uint64
-	Table     uint64
+	Tableid   uint64
 	Priority  uint64
 	UeIpAddr  string
 	ReRouting ReRoute

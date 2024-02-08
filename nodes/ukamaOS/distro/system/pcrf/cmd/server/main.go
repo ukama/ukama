@@ -29,6 +29,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
+	log.Infof("Starting pcrf controller service %s", pkg.ServiceName)
+
 	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.DebugMode)
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)

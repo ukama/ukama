@@ -27,7 +27,7 @@ import (
 	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
-var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
+var REDIRECT_URI = "https://0.0.0.0:8080/swagger/#/"
 
 type Router struct {
 	f          *fizz.Fizz
@@ -100,11 +100,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		// pcrf routes
-		pcrf := auth.Group("v1/pcrf", "PCRF", "pcrf")
+		pcrf := auth.Group("/pcrf", "PCRF", "pcrf")
 
 		s := pcrf.Group("/session", "session", "session")
 		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
-		s.POST("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
+		s.DELETE("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
 		s.GET("/:id", formatDoc("Get session", "Get a particular session"), tonic.Handler(r.getSessionByID, http.StatusOK))
 
 		// cdr
@@ -121,7 +121,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// re-route
 		route := pcrf.Group("/reroute", "Reroute", "rerouting IP address")
 		route.GET("/imsi/:imsi", formatDoc("reroute address", "Get a rerouting IP Address for Imsi"), tonic.Handler(r.getRerouteForImsi, http.StatusOK))
-		route.POST("", formatDoc("Add or Update Node", "Update a rerouting IP Address"), tonic.Handler(r.updateReroute, http.StatusCreated))
+		route.POST("/id/:id", formatDoc("Add or Update Node", "Update a rerouting IP Address"), tonic.Handler(r.updateReroute, http.StatusCreated))
 
 		// Subscriber
 		sub := pcrf.Group("/subscriber", "Subscriber", "subscriber")

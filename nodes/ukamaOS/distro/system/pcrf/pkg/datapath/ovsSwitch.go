@@ -90,9 +90,8 @@ func NewOvsSwitch(bridgeName, localIP, netType string) (*OvsSwitch, error) {
 	sw.ctrler = ofctrl.NewController(sw.ofActor)
 	sw.bridgeName = bridgeName
 
-	log.Infof("wait for 2sec for ovs bridge ovsbr12 to get created..")
-	time.Sleep(2 * time.Second)
-	go sw.ctrler.Connect("/var/run/openvswitch/ovsbr12.mgmt")
+	mgmt := fmt.Sprintf("/var/run/openvswitch/%s.mgmt", bridgeName)
+	go sw.ctrler.Connect(mgmt)
 
 	//wait for 8sec and see if switch connects
 	time.Sleep(8 * time.Second)

@@ -21,7 +21,7 @@ type EndSession struct {
 }
 
 type GetSessionByID struct {
-	ID uint64 `json:"id" validate:"required"`
+	ID uint64 `json:"id" path:"id" validate:"required"`
 }
 
 type GetSessionByImsi struct {
@@ -41,19 +41,19 @@ type CDR struct {
 }
 
 type GetCDRBySessionId struct {
-	ID uint64 `json:"id" validate:"required"`
+	ID uint64 `json:"id" path:"id" validate:"required"`
 }
 
 type GetCDRByImsi struct {
-	Imsi string `json:"imsi" path:"imii" validate:"required"`
+	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
 
 type GetPolicyByImsi struct {
-	Imsi string `json:"imsi" validate:"required"`
+	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
 
 type GetPolicyByID struct {
-	ID string `json:"id" validate:"required"`
+	ID string `json:"id" path:"id" validate:"required"`
 }
 
 type GetReRouteByImsi struct {
@@ -68,8 +68,8 @@ type ReRoute struct {
 }
 
 type UpdateRerouteById struct {
-	Id uint64 `json:"id" validate:"required"`
-	Ip string `json:"ip" path:"ip" validate:"required"`
+	Id uint64 `json:"id" path:"id" validate:"required"`
+	Ip string `json:"ip" validate:"required"`
 }
 
 type AddPolicyByImsi struct {
@@ -82,12 +82,13 @@ type Policy struct {
 	Ulbr      uint64    `json:"ulbr" validate:"required"`
 	Dlbr      uint64    `json:"dlbr" validate:"required"`
 	Data      uint64    `json:"data" validate:"required"`
+	Burst     uint64    `json:"burst" validate:"required"`
 	StartTime int64     `json:"start_time" validate:"required"`
 	EndTime   int64     `json:"end_time" validate:"required"`
 }
 
 type RequestSubscriber struct {
-	Imsi string `json:"imsi" validate:"required"`
+	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
 
 type CreateSubscriber struct {

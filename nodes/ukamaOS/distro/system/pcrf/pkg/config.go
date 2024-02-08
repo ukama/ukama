@@ -28,7 +28,7 @@ type Config struct {
 }
 
 type BrdigeConfig struct {
-	Name    string `default:"br0"`
+	Name    string `default:"gtpbr"`
 	Ip      string `default:"10.0.0.1"`
 	NetType string
 	Period  time.Duration `default:"2s"`
@@ -49,7 +49,9 @@ func NewConfig(name string) *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
 		},
-
+		Bridge: BrdigeConfig{
+			Name: "gtpbr",
+		},
 		DB: name,
 		Server: rest.HttpConfig{
 			Port: 8080,
@@ -61,6 +63,9 @@ func NewConfig(name string) *Config {
 			Policy:  "http://localhost",
 		},
 		Metrics: *config.DefaultMetrics(),
-		Auth:    config.LoadAuthHostConfig("auth"),
+		//Auth:    config.LoadAuthHostConfig("auth"),
+		Auth: &config.Auth{
+			BypassAuthMode: true,
+		},
 	}
 }

@@ -76,7 +76,7 @@ func flowResponse(flows []*store.Flow) []*api.FlowResponse {
 		fr[i] = &api.FlowResponse{
 			ID:        flow.ID,
 			Cookie:    flow.Cookie,
-			Table:     flow.Table,
+			Table:     flow.Tableid,
 			Priority:  flow.Priority,
 			UeIpaddr:  flow.UeIpAddr,
 			ReRouting: flow.ReRouting.IpAddr,
@@ -261,20 +261,20 @@ func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*a
 func (c *Controller) AddPolicy(ctx *gin.Context, req *api.AddPolicyByImsi) error {
 	p, err := c.store.CreatePolicy(&req.Policy)
 	if err != nil {
-		log.Errorf("failed to add policy %s", req.Policy)
+		log.Errorf("failed to add policy %s.Error: %s", req.Policy.Uuid.String(), err.Error())
 		return err
 	}
 
 	sub, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with Imsi %s:Error: %v")
+		log.Errorf("failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
 		return err
 	}
 
 	/* Update policy for subscriber */
 	err = c.store.UpdateSubscriber(sub, p.ID)
 	if err != nil {
-		log.Errorf("failed to update policy for subscriber with Imsi %s:Error: %v")
+		log.Errorf("failed to update policy for subscriber with Imsi %s.Error: %v", req.Imsi, err)
 		return err
 	}
 	return nil
@@ -284,7 +284,7 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 	var flows []*store.Flow
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with Imsi %s:Error: %v")
+		log.Errorf("failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
 		return nil, err
 	}
 
@@ -315,13 +315,13 @@ func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*a
 
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with Imsi %s:Error: %v")
+		log.Errorf("failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
 		return nil, err
 	}
 
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get active session for Imsi %s:Error: %v", req.Imsi, err)
+		log.Errorf("failed to get active session for Imsi %s.Error: %v", req.Imsi, err)
 		return nil, err
 	}
 
@@ -356,7 +356,7 @@ func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById)
 func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber) (*api.SubscriberResponse, error) {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with imsi %s. Error: %s", req.Imsi, err.Error)
+		log.Errorf("failed to get subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
 		return nil, err
 	}
 	return subscriberResponse(s), nil
@@ -365,13 +365,13 @@ func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber)
 func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscriber) error {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with imsi %s. Error: %s", req.Imsi, err.Error)
+		log.Errorf("failed to get subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
 		return err
 	}
 
 	err = c.store.DeleteSubscriber(s)
 	if err != nil {
-		log.Errorf("failed to delete subscriber with imsi %s. Error: %s", req.Imsi, err.Error)
+		log.Errorf("failed to delete subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
 		return err
 	}
 	return nil

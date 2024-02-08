@@ -10,7 +10,9 @@ include ../../../../../systems/config.mk
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/api-gateway cmd/server/main.go
+	export CGO_LDFLAGS="-L../../vendor/build -lsqlite3 -Wl,-rpath=./lib"
+	export CGO_CFLAGS="-I../../vendor/build/include"
+	env CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build  -ldflags ' -s -w -X github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version.Version=$(BIN_VER)' -o bin/pcrf cmd/server/main.go
 
 test:
 	go test -v ./...
