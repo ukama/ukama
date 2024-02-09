@@ -98,7 +98,8 @@ func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]
 		return nil, nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
 	}
 
-	log.Infof("Operator Usage: %+v", usage.Usage)
+	log.Infof("Operator data usage (of type %T): %+v", usage.Usage, usage.Usage)
+	log.Infof("Operator data cost (of type %T): %+v", usage.Cost, usage.Cost)
 
 	return usage.Usage, usage.Cost, nil
 }
