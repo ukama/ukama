@@ -101,27 +101,27 @@ func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 	}
 }
 
-func (c *Controller) validateSusbcriber(imsi string) error {
+func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) {
 	/* Get subscriber policy by imsi*/
 	s, err := c.store.GetSubscriber(imsi)
 	if err != nil {
 		log.Errorf("Failed to get subscriber for %s:Error: %v", imsi, err)
-		return err
+		return nil, err
 	}
 
 	/* store policy */
 	p, err := c.store.GetPolicyByID(s.PolicyID.ID)
 	if err != nil {
 		log.Errorf("Failed to get subscriber policy %d:Error: %v", s.PolicyID, err)
-		return err
+		return nil, err
 	}
 
 	now := time.Now().Unix()
-	if p.StartTime > now && p.EndTime <= now {
-		return fmt.Errorf("failed to get valid policy")
+	if p.StartTime > now || p.EndTime <= now {
+		return nil, fmt.Errorf("failed to get valid policy")
 	}
 
-	return nil
+	return s, nil
 }
 
 func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy) (*store.Subscriber, error) {
@@ -140,7 +140,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	var sub *store.Subscriber
 	var err error
 	/* validate subscriber*/
-	err = c.validateSusbcriber(req.Imsi)
+	sub, err = c.validateSusbcriber(req.Imsi)
 	if err != nil {
 		/* Get subscriber policy from remote */
 		p, err := c.rc.GetPolicy(req.Imsi)
@@ -258,25 +258,13 @@ func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*a
 	return policyResponse(p), nil
 }
 
-func (c *Controller) AddPolicy(ctx *gin.Context, req *api.AddPolicyByImsi) error {
-	p, err := c.store.CreatePolicy(&req.Policy)
+func (c *Controller) AddPolicy(ctx *gin.Context, req *api.Policy) error {
+	_, err := c.store.CreatePolicy(req)
 	if err != nil {
-		log.Errorf("failed to add policy %s.Error: %s", req.Policy.Uuid.String(), err.Error())
+		log.Errorf("failed to add policy %s.Error: %s", req.Uuid.String(), err.Error())
 		return err
 	}
 
-	sub, err := c.store.GetSubscriber(req.Imsi)
-	if err != nil {
-		log.Errorf("failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
-		return err
-	}
-
-	/* Update policy for subscriber */
-	err = c.store.UpdateSubscriber(sub, p.ID)
-	if err != nil {
-		log.Errorf("failed to update policy for subscriber with Imsi %s.Error: %v", req.Imsi, err)
-		return err
-	}
 	return nil
 }
 

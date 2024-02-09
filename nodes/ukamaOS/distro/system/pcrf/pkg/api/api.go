@@ -72,11 +72,6 @@ type UpdateRerouteById struct {
 	Ip string `json:"ip" validate:"required"`
 }
 
-type AddPolicyByImsi struct {
-	Imsi   string `json:"imsi" path:"imsi" validate:"required"`
-	Policy Policy `json:"policy" validate:"required"`
-}
-
 type Policy struct {
 	Uuid      uuid.UUID `json:"uuid" validate:"required"`
 	Ulbr      uint64    `json:"ulbr" validate:"required"`
@@ -86,6 +81,8 @@ type Policy struct {
 	StartTime int64     `json:"start_time" validate:"required"`
 	EndTime   int64     `json:"end_time" validate:"required"`
 }
+
+type AddPolicy Policy
 
 type RequestSubscriber struct {
 	Imsi string `json:"imsi" path:"imsi" validate:"required"`

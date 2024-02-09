@@ -160,7 +160,7 @@ func (r *Router) getPolicyByID(c *gin.Context, req *api.GetPolicyByID) (*api.Pol
 	return r.controller.GetPolicyByID(c, req)
 }
 
-func (r *Router) addPolicy(c *gin.Context, req *api.AddPolicyByImsi) error {
+func (r *Router) addPolicy(c *gin.Context, req *api.Policy) error {
 	return r.controller.AddPolicy(c, req)
 }
 

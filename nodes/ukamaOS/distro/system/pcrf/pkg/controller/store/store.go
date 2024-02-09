@@ -117,6 +117,7 @@ func (s *Store) createMeterTable() error {
 		CREATE TABLE IF NOT EXISTS meters (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			rate INTEGER,
+			burst INTEGER,
 			type INTEGER
 		);
 	`)
@@ -132,13 +133,14 @@ func (s *Store) createFlowTable() error {
 		CREATE TABLE IF NOT EXISTS flows (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		tableid INTEGER,
-		cookie INTEGER ,
+		cookie INTEGER UNIQUE AUTOINCREMENT,
 		priority INTEGER,
 		ueipaddr TEXT,
 		reroute_id INTEGER,
 		meter_id INTEGER,
 		FOREIGN KEY(reroute_id) REFERENCES reroutes(id),
-		FOREIGN KEY(meter_id) REFERENCES meters(id)
+		FOREIGN KEY(meter_id) REFERENCES meters(id),
+		CHECK (cookie >= 0)
 	);
 `)
 	if err != nil {
@@ -317,7 +319,7 @@ func (s *Store) DeleteMeter(id uint32) error {
 func (s *Store) GetMeter(id uint32) (*Meter, error) {
 	var meter Meter
 	err := s.db.QueryRow(`
-		SELECT * FROM meters 
+		SELECT id,rate,type,burst FROM meters 
 		WHERE id = ?;
 	`, id).Scan(&meter.ID, &meter.Rate, &meter.Type, &meter.Burst)
 	if err != nil {
@@ -374,7 +376,7 @@ func (s *Store) DeleteFlow(id uint32) error {
 func (s *Store) GetFlow(id int) (*Flow, error) {
 	var f Flow
 	err := s.db.QueryRow(`
-		SELECT * FROM flows 
+		SELECT id,cookie,tableid,priority,ueipaddr,meter_id,reroute_id FROM flows 
 		WHERE id = ?;
 	`, id).Scan(&f.ID, &f.Cookie, &f.Tableid, &f.Priority, &f.UeIpAddr, &f.MeterID.ID, &f.ReRouting.ID)
 	if err != nil {
@@ -605,9 +607,8 @@ func (s *Store) UpdateUsage(usage *Usage) error {
 /* Get usage by imsi */
 func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 	var usage Usage
-
-	err := s.db.QueryRow("SELECT * FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)", imsi).
-		Scan(&usage.ID, &usage.SubscriberID.ID, &usage.Data)
+	err := s.db.QueryRow("SELECT id, subscriber_id, updatedat, data FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)", imsi).
+		Scan(&usage.ID, &usage.SubscriberID.ID, &usage.Updatedat, &usage.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +619,7 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 	var id []byte
-	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID.Bytes()).
+	err := s.db.QueryRow("SELECT id,data,dlbr,ulbr,burst,starttime,endtime FROM policies WHERE id = ?", policyID.Bytes()).
 		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
 	if err != nil {
 		return nil, err
@@ -938,7 +939,17 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 		// Subscriber not found
 		return nil, fmt.Errorf("Subscriber not found: %v", err)
 	}
-	subscriber.PolicyID.ID, err = uuid.FromBytes(id)
+	uuid, err := uuid.FromBytes(id)
+	if err != nil {
+		return nil, fmt.Errorf("policy id is not a valid uuid: %v", err)
+	}
+
+	p, err := s.GetPolicyByID(uuid)
+	if err != nil {
+		log.Errorf("failed to get policy for subscriber %s.Error: %v", subscriber.Imsi, err)
+		return nil, err
+	}
+	subscriber.PolicyID = *p
 	return &subscriber, err
 }
 
