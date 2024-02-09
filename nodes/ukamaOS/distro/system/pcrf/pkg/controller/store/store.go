@@ -618,7 +618,7 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 	var id []byte
-	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID).
+	err := s.db.QueryRow("SELECT * FROM policies WHERE id = ?", policyID.Bytes()).
 		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
 	if err != nil {
 		return nil, err

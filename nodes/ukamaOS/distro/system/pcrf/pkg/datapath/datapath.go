@@ -17,13 +17,13 @@ type DataPath interface {
 }
 
 func InitDataPath(name, ip, netType string) (*dataPath, error) {
-	//var err error
+	var err error
 	d := &dataPath{ueCount: 0}
-	// d.ovs, err = NewOvsSwitch(name, ip, netType)
-	// if err != nil {
-	// 	log.Errorf("error connecting bridge %s at %s .Error: %v", name, ip, err)
-	// 	return nil, err
-	// }
+	d.ovs, err = NewOvsSwitch(name, ip, netType)
+	if err != nil {
+		log.Errorf("error connecting bridge %s at %s .Error: %v", name, ip, err)
+		return nil, err
+	}
 	return d, nil
 }
 
