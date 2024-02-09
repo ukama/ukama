@@ -109,32 +109,32 @@ func (_m *OperatorClient) GetSimInfo(iccid string) (*operator.OperatorSimInfo, e
 }
 
 // GetUsages provides a mock function with given fields: iccid, cdrType, from, to
-func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string) (map[string]uint64, map[string]float64, error) {
+func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string) (map[string]interface{}, map[string]interface{}, error) {
 	ret := _m.Called(iccid, cdrType, from, to)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsages")
 	}
 
-	var r0 map[string]uint64
-	var r1 map[string]float64
+	var r0 map[string]interface{}
+	var r1 map[string]interface{}
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (map[string]uint64, map[string]float64, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (map[string]interface{}, map[string]interface{}, error)); ok {
 		return rf(iccid, cdrType, from, to)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) map[string]uint64); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string) map[string]interface{}); ok {
 		r0 = rf(iccid, cdrType, from, to)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]uint64)
+			r0 = ret.Get(0).(map[string]interface{})
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) map[string]float64); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, string) map[string]interface{}); ok {
 		r1 = rf(iccid, cdrType, from, to)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(map[string]float64)
+			r1 = ret.Get(1).(map[string]interface{})
 		}
 	}
 

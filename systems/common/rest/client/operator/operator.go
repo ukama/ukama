@@ -25,7 +25,7 @@ const (
 type OperatorClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
-	GetUsages(iccid, cdrType, from, to string) (map[string]uint64, map[string]float64, error)
+	GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
 	TerminateSim(iccid string) error
@@ -78,7 +78,7 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	return sim.SimInfo, nil
 }
 
-func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]uint64, map[string]float64, error) {
+func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting operator sim info: %v", iccid)
 
 	usage := OperatorUsage{}
@@ -153,6 +153,6 @@ type OperatorSim struct {
 }
 
 type OperatorUsage struct {
-	Usage map[string]uint64  `json:"usage"`
-	Cost  map[string]float64 `json:"cost"`
+	Usage map[string]any `json:"usage"`
+	Cost  map[string]any `json:"cost"`
 }
