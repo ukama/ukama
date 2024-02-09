@@ -147,8 +147,12 @@ static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
         ret=-1;
         break;
     default:
-        log_error("Error sending request to init %s. Error: %s",
-                  bootstrapServer, HttpStatusStr(respCode));
+        if (respCode) {
+            log_error("Error sending request to init %s. Error: %s",
+                      url, HttpStatusStr(respCode));
+        } else {
+            log_error("Error sending request to init %s", url);
+        }
         ret=FALSE;
         break;
     }
