@@ -28,9 +28,10 @@ const (
 )
 
 type Subscriber struct {
-	ID       int
-	Imsi     string
-	PolicyID Policy
+	ID        int
+	Imsi      string
+	PolicyID  Policy
+	ReRouteID ReRoute
 }
 
 type Policy struct {

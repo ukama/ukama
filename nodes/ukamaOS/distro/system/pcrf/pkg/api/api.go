@@ -82,6 +82,12 @@ type Policy struct {
 	EndTime   int64     `json:"end_time" validate:"required"`
 }
 
+type Spr struct {
+	Imsi    string `json:"imsi" path:"imsi" validate:"required"`
+	Policy  Policy `json:"policy" validate:"required"`
+	ReRoute string `json:"reroute" validate:"required"`
+}
+
 type AddPolicy Policy
 
 type RequestSubscriber struct {
@@ -89,8 +95,9 @@ type RequestSubscriber struct {
 }
 
 type CreateSubscriber struct {
-	Imsi   string `json:"imsi" path:"imsi" validate:"required"`
-	Policy Policy `json:"policy" validate:"required"`
+	Imsi    string `json:"imsi" path:"imsi" validate:"required"`
+	Policy  Policy `json:"policy" validate:"required"`
+	ReRoute string `json:"reroute" validate:"required"`
 }
 
 type GetFlowsForImsi struct {

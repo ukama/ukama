@@ -86,7 +86,9 @@ func (s *Store) createSubscriberTable() error {
 			id INTEGER PRIMARY KEY,
 			imsi TEXT UNIQUE,
 			policy_id BLOB CHECK(length(policy_id) = 16),
-			FOREIGN KEY(policy_id) REFERENCES policies(id)
+			reroute_id INTEGER,
+			FOREIGN KEY(policy_id) REFERENCES policies(id),
+			FOREIGN KEY(reroute_id) REFERENCES reroutes(id)
 		);
 	`)
 	if err != nil {
@@ -256,13 +258,21 @@ func (s *Store) CreateReroute(r *api.ReRoute) (*ReRoute, error) {
 		IpAddr: r.Ip,
 	}
 
-	err := s.InsertReRoute(&reroute)
+	rr, err := s.GetReRouteByIP(r.Ip)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			err = s.InsertReRoute(&reroute)
+			if err != nil {
+				return nil, err
+			}
+			return s.GetReRouteByIP(r.Ip)
+		} else {
+			return nil, err
+		}
 	}
 
-	log.Infof("Created route %v", reroute)
-	return &reroute, nil
+	log.Infof("Created route %+v", rr)
+	return rr, nil
 }
 
 /* Create a new meter */
@@ -368,7 +378,7 @@ func (s *Store) CreateFlow(m *Meter, r *ReRoute, ip string, table, priority uint
 		return nil, err
 	}
 
-	log.Infof("Created flow %v", flow)
+	log.Infof("Created flow %+v", flow)
 	return flow, nil
 }
 
@@ -406,6 +416,13 @@ func (s *Store) GetFlow(id int) (*Flow, error) {
 	}
 	f.MeterID = *m
 
+	r, err := s.GetReRouteByID(f.ReRouting.ID)
+	if err != nil {
+		log.Errorf("Failed to get reeoute %d for flow %d. Error: %v", f.ReRouting.ID, f.ID, err)
+		return nil, err
+	}
+	f.ReRouting = *r
+
 	return &f, nil
 }
 
@@ -436,23 +453,45 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 }
 
 /* Create a subscriber */
-func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
+func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string) (*Subscriber, error) {
 
-	// Allocate default policy to the subscriber
+	reroute := &ReRoute{}
+
+	/* create a policy */
 	sp, err := s.CreatePolicy(p)
 	if err != nil {
 		return nil, err
 	}
 
-	subscriber := Subscriber{
-		Imsi:     imsi,
-		PolicyID: *sp,
+	/* Create a reroute if doen't exist */
+	if ip != nil {
+		reroute, err = s.CreateReroute(&api.ReRoute{
+			Ip: *ip,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	err = s.InsertSubscriber(&subscriber)
+	err = s.CreateOrUpdateSubscriber(&api.CreateSubscriber{
+		Imsi: imsi,
+	}, &(sp.ID), &reroute.ID)
 	if err != nil {
+		log.Errorf("Failed to create subscriber with imsi %s. Error: %s", imsi, err.Error())
 		return nil, err
 	}
+	// /* check if subscriber exist
+	// /* Create subscriber */
+	// subscriber := Subscriber{
+	// 	Imsi:      imsi,
+	// 	PolicyID:  *sp,
+	// 	ReRouteID: *reroute,
+	// }
+
+	// err = s.InsertSubscriber(&subscriber)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	sub, err := s.GetSubscriber(imsi)
 	if err != nil {
@@ -466,7 +505,7 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 		return nil, err
 	}
 
-	return &subscriber, nil
+	return sub, nil
 }
 
 // CRUD operations for Session entity
@@ -528,6 +567,23 @@ func (s *Store) UpdateSessionEndUsage(session *Session) error {
 
 func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session, *Flow, *Flow, error) {
 
+	/* TODO: Check if required here vaildate if user has enough data */
+	usage, err := s.GetUsageByImsi(subscriber.Imsi)
+	if err != nil {
+		log.Errorf("Error getting usage for subscriber: %s", err.Error())
+		return nil, nil, nil, err
+	}
+
+	// Check if Data in Usage is less than Policy for rerouting
+	if usage.Data >= subscriber.PolicyID.Data {
+		log.Errorf("can't create flows. UE %s has reached max data cap.", subscriber.Imsi)
+		return nil, nil, nil, fmt.Errorf("max data cap exceeded")
+	}
+
+	/* TODO: start create session
+	tx, err := s.db.Begin()
+	*/
+
 	rxM, err := s.CreateMeter(subscriber, &subscriber.PolicyID, RX_PATH)
 	if err != nil {
 		return nil, nil, nil, err
@@ -562,18 +618,6 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 		Priority: 100,
 		UeIpAddr: ueIpAddr,
 		MeterID:  session.TxMeterID,
-	}
-
-	usage, err := s.GetUsageByImsi(subscriber.Imsi)
-	if err != nil {
-		log.Errorf("Error getting usage for subscriber: %s", err.Error())
-		return nil, nil, nil, err
-	}
-
-	// Check if Data in Usage is less than Policy for rerouting
-	if usage.Data >= subscriber.PolicyID.Data {
-		log.Errorf("can't create flows. UE %s has reached max data cap.", subscriber.Imsi)
-		return nil, nil, nil, fmt.Errorf("max data cap exceeded")
 	}
 
 	// Insert Flows
@@ -905,6 +949,9 @@ func (s *Store) InsertReRoute(reRoute *ReRoute) error {
 	_, err := s.db.Exec(`
 		INSERT OR IGNORE INTO reroutes (ipaddr)
 		VALUES (?); `, reRoute.IpAddr)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -912,6 +959,18 @@ func (s *Store) GetReRouteByID(reRouteID int) (*ReRoute, error) {
 	var reRoute ReRoute
 
 	err := s.db.QueryRow("SELECT * FROM reroutes WHERE id = ?", reRouteID).
+		Scan(&reRoute.ID, &reRoute.IpAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &reRoute, nil
+}
+
+func (s *Store) GetReRouteByIP(ip string) (*ReRoute, error) {
+	var reRoute ReRoute
+
+	err := s.db.QueryRow("SELECT * FROM reroutes WHERE ipaddr = ?", ip).
 		Scan(&reRoute.ID, &reRoute.IpAddr)
 	if err != nil {
 		return nil, err
@@ -940,19 +999,29 @@ func (s *Store) UpdateReroute(reRoute *ReRoute) error {
 /* CRUD operations for Subscriber entity */
 func (s *Store) InsertSubscriber(sub *Subscriber) error {
 	_, err := s.db.Exec(`
-		INSERT OR IGNORE INTO subscribers (imsi, policy_id)
-		VALUES (?,?);
-	`, sub.Imsi, sub.PolicyID.ID.Bytes())
+		INSERT OR IGNORE INTO subscribers (imsi, policy_id, reroute_id)
+		VALUES (?,?, ?);
+	`, sub.Imsi, sub.PolicyID.ID.Bytes(), sub.ReRouteID.ID)
 	return err
 }
 
 /* Update policy for Subscriber entity */
-func (s *Store) UpdateSubscriber(subscriber *Subscriber, p uuid.UUID) error {
+func (s *Store) UpdateSubscriberPolicy(subscriber *Subscriber, p uuid.UUID) error {
 	_, err := s.db.Exec(`
 		UPDATE subscribers
 		SET policy_id = ?
 		WHERE id = ?;
 	`, p.Bytes(), subscriber.ID)
+	return err
+}
+
+/* Update policy for Subscriber entity */
+func (s *Store) UpdateSubscriberReRoute(subscriber *Subscriber, id int) error {
+	_, err := s.db.Exec(`
+		UPDATE subscribers
+		SET reroute_id = ?
+		WHERE id = ?;
+	`, subscriber.ReRouteID.ID, subscriber.ID)
 	return err
 }
 
@@ -967,12 +1036,12 @@ func (s *Store) DeleteSubscriber(subscriber *Subscriber) error {
 
 func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 
-	query := "SELECT id, imsi, policy_id FROM subscribers WHERE Imsi = ?"
+	query := "SELECT id, imsi, policy_id, reroute_id FROM subscribers WHERE Imsi = ?"
 	row := s.db.QueryRow(query, imsi)
 
 	var subscriber Subscriber
 	var id []byte
-	err := row.Scan(&subscriber.ID, &subscriber.Imsi, &id)
+	err := row.Scan(&subscriber.ID, &subscriber.Imsi, &id, &subscriber.ReRouteID.ID)
 	if err != nil {
 		// Subscriber not found
 		return nil, fmt.Errorf("Subscriber not found: %v", err)
@@ -988,17 +1057,25 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 		return nil, err
 	}
 	subscriber.PolicyID = *p
+
+	r, err := s.GetReRouteByID(subscriber.ReRouteID.ID)
+	if err != nil {
+		log.Errorf("failed to get reroute for subscriber %s.Error: %v", subscriber.Imsi, err)
+		return nil, err
+	}
+	subscriber.ReRouteID = *r
+
 	return &subscriber, err
 }
 
 func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 
-	query := "SELECT imsi, policy_id FROM subscribers WHERE id = ?"
+	query := "SELECT imsi, policy_id, reroute_id FROM subscribers WHERE id = ?"
 	row := s.db.QueryRow(query, id)
 
 	var subscriber Subscriber
 	var idb []byte
-	err := row.Scan(&subscriber.Imsi, &idb)
+	err := row.Scan(&subscriber.Imsi, &idb, &subscriber.ReRouteID.ID)
 	if err != nil {
 		// Subscriber not found
 		return nil, fmt.Errorf("Subscriber not found: %v", err)
@@ -1015,18 +1092,25 @@ func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 		return nil, err
 	}
 	subscriber.PolicyID = *p
+
+	r, err := s.GetReRouteByID(subscriber.ReRouteID.ID)
+	if err != nil {
+		log.Errorf("failed to get reroute for subscriber %s.Error: %v", subscriber.Imsi, err)
+		return nil, err
+	}
+	subscriber.ReRouteID = *r
+
 	return &subscriber, err
 }
 
-func (s *Store) CreateSubscriberOrUpdatePolicy(ns *api.CreateSubscriber, p uuid.UUID) error {
+func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID, id *int) error {
 
 	// Check if the subscriber already exists
-	var subscriber Subscriber
+	subscriber := &Subscriber{}
 	err := s.db.QueryRow("SELECT ID FROM Subscriber WHERE Imsi = ?", ns.Imsi).Scan(&subscriber.ID, &subscriber.Imsi)
 
 	if err == nil && subscriber.ID != 0 {
-		// Subscriber already exists, update the policy
-		return s.UpdateSubscriber(&subscriber, p)
+		log.Infof("Subscriber already exists %s. Performing update", subscriber.Imsi)
 	} else {
 		err := s.InsertSubscriber(&Subscriber{
 			Imsi: ns.Imsi,
@@ -1037,25 +1121,37 @@ func (s *Store) CreateSubscriberOrUpdatePolicy(ns *api.CreateSubscriber, p uuid.
 		}
 		log.Infof("New subscriber with Imsi %s created.", ns.Imsi)
 
-		// Get the ID of the last inserted Subscriber
-		sub, err := s.GetSubscriber(ns.Imsi)
+		// Get the subscriber
+		subscriber, err = s.GetSubscriber(ns.Imsi)
 		if err != nil {
-			log.Errorf("Erorr while getting sunscriber with imsi %s. Error %s", sub.Imsi, err.Error())
+			log.Errorf("Erorr while getting sunscriber with imsi %s. Error %s", subscriber.Imsi, err.Error())
 			return err
 		}
-
 		/* Usage table */
-		err = s.CreateUsage(sub)
+		err = s.CreateUsage(subscriber)
 		if err != nil {
 			return err
 		}
-
-		err = s.UpdateSubscriber(sub, p)
-		if err != nil {
-			return err
-		}
-		log.Infof("Policy %s assigned to the new subscriber %s.", p, sub.Imsi)
 	}
+
+	// Subscriber already exists, update the policy
+	if p != nil {
+		err := s.UpdateSubscriberPolicy(subscriber, *p)
+		if err != nil {
+			log.Errorf("Failed to update policy %s for the subscriber %s.Error %s", p.String(), ns.Imsi, err.Error())
+			return err
+		}
+	}
+
+	if id != nil {
+		err = s.UpdateSubscriberReRoute(subscriber, *id)
+		if err != nil {
+			log.Errorf("Failed to update Reroute %d for the subscriber %s.Error %s", *id, ns.Imsi, err.Error())
+			return err
+		}
+	}
+
+	log.Infof("Policy %s assigned to the new subscriber %s.", p, subscriber.Imsi)
 
 	return nil
 }

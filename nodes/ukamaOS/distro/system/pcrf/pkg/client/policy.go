@@ -22,7 +22,7 @@ const PolicyEndpoint = "/v1/policy/imsi/"
 const CDREndpoint = "/v1/cdr/imsi/"
 
 type RemoteController interface {
-	GetPolicy(imsi string) (*api.Policy, error)
+	GetPolicy(imsi string) (*api.Spr, error)
 	PushCdr(cdr *api.CDR) error
 }
 
@@ -69,10 +69,10 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	return nil
 }
 
-func (r *remoteControllerClient) GetPolicy(imsi string) (*api.Policy, error) {
+func (r *remoteControllerClient) GetPolicy(imsi string) (*api.Spr, error) {
 	log.Debugf("Getting policy for ismi: %s", imsi)
 
-	policy := &api.Policy{}
+	spr := &api.Spr{}
 	resp, err := r.R.C.R().Get(r.u.String() + PolicyEndpoint + "/" + imsi)
 	if err != nil {
 		log.Errorf("GetPolicy failure. error: %s", err.Error())
@@ -80,14 +80,14 @@ func (r *remoteControllerClient) GetPolicy(imsi string) (*api.Policy, error) {
 		return nil, fmt.Errorf("GetPolicy failure: %w", err)
 	}
 
-	err = json.Unmarshal(resp.Body(), &policy)
+	err = json.Unmarshal(resp.Body(), &spr)
 	if err != nil {
 		log.Tracef("Failed to deserialize policy info. Error message is: %s", err.Error())
 
 		return nil, fmt.Errorf("policy info deserailization failure: %w", err)
 	}
 
-	log.Infof("Policy Info: %+v", policy)
+	log.Infof("SPR Info: %+v", spr)
 
-	return policy, nil
+	return spr, nil
 }

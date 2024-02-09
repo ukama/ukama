@@ -124,10 +124,10 @@ func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) 
 	return s, nil
 }
 
-func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy) (*store.Subscriber, error) {
+func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy, ip string) (*store.Subscriber, error) {
 	var sub *store.Subscriber
 
-	sub, err := c.store.CreateSubscriber(imsi, p)
+	sub, err := c.store.CreateSubscriber(imsi, p, &ip)
 	if err != nil {
 		log.Errorf("Failed to create subscriber %s:Error: %v", imsi, err)
 		return nil, err
@@ -143,15 +143,15 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	sub, err = c.validateSusbcriber(req.Imsi)
 	if err != nil {
 		/* Get subscriber policy from remote */
-		p, err := c.rc.GetPolicy(req.Imsi)
+		spr, err := c.rc.GetPolicy(req.Imsi)
 		if err != nil {
 			log.Errorf("Failed to get subscriber %s policy.Error: %v", req.Imsi, err)
 			return err
 		}
 
-		sub, err = c.updateSubscriberPolicy(req.Imsi, p)
+		sub, err = c.updateSubscriberPolicy(req.Imsi, &spr.Policy, spr.ReRoute)
 		if err != nil {
-			log.Errorf("Failed to update subscriber %s with policy %s.Error: %v", req.Imsi, p.Uuid.String(), err)
+			log.Errorf("Failed to update subscriber %s with policy %s.Error: %v", req.Imsi, spr.Policy.Uuid.String(), err)
 			return err
 		}
 	}
@@ -366,7 +366,7 @@ func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscrib
 }
 
 func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
-	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy)
+	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute)
 	if err != nil {
 		log.Errorf("failed to delete subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
 		return err
