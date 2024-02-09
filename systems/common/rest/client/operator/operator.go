@@ -84,7 +84,7 @@ func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]
 	usage := OperatorUsage{}
 
 	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
-		fmt.Sprintf("?iccid=%s&type=%s&from=%s&to=%s", iccid, cdrType, from, to))
+		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s", iccid, cdrType, from, to))
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
 

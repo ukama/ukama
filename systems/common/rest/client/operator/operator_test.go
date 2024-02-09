@@ -124,7 +124,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 	t.Run("UsageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&type=%s&from=%s&to=%s",
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
 				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
 
 			// fake usage usage
@@ -157,7 +157,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&type=%s&from=%s&to=%s",
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
 				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
 
 			return &http.Response{
@@ -180,7 +180,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&type=%s&from=%s&to=%s",
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
 				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
 
 			return nil
