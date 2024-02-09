@@ -345,6 +345,11 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) (*pb.UsageResponse, error) {
 	log.Infof("Getting Usages matching: %v", req)
 
+	if req.Type == "" {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid value. Cdr type cannot be empty while getting usages")
+	}
+
 	var simType ukama.SimType
 	var simIccid string
 

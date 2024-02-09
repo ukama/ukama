@@ -148,7 +148,9 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", nil, "", "", nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
-			SimId: simID.String()})
+			SimId: simID.String(),
+			Type:  ukama.CdrTypeData.String(),
+		})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, usagesResp)
@@ -165,7 +167,9 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
-			SimId: simID.String()})
+			SimId: simID.String(),
+			Type:  ukama.CdrTypeData.String(),
+		})
 
 		assert.Error(t, err)
 		assert.Nil(t, usagesResp)
@@ -207,6 +211,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 			nil, nil, nil, "", nil, "", "", nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimType: simTypeOperator,
+			Type:    ukama.CdrTypeData.String(),
 		})
 
 		assert.NoError(t, err)
