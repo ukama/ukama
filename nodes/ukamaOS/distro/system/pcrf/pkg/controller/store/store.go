@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/mattn/go-sqlite3"
@@ -133,7 +134,7 @@ func (s *Store) createFlowTable() error {
 		CREATE TABLE IF NOT EXISTS flows (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		tableid INTEGER,
-		cookie INTEGER UNIQUE AUTOINCREMENT,
+		cookie INTEGER UNIQUE,
 		priority INTEGER,
 		ueipaddr TEXT,
 		reroute_id INTEGER,
@@ -332,10 +333,24 @@ func (s *Store) GetMeter(id uint32) (*Meter, error) {
 
 /* Create a new flow */
 func (s *Store) CreateFlow(m *Meter, r *ReRoute, ip string, table, priority uint32) (*Flow, error) {
+	var ck uint64
+
+	for {
+		ck = uint64(rand.Uint32())
+		b, err := s.CheckUniqueCookie(ck)
+		if err != nil {
+			log.Errorf("Failed to check unique cookie.Error: %s", err.Error())
+			return nil, err
+		}
+		if b {
+			break
+		}
+	}
+
 	res, err := s.db.Exec(`
-		INSERT INTO flows (tableid, priority, ueipaddr, reroute_id, meter_id)
-		VALUES (?, ?, ?, ?, ?);
-	`, table, priority, ip, r.ID, m.ID)
+		INSERT INTO flows (cookie,tableid, priority, ueipaddr, reroute_id, meter_id)
+		VALUES (?, ?, ?, ?, ?, ?);
+	`, ck, table, priority, ip, r.ID, m.ID)
 	if err != nil {
 		log.Errorf("Failed to create flow for UE %s meter %d. Error: %v", ip, m.ID, err)
 		return nil, err
@@ -384,7 +399,28 @@ func (s *Store) GetFlow(id int) (*Flow, error) {
 		return nil, err
 	}
 
+	m, err := s.GetMeter(uint32(f.MeterID.ID))
+	if err != nil {
+		log.Errorf("Failed to get meter %d for flow %d. Error: %v", f.MeterID.ID, f.ID, err)
+		return nil, err
+	}
+	f.MeterID = *m
+
 	return &f, nil
+}
+
+/* Get flow */
+func (s *Store) CheckUniqueCookie(cookie uint64) (bool, error) {
+	var count int
+	err := s.db.QueryRow(`
+		SELECT COUNT(*) FROM flows 
+		WHERE cookie = ?;
+	`, cookie).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count == 0, nil
 }
 
 func (s *Store) CreateUsage(sub *Subscriber) error {
@@ -436,8 +472,9 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 // CRUD operations for Session entity
 func (s *Store) InsertSession(se *Session) (*Session, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO sessions (subscriber_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state)
-		VALUES (se.SubsciberID, se.ApnName, se.UeIPAddress, se.StartTime, se.EndTime,se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeter.ID, se.RxMeter.ID, se.State, se.Sync)`)
+		INSERT INTO sessions (subscriber_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
+		`, se.SubscriberID.ID, se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync)
 	if err != nil {
 		log.Errorf("Failed to insert session.Error %v", err)
 		return nil, err
@@ -454,6 +491,7 @@ func (s *Store) InsertSession(se *Session) (*Session, error) {
 		log.Errorf("Failed to get session. Error %v", err)
 		return nil, err
 	}
+	log.Infof("Session created in store %+v", ns)
 
 	return ns, err
 }
@@ -647,8 +685,8 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 	var session Session
 
-	err := s.db.QueryRow("SELECT * FROM sessions WHERE id = ?", sessionID).
-		Scan(&session.ID, &session.SubscriberID.ID, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State)
+	err := s.db.QueryRow("SELECT subscriber_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE id = ?", sessionID).
+		Scan(&session.SubscriberID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 	if err != nil {
 		return nil, err
 	}
@@ -955,17 +993,29 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 
 func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 
-	query := "SELECT * FROM Subscriber WHERE id = ?"
+	query := "SELECT imsi, policy_id FROM subscribers WHERE id = ?"
 	row := s.db.QueryRow(query, id)
 
 	var subscriber Subscriber
-	err := row.Scan(&subscriber.ID, &subscriber.Imsi)
+	var idb []byte
+	err := row.Scan(&subscriber.Imsi, &idb)
 	if err != nil {
 		// Subscriber not found
 		return nil, fmt.Errorf("Subscriber not found: %v", err)
 	}
 
-	return &subscriber, nil
+	uuid, err := uuid.FromBytes(idb)
+	if err != nil {
+		return nil, fmt.Errorf("policy id is not a valid uuid: %v", err)
+	}
+
+	p, err := s.GetPolicyByID(uuid)
+	if err != nil {
+		log.Errorf("failed to get policy for subscriber %s.Error: %v", subscriber.Imsi, err)
+		return nil, err
+	}
+	subscriber.PolicyID = *p
+	return &subscriber, err
 }
 
 func (s *Store) CreateSubscriberOrUpdatePolicy(ns *api.CreateSubscriber, p uuid.UUID) error {
