@@ -98,6 +98,7 @@ func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 		ID:       s.ID,
 		Imsi:     s.Imsi,
 		PolicyID: s.PolicyID.ID,
+		ReRoute:  s.ReRouteID.IpAddr,
 	}
 }
 

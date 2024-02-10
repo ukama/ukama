@@ -449,6 +449,7 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 		log.Errorf("Failed to create usage for subscriber %s. Error: %v", sub.Imsi, err)
 		return err
 	}
+	log.Infof("Created usage for subscriber %s", sub.Imsi)
 	return nil
 }
 
@@ -606,18 +607,20 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 
 	// Create Flow for RX
 	flowRx := Flow{
-		Tableid:  0,
-		Priority: 100,
-		UeIpAddr: ueIpAddr,
-		MeterID:  session.RxMeterID,
+		Tableid:   0,
+		Priority:  100,
+		UeIpAddr:  ueIpAddr,
+		MeterID:   session.RxMeterID,
+		ReRouting: subscriber.ReRouteID,
 	}
 
 	// Create Flow for TX
 	flowTx := Flow{
-		Tableid:  0,
-		Priority: 100,
-		UeIpAddr: ueIpAddr,
-		MeterID:  session.TxMeterID,
+		Tableid:   0,
+		Priority:  100,
+		UeIpAddr:  ueIpAddr,
+		MeterID:   session.TxMeterID,
+		ReRouting: subscriber.ReRouteID,
 	}
 
 	// Insert Flows
@@ -1021,7 +1024,7 @@ func (s *Store) UpdateSubscriberReRoute(subscriber *Subscriber, id int) error {
 		UPDATE subscribers
 		SET reroute_id = ?
 		WHERE id = ?;
-	`, subscriber.ReRouteID.ID, subscriber.ID)
+	`, id, subscriber.ID)
 	return err
 }
 
@@ -1032,6 +1035,18 @@ func (s *Store) DeleteSubscriber(subscriber *Subscriber) error {
 		WHERE id = ?;
 	`, subscriber.ID)
 	return err
+}
+
+func (s *Store) GetSubscriberID(imsi string) (*Subscriber, error) {
+	query := "SELECT id, imsi FROM subscribers WHERE Imsi = ?"
+	row := s.db.QueryRow(query, imsi)
+
+	var subscriber Subscriber
+	err := row.Scan(&subscriber.ID, &subscriber.Imsi)
+	if err != nil {
+		return nil, fmt.Errorf("Subscriber not found: %v", err)
+	}
+	return &subscriber, nil
 }
 
 func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
@@ -1103,11 +1118,34 @@ func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 	return &subscriber, err
 }
 
+func (s *Store) UpdateSubscriberDetails(sub *Subscriber, p *uuid.UUID, id *int) error {
+	// Subscriber already exists, update the policy
+	if p != nil {
+		err := s.UpdateSubscriberPolicy(sub, *p)
+		if err != nil {
+			log.Errorf("Failed to update policy %s for the subscriber %s.Error %s", p.String(), sub.Imsi, err.Error())
+			return err
+		}
+		log.Infof("Policy %s assigned to the new subscriber %s.", p.String(), sub.Imsi)
+	}
+
+	if id != nil {
+		err := s.UpdateSubscriberReRoute(sub, *id)
+		if err != nil {
+			log.Errorf("Failed to update Reroute %d for the subscriber %s.Error %s", *id, sub.Imsi, err.Error())
+			return err
+		}
+		log.Infof("Reroute %d assigned to the new subscriber %s.", *id, sub.Imsi)
+	}
+
+	return nil
+}
+
 func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID, id *int) error {
 
 	// Check if the subscriber already exists
 	subscriber := &Subscriber{}
-	err := s.db.QueryRow("SELECT ID FROM Subscriber WHERE Imsi = ?", ns.Imsi).Scan(&subscriber.ID, &subscriber.Imsi)
+	err := s.db.QueryRow("SELECT ID FROM subscribers WHERE Imsi = ?", ns.Imsi).Scan(&subscriber.ID)
 
 	if err == nil && subscriber.ID != 0 {
 		log.Infof("Subscriber already exists %s. Performing update", subscriber.Imsi)
@@ -1122,9 +1160,9 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 		log.Infof("New subscriber with Imsi %s created.", ns.Imsi)
 
 		// Get the subscriber
-		subscriber, err = s.GetSubscriber(ns.Imsi)
+		subscriber, err = s.GetSubscriberID(ns.Imsi)
 		if err != nil {
-			log.Errorf("Erorr while getting sunscriber with imsi %s. Error %s", subscriber.Imsi, err.Error())
+			log.Errorf("Erorr while getting subscriberID with imsi %s. Error %s", subscriber.Imsi, err.Error())
 			return err
 		}
 		/* Usage table */
@@ -1134,24 +1172,17 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 		}
 	}
 
-	// Subscriber already exists, update the policy
-	if p != nil {
-		err := s.UpdateSubscriberPolicy(subscriber, *p)
-		if err != nil {
-			log.Errorf("Failed to update policy %s for the subscriber %s.Error %s", p.String(), ns.Imsi, err.Error())
-			return err
-		}
+	err = s.UpdateSubscriberDetails(subscriber, p, id)
+	if err != nil {
+		return err
 	}
 
-	if id != nil {
-		err = s.UpdateSubscriberReRoute(subscriber, *id)
-		if err != nil {
-			log.Errorf("Failed to update Reroute %d for the subscriber %s.Error %s", *id, ns.Imsi, err.Error())
-			return err
-		}
+	/* Get updated subscriber */
+	subscriber, err = s.GetSubscriber(ns.Imsi)
+	if err != nil {
+		log.Errorf("Erorr while getting subscriberID with imsi %s. Error %s", subscriber.Imsi, err.Error())
+		return err
 	}
-
-	log.Infof("Policy %s assigned to the new subscriber %s.", p, subscriber.Imsi)
 
 	return nil
 }

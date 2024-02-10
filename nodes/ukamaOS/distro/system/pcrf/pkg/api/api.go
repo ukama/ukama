@@ -108,6 +108,7 @@ type SubscriberResponse struct {
 	ID       int       `json:"id" validate:"required"`
 	Imsi     string    `json:"imsi" path:"imsi" validate:"required"`
 	PolicyID uuid.UUID `json:"policy_id"`
+	ReRoute  string    `json:"reroute"`
 }
 
 type PolicyResponse struct {
