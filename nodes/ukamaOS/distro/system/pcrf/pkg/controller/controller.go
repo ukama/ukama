@@ -123,6 +123,10 @@ func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) 
 		return nil, fmt.Errorf("failed to get valid policy")
 	}
 
+	/* TODO: Also get the usage from the remote cloud and add all the CDR usage after the last update time to it.
+	and then compare the value to allowed data cap if it is less than allowed data cap let the user establish session otherwise not.
+	*/
+
 	return s, nil
 }
 
