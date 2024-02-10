@@ -98,6 +98,7 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 		uint32(sc.s.TxMeterID.Rate), uint32(sc.s.RxMeterID.Rate), uint32(sc.s.RxMeterID.Burst),
 		sc.rxCookie, sc.txCookie)
 	if err != nil {
+		/* TODO: mark session as failure for KPI purposes in DB */
 		log.Errorf("Failed to add data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
 		return err
 	}

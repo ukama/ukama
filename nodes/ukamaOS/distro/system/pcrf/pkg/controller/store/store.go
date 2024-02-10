@@ -441,6 +441,10 @@ func (s *Store) CheckUniqueCookie(cookie uint64) (bool, error) {
 }
 
 func (s *Store) CreateUsage(sub *Subscriber) error {
+	/* TODO: make updatedat field to store session endtime value
+	default initial value should be 0. Thi will let us know what all CDR usage is
+	accumulated in this usage value.
+	*/
 	_, err := s.db.Exec(`
 		INSERT INTO usages (subscriber_id, updatedat, data)
 		VALUES (?, ?, ?);

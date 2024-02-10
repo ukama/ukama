@@ -103,6 +103,7 @@ func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 }
 
 func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) {
+
 	/* Get subscriber policy by imsi*/
 	s, err := c.store.GetSubscriber(imsi)
 	if err != nil {
@@ -140,7 +141,13 @@ func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy, ip strin
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
+
 	/* validate subscriber*/
+	/* TODO: Validate subscriber should always get the values from the remote  server
+	just to make sure the usage values are correct or we could have some timeouts
+	if the new session is started like with in 60 secs then we can consider same values
+	just to avoid makking duplicate requests
+	*/
 	sub, err = c.validateSusbcriber(req.Imsi)
 	if err != nil {
 		/* Get subscriber policy from remote */

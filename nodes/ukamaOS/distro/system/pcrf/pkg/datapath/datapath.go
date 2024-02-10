@@ -54,7 +54,7 @@ func (d *dataPath) DataPathCount() uint32 {
 
 func (d *dataPath) DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
 
-	rxBC, rxPC, txBC, txPC, err := d.DataPathStats(rxCookieID, txCookieID)
+	rxBC, rxPC, txBC, txPC, err := d.ovs.DataPathUEStats(rxCookieID, txCookieID)
 	if err != nil {
 		log.Errorf("Error getting UE pathstats %s", err.Error())
 		return 0, 0, 0, 0, err
