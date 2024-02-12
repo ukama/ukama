@@ -83,9 +83,15 @@ type Policy struct {
 }
 
 type Spr struct {
-	Imsi    string `json:"imsi" path:"imsi" validate:"required"`
-	Policy  Policy `json:"policy" validate:"required"`
-	ReRoute string `json:"reroute" validate:"required"`
+	Imsi    string       `json:"imsi" path:"imsi" validate:"required"`
+	Policy  Policy       `json:"policy" validate:"required"`
+	ReRoute string       `json:"reroute" validate:"required"`
+	Usage   UsageDetails `json:"usage" validate:"required"`
+}
+
+type UsageDetails struct {
+	Data uint64 `json:"data" path:"data" validate:"required"`
+	Time uint64 `json:"time" path:"time" validate:"required"`
 }
 
 type AddPolicy Policy
@@ -132,6 +138,7 @@ type UsageResponse struct {
 type SessionResponse struct {
 	ID         int
 	Imsi       string
+	PolicyID   string
 	ApnName    string
 	UeIpaddr   string
 	StartTime  uint64

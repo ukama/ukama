@@ -102,7 +102,7 @@ func (s *Store) createUsageTable() error {
 	_, err := s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS usages (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			subscriber_id INTEGER,
+			subscriber_id INTEGER UNIQUE,
 			data INTEGER,
 			updatedat INTEGER, 
 			FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
@@ -446,7 +446,7 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 	accumulated in this usage value.
 	*/
 	_, err := s.db.Exec(`
-		INSERT INTO usages (subscriber_id, updatedat, data)
+		INSERT OR IGNORE INTO usages (subscriber_id, updatedat, data)
 		VALUES (?, ?, ?);
 	`, sub.ID, time.Now().Unix(), 0)
 	if err != nil {
@@ -458,7 +458,7 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 }
 
 /* Create a subscriber */
-func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string) (*Subscriber, error) {
+func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.UsageDetails) (*Subscriber, error) {
 
 	reroute := &ReRoute{}
 
@@ -485,18 +485,6 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string) (*Subsc
 		log.Errorf("Failed to create subscriber with imsi %s. Error: %s", imsi, err.Error())
 		return nil, err
 	}
-	// /* check if subscriber exist
-	// /* Create subscriber */
-	// subscriber := Subscriber{
-	// 	Imsi:      imsi,
-	// 	PolicyID:  *sp,
-	// 	ReRouteID: *reroute,
-	// }
-
-	// err = s.InsertSubscriber(&subscriber)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	sub, err := s.GetSubscriber(imsi)
 	if err != nil {
@@ -504,10 +492,13 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string) (*Subsc
 		return nil, err
 	}
 
-	// Create initial Usage for the subscriber
-	err = s.CreateUsage(sub)
-	if err != nil {
-		return nil, err
+	// Recalulate the usage if any sessions reports are available
+	if d != nil {
+		_, err = s.ReCalculateImsiUsage(sub.Imsi, d)
+		if err != nil {
+			log.Errorf("Failed to update usage for subscriber with imsi %s. Error: %s", imsi, err.Error())
+			return nil, err
+		}
 	}
 
 	return sub, nil
@@ -673,6 +664,7 @@ func (s *Store) EndSession(session *Session) error {
 	}
 
 	usage.Data += session.TotalBytes
+	usage.Updatedat = session.EndTime
 
 	// Update subscriber and session
 	err = s.UpdateUsage(usage)
@@ -682,6 +674,48 @@ func (s *Store) EndSession(session *Session) error {
 	}
 
 	return nil
+}
+
+/*
+	This helps to get the updated usage values when a subscriber is atatchimg to mutiple base stattions.
+
+In this case we have to get the updated usage and add any unsynced session values to calculate the exact usage
+*/
+func (s *Store) ReCalculateImsiUsage(imsi string, details *api.UsageDetails) (*Usage, error) {
+
+	cu, err := s.GetUsageByImsi(imsi)
+	if err != nil {
+		log.Errorf("Error getting usage for subscriber %s.Error %s", imsi, err.Error())
+		return nil, err
+	}
+
+	usage := &Usage{
+		ID:        cu.ID,
+		Data:      details.Data,
+		Updatedat: details.Time,
+	}
+
+	sl, err := s.GetUnsyncSessionsByImsiAfterTime(imsi, details.Time)
+	if err != nil {
+		log.Errorf("Failed to get previos sessions for subscriber %s.Error: %v", imsi, err)
+		return nil, err
+	}
+
+	for _, se := range sl {
+		usage.Data += se.TotalBytes
+		/* Updated only if timestamp is newer than allready addressed sessions */
+		if usage.Updatedat < details.Time {
+			usage.Updatedat = details.Time
+		}
+	}
+
+	err = s.UpdateUsage(usage)
+	if err != nil {
+		log.Errorf("Failed to update subscriber %s usage to %+v.Error: %v", imsi, usage, err)
+		return nil, err
+	}
+	log.Infof("Recaculated subscriber %s usage is %+v", imsi, usage)
+	return usage, nil
 }
 
 /* Update Usage */
@@ -694,7 +728,9 @@ func (s *Store) UpdateUsage(usage *Usage) error {
 	return err
 }
 
-/* Get usage by imsi */
+/*
+/* Get usage by imsi
+*/
 func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 	var usage Usage
 	err := s.db.QueryRow("SELECT id, subscriber_id, updatedat, data FROM usages WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)", imsi).
@@ -791,6 +827,35 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	rows, err := s.db.Query(`
 		SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)
 	`, imsi)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var session *Session
+		err := rows.Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		if err != nil {
+			return nil, err
+		}
+
+		session, err = s.GetSessionDetails(session)
+		if err != nil {
+			return nil, err
+		}
+
+		sessions = append(sessions, *session)
+	}
+
+	return sessions, nil
+}
+
+func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Session, error) {
+	var sessions []Session
+
+	rows, err := s.db.Query(`
+		SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND  (endtime > ? OR  Sync = ?)
+	`, imsi, time, SessionSyncReady)
 	if err != nil {
 		return nil, err
 	}
@@ -1156,11 +1221,13 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 			log.Errorf("Erorr while getting subscriberID with imsi %s. Error %s", subscriber.Imsi, err.Error())
 			return err
 		}
+
 		/* Usage table */
 		err = s.CreateUsage(subscriber)
 		if err != nil {
 			return err
 		}
+
 	}
 
 	err = s.UpdateSubscriberDetails(subscriber, p, id)

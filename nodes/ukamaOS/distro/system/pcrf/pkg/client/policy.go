@@ -18,7 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const PolicyEndpoint = "/v1/policy/imsi/"
+const ProfileEndpoint = "/v1/policy/imsi/"
 const CDREndpoint = "/v1/cdr/imsi/"
 
 type RemoteController interface {
@@ -73,7 +73,7 @@ func (r *remoteControllerClient) GetSubscriberProfile(imsi string) (*api.Spr, er
 	log.Debugf("Getting policy for ismi: %s", imsi)
 
 	spr := &api.Spr{}
-	resp, err := r.R.C.R().Get(r.u.String() + PolicyEndpoint + "/" + imsi)
+	resp, err := r.R.C.R().Get(r.u.String() + ProfileEndpoint + "/" + imsi)
 	if err != nil {
 		log.Errorf("GetPolicy failure. error: %s", err.Error())
 

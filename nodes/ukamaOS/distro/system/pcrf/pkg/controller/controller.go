@@ -45,6 +45,7 @@ func sessionResponse(s *store.Session) *api.SessionResponse {
 	return &api.SessionResponse{
 		ID:         s.ID,
 		Imsi:       s.SubscriberID.Imsi,
+		PolicyID:   s.PolicyID.ID.String(),
 		ApnName:    s.ApnName,
 		UeIpaddr:   s.UeIpAddr,
 		StartTime:  s.StartTime,
@@ -130,10 +131,10 @@ func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) 
 	return s, nil
 }
 
-func (c *Controller) updateSubscriberPolicy(imsi string, p *api.Policy, ip string) (*store.Subscriber, error) {
+func (c *Controller) updateSubscriberProfile(imsi string, p *api.Policy, ip string, d *api.UsageDetails) (*store.Subscriber, error) {
 	var sub *store.Subscriber
 
-	sub, err := c.store.CreateSubscriber(imsi, p, &ip)
+	sub, err := c.store.CreateSubscriber(imsi, p, &ip, d)
 	if err != nil {
 		log.Errorf("Failed to create subscriber %s:Error: %v", imsi, err)
 		return nil, err
@@ -161,7 +162,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			return err
 		}
 
-		sub, err = c.updateSubscriberPolicy(req.Imsi, &spr.Policy, spr.ReRoute)
+		sub, err = c.updateSubscriberProfile(req.Imsi, &spr.Policy, spr.ReRoute, &spr.Usage)
 		if err != nil {
 			log.Errorf("Failed to update subscriber %s with policy %s.Error: %v", req.Imsi, spr.Policy.Uuid.String(), err)
 			return err
@@ -378,7 +379,7 @@ func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscrib
 }
 
 func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
-	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute)
+	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
 	if err != nil {
 		log.Errorf("failed to delete subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
 		return err
