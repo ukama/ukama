@@ -1,6 +1,6 @@
 # Config file for mesh.d
 
-[local-config]
+[client-config]
     remote-ip-file = "./configs/ip_file_2"
     local-hostname = "localhost"
     cert           = "./conf/cert.crt"
