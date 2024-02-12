@@ -184,6 +184,8 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
                                  uuid,
                                  server,
                                  &responseStr) == TRUE) {
+
+            if (responseStr) free(responseStr);
             return;
         }
 
