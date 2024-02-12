@@ -22,7 +22,7 @@ const PolicyEndpoint = "/v1/policy/imsi/"
 const CDREndpoint = "/v1/cdr/imsi/"
 
 type RemoteController interface {
-	GetPolicy(imsi string) (*api.Spr, error)
+	GetSubscriberProfile(imsi string) (*api.Spr, error)
 	PushCdr(cdr *api.CDR) error
 }
 
@@ -69,7 +69,7 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	return nil
 }
 
-func (r *remoteControllerClient) GetPolicy(imsi string) (*api.Spr, error) {
+func (r *remoteControllerClient) GetSubscriberProfile(imsi string) (*api.Spr, error) {
 	log.Debugf("Getting policy for ismi: %s", imsi)
 
 	spr := &api.Spr{}

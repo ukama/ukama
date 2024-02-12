@@ -516,9 +516,9 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string) (*Subsc
 // CRUD operations for Session entity
 func (s *Store) InsertSession(se *Session) (*Session, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO sessions (subscriber_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
-		`, se.SubscriberID.ID, se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync)
+		INSERT INTO sessions (subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
+		`, se.SubscriberID.ID, se.PolicyID, se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync)
 	if err != nil {
 		log.Errorf("Failed to insert session.Error %v", err)
 		return nil, err
@@ -607,6 +607,7 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 		RxMeterID:    *rxM,
 		State:        SessionActive,
 		Sync:         SessionSyncPending,
+		PolicyID:     subscriber.PolicyID,
 	}
 
 	// Create Flow for RX
@@ -733,14 +734,7 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 	return &policy, err
 }
 
-func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
-	var session Session
-
-	err := s.db.QueryRow("SELECT subscriber_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE id = ?", sessionID).
-		Scan(&session.SubscriberID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
-	if err != nil {
-		return nil, err
-	}
+func (s *Store) GetSessionDetails(session *Session) (*Session, error) {
 
 	// Fetch associated Subscriber
 	sub, err := s.GetSubscriberByID(session.SubscriberID.ID)
@@ -748,6 +742,14 @@ func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 		return nil, err
 	}
 	session.SubscriberID = *sub
+
+	pUUID := session.PolicyID.ID
+
+	p, err := s.GetPolicyByID(pUUID)
+	if err != nil {
+		return nil, err
+	}
+	session.PolicyID = *p
 
 	// Fetch associated Meters
 	txM, err := s.GetMeter(uint32(session.TxMeterID.ID))
@@ -762,15 +764,32 @@ func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 	}
 	session.RxMeterID = *rxM
 
-	return &session, nil
+	return session, nil
+
+}
+
+func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
+	var session *Session
+	var err error
+	err = s.db.QueryRow("SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE id = ?", sessionID).
+		Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err = s.GetSessionDetails(session)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	var sessions []Session
 
 	rows, err := s.db.Query(`
-		SELECT * FROM sessions
-		WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)
+		SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?)
 	`, imsi)
 	if err != nil {
 		return nil, err
@@ -778,71 +797,39 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var session Session
-		err := rows.Scan(&session.ID, &session.SubscriberID.ID, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State)
+		var session *Session
+		err := rows.Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 		if err != nil {
 			return nil, err
 		}
 
-		// Fetch associated Subscriber
-		sub, err := s.GetSubscriberByID(session.SubscriberID.ID)
+		session, err = s.GetSessionDetails(session)
 		if err != nil {
 			return nil, err
 		}
-		session.SubscriberID = *sub
 
-		// Fetch associated Meters
-		txM, err := s.GetMeter(uint32(session.TxMeterID.ID))
-		if err != nil {
-			return nil, err
-		}
-		session.TxMeterID = *txM
-
-		rxM, err := s.GetMeter(uint32(session.RxMeterID.ID))
-		if err != nil {
-			return nil, err
-		}
-		session.RxMeterID = *rxM
-
-		sessions = append(sessions, session)
+		sessions = append(sessions, *session)
 	}
 
 	return sessions, nil
 }
 
 func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
-	var session Session
+	var session *Session
 
 	err := s.db.QueryRow(`
-		SELECT * FROM sessions
-		WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND state = 1
-	`, imsi).
-		Scan(&session.ID, &session.SubscriberID.ID, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State)
+	SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND state = 1
+	`, imsi).Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch associated Subscriber
-	sub, err := s.GetSubscriberByID(session.SubscriberID.ID)
+	session, err = s.GetSessionDetails(session)
 	if err != nil {
 		return nil, err
 	}
-	session.SubscriberID = *sub
 
-	// Fetch associated Meters
-	txM, err := s.GetMeter(uint32(session.TxMeterID.ID))
-	if err != nil {
-		return nil, err
-	}
-	session.TxMeterID = *txM
-
-	rxM, err := s.GetMeter(uint32(session.RxMeterID.ID))
-	if err != nil {
-		return nil, err
-	}
-	session.RxMeterID = *rxM
-
-	return &session, nil
+	return session, nil
 }
 
 func (s *Store) GetFlowForMeter(id int) (*Flow, error) {

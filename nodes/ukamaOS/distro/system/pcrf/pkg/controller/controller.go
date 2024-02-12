@@ -155,7 +155,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	sub, err = c.validateSusbcriber(req.Imsi)
 	if err != nil {
 		/* Get subscriber policy from remote */
-		spr, err := c.rc.GetPolicy(req.Imsi)
+		spr, err := c.rc.GetSubscriberProfile(req.Imsi)
 		if err != nil {
 			log.Errorf("Failed to get subscriber %s policy.Error: %v", req.Imsi, err)
 			return err

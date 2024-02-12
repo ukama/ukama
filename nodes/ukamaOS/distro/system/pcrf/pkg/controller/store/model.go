@@ -54,6 +54,7 @@ type Usage struct {
 type Session struct {
 	ID           int
 	SubscriberID Subscriber
+	PolicyID     Policy
 	ApnName      string
 	UeIpAddr     string
 	StartTime    uint64
