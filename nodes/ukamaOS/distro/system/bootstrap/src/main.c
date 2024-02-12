@@ -207,7 +207,6 @@ int main (int argc, char **argv) {
 	log_debug("Mesh.d configuration update successfully.");
 
  done:
-	log_debug("Bye World!\n");
 	clear_config(config);
 	clear_mesh_config(meshConfig);
 	free_server_info(serverInfo);
@@ -217,5 +216,5 @@ int main (int argc, char **argv) {
 	free(nodeID);
 	free(serverInfo);
 
-	return 1;
+	return 0;
 }
