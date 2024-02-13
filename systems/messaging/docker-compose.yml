@@ -15,7 +15,7 @@ services:
  mesh:
   build:
     dockerfile: ./Dockerfile
-    context: ./mesh/mesh
+    context: ./mesh
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_ORG_ID=${ORGID}
