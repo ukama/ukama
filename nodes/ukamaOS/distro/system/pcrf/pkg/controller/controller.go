@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -15,12 +16,26 @@ import (
 )
 
 type Controller struct {
-	store *store.Store
-	sm    session.SessionManager
-	rc    client.RemoteController
+	store     *store.Store
+	sm        session.SessionManager
+	rc        client.RemoteController
+	publisher *Publisher
 }
 
-func NewController(db string, br pkg.BrdigeConfig, remote string, debug bool) (*Controller, error) {
+type Publisher struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	period time.Duration
+}
+
+func newPublisher(t time.Duration) *Publisher {
+	p := &Publisher{}
+	p.ctx, p.cancel = context.WithCancel(context.Background())
+	p.period = t
+	return p
+}
+
+func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Duration, debug bool) (*Controller, error) {
 	c := &Controller{}
 	store, err := store.NewStore(db)
 	if err != nil {
@@ -37,6 +52,9 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, debug bool) (*
 	c.sm = session.NewSessionManager(rc, store, br.Name, br.Ip, br.NetType, br.Period)
 	c.store = store
 	c.rc = rc
+	c.publisher = newPublisher(period)
+
+	c.startPublisher()
 
 	return c, nil
 }
@@ -101,6 +119,17 @@ func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 		PolicyID: s.PolicyID.ID,
 		ReRoute:  s.ReRouteID.IpAddr,
 	}
+}
+
+func (c *Controller) ExitController() error {
+
+	err := c.sm.EndAllSessions()
+	if err != nil {
+		log.Errorf("failed to end all sessions.Error: %v", err)
+	}
+
+	return c.stopPublisher()
+
 }
 
 func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) {
@@ -200,7 +229,7 @@ func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
 		return err
 	}
 
-	err = c.sm.EndSesssion(ctx, sub)
+	err = c.sm.EndSession(ctx, sub)
 	if err != nil {
 		log.Errorf("Failed to end session on bridge for subscriber %s:Error: %v", req.Imsi, err)
 		return err
@@ -390,5 +419,77 @@ func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) 
 		log.Errorf("failed to delete subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
 		return err
 	}
+	return nil
+}
+
+func handlePendingSyncSession(c *Controller) {
+	sessions, err := c.store.GetAllNonPublishedSessions()
+	if err != nil {
+		log.Errorf("[Publisher] Failed to get unpublished sessions from store.Error %s", err.Error())
+		return
+	}
+
+	for _, session := range sessions {
+		cdr := store.PrepareCDR(&session)
+		err := c.rc.PushCdr(cdr)
+		if err != nil {
+			log.Errorf("[Publisher] Failed to publish session %+v for subscriber %s from store.Error %s", session, session.SubscriberID.Imsi, err.Error())
+			continue
+		}
+
+		/* Update store if published successfully */
+		err = c.store.UpdateSessionSyncState(session.ID, store.SessionSyncCompleted)
+		if err != nil {
+			log.Errorf("[Publisher] Failed to update session %+v for subscriber %s in store.Error %s", session, session.SubscriberID.Imsi, err.Error())
+			continue
+		}
+
+		log.Infof("[Publisher] Published CDR for session %+v for subscriber %s from store. CDR data %+v", session, session.SubscriberID.Imsi, cdr)
+	}
+}
+
+func handleTerminatedSession(c *Controller) {
+	sessions, err := c.store.GetAllNonPublishedTerminatedSessions()
+	if err != nil {
+		log.Errorf("[Publisher] Failed to get non-published terminated sessions from store.Error %s", err.Error())
+		return
+	}
+	for _, session := range sessions {
+
+		/* Update store. Mark message as ready for sync */
+		err = c.store.UpdateSessionSyncState(session.ID, store.SessionSyncReady)
+		if err != nil {
+			log.Errorf("[Publisher] Failed to update session %d for subscriber %s in store.Error %s", session.ID, session.SubscriberID.Imsi, err.Error())
+			return
+		}
+
+		log.Infof("[Publisher] Session %d for subscriber %s from store updated to sync ready state.", session.ID, session.SubscriberID.Imsi)
+	}
+}
+
+func (c *Controller) publishCDR() {
+	ticker := time.NewTicker(c.publisher.period)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			handlePendingSyncSession(c)
+			handleTerminatedSession(c)
+		case <-c.publisher.ctx.Done():
+			log.Infof("[Publisher] Ending routine to pusblish CDR's")
+			return
+		}
+	}
+}
+
+func (c *Controller) startPublisher() {
+	log.Infof("Starting publisher routine")
+	go c.publishCDR()
+}
+
+func (c *Controller) stopPublisher() error {
+	log.Infof("Stoping publisher routine.")
+	c.publisher.cancel()
+	time.Sleep(100 * time.Millisecond)
 	return nil
 }

@@ -35,8 +35,9 @@ type sessionManager struct {
 
 type SessionManager interface {
 	CreateSesssion(ctx context.Context, sub *store.Subscriber, ns *store.Session, rxf *store.Flow, txf *store.Flow) error
-	EndSesssion(ctx context.Context, sub *store.Subscriber) error
+	EndSession(ctx context.Context, sub *store.Subscriber) error
 	IfSessionExist(ctx context.Context, imsi, ip string) bool
+	EndAllSessions() error
 }
 
 func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip, netType string, period time.Duration) *sessionManager {
@@ -59,6 +60,7 @@ func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip,
 func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 	var err error
 	sc := s.cache[imsi]
+
 	/* Read sats */
 	sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
 	if err != nil {
@@ -66,6 +68,8 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		return err
 	}
 	log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
+
+	//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
 
 	/* Update to DB */
 	if lastStats {
@@ -94,7 +98,7 @@ func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bo
 			return true
 		} else {
 			log.Errorf("Old Session exist for subscriber %s with IP addr %s. Ending it.", imsi, sc.s.UeIpAddr)
-			_ = s.EndSesssion(ctx, &store.Subscriber{Imsi: imsi})
+			_ = s.EndSession(ctx, &store.Subscriber{Imsi: imsi})
 		}
 	}
 	return false
@@ -131,7 +135,17 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 	return nil
 }
 
-func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber) error {
+func (s *sessionManager) EndAllSessions() error {
+	for imsi, _ := range s.cache {
+		err := s.EndSession(context.Background(), &store.Subscriber{Imsi: imsi})
+		if err != nil {
+			log.Errorf("Failed to end session for Imsi %s.Error %s", imsi, err.Error())
+		}
+	}
+	return nil
+}
+
+func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) error {
 
 	sc := s.cache[sub.Imsi]
 
@@ -149,7 +163,7 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 	// 	return err
 	// }
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	/* Delete the UE Data path */
 	err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))

@@ -25,6 +25,7 @@ type Config struct {
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
+	SyncPeriod        time.Duration  `default:"10s"`
 }
 
 type BrdigeConfig struct {
@@ -68,5 +69,6 @@ func NewConfig(name string) *Config {
 		Auth: &config.Auth{
 			BypassAuthMode: true,
 		},
+		SyncPeriod: 5 * time.Second,
 	}
 }

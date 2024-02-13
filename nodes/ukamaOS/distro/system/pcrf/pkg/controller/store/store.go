@@ -563,6 +563,24 @@ func (s *Store) UpdateSessionEndUsage(session *Session) error {
 	return err
 }
 
+func (s *Store) UpdateSessionSyncState(id int, sync SessionSync) error {
+	_, err := s.db.Exec(`
+		UPDATE sessions
+		SET sync = ?
+		WHERE id = ?;
+	`, sync, id)
+	return err
+}
+
+func (s *Store) UpdateSessionState(id int, state SessionState) error {
+	_, err := s.db.Exec(`
+		UPDATE sessions
+		SET state = ?
+		WHERE id = ?;
+	`, state, id)
+	return err
+}
+
 func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session, *Flow, *Flow, error) {
 
 	/* TODO: Check if required here vaildate if user has enough data */
@@ -957,7 +975,7 @@ func (s *Store) GetFlowForMeter(id int) (*Flow, error) {
 func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	var sessions []Session
 
-	rows, err := s.db.Query("SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE WHERE state = 1")
+	rows, err := s.db.Query("SELECT id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE WHERE state = 1")
 	if err != nil {
 		return nil, err
 	}
@@ -966,7 +984,75 @@ func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	for rows.Next() {
 		session := new(Session)
 		var bid []byte
-		err := rows.Scan(&session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		err := rows.Scan(&session.ID, &session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		if err != nil {
+			return nil, err
+		}
+
+		session.PolicyID.ID, err = uuid.FromBytes(bid)
+		if err != nil {
+			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
+			return nil, err
+		}
+
+		session, err = s.GetSessionDetails(session)
+		if err != nil {
+			return nil, err
+		}
+
+		sessions = append(sessions, *session)
+	}
+
+	return sessions, nil
+}
+
+func (s *Store) GetAllNonPublishedSessions() ([]Session, error) {
+	var sessions []Session
+
+	rows, err := s.db.Query("SELECT id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE sync = ?", SessionSyncReady)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		session := new(Session)
+		var bid []byte
+		err := rows.Scan(&session.ID, &session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		if err != nil {
+			return nil, err
+		}
+
+		session.PolicyID.ID, err = uuid.FromBytes(bid)
+		if err != nil {
+			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
+			return nil, err
+		}
+
+		session, err = s.GetSessionDetails(session)
+		if err != nil {
+			return nil, err
+		}
+
+		sessions = append(sessions, *session)
+	}
+
+	return sessions, nil
+}
+
+func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
+	var sessions []Session
+
+	rows, err := s.db.Query("SELECT id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE state = ? AND sync = ?", SessionTerminated, SessionSyncPending)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		session := new(Session)
+		var bid []byte
+		err := rows.Scan(&session.ID, &session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 		if err != nil {
 			return nil, err
 		}

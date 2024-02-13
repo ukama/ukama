@@ -10,6 +10,8 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
@@ -26,15 +28,21 @@ import (
 var svcConf *pkg.Config
 
 func main() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	done := make(chan bool, 1)
+
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
 	log.Infof("Starting pcrf controller service %s", pkg.ServiceName)
 
-	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.DebugMode)
+	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.SyncPeriod, svcConf.DebugMode)
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)
 	}
+
+	go sigHandler(sigs, done, ctr)
 
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
@@ -43,11 +51,21 @@ func main() {
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
-	r.Run()
+	go r.Run()
+
+	<-done
+	log.Infof("Exiting service %s.", pkg.ServiceName)
 
 }
 
 func initConfig() {
 	svcConf = pkg.NewConfig(pkg.ServiceName)
 	config.LoadConfig(pkg.ServiceName, svcConf)
+}
+
+func sigHandler(sigs chan os.Signal, done chan bool, ctr *controller.Controller) {
+	sig := <-sigs
+	log.Infof("Starting signal handler routine for %v", sig)
+	ctr.ExitController()
+	done <- true
 }
