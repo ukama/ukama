@@ -11,13 +11,13 @@ package api
 import "github.com/ukama/ukama/systems/common/uuid"
 
 type CreateSession struct {
-	Imsi    string `json:"imsi" validate:"required"`
+	Imsi    string `json:"imsi" path:"imsi" validate:"required"`
 	ApnName string `json:"apn_name" validate:"required"`
 	Ip      string `json:"ip" validate:"required"`
 }
 
 type EndSession struct {
-	Imsi string `json:"imsi" validate:"required"`
+	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
 
 type GetSessionByID struct {
@@ -31,6 +31,7 @@ type GetSessionByImsi struct {
 type CDR struct {
 	Session    int    `json:"session" validate:"required"`
 	Imsi       string `json:"imsi" validate:"required"`
+	Policy     string `json:"policy" validate:"required"`
 	ApnName    string `json:"apn_name" validate:"required"`
 	Ip         string `json:"ip" validate:"required"`
 	StartTime  uint64 `json:"start_time" validate:"required"`

@@ -169,7 +169,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 		}
 	}
 
-	/* Check if session already exist */
+	/* Check if session already exist wiath same ip */
 	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.Ip)
 	if state {
 		log.Errorf("Session already exist for %s user with ip %s", sub.Imsi, req.Ip)
@@ -239,13 +239,13 @@ func (c *Controller) GetCDRBySessionId(ctx *gin.Context, req *api.GetCDRBySessio
 }
 
 func (c *Controller) GetCDRByImsi(ctx *gin.Context, req *api.GetCDRByImsi) ([]*api.CDR, error) {
-	cdrs := []*api.CDR{}
+
 	sess, err := c.store.GetSessionsByImsi(req.Imsi)
 	if err != nil {
 		log.Errorf("failed to get session for Imsi %s:Error: %v", req.Imsi, err)
 		return nil, err
 	}
-
+	cdrs := make([]*api.CDR, len(sess))
 	for i, s := range sess {
 		cdrs[i] = store.PrepareCDR(&s)
 	}

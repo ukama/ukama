@@ -142,12 +142,14 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 		return err
 	}
 
-	/* Read sats */
-	sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
-	if err != nil {
-		log.Errorf("Failed to read final stats for data path of Imsi %s. Error: %s", sub.Imsi, err.Error())
-		return err
-	}
+	// /* Read sats */
+	// sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
+	// if err != nil {
+	// 	log.Errorf("Failed to read final stats for data path of Imsi %s. Error: %s", sub.Imsi, err.Error())
+	// 	return err
+	// }
+
+	time.Sleep(1 * time.Second)
 
 	/* Delete the UE Data path */
 	err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
@@ -163,7 +165,7 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 	c := store.PrepareCDR(sc.s)
 	err = s.rc.PushCdr(c)
 	if err != nil {
-		log.Warnf("Failed to push cdr to cloud for Imsi %s. Error: %s", sub.Imsi, err.Error())
+		log.Warnf("Failed to push cdr %+v to cloud for Imsi %s. Error: %s", c, sub.Imsi, err.Error())
 	}
 
 	/* Update sync state */
@@ -174,6 +176,8 @@ func (s *sessionManager) EndSesssion(ctx context.Context, sub *store.Subscriber)
 	if err != nil {
 		log.Warnf("Failed to update session to db store for Imsi %s. Error: %s", sub.Imsi, err.Error())
 	}
+
+	delete(s.cache, sub.Imsi)
 
 	return nil
 
@@ -186,7 +190,7 @@ func (s *sessionManager) StartSessionMonitor(ctx context.Context, imsi string) e
 	sc.ctx, sc.cancel = context.WithCancel(context.Background())
 	s.cache[imsi] = sc
 
-	go s.sessionMonitorRoutine(ctx, s.period, sc)
+	go s.sessionMonitorRoutine(sc.ctx, s.period, sc)
 
 	return nil
 }
