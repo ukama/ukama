@@ -588,8 +588,8 @@ int publish_boot_event(void) {
 
     amqpHost = getenv(ENV_AMQP_HOST);
     amqpPort = getenv(ENV_AMQP_PORT);
-    orgName  = getenv(ENV_UKAMA_ORG_NAME);
-    orgId    = getenv(ENV_UKAMA_ORG_ID);
+    orgName  = getenv(ENV_SYSTEM_ORG);
+    orgId    = getenv(ENV_SYSTEM_ORG_ID);
     ip       = getenv(ENV_BINDING_IP);
 
     conn = init_amqp_connection(amqpHost, amqpPort);
