@@ -50,7 +50,8 @@ func NewConfig(name string) *Config {
 			DebugMode: false,
 		},
 		Bridge: BrdigeConfig{
-			Name: "gtpbr",
+			Name:   "gtpbr",
+			Period: 2 * time.Second,
 		},
 		DB: name,
 		Server: rest.HttpConfig{

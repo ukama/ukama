@@ -36,6 +36,7 @@ type sessionManager struct {
 type SessionManager interface {
 	CreateSesssion(ctx context.Context, sub *store.Subscriber, ns *store.Session, rxf *store.Flow, txf *store.Flow) error
 	EndSesssion(ctx context.Context, sub *store.Subscriber) error
+	IfSessionExist(ctx context.Context, imsi, ip string) bool
 }
 
 func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip, netType string, period time.Duration) *sessionManager {
@@ -49,6 +50,7 @@ func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip,
 		store:  store,
 		period: period,
 		rc:     rc,
+		cache:  make(map[string]*sessionCache),
 	}
 
 	return s
@@ -63,6 +65,7 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		return err
 	}
+	log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
 
 	/* Update to DB */
 	if lastStats {
@@ -76,13 +79,25 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		if err != nil {
 			log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		}
-
 	}
 
 	/* Update session */
 	s.cache[imsi] = sc
 
 	return err
+}
+
+func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bool {
+	sc := s.cache[imsi]
+	if sc != nil {
+		if sc.s.UeIpAddr == ip {
+			return true
+		} else {
+			log.Errorf("Old Session exist for subscriber %s with IP addr %s. Ending it.", imsi, sc.s.UeIpAddr)
+			_ = s.EndSesssion(ctx, &store.Subscriber{Imsi: imsi})
+		}
+	}
+	return false
 }
 
 func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscriber, ns *store.Session, rxf *store.Flow, txf *store.Flow) error {

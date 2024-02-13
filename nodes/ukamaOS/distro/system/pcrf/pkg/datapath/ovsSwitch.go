@@ -442,11 +442,11 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 
 	s.Length = binary.BigEndian.Uint16(data[n:])
 	n += 2
-	log.Infof("Stats Length %d", s.Length)
+	//log.Infof("Stats Length %d", s.Length)
 	for n < int(s.Length) {
 		var f util.Message
 		var size uint16 = 0
-		log.Infof("Stats Field value %v", data[n+2]>>1)
+		//log.Infof("Stats Field value %v", data[n+2]>>1)
 		switch data[n+2] >> 1 {
 		case openflow15.XST_OFB_DURATION:
 			fallthrough
@@ -459,7 +459,7 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 			size = f.Len()
 
 		case openflow15.XST_OFB_PACKET_COUNT:
-			log.Infof("Received PBCountStatField offset %d", n)
+			//log.Infof("Received PBCountStatField offset %d", n)
 			err = pc.UnmarshalBinary(data[n:])
 			if err != nil {
 				log.Errorf("Failed to unmarshal Stats's Field data %+v", data[n:])
@@ -468,7 +468,7 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 			size = pc.Len()
 
 		case openflow15.XST_OFB_BYTE_COUNT:
-			log.Infof("Received PBCountStatField offset %d", n)
+			//log.Infof("Received PBCountStatField offset %d", n)
 			err = bc.UnmarshalBinary(data[n:])
 			if err != nil {
 				log.Errorf("Failed to unmarshal Stats's Field data %v", data[n:])
@@ -476,7 +476,7 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 			}
 			size = bc.Len()
 		default:
-			return 0, 0, fmt.Errorf("Received unknown Stats field: %v", data[n+2]>>1)
+			return 0, 0, fmt.Errorf("received unknown Stats field: %v", data[n+2]>>1)
 		}
 		n += int(size)
 	}
@@ -498,7 +498,7 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 
 	for _, stat := range stats {
 		if stat.Cookie == cookieID {
-			log.Infof("found the flow stats for cookie 0x%x. Stats: %v", cookieID, stat.Stats)
+			//log.Infof("found the flow stats for cookie 0x%x. Stats: %+v", cookieID, stat.Stats)
 			bc, pc, err = parseStats(stat.Stats)
 			if err != nil {
 				log.Errorf("Failed to get stats for flow %d (0x%x)", cookieID, cookieID)

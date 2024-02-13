@@ -146,7 +146,7 @@ func (c *Controller) updateSubscriberProfile(imsi string, p *api.Policy, ip stri
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
-
+	log.Infof("New session request recived for subscriber %s and Ip address %s", req.Imsi, req.Ip)
 	/* validate subscriber*/
 	/* TODO: Validate subscriber should always get the values from the remote  server
 	just to make sure the usage values are correct or we could have some timeouts
@@ -169,20 +169,26 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 		}
 	}
 
-	/* create session */
-	s, rxF, txF, err := c.store.CreateSession(sub, req.Ip)
-	if err != nil {
-		log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.Imsi, err)
-		return err
-	}
+	/* Check if session already exist */
+	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.Ip)
+	if state {
+		log.Errorf("Session already exist for %s user with ip %s", sub.Imsi, req.Ip)
+		return nil
+	} else {
+		/* create session */
+		s, rxF, txF, err := c.store.CreateSession(sub, req.Ip)
+		if err != nil {
+			log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.Imsi, err)
+			return err
+		}
 
-	/* create UE data path and monitoring session */
-	err = c.sm.CreateSesssion(ctx, sub, s, rxF, txF)
-	if err != nil {
-		log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.Imsi, err)
-		return err
+		/* create UE data path and monitoring session */
+		err = c.sm.CreateSesssion(ctx, sub, s, rxF, txF)
+		if err != nil {
+			log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.Imsi, err)
+			return err
+		}
 	}
-
 	return nil
 }
 

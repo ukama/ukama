@@ -158,6 +158,7 @@ func (s *Store) createSessionTable() error {
 			CREATE TABLE IF NOT EXISTS sessions (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			subscriber_id INTEGER,
+			policy_id BLOB CHECK(length(policy_id) = 16),
 			apnname TEXT,
 			ueipaddr TEXT,
 			starttime INTEGER,
@@ -170,6 +171,7 @@ func (s *Store) createSessionTable() error {
 			state INTEGER,
 			sync INTEGER,
 			FOREIGN KEY(subscriber_id) REFERENCES subscribers(id),
+			FOREIGN KEY(policy_id) REFERENCES policies(id),
 			FOREIGN KEY(txmeter_id) REFERENCES meters(id),
 			FOREIGN KEY(rxmeter_id) REFERENCES meters(id)
 		);
@@ -509,7 +511,7 @@ func (s *Store) InsertSession(se *Session) (*Session, error) {
 	res, err := s.db.Exec(`
 		INSERT INTO sessions (subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
-		`, se.SubscriberID.ID, se.PolicyID, se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync)
+		`, se.SubscriberID.ID, se.PolicyID.ID.Bytes(), se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync)
 	if err != nil {
 		log.Errorf("Failed to insert session.Error %v", err)
 		return nil, err
@@ -805,11 +807,18 @@ func (s *Store) GetSessionDetails(session *Session) (*Session, error) {
 }
 
 func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
-	var session *Session
+	session := new(Session)
 	var err error
+	var bid []byte
 	err = s.db.QueryRow("SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE id = ?", sessionID).
-		Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		Scan(&session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 	if err != nil {
+		return nil, err
+	}
+
+	session.PolicyID.ID, err = uuid.FromBytes(bid)
+	if err != nil {
+		log.Errorf("Failed to get poilicy id for session %d.Error: %v", sessionID, err)
 		return nil, err
 	}
 
@@ -833,9 +842,16 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var session *Session
-		err := rows.Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		session := new(Session)
+		var bid []byte
+		err := rows.Scan(&session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 		if err != nil {
+			return nil, err
+		}
+
+		session.PolicyID.ID, err = uuid.FromBytes(bid)
+		if err != nil {
+			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
 			return nil, err
 		}
 
@@ -862,9 +878,16 @@ func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Se
 	defer rows.Close()
 
 	for rows.Next() {
-		var session *Session
-		err := rows.Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+		session := new(Session)
+		var bid []byte
+		err := rows.Scan(&session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 		if err != nil {
+			return nil, err
+		}
+
+		session.PolicyID.ID, err = uuid.FromBytes(bid)
+		if err != nil {
+			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
 			return nil, err
 		}
 
@@ -880,12 +903,18 @@ func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Se
 }
 
 func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
-	var session *Session
-
+	session := new(Session)
+	var bid []byte
 	err := s.db.QueryRow(`
 	SELECT subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND state = 1
-	`, imsi).Scan(&session.SubscriberID.ID, &session.PolicyID.ID, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
+	`, imsi).Scan(&session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync)
 	if err != nil {
+		return nil, err
+	}
+
+	session.PolicyID.ID, err = uuid.FromBytes(bid)
+	if err != nil {
+		log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
 		return nil, err
 	}
 
