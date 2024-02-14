@@ -18,7 +18,7 @@ import (
 	"github.com/tj/assert"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/mocks"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -48,7 +48,7 @@ func TestNetworkServer_Add(t *testing.T) {
 		network := &db.Network{
 			Name:       netName,
 			OrgId:      orgId,
-			SyncStatus: types.SyncStatusPending,
+			SyncStatus: ukama.StatusTypePending,
 		}
 
 		orgRepo.On("GetByName", orgName).Return(
@@ -103,7 +103,7 @@ func TestNetworkServer_Add(t *testing.T) {
 		network := &db.Network{
 			Name:       netName,
 			OrgId:      orgId,
-			SyncStatus: types.SyncStatusPending,
+			SyncStatus: ukama.StatusTypePending,
 		}
 
 		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()

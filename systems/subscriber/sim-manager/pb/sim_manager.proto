@@ -13,6 +13,7 @@ option go_package = "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/ge
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
 
 
 package ukama.subscriber.sim_manager.v1;
@@ -31,6 +32,8 @@ service SimManagerService {
     rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
     rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+    // Usage
+    rpc GetUsages(UsageRequest) returns (UsageResponse);
 }
 
 
@@ -137,6 +140,22 @@ message RemovePackageRequest {
 
 message RemovePackageResponse{
 }
+
+
+message UsageRequest {
+    string simId = 1 [json_name = "sim_id"];
+    string sim_type = 2 [json_name = "sim_type"];
+    string type = 3;
+    string from = 4;
+    string to = 5;
+}
+
+
+message UsageResponse {
+    google.protobuf.Struct usage = 1;
+    google.protobuf.Struct cost = 2;
+}
+
 
 
 message Package {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -115,7 +115,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Country:          n.country,
 		Currency:         n.currency,
 		Language:         db.ParseType(n.language),
-		SyncStatus:       types.SyncStatusPending,
+		SyncStatus:       ukama.StatusTypePending,
 	}
 
 	log.Infof("Adding network %s", networkName)

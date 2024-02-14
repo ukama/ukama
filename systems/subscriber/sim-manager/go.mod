@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/subscriber/sim-manager
 
-go 1.19
+go 1.20
 
 replace github.com/ukama/ukama/systems/common => ../../common
 

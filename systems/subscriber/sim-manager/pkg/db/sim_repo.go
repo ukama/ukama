@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -156,15 +157,15 @@ func (s *simRepo) GetSimMetrics() (simsCount, activeCount, deactiveCount, termin
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", SimStatusActive).Count(&activeCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", ukama.SimStatusActive).Count(&activeCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", SimStatusInactive).Count(&deactiveCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", ukama.SimStatusInactive).Count(&deactiveCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", SimStatusTerminated).Count(&terminatedCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", ukama.SimStatusTerminated).Count(&terminatedCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 

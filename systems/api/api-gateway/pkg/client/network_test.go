@@ -17,7 +17,7 @@ import (
 
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -38,7 +38,7 @@ func TestCient_GetNetwork(t *testing.T) {
 			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusCompleted.String(),
+				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
@@ -55,7 +55,7 @@ func TestCient_GetNetwork(t *testing.T) {
 			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusPending.String(),
+				SyncStatus: ukama.StatusTypePending.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
@@ -74,7 +74,7 @@ func TestCient_GetNetwork(t *testing.T) {
 			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusFailed.String(),
+				SyncStatus: ukama.StatusTypeFailed.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())

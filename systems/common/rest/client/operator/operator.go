@@ -17,20 +17,15 @@ import (
 	"github.com/ukama/ukama/systems/common/rest/client"
 )
 
-const OperatorEndpoint = "/v1/sims"
-
-type OperatorSimInfo struct {
-	Iccid string `json:"iccid"`
-	Imsi  string `json:"imsi"`
-}
-
-type OperatorSim struct {
-	SimInfo *OperatorSimInfo `json:"Sim"`
-}
+const (
+	OperatorSimsEndpoint   = "/v1/sims"
+	OperatorUsagesEndpoint = "/v1/usages"
+)
 
 type OperatorClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
+	GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
 	TerminateSim(iccid string) error
@@ -64,7 +59,7 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 
 	sim := OperatorSim{}
 
-	resp, err := o.R.Get(o.u.String() + OperatorEndpoint + "/" + iccid)
+	resp, err := o.R.Get(o.u.String() + OperatorSimsEndpoint + "/" + iccid)
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
 
@@ -83,10 +78,36 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	return sim.SimInfo, nil
 }
 
+func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error) {
+	log.Debugf("Getting operator sim info: %v", iccid)
+
+	usage := OperatorUsage{}
+
+	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
+		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s", iccid, cdrType, from, to))
+	if err != nil {
+		log.Errorf("GetSimInfo failure. error: %s", err.Error())
+
+		return nil, nil, fmt.Errorf("GetSimInfo failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &usage)
+	if err != nil {
+		log.Tracef("Failed to deserialize operator sim info. Error message is: %s", err.Error())
+
+		return nil, nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
+	}
+
+	log.Infof("Operator data usage (of type %T): %+v", usage.Usage, usage.Usage)
+	log.Infof("Operator data cost (of type %T): %+v", usage.Cost, usage.Cost)
+
+	return usage.Usage, usage.Cost, nil
+}
+
 func (o *operatorClient) ActivateSim(iccid string) error {
 	log.Debugf("Activationg operator sim: %v", iccid)
 
-	_, err := o.R.Put(o.u.String()+OperatorEndpoint+"/"+iccid, nil)
+	_, err := o.R.Put(o.u.String()+OperatorSimsEndpoint+"/"+iccid, nil)
 	if err != nil {
 		log.Errorf("ActivateSim failure. error: %s", err.Error())
 
@@ -99,7 +120,7 @@ func (o *operatorClient) ActivateSim(iccid string) error {
 func (o *operatorClient) DeactivateSim(iccid string) error {
 	log.Debugf("Deactivating operator sim: %v", iccid)
 
-	_, err := o.R.Patch(o.u.String()+OperatorEndpoint+"/"+iccid, nil)
+	_, err := o.R.Patch(o.u.String()+OperatorSimsEndpoint+"/"+iccid, nil)
 	if err != nil {
 		log.Errorf("DeactivateSim failure. error: %s", err.Error())
 
@@ -112,7 +133,7 @@ func (o *operatorClient) DeactivateSim(iccid string) error {
 func (o *operatorClient) TerminateSim(iccid string) error {
 	log.Debugf("Terminating operator sim: %v", iccid)
 
-	_, err := o.R.Delete(o.u.String() + OperatorEndpoint + "/" + iccid)
+	_, err := o.R.Delete(o.u.String() + OperatorSimsEndpoint + "/" + iccid)
 	if err != nil {
 		log.Errorf("TerminateSim failure. error: %s", err.Error())
 
@@ -120,4 +141,18 @@ func (o *operatorClient) TerminateSim(iccid string) error {
 	}
 
 	return nil
+}
+
+type OperatorSimInfo struct {
+	Iccid string `json:"iccid"`
+	Imsi  string `json:"imsi"`
+}
+
+type OperatorSim struct {
+	SimInfo *OperatorSimInfo `json:"sim"`
+}
+
+type OperatorUsage struct {
+	Usage map[string]any `json:"usage"`
+	Cost  map[string]any `json:"cost"`
 }

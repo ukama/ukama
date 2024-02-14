@@ -12,7 +12,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -48,7 +48,7 @@ func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 		return nil, handleRestErrorStatus(err)
 	}
 
-	if net.SyncStatus == types.SyncStatusUnknown.String() || net.SyncStatus == types.SyncStatusFailed.String() {
+	if net.SyncStatus == ukama.StatusTypeUnknown.String() || net.SyncStatus == ukama.StatusTypeFailed.String() {
 		log.Error(failedRequestMsg)
 
 		return nil, crest.HttpError{
@@ -57,7 +57,7 @@ func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 		}
 	}
 
-	if net.SyncStatus == types.SyncStatusPending.String() || net.SyncStatus == types.SyncStatusProcessing.String() {
+	if net.SyncStatus == ukama.StatusTypePending.String() || net.SyncStatus == ukama.StatusTypeProcessing.String() {
 		log.Warn(pendingRequestMsg)
 
 		return net, crest.HttpError{

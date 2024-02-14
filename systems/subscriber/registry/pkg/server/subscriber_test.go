@@ -21,7 +21,7 @@ import (
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
@@ -55,7 +55,7 @@ func TestAdd(t *testing.T) {
 				Id:         netId,
 				OrgId:      "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 				Name:       "net-1",
-				SyncStatus: types.SyncStatusCompleted.String(),
+				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, networkClient)
