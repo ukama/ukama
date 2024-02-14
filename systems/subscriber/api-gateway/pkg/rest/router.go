@@ -417,8 +417,13 @@ func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageFor
 }
 
 func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageResponse, error) {
-	//TODO CDRTYPe: cdrType should be a mandatory query parameter. (then no need to filter in usage RPC)
-	return r.clients.sm.GetUsages(req.SimId, req.SimType, req.Type, req.From, req.To)
+	cdrType, ok := c.GetQuery("cdr_type")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "cdr_type is a mandatory query parameter"}
+	}
+
+	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To)
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {

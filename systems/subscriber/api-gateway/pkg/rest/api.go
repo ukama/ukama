@@ -169,7 +169,7 @@ type RemovePkgFromSimReq struct {
 type GetUsagesReq struct {
 	SimId   string `form:"sim_id" json:"sim_id" query:"sim_id" binding:"required"`
 	SimType string `form:"sim_type" json:"sim_type" query:"sim_type" binding:"required"`
-	Type    string `form:"type" json:"type" query:"type" binding:"required"`
+	Type    string `form:"cdr_type" json:"cdr_type" query:"cdr_type" binding:"required"`
 	From    string `form:"from" json:"from" query:"from" binding:"required"`
 	To      string `to:"status" json:"to" query:"to" binding:"required"`
 }
