@@ -22,7 +22,7 @@ services:
    - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_CLIENT_PORT=9091
    - ENV_BINDING_IP=${LOCAL_HOST_IP}
-   - ENV_WEBSOCKET_PORT=18100
+   - ENV_WEBSOCKET_PORT=18200
    - ENV_SERVICES_PORT=4444
    - ENV_MESH_CERT_FILE=
    - ENV_MESH_KEY_FILE=
@@ -30,7 +30,7 @@ services:
    - ENV_AMQP_PORT=5672
   restart: always
   ports:
-    - "18100:18100"
+    - "18200:18200"
     - "4444:4444"
   networks:
     - ukama-net
