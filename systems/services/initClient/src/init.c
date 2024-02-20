@@ -213,10 +213,6 @@ void free_system_registration(SystemRegistrationId* sysReg) {
 	free(sysReg);
 }
 
-/*
- * free_query_response --
- *
- */
 void free_query_response(QueryResponse *response) {
 
 	if (response == NULL) return;
@@ -371,10 +367,6 @@ int send_request_to_init(ReqType reqType, Config *config, char* org,
 	return ret;
 }
 
-/*
- * existing_registration --
- *
- */
 int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 		 int global) {
 
