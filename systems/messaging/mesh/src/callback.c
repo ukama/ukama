@@ -29,6 +29,7 @@
 #include "map.h"
 #include "u_amqp.h"
 #include "httpStatus.h"
+#include "config.h"
 
 extern MapTable *NodesTable;
 
@@ -89,6 +90,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 
 	/* Publish device (nodeID) 'connect' event to AMQP exchange */
 	if (publish_event(CONN_CONNECT,
+                      config->orgName,
                       nodeID,
                       &ip[0], sin->sin_port,
                       config->bindingIP,

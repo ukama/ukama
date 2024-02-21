@@ -35,7 +35,7 @@ static char *convert_source_to_str(MsgSource source);
 static char *convert_object_to_str(MsgObject object);
 static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
-static char *create_routing_key(MeshEvent event);
+static char *create_routing_key(MeshEvent event, char *orgName);
 static int object_type(MeshEvent event);
 static void *serialize_boot_event(char *orgName, char *orgId, char *ip);
 static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
@@ -275,11 +275,6 @@ static void log_amqp_response(WAMQPReply reply, const char *context) {
 	}
 }
 
-/*
- * init_amqp_connection -- 
- *
- */
-
 static WAMQPConn *init_amqp_connection(char *host, char *port) {
 
 	int ret;
@@ -339,11 +334,7 @@ static WAMQPConn *init_amqp_connection(char *host, char *port) {
 	return conn;
 }
 
-/*
- * create_routing_key --
- *
- */
-static char *create_routing_key(MeshEvent event) {
+static char *create_routing_key(MeshEvent event, char *orgName) {
 
 	int len;
 	char *key=NULL;
@@ -368,17 +359,27 @@ static char *create_routing_key(MeshEvent event) {
 
 	source = convert_source_to_str((MsgSource)CLOUD);
 
-	len = strlen(type) + strlen(source) + strlen(MSG_CONTAINER) +
+	len = strlen(type) + strlen(source) + strlen(LOCAL_AMQP) +
+        strlen(orgName) + strlen(SYSTEM_NAME) + strlen(MSG_CONTAINER) +
 		strlen(object) + strlen(state);
 
-	key = (char *)malloc(len+4+1); /* 4 for '.' in the key and 1 for' \0' */
+	key = (char *)malloc(len+7+1); /* 7 for '.' in the key and 1 for' \0' */
 	if (key==NULL) {
 		log_error("Error allocating memory of size: %d", len+1);
 		FREE(source, type, object, state);
 		return NULL;
 	}
 
-	sprintf(key, "%s.%s.%s.%s.%s", type, source, MSG_CONTAINER, object, state);
+    /* event.cloud.local.orgName.messaging.mesh.node.state */
+	sprintf(key, "%s.%s.%s.%s.%s.%s.%s.%s",
+            type,
+            source,
+            LOCAL_AMQP,
+            orgName,
+            SYSTEM_NAME,
+            MSG_CONTAINER,
+            object,
+            state);
 
 	FREE(type, source, container, object, state);
 
@@ -485,10 +486,9 @@ static int object_type(MeshEvent event) {
 }
 
 static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-                              char *nodeID, char *nodeIP, int nodePort,
+                              char *orgName, char *nodeID, char *nodeIP, int nodePort,
                               char *meshIP, int meshPort) {
 
-	/* THREAD? XXX - Think about me*/
 	char *key=NULL;
 	WAMQPProp prop;
 	void *buff=NULL;
@@ -497,7 +497,7 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	/* Step-1: build the routing key for the event. 
 	 * <type>.<source>.<container>.<object>.<state>
 	 */
-	key = create_routing_key(event);
+	key = create_routing_key(event, orgName);
 	if (key == NULL) {
 		log_error("Error creating routing key. Ignoring the message");
 		return FALSE;
@@ -544,7 +544,8 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	return ret;
 }
 
-int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
+int publish_event(MeshEvent event, char *orgName,
+                  char *nodeID, char *nodeIP, int nodePort,
                   char *meshIP, int meshPort) {
 
     WAMQPConn *conn=NULL;
@@ -561,7 +562,7 @@ int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
 
     if (object_type(event) == OBJECT_LINK) {
         publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
-                           nodeID,
+                           orgName, nodeID,
                            nodeIP, nodePort,
                            meshIP, meshPort);
     } else {
