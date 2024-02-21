@@ -407,7 +407,8 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 	if (queryResponse->systemID) {
 		*systemUUID = strdup(queryResponse->systemID);
 	}
-	log_info("Returning status 0x%X for %s registration", status, (queryResponse->systemID)?queryResponse->systemID:"null");
+	log_info("Returning status 0x%X for %s registration",
+             status, (queryResponse->systemID)?queryResponse->systemID:"null");
  return_function:
 	if (str)  free(str);
 	if (*cacheUUID) free (*cacheUUID);
@@ -419,7 +420,9 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
  * get_system_info -- get info about 'system' from the init.
  *
  */
-int get_system_info(Config *config, char *org, char *systemName, char **systemInfo, int global) {
+int get_system_info(Config *config, char *org,
+                    char *systemName, char **systemInfo,
+                    int global) {
 
 	int status=QUERY_OK;
 	char *str=NULL;
