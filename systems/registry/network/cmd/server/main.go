@@ -11,25 +11,24 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/uuid"
-	generated "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/cmd/version"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
-
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
-	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/network/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	generated "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -73,10 +72,16 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
 	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),
-		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
-		providers.NewOrgClientProvider(serviceConfig.OrgHost, serviceConfig.DebugMode), mbClient, serviceConfig.PushGateway, serviceConfig.Country, serviceConfig.Currency, serviceConfig.Language)
+		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb), cnucl.NewOrgClient(serviceConfig.OrgHost),
+		mbClient, serviceConfig.PushGateway, serviceConfig.Country, serviceConfig.Currency,
+		serviceConfig.Language)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

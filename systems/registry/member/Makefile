@@ -36,6 +36,7 @@ gen:
 clean:
 	rm -rf bin/
 
+# integration tests
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
 

@@ -15,13 +15,14 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 func TestCient_GetNetwork(t *testing.T) {
@@ -34,10 +35,10 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusCompleted", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&rest.NetworkInfo{
+			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusCompleted.String(),
+				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
@@ -51,10 +52,10 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusPending", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&rest.NetworkInfo{
+			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusPending.String(),
+				SyncStatus: ukama.StatusTypePending.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
@@ -70,10 +71,10 @@ func TestCient_GetNetwork(t *testing.T) {
 
 	t.Run("NetworkFoundAndStatusFailed", func(t *testing.T) {
 		netClient.On("Get", netId.String()).
-			Return(&rest.NetworkInfo{
+			Return(&creg.NetworkInfo{
 				Id:         netId.String(),
 				Name:       netName,
-				SyncStatus: types.SyncStatusFailed.String(),
+				SyncStatus: ukama.StatusTypeFailed.String(),
 			}, nil).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
@@ -89,7 +90,7 @@ func TestCient_GetNetwork(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(nil,
 				fmt.Errorf("GetNetwork failure: %w",
-					rest.ErrorStatus{StatusCode: 404})).Once()
+					cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
 
@@ -130,13 +131,13 @@ func TestCient_CreateNetwork(t *testing.T) {
 	n := client.NewNetworkClientSet(netClient)
 
 	t.Run("NetworkCreated", func(t *testing.T) {
-		netClient.On("Add", rest.AddNetworkRequest{
+		netClient.On("Add", creg.AddNetworkRequest{
 			OrgName:          orgName,
 			NetName:          netName,
 			AllowedCountries: countries,
 			AllowedNetworks:  networks,
 			PaymentLinks:     paymentLinks,
-		}).Return(&rest.NetworkInfo{
+		}).Return(&creg.NetworkInfo{
 			Id:               netId.String(),
 			Name:             netName,
 			AllowedCountries: countries,
@@ -154,7 +155,7 @@ func TestCient_CreateNetwork(t *testing.T) {
 	})
 
 	t.Run("NetworkNotCreated", func(t *testing.T) {
-		netClient.On("Add", rest.AddNetworkRequest{
+		netClient.On("Add", creg.AddNetworkRequest{
 			OrgName:          orgName,
 			NetName:          netName,
 			AllowedCountries: countries,

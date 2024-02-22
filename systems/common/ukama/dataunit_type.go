@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type DataUnitType uint8
@@ -51,7 +52,7 @@ func ParseDataUnitType(value string) DataUnitType {
 
 	t := map[string]DataUnitType{"unknown": 0, "Bytes": 1, "KiloBytes": 2, "MegaBytes": 3, "GigaBytes": 4}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return DataUnitType(0)
 	}

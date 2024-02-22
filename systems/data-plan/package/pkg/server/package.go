@@ -14,7 +14,6 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/validation"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
@@ -174,7 +173,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Uuid:         uuid.NewV4(),
 		OwnerId:      ownId,
 		Name:         req.GetName(),
-		SimType:      ukama.ParseType(req.GetSimType()),
+		SimType:      ukama.ParseSimType(req.GetSimType()),
 		OrgId:        orgId,
 		Active:       req.Active,
 		From:         from,
@@ -200,7 +199,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
-		SyncStatus:    types.SyncStatusPending,
+		SyncStatus:    ukama.StatusTypePending,
 	}
 
 	// Request rate

@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type MessageUnitType uint8
@@ -48,7 +49,7 @@ func ParseMessageType(value string) MessageUnitType {
 
 	t := map[string]MessageUnitType{"unknown": 0, "int": 1}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return MessageUnitType(0)
 	}

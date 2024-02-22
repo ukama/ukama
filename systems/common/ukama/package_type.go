@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type PackageType uint8
@@ -49,7 +50,7 @@ func ParsePackageType(value string) PackageType {
 
 	t := map[string]PackageType{"unknown": 0, "prepaid": 1, "postpaid": 2}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return PackageType(0)
 	}

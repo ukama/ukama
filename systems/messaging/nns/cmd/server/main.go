@@ -12,23 +12,22 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg/client"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg/server"
+	"google.golang.org/grpc"
 
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
-
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/messaging/nns/cmd/version"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg/server"
 
 	dnspb "github.com/coredns/coredns/pb"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -85,14 +84,11 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	registryClient, err := client.NewRegistryClient(serviceConfig.Registry, serviceConfig.DebugMode)
-	if err != nil {
-		log.Fatalf("Error creating registry client. Error: %v", err)
-	}
+	nodeClient := creg.NewNodeClient(serviceConfig.Registry)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig.Dns)
-		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, registryClient, srv, serviceConfig.Org)
+		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, nodeClient, srv, serviceConfig.Org)
 		pb.RegisterNnsServer(s, srv)
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)

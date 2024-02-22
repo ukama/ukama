@@ -224,6 +224,36 @@ func (_m *SimManagerServiceServer) GetSimsBySubscriber(_a0 context.Context, _a1 
 	return r0, r1
 }
 
+// GetUsages provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GetUsages(_a0 context.Context, _a1 *gen.UsageRequest) (*gen.UsageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUsages")
+	}
+
+	var r0 *gen.UsageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageRequest) (*gen.UsageResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageRequest) *gen.UsageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListSims provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) ListSims(_a0 context.Context, _a1 *gen.ListSimsRequest) (*gen.ListSimsResponse, error) {
 	ret := _m.Called(_a0, _a1)

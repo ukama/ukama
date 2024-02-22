@@ -21,6 +21,14 @@
 #define DEPLOY_SCRIPT "./scripts/deploy-system.sh"
 #define STATUS_SCRIPT "./scripts/status.sh"
 
+#define FREE_ENVS(envs, max_variables) \
+    do { \
+        for (int i = 0; i < (max_variables); i++) { \
+            usys_free((envs)[i]); \
+        } \
+        usys_free(envs); \
+    } while(0)
+
 void toLowerCase(char *str) {
     while (*str) {
         *str = tolower((unsigned char) *str);
@@ -31,7 +39,7 @@ void toLowerCase(char *str) {
 bool isDuplicate(char **variables, int count, const char *variable) {
 
     for (int i = 0; i < count; i++) {
-        if (strcasecmp(variables[i], variable) == 0) {
+        if (variables[i] && strcasecmp(variables[i], variable) == 0) {
             return USYS_TRUE;
         }
     }
@@ -51,7 +59,9 @@ bool isVariablePresent(Config *config, char *varName) {
     return USYS_FALSE;
 }
 
-static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
+static bool deploy_system(char *configFile,
+                          DeployConfig *deployConfig,
+                          char *name, char *path) {
 
 	char runMe[MAX_BUFFER]     = {0};
     char fileName[MAX_BUFFER]  = {0};
@@ -69,7 +79,7 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
         return USYS_FALSE;
     }
 
-    envs = (char **)calloc(MAX_VARIABLES, MAX_LINE_LENGTH);
+    envs = (char **)calloc(MAX_VARIABLES, sizeof (char *));
     if (envs == NULL) {
         usys_log_error("Unable to allocate memory of size: %d",
                        MAX_VARIABLES * MAX_LINE_LENGTH);
@@ -89,6 +99,14 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
                 toLowerCase(varName);
 
                 if (!isDuplicate(envs, count, varName)) {
+
+                    envs[count] = (char *)calloc(MAX_LINE_LENGTH, sizeof(char));
+                    if (envs[count] == NULL) {
+                        usys_log_error("Unable to allocate memory of size: %d",
+                                       MAX_LINE_LENGTH * sizeof(char));
+                        FREE_ENVS(envs, MAX_VARIABLES);
+                        return USYS_FALSE;
+                    }
                     strcpy(envs[count++], varName);
                 }
 
@@ -103,8 +121,7 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
 
     if (count > deployConfig->envCount) {
         usys_log_error("No enough var defined in config file");
-        usys_free(envs);
-
+        FREE_ENVS(envs, MAX_VARIABLES);
         return USYS_FALSE;
     }
 
@@ -118,22 +135,24 @@ static bool deploy_system(DeployConfig *deployConfig, char *name, char *path) {
                 if (setenv(deployConfig->keyValuePair[i].key,
                            deployConfig->keyValuePair[i].value, 1) == -1) {
                     usys_log_error("Unable to set env variable");
-                    usys_free(envs);
-
+                    FREE_ENVS(envs, MAX_VARIABLES);
                     return USYS_FALSE;
                 }
             }
         }
     }
 
-    sprintf(runMe, "%s system %s %s", DEPLOY_SCRIPT, name, path);
+    sprintf(runMe, "%s system %s %s %s", DEPLOY_SCRIPT, name, path, configFile);
     if (system(runMe) < 0) return USYS_FALSE;
 
-    usys_free(envs);
+    FREE_ENVS(envs, MAX_VARIABLES);
     return USYS_TRUE;
 }
 
-bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authRepo) {
+bool deploy_all_systems(char *configFilename,
+                        DeployConfig *deployConfig,
+                        char *ukamaRepo,
+                        char *authRepo) {
 
     char list[MAX_BUFFER] = {0};
     char systemPath[MAX_BUFFER] = {0};
@@ -146,14 +165,14 @@ bool deploy_all_systems(DeployConfig *deployConfig, char *ukamaRepo, char *authR
     while (systemName != NULL) {
 
         if (strcasecmp(systemName, UKAMA_AUTH) == 0) {
-            if (!deploy_system(deployConfig, systemName, authRepo)) {
+            if (!deploy_system(configFilename, deployConfig, systemName, authRepo)) {
                 usys_log_error("Build failed: %s path: %s",
                                systemName, authRepo);
                 return USYS_FALSE;
             }
         } else {
             sprintf(systemPath, "%s/systems/%s/", ukamaRepo, systemName);
-            if (!deploy_system(deployConfig, systemName, systemPath)) {
+            if (!deploy_system(configFilename, deployConfig, systemName, systemPath)) {
                 usys_log_error("Build failed: %s path: %s",
                                systemName, systemPath);
                 return USYS_FALSE;

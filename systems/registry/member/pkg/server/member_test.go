@@ -14,12 +14,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/member/mocks"
-	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
-	"gorm.io/gorm"
+
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 const testOrgName = "test-org"
@@ -28,10 +30,11 @@ var orgId = uuid.NewV4()
 
 func TestMemberServer_AddMember(t *testing.T) {
 	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	mRepo := &mocks.MemberRepo{}
-	nOrg := &mocks.NucleusClientProvider{}
+	orgClient := &cmocks.OrgClient{}
+	userClient := &cmocks.UserClient{}
 
 	member := db.Member{
 		UserId: uuid.NewV4(),
@@ -47,7 +50,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 		Role:     pb.RoleType(db.Users),
 	}).Return(nil).Once()
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-	s := NewMemberServer(testOrgName, mRepo, nOrg, msgclientRepo, "", orgId)
+	s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 	// Act
 	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
@@ -64,9 +67,11 @@ func TestMemberServer_AddMember(t *testing.T) {
 
 func TestMemberServer_GetMember(t *testing.T) {
 	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	mRepo := &mocks.MemberRepo{}
+	orgClient := &cmocks.OrgClient{}
+	userClient := &cmocks.UserClient{}
 
 	member := db.Member{
 		Model: gorm.Model{
@@ -77,7 +82,7 @@ func TestMemberServer_GetMember(t *testing.T) {
 
 	mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
 
-	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
+	s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 	// Act
 	resp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
@@ -96,9 +101,11 @@ func TestMemberServer_GetMember(t *testing.T) {
 func TestMemberServer_GetMembers(t *testing.T) {
 
 	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	mRepo := &mocks.MemberRepo{}
+	orgClient := &cmocks.OrgClient{}
+	userClient := &cmocks.UserClient{}
 
 	members := []db.Member{
 		{
@@ -117,7 +124,7 @@ func TestMemberServer_GetMembers(t *testing.T) {
 
 	mRepo.On("GetMembers").Return(members, nil).Once()
 
-	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
+	s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 	// Act
 	resp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{})
@@ -135,9 +142,11 @@ func TestMemberServer_GetMembers(t *testing.T) {
 
 func TestMemberServer_RemoveMember(t *testing.T) {
 	t.Run("RemoveMember_Success", func(t *testing.T) {
-		msgclientRepo := &mbmocks.MsgBusServiceClient{}
+		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 		mRepo := &mocks.MemberRepo{}
+		orgClient := &cmocks.OrgClient{}
+		userClient := &cmocks.UserClient{}
 
 		member := db.Member{
 			Model: gorm.Model{
@@ -153,7 +162,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 			UserUuid: member.UserId.String(),
 		}).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
+		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
@@ -168,9 +177,11 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 	})
 
 	t.Run("RemoveMember_Fails", func(t *testing.T) {
-		msgclientRepo := &mbmocks.MsgBusServiceClient{}
+		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 		mRepo := &mocks.MemberRepo{}
+		orgClient := &cmocks.OrgClient{}
+		userClient := &cmocks.UserClient{}
 
 		member := db.Member{
 			Model: gorm.Model{
@@ -182,7 +193,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
 
-		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
+		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{

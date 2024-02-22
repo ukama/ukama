@@ -14,42 +14,47 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
+
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
 type InvitationServer struct {
 	pb.UnimplementedInvitationServiceServer
 	iRepo                db.InvitationRepo
-	nucleusSystem        providers.NucleusClientProvider
-	notification         providers.NotificationClient
+	orgClient            cnucl.OrgClient
+	userClient           cnucl.UserClient
+	mailerClient         cnotif.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	baseRoutingKey       msgbus.RoutingKeyBuilder
-	msgbus               mb.MsgBusServiceClient
-	orgName              string
-	TemplateName         string
+	// unused?
+	// baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus       mb.MsgBusServiceClient
+	orgName      string
+	TemplateName string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, notification providers.NotificationClient, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
+	orgClient cnucl.OrgClient, userClient cnucl.UserClient, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
-		notification:         notification,
+		mailerClient:         mailerClient,
 		invitationExpiryTime: invitationExpiryTime,
 		authLoginbaseURL:     authLoginbaseURL,
-		nucleusSystem:        nucleusSystem,
+		orgClient:            orgClient,
+		userClient:           userClient,
 		msgbus:               msgBus,
 		orgName:              orgName,
 		TemplateName:         TemplateName,
@@ -63,30 +68,31 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	if req.GetOrg() == "" || req.GetEmail() == "" || req.GetName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
 	}
+
 	expiry := time.Now().Add(time.Hour * time.Duration(i.invitationExpiryTime))
-	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(),
-		expiry)
-	if err != nil {
-		return nil, err
-	}
-	res, err := i.nucleusSystem.GetOrgByName(req.GetOrg())
+	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(), expiry)
 	if err != nil {
 		return nil, err
 	}
 
-	remoteUserResp, err := i.nucleusSystem.GetUserById(res.Org.Owner)
+	orgInfo, err := i.orgClient.Get(req.GetOrg())
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.notification.SendEmail(providers.SendEmailReq{
+	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
 		To:           []string{req.GetEmail()},
 		TemplateName: i.TemplateName,
 		Values: map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK":       link,
-			"OWNER":      remoteUserResp.User.Name,
-			"ORG":        res.Org.Name,
+			"OWNER":      orgOwnerInfo.Name,
+			"ORG":        orgInfo.Name,
 			"ROLE":       req.GetRole().String(),
 		},
 	})
@@ -95,17 +101,23 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	userInfo, err := i.nucleusSystem.GetByEmail(req.GetEmail())
+	invitedUserInfo, err := i.userClient.GetByEmail(req.GetEmail())
 	if err != nil {
-		log.Errorf("Failed to get user info. Error %s", err.Error())
+		log.Errorf("Failed to get invited user info. Error %s", err.Error())
 	}
-	userId := ""
-	if userInfo != nil && !reflect.DeepEqual(userInfo.User, reflect.Zero(reflect.TypeOf(userInfo.User)).Interface()) {
-		userId = userInfo.User.Id
 
-	} else {
-		userId = "00000000-0000-0000-0000-000000000000"
+	// userId := ""
+	// if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo.User, reflect.Zero(reflect.TypeOf(invitedUserInfo.User)).Interface()) {
+	// userId = invitedUserInfo.User.Id
+	// } else {
+	// userId = "00000000-0000-0000-0000-000000000000"
+	// }
+
+	userId := "00000000-0000-0000-0000-000000000000"
+	if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo, reflect.Zero(reflect.TypeOf(invitedUserInfo)).Interface()) {
+		userId = invitedUserInfo.Id
 	}
+
 	invite := &db.Invitation{
 		Id:        invitationId,
 		Org:       req.GetOrg(),
@@ -124,13 +136,16 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
+
 	return &pb.AddInvitationResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
+
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
 	log.Infof("Deleting invitation %v", req)
 
@@ -149,6 +164,7 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationR
 		Id: req.GetId(),
 	}, nil
 }
+
 func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvitationStatusRequest) (*pb.UpdateInvitationStatusResponse, error) {
 	log.Infof("Updating invitation %v", req)
 
@@ -172,6 +188,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvit
 		Status: *req.GetStatus().Enum(),
 	}, nil
 }
+
 func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
@@ -206,6 +223,7 @@ func (u *InvitationServer) GetInvitationByEmail(ctx context.Context, req *pb.Get
 		Invitation: dbInvitationToPbInvitation(invitation),
 	}, nil
 }
+
 func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationByOrgRequest) (*pb.GetInvitationByOrgResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
@@ -223,22 +241,23 @@ func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationBy
 	}, nil
 }
 
-func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-	switch role {
-	case pb.RoleType_ADMIN:
-		return db.Admin
-	case pb.RoleType_VENDOR:
-		return db.Vendor
-	case pb.RoleType_USERS:
-		return db.Users
-	case pb.RoleType_OWNER:
-		return db.Owner
-	case pb.RoleType_EMPLOYEE:
-		return db.Employee
-	default:
-		return db.Users
-	}
-}
+// unused?
+// func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
+// switch role {
+// case pb.RoleType_ADMIN:
+// return db.Admin
+// case pb.RoleType_VENDOR:
+// return db.Vendor
+// case pb.RoleType_USERS:
+// return db.Users
+// case pb.RoleType_OWNER:
+// return db.Owner
+// case pb.RoleType_EMPLOYEE:
+// return db.Employee
+// default:
+// return db.Users
+// }
+// }
 
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{

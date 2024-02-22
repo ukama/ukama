@@ -16,7 +16,7 @@ import (
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/common/types"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -47,7 +47,7 @@ type Network struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
-	SyncStatus       types.SyncStatus
+	SyncStatus       ukama.StatusType
 }
 type Site struct {
 	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`

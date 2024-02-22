@@ -10,7 +10,10 @@
   "build": {
     "nodes": {
       "count": 1,
-      "ids": "random"
+      "ids" : "random",
+      "kernel-image" : "s3://path/to/vmlinuz.img",
+      "initram-image" : "s3://path/to/initrd.img",
+      "disk-image" : "s3://path/to/ukma-xxx-xxx-xxx.img"
     },
     "systems": {
       "list": "ukama-auth,services,init,nucleus,"
@@ -26,7 +29,7 @@
         "ownerauthid" : "909390bf-43ea-4fa7-8d5e-3e837679ba58",
         "ownername" : "test",
         "owneremail" : "test@ukama.com",
-        "orgid" : "fbc2a80d-339e-4d3c-acaa-329dd1b221",
+        "orgid" : "fbc2a80d-339e-4d3c-acaa-329dd1b22100",
         "orgname" : "ukama-org",
         "key" : "this-key-has-to-be-32-bytes-long",
         "mailer_port" : "465",

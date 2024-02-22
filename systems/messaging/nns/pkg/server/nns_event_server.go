@@ -11,30 +11,32 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg/client"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
+
+	log "github.com/sirupsen/logrus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 type NnsEventServer struct {
-	orgName  string
-	Nns      *NnsServer
-	Registry client.NodeRegistryClient
-	Org      string
+	orgName    string
+	Nns        *NnsServer
+	NodeClient creg.NodeClient
+	Org        string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNnsEventServer(orgName string, c client.NodeRegistryClient, s *NnsServer, o string) *NnsEventServer {
+func NewNnsEventServer(orgName string, c creg.NodeClient, s *NnsServer, o string) *NnsEventServer {
 
 	return &NnsEventServer{
-		orgName:  orgName,
-		Registry: c,
-		Nns:      s,
-		Org:      o,
+		orgName:    orgName,
+		NodeClient: c,
+		Nns:        s,
+		Org:        o,
 	}
 }
 
@@ -117,18 +119,20 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 
 	log.Infof("Getting org and network for %s", msg.GetNodeId())
 
-	var nodeInfo *client.NodeInfo
-	var err error
-	nodeInfo, err = l.Registry.GetNode(msg.GetNodeId())
+	nodeInfo, err := l.NodeClient.Get(msg.GetNodeId())
 	if err != nil {
 		log.Errorf("Failed to get org and network. Error: %+v", err)
 		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
-		nodeInfo = &client.NodeInfo{
-			Id:      msg.GetNodeId(),
-			Network: "",
-			Site:    "",
-			Org:     l.Org,
+
+		nodeInfo = &creg.NodeInfo{
+			Id:    msg.GetNodeId(),
+			OrgId: l.Org,
 		}
+
+		nodeInfo.Site = creg.SiteInfo{}
+		nodeInfo.Site.NodeId = msg.GetNodeId()
+		nodeInfo.Site.SiteId = ""
+		nodeInfo.Site.NetworkId = ""
 	}
 
 	_, err = l.Nns.Set(context.Background(), &pb.SetNodeIPRequest{
@@ -138,15 +142,17 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		NodePort:     msg.GetNodePort(),
 		MeshPort:     msg.GetMeshPort(),
 		Org:          l.Org,
-		Network:      nodeInfo.Network,
-		Site:         nodeInfo.Site,
+		Network:      nodeInfo.Site.NetworkId,
+		Site:         nodeInfo.Site.SiteId,
 		MeshHostName: msg.GetMeshHostName(),
 	})
 
 	if err != nil {
 		log.Errorf("Failed to set node IP. Error: %+v", err)
+
 		return err
 	}
+
 	log.Infof("Node %s IP set to %s", msg.GetNodeId(), msg.GetMeshIp())
 
 	return nil

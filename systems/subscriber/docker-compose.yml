@@ -47,7 +47,7 @@ services:
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
-   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
   restart: always
   networks:
    - ukama-net
@@ -67,13 +67,13 @@ services:
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - KEY=${KEY}
    - ORGNAME=${ORGNAME}
+   - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
    - NOTIFICATIONHOST=http://${LOCAL_HOST_IP}:8058
-   - DATAPLAN=http://${LOCAL_HOST_IP}:8074
-   - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
-   - ORGHOST=http://${LOCAL_HOST_IP}:8060
+   - DATAPLANHOST=http://${LOCAL_HOST_IP}:8074
+   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
   restart: always
   networks:
    - ukama-net
