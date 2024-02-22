@@ -17,10 +17,8 @@
 
 int parse_config(Config *config, toml_table_t *configData) {
 
-	int ret=FALSE;
 	toml_datum_t nodedHost;
 	toml_datum_t meshConfig, remoteIPFile;
-	toml_datum_t bootstrapServer;
 
 	/* sanity check */
 	if (config == NULL) return FALSE;
@@ -60,9 +58,8 @@ int parse_config(Config *config, toml_table_t *configData) {
 	if (nodedHost.ok)       free(nodedHost.u.s);
 	if (meshConfig.ok)      free(meshConfig.u.s);
 	if (remoteIPFile.ok)    free(remoteIPFile.u.s);
-	if (bootstrapServer.ok) free(bootstrapServer.u.s);
 
-	return ret;
+    return TRUE;
 }
 
 bool read_bootstrap_server_info(char **buffer) {
@@ -80,7 +77,7 @@ bool read_bootstrap_server_info(char **buffer) {
     length = ftell(file);
     rewind(file);
 
-    *buffer = (char *)malloc((length + 1) * sizeof(char));
+    *buffer = (char *)calloc((length + 1), sizeof(char));
     if (*buffer == NULL) {
         log_error("Memory allocation failed: %s",
                   (length + 1) * sizeof(char));
@@ -88,7 +85,7 @@ bool read_bootstrap_server_info(char **buffer) {
         return FALSE;
     }
 
-    fread(*buffer, sizeof(char), length, file);
+    fread(*buffer, sizeof(char), length-1, file);
     buffer[length] = '\0';
 
     fclose(file);
@@ -103,7 +100,7 @@ int process_config_file(char *fileName, Config *config) {
 	char errBuf[MAX_BUFFER];
 
 	if ((fp = fopen(fileName, "r")) == NULL) {
-		log_error("Error opening config file: %s: %s\n", fileName,
+		log_error("Error opening config file: %s: %s", fileName,
 				  strerror(errno));
 		return FALSE;
 	}
@@ -112,7 +109,7 @@ int process_config_file(char *fileName, Config *config) {
 	fileData = toml_parse_file(fp, errBuf, sizeof(errBuf));
 	fclose(fp);
 	if (!fileData) {
-		log_error("Error parsing the config file %s: %s\n", fileName, errBuf);
+		log_error("Error parsing the config file %s: %s", fileName, errBuf);
 		return FALSE;
 	}
 
@@ -120,7 +117,7 @@ int process_config_file(char *fileName, Config *config) {
 	configData = toml_table_in(fileData, CONFIG);
 
 	if (configData == NULL) {
-		log_error("[Config] section parsing error in file: %s\n", fileName);
+		log_error("[Config] section parsing error in file: %s", fileName);
 		toml_free(fileData);
 		return FALSE;
 	}
@@ -161,6 +158,10 @@ void print_config(Config *config) {
 	if (config->bootstrapServer) {
 	    log_debug("bootstrap server: %s", config->bootstrapServer);
 	}
+
+    if (config->bootstrapPort) {
+        log_debug("bootstrap port: %d", config->bootstrapPort);
+    }
 }
 
 void clear_config(Config *config) {

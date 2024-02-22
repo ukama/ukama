@@ -64,9 +64,9 @@ LIBS+=-lrabbitmq
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: libs
 
-mesh: $(TARGET_EXEC)
+all: $(TARGET_EXEC) libs
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
@@ -77,6 +77,12 @@ $(VENDOR_PKG):
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+#libs
+libs: $(TARGET_EXEC)
+	@echo "Copying libs..."
+	$(eval RET = $(shell ./copyLibs.sh $(TARGET_EXEC)))
+	@echo $(RET)
 
 all: $(TARGET_EXEC)
 

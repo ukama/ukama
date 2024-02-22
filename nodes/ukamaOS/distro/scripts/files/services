@@ -1181,6 +1181,8 @@ fido		60179/tcp			# Ifmail
 fido		60179/udp
 
 # UkamaOS local services
+bootstrap       17998/tcp   bootstrap
+init 		17999/tcp   initd
 node   	        18000/tcp   noded 
 starter 	18001/tcp   starterd
 mesh          	18002/tcp   meshd
@@ -1192,4 +1194,5 @@ metrics     	18007/tcp   metricsd
 config      	18008/tcp   configd
 notify		18009/tcp   notifyd
 ukama		18100/tcp   ukama
+remote          18200/tcp   remote
 

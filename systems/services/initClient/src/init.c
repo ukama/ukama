@@ -25,9 +25,6 @@
 
 /* Functions related to communicate with init system */
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
@@ -49,10 +46,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * send_http_request --
- *
- */
 static long send_http_request(char *url, Request *request, json_t *json,
 							  char **retStr) {
 
@@ -125,10 +118,6 @@ static long send_http_request(char *url, Request *request, json_t *json,
 	return code;
 }
 
-/*
- * create_url --
- *
- */
 static void create_url(char *url, Config *config, char* org, char *name,
 					   ReqType reqType, int global) {
 
@@ -163,10 +152,6 @@ static void create_url(char *url, Config *config, char* org, char *name,
 	log_debug("Request URL: %s", url);
 }
 
-/*
- * create_request --
- *
- */
 static int create_request(Request **request, Config *config) {
 
 	Register *reg=NULL;
@@ -189,10 +174,6 @@ static int create_request(Request **request, Config *config) {
 	return TRUE;
 }
 
-/*
- * free_request --
- *
- */
 static void free_request(Request *request) {
 
 	Register *reg=NULL;
@@ -232,10 +213,6 @@ void free_system_registration(SystemRegistrationId* sysReg) {
 	free(sysReg);
 }
 
-/*
- * free_query_response --
- *
- */
 void free_query_response(QueryResponse *response) {
 
 	if (response == NULL) return;
@@ -248,10 +225,11 @@ void free_query_response(QueryResponse *response) {
 	free(response);
 }
 
-int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
-	FILE *fp;
-	struct stat sb;
-	char buffer[MAX_BUFFER_SIZE] = {0};
+int parse_cache_uuid(char *fileName, SystemRegistrationId **sysReg) {
+
+	FILE *fp = NULL;
+    struct stat sb;
+    char *str = NULL;
 
 	/* Check to see if the cache file exist. */
 	if (stat(fileName, &sb) == -1) {
@@ -272,16 +250,16 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
 	long fsize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);  /* same as rewind(f); */
 
-	char *str = malloc(fsize + 1);
+	str = malloc(fsize + 1);
 	/* Try to read the uuid */
-	if (fread(buffer, 1, MAX_UUID_LEN, fp) == 0) {
+	if (fread(str, 1, fsize, fp) == 0) {
 		log_error("Error reading from the cache file: %s Error :%s",
 				fileName, strerror(errno));
 		return FALSE;
 	}
 	fclose(fp);
 
-	if (!deserialize_uuids_from_file(str, &sysReg)) {
+	if (!deserialize_uuids_from_file(str, sysReg)) {
 		log_error("Error parsing the cache file: %s Error :%s",
 				fileName, strerror(errno));
 		return FALSE;
@@ -289,18 +267,21 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
 
 	return TRUE;
 }
-/*
- * read_cache_uuid --
- *
- */
+
 static int read_cache_uuid(char *fileName, char** uuid, int global) {
+
 	SystemRegistrationId *sysReg = NULL;
-	if (parse_cache_uuid(fileName, sysReg)) {
+
+	if (parse_cache_uuid(fileName, &sysReg)) {
 		if (global && sysReg->globalUUID) {
+
 			*uuid = strdup(sysReg->globalUUID);
+            free_system_registration(sysReg);
 			return REG_STATUS_HAVE_UUID;
 		} else if (sysReg->localUUID){
+
 			*uuid = strdup(sysReg->localUUID);
+            free_system_registration(sysReg);
 			return REG_STATUS_HAVE_UUID;
 		}
 	}
@@ -309,14 +290,6 @@ static int read_cache_uuid(char *fileName, char** uuid, int global) {
 	return REG_STATUS_NO_UUID;
 }
 
-/*
- * send_request_to_init --
- *
- * create_request
- * serialize
- * send to init
- *
- */
 int send_request_to_init(ReqType reqType, Config *config, char* org,
 						 char *systemName, char **response, int global ) {
 
@@ -394,10 +367,6 @@ int send_request_to_init(ReqType reqType, Config *config, char* org,
 	return ret;
 }
 
-/*
- * existing_registration --
- *
- */
 int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 		 int global) {
 
@@ -438,7 +407,8 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 	if (queryResponse->systemID) {
 		*systemUUID = strdup(queryResponse->systemID);
 	}
-	log_info("Returning status 0x%X for %s registration", status, (queryResponse->systemID)?queryResponse->systemID:"null");
+	log_info("Returning status 0x%X for %s registration",
+             status, (queryResponse->systemID)?queryResponse->systemID:"null");
  return_function:
 	if (str)  free(str);
 	if (*cacheUUID) free (*cacheUUID);
@@ -450,7 +420,9 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
  * get_system_info -- get info about 'system' from the init.
  *
  */
-int get_system_info(Config *config, char *org, char *systemName, char **systemInfo, int global) {
+int get_system_info(Config *config, char *org,
+                    char *systemName, char **systemInfo,
+                    int global) {
 
 	int status=QUERY_OK;
 	char *str=NULL;

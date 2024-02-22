@@ -52,19 +52,20 @@ static void free_message(Message *message) {
     free(message);
 }
 
-/*
- * is_websocket_valid --
- *
- */
 static int is_websocket_valid(WSManager *manager, MapItem *map) {
+
+    Config *config = NULL;
 
     if (manager == NULL || map == NULL) return FALSE;
 
     if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
         log_debug("Websocket is closed with node: %s", map->nodeInfo->nodeID);
 
+        config = (Config *)map->configData;
+
         /* publish event on AMQP */
         if (publish_event(CONN_CLOSE,
+                          config->orgName,
                           map->nodeInfo->nodeID,
                           map->nodeInfo->nodeIP,
                           map->nodeInfo->nodePort,
@@ -260,6 +261,7 @@ void websocket_onclose(const URequest *request,
                        void *data) {
 
     MapItem *map=NULL;
+    Config *config=NULL;
 
     map = is_existing_item(NodesTable, (char *)data);
     if (map == NULL) {
@@ -268,8 +270,11 @@ void websocket_onclose(const URequest *request,
         return;
     }
 
+    config = (Config *)map->configData;
+
 	if (map->nodeInfo) {
         if (publish_event(CONN_CLOSE,
+                          config->orgName,
                           map->nodeInfo->nodeID,
                           map->nodeInfo->nodeIP,
                           map->nodeInfo->nodePort,

@@ -152,19 +152,19 @@ int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json) {
 }
 
 int deserialize_uuids_from_file(char* str, SystemRegistrationId** sysReg) {
+
 	int ret=TRUE;
 	json_t *json=NULL;
 	json_t *gUUID, *lUUID;
+
 	json = json_loads(str, JSON_DECODE_ANY, NULL);
 	if (!json) {
 		log_error("Can not load str into JSON object. Str: %s", str);
 		return FALSE;
 	}
 
-	gUUID   = json_object_get(json, JSON_GLOBAL_UUID);
-	lUUID   = json_object_get(json, JSON_LOCAL_UUID);
-
-
+	gUUID = json_object_get(json, JSON_GLOBAL_UUID);
+	lUUID = json_object_get(json, JSON_LOCAL_UUID);
 
 	*sysReg = (SystemRegistrationId *)calloc(1, sizeof(SystemRegistrationId));
 	if (*sysReg == NULL) {
@@ -182,7 +182,7 @@ int deserialize_uuids_from_file(char* str, SystemRegistrationId** sysReg) {
 		(*sysReg)->localUUID  = strdup(json_string_value(lUUID));
 	}
 
-	 failure:
-		json_decref(json);
-		return ret;
+failure:
+    json_decref(json);
+    return ret;
 }
