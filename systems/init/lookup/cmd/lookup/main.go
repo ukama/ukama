@@ -9,16 +9,18 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"github.com/num30/config"
-	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	"github.com/ukama/ukama/systems/init/lookup/internal/server"
 	"gopkg.in/yaml.v3"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -58,6 +60,11 @@ func initDb() sql.Db {
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
+	orgDB := d.GetGormDb()
+
+	initOrgDB(orgDB)
+
 	return d
 }
 
@@ -104,9 +111,11 @@ func runGrpcServer(d sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
+	go grpcServer.StartServer()
+
 	go msgBusListener(mbClient)
 
-	grpcServer.StartServer()
+	waitForExit()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
@@ -118,4 +127,50 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
 	}
+}
+
+func initOrgDB(orgDB *gorm.DB) {
+	if orgDB.Migrator().HasTable(&db.Org{}) {
+		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Initializing orgs table")
+
+			var OrgUUID uuid.UUID
+			var err error
+
+			if OrgUUID, err = uuid.FromString(serviceConfig.OrgId); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGID", err)
+			}
+
+			org := &db.Org{
+				OrgId: OrgUUID,
+				Name:  serviceConfig.OrgName,
+			}
+
+			if err := orgDB.Transaction(func(tx *gorm.DB) error {
+
+				if err := tx.Create(org).Error; err != nil {
+					return err
+				}
+				return nil
+
+			}); err != nil {
+				log.Fatalf("Database initialization failed, invalid initial state. Error: %v", err)
+			}
+		}
+	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", internal.ServiceName)
 }
