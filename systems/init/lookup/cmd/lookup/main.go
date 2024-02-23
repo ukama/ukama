@@ -142,8 +142,9 @@ func initOrgDB(orgDB *gorm.DB) {
 			}
 
 			org := &db.Org{
-				OrgId: OrgUUID,
-				Name:  serviceConfig.OrgName,
+				OrgId:       OrgUUID,
+				Name:        serviceConfig.OrgName,
+				Certificate: "none",
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
