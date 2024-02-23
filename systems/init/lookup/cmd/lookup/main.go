@@ -12,6 +12,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/jackc/pgtype"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -141,10 +142,14 @@ func initOrgDB(orgDB *gorm.DB) {
 				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGID", err)
 			}
 
+			var orgIp pgtype.Inet
+			orgIp.Status = pgtype.Null
+
 			org := &db.Org{
 				OrgId:       OrgUUID,
 				Name:        serviceConfig.OrgName,
 				Certificate: "none",
+				Ip:          orgIp,
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
