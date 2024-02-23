@@ -75,7 +75,7 @@ type simManager interface {
 	DeleteSim(simId string) (*simMangPb.DeleteSimResponse, error)
 	GetPackagesForSim(simId string) (*simMangPb.GetPackagesBySimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
-	GetUsages(iccid, simType, cdrType, from, to string) (*simMangPb.UsageResponse, error)
+	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
 }
 
 type subscriber interface {
@@ -423,7 +423,7 @@ func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageR
 			Message: "cdr_type is a mandatory query parameter"}
 	}
 
-	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To)
+	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To, req.Region)
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {

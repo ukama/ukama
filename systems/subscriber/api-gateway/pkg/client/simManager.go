@@ -117,7 +117,7 @@ func (sm *SimManager) SetActivePackageForSim(req *pb.SetActivePackageRequest) (*
 	return sm.client.SetActivePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to string) (*pb.UsageResponse, error) {
+func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string) (*pb.UsageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
@@ -128,5 +128,6 @@ func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to string) (*pb.U
 			Type:    cdrType,
 			From:    from,
 			To:      to,
+			Region:  region,
 		})
 }
