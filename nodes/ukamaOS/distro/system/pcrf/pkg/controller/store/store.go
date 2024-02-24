@@ -592,7 +592,7 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session
 
 	// Check if Data in Usage is less than Policy for rerouting
 	if usage.Data >= subscriber.PolicyID.Data {
-		log.Errorf("can't create flows. UE %s has reached max data cap.", subscriber.Imsi)
+		log.Errorf("can't create flows. UE %s usage %d has reached max data cap of %d.", subscriber.Imsi, usage.Data, subscriber.PolicyID.Data)
 		return nil, nil, nil, fmt.Errorf("max data cap exceeded")
 	}
 
