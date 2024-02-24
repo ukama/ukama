@@ -103,8 +103,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		pcrf := auth.Group("/pcrf", "PCRF", "pcrf")
 
 		s := pcrf.Group("/session", "session", "session")
-		s.POST("/imsi/:imsi", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
-		s.DELETE("/imsi/:imsi", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
+		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
+		s.DELETE("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
 		s.GET("/:id", formatDoc("Get session", "Get a particular session"), tonic.Handler(r.getSessionByID, http.StatusOK))
 
 		// cdr
