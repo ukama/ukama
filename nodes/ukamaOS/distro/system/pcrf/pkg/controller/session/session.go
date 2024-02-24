@@ -42,7 +42,7 @@ type SessionManager interface {
 }
 
 func NewSessionManager(rc client.RemoteController, store *store.Store, br pkg.BrdigeConfig) *sessionManager {
-	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Managemant)
+	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Management)
 	if err != nil {
 		log.Fatalf("error initializing session manager. Error: %s", err.Error())
 	}
