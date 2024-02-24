@@ -148,7 +148,11 @@ func (s *sessionManager) EndAllSessions() error {
 
 func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) error {
 
-	sc := s.cache[sub.Imsi]
+	sc, ok := s.cache[sub.Imsi]
+	if !ok {
+		log.Errorf("failed to find session for Imsi %s", sub.Imsi)
+		return nil
+	}
 
 	/* Stop montioring*/
 	err := s.StopSessionMonitor(ctx, sub.Imsi)
