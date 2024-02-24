@@ -9,7 +9,9 @@
 package rest
 
 import (
+	"encoding/binary"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -136,6 +138,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 	log.Infof("Recieved request for create session: %v", req)
 	req.ImsiStr = uintArrayToString(req.Imsi)
+	req.IpStr = uintToIp(req.Ip)
 	return r.controller.CreateSession(c, req)
 }
 
@@ -203,4 +206,10 @@ func uintArrayToString(array []uint8) string {
 	}
 	log.Debugf("Byte %v to string %s", array, str)
 	return str
+}
+
+func uintToIp(nn uint32) string {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, nn)
+	return ip.String()
 }

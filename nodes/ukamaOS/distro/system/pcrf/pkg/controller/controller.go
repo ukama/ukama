@@ -199,13 +199,13 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	}
 
 	/* Check if session already exist wiath same ip */
-	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.Ip)
+	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.IpStr)
 	if state {
-		log.Errorf("Session already exist for %s user with ip %s", sub.Imsi, req.Ip)
+		log.Errorf("Session already exist for %s user with ip %s", sub.Imsi, req.IpStr)
 		return nil
 	} else {
 		/* create session */
-		s, rxF, txF, err := c.store.CreateSession(sub, req.Ip)
+		s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr)
 		if err != nil {
 			log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.ImsiStr, err)
 			return err

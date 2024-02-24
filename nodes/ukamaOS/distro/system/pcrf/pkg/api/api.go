@@ -14,7 +14,8 @@ type CreateSession struct {
 	Imsi    []uint8 `json:"imsi" validate:"required"`
 	ImsiStr string  `json:"imsi_str,omitempty"`
 	ApnName string  `json:"apn_name"`
-	Ip      string  `json:"ip" validate:"required"`
+	Ip      uint32  `json:"ip" validate:"required"`
+	IpStr   string  `json:"ip_str,omitempty"`
 }
 
 type EndSession struct {
