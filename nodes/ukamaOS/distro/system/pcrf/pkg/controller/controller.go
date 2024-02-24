@@ -175,7 +175,7 @@ func (c *Controller) updateSubscriberProfile(imsi string, p *api.Policy, ip stri
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
-	log.Infof("New session request recived for subscriber %s and Ip address %s", req.ImsiStr, req.Ip)
+	log.Infof("New session request received for subscriber %s and Ip address %s", req.ImsiStr, req.IpStr)
 	/* validate subscriber*/
 	/* TODO: Validate subscriber should always get the values from the remote  server
 	just to make sure the usage values are correct or we could have some timeouts

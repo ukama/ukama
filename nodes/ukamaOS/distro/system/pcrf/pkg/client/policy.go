@@ -18,8 +18,8 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const ProfileEndpoint = "/v1/policy/imsi/"
-const CDREndpoint = "/v1/cdr/imsi/"
+const ProfileEndpoint = "/v1/policy/imsi"
+const CDREndpoint = "/v1/cdr/imsi"
 
 type RemoteController interface {
 	GetSubscriberProfile(imsi string) (*api.Spr, error)
