@@ -586,13 +586,13 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 	if err != nil {
 		return err
 	}
+	log.Infof("Subscriber %s has usage %+v.", imsi, u)
 
 	if u.Data < p.Data {
 		log.Errorf("Subscriber has usage %+v reached max data cap of %d", u, p.Data)
 		return fmt.Errorf("max data cap hit")
 	}
 
-	log.Infof("Subscriber %s has usage %+v reached", imsi, u)
 	return nil
 }
 
@@ -774,6 +774,7 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 		return nil, err
 	}
 
+	log.Debugf("Usage for imsi: %s is %+v", imsi, usage)
 	return &usage, nil
 }
 
@@ -804,6 +805,7 @@ func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 		return nil, err
 	}
 	policy.ID, err = uuid.FromBytes(id)
+	log.Debugf("Policy with is %s is %+v", policyID.String(), policy)
 	return &policy, err
 }
 
@@ -820,6 +822,7 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 	}
 
 	policy.ID, err = uuid.FromBytes(id)
+	log.Debugf("Policy for imsi %s is %+v", imsi, policy)
 	return &policy, err
 }
 

@@ -49,7 +49,7 @@ func NewConfig(name string) *Config {
 
 	return &Config{
 		BaseConfig: config.BaseConfig{
-			DebugMode: false,
+			DebugMode: true,
 		},
 		Bridge: BrdigeConfig{
 			Name:       "br0",
