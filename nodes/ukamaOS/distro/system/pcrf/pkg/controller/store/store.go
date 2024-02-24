@@ -581,6 +581,21 @@ func (s *Store) UpdateSessionState(id int, state SessionState) error {
 	return err
 }
 
+func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
+	u, err := s.GetUsageByImsi(imsi)
+	if err != nil {
+		return err
+	}
+
+	if u.Data < p.Data {
+		log.Errorf("Subscriber has usage %+v reached max data cap of %d", u, p.Data)
+		return fmt.Errorf("max data cap hit")
+	}
+
+	log.Infof("Subscriber %s has usage %+v reached", imsi, u)
+	return nil
+}
+
 func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string) (*Session, *Flow, *Flow, error) {
 
 	/* TODO: Check if required here vaildate if user has enough data */
@@ -760,6 +775,24 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 	}
 
 	return &usage, nil
+}
+
+func (s *Store) ResetUsageByImsi(imsi string) error {
+
+	u, err := s.GetUsageByImsi(imsi)
+	if err != nil {
+		log.Errorf("failed to get usage for imsi %s: %v", imsi, err)
+		return err
+	}
+	log.Infof("Reseting usage %+v for imsi %s", u, imsi)
+	u.Data = 0
+	err = s.UpdateUsage(u)
+	if err != nil {
+		log.Errorf("failed to reset usage for imsi %s: %v", imsi, err)
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
@@ -1284,12 +1317,26 @@ func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 func (s *Store) UpdateSubscriberDetails(sub *Subscriber, p *uuid.UUID, id *int) error {
 	// Subscriber already exists, update the policy
 	if p != nil {
+
+		if sub.PolicyID.ID.String() == p.String() {
+			log.Errorf("Subscriber %+v is already have policy %s assigned.", sub, p.String())
+			return fmt.Errorf("policy %s is already assigned", p.String())
+		}
+
 		err := s.UpdateSubscriberPolicy(sub, *p)
 		if err != nil {
 			log.Errorf("Failed to update policy %s for the subscriber %s.Error %s", p.String(), sub.Imsi, err.Error())
 			return err
 		}
 		log.Infof("Policy %s assigned to the new subscriber %s.", p.String(), sub.Imsi)
+
+		// Policy is updated ths means new policy is assigned and new data caps are available
+		err = s.ResetUsageByImsi(sub.Imsi)
+		if err != nil {
+			log.Errorf("Failed to reset usage for the subscriber %s.Error %s", sub.Imsi, err.Error())
+			return err
+		}
+
 	}
 
 	if id != nil {

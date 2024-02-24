@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -12,19 +13,20 @@ import (
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/datapath"
 )
 
-type Cache struct {
-	imsi    string
-	ip      string
-	rxMeter uint32
-	txMeter uint32
-}
+// type Cache struct {
+// 	imsi    string
+// 	ip      string
+// 	rxMeter uint32
+// 	txMeter uint32
+// }
 
 type sessionCache struct {
-	s        *store.Session
-	txCookie uint64
-	rxCookie uint64
-	cancel   context.CancelFunc
-	ctx      context.Context
+	s         *store.Session
+	txCookie  uint64
+	rxCookie  uint64
+	InitUsage uint64
+	cancel    context.CancelFunc
+	ctx       context.Context
 }
 type sessionManager struct {
 	period time.Duration `default:"2s"`
@@ -74,17 +76,36 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 	/* Update to DB */
 	if lastStats {
+		/* This adds the stats for TX and RX and store them*/
 		err = s.store.EndSession(sc.s)
 		if err != nil {
 			log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		}
-	} else {
 
+	} else {
+		sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
 		err = s.store.UpdateSessionUsage(sc.s)
 		if err != nil {
 			log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 		}
+
+		p, err := s.store.GetApplicablePolicyByImsi(imsi)
+		if err != nil {
+			log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
+			return err
+		}
+
+		totalUsage := sc.InitUsage + sc.s.TotalBytes
+		if totalUsage >= p.Data {
+			/* this means we need to terminates session */
+			log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
+			_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
+			return fmt.Errorf("max data cap limit exceeded")
+		}
+
 	}
+
+	log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
 
 	/* Update session */
 	s.cache[imsi] = sc
@@ -113,8 +134,16 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 		rxCookie: rxf.Cookie,
 	}
 
+	/* Get usage for before session creation */
+	u, err := s.store.GetUsageByImsi(sub.Imsi)
+	if err != nil {
+		log.Errorf("Error getting usage for Imsi %s.Error: %s", sub.Imsi, err.Error())
+		return err
+	}
+	sc.InitUsage = u.Data
+
 	/* Add new data path */
-	err := s.d.AddNewDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID),
+	err = s.d.AddNewDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID),
 		uint32(sc.s.TxMeterID.Rate), uint32(sc.s.RxMeterID.Rate), uint32(sc.s.RxMeterID.Burst),
 		sc.rxCookie, sc.txCookie)
 	if err != nil {
