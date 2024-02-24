@@ -175,25 +175,25 @@ func (c *Controller) updateSubscriberProfile(imsi string, p *api.Policy, ip stri
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
-	log.Infof("New session request recived for subscriber %s and Ip address %s", req.Imsi, req.Ip)
+	log.Infof("New session request recived for subscriber %s and Ip address %s", req.ImsiStr, req.Ip)
 	/* validate subscriber*/
 	/* TODO: Validate subscriber should always get the values from the remote  server
 	just to make sure the usage values are correct or we could have some timeouts
 	if the new session is started like with in 60 secs then we can consider same values
 	just to avoid makking duplicate requests
 	*/
-	sub, err = c.validateSusbcriber(req.Imsi)
+	sub, err = c.validateSusbcriber(req.ImsiStr)
 	if err != nil {
 		/* Get subscriber policy from remote */
-		spr, err := c.rc.GetSubscriberProfile(req.Imsi)
+		spr, err := c.rc.GetSubscriberProfile(req.ImsiStr)
 		if err != nil {
-			log.Errorf("Failed to get subscriber %s policy.Error: %v", req.Imsi, err)
+			log.Errorf("Failed to get subscriber %s policy.Error: %v", req.ImsiStr, err)
 			return err
 		}
 
-		sub, err = c.updateSubscriberProfile(req.Imsi, &spr.Policy, spr.ReRoute, &spr.Usage)
+		sub, err = c.updateSubscriberProfile(req.ImsiStr, &spr.Policy, spr.ReRoute, &spr.Usage)
 		if err != nil {
-			log.Errorf("Failed to update subscriber %s with policy %s.Error: %v", req.Imsi, spr.Policy.Uuid.String(), err)
+			log.Errorf("Failed to update subscriber %s with policy %s.Error: %v", req.ImsiStr, spr.Policy.Uuid.String(), err)
 			return err
 		}
 	}
@@ -207,14 +207,14 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 		/* create session */
 		s, rxF, txF, err := c.store.CreateSession(sub, req.Ip)
 		if err != nil {
-			log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.Imsi, err)
+			log.Errorf("Failed to create a session for subscriber %s:Error: %v", req.ImsiStr, err)
 			return err
 		}
 
 		/* create UE data path and monitoring session */
 		err = c.sm.CreateSesssion(ctx, sub, s, rxF, txF)
 		if err != nil {
-			log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.Imsi, err)
+			log.Errorf("Failed to monitor session on bridge for subscriber %s:Error: %v", req.ImsiStr, err)
 			return err
 		}
 	}
@@ -223,15 +223,15 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 
 func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
 
-	sub, err := c.store.GetSubscriber(req.Imsi)
+	sub, err := c.store.GetSubscriber(req.ImsiStr)
 	if err != nil {
-		log.Errorf("failed to get subscriber for imsi %s:Error: %v", req.Imsi, err)
+		log.Errorf("failed to get subscriber for imsi %s:Error: %v", req.ImsiStr, err)
 		return err
 	}
 
 	err = c.sm.EndSession(ctx, sub)
 	if err != nil {
-		log.Errorf("Failed to end session on bridge for subscriber %s:Error: %v", req.Imsi, err)
+		log.Errorf("Failed to end session on bridge for subscriber %s:Error: %v", req.ImsiStr, err)
 		return err
 	}
 	return nil

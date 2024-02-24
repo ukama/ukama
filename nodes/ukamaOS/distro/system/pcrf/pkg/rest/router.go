@@ -133,10 +133,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
+	req.ImsiStr = string(req.Imsi)
 	return r.controller.CreateSession(c, req)
 }
 
 func (r *Router) endSession(c *gin.Context, req *api.EndSession) error {
+	req.ImsiStr = string(req.Imsi)
 	return r.controller.EndSession(c, req)
 }
 
