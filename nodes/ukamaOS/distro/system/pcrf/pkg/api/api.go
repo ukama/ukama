@@ -11,15 +11,15 @@ package api
 import "github.com/ukama/ukama/systems/common/uuid"
 
 type CreateSession struct {
-	Imsi    []byte `json:"imsi" validate:"required"`
-	ImsiStr string `json:"imsi_str,omitempty"`
-	ApnName string `json:"apn_name"`
-	Ip      string `json:"ip" validate:"required"`
+	Imsi    []uint8 `json:"imsi" validate:"required"`
+	ImsiStr string  `json:"imsi_str,omitempty"`
+	ApnName string  `json:"apn_name"`
+	Ip      string  `json:"ip" validate:"required"`
 }
 
 type EndSession struct {
-	Imsi    []byte `json:"imsi" validate:"required"`
-	ImsiStr string `json:"imsi_str,omitempty"`
+	Imsi    []uint8 `json:"imsi" validate:"required"`
+	ImsiStr string  `json:"imsi_str,omitempty"`
 }
 
 type GetSessionByID struct {

@@ -11,6 +11,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -133,12 +134,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
-	req.ImsiStr = string(req.Imsi)
+	log.Infof("Recieved request for create session: %v", req)
+	req.ImsiStr = uintArrayToString(req.Imsi)
 	return r.controller.CreateSession(c, req)
 }
 
 func (r *Router) endSession(c *gin.Context, req *api.EndSession) error {
-	req.ImsiStr = string(req.Imsi)
+	log.Infof("Recieved request for end session: %v", req)
+	req.ImsiStr = uintArrayToString(req.Imsi)
 	return r.controller.EndSession(c, req)
 }
 
@@ -191,4 +194,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func uintArrayToString(array []uint8) string {
+	str := ""
+	for _, i := range array {
+		str = str + strconv.Itoa(int(i))
+	}
+	log.Debugf("Byte %v to string %s", array, str)
+	return str
 }
