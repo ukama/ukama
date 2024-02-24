@@ -11,7 +11,7 @@ package api
 import "github.com/ukama/ukama/systems/common/uuid"
 
 type CreateSession struct {
-	Imsi    []byte `json:"imsi" path:"imsi" validate:"required"`
+	Imsi    []uint8 `json:"imsi" path:"imsi" validate:"required"`
 	ImsiStr string `json:"imsi_str,omitempty"`
 	ApnName string `json:"apn_name"`
 	Ip      string `json:"ip" validate:"required"`
