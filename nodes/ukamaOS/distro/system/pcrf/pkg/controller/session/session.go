@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/datapath"
@@ -40,8 +41,8 @@ type SessionManager interface {
 	EndAllSessions() error
 }
 
-func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip, netType string, period time.Duration) *sessionManager {
-	d, err := datapath.InitDataPath(name, ip, netType)
+func NewSessionManager(rc client.RemoteController, store *store.Store, br pkg.BrdigeConfig) *sessionManager {
+	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Managemant)
 	if err != nil {
 		log.Fatalf("error initializing session manager. Error: %s", err.Error())
 	}
@@ -49,7 +50,7 @@ func NewSessionManager(rc client.RemoteController, store *store.Store, name, ip,
 	s := &sessionManager{
 		d:      d,
 		store:  store,
-		period: period,
+		period: br.Period,
 		rc:     rc,
 		cache:  make(map[string]*sessionCache),
 	}

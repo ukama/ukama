@@ -49,7 +49,7 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Du
 		return nil, err
 	}
 
-	c.sm = session.NewSessionManager(rc, store, br.Name, br.Ip, br.NetType, br.Period)
+	c.sm = session.NewSessionManager(rc, store, br)
 	c.store = store
 	c.rc = rc
 	c.publisher = newPublisher(period)

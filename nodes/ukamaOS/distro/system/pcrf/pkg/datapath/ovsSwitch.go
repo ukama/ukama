@@ -81,7 +81,7 @@ func (o *OfActor) TLVMapEnabledOnSwitch() bool {
 }
 
 // NewOvsSwitch Creates a new OVS switch instance
-func NewOvsSwitch(bridgeName, localIP, netType string) (*OvsSwitch, error) {
+func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, error) {
 
 	sw := new(OvsSwitch)
 
@@ -90,7 +90,7 @@ func NewOvsSwitch(bridgeName, localIP, netType string) (*OvsSwitch, error) {
 	sw.ctrler = ofctrl.NewController(sw.ofActor)
 	sw.bridgeName = bridgeName
 
-	mgmt := fmt.Sprintf("/var/run/openvswitch/%s.mgmt", bridgeName)
+	mgmt := fmt.Sprintf("%s/%s.mgmt", mgmtPath, bridgeName)
 	go sw.ctrler.Connect(mgmt)
 
 	//wait for 8sec and see if switch connects

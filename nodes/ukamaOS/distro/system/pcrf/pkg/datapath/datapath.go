@@ -16,10 +16,10 @@ type DataPath interface {
 	DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error)
 }
 
-func InitDataPath(name, ip, netType string) (*dataPath, error) {
+func InitDataPath(name, ip, netType, mgmt string) (*dataPath, error) {
 	var err error
 	d := &dataPath{ueCount: 0}
-	d.ovs, err = NewOvsSwitch(name, ip, netType)
+	d.ovs, err = NewOvsSwitch(name, ip, netType, mgmt)
 	if err != nil {
 		log.Errorf("error connecting bridge %s at %s .Error: %v", name, ip, err)
 		return nil, err

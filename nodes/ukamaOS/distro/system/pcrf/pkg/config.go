@@ -29,10 +29,11 @@ type Config struct {
 }
 
 type BrdigeConfig struct {
-	Name    string `default:"gtpbr"`
-	Ip      string `default:"10.0.0.1"`
-	NetType string
-	Period  time.Duration `default:"2s"`
+	Name       string `default:"br0"`
+	Ip         string `default:"10.10.10.1"`
+	NetType    string
+	Period     time.Duration `default:"2s"`
+	Managemant string        `default:"/usr/local/var/run/openvswitch"`
 }
 
 type HttpEndpoints struct {
