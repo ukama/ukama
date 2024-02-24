@@ -58,7 +58,7 @@ func NewConfig(name string) *Config {
 		},
 		DB: name,
 		Server: rest.HttpConfig{
-			Port: 8080,
+			Port: 8090,
 			Cors: defaultCors,
 		},
 
