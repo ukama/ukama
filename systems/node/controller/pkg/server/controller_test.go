@@ -118,7 +118,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	msg := &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	}
-	data, err := proto.Marshal(msg)
+	_, err := proto.Marshal(msg)
 	if err != nil {
 		return
 	}
@@ -132,7 +132,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	msg = &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	}
-	data, err = proto.Marshal(msg)
+	data, err := proto.Marshal(msg)
 	if err != nil {
 		return
 	}
