@@ -48,7 +48,7 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 }
 
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
-	log.Debugf("Posting  CDR: %v", req)
+	log.Debugf("Posting  CDR: %+v", req)
 
 	url := r.u.String() + "/" + CDREndpoint + req.Imsi
 

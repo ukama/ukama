@@ -62,60 +62,64 @@ func NewSessionManager(rc client.RemoteController, store *store.Store, br pkg.Br
 
 func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 	var err error
-	sc := s.cache[imsi]
+	sc, ok := s.cache[imsi]
+	if ok {
 
-	/* Read sats */
-	sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
-	if err != nil {
-		log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-		return err
-	}
-	log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
-
-	//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
-
-	/* Update to DB */
-	if lastStats {
-		/* This adds the stats for TX and RX and store them*/
-		err = s.store.EndSession(sc.s)
+		/* Read sats */
+		sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
 		if err != nil {
-			log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-		}
-
-	} else {
-		sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
-		err = s.store.UpdateSessionUsage(sc.s)
-		if err != nil {
-			log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-		}
-
-		p, err := s.store.GetApplicablePolicyByImsi(imsi)
-		if err != nil {
-			log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
+			log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 			return err
 		}
+		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
 
-		totalUsage := sc.InitUsage + sc.s.TotalBytes
-		if totalUsage >= p.Data {
-			/* this means we need to terminates session */
-			log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
-			_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
-			return fmt.Errorf("max data cap limit exceeded")
+		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
+
+		/* Update to DB */
+		if lastStats {
+			/* This adds the stats for TX and RX and store them*/
+			err = s.store.EndSession(sc.s)
+			if err != nil {
+				log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+			}
+
+		} else {
+			sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
+			err = s.store.UpdateSessionUsage(sc.s)
+			if err != nil {
+				log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+			}
+
+			p, err := s.store.GetApplicablePolicyByImsi(imsi)
+			if err != nil {
+				log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
+				return err
+			}
+
+			totalUsage := sc.InitUsage + sc.s.TotalBytes
+			if totalUsage >= p.Data {
+				/* this means we need to terminates session */
+				log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
+				_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
+				return fmt.Errorf("max data cap limit exceeded")
+			}
+
 		}
 
+		log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
+
+		/* Update session */
+		s.cache[imsi] = sc
+	} else {
+		log.Errorf("Session for Imsi %s not found.", imsi)
+		return fmt.Errorf("session for imsi not found: %s", imsi)
 	}
-
-	log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
-
-	/* Update session */
-	s.cache[imsi] = sc
-
 	return err
 }
 
 func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bool {
-	sc := s.cache[imsi]
-	if sc != nil {
+	sc, ok := s.cache[imsi]
+	if ok {
 		if sc.s.UeIpAddr == ip {
 			return true
 		} else {
@@ -166,11 +170,12 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 }
 
 func (s *sessionManager) EndAllSessions() error {
-	for imsi, _ := range s.cache {
+	for imsi, session := range s.cache {
 		err := s.EndSession(context.Background(), &store.Subscriber{Imsi: imsi})
 		if err != nil {
 			log.Errorf("Failed to end session for Imsi %s.Error %s", imsi, err.Error())
 		}
+		log.Infof("Ending session %+v for Imsi %s.", session, imsi)
 	}
 	return nil
 }
