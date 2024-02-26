@@ -29,15 +29,16 @@ var svcConf *pkg.Config
 
 func main() {
 
-	if svcConf.DebugMode {
-		log.SetLevel(log.DebugLevel)
-	}
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan bool, 1)
 
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
+
+	if svcConf.DebugMode {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	log.Infof("Starting pcrf controller service %s", pkg.ServiceName)
 
