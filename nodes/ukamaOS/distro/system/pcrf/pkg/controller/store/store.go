@@ -816,7 +816,7 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 		SELECT * FROM policies
 		WHERE id = (SELECT policy_id FROM subscribers WHERE imsi = ?)
 	`, imsi).
-		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
+		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.StartTime, &policy.EndTime, &policy.Burst)
 	if err != nil {
 		return nil, err
 	}
