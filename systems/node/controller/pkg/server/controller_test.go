@@ -27,7 +27,6 @@ import (
 
 const testOrgName = "test-org"
 
-var orgId = uuid.NewV4()
 
 func TestControllerServer_RestartSite(t *testing.T) {
 	// Arrange
