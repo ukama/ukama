@@ -222,9 +222,9 @@ func (_m *simManager) GetSimsBySub(subscriberId string) (*gen.GetSimsBySubscribe
 	return r0, r1
 }
 
-// GetUsages provides a mock function with given fields: iccid, simType, cdrType, from, to
-func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, from string, to string) (*gen.UsageResponse, error) {
-	ret := _m.Called(iccid, simType, cdrType, from, to)
+// GetUsages provides a mock function with given fields: iccid, simType, cdrType, from, to, region
+func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, from string, to string, region string) (*gen.UsageResponse, error) {
+	ret := _m.Called(iccid, simType, cdrType, from, to, region)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsages")
@@ -232,19 +232,19 @@ func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, fr
 
 	var r0 *gen.UsageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (*gen.UsageResponse, error)); ok {
-		return rf(iccid, simType, cdrType, from, to)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) (*gen.UsageResponse, error)); ok {
+		return rf(iccid, simType, cdrType, from, to, region)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string) *gen.UsageResponse); ok {
-		r0 = rf(iccid, simType, cdrType, from, to)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) *gen.UsageResponse); ok {
+		r0 = rf(iccid, simType, cdrType, from, to, region)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UsageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string) error); ok {
-		r1 = rf(iccid, simType, cdrType, from, to)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string) error); ok {
+		r1 = rf(iccid, simType, cdrType, from, to, region)
 	} else {
 		r1 = ret.Error(1)
 	}
