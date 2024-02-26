@@ -1139,8 +1139,10 @@ func (s *Store) UpdateFlow(flow *Flow) error {
 
 /* CRUD operations for Policy entity */
 func (s *Store) InsertPolicy(policy *Policy) error {
+	/* PolicyID always have to be new even if it's a same plan.
+	This ID will be genrated by SPR for subscriber */
 	_, err := s.db.Exec(`
-		INSERT OR IGNORE INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst)
+		INSERT INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst)
 		VALUES (?, ?, ?, ?, ?, ?, ?);
 	`, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst)
 	return err
