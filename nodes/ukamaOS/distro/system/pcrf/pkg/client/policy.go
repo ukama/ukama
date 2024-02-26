@@ -50,7 +50,7 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	log.Debugf("Posting  CDR: %+v", req)
 
-	url := r.u.String() + "/" + CDREndpoint + "/" + req.Imsi
+	url := r.u.String() + CDREndpoint + "/" + req.Imsi
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -59,6 +59,9 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	}
 
 	_, err = r.R.C.R().
+		SetHeaders(map[string]string{
+			"Content-Type": "application/json",
+		}).
 		SetBody(b).
 		Post(url)
 	if err != nil {
