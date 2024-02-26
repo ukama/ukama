@@ -195,14 +195,9 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 		return err
 	}
 
-	// /* Read sats */
-	// sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
-	// if err != nil {
-	// 	log.Errorf("Failed to read final stats for data path of Imsi %s. Error: %s", sub.Imsi, err.Error())
-	// 	return err
-	// }
+	_ = s.storeStats(sc.s.SubscriberID.Imsi, true)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 
 	/* Delete the UE Data path */
 	err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
@@ -221,11 +216,8 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 		log.Warnf("Failed to push cdr %+v to cloud for Imsi %s. Error: %s", c, sub.Imsi, err.Error())
 	}
 
-	/* Update sync state */
-	sc.s.Sync = store.SessionSyncReady
-
-	/* Update to DB */
-	err = s.store.UpdateSessionEndUsage(sc.s)
+	/* Update usage to DB */
+	err = s.store.EndSession(sc.s)
 	if err != nil {
 		log.Warnf("Failed to update session to db store for Imsi %s. Error: %s", sub.Imsi, err.Error())
 	}
@@ -271,7 +263,6 @@ func (s *sessionManager) sessionMonitorRoutine(ctx context.Context, interval tim
 
 		case <-ctx.Done():
 			// Context canceled, exit the goroutine
-			_ = s.storeStats(sc.s.SubscriberID.Imsi, true)
 			log.Infof("[SessionId %d ] Exiting montoring for subscriber %s", sc.s.ID, sc.s.SubscriberID.Imsi)
 			return
 		}
