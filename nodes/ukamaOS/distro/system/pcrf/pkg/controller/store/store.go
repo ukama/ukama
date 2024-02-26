@@ -1360,7 +1360,7 @@ func (s *Store) UpdateSubscriberDetails(sub *Subscriber, p *uuid.UUID, id *int) 
 func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID, id *int) error {
 
 	// Check if the subscriber already exists
-	subscriber := &Subscriber{}
+	subscriber := &Subscriber{Imsi: ns.Imsi}
 	err := s.db.QueryRow("SELECT ID FROM subscribers WHERE Imsi = ?", ns.Imsi).Scan(&subscriber.ID)
 
 	if err == nil && subscriber.ID != 0 {
