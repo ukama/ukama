@@ -50,7 +50,7 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	log.Debugf("Posting  CDR: %+v", req)
 
-	url := r.u.String() + "/" + CDREndpoint + req.Imsi
+	url := r.u.String() + "/" + CDREndpoint + "/" + req.Imsi
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -70,7 +70,7 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 }
 
 func (r *remoteControllerClient) GetSubscriberProfile(imsi string) (*api.Spr, error) {
-	log.Debugf("Getting policy for ismi: %s", imsi)
+	log.Debugf("Getting policy for imsi: %s", imsi)
 
 	spr := &api.Spr{}
 	resp, err := r.R.C.R().Get(r.u.String() + ProfileEndpoint + "/" + imsi)

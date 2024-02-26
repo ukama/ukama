@@ -64,7 +64,7 @@ func NewConfig(name string) *Config {
 
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
-			Policy:  "http://localhost",
+			Policy:  "http://localhost:8087",
 		},
 		Metrics: *config.DefaultMetrics(),
 		//Auth:    config.LoadAuthHostConfig("auth"),
