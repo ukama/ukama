@@ -80,7 +80,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
 		mbClient, svcConf.DebugMode, providers.NewHealthClientProvider(svcConf.Health))
 	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
