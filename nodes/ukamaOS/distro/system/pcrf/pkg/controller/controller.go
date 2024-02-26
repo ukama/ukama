@@ -132,7 +132,7 @@ func (c *Controller) ExitController() error {
 
 }
 
-func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) {
+func (c *Controller) validateSubscriber(imsi string) (*store.Subscriber, error) {
 
 	/* Get subscriber policy by imsi*/
 	s, err := c.store.GetSubscriber(imsi)
@@ -141,22 +141,15 @@ func (c *Controller) validateSusbcriber(imsi string) (*store.Subscriber, error) 
 		return nil, err
 	}
 
-	/* store policy */
-	p, err := c.store.GetPolicyByID(s.PolicyID.ID)
-	if err != nil {
-		log.Errorf("Failed to get subscriber policy %d.Error: %v", s.PolicyID, err)
-		return nil, err
-	}
-
 	now := time.Now().Unix()
-	if p.StartTime > now || p.EndTime <= now {
+	if s.PolicyID.StartTime > now || s.PolicyID.EndTime <= now {
 		return nil, fmt.Errorf("failed to get valid policy")
 	}
 
 	/* TODO: Also get the usage from the remote cloud and add all the CDR usage after the last update time to it.
 	and then compare the value to allowed data cap if it is less than allowed data cap let the user establish session otherwise not.
 	*/
-	err = c.store.ValidateDataCapLimits(imsi, p)
+	err = c.store.ValidateDataCapLimits(imsi, &s.PolicyID)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +178,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	if the new session is started like with in 60 secs then we can consider same values
 	just to avoid makking duplicate requests
 	*/
-	sub, err = c.validateSusbcriber(req.ImsiStr)
+	sub, err = c.validateSubscriber(req.ImsiStr)
 	if err != nil {
 		/* Get subscriber policy from remote */
 		spr, err := c.rc.GetSubscriberProfile(req.ImsiStr)
