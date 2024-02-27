@@ -11,12 +11,13 @@ replace github.com/ukama/ukama/systems/ukama-agent/asr => ../asr
 require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20221225192258-9f8df15a9e8d
 	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.18.1
+	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.51.0
 )
 
@@ -29,7 +30,6 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

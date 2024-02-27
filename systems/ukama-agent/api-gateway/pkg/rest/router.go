@@ -31,6 +31,7 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
@@ -50,7 +51,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
 		clients: clients,
@@ -61,7 +62,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -71,6 +72,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
@@ -82,16 +84,33 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "ukama-agent ", "Ukama-agent system", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	v1 := r.f.Group("/v1", "ukama-agent ", "Ukama-agent system")
-
-	asr := v1.Group("/subscriber", "Asr", "Active susbcriber registry")
-	asr.GET("/:iccid", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
-	asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
-	asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
-	asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
+		asr := auth.Group("/subscriber", "Asr", "Active susbcriber registry")
+		asr.GET("/:iccid", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
+		asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
+		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+		asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
+	}
 
 }
 
