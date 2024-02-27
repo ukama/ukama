@@ -75,6 +75,7 @@ func sessionResponse(s *store.Session) *api.SessionResponse {
 		RxMeterId:  uint32(s.RxMeterID.ID),
 		State:      s.State.String(),
 		Sync:       s.Sync.String(),
+		UpdatedAt:  s.UpdatedAt,
 	}
 }
 

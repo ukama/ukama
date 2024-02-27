@@ -66,6 +66,7 @@ type Session struct {
 	RxMeterID    Meter
 	State        SessionState
 	Sync         SessionSync
+	UpdatedAt    uint64
 }
 
 type Meter struct {

@@ -154,6 +154,7 @@ type SessionResponse struct {
 	RxMeterId  uint32
 	State      string
 	Sync       string
+	UpdatedAt  uint64
 }
 
 type MeterResponse struct {

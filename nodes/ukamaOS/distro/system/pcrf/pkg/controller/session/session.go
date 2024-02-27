@@ -73,8 +73,10 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		}
 		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
 
-		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
+		tNow := time.Now().Unix()
+		sc.s.UpdatedAt = uint64(tNow)
 
+		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
 		/* Update to DB */
 		if lastStats {
 			/* This adds the stats for TX and RX and store them*/
