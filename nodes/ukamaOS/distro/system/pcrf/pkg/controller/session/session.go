@@ -117,7 +117,9 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 			}
 
 			/* If report is laready sent no need to send again */
-			if !sc.idleReportSent && tNow > (int64)(lastUpdate+uint64(s.idle)) {
+			temp := (int64)(lastUpdate + uint64(s.idle.Seconds()))
+			log.Debugf("[SessionId %d ] Subscriber %s Idle session report flag %v, time now %d and timeout Val %d", sc.s.ID, imsi, sc.idleReportSent, tNow, temp)
+			if !sc.idleReportSent && tNow > temp {
 				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %d secconds from %d.", sc.s.ID, imsi, s.idle, lastUpdate)
 				/* Sync data to cloud */
 				err = s.SendCDR(imsi)
