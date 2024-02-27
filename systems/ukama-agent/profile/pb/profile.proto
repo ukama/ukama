@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen";
 
 package ukama.ukama_agent.profile.v1;
 

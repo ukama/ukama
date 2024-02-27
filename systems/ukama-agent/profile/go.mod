@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/ukama-agent/profile
 
-go 1.18
+go 1.20
 
 require (
 	github.com/golang/protobuf v1.5.2
@@ -10,8 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-20221225192258-9f8df15a9e8d
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
+	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.28.1
@@ -20,23 +19,23 @@ require (
 
 require (
 	github.com/creasty/defaults v1.6.0 // indirect
+	github.com/gin-contrib/cors v1.3.0 // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/loopfz/gadgeto v0.9.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
+	github.com/wI2L/fizz v0.22.0 // indirect
+	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 )
 
 require (
-	github.com/gin-contrib/cors v1.3.0
-	github.com/gin-gonic/gin v1.7.7
-	github.com/gofrs/uuid v4.2.0+incompatible
-	github.com/jarcoal/httpmock v1.2.0
-	github.com/loopfz/gadgeto v0.9.0
 	github.com/num30/config v0.0.7
-	github.com/satori/go.uuid v1.2.0
 	github.com/tj/assert v0.0.3
-	github.com/wI2L/fizz v0.18.1
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -90,7 +89,6 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
@@ -102,10 +100,10 @@ require (
 	gorm.io/driver/postgres v1.3.5
 )
 
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
+
 replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/ukama-agent/profile => ./
 
 replace github.com/ukama/ukama/systems/ukama-agent/profile/mocks => ./mocks
-
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient

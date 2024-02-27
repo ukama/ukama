@@ -74,7 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	if serviceConfig.IsMsgBus {
-		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -87,7 +87,7 @@ func runGrpcServer(gormdb sql.Db) {
 	profile := db.NewProfileRepo(gormdb)
 
 	// profile service
-	pServer, err := server.NewProfileServer(profile, serviceConfig.Org, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyMonitor, serviceConfig.PolicyCheckPeriod)
+	pServer, err := server.NewProfileServer(profile, serviceConfig.OrgName, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyMonitor, serviceConfig.PolicyCheckPeriod)
 
 	if err != nil {
 		log.Fatalf("profile server initialization failed. Error: %v", err)

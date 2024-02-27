@@ -39,7 +39,7 @@ func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {
 			Iccid:                pf.Iccid,
 			Network:              pf.NetworkId.String(),
 			Package:              pf.PackageId.String(),
-			Org:                  p.Org,
+			Org:                  p.OrgName,
 			AllowedTimeOfService: pf.AllowedTimeOfService,
 			TotalDataBytes:       pf.TotalDataBytes,
 		},

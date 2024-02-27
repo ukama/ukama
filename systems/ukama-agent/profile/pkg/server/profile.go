@@ -12,6 +12,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
@@ -41,7 +42,7 @@ func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceC
 	}
 
 	if msgBus != nil {
-		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(org).SetService(pkg.ServiceName)
 	}
 
 	ps.PolicyController = policy.NewPolicyController(pRepo, org, msgBus, nodePath, monitor, period)
@@ -316,22 +317,29 @@ func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, 
 	return &pb.SyncResp{}, nil
 }
 
-func (s *ProfileServer) syncProfile(method string, p *db.Profile) {
+func (s *ProfileServer) syncProfile(method string, p *db.Profile) error {
 
+	route := s.baseRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 	body, err := json.Marshal(p)
 	if err != nil {
 		log.Errorf("error marshaling profile: %s", err.Error())
-		return
+		return err
 	}
 
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetAction("node-feed").SetObject("server").MustBuild()
-		err = s.msgbus.PublishToNodeFeeder(route, "*", s.Org, s.nodePolicyPath, method, body)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
-		}
+	msg := &cpb.NodeFeederMessage{
+		Target:     s.Org + "." + p.NetworkId.String() + "." + "*" + "." + "*",
+		HTTPMethod: "POST",
+		Path:       "/v1/pcrf/policy",
+		Msg:        body,
 	}
 
+	err = s.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+		return err
+	}
+	log.Infof("Published message %s on route %s with Target %s ", msg, route, msg.Target)
+	return nil
 }
 
 func (s *ProfileServer) publishEvent(action string, object string, msg protoreflect.ProtoMessage) error {

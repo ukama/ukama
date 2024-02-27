@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -16,7 +17,7 @@ type PolicyController struct {
 	Policy         []Policy
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	Org            string
+	OrgName        string
 	profileRepo    db.ProfileRepo
 	nodePolicyPath string
 	period         time.Duration
@@ -44,7 +45,7 @@ func (p *PolicyController) InitPolicyController() {
 func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, path string, monitor bool, period time.Duration) *PolicyController {
 	p := &PolicyController{
 		profileRepo:    pRepo,
-		Org:            org,
+		OrgName:        org,
 		msgbus:         msgBus,
 		nodePolicyPath: path,
 		period:         period,
@@ -52,7 +53,7 @@ func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServi
 	p.InitPolicyController()
 
 	if msgBus != nil {
-		p.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+		p.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(org).SetService(pkg.ServiceName)
 	}
 
 	p.pR = make(chan bool)
@@ -106,20 +107,27 @@ func (p *PolicyController) RunPolicyControl(imsi string) (error, bool) {
 
 func (p *PolicyController) syncProfile(method string, pf db.Profile) error {
 
+	route := "request.cloud.local" + "." + p.OrgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
+
 	body, err := json.Marshal(pf)
 	if err != nil {
 		log.Errorf("error marshaling profile: %s", err.Error())
 		return err
 	}
 
-	if p.msgbus != nil {
-		route := p.baseRoutingKey.SetAction("node-feed").SetObject("policy").MustBuild()
-		err = p.msgbus.PublishToNodeFeeder(route, "*", p.Org, p.nodePolicyPath, method, body)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
-			return err
-		}
+	msg := &pb.NodeFeederMessage{
+		Target:     p.OrgName + "." + pf.NetworkId.String() + "." + "*" + "." + "*",
+		HTTPMethod: method,
+		Path:       "/v1/pcrf/policy",
+		Msg:        body,
 	}
+
+	err = p.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+		return err
+	}
+	log.Infof("Published policy %v on route %s with target nodes %s", msg, msg.Target)
 
 	return nil
 }
