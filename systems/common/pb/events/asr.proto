@@ -1,11 +1,10 @@
 syntax = "proto3";
 
-option go_package = "pb/gen/events";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
 
 import "validator.proto";
-import "google/protobuf/any.proto";
 
 message subscriber {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
