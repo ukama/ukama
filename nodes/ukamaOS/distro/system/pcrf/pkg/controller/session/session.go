@@ -78,12 +78,13 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 		tNow := time.Now().Unix()
 		lastUpdate := sc.s.UpdatedAt
-		sc.s.UpdatedAt = uint64(tNow)
+
 		totalBytes := sc.s.TxBytes + sc.s.RxBytes
 
 		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
 		/* Update to DB */
 		if lastStats {
+			sc.s.UpdatedAt = uint64(tNow)
 			/* This adds the stats for TX and RX and store them*/
 			err = s.store.EndSession(sc.s)
 			if err != nil {
@@ -95,6 +96,7 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 			/* Only do this whem RX or TX value changes */
 			if totalBytes != sc.s.TotalBytes {
 				sc.idleReportSent = false // Reset teh idleReportSent flag on change in stats
+				sc.s.UpdatedAt = uint64(tNow)
 				sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
 				err = s.store.UpdateSessionUsage(sc.s)
 				if err != nil {
