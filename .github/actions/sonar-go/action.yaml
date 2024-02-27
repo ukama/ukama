@@ -36,7 +36,7 @@ runs:
       path: ${{ inputs.working-directory }}
 
   - name: SonarCloud Scan
-    uses: sonarsource/sonarcloud-github-action@v1.6
+    uses: sonarsource/sonarcloud-github-action@v2
     env:
       GITHUB_TOKEN: ${{ inputs.github-bot-token }}
       SONAR_TOKEN: ${{ inputs.sonar-token }}
