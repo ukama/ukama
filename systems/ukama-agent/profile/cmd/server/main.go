@@ -87,7 +87,7 @@ func runGrpcServer(gormdb sql.Db) {
 	profile := db.NewProfileRepo(gormdb)
 
 	// profile service
-	pServer, err := server.NewProfileServer(profile, serviceConfig.OrgName, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyMonitor, serviceConfig.PolicyCheckPeriod)
+	pServer, err := server.NewProfileServer(profile, serviceConfig.OrgName, serviceConfig.OrgId, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyMonitor, serviceConfig.PolicyCheckPeriod)
 
 	if err != nil {
 		log.Fatalf("profile server initialization failed. Error: %v", err)

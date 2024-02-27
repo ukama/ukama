@@ -27,25 +27,27 @@ type ProfileServer struct {
 
 	msgbus           mb.MsgBusServiceClient
 	baseRoutingKey   msgbus.RoutingKeyBuilder
-	Org              string
+	OrgName          string
+	OrgId            string
 	PolicyController *policy.PolicyController
 	nodePolicyPath   string
 }
 
-func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, nodePath string, monitor bool, period time.Duration) (*ProfileServer, error) {
+func NewProfileServer(pRepo db.ProfileRepo, orgName, orgId string, msgBus mb.MsgBusServiceClient, nodePath string, monitor bool, period time.Duration) (*ProfileServer, error) {
 
 	ps := &ProfileServer{
 		profileRepo:    pRepo,
-		Org:            org,
+		OrgName:        orgName,
+		OrgId:          orgId,
 		msgbus:         msgBus,
 		nodePolicyPath: nodePath,
 	}
 
 	if msgBus != nil {
-		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(org).SetService(pkg.ServiceName)
+		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
 
-	ps.PolicyController = policy.NewPolicyController(pRepo, org, msgBus, nodePath, monitor, period)
+	ps.PolicyController = policy.NewPolicyController(pRepo, orgName, msgBus, nodePath, monitor, period)
 
 	return ps, nil
 }
@@ -143,7 +145,7 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 			Iccid:                p.Iccid,
 			Network:              p.NetworkId.String(),
 			Package:              p.PackageId.String(),
-			Org:                  s.Org,
+			Org:                  s.OrgId,
 			AllowedTimeOfService: p.AllowedTimeOfService,
 			TotalDataBytes:       p.TotalDataBytes,
 			LastStatusChangeAt:   p.LastStatusChangeAt.Unix(),
@@ -204,7 +206,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 			Iccid:                p.Iccid,
 			Network:              p.NetworkId.String(),
 			Package:              req.Package.PackageId,
-			Org:                  s.Org,
+			Org:                  s.OrgId,
 			AllowedTimeOfService: req.Package.AllowedTimeOfService,
 			TotalDataBytes:       p.TotalDataBytes,
 		},
@@ -279,7 +281,7 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 			Iccid:                delProfile.Iccid,
 			Network:              delProfile.NetworkId.String(),
 			Package:              delProfile.PackageId.String(),
-			Org:                  s.Org,
+			Org:                  s.OrgId,
 			AllowedTimeOfService: delProfile.AllowedTimeOfService,
 			TotalDataBytes:       delProfile.TotalDataBytes,
 		},
@@ -327,7 +329,7 @@ func (s *ProfileServer) syncProfile(method string, p *db.Profile) error {
 	}
 
 	msg := &cpb.NodeFeederMessage{
-		Target:     s.Org + "." + p.NetworkId.String() + "." + "*" + "." + "*",
+		Target:     s.OrgId + "." + p.NetworkId.String() + "." + "*" + "." + "*",
 		HTTPMethod: "POST",
 		Path:       "/v1/pcrf/policy",
 		Msg:        body,
