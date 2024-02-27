@@ -1412,16 +1412,17 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 
 func PrepareCDR(s *Session) *api.CDR {
 	cdr := &api.CDR{
-		Session:    s.ID,
-		Imsi:       s.SubscriberID.Imsi,
-		Policy:     s.PolicyID.ID.String(),
-		ApnName:    s.ApnName,
-		Ip:         s.UeIpAddr,
-		StartTime:  s.StartTime,
-		EndTime:    s.EndTime,
-		TxBytes:    s.TxBytes,
-		RxBytes:    s.RxBytes,
-		TotalBytes: s.TotalBytes,
+		Session:       s.ID,
+		Imsi:          s.SubscriberID.Imsi,
+		Policy:        s.PolicyID.ID.String(),
+		ApnName:       s.ApnName,
+		Ip:            s.UeIpAddr,
+		StartTime:     s.StartTime,
+		EndTime:       s.EndTime,
+		TxBytes:       s.TxBytes,
+		RxBytes:       s.RxBytes,
+		TotalBytes:    s.TotalBytes,
+		LastUpdatedAt: s.UpdatedAt,
 	}
 	return cdr
 }

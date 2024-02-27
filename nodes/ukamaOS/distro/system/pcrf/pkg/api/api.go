@@ -32,16 +32,17 @@ type GetSessionByImsi struct {
 }
 
 type CDR struct {
-	Session    int    `json:"session" validate:"required"`
-	Imsi       string `json:"imsi" validate:"required"`
-	Policy     string `json:"policy" validate:"required"`
-	ApnName    string `json:"apn_name" validate:"required"`
-	Ip         string `json:"ip" validate:"required"`
-	StartTime  uint64 `json:"start_time" validate:"required"`
-	EndTime    uint64 `json:"end_time" validate:"required"`
-	TxBytes    uint64 `json:"tx_bytes" validate:"required"`
-	RxBytes    uint64 `json:"rx_bytes" validate:"required"`
-	TotalBytes uint64 `json:"total_bytes" validate:"required"`
+	Session       int    `json:"session" validate:"required"`
+	Imsi          string `json:"imsi" validate:"required"`
+	Policy        string `json:"policy" validate:"required"`
+	ApnName       string `json:"apn_name" validate:"required"`
+	Ip            string `json:"ip" validate:"required"`
+	StartTime     uint64 `json:"start_time" validate:"required"`
+	EndTime       uint64 `json:"end_time" validate:"required"`
+	LastUpdatedAt uint64 `json:"last_updated_at" validate:"required"`
+	TxBytes       uint64 `json:"tx_bytes" validate:"required"`
+	RxBytes       uint64 `json:"rx_bytes" validate:"required"`
+	TotalBytes    uint64 `json:"total_bytes" validate:"required"`
 }
 
 type GetCDRBySessionId struct {
