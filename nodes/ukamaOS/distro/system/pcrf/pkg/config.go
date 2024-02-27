@@ -29,11 +29,12 @@ type Config struct {
 }
 
 type BrdigeConfig struct {
-	Name       string `default:"br0"`
-	Ip         string `default:"10.10.10.1"`
-	NetType    string
-	Period     time.Duration `default:"2s"`
-	Management string        `default:"/usr/local/var/run/openvswitch"`
+	Name            string `default:"br0"`
+	Ip              string `default:"10.10.10.1"`
+	NetType         string
+	Period          time.Duration `default:"2s"`
+	Management      string        `default:"/usr/local/var/run/openvswitch"`
+	SessionIdleTime time.Duration `default:"60s"`
 }
 
 type HttpEndpoints struct {
@@ -52,9 +53,10 @@ func NewConfig(name string) *Config {
 			DebugMode: true,
 		},
 		Bridge: BrdigeConfig{
-			Name:       "br0",
-			Period:     2 * time.Second,
-			Management: "/usr/local/var/run/openvswitch",
+			Name:            "br0",
+			Period:          2 * time.Second,
+			Management:      "/usr/local/var/run/openvswitch",
+			SessionIdleTime: 60 * time.Second,
 		},
 		DB: name,
 		Server: rest.HttpConfig{

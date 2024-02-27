@@ -21,15 +21,17 @@ import (
 // }
 
 type sessionCache struct {
-	s         *store.Session
-	txCookie  uint64
-	rxCookie  uint64
-	InitUsage uint64
-	cancel    context.CancelFunc
-	ctx       context.Context
+	s              *store.Session
+	txCookie       uint64
+	rxCookie       uint64
+	InitUsage      uint64
+	idleReportSent bool
+	cancel         context.CancelFunc
+	ctx            context.Context
 }
 type sessionManager struct {
 	period time.Duration `default:"2s"`
+	idle   time.Duration `default:"60s"`
 	store  *store.Store
 	d      datapath.DataPath
 	cache  map[string]*sessionCache
@@ -53,6 +55,7 @@ func NewSessionManager(rc client.RemoteController, store *store.Store, br pkg.Br
 		d:      d,
 		store:  store,
 		period: br.Period,
+		idle:   br.SessionIdleTime,
 		rc:     rc,
 		cache:  make(map[string]*sessionCache),
 	}
@@ -74,7 +77,9 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
 
 		tNow := time.Now().Unix()
+		lastUpdate := sc.s.UpdatedAt
 		sc.s.UpdatedAt = uint64(tNow)
+		totalBytes := sc.s.TxBytes + sc.s.RxBytes
 
 		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
 		/* Update to DB */
@@ -86,32 +91,46 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 			}
 
 		} else {
-			sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
-			err = s.store.UpdateSessionUsage(sc.s)
-			if err != nil {
-				log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+
+			/* Only do this whem RX or TX value changes */
+			if totalBytes != sc.s.TotalBytes {
+				sc.idleReportSent = false // Reset teh idleReportSent flag on change in stats
+				sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
+				err = s.store.UpdateSessionUsage(sc.s)
+				if err != nil {
+					log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+				}
+
+				p, err := s.store.GetApplicablePolicyByImsi(imsi)
+				if err != nil {
+					log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
+					return err
+				}
+
+				totalUsage := sc.InitUsage + sc.s.TotalBytes
+				if totalUsage >= p.Data {
+					/* this means we need to terminates session */
+					log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
+					_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
+					return fmt.Errorf("max data cap limit exceeded")
+				}
 			}
 
-			p, err := s.store.GetApplicablePolicyByImsi(imsi)
-			if err != nil {
-				log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
-				return err
-			}
+			/* If report is laready sent no need to send again */
+			if !sc.idleReportSent && tNow > (int64)(lastUpdate+uint64(s.idle)) {
+				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %d secconds from %d.", sc.s.ID, imsi, s.idle, lastUpdate)
+				/* Sync data to cloud */
+				err = s.SendCDR(imsi)
+				if err == nil {
+					sc.idleReportSent = true
+				}
 
-			totalUsage := sc.InitUsage + sc.s.TotalBytes
-			if totalUsage >= p.Data {
-				/* this means we need to terminates session */
-				log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
-				_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
-				return fmt.Errorf("max data cap limit exceeded")
 			}
 
 		}
 
 		log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
 
-		/* Update session */
-		s.cache[imsi] = sc
 	} else {
 		log.Errorf("Session for Imsi %s not found.", imsi)
 		return fmt.Errorf("session for imsi not found: %s", imsi)
@@ -135,9 +154,10 @@ func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bo
 func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscriber, ns *store.Session, rxf *store.Flow, txf *store.Flow) error {
 
 	sc := sessionCache{
-		s:        ns,
-		txCookie: txf.Cookie,
-		rxCookie: rxf.Cookie,
+		s:              ns,
+		txCookie:       txf.Cookie,
+		rxCookie:       rxf.Cookie,
+		idleReportSent: false,
 	}
 
 	/* Get usage for before session creation */
@@ -212,11 +232,7 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 	}
 
 	/* Sync data to cloud */
-	c := store.PrepareCDR(sc.s)
-	err = s.rc.PushCdr(c)
-	if err != nil {
-		log.Warnf("Failed to push cdr %+v to cloud for Imsi %s. Error: %s", c, sub.Imsi, err.Error())
-	}
+	_ = s.SendCDR(sub.Imsi)
 
 	/* Update usage to DB */
 	err = s.store.EndSession(sc.s)
@@ -228,6 +244,21 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 
 	return nil
 
+}
+
+func (s *sessionManager) SendCDR(imsi string) error {
+	sc := s.cache[imsi]
+	log.Infof("[ SessionId %d ] Sending session CDR for subscriber %s  and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
+
+	/* Sync data to cloud */
+	c := store.PrepareCDR(sc.s)
+	err := s.rc.PushCdr(c)
+	if err != nil {
+		log.Warnf("Failed to push cdr %+v to cloud for Imsi %s. Error: %s", c, imsi, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *sessionManager) StartSessionMonitor(ctx context.Context, imsi string) error {
