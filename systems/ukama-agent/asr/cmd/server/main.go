@@ -75,7 +75,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	if serviceConfig.IsMsgBus {
-		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -105,7 +105,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	// asr service
 	asrServer, err := server.NewAsrRecordServer(asr, guti,
-		factory, network, pcrf, serviceConfig.Org, mbClient)
+		factory, network, pcrf, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
 
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)

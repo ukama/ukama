@@ -84,7 +84,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, "asr-stubs", "0,.0.0.", r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, "asr-stubs", "0,.0.0.", r.config.debugMode, "")
 	v1 := r.f.Group("/v1", " ", " ASR service stubs version v1")
 
 	f := v1.Group("/factory", "Sim Factory", "Sim Factory")

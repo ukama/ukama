@@ -28,15 +28,17 @@ type AsrRecordServer struct {
 	factory        client.Factory
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	Org            string
+	OrgName        string
+	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pcrf client.PolicyControl, org string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pcrf client.PolicyControl, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
 		gutiRepo: gutiRepo,
-		Org:      org,
+		OrgName:  orgName,
+		OrgId:    orgId,
 		factory:  factory,
 		network:  network,
 		pcrf:     pcrf,
@@ -44,7 +46,7 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory 
 	}
 
 	if msgBus != nil {
-		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
 
 	return &asr, nil
@@ -94,7 +96,7 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
 
 	/* Validate network in Org */
-	err := s.network.ValidateNetwork(req.Network, s.Org)
+	err := s.network.ValidateNetwork(req.Network, s.OrgId)
 	if err != nil {
 		return nil, fmt.Errorf("error validating network")
 	}
@@ -160,7 +162,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 			Iccid:   asr.Iccid,
 			Network: asr.NetworkID.String(),
 			Package: asr.PackageId.String(),
-			Org:     s.Org,
+			Org:     s.OrgId,
 		},
 	}
 
@@ -210,7 +212,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 			Iccid:   asrRecord.Iccid,
 			Network: asrRecord.NetworkID.String(),
 			Package: req.PackageId,
-			Org:     s.Org,
+			Org:     s.OrgId,
 		},
 	}
 
@@ -260,7 +262,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 			Iccid:   delAsrRecord.Iccid,
 			Network: delAsrRecord.NetworkID.String(),
 			Package: delAsrRecord.PackageId.String(),
-			Org:     s.Org,
+			Org:     s.OrgId,
 		},
 	}
 
