@@ -51,16 +51,21 @@ func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, 
 	return nil, nil, nil
 }
 
-func (t *TestAgentAdapter) ActivateSim(ctx context.Context, iccid string) error {
-	_, err := t.client.ActivateSim(ctx, &pb.ActivateSimRequest{Iccid: iccid})
+func (t *TestAgentAdapter) ActivateSim(ctx context.Context, req ReqData) error {
+	_, err := t.client.ActivateSim(ctx, &pb.ActivateSimRequest{Iccid: req.Iccid})
 
 	return err
 }
 
-func (t *TestAgentAdapter) DeactivateSim(ctx context.Context, iccid string) error {
-	_, err := t.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{Iccid: iccid})
+func (t *TestAgentAdapter) DeactivateSim(ctx context.Context, req ReqData) error {
+	_, err := t.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{Iccid: req.Iccid})
 
 	return err
+}
+
+func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req ReqData) error {
+	// think of how to use ctx with restclient
+	return nil
 }
 
 func (t *TestAgentAdapter) TerminateSim(ctx context.Context, iccid string) error {
