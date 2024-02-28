@@ -1,19 +1,18 @@
 package rest
 
-type ActivateReq struct {
-	Iccid     string `path:"iccid" validate:"required"`
-	Network   string `json:"network" validate:"required"`
-	PackageId string `json:"packageId" validate:"required"`
+type ReqData struct {
+	Iccid     string `json:"iccid" path:"iccid" validate:"required"`
+	Imsi      string `json:"imsi,omitempty"`
+	SimId     string `json:"sim_id,omitempty"`
+	PackageId string `json:"package_id,omitempty"`
+	NetworkId string `json:"netwrok_id,omitempty"`
 }
 
-type InactivateReq struct {
-	Iccid string `path:"iccid" validate:"required"`
-}
+type ActivateReq ReqData
 
-type UpdatePackageReq struct {
-	Iccid     string `path:"iccid" validate:"required"`
-	PackageId string `json:"packageId" validate:"required"`
-}
+type DeactivateReq ReqData
+
+type UpdatePackageReq ReqData
 
 type ReadSubscriberReq struct {
 	Iccid string `path:"iccid" validate:"required"`

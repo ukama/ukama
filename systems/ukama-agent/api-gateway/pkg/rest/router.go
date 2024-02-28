@@ -104,8 +104,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-
-		asr := auth.Group("/subscriber", "Asr", "Active susbcriber registry")
+		asr := auth.Group("/asr", "Asr", "Active susbcriber registry")
 		asr.GET("/:iccid", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
 		asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
 		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
@@ -125,17 +124,21 @@ func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateRe
 
 	return r.clients.a.Activate(&pb.ActivateReq{
 		Iccid:     req.Iccid,
-		Network:   req.Network,
+		Imsi:      req.Imsi,
+		SimId:     req.SimId,
 		PackageId: req.PackageId,
+		NetworkId: req.NetworkId,
 	})
 }
 
-func (r *Router) deleteSubscriber(c *gin.Context, req *InactivateReq) (*pb.InactivateResp, error) {
+func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.InactivateResp, error) {
 
 	return r.clients.a.Inactivate(&pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: req.Iccid,
-		},
+		Iccid:     req.Iccid,
+		Imsi:      req.Imsi,
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
+		NetworkId: req.NetworkId,
 	})
 }
 
@@ -143,7 +146,10 @@ func (r *Router) patchPackageUpdate(c *gin.Context, req *UpdatePackageReq) (*pb.
 
 	return r.clients.a.UpdatePackage(&pb.UpdatePackageReq{
 		Iccid:     req.Iccid,
+		Imsi:      req.Imsi,
+		SimId:     req.SimId,
 		PackageId: req.PackageId,
+		NetworkId: req.NetworkId,
 	})
 }
 
