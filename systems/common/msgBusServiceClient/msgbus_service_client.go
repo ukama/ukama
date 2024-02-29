@@ -30,7 +30,6 @@ type MsgBusServiceClient interface {
 	Start() error
 	Stop() error
 	PublishRequest(route string, msg protoreflect.ProtoMessage) error
-	PublishToNodeFeeder(route string, node string, org string, path string, method string, body []byte) error
 }
 
 type msgBusServiceClient struct {

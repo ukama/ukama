@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
@@ -32,6 +32,7 @@ type Asr struct {
 	NetworkID      uuid.UUID `gorm:"not null;type:uuid"`
 	Tai            Tai
 	PackageId      uuid.UUID `gorm:"not null;type uuid"`
+	Policy         Policy
 }
 
 // Tracking Area Identity (TAI)
@@ -52,4 +53,19 @@ type Guti struct {
 	Mmegi           uint32    `gorm:"uniqueIndex:guti_asr_unique_idx;not null"`
 	Mmec            uint32    `gorm:"uniqueIndex:guti_asr_unique_idx;not null"`
 	MTmsi           uint32    `gorm:"uniqueIndex:guti_asr_unique_idx;not null"`
+}
+
+type Policy struct {
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Id           uuid.UUID      `gorm:"primarykey;type:uuid"`
+	Burst        uint64
+	Data         uint64
+	Dlbr         uint64
+	Ulbr         uint64
+	StartTime    uint64
+	EndTime      uint64
+	RollOverData uint64
+	AsrID        uint
 }

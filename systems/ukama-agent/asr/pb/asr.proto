@@ -81,9 +81,11 @@ message ReadResp {
     Record Record = 1;
 }
 message ActivateReq {
-    string network = 1[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="network"];
-    string Iccid = 2 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
-    string PackageId = 3;
+    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    string Imsi = 2;
+    string SimId = 3;
+    string PackageId = 4;
+    string NetworkId = 5; 
 }
 
 message ActivateResp {
@@ -92,10 +94,11 @@ message ActivateResp {
 
 /* Could be called by subscriber manager with ICCID and by billing service with imsi */ 
 message InactivateReq {
-    oneof id {
-        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; /// oneof
-        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
-    }
+    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    string Imsi = 2;
+    string SimId = 3;
+    string PackageId = 4;
+    string NetworkId = 5; 
 }
 
 message InactivateResp {
@@ -104,7 +107,10 @@ message InactivateResp {
 
 message UpdatePackageReq {
     string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
-    string PackageId = 2[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="packageId"]; 
+    string Imsi = 2;
+    string SimId = 3;
+    string PackageId = 4;
+    string NetworkId = 5; 
 }
 
 message UpdatePackageResp {

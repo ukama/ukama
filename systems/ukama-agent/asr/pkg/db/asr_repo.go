@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -20,7 +20,7 @@ type AsrRecordRepo interface {
 	GetByImsi(imsi string) (*Asr, error)
 	GetByIccid(iccid string) (*Asr, error)
 	Update(imsi string, record *Asr) error
-	UpdatePackage(imsi string, packageId uuid.UUID) error
+	UpdatePackage(imsi string, packageId uuid.UUID, policy Policy) error
 	DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error
 	Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
@@ -46,8 +46,8 @@ func (r *asrRecordRepo) Update(imsiToUpdate string, rec *Asr) error {
 	return d.Error
 }
 
-func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID) error {
-	rec := &Asr{PackageId: packageId}
+func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy Policy) error {
+	rec := &Asr{PackageId: packageId, Policy: policy}
 	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(rec)
 	return d.Error
 }

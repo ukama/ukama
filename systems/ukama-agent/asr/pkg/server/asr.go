@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/pcrf"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -22,17 +24,18 @@ import (
 type AsrRecordServer struct {
 	pb.UnimplementedAsrRecordServiceServer
 	asrRepo        db.AsrRecordRepo
+	pRepo          db.PolicyRepo
 	gutiRepo       db.GutiRepo
-	pcrf           client.PolicyControl
 	network        client.Network
 	factory        client.Factory
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
+	pcrf           pcrf.PCRFController
 	OrgName        string
 	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pcrf client.PolicyControl, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pRepo db.PolicyRepo, pcrf pcrf.PCRFController, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
@@ -41,8 +44,9 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory 
 		OrgId:    orgId,
 		factory:  factory,
 		network:  network,
-		pcrf:     pcrf,
+		pRepo:    pRepo,
 		msgbus:   msgBus,
+		pcrf:     pcrf,
 	}
 
 	if msgBus != nil {
@@ -89,17 +93,11 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		PackageId:   sub.PackageId.String(),
 	}}
 
-	logrus.Infof("Subscriber is having %+v", resp)
+	log.Infof("Subscriber is having %+v", resp)
 	return resp, nil
 }
 
 func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-
-	/* Validate network in Org */
-	err := s.network.ValidateNetwork(req.Network, s.OrgId)
-	if err != nil {
-		return nil, fmt.Errorf("error validating network")
-	}
 
 	/* Send Request to SIM Factory */
 	sim, err := s.factory.ReadSimCardInfo(req.Iccid)
@@ -107,19 +105,25 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, fmt.Errorf("error reading iccid from factory")
 	}
 
-	/* Send message to PCRF */
-	nId, err := uuid.FromString(req.Network)
+	/* Validate network in Org */
+	err = s.network.ValidateNetwork(req.NetworkId, s.OrgId)
 	if err != nil {
-		logrus.Errorf("NetworkId not valid.")
+		return nil, fmt.Errorf("error validating network")
+	}
+
+	nId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		log.Errorf("NetworkId not valid.")
 		return nil, err
 	}
 
+	/* PackageId */
 	pId, err := uuid.FromString(req.PackageId)
 	if err != nil {
-		logrus.Errorf("PackageId not valid.")
+		log.Errorf("PackageId not valid.")
 	}
 
-	pcrfData := client.PolicyControlSimInfo{
+	pcrfData := &pcrf.SimInfo{
 		Imsi:      sim.Imsi,
 		Iccid:     sim.Iccid,
 		PackageId: pId,
@@ -127,7 +131,8 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		Visitor:   false, // We will using this flag on roaming in VLR
 	}
 
-	err = s.pcrf.AddSim(pcrfData)
+	/* Send message to PCRF */
+	policy, err := s.pcrf.AddPolicy(pcrfData)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error adding to pcrf")
 	}
@@ -148,6 +153,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		DefaultApnName: sim.DefaultApnName,
 		PackageId:      pId,
 		NetworkID:      nId,
+		Policy:         *policy,
 	}
 
 	err = s.asrRepo.Add(asr)
@@ -163,6 +169,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 			Network: asr.NetworkID.String(),
 			Package: asr.PackageId.String(),
 			Org:     s.OrgId,
+			Policy:  policy.Id.String(),
 		},
 	}
 
@@ -170,10 +177,11 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		route := s.baseRoutingKey.SetAction("create").SetObject("activesubscriber").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 		}
 	}
 
+	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
 	return &pb.ActivateResp{}, err
 }
 
@@ -186,21 +194,24 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	/* We assum that packageId is validated by subscriber. */
 	pId, err := uuid.FromString(req.PackageId)
 	if err != nil {
-		logrus.Errorf("PackageId not valid.")
+		log.Errorf("PackageId not valid.")
 		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id")
 	}
 
-	pD := client.PolicyControlSimPackageUpdate{
+	pcrfData := &pcrf.SimInfo{
+		ID:        asrRecord.ID,
 		Imsi:      asrRecord.Imsi,
+		Iccid:     asrRecord.Iccid,
 		PackageId: pId,
+		NetworkId: asrRecord.NetworkID,
 	}
 
-	err = s.pcrf.UpdateSim(pD)
+	policy, err := s.pcrf.UpdatePolicy(pcrfData)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
-	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId)
+	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
@@ -213,6 +224,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 			Network: asrRecord.NetworkID.String(),
 			Package: req.PackageId,
 			Org:     s.OrgId,
+			Policy:  policy.Id.String(),
 		},
 	}
 
@@ -220,32 +232,29 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		route := s.baseRoutingKey.SetActionUpdate().SetObject("updateactivesubscriber").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 		}
 	}
+
+	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, asrRecord)
 	return &pb.UpdatePackageResp{}, nil
 }
 
 func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
-	var delAsrRecord *db.Asr
-	var err error
 
-	switch req.Id.(type) {
-	case *pb.InactivateReq_Imsi:
-
-		delAsrRecord, err = s.asrRepo.GetByImsi(req.GetImsi())
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
-		}
-
-	case *pb.InactivateReq_Iccid:
-		delAsrRecord, err = s.asrRepo.GetByIccid(req.GetIccid())
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
-		}
+	delAsrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 	}
 
-	err = s.pcrf.DeleteSim(delAsrRecord.Imsi)
+	pcrfData := &pcrf.SimInfo{
+		ID:        delAsrRecord.ID,
+		Imsi:      delAsrRecord.Imsi,
+		Iccid:     delAsrRecord.Iccid,
+		NetworkId: delAsrRecord.NetworkID,
+	}
+
+	err = s.pcrf.DeletePolicy(pcrfData)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
@@ -270,9 +279,11 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		route := s.baseRoutingKey.SetActionDelete().SetObject("activesubscriber").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 		}
 	}
+
+	log.Debugf("Deleted subscriber %+v", delAsrRecord)
 
 	return &pb.InactivateResp{}, nil
 
@@ -293,7 +304,7 @@ func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (
 		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
 	})
 	if err != nil {
-		logrus.Errorf("Failed to update GUTI: %s", err.Error())
+		log.Errorf("Failed to update GUTI: %s", err.Error())
 		if err.Error() == db.GutiNotUpdatedErr {
 			return nil, status.Errorf(codes.AlreadyExists, err.Error())
 		}

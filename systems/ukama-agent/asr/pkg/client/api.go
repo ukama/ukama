@@ -29,15 +29,4 @@ type NetworkInfo struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-type PolicyControlSimInfo struct {
-	Imsi      string `path:"imsi" validate:"required" json:"-"`
-	Iccid     string
-	PackageId uuid.UUID
-	NetworkId uuid.UUID
-	Visitor   bool
-}
 
-type PolicyControlSimPackageUpdate struct {
-	Imsi      string `path:"imsi" validate:"required" json:"-"`
-	PackageId uuid.UUID
-}

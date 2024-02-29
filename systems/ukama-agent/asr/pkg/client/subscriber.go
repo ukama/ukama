@@ -1,0 +1,69 @@
+package client
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
+type Subscriber interface {
+	GetSubscriber()
+	GetSimDetails()
+}
+
+type subscriber struct {
+	R *rest.RestClient
+}
+
+func NewSubscriberClient(url string, debug bool) (*subscriber, error) {
+
+	f, err := rest.NewRestClient(url, debug)
+	if err != nil {
+		logrus.Errorf("Can't conncet to %s url.Error %s", url, err.Error())
+		return nil, err
+	}
+
+	S := &subscriber{
+		R: f,
+	}
+
+	return S, nil
+}
+
+func (N *network) GetSimDetails(iccid string) error {
+
+	errStatus := &ErrorMessage{}
+
+	network := NetworkInfo{}
+
+	resp, err := N.R.C.R().
+		SetError(errStatus).
+		Get(N.R.URL.String() + "/v1/sim/" + iccid)
+
+	if err != nil {
+		logrus.Errorf("Failed to send api request to susbcriber system. Error %s", err.Error())
+		return err
+	}
+
+	if !resp.IsSuccess() {
+		logrus.Tracef("Failed to fetch sim info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		return fmt.Errorf(" Sim Info failure %s", errStatus.Message)
+	}
+
+	err = json.Unmarshal(resp.Body(), &network)
+	if err != nil {
+		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
+		return fmt.Errorf("network info deserailization failure:" + err.Error())
+	} else {
+		logrus.Infof("Network Info: %+v", network)
+	}
+
+	if orgId != network.OrgId {
+		logrus.Error("Missing network.")
+		return fmt.Errorf("Network mismatch")
+	}
+
+	return nil
+}
