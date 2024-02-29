@@ -9,8 +9,7 @@ import (
 )
 
 type Subscriber interface {
-	GetSubscriber()
-	GetSimDetails()
+	GetSimDetails(iccid string, orgId string)
 }
 
 type subscriber struct {
@@ -32,7 +31,7 @@ func NewSubscriberClient(url string, debug bool) (*subscriber, error) {
 	return S, nil
 }
 
-func (N *network) GetSimDetails(iccid string) error {
+func (N *network) GetSimDetails(iccid string, orgId string) error {
 
 	errStatus := &ErrorMessage{}
 

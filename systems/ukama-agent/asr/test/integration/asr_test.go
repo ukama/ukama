@@ -6,11 +6,12 @@ package integration
 import (
 	"context"
 
+	"testing"
+	"time"
+
 	confr "github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc/credentials/insecure"
-	"testing"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -94,9 +95,11 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("Activate", func(t *testing.T) {
 		_, err := c.Activate(ctx, &pb.ActivateReq{
-			Network:   "40987edb-ebb6-4f84-a27c-99db7c136127",
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
+			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
@@ -156,18 +159,22 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("Inactivate", func(t *testing.T) {
 		_, err := c.Inactivate(ctx, &pb.InactivateReq{
-			Id: &pb.InactivateReq_Iccid{
-				Iccid: sim.Iccid,
-			},
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:     sim.Iccid,
+			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
+			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Activate", func(t *testing.T) {
 		_, err := c.Activate(ctx, &pb.ActivateReq{
-			Network:   "40987edb-ebb6-4f84-a27c-99db7c136127",
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
+			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
@@ -185,9 +192,11 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("InactivateByImsi", func(t *testing.T) {
 		_, err := c.Inactivate(ctx, &pb.InactivateReq{
-			Id: &pb.InactivateReq_Imsi{
-				Imsi: Imsi,
-			},
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:     sim.Iccid,
+			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
+			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})

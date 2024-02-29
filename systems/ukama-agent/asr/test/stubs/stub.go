@@ -93,10 +93,6 @@ func (r *Router) init() {
 	n := v1.Group("/networks", "Registry", "Network Factory")
 	n.GET("/:network/", formatDoc("Validate Network", ""), tonic.Handler(r.getValidateNetwork, http.StatusOK))
 
-	p := v1.Group("/pcrf", "PCRF", "Policy control")
-	p.PUT("/sims/:imsi", formatDoc("Add Sim", ""), tonic.Handler(r.putSim, http.StatusOK))
-	p.DELETE("/sims/:imsi", formatDoc("Delete Sim", ""), tonic.Handler(r.deleteSim, http.StatusOK))
-	p.PATCH("/sims/:imsi", formatDoc("Update Sim Packege Info", ""), tonic.Handler(r.patchSim, http.StatusOK))
 
 }
 
@@ -148,21 +144,6 @@ func (r *Router) getValidateNetwork(c *gin.Context, req *NetworkValidationReq) (
 		}, nil
 	}
 	return nil, fmt.Errorf("network %s not found", req.Network)
-}
-
-func (r *Router) putSim(c *gin.Context, req *client.PolicyControlSimInfo) error {
-	/* No implementaion always return success.*/
-	return nil
-}
-
-func (r *Router) deleteSim(c *gin.Context, req *DeleteSimReq) error {
-	/* No implementaion always return success.*/
-	return nil
-}
-
-func (r *Router) patchSim(c *gin.Context, req *client.PolicyControlSimPackageUpdate) error {
-	/* No implementaion always return success.*/
-	return nil
 }
 
 func main() {

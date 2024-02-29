@@ -15,6 +15,7 @@ type Config struct {
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	AsrHost           string            `default:"localhost"`
+	DataplanHost      string            `default:"http://localhost:8085"`
 	NetworkHost       string            `default:"http://localhost:8085"`
 	PCRFHost          string            `default:"http://localhost:8085"`
 	FactoryHost       string            `default:"http://localhost:8085"`

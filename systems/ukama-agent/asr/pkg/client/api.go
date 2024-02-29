@@ -2,8 +2,6 @@ package client
 
 import (
 	"time"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 type SimCardInfo struct {
@@ -28,5 +26,3 @@ type NetworkInfo struct {
 	IsDeactivated bool      `json:"is_deactivated"`
 	CreatedAt     time.Time `json:"created_at"`
 }
-
-

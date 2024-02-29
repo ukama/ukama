@@ -12,8 +12,8 @@ import (
 type PolicyRepo interface {
 	Add(policy *Policy) error
 	Get(id uuid.UUID) (*Policy, error)
-	Delete(id uuid.UUID) error
-	Update(id uint, policy *Policy) error
+	Delete(id uuid.UUID, nestedFunc ...func(*gorm.DB) error) error
+	Update(id uint, newPolicy *Policy) error
 	GetByAsrId(id uint) (*Policy, error)
 }
 
@@ -38,11 +38,11 @@ func (p *policyRepo) Add(policy *Policy) error {
 	return nil
 }
 
-func (p *policyRepo) Get(id *uuid.UUID) (*Policy, error) {
+func (p *policyRepo) Get(id uuid.UUID) (*Policy, error) {
 	var policy Policy
 	result := p.db.GetGormDb().Where("id = ? AND delete_at = null", id).First(&policy)
 	if result.Error != nil {
-		log.Errorf("error reading policy %s. Error: %v", id.String(), err)
+		log.Errorf("error reading policy %s. Error: %v", id.String(), result.Error)
 		return nil, result.Error
 	}
 
@@ -53,7 +53,7 @@ func (p *policyRepo) GetByAsrId(id uint) (*Policy, error) {
 	var policy Policy
 	result := p.db.GetGormDb().Where("asr_id = ? AND delete_at = null", id).First(&policy)
 	if result.Error != nil {
-		log.Errorf("error reading policy for ASR ID %d. Error: %v", id, err)
+		log.Errorf("error reading policy for ASR ID %d. Error: %v", id, result.Error)
 		return nil, result.Error
 	}
 
@@ -66,7 +66,7 @@ func (r *policyRepo) Delete(id uuid.UUID, nestedFunc ...func(*gorm.DB) error) er
 	}, nestedFunc...)
 }
 
-func (r *policyRepo) Update(id uuid.UUID, newPolicy Policy) error {
+func (r *policyRepo) Update(id uint, newPolicy *Policy) error {
 
 	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
@@ -81,7 +81,7 @@ func (r *policyRepo) Update(id uuid.UUID, newPolicy Policy) error {
 		}
 
 		if err := tx.Delete(policy).Error; err != nil {
-			log.Errorf("Failed to delete policy %+v  for ASR id %d .Error %s", id, policy, err.Error())
+			log.Errorf("Failed to delete policy %+v  for ASR id %d .Error %s", policy, id, err.Error())
 			return nil
 		}
 

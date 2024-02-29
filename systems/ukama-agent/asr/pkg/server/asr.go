@@ -35,7 +35,7 @@ type AsrRecordServer struct {
 	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pRepo db.PolicyRepo, pcrf pcrf.PCRFController, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
@@ -211,7 +211,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
-	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
+	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, *policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}

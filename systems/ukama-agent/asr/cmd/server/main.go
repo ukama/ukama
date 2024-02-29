@@ -6,6 +6,7 @@ import (
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/pcrf"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -83,10 +84,13 @@ func runGrpcServer(gormdb sql.Db) {
 			serviceConfig.MsgClient.ListenerRoutes)
 
 		log.Debugf("MessageBus Client is %+v", mbClient)
+	} else {
+		log.Fatalf("MsgBus is mandatory for service %s", pkg.ServiceName)
 	}
 
 	asr := db.NewAsrRecordRepo(gormdb)
 	guti := db.NewGutiRepo(gormdb)
+	policy := db.NewPolicyRepo(gormdb)
 
 	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
 	if err != nil {
@@ -98,13 +102,10 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Network Client initilization failed. Error: %v", err)
 	}
 
-	pcrf, err := client.NewPolicyControlClient(serviceConfig.PCRFHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("PCRF Client initialization failed. Error: %v", err)
-	}
+	pcrf := pcrf.NewPCRFController(policy, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName)
 
 	// asr service
-	asrServer, err := server.NewAsrRecordServer(asr, guti,
+	asrServer, err := server.NewAsrRecordServer(asr, guti, policy,
 		factory, network, pcrf, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
 
 	if err != nil {

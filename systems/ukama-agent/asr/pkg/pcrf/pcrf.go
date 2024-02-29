@@ -4,6 +4,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
@@ -34,10 +35,10 @@ type PCRFController interface {
 	DeletePolicy(s *SimInfo) error
 }
 
-func NewPCRFController(db db.PolicyRepo, dataplanHost string) *pcrf {
+func NewPCRFController(db db.PolicyRepo, dataplanHost string, msgB mb.MsgBusServiceClient, orgName string) *pcrf {
 	return &pcrf{
 		dp: dataplan.NewPackageClient(dataplanHost),
-		pf: NewPolicyFunctionController(db),
+		pf: NewPolicyFunctionController(msgB, db, orgName),
 	}
 }
 
@@ -52,14 +53,13 @@ func (p *pcrf) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	et := uint64(st) + pack.Duration
 
 	policy := db.Policy{
-		Id:           uuid.NewV4(),
-		Burst:        1500,
-		Data:         pack.DataVolume,
-		Dlbr:         pack.PackageDetails.Dlbr,
-		Ulbr:         pack.PackageDetails.Ulbr,
-		StartTime:    st,
-		EndTime:      et,
-		RollOverData: 0,
+		Id:        uuid.NewV4(),
+		Burst:     1500,
+		Data:      pack.DataVolume,
+		Dlbr:      pack.PackageDetails.Dlbr,
+		Ulbr:      pack.PackageDetails.Ulbr,
+		StartTime: st,
+		EndTime:   et,
 	}
 
 	return &policy, nil
@@ -77,7 +77,7 @@ func (p *pcrf) AddPolicy(s *SimInfo) (*db.Policy, error) {
 		return nil, err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, policy)
+	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), policy)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (p *pcrf) UpdatePolicy(s *SimInfo) (*db.Policy, error) {
 		return nil, err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, policy)
+	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), policy)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (p *pcrf) DeletePolicy(s *SimInfo) error {
 		return err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, &db.Policy{})
+	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), &db.Policy{})
 	if err != nil {
 		return err
 	}
