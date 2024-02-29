@@ -80,7 +80,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = crest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
-	auth := r.f.Group("/v1", "PCRF for Node", "API system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/pcrf", "PCRF for Node", "API system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 			return
@@ -103,7 +103,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		// pcrf routes
-		pcrf := auth.Group("/pcrf", "PCRF", "pcrf")
+		pcrf := auth.Group("/v1", "PCRF", "pcrf")
 
 		s := pcrf.Group("/session", "session", "session")
 		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
