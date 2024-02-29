@@ -31,6 +31,7 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
@@ -83,7 +84,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	v1 := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system")
 
 	asr := v1.Group("/subscriber", "Asr", "Active susbcriber registry")
