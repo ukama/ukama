@@ -138,7 +138,7 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 		return nil, fmt.Errorf("policy control rejected profile")
 	}
 
-	/* Create event */
+	/* Create event for EPC */
 	e := &epb.ProfileUpdated{
 		Profile: &epb.Profile{
 			Imsi:                 p.Imsi,
@@ -154,7 +154,29 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 
 	_ = s.publishEvent(msgbus.ACTION_CRUD_CREATE, "profile", e)
 
-	s.syncProfile(http.MethodPut, p)
+	/* mesage should be
+		"{
+			"subscriber_info":{
+				"imsi": [0, 0, 1, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+				"algo_type": 1,
+				"key": [0,17,34,51,68,85,102,119,136,153,170,187,204,221,238,255],
+				ue_dl_ambr_bps": 100000000,
+				ue_ul_ambr_bps": 20000000,
+				"apn": {
+					"len": 7,
+					"apn_name": "VZWIMS"
+				},
+				"csg_id_prsent": false,
+				"csg_id":1,
+				"op": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+				"amf":[180,0],
+				"sqn":2,
+				"ats":1660113998,
+				"updated_at":1660113998
+			}
+	    }
+	*/
+	s.syncProfile(http.MethodPost, p)
 
 	return &pb.AddResp{}, err
 }
@@ -289,6 +311,14 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 
 	_ = s.publishEvent(msgbus.ACTION_CRUD_DELETE, "profile", e)
 
+	/*
+		 message should only sent json with
+		"{
+			"subscriber_info":{
+			"imsi": [0, 0, 1, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+			}
+		}
+	*/
 	s.syncProfile(http.MethodDelete, delProfile)
 
 	return &pb.RemoveResp{}, nil
@@ -330,8 +360,8 @@ func (s *ProfileServer) syncProfile(method string, p *db.Profile) error {
 
 	msg := &cpb.NodeFeederMessage{
 		Target:     s.OrgId + "." + p.NetworkId.String() + "." + "*" + "." + "*",
-		HTTPMethod: "POST",
-		Path:       "/v1/pcrf/policy",
+		HTTPMethod: method,
+		Path:       "/epc/v1/hss/subscriber",
 		Msg:        body,
 	}
 

@@ -105,20 +105,37 @@ func (p *PolicyController) RunPolicyControl(imsi string) (error, bool) {
 	return nil, removed
 }
 
+/* This will send a policy to the pcrf on node */
 func (p *PolicyController) syncProfile(method string, pf db.Profile) error {
 
 	route := "request.cloud.local" + "." + p.OrgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 
+	/* Msg can only be :
+		{
+		"policy": {
+			"burst": 1500,
+			"data": 102400000, // Only data allowed for user not the total data limit of package
+			"dlbr": 15000,
+			"end_time": 1908747808,
+			"start_time": 1608747808,
+			"ulbr": 1000,
+			"uuid": "04693e2853b7496781e235d826b56703"
+			"ats": "",
+		},
+		"reroute": "192.168.0.14"
+	}
+	*/
 	body, err := json.Marshal(pf)
 	if err != nil {
 		log.Errorf("error marshaling profile: %s", err.Error())
 		return err
 	}
 
+	path := "/v1/pcrf/subscriber/imsi/" + pf.Imsi
 	msg := &pb.NodeFeederMessage{
 		Target:     p.OrgName + "." + pf.NetworkId.String() + "." + "*" + "." + "*",
 		HTTPMethod: method,
-		Path:       "/v1/pcrf/policy",
+		Path:       path,
 		Msg:        body,
 	}
 
@@ -127,7 +144,7 @@ func (p *PolicyController) syncProfile(method string, pf db.Profile) error {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 		return err
 	}
-	log.Infof("Published policy %v on route %s with target nodes %s", msg, msg.Target)
+	log.Infof("Published policy %v on route %s with target nodes %s", msg, route, msg.Target)
 
 	return nil
 }
