@@ -71,6 +71,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
