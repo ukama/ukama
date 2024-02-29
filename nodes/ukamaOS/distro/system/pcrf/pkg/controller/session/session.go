@@ -81,7 +81,6 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 		totalBytes := sc.s.TxBytes + sc.s.RxBytes
 
-		//TODO: Maybe check here if stats are not updated for a while mark session as termiinated
 		/* Update to DB */
 		if lastStats {
 			sc.s.UpdatedAt = uint64(tNow)

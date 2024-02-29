@@ -39,7 +39,6 @@ type BrdigeConfig struct {
 
 type HttpEndpoints struct {
 	Timeout time.Duration
-	Network string
 	Policy  string
 }
 

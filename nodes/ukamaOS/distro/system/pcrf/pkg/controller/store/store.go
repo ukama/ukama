@@ -13,6 +13,8 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
+const PCRFDB = "/etc/pcrf/pcrf.db"
+
 type Store struct {
 	db *sql.DB
 }
@@ -31,7 +33,7 @@ func NewStore(name string) (*Store, error) {
 			},
 		})
 	// Open the SQLite database file
-	database, err := sql.Open("sqlite3", "/tmp/pcrf.db")
+	database, err := sql.Open("sqlite3", PCRFDB)
 	if err != nil {
 		log.Errorf("Error opening database: %s. Error %s", name, err.Error())
 		return nil, err
