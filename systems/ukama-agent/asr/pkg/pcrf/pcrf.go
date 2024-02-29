@@ -15,6 +15,12 @@ type pcrf struct {
 	dp dataplan.PackageClient
 }
 
+const (
+	ADD    = "POST"
+	UPDATE = "POST"
+	DELETE = "DELETE"
+)
+
 type SimInfo struct {
 	Imsi      string `path:"imsi" validate:"required" json:"-"`
 	Iccid     string
@@ -77,7 +83,7 @@ func (p *pcrf) AddPolicy(s *SimInfo) (*db.Policy, error) {
 		return nil, err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), policy)
+	err = p.pf.ApplyPolicy(ADD, s.Imsi, s.NetworkId.String(), policy)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +104,7 @@ func (p *pcrf) UpdatePolicy(s *SimInfo) (*db.Policy, error) {
 		return nil, err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), policy)
+	err = p.pf.ApplyPolicy(UPDATE, s.Imsi, s.NetworkId.String(), policy)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +119,7 @@ func (p *pcrf) DeletePolicy(s *SimInfo) error {
 		return err
 	}
 
-	err = p.pf.ApplyPolicy(s.Imsi, s.NetworkId.String(), &db.Policy{})
+	err = p.pf.ApplyPolicy(DELETE, s.Imsi, s.NetworkId.String(), &db.Policy{})
 	if err != nil {
 		return err
 	}

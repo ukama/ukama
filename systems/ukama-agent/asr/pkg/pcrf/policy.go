@@ -41,7 +41,7 @@ type PolicyFunctionController interface {
 	DeletePolicy(id uuid.UUID) error
 	DeletePolicyByAsrID(id uint) error
 	UpdatePolicy(id uint, p *db.Policy) error
-	ApplyPolicy(imsi string, network string, p *db.Policy) error
+	ApplyPolicy(method string, imsi string, network string, p *db.Policy) error
 }
 
 func NewPolicyFunctionController(msgB mb.MsgBusServiceClient, db db.PolicyRepo, orgName string) *policyFunction {
@@ -124,10 +124,25 @@ func (pf *policyFunction) UpdatePolicy(id uint, p *db.Policy) error {
 }
 
 func (pf *policyFunction) MonitorPolicy() error {
+
+	//TODO: May be have repo gorm.default, imsi, usage
+	/*
+		=>	This will be a periodic routine
+
+		=>	Update usage from the event sent by CDR service on reciving a new CDR report for imsi
+			Compare the usage to the policy data limit in periodin oand on events
+			As soons as it hits the cap remove the subscriber
+
+		=>	Important: need to make sure when the updates comes from the diffrent nodes we generate a new policy and update the max data limit
+		 	available to subscriber and push them to all nodes
+
+		=> may be CDR also contains the nodeId from which it was genrated
+		   This might help us to resolve lot of issues like quick update , figure out if the user is moving , roaming, locations etc
+	*/
 	return nil
 }
 
-func (pf *policyFunction) ApplyPolicy(imsi string, network string, p *db.Policy) error {
+func (pf *policyFunction) ApplyPolicy(method string, imsi string, network string, p *db.Policy) error {
 
 	route := pf.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 	pMsg := createMessage(p, pf.reroute)
@@ -142,7 +157,7 @@ func (pf *policyFunction) ApplyPolicy(imsi string, network string, p *db.Policy)
 
 	msg := &pb.NodeFeederMessage{
 		Target:     pf.OrgName + "." + network + "." + "*" + "." + "*",
-		HTTPMethod: "POST",
+		HTTPMethod: method,
 		Path:       path,
 		Msg:        jd,
 	}
