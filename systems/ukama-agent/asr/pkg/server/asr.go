@@ -134,9 +134,9 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 	}
 
 	/* Send message to PCRF */
-	policy, err := s.pcrf.AddPolicy(pcrfData)
+	policy, err := s.pcrf.NewPolicy(pcrfData.PackageId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error adding to pcrf")
+		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
 	}
 
 	/* Add to ASR */
@@ -161,6 +161,11 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 	err = s.asrRepo.Add(asr)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	err = s.pcrf.AddPolicy(pcrfData, policy)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error adding policy")
 	}
 
 	/* Create event */
@@ -208,14 +213,20 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		NetworkId: asrRecord.NetworkID,
 	}
 
-	policy, err := s.pcrf.UpdatePolicy(pcrfData)
+	/* Send message to PCRF */
+	policy, err := s.pcrf.NewPolicy(pcrfData.PackageId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
+		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
 	}
 
-	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, *policy)
+	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	err = s.pcrf.UpdatePolicy(pcrfData, policy)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
 	/* Create event */

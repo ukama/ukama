@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ type AsrRecordRepo interface {
 	GetByImsi(imsi string) (*Asr, error)
 	GetByIccid(iccid string) (*Asr, error)
 	Update(imsi string, record *Asr) error
-	UpdatePackage(imsi string, packageId uuid.UUID, policy Policy) error
+	UpdatePackage(imsi string, packageId uuid.UUID, policy *Policy) error
 	DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error
 	Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
@@ -46,10 +47,36 @@ func (r *asrRecordRepo) Update(imsiToUpdate string, rec *Asr) error {
 	return d.Error
 }
 
-func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy Policy) error {
-	rec := &Asr{PackageId: packageId, Policy: policy}
-	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(rec)
-	return d.Error
+func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy *Policy) error {
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		asrRec := &Asr{}
+		oldPolicy := &Policy{}
+		rec := &Asr{PackageId: packageId, Policy: *policy}
+
+		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
+		if err != nil {
+			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
+		}
+		log.Debugf("Updating ASR record %+v", asrRec)
+
+		err = tx.Model(&asrRec).Association("Policies").Find(&oldPolicy)
+		if err != nil {
+			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
+		}
+
+		err = tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Updates(rec).Error
+		if err != nil {
+			return errors.Wrap(err, "error updating subscriber "+imsiToUpdate)
+		}
+
+		err = tx.Model(&Policy{}).Where("id=?", oldPolicy.Id).Delete(&Policy{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error deleting policy for subscriber "+imsiToUpdate)
+		}
+
+		return nil
+	})
+
 }
 
 func (r *asrRecordRepo) Get(id int) (*Asr, error) {

@@ -44,12 +44,13 @@ type PolicyFunctionController interface {
 	ApplyPolicy(method string, imsi string, network string, p *db.Policy) error
 }
 
-func NewPolicyFunctionController(msgB mb.MsgBusServiceClient, db db.PolicyRepo, orgName string) *policyFunction {
+func NewPolicyFunctionController(msgB mb.MsgBusServiceClient, db db.PolicyRepo, orgName string, reroute string) *policyFunction {
 	return &policyFunction{
 		r:                    db,
 		msgbus:               msgB,
 		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
 		OrgName:              orgName,
+		reroute:              reroute,
 	}
 }
 
@@ -153,7 +154,7 @@ func (pf *policyFunction) ApplyPolicy(method string, imsi string, network string
 		return err
 	}
 
-	path := "/pcrf/v1/subscriber/imsi" + imsi
+	path := "/pcrf/v1/subscriber/imsi/" + imsi
 
 	msg := &pb.NodeFeederMessage{
 		Target:     pf.OrgName + "." + network + "." + "*" + "." + "*",

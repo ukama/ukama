@@ -39,6 +39,7 @@ func main() {
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	log.Infof("Initializing config")
+
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -50,6 +51,11 @@ func initConfig() {
 		}
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
+
+	if serviceConfig.DebugMode {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	log.Infof("Config: %+v", serviceConfig)
 }
 
@@ -102,7 +108,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Network Client initilization failed. Error: %v", err)
 	}
 
-	pcrf := pcrf.NewPCRFController(policy, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName)
+	pcrf := pcrf.NewPCRFController(policy, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
 
 	// asr service
 	asrServer, err := server.NewAsrRecordServer(asr, guti, policy,
