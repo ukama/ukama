@@ -118,7 +118,7 @@ func (r *asrRecordRepo) Delete(imsi string, nestedFuncs ...func(*gorm.DB) error)
 			return errors.Wrap(err, "error deleting policy for subscriber "+imsi)
 		}
 
-		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Asr{}).Error
+		err = tx.Where("id=?", asrRec.ID).Delete(&Asr{}).Error
 		if err != nil {
 			return errors.Wrap(err, "error deleting ASR for subscriber "+imsi)
 		}
