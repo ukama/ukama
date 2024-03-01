@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/ukama-agent/node-gateway => ./
 
 replace github.com/ukama/ukama/systems/ukama-agent/asr => ../asr
 
+replace github.com/ukama/ukama/systems/ukama-agent/cdr => ../cdr
+
 require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
@@ -17,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.51.0
 )

@@ -24,6 +24,7 @@ type Kratos struct {
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Asr     string
+	CDR     string
 }
 
 type HttpEndpoints struct {
@@ -43,7 +44,8 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Asr:     "0.0.0.0:9090",
+			Asr:     "asr:9090",
+			CDR:     "cdr:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

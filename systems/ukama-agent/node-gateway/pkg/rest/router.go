@@ -12,6 +12,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/rest"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/client"
@@ -36,6 +37,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	a asr
+	c cdr
 }
 
 type asr interface {
@@ -44,9 +46,16 @@ type asr interface {
 	Read(req *pb.ReadReq) (*pb.ReadResp, error)
 }
 
+type cdr interface {
+	PostCDR(req *cpb.CDR) (*cpb.CDRResp, error)
+	GetCDR(req *cpb.RecordReq) (*cpb.RecordResp, error)
+	GetUsage(req *cpb.UsageReq) (*cpb.UsageResp, error)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.a = client.NewAsr(endpoints.Asr, endpoints.Timeout)
+	c.c = client.NewCDR(endpoints.CDR, endpoints.Timeout)
 	return c
 }
 
@@ -88,10 +97,15 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	v1 := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system")
 
-	asr := v1.Group("/subscriber", "Asr", "Active susbcriber registry")
+	asr := v1.Group("/asr", "Asr", "Active susbcriber registry")
 	asr.GET("/:imsi", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
 	asr.POST("/:imsi/guti", formatDoc("GUTI update for subscriber", ""), tonic.Handler(r.postGuti, http.StatusOK))
 	asr.POST("/:imsi/tai", formatDoc("TAI update for subscriber", ""), tonic.Handler(r.postTai, http.StatusOK))
+
+	cdr := v1.Group("/cdr", "CDR", "Call Detail Record")
+	cdr.POST("/:imsi", formatDoc("Post CDR", ""), tonic.Handler(r.postCDR, http.StatusOK))
+	asr.GET("/:imsi", formatDoc("Get CDR", ""), tonic.Handler(r.getCDR, http.StatusOK))
+	asr.GET("/:imsi/usage", formatDoc("Get total usage", ""), tonic.Handler(r.getUsage, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -99,6 +113,47 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) postCDR(c *gin.Context, req *PostCDRReq) (*cpb.CDRResp, error) {
+
+	return r.clients.c.PostCDR(&cpb.CDR{
+		Session:       uint64(req.Session),
+		Imsi:          req.Imsi,
+		Policy:        req.Policy,
+		ApnName:       req.ApnName,
+		Ip:            req.Ip,
+		StartTime:     req.StartTime,
+		EndTime:       req.EndTime,
+		TxBytes:       req.TxBytes,
+		RxBytes:       req.RxBytes,
+		TotalBytes:    req.TotalBytes,
+		LastUpdatedAt: req.LastUpdatedAt,
+	})
+}
+
+func (r *Router) getCDR(c *gin.Context, req *GetCDRReq) (*cpb.RecordResp, error) {
+
+	return r.clients.c.GetCDR(&cpb.RecordReq{
+		Imsi:      req.Imsi,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		Policy:    req.Policy,
+		SessionId: req.SessionId,
+	})
+
+}
+
+func (r *Router) getUsage(c *gin.Context, req *GetUsageReq) (*cpb.UsageResp, error) {
+
+	return r.clients.c.GetUsage(&cpb.UsageReq{
+		Imsi:      req.Imsi,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		Policy:    req.Policy,
+		SessionId: req.SessionId,
+	})
+
 }
 
 func (r *Router) postGuti(c *gin.Context, req *UpdateGutiReq) (*pb.UpdateGutiResp, error) {
