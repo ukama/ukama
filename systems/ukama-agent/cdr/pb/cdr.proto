@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen";
+
+package ukama.ukamaagent.cdr.v1;
+
+import "validator.proto";
+
+
+  service CDRService {
+
+    /// Add new CDR to the database
+    rpc PostCDR(CDR) returns (CDRResp);
+    
+    /// Get CDR from the database
+    rpc GetCDR(RecordReq) returns (RecordResp);
+
+    /// Get Usage for the subscriber current package
+    rpc GetUsage(UsageReq) returns (UsageResp); 
+   
+}
+
+message CDR {
+    uint64 Session =1  [json_name="session_id"];
+    string Imsi = 2 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string Policy =3 [json_name="policy"];
+    string ApnName =4  [json_name="apn_name"];
+    string Ip = 5 [json_name="ue_ip"];
+    uint64 StartTime = 6 [json_name="start_time"];
+    uint64 EndTime = 7 [json_name="end_time"];
+    uint64 LastUpdatedAt = 8 [json_name="last_updated_at"];
+    uint64 TxBytes = 9 [json_name="tx_bytes"];
+    uint64 RxBytes =10  [ json_name="rx_bytes"];
+    uint64 TotalBytes =11 [json_name= "total_bytes"];
+}
+
+message CDRResp {
+ 
+}
+
+message RecordReq {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    uint64 StartTime = 2 [json_name="start_time"];
+    uint64 EndTime = 3 [json_name="end_time"];
+    string Policy = 4 [json_name="policy"];
+    uint64 SessionId = 5 [json_name="session_id"];
+}
+
+message RecordResp {
+    repeated CDR cdr = 1 [json_name="cdrs"];
+}
+
+message UsageReq {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    uint64 StartTime = 2 [json_name="start_time"];
+    uint64 EndTime = 3 [json_name="end_time"];
+    string Policy = 4 [json_name="policy"];
+    uint64 SessionId = 5 [json_name="session_id"];
+}
+
+message UsageResp {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    uint64 usage = 2;
+}
+
