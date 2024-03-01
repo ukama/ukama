@@ -49,6 +49,11 @@ func (this *Record) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Apn", err)
 		}
 	}
+	if this.Policy != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Policy); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Policy", err)
+		}
+	}
 	return nil
 }
 func (this *Apn) Validate() error {
@@ -186,5 +191,11 @@ func (this *UpdateTaiReq) Validate() error {
 	return nil
 }
 func (this *UpdateTaiResp) Validate() error {
+	return nil
+}
+func (this *Policy) Validate() error {
+	if this.Uuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must not be an empty string`, this.Uuid))
+	}
 	return nil
 }

@@ -93,9 +93,18 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		UeDlAmbrBps: sub.UeDlAmbrBps,
 		UeUlAmbrBps: sub.UeDlAmbrBps,
 		PackageId:   sub.PackageId.String(),
+		Policy: &pb.Policy{
+			Uuid:      sub.Policy.Id.String(),
+			Burst:     sub.Policy.Burst,
+			Data:      sub.Policy.Data,
+			Ulbr:      sub.Policy.Ulbr,
+			Dlbr:      sub.Policy.Dlbr,
+			StartTime: sub.Policy.StartTime,
+			EndTime:   sub.Policy.EndTime,
+		},
 	}}
 
-	log.Infof("Subscriber is having %+v", resp)
+	log.Infof("Active subscriber is  %+v", resp)
 	return resp, nil
 }
 
