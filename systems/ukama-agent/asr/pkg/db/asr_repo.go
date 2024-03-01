@@ -49,29 +49,23 @@ func (r *asrRecordRepo) Update(imsiToUpdate string, rec *Asr) error {
 
 func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy *Policy) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		asrRec := &Asr{}
-		oldPolicy := &Policy{}
-		rec := &Asr{PackageId: packageId, Policy: *policy}
 
+		asrRec := &Asr{}
 		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
 		if err != nil {
 			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
 		}
 		log.Debugf("Updating ASR record %+v", asrRec)
 
-		err = tx.Model(&asrRec).Association("Policies").Find(&oldPolicy)
-		if err != nil {
-			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
-		}
-
-		err = tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Updates(rec).Error
-		if err != nil {
-			return errors.Wrap(err, "error updating subscriber "+imsiToUpdate)
-		}
-
-		err = tx.Model(&Policy{}).Where("id=?", oldPolicy.Id).Delete(&Policy{}).Error
+		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Policy{}).Error
 		if err != nil {
 			return errors.Wrap(err, "error deleting policy for subscriber "+imsiToUpdate)
+		}
+
+		policy.AsrID = asrRec.ID
+		err = tx.Create(&policy).Error
+		if err != nil {
+			return errors.Wrap(err, "error adding policy")
 		}
 
 		return nil

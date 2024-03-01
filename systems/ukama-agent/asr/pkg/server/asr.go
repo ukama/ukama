@@ -249,6 +249,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		}
 	}
 
+	asrRecord.Policy = *policy
 	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, asrRecord)
 	return &pb.UpdatePackageResp{}, nil
 }
