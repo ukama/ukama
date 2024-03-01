@@ -98,12 +98,12 @@ func (p *pcrf) UpdatePolicy(s *SimInfo, policy *db.Policy) error {
 
 func (p *pcrf) DeletePolicy(s *SimInfo) error {
 
-	err := p.pf.DeletePolicyByAsrID(s.ID)
-	if err != nil {
-		return err
-	}
+	// err := p.pf.DeletePolicyByAsrID(s.ID)
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = p.pf.ApplyPolicy(DELETE, s.Imsi, s.NetworkId.String(), &db.Policy{})
+	err := p.pf.ApplyPolicy(DELETE, s.Imsi, s.NetworkId.String(), &db.Policy{})
 	if err != nil {
 		return err
 	}

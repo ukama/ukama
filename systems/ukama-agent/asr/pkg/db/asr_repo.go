@@ -103,10 +103,38 @@ func (r *asrRecordRepo) GetByIccid(iccid string) (*Asr, error) {
 	return &asr, nil
 }
 
-func (r *asrRecordRepo) Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error {
-	return r.db.ExecuteInTransaction2(func(tx *gorm.DB) *gorm.DB {
-		return tx.Where(&Asr{Imsi: imsi}).Delete(&Asr{})
-	}, nestedFunc...)
+func (r *asrRecordRepo) Delete(imsi string, nestedFuncs ...func(*gorm.DB) error) error {
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+
+		asrRec := &Asr{}
+		err := tx.Model(&Asr{}).Where("imsi=?", imsi).Find(&asrRec).Error
+		if err != nil {
+			return errors.Wrap(err, "unable to find record for subscriber "+imsi)
+		}
+		log.Debugf("Deleting ASR record %+v", asrRec)
+
+		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Policy{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error deleting policy for subscriber "+imsi)
+		}
+
+		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Asr{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error deleting ASR for subscriber "+imsi)
+		}
+
+		if len(nestedFuncs) > 0 {
+			for _, n := range nestedFuncs {
+				if n != nil {
+					nestErr := n(tx)
+					if nestErr != nil {
+						return nestErr
+					}
+				}
+			}
+		}
+		return nil
+	})
 }
 
 func (r *asrRecordRepo) DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error {

@@ -268,14 +268,14 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		NetworkId: delAsrRecord.NetworkID,
 	}
 
-	err = s.pcrf.DeletePolicy(pcrfData)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
-	}
-
 	err = s.asrRepo.Delete(delAsrRecord.Imsi)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	err = s.pcrf.DeletePolicy(pcrfData)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
 	/* Create event */
