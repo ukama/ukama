@@ -17,10 +17,9 @@ type Config struct {
 	AsrHost           string            `default:"localhost"`
 	DataplanHost      string            `default:"http://localhost:8085"`
 	NetworkHost       string            `default:"http://localhost:8085"`
-	PCRFHost          string            `default:"http://localhost:8085"`
 	FactoryHost       string            `default:"http://localhost:8085"`
-	OrgName           string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
-	OrgId             string            `default:"ukama"`
+	OrgName           string            `default:"ukama"`
+	OrgId             string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
 }
 
@@ -44,5 +43,8 @@ func NewConfig(name string) *Config {
 			Timeout:        5 * time.Second,
 			ListenerRoutes: []string{},
 		},
+		DataplanHost: "http://192.168.0.14:8085",
+		NetworkHost:  "http://192.168.0.14:8085",
+		FactoryHost:  "http://192.168.0.14:8085",
 	}
 }

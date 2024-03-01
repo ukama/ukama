@@ -35,7 +35,7 @@ type AsrRecordServer struct {
 	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, orgName, orgId string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
@@ -52,6 +52,8 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db
 	if msgBus != nil {
 		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
+
+	log.Infof("Asr is %+v", asr)
 
 	return &asr, nil
 }

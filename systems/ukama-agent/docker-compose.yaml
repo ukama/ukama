@@ -1,0 +1,99 @@
+version: '3.9'
+services:
+  postgresd-ukama-agent:
+    image: postgres:13.3
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      ukama-net:
+        ipv4_address: 10.1.0.101
+    volumes:
+      - postgress-data:/var/lib/postgresql  
+
+  asr:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./asr
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-ukama-agent
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@10.1.0.11:5672
+      - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+      - ASR_SERVICE_HOST=asr
+      - ASR_SERVICE_PORT=9090
+      - ORGNAME=ukama
+      - ORGID=40987edb-ebb6-4f84-a27c-99db7c136100
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-ukama-agent
+      - postgresd-ukama-agent
+
+  node-gateway-ukama-agent:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-gateway
+    restart: always
+    networks:
+      ukama-net:
+        ipv4_address: 10.1.0.103
+    environment:
+    - DEBUGMODE=true
+    - AUTH_BYPASSAUTHMODE=true
+    - SERVICES_ASR=asr:9090
+    # - CORS_ALLOWALLORIGINS=true
+    # - CORS_ALLOWORIGINS=""
+    depends_on:
+    - asr
+
+  api-gateway-ukama-agent:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    restart: always
+    networks:
+      ukama-net:
+        ipv4_address: 10.1.0.102
+    environment:
+    - DEBUGMODE=true
+    - AUTH_BYPASSAUTHMODE=true
+    - SERVICES_ASR=asr:9090
+    # - CORS_ALLOWALLORIGINS=true
+    # - CORS_ALLOWORIGINS=""
+    depends_on:
+    - asr
+
+  msgclient-ukama-agent:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-ukama-agent
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@$10.1.0.11:5672
+      - SYSTEM=ukamaagent
+      - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
+      - SHOVEL_SRCURI=amqp://guest:guest@$10.1.0.11:5672
+      - SHOVEL_DESTURI=amqp://user:password@10.1.0.11:5672
+      - ORGNAME=ukama
+      - MASTERORGNAME=ukama
+      - MSGBUS_MANAGEMENTURI=http://10.1.0.11:15672
+      - MSGBUS_USER=guest
+      - MSGBUS_PASSWORD=guest
+    restart: always
+    networks:
+    - ukama-net
+    depends_on:
+    - postgresd-ukama-agent
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
+
+volumes:
+ postgress-data:

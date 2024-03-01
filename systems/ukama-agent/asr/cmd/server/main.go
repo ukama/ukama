@@ -56,7 +56,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, true)
-	err := d.Init(&db.Asr{}, &db.Guti{}, &db.Tai{})
+	err := d.Init(&db.Asr{}, &db.Guti{}, &db.Tai{}, &db.Policy{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -107,7 +107,6 @@ func runGrpcServer(gormdb sql.Db) {
 	// asr service
 	asrServer, err := server.NewAsrRecordServer(asr, guti, policy,
 		factory, network, pcrf, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
-
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}

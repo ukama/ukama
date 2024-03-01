@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
 
@@ -121,7 +122,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateResp, error) {
-
+	log.Infof("Received a add subscriber request: %v", req)
 	return r.clients.a.Activate(&pb.ActivateReq{
 		Iccid:     req.Iccid,
 		Imsi:      req.Imsi,
@@ -132,7 +133,7 @@ func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateRe
 }
 
 func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.InactivateResp, error) {
-
+	log.Infof("Received a update subscriber request: %v", req)
 	return r.clients.a.Inactivate(&pb.InactivateReq{
 		Iccid:     req.Iccid,
 		Imsi:      req.Imsi,
@@ -143,7 +144,7 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.Inact
 }
 
 func (r *Router) patchPackageUpdate(c *gin.Context, req *UpdatePackageReq) (*pb.UpdatePackageResp, error) {
-
+	log.Infof("Received a delete subscriber request: %v", req)
 	return r.clients.a.UpdatePackage(&pb.UpdatePackageReq{
 		Iccid:     req.Iccid,
 		Imsi:      req.Imsi,
