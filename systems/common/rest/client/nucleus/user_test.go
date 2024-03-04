@@ -57,10 +57,14 @@ func TestUserClient_GetById(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/"+testUuid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -154,10 +158,14 @@ func TestUserClient_GetByEmail(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.UserEndpoint+"/email/"+testEmail)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 

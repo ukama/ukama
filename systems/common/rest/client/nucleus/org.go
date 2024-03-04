@@ -14,8 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const OrgEndpoint = "/v1/orgs"
@@ -44,7 +45,7 @@ type orgClient struct {
 	R *client.Resty
 }
 
-func NewOrgClient(h string) *orgClient {
+func NewOrgClient(h string, options ...client.Option) *orgClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -53,7 +54,7 @@ func NewOrgClient(h string) *orgClient {
 
 	return &orgClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

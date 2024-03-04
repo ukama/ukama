@@ -14,8 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const UserEndpoint = "/v1/users"
@@ -44,7 +45,7 @@ type userClient struct {
 	R *client.Resty
 }
 
-func NewUserClient(h string) *userClient {
+func NewUserClient(h string, options ...client.Option) *userClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -53,7 +54,7 @@ func NewUserClient(h string) *userClient {
 
 	return &userClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

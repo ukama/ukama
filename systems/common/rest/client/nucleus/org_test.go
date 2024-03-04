@@ -59,11 +59,16 @@ func TestOrgClient_Get(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.OrgEndpoint+"/"+testUuid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
+
 		}
 
 		testOrgClient := nucleus.NewOrgClient("")
@@ -140,9 +145,14 @@ func TestOrgClient_AddUser(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Status:     "404 NOT FOUND",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -196,9 +206,14 @@ func TestOrgClient_RemoveUser(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Status:     "404 NOT FOUND",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -214,6 +229,7 @@ func TestOrgClient_RemoveUser(t *testing.T) {
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), nucleus.OrgEndpoint+"/"+testUuid+"/users/"+testUuid)
+
 			return nil
 		}
 
