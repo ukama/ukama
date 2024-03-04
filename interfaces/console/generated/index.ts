@@ -131,6 +131,23 @@ export type AttachedNodes = {
   type: NodeTypeEnum;
 };
 
+export type BillHistoryDto = {
+  __typename?: 'BillHistoryDto';
+  date: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  subtotal: Scalars['Float']['output'];
+  totalUsage: Scalars['Float']['output'];
+};
+
+export type BillResponse = {
+  __typename?: 'BillResponse';
+  bill: Array<CurrentBillDto>;
+  billMonth: Scalars['String']['output'];
+  dueDate: Scalars['String']['output'];
+  total: Scalars['Float']['output'];
+};
+
 export type CBooleanResponse = {
   __typename?: 'CBooleanResponse';
   success: Scalars['Boolean']['output'];
@@ -141,6 +158,33 @@ export type CoverageInput = {
   lat: Scalars['Float']['input'];
   lng: Scalars['Float']['input'];
   mode: Scalars['String']['input'];
+};
+
+export type CreateCustomerDto = {
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type CurrentBillDto = {
+  __typename?: 'CurrentBillDto';
+  dataUsed: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  rate: Scalars['Float']['output'];
+  subtotal: Scalars['Float']['output'];
+};
+
+export type Customer = {
+  __typename?: 'Customer';
+  addressLine1: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  externalId: Scalars['String']['output'];
+  legalName: Scalars['String']['output'];
+  legalNumber: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  vatRate: Scalars['Float']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -217,6 +261,26 @@ export type Event = {
   value: Scalars['String']['output'];
 };
 
+export type Fee = {
+  __typename?: 'Fee';
+  amountCents: Scalars['Int']['output'];
+  amountCurrency: Scalars['String']['output'];
+  eventsCount: Scalars['Int']['output'];
+  item: FeeItem;
+  totalAmountCents: Scalars['Int']['output'];
+  totalAmountCurrency: Scalars['String']['output'];
+  units: Scalars['Float']['output'];
+  vatAmountCents: Scalars['Int']['output'];
+  vatAmountCurrency: Scalars['String']['output'];
+};
+
+export type FeeItem = {
+  __typename?: 'FeeItem';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type GetInvitationByOrgResDto = {
   __typename?: 'GetInvitationByOrgResDto';
   invitations: Array<InvitationDto>;
@@ -262,6 +326,22 @@ export type InvitationDto = {
   userId: Scalars['String']['output'];
 };
 
+export type InvoiceDto = {
+  __typename?: 'InvoiceDto';
+  createdAt: Scalars['DateTimeISO']['output'];
+  id: Scalars['String']['output'];
+  isPaid: Scalars['Boolean']['output'];
+  networkId: Scalars['String']['output'];
+  period: Scalars['DateTimeISO']['output'];
+  rawInvoice: RawInvoiceDto;
+  subscriberId: Scalars['String']['output'];
+};
+
+export type InvoicesResponse = {
+  __typename?: 'InvoicesResponse';
+  invoices: Array<InvoiceDto>;
+};
+
 export type Link = {
   __typename?: 'Link';
   id: Scalars['String']['output'];
@@ -304,6 +384,14 @@ export type MembersResDto = {
   members: Array<MemberDto>;
 };
 
+export type MetadataItem = {
+  __typename?: 'MetadataItem';
+  createdAt: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  lagoId: Array<Scalars['Int']['output']>;
+  value: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
@@ -318,7 +406,9 @@ export type Mutation = {
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
   attachNode: CBooleanResponse;
+  attachPaymentWithCustomer: Scalars['Boolean']['output'];
   coverage: Site;
+  createCustomer: StripeCustomer;
   defaultMarkup: CBooleanResponse;
   deleteDraft: DeleteDraftRes;
   deleteInvitation: DeleteInvitationResDto;
@@ -330,6 +420,7 @@ export type Mutation = {
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
   releaseNodeFromSite: CBooleanResponse;
+  removeInvoice: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
   sendInvitation: SendInvitationResDto;
@@ -412,9 +503,19 @@ export type MutationAttachNodeArgs = {
 };
 
 
+export type MutationAttachPaymentWithCustomerArgs = {
+  paymentId: Scalars['String']['input'];
+};
+
+
 export type MutationCoverageArgs = {
   data: CoverageInput;
   siteId: Scalars['String']['input'];
+};
+
+
+export type MutationCreateCustomerArgs = {
+  data: CreateCustomerDto;
 };
 
 
@@ -472,6 +573,11 @@ export type MutationDetachhNodeArgs = {
 
 export type MutationReleaseNodeFromSiteArgs = {
   data: NodeInput;
+};
+
+
+export type MutationRemoveInvoiceArgs = {
+  invoiceId: Scalars['String']['input'];
 };
 
 
@@ -750,6 +856,8 @@ export type Query = {
   __typename?: 'Query';
   addSite: SiteDto;
   getAppsChangeLog: AppChangeLogs;
+  getBillHistory: Array<BillHistoryDto>;
+  getCurrentBill: BillResponse;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
@@ -757,6 +865,9 @@ export type Query = {
   getDrafts: Array<Draft>;
   getInvitation: InvitationDto;
   getInvitationsByOrg: GetInvitationByOrgResDto;
+  getInvoice: InvoiceDto;
+  getInvoicesByNetwork: InvoicesResponse;
+  getInvoicesBySubscriber: InvoicesResponse;
   getMember: MemberDto;
   getMembers: MembersResDto;
   getNetwork: NetworkDto;
@@ -778,10 +889,12 @@ export type Query = {
   getSimsBySubscriber: SubscriberToSimsDto;
   getSite: SiteDto;
   getSites: SitesResDto;
+  getStripeCustomer: StripeCustomer;
   getSubscriber: SubscriberDto;
   getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
   getSubscribersByNetwork: SubscribersResDto;
   getUser: UserResDto;
+  retrivePaymentMethods: Array<StripePaymentMethods>;
   whoami: WhoamiDto;
 };
 
@@ -814,6 +927,21 @@ export type QueryGetDraftsArgs = {
 
 export type QueryGetInvitationArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetInvoiceArgs = {
+  invoiceId: Scalars['String']['input'];
+};
+
+
+export type QueryGetInvoicesByNetworkArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetInvoicesBySubscriberArgs = {
+  subscriberId: Scalars['String']['input'];
 };
 
 
@@ -915,6 +1043,24 @@ export type QueryGetSubscribersByNetworkArgs = {
 
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
+};
+
+export type RawInvoiceDto = {
+  __typename?: 'RawInvoiceDto';
+  amountCents: Scalars['Int']['output'];
+  amountCurrency: Scalars['String']['output'];
+  customer: Customer;
+  fees: Array<Fee>;
+  fileURL: Scalars['String']['output'];
+  issuingDate: Scalars['String']['output'];
+  metadata?: Maybe<Array<MetadataItem>>;
+  paymentStatus: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  subscriptions: Array<Subscription>;
+  totalAmountCents: Scalars['Int']['output'];
+  totalAmountCurrency: Scalars['String']['output'];
+  vatAmountCents: Scalars['Int']['output'];
+  vatAmountCurrency: Scalars['String']['output'];
 };
 
 export type RemovePackageFormSimInputDto = {
@@ -1055,6 +1201,27 @@ export type SitesResDto = {
   sites: Array<SiteDto>;
 };
 
+export type StripeCustomer = {
+  __typename?: 'StripeCustomer';
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type StripePaymentMethods = {
+  __typename?: 'StripePaymentMethods';
+  brand: Scalars['String']['output'];
+  country?: Maybe<Scalars['String']['output']>;
+  created: Scalars['Float']['output'];
+  cvc_check?: Maybe<Scalars['String']['output']>;
+  exp_month: Scalars['Float']['output'];
+  exp_year: Scalars['Float']['output'];
+  funding: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  last4: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type SubscriberDto = {
   __typename?: 'SubscriberDto';
   address: Scalars['String']['output'];
@@ -1123,6 +1290,18 @@ export type SubscriberToSimsDto = {
 export type SubscribersResDto = {
   __typename?: 'SubscribersResDto';
   subscribers: Array<SubscriberDto>;
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  canceledAt: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  externalCustomerId: Scalars['String']['output'];
+  externalId: Scalars['String']['output'];
+  planCode: Scalars['String']['output'];
+  startedAt: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  terminatedAt: Scalars['String']['output'];
 };
 
 export type ToggleSimStatusInputDto = {
@@ -1679,6 +1858,29 @@ export type CoverageMutationVariables = Exact<{
 
 export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } } };
 
+export type InvoiceFragment = { __typename?: 'InvoiceDto', id: string, subscriberId: string, networkId: string, period: any, isPaid: boolean, createdAt: any, rawInvoice: { __typename?: 'RawInvoiceDto', issuingDate: string, status: string, paymentStatus: string, amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, fileURL: string, customer: { __typename?: 'Customer', externalId: string, name: string, email: string, addressLine1: string, legalName: string, legalNumber: string, phone: string, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'Subscription', externalCustomerId: string, externalId: string, planCode: string, status: string, createdAt: string, startedAt: string, canceledAt: string, terminatedAt: string }>, metadata?: Array<{ __typename?: 'MetadataItem', createdAt: string, key: string, lagoId: Array<number>, value: string }> | null, fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, eventsCount: number, units: number, item: { __typename?: 'FeeItem', type: string, code: string, name: string } }> } };
+
+export type GetInvoicesByNetworkQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetInvoicesByNetworkQuery = { __typename?: 'Query', getInvoicesByNetwork: { __typename?: 'InvoicesResponse', invoices: Array<{ __typename?: 'InvoiceDto', id: string, subscriberId: string, networkId: string, period: any, isPaid: boolean, createdAt: any, rawInvoice: { __typename?: 'RawInvoiceDto', issuingDate: string, status: string, paymentStatus: string, amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, fileURL: string, customer: { __typename?: 'Customer', externalId: string, name: string, email: string, addressLine1: string, legalName: string, legalNumber: string, phone: string, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'Subscription', externalCustomerId: string, externalId: string, planCode: string, status: string, createdAt: string, startedAt: string, canceledAt: string, terminatedAt: string }>, metadata?: Array<{ __typename?: 'MetadataItem', createdAt: string, key: string, lagoId: Array<number>, value: string }> | null, fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, eventsCount: number, units: number, item: { __typename?: 'FeeItem', type: string, code: string, name: string } }> } }> } };
+
+export type GetInvoicesBySubscriberQueryVariables = Exact<{
+  subscriberId: Scalars['String']['input'];
+}>;
+
+
+export type GetInvoicesBySubscriberQuery = { __typename?: 'Query', getInvoicesBySubscriber: { __typename?: 'InvoicesResponse', invoices: Array<{ __typename?: 'InvoiceDto', id: string, subscriberId: string, networkId: string, period: any, isPaid: boolean, createdAt: any, rawInvoice: { __typename?: 'RawInvoiceDto', issuingDate: string, status: string, paymentStatus: string, amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, fileURL: string, customer: { __typename?: 'Customer', externalId: string, name: string, email: string, addressLine1: string, legalName: string, legalNumber: string, phone: string, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'Subscription', externalCustomerId: string, externalId: string, planCode: string, status: string, createdAt: string, startedAt: string, canceledAt: string, terminatedAt: string }>, metadata?: Array<{ __typename?: 'MetadataItem', createdAt: string, key: string, lagoId: Array<number>, value: string }> | null, fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, eventsCount: number, units: number, item: { __typename?: 'FeeItem', type: string, code: string, name: string } }> } }> } };
+
+export type GetInvoiceQueryVariables = Exact<{
+  invoiceId: Scalars['String']['input'];
+}>;
+
+
+export type GetInvoiceQuery = { __typename?: 'Query', getInvoice: { __typename?: 'InvoiceDto', id: string, subscriberId: string, networkId: string, period: any, isPaid: boolean, createdAt: any, rawInvoice: { __typename?: 'RawInvoiceDto', issuingDate: string, status: string, paymentStatus: string, amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, fileURL: string, customer: { __typename?: 'Customer', externalId: string, name: string, email: string, addressLine1: string, legalName: string, legalNumber: string, phone: string, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'Subscription', externalCustomerId: string, externalId: string, planCode: string, status: string, createdAt: string, startedAt: string, canceledAt: string, terminatedAt: string }>, metadata?: Array<{ __typename?: 'MetadataItem', createdAt: string, key: string, lagoId: Array<number>, value: string }> | null, fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, totalAmountCents: number, totalAmountCurrency: string, eventsCount: number, units: number, item: { __typename?: 'FeeItem', type: string, code: string, name: string } }> } } };
+
 export const NodeFragmentDoc = gql`
     fragment node on Node {
   id
@@ -1966,6 +2168,70 @@ export const DraftFragmentDoc = gql`
     ${LinkFragmentDoc}
 ${SiteFragmentDoc}
 ${EventFragmentDoc}`;
+export const InvoiceFragmentDoc = gql`
+    fragment invoice on InvoiceDto {
+  id
+  subscriberId
+  networkId
+  period
+  rawInvoice {
+    issuingDate
+    status
+    paymentStatus
+    amountCents
+    amountCurrency
+    vatAmountCents
+    vatAmountCurrency
+    totalAmountCents
+    totalAmountCurrency
+    fileURL
+    customer {
+      externalId
+      name
+      email
+      addressLine1
+      legalName
+      legalNumber
+      phone
+      vatRate
+      createdAt
+    }
+    subscriptions {
+      externalCustomerId
+      externalId
+      planCode
+      status
+      createdAt
+      startedAt
+      canceledAt
+      terminatedAt
+    }
+    metadata {
+      createdAt
+      key
+      lagoId
+      value
+    }
+    fees {
+      amountCents
+      amountCurrency
+      vatAmountCents
+      vatAmountCurrency
+      totalAmountCents
+      totalAmountCurrency
+      eventsCount
+      units
+      item {
+        type
+        code
+        name
+      }
+    }
+  }
+  isPaid
+  createdAt
+}
+    `;
 export const GetNodeDocument = gql`
     query getNode($data: NodeInput!) {
   getNode(data: $data) {
@@ -4105,3 +4371,112 @@ export function useCoverageMutation(baseOptions?: Apollo.MutationHookOptions<Cov
 export type CoverageMutationHookResult = ReturnType<typeof useCoverageMutation>;
 export type CoverageMutationResult = Apollo.MutationResult<CoverageMutation>;
 export type CoverageMutationOptions = Apollo.BaseMutationOptions<CoverageMutation, CoverageMutationVariables>;
+export const GetInvoicesByNetworkDocument = gql`
+    query getInvoicesByNetwork($networkId: String!) {
+  getInvoicesByNetwork(networkId: $networkId) {
+    invoices {
+      ...invoice
+    }
+  }
+}
+    ${InvoiceFragmentDoc}`;
+
+/**
+ * __useGetInvoicesByNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetInvoicesByNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvoicesByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvoicesByNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetInvoicesByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetInvoicesByNetworkQuery, GetInvoicesByNetworkQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvoicesByNetworkQuery, GetInvoicesByNetworkQueryVariables>(GetInvoicesByNetworkDocument, options);
+      }
+export function useGetInvoicesByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvoicesByNetworkQuery, GetInvoicesByNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvoicesByNetworkQuery, GetInvoicesByNetworkQueryVariables>(GetInvoicesByNetworkDocument, options);
+        }
+export type GetInvoicesByNetworkQueryHookResult = ReturnType<typeof useGetInvoicesByNetworkQuery>;
+export type GetInvoicesByNetworkLazyQueryHookResult = ReturnType<typeof useGetInvoicesByNetworkLazyQuery>;
+export type GetInvoicesByNetworkQueryResult = Apollo.QueryResult<GetInvoicesByNetworkQuery, GetInvoicesByNetworkQueryVariables>;
+export const GetInvoicesBySubscriberDocument = gql`
+    query getInvoicesBySubscriber($subscriberId: String!) {
+  getInvoicesBySubscriber(subscriberId: $subscriberId) {
+    invoices {
+      ...invoice
+    }
+  }
+}
+    ${InvoiceFragmentDoc}`;
+
+/**
+ * __useGetInvoicesBySubscriberQuery__
+ *
+ * To run a query within a React component, call `useGetInvoicesBySubscriberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvoicesBySubscriberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvoicesBySubscriberQuery({
+ *   variables: {
+ *      subscriberId: // value for 'subscriberId'
+ *   },
+ * });
+ */
+export function useGetInvoicesBySubscriberQuery(baseOptions: Apollo.QueryHookOptions<GetInvoicesBySubscriberQuery, GetInvoicesBySubscriberQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvoicesBySubscriberQuery, GetInvoicesBySubscriberQueryVariables>(GetInvoicesBySubscriberDocument, options);
+      }
+export function useGetInvoicesBySubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvoicesBySubscriberQuery, GetInvoicesBySubscriberQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvoicesBySubscriberQuery, GetInvoicesBySubscriberQueryVariables>(GetInvoicesBySubscriberDocument, options);
+        }
+export type GetInvoicesBySubscriberQueryHookResult = ReturnType<typeof useGetInvoicesBySubscriberQuery>;
+export type GetInvoicesBySubscriberLazyQueryHookResult = ReturnType<typeof useGetInvoicesBySubscriberLazyQuery>;
+export type GetInvoicesBySubscriberQueryResult = Apollo.QueryResult<GetInvoicesBySubscriberQuery, GetInvoicesBySubscriberQueryVariables>;
+export const GetInvoiceDocument = gql`
+    query getInvoice($invoiceId: String!) {
+  getInvoice(invoiceId: $invoiceId) {
+    ...invoice
+  }
+}
+    ${InvoiceFragmentDoc}`;
+
+/**
+ * __useGetInvoiceQuery__
+ *
+ * To run a query within a React component, call `useGetInvoiceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvoiceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvoiceQuery({
+ *   variables: {
+ *      invoiceId: // value for 'invoiceId'
+ *   },
+ * });
+ */
+export function useGetInvoiceQuery(baseOptions: Apollo.QueryHookOptions<GetInvoiceQuery, GetInvoiceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvoiceQuery, GetInvoiceQueryVariables>(GetInvoiceDocument, options);
+      }
+export function useGetInvoiceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvoiceQuery, GetInvoiceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvoiceQuery, GetInvoiceQueryVariables>(GetInvoiceDocument, options);
+        }
+export type GetInvoiceQueryHookResult = ReturnType<typeof useGetInvoiceQuery>;
+export type GetInvoiceLazyQueryHookResult = ReturnType<typeof useGetInvoiceLazyQuery>;
+export type GetInvoiceQueryResult = Apollo.QueryResult<GetInvoiceQuery, GetInvoiceQueryVariables>;

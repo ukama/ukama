@@ -29,6 +29,7 @@ import {
   useSetActivePackageForSimMutation,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
+  useGetInvoicesBySubscriberQuery,
 } from '@/generated';
 import {
   ContainerMax,
@@ -83,6 +84,19 @@ const Page = () => {
     subscribers: [],
   });
 
+  const { loading: subBillingLoading, data: _billingData } =
+    useGetInvoicesBySubscriberQuery({
+      variables: { subscriberId: subcriberInfo?.subscriberId },
+      fetchPolicy: 'cache-first',
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'billing-msg',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
   const { loading: packagesLoading, data: _packages } = useGetPackagesQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (_packages) => {
@@ -735,6 +749,14 @@ const Page = () => {
                 ? sitesData?.getSites?.sites[0].name
                 : '-'
             }
+            dataPlans={packages.packages}
+            billingCycle={
+              (_billingData
+                ? _billingData.getInvoicesBySubscriber?.invoices
+                : []) || []
+            }
+            billingCycleLoading={subBillingLoading}
+            dataPlanLoading={packagesLoading}
           />
           <TopUpData
             isToPup={isToPupData}

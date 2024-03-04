@@ -64,6 +64,11 @@ export const SUB_GRAPH_LIST = [
     isPingedSuccess: false,
   },
   {
+    name: "billing",
+    url: `http://localhost:${BILLING_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
     name: "network",
     url: `http://localhost:${NETWORK_PORT}`,
     isPingedSuccess: false,
