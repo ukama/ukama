@@ -66,9 +66,13 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -223,9 +227,13 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -279,9 +287,13 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -335,9 +347,13 @@ func TestOperatorClient_TerminateSim(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
