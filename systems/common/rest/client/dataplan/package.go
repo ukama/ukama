@@ -13,8 +13,9 @@ import (
 	"fmt"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const PackageEndpoint = "/v1/packages"
@@ -91,7 +92,7 @@ type packageClient struct {
 	R *client.Resty
 }
 
-func NewPackageClient(h string) *packageClient {
+func NewPackageClient(h string, options ...client.Option) *packageClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -100,7 +101,7 @@ func NewPackageClient(h string) *packageClient {
 
 	return &packageClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 
