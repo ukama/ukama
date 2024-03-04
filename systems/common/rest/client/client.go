@@ -13,25 +13,55 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
-	crest "github.com/ukama/ukama/systems/common/rest"
 
 	log "github.com/sirupsen/logrus"
+	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
 type Resty struct {
 	C *resty.Client
 }
 
-func NewResty() *Resty {
-	c := resty.New()
+type Option func(*Resty)
 
-	c.SetDebug(false)
+func NewResty(options ...Option) *Resty {
+	c := resty.New().SetDebug(false)
 
-	return &Resty{
+	r := &Resty{
 		C: c,
+	}
+
+	// set the default error option
+	WithError(crest.ErrorResponse{})(r)
+
+	// set user defined options.
+	// Will overide error option if caller sets his own
+	for _, opt := range options {
+		opt(r)
+	}
+
+	return r
+}
+
+func WithDebug() Option {
+	return func(r *Resty) {
+		r.C = r.C.SetDebug(true)
 	}
 }
 
+func WithBearer(key string) Option {
+	return func(r *Resty) {
+		r.C = r.C.SetHeader("Authorization", "Bearer "+key)
+	}
+}
+
+func WithError(apiErr error) Option {
+	return func(r *Resty) {
+		r.C = r.C.SetError(apiErr)
+	}
+}
+
+// Deprecated: Use NewResty() + WithBearer() option instead.
 func NewRestyWithBearer(key string) *Resty {
 	c := resty.New()
 
@@ -43,53 +73,49 @@ func NewRestyWithBearer(key string) *Resty {
 }
 
 func (r *Resty) Get(url string) (*resty.Response, error) {
-	resp, err := r.C.R().SetError(&crest.ErrorResponse{}).Get(url)
+	resp, err := r.C.R().Get(url)
 	if err != nil {
 		log.Errorf("Failed to send GET api request with error: %s", err.Error())
 
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
 		return nil, fmt.Errorf("rest api GET failure with error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respError)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
-	resp, err := r.C.R().SetError(&crest.ErrorResponse{}).SetQueryString(q).Get(url)
+	resp, err := r.C.R().SetQueryString(q).Get(url)
 	if err != nil {
 		log.Errorf("Failed to send GET api request with  error: %s", err.Error())
 
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respErr, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+			url, resp.StatusCode(), respErr)
 
 		return nil, fmt.Errorf("rest api GET failure with error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respErr)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R().SetError(&crest.ErrorResponse{})
+	req := r.C.R()
 	if b != nil {
 		req = req.SetBody(b)
 	}
@@ -101,23 +127,21 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respErr, _ := resp.Error().(error)
 
 	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
 		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+			url, resp.StatusCode(), respErr)
 
 		return nil, fmt.Errorf("rest api POST failure with error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respErr)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R().SetError(&crest.ErrorResponse{})
+	req := r.C.R()
 	if b != nil {
 		req = req.SetBody(b)
 	}
@@ -129,23 +153,21 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respErr, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusCreated {
 		log.Errorf("Failed to perform PUT operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+			url, resp.StatusCode(), respErr)
 
 		return nil, fmt.Errorf("rest api PUT failure with error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respErr)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
-	req := r.C.R().SetError(&crest.ErrorResponse{})
+	req := r.C.R()
 	if b != nil {
 		req = req.SetBody(b)
 	}
@@ -157,39 +179,35 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respErr, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform PATCH operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+			url, resp.StatusCode(), respErr)
 
 		return nil, fmt.Errorf("rest api PATCH failure with  error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respErr)
 	}
 
 	return resp, nil
 }
 
 func (r *Resty) Delete(url string) (*resty.Response, error) {
-	resp, err := r.C.R().SetError(&crest.ErrorResponse{}).Delete(url)
+	resp, err := r.C.R().Delete(url)
 	if err != nil {
 		log.Errorf("Failed to send DELETE api request with  error: %s", err.Error())
 
 		return nil, err
 	}
 
-	errMsg, _ := resp.Error().(*crest.ErrorResponse)
+	respErr, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform DELETE operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), errMsg.Error)
+			url, resp.StatusCode(), respErr)
 
 		return nil, fmt.Errorf("rest api DELETE failure with error: %w",
-			ErrorStatus{StatusCode: resp.StatusCode(),
-				Msg: errMsg.Error,
-			})
+			respErr)
 	}
 
 	return resp, nil

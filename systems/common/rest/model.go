@@ -14,5 +14,9 @@ type ErrorMessage struct {
 }
 
 type ErrorResponse struct {
-	Error string `json:"error,omitempty"`
+	Err string `json:"error,omitempty"`
+}
+
+func (e ErrorResponse) Error() string {
+	return e.Err
 }
