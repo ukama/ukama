@@ -93,19 +93,15 @@ func (s *CDRServer) ResetPackageUsage(imsi string) error {
 		Imsi:        imsi,
 		Usage:       0,
 		LastSession: 0,
-		Historical:  ou.Historical + ou.Usage,
+		Historical:  ou.Historical,
 	}
 
 	err = s.usageRepo.Add(&u)
 	if err != nil {
 		log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
-		if err != nil {
-			log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
-			return err
-		}
 		return err
 	}
-	log.Infof("Updated usage for imsi %s to %+v", u.Imsi, u)
+	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
 
 	return nil
 }
@@ -144,35 +140,35 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 	var lastSession uint64 = 0
 	if len(cdrs) > 1 {
 		if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
-			// This means its same session as last recorded session
-			session = cdr.Session
-			lastSession = cdr.Session
+			// This means it's same session as last recorded session
+			session = cdrs[0].Session
+			lastSession = cdrs[0].Session
 
 		} else {
-			session = cdr.Session
+			/* new session */
+			session = cdrs[0].Session
 			lastSession = 0
 		}
 
 	}
 
 	for _, cdr := range cdrs {
-
 		if session == lastSession {
-			/* if session is continued or not check by endTime=0
-			update last session usage only when session is terminated
-			*/
+			/* if session is continued */
 			if cdr.LastUpdatedAt > lastUpdatedAt {
 				lastUpdatedAt = cdr.LastUpdatedAt
 				u.Historical = (u.Historical - u.Usage) + cdr.TotalBytes
-				u.Usage = ou.LastSession + cdr.TotalBytes
+				u.Usage = u.LastSession + cdr.TotalBytes
 			}
 
 		} else {
 			/* New session */
-			lastUpdatedAt = cdr.LastUpdatedAt
-			u.LastSession = u.Usage
-			u.Historical = (u.Historical - u.Usage) + cdr.TotalBytes
-			u.Usage = u.LastSession + cdr.TotalBytes
+			if cdr.LastUpdatedAt > lastUpdatedAt {
+				lastUpdatedAt = cdr.LastUpdatedAt
+				u.LastSession = u.Usage                      /* Usage till last session last cdr */
+				u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
+				u.Usage = u.LastSession + cdr.TotalBytes     /*usage for this package is last session + current */
+			}
 
 		}
 
