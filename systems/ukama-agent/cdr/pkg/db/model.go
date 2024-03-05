@@ -22,6 +22,9 @@ type CDR struct {
 
 type Usage struct {
 	gorm.Model
-	Imsi  string `gorm:"Index:cdr_imsi_idx;not null"`
-	Usage uint64
+	Imsi             string `gorm:"Index:cdr_imsi_idx;not null"`
+	Historical       uint64 /* all data used till last session */
+	Usage            uint64 /* usage for the current package */
+	LastSession      uint64 /* usage till last session for current package*/
+	LastCDRUpdatedAt uint64 /* timestamp for last CDR LasteUpdatedAt */
 }

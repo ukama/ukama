@@ -59,7 +59,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, true)
-	err := d.Init(&db.CDR{})
+	err := d.Init(&db.CDR{}, &db.Usage{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -92,9 +92,10 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	cdr := db.NewCDRRepo(gormdb)
+	usage := db.NewUsageRepo(gormdb)
 
 	// asr service
-	cdrServer, err := server.NewCDRServer(cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
+	cdrServer, err := server.NewCDRServer(cdr, usage, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
