@@ -33,6 +33,28 @@ services:
       - msgclient-ukama-agent
       - postgresd-ukama-agent
 
+  cdr:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./cdr
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-ukama-agent
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@10.1.0.11:5672
+      - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+      - ORGNAME=ukama
+      - ORGID=40987edb-ebb6-4f84-a27c-99db7c136100
+      - ASRHOST=asr:9090
+      
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-ukama-agent
+      - postgresd-ukama-agent
+
   node-gateway-ukama-agent:
     build:
       dockerfile: ./Dockerfile

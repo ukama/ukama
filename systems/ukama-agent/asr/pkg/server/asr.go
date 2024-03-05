@@ -251,7 +251,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	}
 
 	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionUpdate().SetObject("updateactivesubscriber").MustBuild()
+		route := s.baseRoutingKey.SetActionCreate().SetObject("activesubscriber").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
