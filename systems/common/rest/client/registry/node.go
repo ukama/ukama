@@ -14,8 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const NodeEndpoint = "/v1/nodes"
@@ -78,7 +79,7 @@ type nodeClient struct {
 	R *client.Resty
 }
 
-func NewNodeClient(h string) *nodeClient {
+func NewNodeClient(h string, options ...client.Option) *nodeClient {
 	u, err := url.Parse(h)
 	if err != nil {
 		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
@@ -86,11 +87,11 @@ func NewNodeClient(h string) *nodeClient {
 
 	return &nodeClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 
-// TODO check upstream add returns payload
+// TODO check upstream add returned payload
 func (n *nodeClient) Add(req AddNodeRequest) (*NodeInfo, error) {
 	log.Debugf("Adding node: %v", req)
 
