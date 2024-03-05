@@ -83,11 +83,11 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d. Error: %v",
+		log.Errorf("Failed to perform GET on %q. HTTP operation resp code: %d. Error: %v",
 			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api GET failure with error: %w",
-			respError)
+		return nil, fmt.Errorf("rest api GET failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
@@ -101,14 +101,14 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respErr, _ := resp.Error().(error)
+	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), respErr)
+		log.Errorf("Failed to perform GET on %q. HTTP operation resp code: %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api GET failure with error: %w",
-			respErr)
+		return nil, fmt.Errorf("rest api GET failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
@@ -127,14 +127,14 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respErr, _ := resp.Error().(error)
+	respError, _ := resp.Error().(error)
 
 	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
-		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), respErr)
+		log.Errorf("Failed to perform POST on %q. HTTP operation resp code: %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api POST failure with error: %w",
-			respErr)
+		return nil, fmt.Errorf("rest api POST failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
@@ -153,14 +153,14 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respErr, _ := resp.Error().(error)
+	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusCreated {
-		log.Errorf("Failed to perform PUT operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), respErr)
+		log.Errorf("Failed to perform PUT on %q. HTTP operation resp code: %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api PUT failure with error: %w",
-			respErr)
+		return nil, fmt.Errorf("rest api PUT failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
@@ -179,14 +179,14 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respErr, _ := resp.Error().(error)
+	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform PATCH operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), respErr)
+		log.Errorf("Failed to perform PATCH on %q. HTTP operation resp code: %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api PATCH failure with  error: %w",
-			respErr)
+		return nil, fmt.Errorf("rest api PATCH failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
@@ -200,14 +200,14 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respErr, _ := resp.Error().(error)
+	respError, _ := resp.Error().(error)
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform DELETE operation on %s HTTP resp code %d and Error message is %s",
-			url, resp.StatusCode(), respErr)
+		log.Errorf("Failed to perform DELETE on %q. HTTP operation resp code: %d. Error: %v",
+			url, resp.StatusCode(), respError)
 
-		return nil, fmt.Errorf("rest api DELETE failure with error: %w",
-			respErr)
+		return nil, fmt.Errorf("rest api DELETE failure with code: %d. error: %w",
+			resp.StatusCode(), respError)
 	}
 
 	return resp, nil
