@@ -6,4 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package server
+package db
+
+import (
+	"github.com/ukama/ukama/systems/common/uuid"
+)
+
+type Contract struct {
+	Id   uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name string    `gorm:"uniqueIndex:contract_name_idx"`
+}

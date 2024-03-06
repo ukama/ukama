@@ -6,4 +6,4 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package server
+package db_test

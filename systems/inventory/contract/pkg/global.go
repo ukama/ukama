@@ -6,4 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package server
+package pkg
+
+const ServiceName = "contract"
+const SystemName = "inventory"
+
+var InstanceId = "debug"
+
+var IsDebugMode = false
