@@ -11,15 +11,16 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type CallUnitType uint8
 
 const (
 	CallUnitTypeUnknown CallUnitType = iota
-	CallUnitTypeSec                  = 1
-	CallUnitTypeMin                  = 2
-	CallUnitTypeHours                = 3
+	CallUnitTypeSec
+	CallUnitTypeMin
+	CallUnitTypeHours
 )
 
 func (s *CallUnitType) Scan(value interface{}) error {
@@ -50,7 +51,7 @@ func ParseCallUnitType(value string) CallUnitType {
 
 	t := map[string]CallUnitType{"unknown": 0, "seconds": 1, "minutes": 2, "hours": 3}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return CallUnitType(0)
 	}
