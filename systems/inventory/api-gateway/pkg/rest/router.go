@@ -1,0 +1,158 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+package rest
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/inventory/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/inventory/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/inventory/api-gateway/pkg/client"
+
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
+
+	log "github.com/sirupsen/logrus"
+	accountpb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
+	contractpb "github.com/ukama/ukama/systems/inventory/contract/pb/gen"
+	sitepb "github.com/ukama/ukama/systems/inventory/site/pb/gen"
+)
+
+type Router struct {
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
+}
+
+type RouterConfig struct {
+	metricsConfig config.Metrics
+	httpEndpoints *pkg.HttpEndpoints
+	debugMode     bool
+	serverConf    *rest.HttpConfig
+	auth          *config.Auth
+}
+
+type Clients struct {
+	Site     site
+	Account  account
+	Contract contract
+}
+
+type site interface {
+	Get() (*sitepb.GetTestResponse, error)
+}
+
+type account interface {
+	Get() (*accountpb.GetTestResponse, error)
+}
+
+type contract interface {
+	Get() (*contractpb.GetTestResponse, error)
+}
+
+func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
+	c := &Clients{}
+	c.Account = client.NewAccountInventory(endpoints.Account, endpoints.Timeout)
+	c.Contract = client.NewContractInventory(endpoints.Contract, endpoints.Timeout)
+	c.Site = client.NewSiteInventory(endpoints.Site, endpoints.Timeout)
+
+	return c
+}
+
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+	r := &Router{
+		clients: clients,
+		config:  config,
+	}
+
+	if !config.debugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r.init(authfunc)
+	return r
+}
+
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+	return &RouterConfig{
+		metricsConfig: svcConf.Metrics,
+		httpEndpoints: &svcConf.HttpServices,
+		serverConf:    &svcConf.Server,
+		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
+	}
+}
+
+func (rt *Router) Run() {
+	log.Info("Listening on port ", rt.config.serverConf.Port)
+	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "API gateway", "Inventory system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			log.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		const site = "/site"
+		sites := auth.Group(site, "Site", "Operations on Site")
+		sites.GET("", formatDoc("Get Test", "Get site test call"), tonic.Handler(r.getTestSiteHandler, http.StatusOK))
+
+		// Account routes
+		const account = "/account"
+		accounts := auth.Group(account, "Account", "Operations on Account")
+		accounts.GET("", formatDoc("Get Test", "Get account test call"), tonic.Handler(r.getTestAccountHandler, http.StatusOK))
+
+		// Contract routes
+		const contract = "/contract"
+		contracts := auth.Group(contract, "Contracts", "Operations on Contract")
+		contracts.GET("", formatDoc("Get Test", "Get contract test call"), tonic.Handler(r.getTestContractHandler, http.StatusOK))
+	}
+}
+
+func (r *Router) getTestSiteHandler(c *gin.Context, req *GetTestRequest) (*sitepb.GetTestResponse, error) {
+	return r.clients.Site.Get()
+}
+
+func (r *Router) getTestAccountHandler(c *gin.Context, req *GetTestRequest) (*accountpb.GetTestResponse, error) {
+	return r.clients.Account.Get()
+}
+
+func (r *Router) getTestContractHandler(c *gin.Context, req *GetTestRequest) (*contractpb.GetTestResponse, error) {
+	return r.clients.Contract.Get()
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
+}

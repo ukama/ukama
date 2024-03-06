@@ -75,6 +75,24 @@ services:
   depends_on:
    - msgclient-inventory
 
+ api-gateway-inventory:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./api-gateway
+  restart: always
+  ports:
+   - '8077:8080'
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+  depends_on:
+   - site
+   - account
+   - contract
+   - postgresd-inventory
+
  msgclient-inventory:
   build: ../services/msgClient
   environment:
