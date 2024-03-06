@@ -20,7 +20,7 @@ import (
 
 type Package interface {
 	GetPackage(string) (*cdplan.PackageInfo, error)
-	AddPackage(string, string, string, string, string, string, bool, bool, int64, int64, int64, string,
+	AddPackage(string, string, string, string, string, string, bool, bool, uint64, uint64, uint64, string,
 		string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*cdplan.PackageInfo, error)
 }
 
@@ -64,7 +64,7 @@ func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 }
 
 func (p *datapackage) AddPackage(name, orgId, ownerId, from, to, baserateId string,
-	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume int64, voiceUnit, dataUnit,
+	isActive, flatRate bool, smsVolume, voiceVolume, dataVolume uint64, voiceUnit, dataUnit,
 	simType, apn, pType string, duration uint64, markup, amount, overdraft float64, trafficPolicy uint32,
 	networks []string) (*cdplan.PackageInfo, error) {
 

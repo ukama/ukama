@@ -13,7 +13,7 @@ type Package struct {
 }
 
 // AddPackage provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21
-func (_m *Package) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 int64, _a9 int64, _a10 int64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 uint64, _a17 float64, _a18 float64, _a19 float64, _a20 uint32, _a21 []string) (*dataplan.PackageInfo, error) {
+func (_m *Package) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a4 string, _a5 string, _a6 bool, _a7 bool, _a8 uint64, _a9 uint64, _a10 uint64, _a11 string, _a12 string, _a13 string, _a14 string, _a15 string, _a16 uint64, _a17 float64, _a18 float64, _a19 float64, _a20 uint32, _a21 []string) (*dataplan.PackageInfo, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
 
 	if len(ret) == 0 {
@@ -22,10 +22,10 @@ func (_m *Package) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a
 
 	var r0 *dataplan.PackageInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*dataplan.PackageInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint64, uint64, uint64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) (*dataplan.PackageInfo, error)); ok {
 		return rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) *dataplan.PackageInfo); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint64, uint64, uint64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) *dataplan.PackageInfo); ok {
 		r0 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
 	} else {
 		if ret.Get(0) != nil {
@@ -33,7 +33,7 @@ func (_m *Package) AddPackage(_a0 string, _a1 string, _a2 string, _a3 string, _a
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, int64, int64, int64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, uint64, uint64, uint64, string, string, string, string, string, uint64, float64, float64, float64, uint32, []string) error); ok {
 		r1 = rf(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
 	} else {
 		r1 = ret.Error(1)
