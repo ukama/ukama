@@ -16,17 +16,13 @@ import (
 	"github.com/ukama/ukama/systems/inventory/contract/pkg/db"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/inventory/contract/pb/gen"
 )
-
-const uuidParsingError = "Error parsing UUID"
 
 type ContractServer struct {
 	pb.UnimplementedContractServiceServer
 	orgName        string
 	contractRepo   db.ContractRepo
-	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string

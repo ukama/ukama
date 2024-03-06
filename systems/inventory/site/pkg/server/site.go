@@ -19,8 +19,6 @@ import (
 	pb "github.com/ukama/ukama/systems/inventory/site/pb/gen"
 )
 
-const uuidParsingError = "Error parsing UUID"
-
 type SiteServer struct {
 	pb.UnimplementedSiteServiceServer
 	orgName        string

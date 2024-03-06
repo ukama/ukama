@@ -16,17 +16,13 @@ import (
 	"github.com/ukama/ukama/systems/inventory/account/pkg/db"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
 )
-
-const uuidParsingError = "Error parsing UUID"
 
 type AccountServer struct {
 	pb.UnimplementedAccountServiceServer
 	orgName        string
 	accountRepo    db.AccountRepo
-	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
