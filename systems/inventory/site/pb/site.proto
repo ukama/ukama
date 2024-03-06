@@ -1,0 +1,34 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/inventory/site/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.inventory.site.v1;
+
+service SiteService {
+    rpc GetTest(GetTestRequest) returns (GetTestResponse);
+}
+
+message GetTestRequest{}
+
+message GetTestResponse{
+    string service = 1;
+}
+
+message Site {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name = 2;
+}
+
