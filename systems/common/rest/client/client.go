@@ -81,13 +81,17 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform GET on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api GET failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api GET failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
@@ -102,13 +106,17 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform GET on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api GET failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api GET failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
@@ -128,13 +136,17 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
 		log.Errorf("Failed to perform POST on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api POST failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api POST failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
@@ -154,13 +166,17 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if resp.StatusCode() != http.StatusCreated {
 		log.Errorf("Failed to perform PUT on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api PUT failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api PUT failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
@@ -180,13 +196,17 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform PATCH on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api PATCH failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api PATCH failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
@@ -201,23 +221,27 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 	}
 
 	respError, _ := resp.Error().(error)
+	errStatus := ErrorStatus{
+		StatusCode: resp.StatusCode(),
+		RawError:   respError,
+	}
 
 	if resp.StatusCode() != http.StatusOK {
 		log.Errorf("Failed to perform DELETE on %q. HTTP operation resp code: %d. Error: %v",
-			url, resp.StatusCode(), respError)
+			url, errStatus.StatusCode, errStatus.RawError)
 
-		return nil, fmt.Errorf("rest api DELETE failure with code: %d. error: %w",
-			resp.StatusCode(), respError)
+		return nil, fmt.Errorf("rest api DELETE failure with error: %w",
+			errStatus)
 	}
 
 	return resp, nil
 }
 
 type ErrorStatus struct {
-	StatusCode int    `json:"status,omitempty"`
-	Msg        string `json:"msg,omitempty"`
+	StatusCode int   `json:"status,omitempty"`
+	RawError   error `json:"raw_error,omitempty"`
 }
 
 func (e ErrorStatus) Error() string {
-	return fmt.Sprintf("%d:%s", e.StatusCode, e.Msg)
+	return fmt.Sprintf("%d:%s", e.StatusCode, e.RawError.Error())
 }
