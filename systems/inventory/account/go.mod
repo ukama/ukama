@@ -1,10 +1,10 @@
-module github.com/ukama/ukama/systems/inventory/site
+module github.com/ukama/ukama/systems/inventory/account
 
 go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/inventory/site => ./
+replace github.com/ukama/ukama/systems/inventory/account => ./
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 

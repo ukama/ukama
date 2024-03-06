@@ -6,4 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package db_test
+package pkg
+
+const ServiceName = "account"
+const SystemName = "inventory"
+
+var InstanceId = "debug"
+
+var IsDebugMode = false

@@ -18,16 +18,16 @@ import (
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/inventory/site/cmd/version"
-	"github.com/ukama/ukama/systems/inventory/site/pkg"
-	"github.com/ukama/ukama/systems/inventory/site/pkg/db"
-	"github.com/ukama/ukama/systems/inventory/site/pkg/server"
+	"github.com/ukama/ukama/systems/inventory/account/cmd/version"
+	"github.com/ukama/ukama/systems/inventory/account/pkg"
+	"github.com/ukama/ukama/systems/inventory/account/pkg/db"
+	"github.com/ukama/ukama/systems/inventory/account/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	generated "github.com/ukama/ukama/systems/inventory/site/pb/gen"
+	generated "github.com/ukama/ukama/systems/inventory/account/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -35,8 +35,8 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	siteDb := initDb()
-	runGrpcServer(siteDb)
+	accountDb := initDb()
+	runGrpcServer(accountDb)
 }
 func initConfig() {
 
@@ -56,7 +56,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Site{})
+	err := d.Init(&db.Account{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -77,13 +77,13 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	siteServer := server.NewSiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
+	accountServer := server.NewAccountServer(serviceConfig.OrgName, db.NewAccountRepo(gormdb),
 		mbClient, serviceConfig.PushGateway)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		generated.RegisterSiteServiceServer(s, siteServer)
+		generated.RegisterAccountServiceServer(s, accountServer)
 	})
 
 	go grpcServer.StartServer()

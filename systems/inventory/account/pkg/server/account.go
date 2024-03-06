@@ -12,37 +12,38 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/inventory/site/pkg"
-	"github.com/ukama/ukama/systems/inventory/site/pkg/db"
+	"github.com/ukama/ukama/systems/inventory/account/pkg"
+	"github.com/ukama/ukama/systems/inventory/account/pkg/db"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	pb "github.com/ukama/ukama/systems/inventory/site/pb/gen"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	pb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
 )
 
 const uuidParsingError = "Error parsing UUID"
 
-type SiteServer struct {
-	pb.UnimplementedSiteServiceServer
+type AccountServer struct {
+	pb.UnimplementedAccountServiceServer
 	orgName        string
-	siteRepo       db.SiteRepo
+	accountRepo    db.AccountRepo
+	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo,
-	msgBus mb.MsgBusServiceClient, pushGateway string) *SiteServer {
-	return &SiteServer{
+func NewAccountServer(orgName string, accountRepo db.AccountRepo, msgBus mb.MsgBusServiceClient, pushGateway string) *AccountServer {
+	return &AccountServer{
 		orgName:        orgName,
-		siteRepo:       siteRepo,
+		accountRepo:    accountRepo,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
 	}
 }
 
-func (n *SiteServer) GetTest(ctx context.Context, req *pb.GetTestRequest) (*pb.GetTestResponse, error) {
+func (n *AccountServer) GetTest(ctx context.Context, req *pb.GetTestRequest) (*pb.GetTestResponse, error) {
 	return &pb.GetTestResponse{
-		Service: "Inventory Site Service",
+		Service: "Inventory Account Service",
 	}, nil
 }
