@@ -64,9 +64,9 @@ type AddPackageRequest struct {
 	OrgId         string   `json:"org_id" validation:"required"`
 	OwnerId       string   `json:"owner_id" validation:"required"`
 	SimType       string   `json:"sim_type" validation:"required"`
-	SmsVolume     int64    `json:"sms_volume" validation:"required"`
-	VoiceVolume   int64    `json:"voice_volume" default:"0"`
-	DataVolume    int64    `json:"data_volume" validation:"required"`
+	SmsVolume     uint64   `json:"sms_volume" validation:"required"`
+	VoiceVolume   uint64   `json:"voice_volume" default:"0"`
+	DataVolume    uint64   `json:"data_volume" validation:"required"`
 	VoiceUnit     string   `json:"voice_unit" validation:"required"`
 	DataUnit      string   `json:"data_unit" validation:"required"`
 	Duration      uint64   `json:"duration" validation:"required"`
