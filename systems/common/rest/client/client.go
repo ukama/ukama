@@ -135,7 +135,12 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
+	log.Infof("response: %v", resp)
+
 	respError, _ := resp.Error().(error)
+
+	log.Infof("response error: %v", respError)
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
