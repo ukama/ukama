@@ -61,6 +61,13 @@ func WithError(apiErr error) Option {
 	}
 }
 
+func WithContentTypeJSON() Option {
+	return func(r *Resty) {
+		r.C = r.C.SetHeader("Content-Type", "application/json ").
+			SetHeader("Accept", "application/json ")
+	}
+}
+
 // Deprecated: Use NewResty() + WithBearer() option instead.
 func NewRestyWithBearer(key string) *Resty {
 	c := resty.New()
