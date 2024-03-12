@@ -38,10 +38,10 @@ int read_config_from_env(Config **config) {
         (servicesPort = getenv(ENV_SERVICES_PORT)) == NULL ||
         (amqpHost = getenv(ENV_AMQP_HOST)) == NULL ||
         (amqpPort = getenv(ENV_AMQP_PORT)) == NULL ||
-        (initClientHost = getenv(ENV_INIT_CLIENT_HOST)) == NULL ||
+        (initClientHost = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
         (initClientPort = getenv(ENV_INIT_CLIENT_PORT)) == NULL ||
-        (orgName = getenv(ENV_UKAMA_ORG_NAME)) == NULL ||
-        (orgID   = getenv(ENV_UKAMA_ORG_ID)) == NULL) {
+        (orgName = getenv(ENV_SYSTEM_ORG)) == NULL ||
+        (orgID   = getenv(ENV_SYSTEM_ORG_ID)) == NULL) {
         log_error("Required env variable not defined");
         return FALSE;
     }

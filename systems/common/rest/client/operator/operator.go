@@ -25,7 +25,7 @@ const (
 type OperatorClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
-	GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error)
+	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
 	TerminateSim(iccid string) error
@@ -78,13 +78,13 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	return sim.SimInfo, nil
 }
 
-func (o *operatorClient) GetUsages(iccid, cdrType, from, to string) (map[string]any, map[string]any, error) {
+func (o *operatorClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting operator sim info: %v", iccid)
 
 	usage := OperatorUsage{}
 
 	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
-		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s", iccid, cdrType, from, to))
+		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
 

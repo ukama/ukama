@@ -180,7 +180,7 @@ int get_systemInfo_from_initClient(char *systemName, char **systemHost,
 
 	*systemHost = NULL;
 	*systemPort = NULL;
-    initClientHost = getenv(ENV_INIT_CLIENT_HOST);
+    initClientHost = getenv(ENV_INIT_CLIENT_ADDR);
     initClientPort = getenv(ENV_INIT_CLIENT_PORT);
 
 	url = create_url(initClientHost, initClientPort, systemName);

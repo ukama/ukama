@@ -51,12 +51,12 @@ void usage(void) {
            ENV_SERVICES_PORT,
            ENV_AMQP_HOST,
            ENV_AMQP_PORT,
-           ENV_INIT_CLIENT_HOST,
+           ENV_INIT_CLIENT_ADDR,
            ENV_INIT_CLIENT_PORT,
            ENV_MESH_CERT_FILE,
            ENV_MESH_KEY_FILE,
-           ENV_UKAMA_ORG_NAME,
-           ENV_UKAMA_ORG_ID,
+           ENV_SYSTEM_ORG,
+           ENV_SYSTEM_ORG_ID,
            ENV_BINDING_IP);
 }
 

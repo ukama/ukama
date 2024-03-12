@@ -47,7 +47,7 @@ func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error
 	return t.client.GetSim(ctx, &pb.GetSimRequest{Iccid: iccid})
 }
 
-func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, to string) (any, any, error) {
+func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
 	return nil, nil, nil
 }
 

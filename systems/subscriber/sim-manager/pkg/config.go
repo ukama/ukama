@@ -35,7 +35,7 @@ type Config struct {
 	Service           *config.Service
 	Key               string
 	Registry          string `default:"registry:9090"`
-	SimPool           string `default:"sim:9090"`
+	SimPool           string `default:"simpool:9090"`
 	TestAgent         string `default:"testagent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
 	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`

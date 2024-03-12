@@ -49,7 +49,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:    3 * time.Second,
-			SimPool:    "sim:9090",
+			SimPool:    "simpool:9090",
 			Registry:   "registry:9090",
 			SimManager: "simmanager:9090",
 		},

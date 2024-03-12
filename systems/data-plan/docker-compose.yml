@@ -22,7 +22,7 @@ services:
    - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-dataplan:9095
-   - RATE_SERVICE_HOST=rate
+   - RATE_SERVICE_HOST=baserate
    - RATE_SERVICE_PORT=9090
   restart: always
   networks:

@@ -171,5 +171,6 @@ type GetUsagesReq struct {
 	SimType string `form:"sim_type" json:"sim_type" query:"sim_type" binding:"required"`
 	Type    string `form:"cdr_type" json:"cdr_type" query:"cdr_type" binding:"required"`
 	From    string `form:"from" json:"from" query:"from" binding:"required"`
-	To      string `to:"status" json:"to" query:"to" binding:"required"`
+	To      string `form:"to" json:"to" query:"to" binding:"required"`
+	Region  string `form:"region" json:"region" query:"region" binding:"required"`
 }

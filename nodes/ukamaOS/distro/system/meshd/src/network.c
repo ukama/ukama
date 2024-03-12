@@ -134,8 +134,9 @@ int start_websocket_client(Config *config,
       ret=TRUE;
       goto done;
     } else {
-      log_error("Unable to open websocket connect to: %s",
-		config->remoteConnect);
+      log_error("Unable to open websocket connect to: %s", config->remoteConnect);
+      ulfius_websocket_client_connection_close(handler);
+      handler->websocket = NULL;
       ret=FALSE;
       goto done;
     }

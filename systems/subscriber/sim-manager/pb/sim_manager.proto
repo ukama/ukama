@@ -148,6 +148,7 @@ message UsageRequest {
     string type = 3;
     string from = 4;
     string to = 5;
+    string region = 6;
 }
 
 

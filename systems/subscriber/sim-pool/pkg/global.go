@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "sim"
+const ServiceName = "simpool"
 const SystemName = "subscriber"
 
 var IsDebugMode bool = false

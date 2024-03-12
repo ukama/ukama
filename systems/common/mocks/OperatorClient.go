@@ -108,9 +108,9 @@ func (_m *OperatorClient) GetSimInfo(iccid string) (*operator.OperatorSimInfo, e
 	return r0, r1
 }
 
-// GetUsages provides a mock function with given fields: iccid, cdrType, from, to
-func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string) (map[string]interface{}, map[string]interface{}, error) {
-	ret := _m.Called(iccid, cdrType, from, to)
+// GetUsages provides a mock function with given fields: iccid, cdrType, from, to, region
+func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, to string, region string) (map[string]interface{}, map[string]interface{}, error) {
+	ret := _m.Called(iccid, cdrType, from, to, region)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsages")
@@ -119,27 +119,27 @@ func (_m *OperatorClient) GetUsages(iccid string, cdrType string, from string, t
 	var r0 map[string]interface{}
 	var r1 map[string]interface{}
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (map[string]interface{}, map[string]interface{}, error)); ok {
-		return rf(iccid, cdrType, from, to)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (map[string]interface{}, map[string]interface{}, error)); ok {
+		return rf(iccid, cdrType, from, to, region)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) map[string]interface{}); ok {
-		r0 = rf(iccid, cdrType, from, to)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) map[string]interface{}); ok {
+		r0 = rf(iccid, cdrType, from, to, region)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]interface{})
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) map[string]interface{}); ok {
-		r1 = rf(iccid, cdrType, from, to)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string) map[string]interface{}); ok {
+		r1 = rf(iccid, cdrType, from, to, region)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(map[string]interface{})
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(string, string, string, string) error); ok {
-		r2 = rf(iccid, cdrType, from, to)
+	if rf, ok := ret.Get(2).(func(string, string, string, string, string) error); ok {
+		r2 = rf(iccid, cdrType, from, to, region)
 	} else {
 		r2 = ret.Error(2)
 	}

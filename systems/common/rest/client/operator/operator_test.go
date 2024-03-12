@@ -25,6 +25,7 @@ const (
 	cdrType   = "data"
 	from      = "2022-12-01T00:00:00Z"
 	to        = "2023-12-01T00:00:00Z"
+	region    = "meedan"
 	bytesUsed = 28901234567
 	cost      = 100.99
 )
@@ -124,8 +125,8 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 	t.Run("UsageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
+				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			// fake usage usage
 			usage := `{"usage":{"890000000000000001234": 28901234567}, "cost":{"890000000000000001234":100.99}}`
@@ -147,7 +148,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 		// so that the test stays a unit test e.g no server/network call.
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to, region)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u[testIccid])
@@ -157,8 +158,8 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
+				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			return &http.Response{
 				StatusCode: 200,
@@ -171,7 +172,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to, region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -180,8 +181,8 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to))
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
+				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			return nil
 		}
@@ -190,7 +191,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to)
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to, region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)

@@ -375,7 +375,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 			"failure to get agent for sim type: %q", simType)
 	}
 
-	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To)
+	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To, req.Region)
 	if err != nil {
 		return nil, err
 	}

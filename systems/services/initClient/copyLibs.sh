@@ -26,8 +26,6 @@ else
     echo "Nothing required"
 fi
 
-sleep 5;
-
 echo "Copied files"
 ls -ltr ./libs
 

@@ -261,10 +261,6 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (start_websocket_client(config, &websocketHandler) != TRUE) {
-		log_error("Websocket failed to setup for client. Retrying soon ...");
-	}
-
     if (start_web_services(config, &webInst) != TRUE) {
         log_error("Web service failed to setup. Exiting.");
 		exit(1);

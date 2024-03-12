@@ -23,7 +23,6 @@ import (
 
 const testOrgName = "test-org"
 
-var orgId = uuid.NewV4()
 var testNode = ukama.NewVirtualNodeId("HomeNode")
 
 func TestHealthServer_GetRunningApps(t *testing.T) {

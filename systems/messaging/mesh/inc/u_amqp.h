@@ -13,6 +13,9 @@
 #include <rabbitmq-c/amqp.h>
 
 #define MSG_CONTAINER "mesh" /* use in AMQP routing key */
+#define SYSTEM_NAME   "messaging"
+#define GLOBAL_AMQP   "global"
+#define LOCAL_AMQP    "local"
 
 #define MAX_FRAME  131072
 #define MAX_EVENTS 10
@@ -117,6 +120,6 @@ typedef struct _routing_key {
 } AMQPRoutingKey;
 
 int boot_event(void);
-int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
-                  char *meshIP, int meshPort);
+int publish_event(MeshEvent event, char *orgName, char *nodeID, char *nodeIP,
+                  int nodePort, char *meshIP, int meshPort);
 #endif /* MESH_AMQP_H */

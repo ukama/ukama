@@ -6,14 +6,15 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * Config.c
- *
- */
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+
+#include "usys_api.h"
+#include "usys_error.h"
+#include "usys_log.h"
+#include "usys_file.h"
 
 #include "mesh.h"
 #include "config.h"
@@ -117,6 +118,7 @@ static int read_hostname_and_nodeid(char *fileName, char **hostname,
 static int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	int ret=TRUE;
+    int remote=0;
 	char *hostname=NULL, *nodeID=NULL, *subnetMask=NULL;
 	toml_datum_t cert, key, localHostname, remoteIPFile;
 
@@ -137,9 +139,16 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 		}
 	}
 
+    remote = usys_find_service_port(SERVICE_REMOTE);
+    if (remote == 0) {
+        log_error("Error getting remote mesh.d port from service db");
+        ret = FALSE;
+        goto done;
+    }
+
 	config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
-    sprintf(config->remoteConnect, "ws://%s:%s/%s", hostname,
-            DEFAULT_REMOTE_PORT, PREFIX_WEBSOCKET);
+    sprintf(config->remoteConnect, "ws://%s:%d/%s", hostname,
+            remote, PREFIX_WEBSOCKET);
 
 	config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 	if (config->deviceInfo == NULL) {

@@ -23,7 +23,6 @@ import (
 
 const testOrgName = "test-org"
 
-var orgId = uuid.NewV4()
 
 func Test_CreateSoftwareUpdate(t *testing.T) {
 	ctx := context.Background()
