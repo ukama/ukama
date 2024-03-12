@@ -54,9 +54,9 @@ int read_mesh_config_file(char *fileName, MeshConfig *meshConfig) {
 	}
 
 	/* client-mode entries only */
-	clientConfig = toml_table_in(fileData, CLIENT_CONFIG);
+	clientConfig = toml_table_in(fileData, LOCAL_CONFIG);
 	if (clientConfig == NULL) {
-		log_error("[%s] section parsing error in file: %s\n", CLIENT_CONFIG,
+		log_error("[%s] section parsing error in file: %s\n", LOCAL_CONFIG,
 				  fileName);
 		goto done;
 	}
