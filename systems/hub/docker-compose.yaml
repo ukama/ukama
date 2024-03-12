@@ -9,7 +9,7 @@ services:
         - 9000:9000
         - 9001:9001
     networks:
-      hub-net:
+      - ukama-net
         # Don't copy those addresses in your application. Use the local docker socket to get them.
     environment:
       # Same for the environment variables, use the local docker socket to read it.
@@ -25,7 +25,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Pass2020!
     networks:
-      - hub-net
+      - ukama-net
     volumes:
       - postgress-data:/var/lib/postgresql
 
@@ -47,7 +47,7 @@ services:
       - ORGNAME=ukama-test-org
     restart: always
     networks:
-      hub-net:
+      - ukama-net
     depends_on:
       - msgclient-hub
 
@@ -72,7 +72,7 @@ services:
       - DISTRIBUTOR_SERVICE_PORT=9090
       - ORGNAME=ukama-test-org
     networks:
-      hub-net:
+      - ukama-net
     restart: always
 
   msgclient-hub:
@@ -88,7 +88,7 @@ services:
       - SYSTEM=hub
     restart: always
     networks:
-      - hub-net
+      - ukama-net
     depends_on:
       - postgresd-hub
 
@@ -98,7 +98,7 @@ services:
       dockerfile: ./Dockerfile
       context: ../services/initClient
     environment:
-      - ENV_SYSTEM_ORG=ukama001
+      - ENV_SYSTEM_ORG=${ORGNAME}
       - ENV_SYSTEM_NAME=hub
       - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
       - ENV_SYSTEM_PORT=8889
@@ -113,7 +113,9 @@ services:
       - ukama-net
 
 networks:
-  hub-net:
+ ukama-net:
+  external: true
+  name: services_dev-net
 
 volumes:
   postgress-data:
