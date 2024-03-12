@@ -9,3 +9,12 @@
 package rest
 
 type GetTestRequest struct{}
+
+type GetComponent struct {
+	uuid string `example:"{{ComponentUUID}}" path:"uuid" validate:"required"`
+}
+
+type GetComponents struct {
+	company       string `example:"{{company}}" path:"uuid" validate:"required"`
+	componentType string `example:"{{componentType}}" path:"query" validate:"required"`
+}

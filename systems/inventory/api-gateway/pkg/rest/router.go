@@ -25,8 +25,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	accountpb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
+	componentpb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 	contractpb "github.com/ukama/ukama/systems/inventory/contract/pb/gen"
-	sitepb "github.com/ukama/ukama/systems/inventory/site/pb/gen"
 )
 
 type Router struct {
@@ -44,13 +44,15 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Site     site
-	Account  account
-	Contract contract
+	Component component
+	Account   account
+	Contract  contract
 }
 
-type site interface {
-	Get() (*sitepb.GetTestResponse, error)
+type component interface {
+	Get(id string) (*componentpb.GetResponse, error)
+	GetByCompany(c string, t string) (*componentpb.GetByCompanyResponse, error)
+	SyncComponent() (*componentpb.SyncComponentsResponse, error)
 }
 
 type account interface {
@@ -65,7 +67,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Account = client.NewAccountInventory(endpoints.Account, endpoints.Timeout)
 	c.Contract = client.NewContractInventory(endpoints.Contract, endpoints.Timeout)
-	c.Site = client.NewSiteInventory(endpoints.Site, endpoints.Timeout)
+	c.Component = client.NewComponentInventory(endpoints.Component, endpoints.Timeout)
 
 	return c
 }
@@ -122,9 +124,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		const site = "/site"
-		sites := auth.Group(site, "Site", "Operations on Site")
-		sites.GET("", formatDoc("Get Test", "Get site test call"), tonic.Handler(r.getTestSiteHandler, http.StatusOK))
+		const component = "/component"
+		components := auth.Group(component, "Component", "Operations on Component")
+		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
+		components.GET("/:company", formatDoc("Get components", "Get components by company name"), tonic.Handler(r.getComponentsByCompanyHandler, http.StatusOK))
+		components.GET("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 
 		// Account routes
 		const account = "/account"
@@ -138,8 +142,16 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	}
 }
 
-func (r *Router) getTestSiteHandler(c *gin.Context, req *GetTestRequest) (*sitepb.GetTestResponse, error) {
-	return r.clients.Site.Get()
+func (r *Router) getComponentByIdHandler(c *gin.Context, req *GetComponent) (*componentpb.GetResponse, error) {
+	return r.clients.Component.Get(req.uuid)
+}
+
+func (r *Router) getComponentsByCompanyHandler(c *gin.Context, req *GetComponents) (*componentpb.GetByCompanyResponse, error) {
+	return r.clients.Component.GetByCompany(req.company, req.componentType)
+}
+
+func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponentsResponse, error) {
+	return r.clients.Component.SyncComponent()
 }
 
 func (r *Router) getTestAccountHandler(c *gin.Context, req *GetTestRequest) (*accountpb.GetTestResponse, error) {
