@@ -69,11 +69,6 @@ static void split_strings(char *input, char **str1, char **str2,
     }
 }
 
-/*
- * read_hostname_and_nodeid -- read hostname (ip:port) and nodeID from the
- *                             passed file
- *
- */
 static int read_hostname_and_nodeid(char *fileName, char **hostname,
                                     char **subnetMask, char **nodeID) {
 
@@ -111,10 +106,6 @@ static int read_hostname_and_nodeid(char *fileName, char **hostname,
 	return ret;
 }
 
-/*
- * parse_config_entries -- Server/client stuff.
- *
- */
 static int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	int ret=TRUE;
@@ -189,11 +180,6 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	return ret;
 }
 
-/*
- * process_config_file -- read and parse the config file. 
- *                       
- *
- */
 int process_config_file(Config *config, char *fileName) {
 
 	int ret=TRUE;
@@ -236,9 +222,6 @@ done:
 	return ret;
 }
 
-/*
- * clear_config --
- */
 void clear_config(Config *config) {
 
 	if (!config) return;
