@@ -12,29 +12,29 @@ type ContractRepo struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields:
-func (_m *ContractRepo) Get() (*db.Contract, error) {
-	ret := _m.Called()
+// GetContracts provides a mock function with given fields: company, effectiveDate
+func (_m *ContractRepo) GetContracts(company string, effectiveDate string) ([]*db.Contract, error) {
+	ret := _m.Called(company, effectiveDate)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetContracts")
 	}
 
-	var r0 *db.Contract
+	var r0 []*db.Contract
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*db.Contract, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(string, string) ([]*db.Contract, error)); ok {
+		return rf(company, effectiveDate)
 	}
-	if rf, ok := ret.Get(0).(func() *db.Contract); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string, string) []*db.Contract); ok {
+		r0 = rf(company, effectiveDate)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Contract)
+			r0 = ret.Get(0).([]*db.Contract)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(company, effectiveDate)
 	} else {
 		r1 = ret.Error(1)
 	}

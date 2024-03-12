@@ -58,11 +58,14 @@ func (r *ContractInventory) Close() {
 	r.conn.Close()
 }
 
-func (r *ContractInventory) Get() (*pb.GetTestResponse, error) {
+func (r *ContractInventory) GetContracts(c string, a bool) (*pb.GetContractsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetTest(ctx, &pb.GetTestRequest{})
+	res, err := r.client.GetContracts(ctx, &pb.GetContractsRequest{
+		Company: c,
+		Active:  a,
+	})
 	if err != nil {
 		return nil, err
 	}

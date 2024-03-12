@@ -12,29 +12,29 @@ type contract struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields:
-func (_m *contract) Get() (*gen.GetTestResponse, error) {
-	ret := _m.Called()
+// GetContracts provides a mock function with given fields: c, a
+func (_m *contract) GetContracts(c string, a bool) (*gen.GetContractsResponse, error) {
+	ret := _m.Called(c, a)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetContracts")
 	}
 
-	var r0 *gen.GetTestResponse
+	var r0 *gen.GetContractsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetTestResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(string, bool) (*gen.GetContractsResponse, error)); ok {
+		return rf(c, a)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetTestResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string, bool) *gen.GetContractsResponse); ok {
+		r0 = rf(c, a)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetTestResponse)
+			r0 = ret.Get(0).(*gen.GetContractsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string, bool) error); ok {
+		r1 = rf(c, a)
 	} else {
 		r1 = ret.Error(1)
 	}

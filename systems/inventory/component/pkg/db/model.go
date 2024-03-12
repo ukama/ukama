@@ -31,10 +31,10 @@ type Component struct {
 type ComponentType uint8
 
 const (
-	Power    ComponentType = 0
-	Backhaul ComponentType = 1
-	Switch   ComponentType = 2
-	Access   ComponentType = 3
+	POWER    ComponentType = 0
+	BACKHAUL ComponentType = 1
+	SWITCH   ComponentType = 2
+	ACCESS   ComponentType = 3
 )
 
 func (e *ComponentType) Scan(value interface{}) error {

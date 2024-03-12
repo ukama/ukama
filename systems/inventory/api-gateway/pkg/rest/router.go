@@ -60,7 +60,7 @@ type account interface {
 }
 
 type contract interface {
-	Get() (*contractpb.GetTestResponse, error)
+	GetContracts(c string, a bool) (*contractpb.GetContractsResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -124,7 +124,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		const component = "/component"
+		const component = "/components"
 		components := auth.Group(component, "Component", "Operations on Component")
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
 		components.GET("/:company", formatDoc("Get components", "Get components by company name"), tonic.Handler(r.getComponentsByCompanyHandler, http.StatusOK))
@@ -136,9 +136,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		accounts.GET("", formatDoc("Get Test", "Get account test call"), tonic.Handler(r.getTestAccountHandler, http.StatusOK))
 
 		// Contract routes
-		const contract = "/contract"
+		const contract = "/contracts"
 		contracts := auth.Group(contract, "Contracts", "Operations on Contract")
-		contracts.GET("", formatDoc("Get Test", "Get contract test call"), tonic.Handler(r.getTestContractHandler, http.StatusOK))
+		contracts.GET("/:company", formatDoc("Get Contracts", "Get contracts by company"), tonic.Handler(r.getContractsHandler, http.StatusOK))
 	}
 }
 
@@ -158,8 +158,8 @@ func (r *Router) getTestAccountHandler(c *gin.Context, req *GetTestRequest) (*ac
 	return r.clients.Account.Get()
 }
 
-func (r *Router) getTestContractHandler(c *gin.Context, req *GetTestRequest) (*contractpb.GetTestResponse, error) {
-	return r.clients.Contract.Get()
+func (r *Router) getContractsHandler(c *gin.Context, req *GetContracts) (*contractpb.GetContractsResponse, error) {
+	return r.clients.Contract.GetContracts(req.company, req.isActive)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

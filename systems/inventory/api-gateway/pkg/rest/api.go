@@ -15,6 +15,11 @@ type GetComponent struct {
 }
 
 type GetComponents struct {
-	company       string `example:"{{company}}" path:"uuid" validate:"required"`
+	company       string `example:"{{company}}" path:"company" validate:"required"`
 	componentType string `example:"{{componentType}}" path:"query" validate:"required"`
+}
+
+type GetContracts struct {
+	company  string `example:"{{company}}" path:"company" validate:"required"`
+	isActive bool   `example:"{{true}}" path:"query" validate:"required"`
 }

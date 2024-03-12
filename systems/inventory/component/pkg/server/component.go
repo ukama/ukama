@@ -128,10 +128,10 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	}
 }
 
-func dbComponentsToPbComponents(invitations []*db.Component) []*pb.Component {
+func dbComponentsToPbComponents(components []*db.Component) []*pb.Component {
 	res := []*pb.Component{}
 
-	for _, i := range invitations {
+	for _, i := range components {
 		res = append(res, dbComponentToPbComponent(i))
 	}
 

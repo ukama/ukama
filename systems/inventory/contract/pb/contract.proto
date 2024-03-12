@@ -18,40 +18,17 @@ import "google/protobuf/wrappers.proto";
 package ukama.inventory.contract.v1;
 
 service ContractService {
-    rpc GetProduct(GetProductRequest) returns (GetProductResponse);
-    rpc GetProducts(GetProductsRequest) returns (GetProductsResponse);// /products?company=ukama
-    rpc PostProduct(PostProductRequest) returns (PostProductResponse);
-    rpc PutProduct(PutProductRequest) returns (PutProductResponse);
-
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc PostNode(PostNodeRequest) returns (PostNodeResponse);
-    rpc PutNode(PutNodeRequest) returns (PutNodeResponse);
-
-    rpc SyncContracts(SyncContractsRequest) returns (SyncContractsResponse);
-    rpc GetActiveContract(GetActiveContractRequest) returns (GetActiveContractResponse); //base on effective dates
     rpc GetContracts(GetContractsRequest) returns (GetContractsResponse);
-}
-
-message GetActiveContractRequest{
-    string company = 1 [(validator.field) = {string_not_empty: true}];
-}
-
-message GetActiveContractResponse{
-    Contract contract = 1;
-    string name = 2;
-    string phone = 3;
-    string email = 4;
-    string address = 5;
-    string company = 6;
+    rpc SyncContracts(SyncContractsRequest) returns (SyncContractsResponse);
 }
 
 message GetContractsRequest{
     string company = 1 [(validator.field) = {string_not_empty: true}];
+    bool active = 2;
 }
 
 message GetContractsResponse{
-    repeated Contract contract = 1;
+    repeated Contract contracts = 1;
     string name = 2;
     string phone = 3;
     string email = 4;
@@ -59,112 +36,23 @@ message GetContractsResponse{
     string company = 6;
 }
 
-message GetProductRequest{
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-}
+message SyncContractsRequest {}
 
-message GetProductResponse{
-    Product product = 1;
-}
+message SyncContractsResponse {}
 
-message GetProductsRequest{
-    string company = 1 [(validator.field) = {string_not_empty: true}];
-}
 
-message GetProductsResponse{
-    repeated Product products = 1;
-}
-
-message PostProductRequest{
-    string name = 1;
-    string vat = 2;
-    string company = 3;
-    ProductType type = 4;
-    string description = 5;
-    string opexFee = 6 [json_name = "opex_fee"];
-    string effectiveDate = 7 [json_name = "effective_date"];
-}
-
-message PostProductResponse{
-    Product product = 1;
-}
-
-message PutProductRequest{
-    string name = 1;
-    string vat = 2;
-    ProductType type = 3;
-    string description = 4;
-    string opexFee = 5 [json_name = "opex_fee"];
-    string effectiveDate = 6 [json_name = "effective_date"];
-}
-
-message PutProductResponse{
-    Product product = 1;
-}
-
-message GetNodeRequest{
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-}
-
-message GetNodeResponse{
-    Node node = 1;
-}
-
-message GetNodesRequest{
-    string company = 1 [(validator.field) = {string_not_empty: true}];
-}
-
-message GetNodesResponse{
-    repeated Node nodes = 1;
-}
-
-message PostNodeRequest{
-    string company = 1;
-    string onOrder = 2 [json_name = "on_order"];
-    string effectiveDate = 3 [json_name = "effective_date"];
-}
-
-message PostNodeResponse{
-    Node node = 1;
-}
-
-message PutNodeRequest{
-    string onOrder = 2 [json_name = "on_order"];
-    string effectiveDate = 3 [json_name = "effective_date"];
-}
-
-message PutNodeResponse{
-    Node node = 1;
-}
-
-message SyncContractsRequest{}
-
-message SyncContractsResponse{}
-
-message Node {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string company = 2;
-    string onOrder = 3 [json_name = "on_order"];
-    string effectiveDate = 4 [json_name = "effective_date"];
-}
-
-message Product {
+message Contract {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2;
     string vat = 3;
     string company = 4 [(validator.field) = {string_not_empty: true}];
-    ProductType type = 5;
+    ContractType type = 5;
     string description = 6;
     string opexFee =7 [json_name = "opex_fee"];
     string effectiveDate = 8 [json_name = "effective_date"];
 }
 
-message ProductType{ 
-    string ukamaProduct = 1 [json_name = "ukama_product"];
-    string backhaul = 2;
-} 
-
-message Contract {
-    Product products = 1;
-    Node nodes = 2;
+enum ContractType {
+    UKAMA_PRODUCT = 0;
+    BACKHAUL = 1;
 }

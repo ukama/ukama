@@ -13,7 +13,7 @@ import (
 )
 
 type ContractRepo interface {
-	Get() (*Contract, error)
+	GetContracts(company string, active bool) ([]*Contract, error)
 }
 
 type contractRepo struct {
@@ -26,13 +26,19 @@ func NewContractRepo(db sql.Db) ContractRepo {
 	}
 }
 
-func (s contractRepo) Get() (*Contract, error) {
-	var contract Contract
-
-	result := s.Db.GetGormDb().First(&contract)
-	if result.Error != nil {
-		return nil, result.Error
+func (c *contractRepo) GetContracts(company string, active bool) ([]*Contract, error) {
+	var contracts []*Contract
+	if active {
+		err := c.Db.GetGormDb().Where("company = ?", company).Order("effective_date desc").First(&contracts).Error
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := c.Db.GetGormDb().Where("company = ?", company).Find(&contracts).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return &contract, nil
+	return contracts, nil
 }

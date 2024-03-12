@@ -13,6 +13,28 @@ import (
 )
 
 type Contract struct {
-	Id   uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name string    `gorm:"uniqueIndex:contract_name_idx"`
+	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name          string    `gorm:"uniqueIndex:contract_name_idx"`
+	VAT           string
+	Company       string
+	Type          ContractType
+	Description   string
+	OpexFee       string `gorm:"column:opex_fee"`
+	EffectiveDate string `gorm:"column:effective_date"`
+}
+
+type ContractType uint8
+
+const (
+	UKAMA_PRODUCT ContractType = 0
+	BACKHAUL      ContractType = 1
+)
+
+func (e *ContractType) Scan(value interface{}) error {
+	*e = ContractType(uint8(value.(int64)))
+	return nil
+}
+
+func (e ContractType) Value() (uint8, error) {
+	return uint8(e), nil
 }

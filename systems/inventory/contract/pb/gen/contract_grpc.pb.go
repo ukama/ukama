@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ContractServiceClient interface {
-	GetTest(ctx context.Context, in *GetTestRequest, opts ...grpc.CallOption) (*GetTestResponse, error)
+	GetContracts(ctx context.Context, in *GetContractsRequest, opts ...grpc.CallOption) (*GetContractsResponse, error)
+	SyncContracts(ctx context.Context, in *SyncContractsRequest, opts ...grpc.CallOption) (*SyncContractsResponse, error)
 }
 
 type contractServiceClient struct {
@@ -33,9 +34,18 @@ func NewContractServiceClient(cc grpc.ClientConnInterface) ContractServiceClient
 	return &contractServiceClient{cc}
 }
 
-func (c *contractServiceClient) GetTest(ctx context.Context, in *GetTestRequest, opts ...grpc.CallOption) (*GetTestResponse, error) {
-	out := new(GetTestResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.contract.v1.ContractService/GetTest", in, out, opts...)
+func (c *contractServiceClient) GetContracts(ctx context.Context, in *GetContractsRequest, opts ...grpc.CallOption) (*GetContractsResponse, error) {
+	out := new(GetContractsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.inventory.contract.v1.ContractService/GetContracts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contractServiceClient) SyncContracts(ctx context.Context, in *SyncContractsRequest, opts ...grpc.CallOption) (*SyncContractsResponse, error) {
+	out := new(SyncContractsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.inventory.contract.v1.ContractService/SyncContracts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,8 @@ func (c *contractServiceClient) GetTest(ctx context.Context, in *GetTestRequest,
 // All implementations must embed UnimplementedContractServiceServer
 // for forward compatibility
 type ContractServiceServer interface {
-	GetTest(context.Context, *GetTestRequest) (*GetTestResponse, error)
+	GetContracts(context.Context, *GetContractsRequest) (*GetContractsResponse, error)
+	SyncContracts(context.Context, *SyncContractsRequest) (*SyncContractsResponse, error)
 	mustEmbedUnimplementedContractServiceServer()
 }
 
@@ -54,8 +65,11 @@ type ContractServiceServer interface {
 type UnimplementedContractServiceServer struct {
 }
 
-func (UnimplementedContractServiceServer) GetTest(context.Context, *GetTestRequest) (*GetTestResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTest not implemented")
+func (UnimplementedContractServiceServer) GetContracts(context.Context, *GetContractsRequest) (*GetContractsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContracts not implemented")
+}
+func (UnimplementedContractServiceServer) SyncContracts(context.Context, *SyncContractsRequest) (*SyncContractsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncContracts not implemented")
 }
 func (UnimplementedContractServiceServer) mustEmbedUnimplementedContractServiceServer() {}
 
@@ -70,20 +84,38 @@ func RegisterContractServiceServer(s grpc.ServiceRegistrar, srv ContractServiceS
 	s.RegisterService(&ContractService_ServiceDesc, srv)
 }
 
-func _ContractService_GetTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTestRequest)
+func _ContractService_GetContracts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContractsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContractServiceServer).GetTest(ctx, in)
+		return srv.(ContractServiceServer).GetContracts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.inventory.contract.v1.ContractService/GetTest",
+		FullMethod: "/ukama.inventory.contract.v1.ContractService/GetContracts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContractServiceServer).GetTest(ctx, req.(*GetTestRequest))
+		return srv.(ContractServiceServer).GetContracts(ctx, req.(*GetContractsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContractService_SyncContracts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncContractsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContractServiceServer).SyncContracts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.inventory.contract.v1.ContractService/SyncContracts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContractServiceServer).SyncContracts(ctx, req.(*SyncContractsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +128,12 @@ var ContractService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ContractServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetTest",
-			Handler:    _ContractService_GetTest_Handler,
+			MethodName: "GetContracts",
+			Handler:    _ContractService_GetContracts_Handler,
+		},
+		{
+			MethodName: "SyncContracts",
+			Handler:    _ContractService_SyncContracts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

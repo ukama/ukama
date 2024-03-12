@@ -16,8 +16,8 @@ type ContractServiceClient struct {
 	mock.Mock
 }
 
-// GetTest provides a mock function with given fields: ctx, in, opts
-func (_m *ContractServiceClient) GetTest(ctx context.Context, in *gen.GetTestRequest, opts ...grpc.CallOption) (*gen.GetTestResponse, error) {
+// GetContracts provides a mock function with given fields: ctx, in, opts
+func (_m *ContractServiceClient) GetContracts(ctx context.Context, in *gen.GetContractsRequest, opts ...grpc.CallOption) (*gen.GetContractsResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -28,23 +28,60 @@ func (_m *ContractServiceClient) GetTest(ctx context.Context, in *gen.GetTestReq
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetTest")
+		panic("no return value specified for GetContracts")
 	}
 
-	var r0 *gen.GetTestResponse
+	var r0 *gen.GetContractsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetTestRequest, ...grpc.CallOption) (*gen.GetTestResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetContractsRequest, ...grpc.CallOption) (*gen.GetContractsResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetTestRequest, ...grpc.CallOption) *gen.GetTestResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetContractsRequest, ...grpc.CallOption) *gen.GetContractsResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetTestResponse)
+			r0 = ret.Get(0).(*gen.GetContractsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetTestRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetContractsRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SyncContracts provides a mock function with given fields: ctx, in, opts
+func (_m *ContractServiceClient) SyncContracts(ctx context.Context, in *gen.SyncContractsRequest, opts ...grpc.CallOption) (*gen.SyncContractsResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SyncContracts")
+	}
+
+	var r0 *gen.SyncContractsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SyncContractsRequest, ...grpc.CallOption) (*gen.SyncContractsResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SyncContractsRequest, ...grpc.CallOption) *gen.SyncContractsResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SyncContractsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SyncContractsRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
