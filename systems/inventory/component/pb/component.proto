@@ -1,0 +1,91 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/inventory/component/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.inventory.component.v1;
+
+service ComponentService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByCompany(GetByCompanyRequest) returns (GetByCompanyResponse);
+    rpc Add(AddRequest) returns (AddResponse);
+
+    rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
+}
+
+message GetRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetResponse {
+    Component component = 1;
+}
+
+message GetByCompanyRequest {
+    string company = 1 [(validator.field) = {string_not_empty: true}];
+    ComponentType type = 2;
+}
+
+message GetByCompanyResponse {
+    repeated Component components = 1;
+}
+
+message AddRequest {
+    string company = 2 [(validator.field) = {string_not_empty: true}];
+    string inventoryId = 3 [json_name = "inventory_id"];
+    string category = 4;
+    ComponentType type = 5;
+    string description = 6;
+    string datasheetURL = 7 [json_name = "datasheet_url"];
+    string imagesURL = 8 [json_name = "images_url"];
+    string partNumber = 9 [json_name = "part_number"];
+    string manufacturer = 10;
+    string managed = 11;
+    uint32 warranty = 12;
+    string specification = 13;
+}
+
+message AddResponse {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message SyncComponentsRequest {}
+
+message SyncComponentsResponse {}
+
+message Component {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string company = 2 [(validator.field) = {string_not_empty: true}];
+    string inventoryId = 3 [json_name = "inventory_id"];
+    string category = 4;
+    ComponentType type = 5;
+    string description = 6;
+    string datasheetURL = 7 [json_name = "datasheet_url"];
+    string imagesURL = 8 [json_name = "images_url"];
+    string partNumber = 9 [json_name = "part_number"];
+    string manufacturer = 10;
+    string managed = 11;
+    uint32 warranty = 12;
+    string specification = 13;
+}
+
+enum ComponentType {
+    POWER = 0;
+    BACKHAUL = 1;
+    SWITCH = 2;
+    ACCESS = 3;
+}
+
+

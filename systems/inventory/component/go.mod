@@ -1,10 +1,10 @@
-module github.com/ukama/ukama/systems/inventory/site
+module github.com/ukama/ukama/systems/inventory/component
 
 go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/inventory/site => ./
+replace github.com/ukama/ukama/systems/inventory/component => ./
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
@@ -18,6 +18,7 @@ require (
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/gorm v1.25.2
 )
 
 require (
@@ -93,5 +94,4 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.2 // indirect
-	gorm.io/gorm v1.25.2 // indirect
 )

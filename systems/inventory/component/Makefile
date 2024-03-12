@@ -10,7 +10,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/inventory/site/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/site cmd/server/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/inventory/component/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/component cmd/server/main.go
 
 test:
 	go test -v ./...
@@ -28,7 +28,7 @@ deps:
 
 gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
- 			  site.proto
+ 			  component.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks

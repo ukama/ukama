@@ -18,17 +18,64 @@ import "google/protobuf/wrappers.proto";
 package ukama.inventory.account.v1;
 
 service AccountService {
-    rpc GetTest(GetTestRequest) returns (GetTestResponse);
+    rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);// Order by id
+    rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);// Orders by company name
 }
 
-message GetTestRequest{}
-
-message GetTestResponse{
-    string service = 1;
-}
-
-message Account {
+message Order {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string name = 2;
+    uint32 quantity = 2;
+    OrderType type = 3;
+    string description = 4;
+    string futureOrderExpectedId = 5;
+    string company = 6 [(validator.field) = {string_not_empty: true}];
 }
+
+message OrderPrices {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orderId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string priceId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+
+message Price {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    uint64 amount = 2;
+    string currency = 3;
+    PriceType type = 4;
+    PriceFor for = 5;
+    string description = 6;
+    bool isEligibleForDiscount = 7 [json_name = "is_eligible_for_discount"];
+    string discountId = 8;    
+}
+
+message Discount {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    uint64 amount = 2;
+    string code = 3;
+    string description = 4;
+} 
+
+message FutureOrderExpected {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    uint32 node = 2;
+    string note = 3;
+}
+
+message OrderType{
+    string sass = 1;
+    string nodePurchase = 2 [json_name = "node_purchase"];
+    string nodeRental = 3 [json_name = "node_rental"];
+    string simsPurchase = 4 [json_name = "sims_purchase"];
+    string backhaulFiber = 5 [json_name = "backhaul_fiber"];
+    string backhaulSetlite = 6 [json_name = "backhaul_setlite"];
+} 
+
+message PriceType{
+    string oneTime = 1  [json_name = "one_time"];
+    string monthly = 2;
+    string yearly = 3;
+}
+
+
 

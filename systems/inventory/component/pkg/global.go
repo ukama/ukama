@@ -6,13 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package db
+package pkg
 
-import (
-	"github.com/ukama/ukama/systems/common/uuid"
-)
+const ServiceName = "component"
+const SystemName = "inventory"
 
-type Site struct {
-	Id   uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name string    `gorm:"uniqueIndex:site_name_network_idx"`
-}
+var InstanceId = "debug"
+
+var IsDebugMode = false
