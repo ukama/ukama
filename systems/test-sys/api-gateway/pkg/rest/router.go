@@ -16,7 +16,6 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/test-sys/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/test-sys/api-gateway/pkg"
@@ -35,7 +34,6 @@ import (
  type RouterConfig struct {
 	 debugMode  bool
 	 serverConf *rest.HttpConfig
-	 auth       *config.Auth
  }
  
  func NewRouter(config *RouterConfig) *Router {
@@ -56,7 +54,6 @@ import (
 	 return &RouterConfig{
 		 serverConf: &svcConf.Server,
 		 debugMode:  svcConf.DebugMode,
-		 auth:       svcConf.Auth,
 	 }
  }
  

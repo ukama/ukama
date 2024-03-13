@@ -21,7 +21,6 @@ type Config struct {
 	Server            rest.HttpConfig
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type HttpEndpoints struct {
@@ -51,7 +50,5 @@ func NewConfig() *Config {
 		},
 
 		Metrics: *config.DefaultMetrics(),
-
-		Auth: config.LoadAuthHostConfig("auth"),
 	}
 }
