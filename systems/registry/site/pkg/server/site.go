@@ -193,6 +193,53 @@ func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb
 	return resp, nil
 }
 
+func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+	log.Infof("Updating site %s-%s", req.NetworkId, req.SiteId)
+
+	netID, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	siteID, err := uuid.FromString(req.SiteId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	site, err := s.siteRepo.Get(netID, siteID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	// Update the site fields
+	if req.Name != "" {
+		site.Name = req.Name
+	}
+	if req.BackhaulId != "" {
+		backhaulID, err := uuid.FromString(req.BackhaulId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		}
+		site.BackhaulID = backhaulID
+	}
+	// Similarly, update other fields as required
+	site, err = s.siteRepo.Get(netID, siteID)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	// Save the updated site to the database
+	err = s.siteRepo.Update(site)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	return &pb.UpdateResponse{
+		Site: dbSiteToPbSite(site),
+	}, nil
+}
+
 func dbSiteToPbSite(site *db.Site) *pb.Site {
 	return &pb.Site{
 		Id:            site.ID.String(),

@@ -29,6 +29,7 @@ const (
 	SiteService_Add_FullMethodName      = "/ukama.registry.site.v1.SiteService/Add"
 	SiteService_Get_FullMethodName      = "/ukama.registry.site.v1.SiteService/Get"
 	SiteService_GetSites_FullMethodName = "/ukama.registry.site.v1.SiteService/GetSites"
+	SiteService_Update_FullMethodName   = "/ukama.registry.site.v1.SiteService/Update"
 )
 
 // SiteServiceClient is the client API for SiteService service.
@@ -38,6 +39,7 @@ type SiteServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetSites(ctx context.Context, in *GetSitesRequest, opts ...grpc.CallOption) (*GetSitesResponse, error)
+	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 }
 
 type siteServiceClient struct {
@@ -75,6 +77,15 @@ func (c *siteServiceClient) GetSites(ctx context.Context, in *GetSitesRequest, o
 	return out, nil
 }
 
+func (c *siteServiceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, SiteService_Update_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SiteServiceServer is the server API for SiteService service.
 // All implementations must embed UnimplementedSiteServiceServer
 // for forward compatibility
@@ -82,6 +93,7 @@ type SiteServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetSites(context.Context, *GetSitesRequest) (*GetSitesResponse, error)
+	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	mustEmbedUnimplementedSiteServiceServer()
 }
 
@@ -97,6 +109,9 @@ func (UnimplementedSiteServiceServer) Get(context.Context, *GetRequest) (*GetRes
 }
 func (UnimplementedSiteServiceServer) GetSites(context.Context, *GetSitesRequest) (*GetSitesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSites not implemented")
+}
+func (UnimplementedSiteServiceServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedSiteServiceServer) mustEmbedUnimplementedSiteServiceServer() {}
 
@@ -165,6 +180,24 @@ func _SiteService_GetSites_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SiteService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SiteServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SiteService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SiteServiceServer).Update(ctx, req.(*UpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SiteService_ServiceDesc is the grpc.ServiceDesc for SiteService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -183,6 +216,10 @@ var SiteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSites",
 			Handler:    _SiteService_GetSites_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _SiteService_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

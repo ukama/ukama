@@ -21,7 +21,7 @@ type SiteRepo interface {
 	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
 	Get(netID,siteID uuid.UUID) (*Site, error)
 	GetSites(netID uuid.UUID) ([]Site, error) 
-
+	Update(site *Site) error
 }
 
 type siteRepo struct {
@@ -84,4 +84,13 @@ func (s siteRepo) GetSites(netID uuid.UUID) ([]Site, error) {
     }
 
     return sites, nil
+}
+
+func (s *siteRepo) Update(site *Site) error {
+    result := s.Db.GetGormDb().Model(site).Updates(site)
+    if result.Error != nil {
+        return result.Error
+    }
+
+    return nil
 }
