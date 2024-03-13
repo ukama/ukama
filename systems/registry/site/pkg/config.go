@@ -28,13 +28,9 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgHost          string           `default:"org:9090"`
 	Service          *uconf.Service
-	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string
-	Country          string `default:"{}"`
-	Language         string `default:"{}"`
-	Currency         string `default:"{}"`
+	Network           string           `default:"http://health:9090"`
 }
 
 var NetworkMetric = []metric.MetricConfig{

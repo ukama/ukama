@@ -21,6 +21,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/site/cmd/version"
 	"github.com/ukama/ukama/systems/registry/site/pkg"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
+	providers "github.com/ukama/ukama/systems/registry/site/pkg/provider"
 	"github.com/ukama/ukama/systems/registry/site/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -77,8 +78,8 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	siteServer := server.NewsiteServer(serviceConfig.OrgName,db.NewSiteRepo(gormdb),
-		mbClient, serviceConfig.PushGateway)
+	siteServer := server.NewsiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
+		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network))
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -89,7 +90,6 @@ func runGrpcServer(gormdb sql.Db) {
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
-
 
 	waitForExit()
 }
