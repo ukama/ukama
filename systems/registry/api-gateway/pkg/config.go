@@ -31,6 +31,7 @@ type GrpcEndpoints struct {
 	Member     string
 	Node       string
 	Invitation string
+	Site       string
 }
 
 type HttpEndpoints struct {
@@ -54,6 +55,7 @@ func NewConfig() *Config {
 			Member:     "member:9090",
 			Node:       "node:9090",
 			Invitation: "invitation:9090",
+			Site:       "site:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
