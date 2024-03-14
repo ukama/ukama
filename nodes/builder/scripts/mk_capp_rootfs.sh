@@ -271,7 +271,7 @@ case "$ACTION" in
 	patchelf --set-rpath /lib $2
 	;;
     "mkdir")
-	mkdir ${ROOTFS}/$2
+	mkdir -p ${ROOTFS}/$2
 	;;
     "libs")
 	copy_all_libs $2
