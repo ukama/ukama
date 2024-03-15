@@ -5,21 +5,21 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/nodes/ukamaOS/distro/system/mesh"
+	source="/nodes/ukamaOS/distro/system/meshd"
 	cmd="make XGCCPATH=/usr/bin/"
-	bin_from="/nodes/ukamaOS/distro/system/mesh/mesh.d"
+	bin_from="/nodes/ukamaOS/distro/system/meshd/mesh.d"
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/conf/mesh"
+	mkdir="/ukama/conf/meshd"
 
 [build-conf]
         from="/nodes/configs/capps/mesh/config.toml"
-        to="/ukama/conf/mesh/config.toml"
+        to="/ukama/conf/meshd/config.toml"
 
 [build-misc]
 	from="/nodes/configs/capps/mesh/ip_file"
-	to="/ukama/conf/mesh/ip_file"
+	to="/ukama/conf/meshd/ip_file"
 
 # Following are use to create config.json file which is used by lxce.d to start 
 # the capp within ukamaOS and pkg everything
@@ -28,7 +28,7 @@
 	version="latest"
 	bin="mesh.d"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="--config /ukama/conf/mesh/config.toml"
+	args="--config /ukama/conf/meshd/config.toml"
 	
 # Final output format for capp
 [capp-output]
