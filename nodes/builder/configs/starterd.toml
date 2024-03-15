@@ -11,7 +11,7 @@
 	bin_to="/sbin"
 
 [build-rootfs]
-	mkdir="/conf"
+	mkdir="/ukama/conf"
 
 [build-conf]
     from="/nodes/manifest.json"

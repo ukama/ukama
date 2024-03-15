@@ -1,7 +1,3 @@
-#
-# mesh config file to build and create capp 
-#
-
 [build-from]
 	rootfs="default"     # default is busybox minimal capp config
 	contained="default"  # default namespace, cgroup, etc.
@@ -15,15 +11,15 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/conf"
+	mkdir="/ukama/conf/mesh"
 
 [build-conf]
         from="/nodes/configs/capps/mesh/config.toml"
-        to="/conf/mesh_config.toml"
+        to="/ukama/conf/mesh/config.toml"
 
 [build-misc]
 	from="/nodes/configs/capps/mesh/ip_file"
-	to="/conf/ip_file"
+	to="/ukama/conf/mesh/ip_file"
 
 # Following are use to create config.json file which is used by lxce.d to start 
 # the capp within ukamaOS and pkg everything
@@ -32,7 +28,7 @@
 	version="latest"
 	bin="mesh.d"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="--config /conf/mesh_config.toml --mode client"
+	args="--config /ukama/conf/mesh/config.toml"
 	
 # Final output format for capp
 [capp-output]
