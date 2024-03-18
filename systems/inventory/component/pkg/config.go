@@ -29,6 +29,7 @@ type Config struct {
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string
+	GitClient        string `default:"gitclient:9090"`
 }
 
 var NetworkMetric = []metric.MetricConfig{}

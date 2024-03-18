@@ -28,6 +28,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	generated "github.com/ukama/ukama/systems/inventory/component/pb/gen"
+	provider "github.com/ukama/ukama/systems/inventory/component/pkg/providers"
 )
 
 var serviceConfig *pkg.Config
@@ -78,7 +79,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
-		mbClient, serviceConfig.PushGateway)
+		mbClient, serviceConfig.PushGateway, provider.NewGitClientProvider(serviceConfig.GitClient))
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -94,7 +95,6 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}

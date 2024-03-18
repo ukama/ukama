@@ -18,7 +18,7 @@ type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
 	GetByCompany(company string, ctype string) ([]*Component, error)
 
-	Add(invitation *Component, nestedFunc func(*Component, *gorm.DB) error) error
+	Add(component *Component, nestedFunc func(*Component, *gorm.DB) error) error
 }
 
 type componentRepo struct {
