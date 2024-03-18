@@ -22,6 +22,7 @@ type SiteRepo interface {
 	Get(netID,siteID uuid.UUID) (*Site, error)
 	GetSites(netID uuid.UUID) ([]Site, error) 
 	Update(site *Site) error
+	GetSiteCount(netID uuid.UUID) (int64, error)
 }
 
 type siteRepo struct {
@@ -93,4 +94,13 @@ func (s *siteRepo) Update(site *Site) error {
     }
 
     return nil
+}
+
+func (s siteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+	var count int64
+	result := s.Db.GetGormDb().Model(&Site{}).Where("network_id = ?", netID).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }

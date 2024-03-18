@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	NumberOfNetworks = "number_of_networks"
 	NumberOfSites    = "number_of_sites"
 	GaugeType        = "gauge"
 )
@@ -30,16 +29,11 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	OrgName          string
-	Network           string           `default:"http://health:9090"`
+	Network      	 string `default:"network:9090"`
+	PushGateway      string `default:"http://localhost:9091"`
 }
 
-var NetworkMetric = []metric.MetricConfig{
-	{
-		Name:   NumberOfNetworks,
-		Type:   GaugeType,
-		Labels: map[string]string{"org": ""},
-		Value:  0,
-	},
+var SiteMetric = []metric.MetricConfig{
 	{
 		Name:   NumberOfSites,
 		Type:   GaugeType,

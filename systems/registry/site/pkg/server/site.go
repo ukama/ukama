@@ -18,11 +18,11 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-
 	"github.com/ukama/ukama/systems/common/uuid"
+	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 	"github.com/ukama/ukama/systems/registry/site/pkg"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
@@ -38,15 +38,17 @@ type SiteServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	networkService providers.NetworkClientProvider
+	pushGateway    string
 }
 
-func NewsiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider) *SiteServer {
+func NewsiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string) *SiteServer {
 	return &SiteServer{
 		orgName:        orgName,
 		siteRepo:       siteRepo,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		networkService: networkService,
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -116,6 +118,13 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
+	route := s.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
+
+	err = s.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	s.pushSiteCount(netID)
 
 	return &pb.AddResponse{
 		Site: dbSiteToPbSite(site)}, nil
@@ -265,3 +274,15 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 
 	return res
 }
+func (s *SiteServer) pushSiteCount(netId uuid.UUID) {
+	siteCount, err := s.siteRepo.GetSiteCount(netId)
+	if err != nil {
+		log.Errorf("failed to get site count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(s.pushGateway, pkg.SiteMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
+	}
+}
+
