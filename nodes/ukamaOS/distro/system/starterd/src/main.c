@@ -98,7 +98,9 @@ int main(int argc, char **argv) {
     Space     *bootSpace = NULL;
 
     pthread_t thread;
-    
+
+    log_set_service(SERVICE_NAME);
+
     /* Parsing command line args. */
     while (true) {
 
