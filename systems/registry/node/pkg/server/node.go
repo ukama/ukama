@@ -31,8 +31,8 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
 type NodeServer struct {
@@ -42,7 +42,7 @@ type NodeServer struct {
 	siteRepo       db.SiteRepo
 	nodeStatusRepo db.NodeStatusRepo
 	nameGenerator  namegenerator.Generator
-	networkService providers.NetworkClientProvider
+	siteService providers.SiteClientProvider
 	pushGateway    string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -50,7 +50,7 @@ type NodeServer struct {
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, org uuid.UUID) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
@@ -59,7 +59,7 @@ func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, n
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
 		siteRepo:       siteRepo,
-		networkService: networkService,
+		siteService: siteService,
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
 		msgbus:         msgBus,
@@ -388,12 +388,12 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 			"invalid site id %s. Error %s", req.GetSiteId(), err.Error())
 	}
 
-	svc, err := n.networkService.GetClient()
+	svc, err := n.siteService.GetClient()
 	if err != nil {
 		return nil, err
 	}
 
-	remoteSite, err := svc.GetSite(ctx, &netpb.GetSiteRequest{SiteId: site.String()})
+	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: site.String()})
 	if err != nil {
 		return nil, err
 	}

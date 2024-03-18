@@ -36,12 +36,12 @@ func TestNodeServer_Add(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
 	nodeStatusRepo := &mocks.NodeStatusRepo{}
-	networkService := &mocks.NetworkClientProvider{}
+	siteService := &mocks.SiteClientProvider{}
 
 	const nodeName = "node-A"
 	const nodeType = "hnode"
 
-	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, networkService, orgId)
+	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId)
 
 	node := &db.Node{
 		Id:    nodeId,
