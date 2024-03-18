@@ -1,0 +1,45 @@
+/*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2023-present, Ukama Inc.
+*/
+
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/services/gitClient/pb/gen";
+import "validator.proto";
+
+package ukama.services.gitClient.v1;
+
+service GitClientService {
+    rpc FetchComponents (FetchComponentsRequest) returns (FetchComponentsResponse);
+}
+
+message FetchComponentsRequest {}
+
+message FetchComponentsResponse {
+    repeated Component component = 1;
+}
+
+message Component {
+    string company = 1 [(validator.field) = {string_not_empty: true}];
+    string inventoryId = 2 [json_name = "inventory_id"];
+    string category = 3;
+    ComponentType type = 4;
+    string description = 5;
+    string datasheetURL = 6 [json_name = "datasheet_url"];
+    string imagesURL = 7 [json_name = "images_url"];
+    string partNumber = 8 [json_name = "part_number"];
+    string manufacturer = 9;
+    string managed = 10;
+    uint32 warranty = 11;
+    string specification = 12;
+}
+
+enum ComponentType {
+    POWER = 0;
+    BACKHAUL = 1;
+    SWITCH = 2;
+    ACCESS = 3;
+}
