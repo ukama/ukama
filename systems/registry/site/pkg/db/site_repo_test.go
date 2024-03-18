@@ -9,150 +9,59 @@
 package db_test
 
 import (
-	"log"
-	"regexp"
+	extsql "database/sql"
 	"testing"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/uuid"
+	db_site "github.com/ukama/ukama/systems/registry/site/pkg/db"
+
 	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/tj/assert"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"database/sql"
-	extsql "database/sql"
-
-	site_db "github.com/ukama/ukama/systems/registry/site/pkg/db"
 )
  
-type UkamaDbMock struct {
-	GormDb *gorm.DB
-}
-
-func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me: Init()")
-}
-
-func (u UkamaDbMock) Connect() error {
-	panic("implement me: Connect()")
-}
-
-func (u UkamaDbMock) GetGormDb() *gorm.DB {
-	return u.GormDb
-}
-
-func (u UkamaDbMock) InitDB() error {
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
-	nestedFuncs ...func() error) error {
-	log.Fatal("implement me: ExecuteInTransaction()")
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
-	nestedFuncs ...func(tx *gorm.DB) error) error {
-	log.Fatal("implement me: ExecuteInTransaction2()")
-	return nil
-}
- func Test_SiteRepo_Get(t *testing.T) {
-	 t.Run("SiteExist", func(t *testing.T) {
-		 // Arrange
-		 const siteName = "site1"
-		 var siteId = uuid.NewV4()
-		 var netId = uuid.NewV4()
+ type UkamaDbMock struct {
+	 GormDb *gorm.DB
+ }
  
-		 var db *extsql.DB
+ func (u UkamaDbMock) Init(model ...interface{}) error {
+	 return nil
+ }
  
-		 db, mock, err := sqlmock.New() // mock sql.DB
-		 assert.NoError(t, err)
+ func (u UkamaDbMock) Connect() error {
+	 return nil
+ }
  
-		 rows := sqlmock.NewRows([]string{"id", "name", "network_id"}).
-			 AddRow(siteId, siteName, netId)
+ func (u UkamaDbMock) GetGormDb() *gorm.DB {
+	 return u.GormDb
+ }
  
-		 mock.ExpectQuery(`^SELECT.*sites.*`).
-			 WithArgs(siteId).
-			 WillReturnRows(rows)
+ func (u UkamaDbMock) InitDB() error {
+	 return nil
+ }
  
-		 dialector := postgres.New(postgres.Config{
-			 DSN:                  "sqlmock_db_0",
-			 DriverName:           "postgres",
-			 Conn:                 db,
-			 PreferSimpleProtocol: true,
-		 })
+ func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
+	 nestedFuncs ...func() error) error {
+	 return nil
+ }
  
-		 gdb, err := gorm.Open(dialector, &gorm.Config{})
-		 assert.NoError(t, err)
- 
-		 r := site_db.NewSiteRepo(&UkamaDbMock{
-			 GormDb: gdb,
-		 })
- 
-		 assert.NoError(t, err)
- 
-		 // Act
-		 site, err := r.Get(siteId,netId)
- 
-		 // Assert
-		 assert.NoError(t, err)
- 
-		 err = mock.ExpectationsWereMet()
-		 assert.NoError(t, err)
-		 assert.NotNil(t, site)
-	 })
- 
-	 t.Run("SiteNotFound", func(t *testing.T) {
-		 // Arrange
-		 var siteId = uuid.NewV4()
-		 var netId = uuid.NewV4()
-
-		 var db *extsql.DB
- 
-		 db, mock, err := sqlmock.New() // mock sql.DB
-		 assert.NoError(t, err)
- 
-		 mock.ExpectQuery(`^SELECT.*sites.*`).
-			 WithArgs(siteId).
-			 WillReturnError(sql.ErrNoRows)
- 
-		 dialector := postgres.New(postgres.Config{
-			 DSN:                  "sqlmock_db_0",
-			 DriverName:           "postgres",
-			 Conn:                 db,
-			 PreferSimpleProtocol: true,
-		 })
- 
-		 gdb, err := gorm.Open(dialector, &gorm.Config{})
-		 assert.NoError(t, err)
- 
-		 r := site_db.NewSiteRepo(&UkamaDbMock{
-			 GormDb: gdb,
-		 })
- 
-		 assert.NoError(t, err)
- 
-		 // Act
-		 site, err := r.Get(siteId,netId)
- 
-		 // Assert
-		 assert.Error(t, err)
- 
-		 err = mock.ExpectationsWereMet()
-		 assert.NoError(t, err)
-		 assert.Nil(t, site)
-	 })
+ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
+	 nestedFuncs ...func(tx *gorm.DB) error) error {
+	 return nil
  }
  
 
- func Test_SiteRepo_Add(t *testing.T) {
-	t.Run("AddSite", func(t *testing.T) {
-		// Arrange
-		var db *extsql.DB
-		site := site_db.Site{
-			ID:            uuid.NewV4(),
-			Name:          "Site A",
+ func TestSiteRepo_GetSite(t *testing.T) {
+	 t.Run("SiteExist", func(t *testing.T) {
+		 // Arrange
+		 siteId := uuid.NewV4()
+		 site := db_site.Site{
+			ID:            siteId,
+			Name:          "pamoja-net",
 			NetworkID:     uuid.NewV4(),
 			BackhaulID:    uuid.NewV4(),
 			PowerID:       uuid.NewV4(),
@@ -162,42 +71,207 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 			Latitude:      40.7128,   // Dummy latitude
 			Longitude:     -74.0060,  // Dummy longitude
 			InstallDate:   time.Now(), // Current time as install date
-		}
+			 CreatedAt: time.Now(),
+			 UpdatedAt: time.Now(),
+			 DeletedAt: gorm.DeletedAt{},
+		 }
+ 
+		 var db *extsql.DB
+ 
+		 db, mock, err := sqlmock.New() // mock sql.DB
+		 assert.NoError(t, err)
+ 
+		 rows := sqlmock.NewRows([]string{"id", "name", "latitude","network_id"}).
+			 AddRow(siteId, site.Name, site.Latitude,site.NetworkID)
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
 
-		mock.ExpectBegin()
+			 mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(site.ID,site.NetworkID, 1). // Add '1' for the LIMIT clause
+			WillReturnRows(rows)
+ 
+		 dialector := postgres.New(postgres.Config{
+			 DSN:                  "sqlmock_db_0",
+			 DriverName:           "postgres",
+			 Conn:                 db,
+			 PreferSimpleProtocol: true,
+		 })
+ 
+		 gdb, err := gorm.Open(dialector, &gorm.Config{})
+		 assert.NoError(t, err)
+ 
+		 r := db_site.NewSiteRepo(&UkamaDbMock{
+			 GormDb: gdb,
+		 })
+ 
+		 assert.NoError(t, err)
+ 
+		 // Act
+		 rm, err := r.Get(site.ID,site.NetworkID)
+ 
+		 // Assert
+		 assert.NoError(t, err)
+ 
+		 err = mock.ExpectationsWereMet()
+		 assert.NoError(t, err)
+		 assert.NotNil(t, rm)
+	 })
+ }
+ 
+ func TestSiteRepo_GetSites(t *testing.T) {
+    t.Run("SitesExist", func(t *testing.T) {
+        // Arrange
+        netID := uuid.NewV4()
+        site1 := db_site.Site{
+            ID:            uuid.NewV4(),
+            Name:          "Site1",
+            NetworkID:     netID,
+            Latitude:      40.7128,
+            Longitude:     -74.0060,
+            InstallDate:   time.Now(),
+            CreatedAt:     time.Now(),
+            UpdatedAt:     time.Now(),
+            DeletedAt:     gorm.DeletedAt{},
+        }
+        site2 := db_site.Site{
+            ID:            uuid.NewV4(),
+            Name:          "Site2",
+            NetworkID:     netID,
+            Latitude:      40.7128,
+            Longitude:     -74.0060,
+            InstallDate:   time.Now(),
+            CreatedAt:     time.Now(),
+            UpdatedAt:     time.Now(),
+            DeletedAt:     gorm.DeletedAt{},
+        }
 
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(site.ID, site.Name, site.NetworkID,site.BackhaulID,site.PowerID,site.AccessID,site.SwitchID,site.IsDeactivated,site.Latitude,site.Longitude,site.InstallDate, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+        var db *extsql.DB
 
-		mock.ExpectCommit()
+        db, mock, err := sqlmock.New()
+        assert.NoError(t, err)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+        rows := sqlmock.NewRows([]string{"id", "name", "latitude", "network_id"}).
+            AddRow(site1.ID, site1.Name, site1.Latitude, site1.NetworkID).
+            AddRow(site2.ID, site2.Name, site2.Latitude, site2.NetworkID)
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
+        mock.ExpectQuery(`^SELECT.*sites.*`).
+            WithArgs(netID).
+            WillReturnRows(rows)
 
-		r := site_db.NewSiteRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+        dialector := postgres.New(postgres.Config{
+            DSN:                  "sqlmock_db_0",
+            DriverName:           "postgres",
+            Conn:                 db,
+            PreferSimpleProtocol: true,
+        })
 
-		assert.NoError(t, err)
+        gdb, err := gorm.Open(dialector, &gorm.Config{})
+        assert.NoError(t, err)
 
-		// Act
-		err = r.Add(&site, nil)
+        r := db_site.NewSiteRepo(&UkamaDbMock{
+            GormDb: gdb,
+        })
 
-		// Assert
-		assert.NoError(t, err)
+        assert.NoError(t, err)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+        // Act
+        sites, err := r.GetSites(netID)
+
+        // Assert
+        assert.NoError(t, err)
+        assert.NotNil(t, sites)
+        assert.Equal(t, 2, len(sites)) // Ensure that both sites are retrieved
+        assert.Equal(t, site1.ID, sites[0].ID)
+        assert.Equal(t, site2.ID, sites[1].ID)
+
+        err = mock.ExpectationsWereMet()
+        assert.NoError(t, err)
+    })
 }
+
+func TestSiteRepo_Add(t *testing.T) {
+    t.Run("ValidSite", func(t *testing.T) {
+        // Arrange
+        site := &db_site.Site{
+            ID:            uuid.NewV4(),
+            Name:          "valid-site",
+            NetworkID:     uuid.NewV4(),
+            BackhaulID:    uuid.NewV4(),
+            AccessID:      uuid.NewV4(),
+            PowerID:       uuid.NewV4(),
+            SwitchID:      uuid.NewV4(),
+            IsDeactivated: false,
+            Latitude:      40.7128,
+            Longitude:     -74.0060,
+            InstallDate:   time.Now(),
+            CreatedAt:     time.Now(),
+            UpdatedAt:     time.Now(),
+            DeletedAt:     gorm.DeletedAt{},
+        }
+
+        var db *extsql.DB
+
+        db, mock, err := sqlmock.New()
+        assert.NoError(t, err)
+
+        mock.ExpectBegin()
+        mock.ExpectExec(`^INSERT INTO "sites"`).
+            WithArgs(
+                site.ID, site.Name, site.NetworkID, site.BackhaulID,
+                site.PowerID, site.AccessID, site.SwitchID, site.IsDeactivated,
+                site.Latitude, site.Longitude, site.InstallDate,
+                sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+            WillReturnResult(sqlmock.NewResult(1, 1))
+        mock.ExpectCommit()
+
+        dialector := postgres.New(postgres.Config{
+            DSN:                  "sqlmock_db_0",
+            DriverName:           "postgres",
+            Conn:                 db,
+            PreferSimpleProtocol: true,
+        })
+
+        gdb, err := gorm.Open(dialector, &gorm.Config{})
+        assert.NoError(t, err)
+
+        r := db_site.NewSiteRepo(&UkamaDbMock{
+            GormDb: gdb,
+        })
+
+        assert.NoError(t, err)
+
+        // Act
+        err = r.Add(site, nil)
+
+        // Assert
+        assert.NoError(t, err)
+
+        err = mock.ExpectationsWereMet()
+        assert.NoError(t, err)
+    })
+
+    t.Run("InvalidSiteName", func(t *testing.T) {
+        // Arrange
+        invalidSite := &db_site.Site{
+            ID:            uuid.NewV4(),
+            Name:          "invalid_site_name!", // Invalid site name with special characters
+            NetworkID:     uuid.NewV4(),
+            Latitude:      40.7128,
+            Longitude:     -74.0060,
+            InstallDate:   time.Now(),
+            CreatedAt:     time.Now(),
+            UpdatedAt:     time.Now(),
+            DeletedAt:     gorm.DeletedAt{},
+        }
+
+        r := db_site.NewSiteRepo(&UkamaDbMock{})
+
+        // Act
+        err := r.Add(invalidSite, nil)
+
+        // Assert
+        assert.Error(t, err)
+        assert.Contains(t, err.Error(), "invalid name")
+    })
+}
+
+

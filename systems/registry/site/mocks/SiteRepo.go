@@ -56,6 +56,30 @@ func (_m *SiteRepo) Get(netID uuid.UUID, siteID uuid.UUID) (*db.Site, error) {
 	return r0, r1
 }
 
+// GetSiteCount provides a mock function with given fields: netID
+func (_m *SiteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+	ret := _m.Called(netID)
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) (int64, error)); ok {
+		return rf(netID)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) int64); ok {
+		r0 = rf(netID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(netID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSites provides a mock function with given fields: netID
 func (_m *SiteRepo) GetSites(netID uuid.UUID) ([]db.Site, error) {
 	ret := _m.Called(netID)

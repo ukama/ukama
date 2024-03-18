@@ -41,7 +41,7 @@ type SiteServer struct {
 	pushGateway    string
 }
 
-func NewsiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string) *SiteServer {
 	return &SiteServer{
 		orgName:        orgName,
 		siteRepo:       siteRepo,
@@ -144,19 +144,6 @@ func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	svc, err := s.networkService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("checking if network exist %s", req.NetworkId)
-
-	_, err = svc.Get(ctx, &npb.GetRequest{
-		NetworkId: netID.String(),
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-
-	}
 	site, err := s.siteRepo.Get(netID, siteID)
 
 	if err != nil {
@@ -174,20 +161,6 @@ func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	svc, err := s.networkService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("checking if network exist %s", req.NetworkId)
-	
-	_, err = svc.Get(ctx, &npb.GetRequest{
-		NetworkId: netID.String(),
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-
 	}
 
 	sites, err := s.siteRepo.GetSites(netID)
