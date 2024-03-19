@@ -87,7 +87,11 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respError, _ := resp.Error().(error)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
@@ -112,7 +116,11 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respError, _ := resp.Error().(error)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
@@ -142,11 +150,10 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	log.Infof("response: %v", resp)
-
-	respError, _ := resp.Error().(error)
-
-	log.Infof("response error: %v", respError)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
 
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
@@ -177,7 +184,11 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respError, _ := resp.Error().(error)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
@@ -207,7 +218,11 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respError, _ := resp.Error().(error)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
@@ -232,7 +247,11 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 		return nil, err
 	}
 
-	respError, _ := resp.Error().(error)
+	respError, ok := resp.Error().(error)
+	if !ok || respError == nil {
+		respError = fmt.Errorf("empty error response from remote API")
+	}
+
 	errStatus := ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
@@ -255,5 +274,5 @@ type ErrorStatus struct {
 }
 
 func (e ErrorStatus) Error() string {
-	return fmt.Sprintf("%d:%s", e.StatusCode, e.RawError.Error())
+	return fmt.Sprintf("%d: %s", e.StatusCode, e.RawError.Error())
 }
