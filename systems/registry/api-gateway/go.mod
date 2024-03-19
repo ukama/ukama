@@ -30,7 +30,7 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/registry/invitation v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/network v0.0.0-20240229210932-9e1cc8c6c952
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/site v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0

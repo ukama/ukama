@@ -176,50 +176,90 @@ func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb
 }
 
 func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	log.Infof("Updating site %s-%s", req.NetworkId, req.SiteId)
+    log.Infof("Updating site %s-%s", req.NetworkId, req.SiteId)
 
-	netID, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    netID, err := uuid.FromString(req.NetworkId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    siteID, err := uuid.FromString(req.SiteId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    site, err := s.siteRepo.Get(netID, siteID)
+    if err != nil {
+        return nil, grpc.SqlErrorToGrpc(err, "site")
+    }
+
+    // Update the site fields
+    if req.Name != "" {
+        site.Name = req.Name
+    }
+    
+    if req.Latitude != 0 {
+        site.Latitude = req.Latitude
+    }
+
+    if req.Longitude != 0 {
+        site.Longitude = req.Longitude 
+    }
+
+	if req.IsDeactivated {
+		site.IsDeactivated = req.IsDeactivated
 	}
 
-	siteID, err := uuid.FromString(req.SiteId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
+    if req.InstallDate != nil {
+        installTime := req.InstallDate.AsTime()
+        if installTime.IsZero() {
+            return nil, status.Errorf(codes.InvalidArgument, "Invalid install date format")
+        }
+        site.InstallDate = installTime
+    }   
+    
 
-	site, err := s.siteRepo.Get(netID, siteID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
+    if req.BackhaulId != "" {
+        backhaulID, err := uuid.FromString(req.BackhaulId)
+        if err != nil {
+            return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+        }
+        site.BackhaulID = backhaulID
+    }
+    
+    if req.AccessId != "" {
+        accessID, err := uuid.FromString(req.AccessId)
+        if err != nil {
+            return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+        }
+        site.AccessID = accessID
+    }
+    
+    if req.PowerId != "" {
+        powerID, err := uuid.FromString(req.PowerId)
+        if err != nil {
+            return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+        }
+        site.PowerID = powerID
+    }
 
-	// Update the site fields
-	if req.Name != "" {
-		site.Name = req.Name
-	}
-	if req.BackhaulId != "" {
-		backhaulID, err := uuid.FromString(req.BackhaulId)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-		}
-		site.BackhaulID = backhaulID
-	}
-	// Similarly, update other fields as required
-	site, err = s.siteRepo.Get(netID, siteID)
+    if req.SwitchId != "" {
+        switchID, err := uuid.FromString(req.SwitchId)
+        if err != nil {
+            return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+        }
+        site.SwitchID = switchID
+    }
+    
+	
+    err = s.siteRepo.Update(site)
+    if err != nil {
+        return nil, grpc.SqlErrorToGrpc(err, "site")
+    }
 
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	// Save the updated site to the database
-	err = s.siteRepo.Update(site)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	return &pb.UpdateResponse{
-		Site: dbSiteToPbSite(site),
-	}, nil
+    return &pb.UpdateResponse{
+        Site: dbSiteToPbSite(site),
+    }, nil
 }
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {

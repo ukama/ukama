@@ -27,12 +27,12 @@ type SiteRegistry struct {
 	host    string
 }
 
-func NewSiteRegistry(invitationHost string, timeout time.Duration) *SiteRegistry {
+func NewSiteRegistry(siteHost string, timeout time.Duration) *SiteRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, invitationHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -42,7 +42,7 @@ func NewSiteRegistry(invitationHost string, timeout time.Duration) *SiteRegistry
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
-		host:    invitationHost,
+		host:    siteHost,
 	}
 }
 
