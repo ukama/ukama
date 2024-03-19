@@ -19,10 +19,51 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetTestRequest) Validate() error {
+var _regex_GetAcountRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetAcountRequest) Validate() error {
+	if !_regex_GetAcountRequest_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
 	return nil
 }
-func (this *GetTestResponse) Validate() error {
+func (this *GetAcountResponse) Validate() error {
+	if this.Account != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Account); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Account", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetAcountsRequest_Company = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetAcountsRequest) Validate() error {
+	if !_regex_GetAcountsRequest_Company.MatchString(this.Company) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Company))
+	}
+	if this.Company == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must not be an empty string`, this.Company))
+	}
+	return nil
+}
+func (this *GetAcountsResponse) Validate() error {
+	for _, item := range this.Accounts {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Accounts", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *SyncAcountsRequest) Validate() error {
+	return nil
+}
+func (this *SyncAcountsResponse) Validate() error {
 	return nil
 }
 
@@ -34,6 +75,9 @@ func (this *Account) Validate() error {
 	}
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.Company == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must not be an empty string`, this.Company))
 	}
 	return nil
 }
