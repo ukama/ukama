@@ -11,9 +11,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
@@ -62,10 +60,10 @@ type network interface {
 }
 
 type site interface {
-	AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate time.Time) (*sitepb.AddResponse, error)
+	AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
 	GetSite(netID, siteID string) (*sitepb.GetResponse, error)
 	GetSites(netID string) (*sitepb.GetSitesResponse, error)
-	UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate *timestamp.Timestamp) *sitepb.UpdateResponse
+	UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse,error)
 }
 
 type invitation interface {
@@ -107,6 +105,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Node = client.NewNode(endpoints.Node, endpoints.Timeout)
 	c.Member = client.NewMemberRegistry(endpoints.Member, endpoints.Timeout)
 	c.Invitation = client.NewInvitationRegistry(endpoints.Invitation, endpoints.Timeout)
+	c.Site = client.NewSiteRegistry(endpoints.Site, endpoints.Timeout)
 
 	return c
 }
@@ -322,7 +321,6 @@ func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.
 }
 
 func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sitepb.UpdateResponse, error) {
-	installDate := timestamp.Timestamp{Seconds: req.InstallDate.Unix()}
 	return r.clients.Site.UpdateSite(
 		req.NetworkId,
 		req.SiteId,
@@ -334,15 +332,12 @@ func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sit
 		req.IsDeactivated,
 		req.Latitude,
 		req.Longitude,
-		&installDate,
-	), nil
+		req.InstallDate.String(),
+	)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {
-	installDate, err := time.Parse(time.RFC3339, req.InstallDate)
-	if err != nil {
-		return nil, err
-	}
+	
 	return r.clients.Site.AddSite(
 		req.NetworkId,
 		req.Name,
@@ -353,7 +348,7 @@ func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.A
 		req.IsDeactivated,
 		req.Latitude,
 		req.Longitude,
-		installDate,
+		req.InstallDate,
 	)
 }
 

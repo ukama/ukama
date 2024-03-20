@@ -14,7 +14,6 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 	"google.golang.org/grpc"
@@ -71,6 +70,7 @@ func (r *SiteRegistry) GetSite(networkID, siteID string) (*pb.GetResponse, error
 	return res, nil
 }
 
+
 func (r *SiteRegistry) GetSites(networkID string) (*pb.GetSitesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
@@ -83,7 +83,7 @@ func (r *SiteRegistry) GetSites(networkID string) (*pb.GetSitesResponse, error) 
 	return res, nil
 }
 
-func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate time.Time) (*pb.AddResponse, error) {
+func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	res, err := r.client.Add(ctx, &pb.AddRequest{
@@ -96,7 +96,7 @@ func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, s
 		IsDeactivated: isDeactivated,
 		Latitude:      latitude,
 		Longitude:     longitude,
-		InstallDate:   &timestamp.Timestamp{Seconds: installDate.Unix()},
+		InstallDate:   installDate,
 	})
 	if err != nil {
 		return nil, err
@@ -104,7 +104,8 @@ func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, s
 
 	return res, nil
 }
-func (r *SiteRegistry) UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate *timestamp.Timestamp) (*pb.UpdateResponse, error) {
+
+func (r *SiteRegistry) UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.UpdateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

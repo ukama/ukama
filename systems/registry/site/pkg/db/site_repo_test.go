@@ -70,7 +70,7 @@ import (
 			IsDeactivated: false,
 			Latitude:      40.7128,   // Dummy latitude
 			Longitude:     -74.0060,  // Dummy longitude
-			InstallDate:   time.Now(), // Current time as install date
+			InstallDate:   "07-03-2023", // Current time as install date
 			 CreatedAt: time.Now(),
 			 UpdatedAt: time.Now(),
 			 DeletedAt: gorm.DeletedAt{},
@@ -127,7 +127,7 @@ import (
             NetworkID:     netID,
             Latitude:      40.7128,
             Longitude:     -74.0060,
-            InstallDate:   time.Now(),
+            InstallDate:   "07-03-2023",
             CreatedAt:     time.Now(),
             UpdatedAt:     time.Now(),
             DeletedAt:     gorm.DeletedAt{},
@@ -138,7 +138,7 @@ import (
             NetworkID:     netID,
             Latitude:      40.7128,
             Longitude:     -74.0060,
-            InstallDate:   time.Now(),
+            InstallDate:    "07-03-2023",
             CreatedAt:     time.Now(),
             UpdatedAt:     time.Now(),
             DeletedAt:     gorm.DeletedAt{},
@@ -202,7 +202,7 @@ func TestSiteRepo_Add(t *testing.T) {
             IsDeactivated: false,
             Latitude:      40.7128,
             Longitude:     -74.0060,
-            InstallDate:   time.Now(),
+            InstallDate:    "07-03-2023",
             CreatedAt:     time.Now(),
             UpdatedAt:     time.Now(),
             DeletedAt:     gorm.DeletedAt{},
@@ -257,7 +257,7 @@ func TestSiteRepo_Add(t *testing.T) {
             NetworkID:     uuid.NewV4(),
             Latitude:      40.7128,
             Longitude:     -74.0060,
-            InstallDate:   time.Now(),
+            InstallDate:    "07-03-2023",
             CreatedAt:     time.Now(),
             UpdatedAt:     time.Now(),
             DeletedAt:     gorm.DeletedAt{},

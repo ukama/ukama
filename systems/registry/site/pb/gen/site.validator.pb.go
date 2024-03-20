@@ -56,11 +56,6 @@ func (this *AddRequest) Validate() error {
 	if this.SwitchId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must not be an empty string`, this.SwitchId))
 	}
-	if this.InstallDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.InstallDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("InstallDate", err)
-		}
-	}
 	return nil
 }
 func (this *AddResponse) Validate() error {
@@ -165,9 +160,11 @@ func (this *Site) Validate() error {
 	if this.SwitchId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must not be an empty string`, this.SwitchId))
 	}
-	if this.InstallDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.InstallDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("InstallDate", err)
+	for _, item := range this.Networks {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Networks", err)
+			}
 		}
 	}
 	return nil
@@ -217,9 +214,28 @@ func (this *UpdateRequest) Validate() error {
 	if this.SwitchId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must not be an empty string`, this.SwitchId))
 	}
-	if this.InstallDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.InstallDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("InstallDate", err)
+	return nil
+}
+
+var _regex_Network_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Network_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Network) Validate() error {
+	if !_regex_Network_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if !_regex_Network_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
+	}
+	if this.OrgId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
 		}
 	}
 	return nil

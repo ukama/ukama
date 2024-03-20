@@ -87,7 +87,7 @@ type AddSiteRequest struct {
 	IsDeactivated bool    `json:"is_deactivated" validate:"required"`
 	Latitude      float64 `json:"latitude" validate:"required"`
 	Longitude     float64 `json:"longitude" validate:"required"`
-	InstallDate   string  `json:"install_date" validate:"required"`
+	InstallDate   string  `json:"install_date"`
 }
 
 type AttachNodesRequest struct {

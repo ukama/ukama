@@ -5,10 +5,12 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/lib/pq"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
-//Site model
+// Site model
 type Site struct {
     ID            uuid.UUID       `gorm:"primaryKey;type:uuid"`
     Name           string          `gorm:"uniqueIndex:site_name_network_idx"`
@@ -20,8 +22,27 @@ type Site struct {
     IsDeactivated  bool            
     Latitude       float64         
     Longitude      float64         
-    InstallDate    time.Time       
+    InstallDate    string       
     CreatedAt      time.Time
     UpdatedAt      time.Time
     DeletedAt      gorm.DeletedAt `gorm:"index"`
+    Networks       []Network       `gorm:"many2many:site_networks"`
+}
+
+// Network model
+type Network struct {
+	ID               uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name             string    `gorm:"uniqueIndex:network_name_org_idx"`
+	OrgID            uuid.UUID `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
+	Deactivated      bool
+	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
+	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`
+	Budget           float64
+	Overdraft        float64
+	TrafficPolicy    uint32
+	PaymentLinks     bool
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        gorm.DeletedAt `gorm:"index"`
+	SyncStatus       ukama.StatusType
 }
