@@ -27,13 +27,11 @@ type Config struct {
 }
 
 type HttpEndpoints struct {
-	Timeout     time.Duration
-	Network     string
-	Package     string
-	Subscriber  string
-	Sim         string
-	Node        string
-	NodeMetrics string
+	Timeout        time.Duration
+	RegistryHost   string `default:"registry:9090"`
+	DataPlanHost   string `default:"data-plan:9090"`
+	SubscriberHost string `default:"subscriber:9090"`
+	NodeMetrics    string
 }
 
 func NewConfig(name string) *Config {
@@ -57,12 +55,7 @@ func NewConfig(name string) *Config {
 
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
-			Network:     "http://localhost",
-			Package:     "http://localhost",
-			Subscriber:  "http://localhost",
-			Sim:         "http://localhost",
-			Node:        "http://localhost",
-			NodeMetrics: "http://localhost",
+			NodeMetrics: "http://localhost:8075",
 		},
 
 		Metrics: *config.DefaultMetrics(),

@@ -23,7 +23,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	SimManagerHost   string `default:"simmanager:9090"`
-	NetworkHost      string `default:"http://registry-api-gw:8080"`
+	RegistryHost     string `default:"http://registry-api-gw:8080"`
 	OrgName          string
 }
 

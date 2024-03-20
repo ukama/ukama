@@ -75,6 +75,7 @@ type simManager interface {
 	DeleteSim(simId string) (*simMangPb.DeleteSimResponse, error)
 	GetPackagesForSim(simId string) (*simMangPb.GetPackagesBySimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
+	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
 }
 
 type subscriber interface {
@@ -174,6 +175,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
 		sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 		sim.DELETE("/:sim_id", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
+
+		usage := auth.Group("usages", "Usages", "Operator sims usages endpoints")
+		usage.GET("", formatDoc("Get Usages", "Get sim usages with filters"), tonic.Handler(r.getUsages, http.StatusOK))
 	}
 }
 
@@ -410,6 +414,16 @@ func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageFor
 		return nil, err
 	}
 	return resp, err
+}
+
+func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageResponse, error) {
+	cdrType, ok := c.GetQuery("cdr_type")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "cdr_type is a mandatory query parameter"}
+	}
+
+	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To, req.Region)
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {

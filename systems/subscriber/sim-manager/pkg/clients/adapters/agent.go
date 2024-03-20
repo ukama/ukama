@@ -12,13 +12,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
+
 	log "github.com/sirupsen/logrus"
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 type AgentAdapter interface {
 	BindSim(context.Context, string) (any, error)
 	GetSim(context.Context, string) (any, error)
+	GetUsages(context.Context, string, string, string, string, string) (any, any, error)
 	ActivateSim(context.Context, string) error
 	DeactivateSim(context.Context, string) error
 	TerminateSim(context.Context, string) error
@@ -26,12 +28,12 @@ type AgentAdapter interface {
 }
 
 type AgentFactory interface {
-	GetAgentAdapter(sims.SimType) (AgentAdapter, bool)
+	GetAgentAdapter(ukama.SimType) (AgentAdapter, bool)
 }
 
 type agentFactory struct {
 	timeout time.Duration
-	factory map[sims.SimType]AgentAdapter
+	factory map[ukama.SimType]AgentAdapter
 }
 
 func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Duration, debug bool) *agentFactory {
@@ -55,10 +57,10 @@ func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Durat
 		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", operatorAgentHost, err)
 	}
 
-	var factory = make(map[sims.SimType]AgentAdapter)
+	var factory = make(map[ukama.SimType]AgentAdapter)
 
-	factory[sims.SimTypeTest] = tAgent
-	factory[sims.SimTypeOperatorData] = opAgent
+	factory[ukama.SimTypeTest] = tAgent
+	factory[ukama.SimTypeOperatorData] = opAgent
 
 	return &agentFactory{
 		timeout: timeout,
@@ -66,7 +68,7 @@ func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Durat
 	}
 }
 
-func (a *agentFactory) GetAgentAdapter(simType sims.SimType) (AgentAdapter, bool) {
+func (a *agentFactory) GetAgentAdapter(simType ukama.SimType) (AgentAdapter, bool) {
 	agent, ok := a.factory[simType]
 
 	return agent, ok

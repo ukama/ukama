@@ -13,12 +13,16 @@ build: integration.build
 
 lint:
 	golangci-lint run
+
 test:
 	go test -v ./...
+
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
+
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
@@ -30,6 +34,7 @@ gen:
 		subscriber.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
+
 clean:
 	rm -rf bin/
 

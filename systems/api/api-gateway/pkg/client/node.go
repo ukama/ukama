@@ -8,13 +8,11 @@
 
 package client
 
-import (
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
-)
+import creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 
 type Node interface {
-	GetNode(string) (*rest.NodeInfo, error)
-	RegisterNode(string, string, string, string) (*rest.NodeInfo, error)
+	GetNode(string) (*creg.NodeInfo, error)
+	RegisterNode(string, string, string, string) (*creg.NodeInfo, error)
 	AttachNode(string, string, string) error
 	DetachNode(string) error
 	AddNodeToSite(string, string, string) error
@@ -23,10 +21,10 @@ type Node interface {
 }
 
 type node struct {
-	nc rest.NodeClient
+	nc creg.NodeClient
 }
 
-func NewNodeClientSet(nd rest.NodeClient) Node {
+func NewNodeClientSet(nd creg.NodeClient) Node {
 	n := &node{
 		nc: nd,
 	}
@@ -34,7 +32,7 @@ func NewNodeClientSet(nd rest.NodeClient) Node {
 	return n
 }
 
-func (n *node) GetNode(id string) (*rest.NodeInfo, error) {
+func (n *node) GetNode(id string) (*creg.NodeInfo, error) {
 	node, err := n.nc.Get(id)
 	if err != nil {
 		return nil, handleRestErrorStatus(err)
@@ -43,8 +41,8 @@ func (n *node) GetNode(id string) (*rest.NodeInfo, error) {
 	return node, nil
 }
 
-func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*rest.NodeInfo, error) {
-	node, err := n.nc.Add(rest.AddNodeRequest{
+func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*creg.NodeInfo, error) {
+	node, err := n.nc.Add(creg.AddNodeRequest{
 		NodeId: nodeId,
 		Name:   nodeName,
 		OrgId:  orgId,
@@ -58,7 +56,7 @@ func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*rest.NodeIn
 }
 
 func (n *node) AttachNode(id, left, right string) error {
-	err := n.nc.Attach(id, rest.AttachNodesRequest{
+	err := n.nc.Attach(id, creg.AttachNodesRequest{
 		AmpNodeL: left,
 		AmpNodeR: right,
 	})
@@ -79,7 +77,7 @@ func (n *node) DetachNode(id string) error {
 }
 
 func (n *node) AddNodeToSite(id, networkId, siteId string) error {
-	err := n.nc.AddToSite(id, rest.AddToSiteRequest{
+	err := n.nc.AddToSite(id, creg.AddToSiteRequest{
 		NetworkId: networkId,
 		SiteId:    siteId,
 	})

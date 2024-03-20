@@ -7,6 +7,9 @@ services:
   restart: always
   environment:
    - BYPASS_AUTH_MODE=true
+   - HTTPSERVICES_SUBSCRIBERHOST=http://${LOCAL_HOST_IP}:8078
+   - HTTPSERVICES_DATAPLANHOST=http://${LOCAL_HOST_IP}:8074
+   - HTTPSERVICES_REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
   networks:
    - ukama-net
 

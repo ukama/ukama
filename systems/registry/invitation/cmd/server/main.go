@@ -11,27 +11,24 @@ package main
 import (
 	"os"
 
-	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/registry/invitation/cmd/version"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg"
-
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
-	"github.com/ukama/ukama/systems/registry/invitation/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -74,16 +71,19 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	notificationClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
-	if err != nil {
-		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
-	}
-	nucleusP := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
+	mailerClient := cnotif.NewMailerClient(serviceConfig.NotificationHost)
+	orgClient := cnucl.NewOrgClient(serviceConfig.OrgRegistryHost)
+	userClient := cnucl.NewUserClient(serviceConfig.OrgRegistryHost)
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
+		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
 	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
 		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
-		notificationClient, nucleusP, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
+		mailerClient, orgClient, userClient, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
+
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterInvitationServiceServer(s, invitationServer)
@@ -94,15 +94,16 @@ func runGrpcServer(gormdb sql.Db) {
 	waitForExit()
 }
 
-func msgBusListener(m mb.MsgBusServiceClient) {
-	if err := m.Register(); err != nil {
-		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
-	}
+// unused?
+// func msgBusListener(m mb.MsgBusServiceClient) {
+// if err := m.Register(); err != nil {
+// log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+// }
 
-	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
-	}
-}
+// if err := m.Start(); err != nil {
+// log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+// }
+// }
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)

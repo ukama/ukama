@@ -6,25 +6,24 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+//TODO: add unit tests.
+
 package adapters
 
 import (
 	"context"
 
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
+	cop "github.com/ukama/ukama/systems/common/rest/client/operator"
 )
 
 type OperatorAgentAdaper struct {
 	host    string
 	isDebug bool
-	client  providers.OperatorClient
+	client  cop.OperatorClient
 }
 
 func NewOperatorAgentAdapter(operatorAgentHost string, debug bool) (*OperatorAgentAdaper, error) {
-	c, err := providers.NewOperatorClient(operatorAgentHost, debug)
-	if err != nil {
-		return nil, err
-	}
+	c := cop.NewOperatorClient(operatorAgentHost)
 
 	return &OperatorAgentAdaper{
 		host:    operatorAgentHost,
@@ -41,6 +40,11 @@ func (o *OperatorAgentAdaper) BindSim(ctx context.Context, iccid string) (any, e
 func (o *OperatorAgentAdaper) GetSim(ctx context.Context, iccid string) (any, error) {
 	// think of how to use ctx with restclient
 	return o.client.GetSimInfo(iccid)
+}
+
+func (o *OperatorAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
+	// think of how to use ctx with restclient
+	return o.client.GetUsages(iccid, cdrType, from, to, region)
 }
 
 func (o *OperatorAgentAdaper) ActivateSim(ctx context.Context, iccid string) error {

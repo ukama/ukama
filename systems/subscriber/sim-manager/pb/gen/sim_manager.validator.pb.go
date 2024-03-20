@@ -10,6 +10,7 @@ import (
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -232,6 +233,22 @@ func (this *RemovePackageRequest) Validate() error {
 	return nil
 }
 func (this *RemovePackageResponse) Validate() error {
+	return nil
+}
+func (this *UsageRequest) Validate() error {
+	return nil
+}
+func (this *UsageResponse) Validate() error {
+	if this.Usage != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Usage); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Usage", err)
+		}
+	}
+	if this.Cost != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Cost); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Cost", err)
+		}
+	}
 	return nil
 }
 

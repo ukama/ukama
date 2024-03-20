@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/ukama/ukama/systems/common/types"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	"gorm.io/gorm"
@@ -48,7 +47,7 @@ type Package struct {
 	Overdraft      float64
 	TrafficPolicy  uint32
 	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
-	SyncStatus     types.SyncStatus
+	SyncStatus     ukama.StatusType
 }
 
 type PackageDetails struct {

@@ -15,12 +15,13 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
 	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/api/api-gateway/pkg/client/rest"
+	"github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 func TestCient_GetNode(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCient_GetNode(t *testing.T) {
 
 	t.Run("NodeFound", func(t *testing.T) {
 		nodeClient.On("Get", nodeId).
-			Return(&rest.NodeInfo{
+			Return(&creg.NodeInfo{
 				Id:   nodeId,
 				Name: nodeName,
 			}, nil).Once()
@@ -51,7 +52,7 @@ func TestCient_GetNode(t *testing.T) {
 		nodeClient.On("Get", nodeId).
 			Return(nil,
 				fmt.Errorf("GetNode failure: %w",
-					rest.ErrorStatus{StatusCode: 404})).Once()
+					cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		nodeInfo, err := n.GetNode(nodeId)
 
@@ -87,12 +88,12 @@ func TestCient_RegisterNode(t *testing.T) {
 	n := client.NewNodeClientSet(nodeClient)
 
 	t.Run("NodeRegistered", func(t *testing.T) {
-		nodeClient.On("Add", rest.AddNodeRequest{
+		nodeClient.On("Add", creg.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
 			State:  state,
-		}).Return(&rest.NodeInfo{
+		}).Return(&creg.NodeInfo{
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
@@ -108,7 +109,7 @@ func TestCient_RegisterNode(t *testing.T) {
 	})
 
 	t.Run("NodeNotRegistered", func(t *testing.T) {
-		nodeClient.On("Add", rest.AddNodeRequest{
+		nodeClient.On("Add", creg.AddNodeRequest{
 			NodeId: nodeId,
 			Name:   nodeName,
 			OrgId:  orgId.String(),
@@ -134,7 +135,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("Attach", nodeId, rest.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, creg.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(nil).Once()
@@ -147,7 +148,7 @@ func TestCient_AttachNode(t *testing.T) {
 	t.Run("NodeNotAttached", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("Attach", nodeId, rest.AttachNodesRequest{
+		nodeClient.On("Attach", nodeId, creg.AttachNodesRequest{
 			AmpNodeL: ampNodeL,
 			AmpNodeR: ampNodeR,
 		}).Return(errors.New("some error")).Once()
@@ -178,7 +179,7 @@ func TestCient_DetachNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Detach", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				rest.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		err := n.DetachNode(nodeId)
 
@@ -209,7 +210,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a0"
 
-		nodeClient.On("AddToSite", nodeId, rest.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, creg.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(nil).Once()
@@ -222,7 +223,7 @@ func TestCient_AddToSite(t *testing.T) {
 	t.Run("NodeNotAdded", func(t *testing.T) {
 		nodeId := "uk-sa2341-tnode-v0-a1a1"
 
-		nodeClient.On("AddToSite", nodeId, rest.AddToSiteRequest{
+		nodeClient.On("AddToSite", nodeId, creg.AddToSiteRequest{
 			NetworkId: networkId,
 			SiteId:    siteId,
 		}).Return(errors.New("some error")).Once()
@@ -253,7 +254,7 @@ func TestCient_RemoveNodeFromSite(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("RemoveFromSite", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				rest.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		err := n.RemoveNodeFromSite(nodeId)
 
@@ -292,7 +293,7 @@ func TestCient_DeleteNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Delete", nodeId).
 			Return(fmt.Errorf("DeleteNode failure: %w",
-				rest.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{StatusCode: 404})).Once()
 
 		err := n.DeleteNode(nodeId)
 

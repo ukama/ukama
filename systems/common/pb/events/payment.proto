@@ -1,0 +1,35 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+
+
+
+message Payment {
+    string id = 1;
+    string itemId = 2;
+    string itemType = 3 [json_name = "item_type"];
+    int64 amountCents = 4 [json_name = "amount_cents"];
+    string currency = 5;
+    string paymentMethod = 6 [json_name = "payment_method"];
+    int64 depositedAmountCents = 7 [json_name = "deposited_amount_cents"];
+    string paidAt = 8 [json_name = "paid_at"];
+    string payerName = 9 [json_name = "payer_name"];
+    string payerEmail = 10 [json_name = "payer_email"];
+    string payerPhone = 11 [json_name = "payer_phone"];
+    string correspondant = 12;
+    string country = 13;
+    string description = 14;
+    string status = 15;
+}

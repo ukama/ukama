@@ -12,27 +12,28 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/grpc"
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/member/pkg"
-	"github.com/ukama/ukama/systems/registry/member/pkg/db"
-	"github.com/ukama/ukama/systems/registry/member/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/registry/member/pkg"
+	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 type MemberServer struct {
 	pb.UnimplementedMemberServiceServer
 	mRepo          db.MemberRepo
-	nucleusSystem  providers.NucleusClientProvider
+	orgClient      cnucl.OrgClient
+	userClient     cnucl.UserClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
@@ -40,11 +41,13 @@ type MemberServer struct {
 	OrgName        string
 }
 
-func NewMemberServer(orgName string, mRepo db.MemberRepo, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID) *MemberServer {
+func NewMemberServer(orgName string, mRepo db.MemberRepo, orgClient cnucl.OrgClient, userClient cnucl.UserClient,
+	msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID) *MemberServer {
 
 	return &MemberServer{
 		mRepo:          mRepo,
-		nucleusSystem:  nucleusSystem,
+		orgClient:      orgClient,
+		userClient:     userClient,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
@@ -103,7 +106,7 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 	}
 
 	/* validate user uuid */
-	_, err = m.nucleusSystem.GetUserById(userUUID.String())
+	_, err = m.userClient.GetById(userUUID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
 	}
@@ -115,7 +118,7 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.nucleusSystem.UpdateOrgToUser(orgId, userId)
+		err := m.orgClient.AddUser(orgId, userId)
 		if err != nil {
 			return err
 		}
@@ -205,7 +208,7 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 	}
 
 	err = m.mRepo.RemoveMember(uuid, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.nucleusSystem.RemoveOrgFromUser(orgId, userId)
+		err := m.orgClient.RemoveUser(orgId, userId)
 		if err != nil {
 			return err
 		}

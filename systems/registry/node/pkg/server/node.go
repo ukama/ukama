@@ -42,7 +42,6 @@ type NodeServer struct {
 	siteRepo       db.SiteRepo
 	nodeStatusRepo db.NodeStatusRepo
 	nameGenerator  namegenerator.Generator
-	orgService     providers.OrgClientProvider
 	networkService providers.NetworkClientProvider
 	pushGateway    string
 	msgbus         mb.MsgBusServiceClient
@@ -51,18 +50,15 @@ type NodeServer struct {
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient,
-	orgService providers.OrgClientProvider,
-	networkService providers.NetworkClientProvider,
-	org uuid.UUID) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
+
 	return &NodeServer{
 		orgName:        orgName,
 		org:            org,
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
 		siteRepo:       siteRepo,
-		orgService:     orgService,
 		networkService: networkService,
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
