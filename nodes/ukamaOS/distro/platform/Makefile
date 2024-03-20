@@ -44,6 +44,7 @@ CFLAGS+=-Wall
 CFLAGS+=-Wno-unused-variable
 CFLAGS+=-fPIC
 CFLAGS+=-DHAVE_SYS_TIME_H
+CFLAGS+=-DLOG_USE_COLOR
 
 LDFLAGS+=$(LDPATH)
 LDFLAGS+=-L$(CURDIR)/$(BUILD_DIR) 
@@ -156,12 +157,8 @@ $(BUILD_DIR)/%.o: %.c
 # Memory check
 memcheck: $(UTEST_BIN)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
-		
+
 # Clean all build files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
-

@@ -9,12 +9,11 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "usys_log.h"
+
 #include "map.h"
 #include "mesh.h"
 
-/*
- * init_map_table -- 
- */
 void init_map_table(MapTable **table) {
 
 	(*table)->first = NULL;
@@ -23,10 +22,6 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-/*
- * create_map_item --
- *
- */
 static MapItem *create_map_item(char *name, char *port) {
 
 	MapItem *map;
@@ -36,13 +31,13 @@ static MapItem *create_map_item(char *name, char *port) {
 
 	map = (MapItem *)malloc(sizeof(MapItem));
 	if (map == NULL) {
-		log_error("Error allocating memory: %d", sizeof(MapItem));
+		usys_log_error("Error allocating memory: %d", sizeof(MapItem));
 		return NULL;
 	}
 
     map->serviceInfo = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
     if (map->serviceInfo == NULL) {
-        log_error("Error allocating memory: %d", sizeof(ServiceInfo));
+        usys_log_error("Error allocating memory: %d", sizeof(ServiceInfo));
         free(map);
         return NULL;
     }
@@ -60,10 +55,6 @@ static MapItem *create_map_item(char *name, char *port) {
 	return map;
 }
 
-/*
- * free_work_item --
- *
- */
 void free_map_item(MapItem *map) {
 
 	if (!map) {
@@ -79,10 +70,6 @@ void free_map_item(MapItem *map) {
 	free(map);
 }
 
-/*
- * is_existing_item --
- *
- */
 MapItem *is_existing_item(MapTable *table, char *name, char *port) {
 
 	MapItem *item=NULL;
@@ -106,10 +93,6 @@ MapItem *is_existing_item(MapTable *table, char *name, char *port) {
     return NULL;
 }
 
-/*
- * add_map_to_table --
- *
- */
 MapItem *add_map_to_table(MapTable **table, char *name, char *port) {
 
 	MapItem *map=NULL;
@@ -151,10 +134,6 @@ MapItem *add_map_to_table(MapTable **table, char *name, char *port) {
     return map;
 }
 
-/*
- * remove_item -- remove the matching item from the table and free()
- *
- */
 void remove_map_item_from_table(MapTable *table, char *name, char *port) {
 
     MapItem *current=NULL, *previous=NULL;

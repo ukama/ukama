@@ -10,9 +10,10 @@
 #include <string.h>
 #include <jansson.h>
 
+#include "usys_log.h"
+
 #include "jserdes.h"
 #include "nodeInfo.h"
-#include "log.h"
 
 static void log_json(json_t *json);
 static int get_json_entry(json_t *json, char *key, json_type type,
@@ -27,7 +28,7 @@ static void log_json(json_t *json) {
 
 	str = json_dumps(json, 0);
 	if (str) {
-		log_debug("json str: %s", str);
+		usys_log_debug("json str: %s", str);
 		free(str);
 	}
 }
