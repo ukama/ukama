@@ -49,7 +49,7 @@ func (c *componentRepo) GetByCompany(company string, ctype string) ([]*Component
 	return components, nil
 }
 
-func (c componentRepo) Add(component *Component, nestedFunc func(*Component, *gorm.DB) error) error {
+func (c *componentRepo) Add(component *Component, nestedFunc func(*Component, *gorm.DB) error) error {
 	err := c.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
 			nestErr := nestedFunc(component, tx)

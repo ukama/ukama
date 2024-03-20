@@ -87,5 +87,3 @@ enum ComponentType {
     SWITCH = 2;
     ACCESS = 3;
 }
-
-

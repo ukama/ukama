@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -20,35 +19,32 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	log "github.com/sirupsen/logrus"
+
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
-	pkgP "github.com/ukama/ukama/systems/inventory/component/pkg/providers"
-	gpb "github.com/ukama/ukama/systems/services/gitClient/pb/gen"
 )
 
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName        string
-	gitService     pkgP.GitClientProvider
 	componentRepo  db.ComponentRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
 }
 
-func NewComponentServer(orgName string, componentRepo db.ComponentRepo,
-	msgBus mb.MsgBusServiceClient, pushGateway string, gitService pkgP.GitClientProvider) *ComponentServer {
+func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string) *ComponentServer {
 	return &ComponentServer{
-		msgbus:         msgBus,
 		orgName:        orgName,
-		gitService:     gitService,
-		pushGateway:    pushGateway,
 		componentRepo:  componentRepo,
+		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		pushGateway:    pushGateway,
 	}
 }
 
-func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting component %v", req)
 
 	cuuid, err := uuid.FromString(req.GetId())
@@ -56,7 +52,7 @@ func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of component uuid. Error %s", err.Error())
 	}
-	component, err := s.componentRepo.Get(cuuid)
+	component, err := c.componentRepo.Get(cuuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -66,10 +62,10 @@ func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
-func (s *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompanyRequest) (*pb.GetByCompanyResponse, error) {
+func (c *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompanyRequest) (*pb.GetByCompanyResponse, error) {
 	log.Infof("Getting components %v", req)
 
-	components, err := s.componentRepo.GetByCompany(req.GetCompany(), req.GetType().Enum().String())
+	components, err := c.componentRepo.GetByCompany(req.GetCompany(), req.GetType().Enum().String())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -79,7 +75,7 @@ func (s *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompany
 	}, nil
 }
 
-func (s *ComponentServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+func (c *ComponentServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding component %v", req)
 
 	cuuid := uuid.NewV4()
@@ -100,7 +96,7 @@ func (s *ComponentServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddR
 		Specification: req.GetSpecification(),
 	}
 
-	err := s.componentRepo.Add(component, nil)
+	err := c.componentRepo.Add(component, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -110,43 +106,8 @@ func (s *ComponentServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddR
 	}, nil
 }
 
-func (s *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
+func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
 	log.Infof("Syncing components %v", req)
-
-	gc, err := s.gitService.GetClient()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get git client. Error: %v", err)
-	}
-
-	fcr, err := gc.FetchComponents(ctx, &gpb.FetchComponentsRequest{})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to fetch components from git client. Error: %v", err)
-	}
-
-	for _, c := range fcr.Component {
-		cuuid := uuid.NewV4()
-
-		component := &db.Component{
-			Id:            cuuid,
-			Company:       c.GetCompany(),
-			InventoryId:   c.GetInventoryId(),
-			Category:      c.GetCategory(),
-			Type:          db.ComponentType(c.GetType()),
-			Description:   c.GetDescription(),
-			DatasheetURL:  c.GetDatasheetURL(),
-			ImagesURL:     c.GetImagesURL(),
-			PartNumber:    c.GetPartNumber(),
-			Manufacturer:  c.GetManufacturer(),
-			Managed:       c.GetManaged(),
-			Warranty:      c.GetWarranty(),
-			Specification: c.GetSpecification(),
-		}
-
-		err = s.componentRepo.Add(component, nil)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "component")
-		}
-	}
 
 	return &pb.SyncComponentsResponse{}, nil
 }
