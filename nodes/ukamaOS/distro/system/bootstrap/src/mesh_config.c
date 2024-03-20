@@ -16,9 +16,10 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "usys_log.h"
+
 #include "mesh_config.h"
 #include "toml.h"
-#include "log.h"
 
 /*
  * read_mesh_config_file -- read and parse the mesh config file for
@@ -92,9 +93,6 @@ int read_mesh_config_file(char *fileName, MeshConfig *meshConfig) {
 	return ret;
 }
 
-/*
- * clear_mesh_config --
- */
 void clear_mesh_config(MeshConfig *config) {
 
 	if (!config) return;
