@@ -9,11 +9,10 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "usys_log.h"
+
 #include "work.h"
 
-/*
- * init_work_list -- 
- */
 void init_work_list(WorkList **list) {
 
 	(*list)->first = NULL;
@@ -25,10 +24,6 @@ void init_work_list(WorkList **list) {
 	(*list)->exit = FALSE;
 }
 
-/*
- * create_work_item --
- *
- */
 static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 								  thread_func_t post, void *postArgs) {
 
@@ -40,7 +35,7 @@ static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 
 	work = (WorkItem *)calloc(1, sizeof(WorkItem));
 	if (!work) {
-		log_error("Error allocating memory: %d", sizeof(WorkItem));
+		usys_log_error("Error allocating memory: %d", sizeof(WorkItem));
 		return NULL;
 	}
 
@@ -55,10 +50,6 @@ static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 	return work;
 }
 
-/*
- * destroy_work_item --
- *
- */
 void destroy_work_item(WorkItem *work) {
 
 	if (!work) {
@@ -107,7 +98,7 @@ int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 
 	/* Unlock */
 	pthread_mutex_unlock(&((*list)->mutex));
-    log_debug("Work added on the queue. Len: %d Data: %s", strlen(data), data);
+    usys_log_debug("Work added on the queue. Len: %d Data: %s", strlen(data), data);
 
 	return TRUE;
 }

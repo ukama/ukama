@@ -15,23 +15,23 @@
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_file.h"
+#include "usys_log.h"
 
 #include "mesh.h"
 #include "config.h"
 #include "toml.h"
-#include "log.h"
 
 static int parse_config_entries(Config *config, toml_table_t *configData);
 static int read_line(char *buffer, int size, FILE *fp);
 
 void print_config(Config *config) {
 
-	log_debug("Remote connect port: %s", config->remoteConnect);
-	log_debug("Forward port: %d",        config->forwardPort);
-    log_debug("Servuce port: %d",        config->servicePort);
-    log_debug("Local hostname: %s",      config->localHostname);
-    log_debug("TLS/SSL key file: %s",    config->keyFile);
-    log_debug("TLS/SSL cert file: %s",   config->certFile);
+	usys_log_debug("Remote connect port: %s", config->remoteConnect);
+	usys_log_debug("Forward port: %d",        config->forwardPort);
+    usys_log_debug("Servuce port: %d",        config->servicePort);
+    usys_log_debug("Local hostname: %s",      config->localHostname);
+    usys_log_debug("TLS/SSL key file: %s",    config->keyFile);
+    usys_log_debug("TLS/SSL cert file: %s",   config->certFile);
 }
 
 static int read_line(char *buffer, int size, FILE *fp) {
@@ -78,20 +78,20 @@ static int read_hostname_and_nodeid(char *fileName, char **hostname,
 
 	buffer = (char *)malloc(MAX_BUFFER);
 	if (!buffer) {
-		log_error("Error allocating memory of size: %s", MAX_BUFFER);
+		usys_log_error("Error allocating memory of size: %s", MAX_BUFFER);
 		return FALSE;
 	}
 
 	fp = fopen(fileName, "r");
 	if (fp == NULL) {
-		log_error("[%s] Error opening file. Error: %s", fileName,
+		usys_log_error("[%s] Error opening file. Error: %s", fileName,
 				  strerror(errno));
 		return FALSE;
 	}
 
 	/* Read the file content. */
 	if (read_line(buffer, MAX_BUFFER, fp)<=0) {
-		log_error("[%s] Error reading file. Error: %s", fileName,
+		usys_log_error("[%s] Error reading file. Error: %s", fileName,
 				  strerror(errno));
         ret = FALSE;
 	} else {
@@ -119,7 +119,7 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	key           = toml_string_in(configData, KEY);
 
 	if (!remoteIPFile.ok) {
-		log_error("[%s] is missing but is mandatory", REMOTE_IP_FILE);
+		usys_log_error("[%s] is missing but is mandatory", REMOTE_IP_FILE);
         ret=FALSE;
         goto done;
 	} else {
@@ -132,7 +132,7 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 
     remote = usys_find_service_port(SERVICE_REMOTE);
     if (remote == 0) {
-        log_error("Error getting remote mesh.d port from service db");
+        usys_log_error("Error getting remote mesh.d port from service db");
         ret = FALSE;
         goto done;
     }
@@ -143,13 +143,13 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 	if (config->deviceInfo == NULL) {
-		log_error("Error allocating memory of size: %d", sizeof(DeviceInfo));
+		usys_log_error("Error allocating memory of size: %d", sizeof(DeviceInfo));
 		goto done;
 	}
     config->deviceInfo->nodeID = strdup(nodeID);
 
 	if (!localHostname.ok) {
-		log_debug("[%s] is missing, setting to default: %s", LOCAL_HOSTNAME,
+		usys_log_debug("[%s] is missing, setting to default: %s", LOCAL_HOSTNAME,
 				  DEFAULT_LOCAL_HOSTNAME);
 		config->localHostname = strdup(DEFAULT_LOCAL_HOSTNAME);
 	} else {
@@ -192,7 +192,7 @@ int process_config_file(Config *config, char *fileName) {
 		return FALSE;
 
 	if ((fp = fopen(fileName, "r")) == NULL) {
-		log_error("Error opening config file: %s: %s\n", fileName,
+		usys_log_error("Error opening config file: %s: %s\n", fileName,
 				  strerror(errno));
 		return FALSE;
 	}
@@ -201,13 +201,13 @@ int process_config_file(Config *config, char *fileName) {
 	fileData = toml_parse_file(fp, errBuf, sizeof(errBuf));
   	fclose(fp);
  	if (!fileData) {
-		log_error("Error parsing the config file %s: %s\n", fileName, errBuf);
+		usys_log_error("Error parsing the config file %s: %s\n", fileName, errBuf);
 		return FALSE;
 	}
 
 	localConfig = toml_table_in(fileData, LOCAL_CONFIG);
 	if (localConfig == NULL) {
-		log_error("[%s] section parsing error in file: %s\n", LOCAL_CONFIG,
+		usys_log_error("[%s] section parsing error in file: %s\n", LOCAL_CONFIG,
 				  fileName);
 		ret = FALSE;
 		goto done;

@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "usys_log.h"
+
 #include "callback.h"
 #include "mesh.h"
 #include "websocket.h"
@@ -29,7 +31,7 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager, void
 static int init_framework(UInst *inst, int port) {
 
   if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
-    log_error("Error initializing instance for websocket remote port %d", port);
+    usys_log_error("Error initializing instance for websocket remote port %d", port);
     return FALSE;
   }
 
@@ -76,7 +78,7 @@ static int start_framework(Config *config, UInst *instance, int flag) {
   int ret;
   
   if (ulfius_start_framework(instance) != U_OK) {
-      log_error("Error starting the webservice/websocket.");
+      usys_log_error("Error starting the webservice/websocket.");
     
       /* clean up. */
       ulfius_stop_framework(instance); /* don't think need this. XXX */
@@ -86,11 +88,11 @@ static int start_framework(Config *config, UInst *instance, int flag) {
   }
 
   if (flag == WEB_SOCKETS) {
-      log_debug("Websocket succesfully started.");
+      usys_log_debug("Websocket succesfully started.");
   } else if (flag == FWD_SERVICE) {
-      log_debug("Forward service sucessfully started.");
+      usys_log_debug("Forward service sucessfully started.");
   } else {
-      log_debug("Webservice sucessfully started.");
+      usys_log_debug("Webservice sucessfully started.");
   }
 
   return TRUE;
@@ -134,13 +136,13 @@ int start_websocket_client(Config *config,
       ret=TRUE;
       goto done;
     } else {
-      log_error("Unable to open websocket connect to: %s", config->remoteConnect);
+      usys_log_error("Unable to open websocket connect to: %s", config->remoteConnect);
       handler->websocket = NULL;
       ret=FALSE;
       goto done;
     }
   } else {
-    log_error("Error initializing the websocket client request");
+    usys_log_error("Error initializing the websocket client request");
     ret=FALSE;
     goto done;
   }
@@ -156,7 +158,7 @@ int start_forward_services(Config *config, UInst *clientInst) {
 
     /* Initialize the admin and client webservices framework. */
     if (init_framework(clientInst, config->forwardPort) != TRUE){
-        log_error("Error initializing webservice framework");
+        usys_log_error("Error initializing webservice framework");
         return FALSE;
     }
 
@@ -165,12 +167,12 @@ int start_forward_services(Config *config, UInst *clientInst) {
 
     /* open connection for both admin and client webservices */
     if (!start_framework(config, clientInst, FWD_SERVICE)) {
-        log_error("Failed to start webservices for client: %d",
+        usys_log_error("Failed to start webservices for client: %d",
                   config->forwardPort);
         return FALSE;
     }
 
-    log_debug("Forward service on port: %d started.", config->forwardPort);
+    usys_log_debug("Forward service on port: %d started.", config->forwardPort);
 
     return TRUE;
 }
@@ -178,7 +180,7 @@ int start_forward_services(Config *config, UInst *clientInst) {
 int start_web_services(Config *config, UInst *clientInst) {
 
     if (init_framework(clientInst, config->servicePort) != TRUE){
-        log_error("Error initializing webservice framework");
+        usys_log_error("Error initializing webservice framework");
         return FALSE;
     }
 
@@ -187,12 +189,12 @@ int start_web_services(Config *config, UInst *clientInst) {
     ulfius_set_default_endpoint(clientInst, &web_service_cb_default, config);
 
     if (!start_framework(config, clientInst, WEB_SERVICE)) {
-        log_error("Failed to start webservices for client: %d",
+        usys_log_error("Failed to start webservices for client: %d",
                   config->servicePort);
         return FALSE;
     }
 
-    log_debug("Web service on port: %d started.", config->servicePort);
+    usys_log_debug("Web service on port: %d started.", config->servicePort);
 
     return TRUE;
 }

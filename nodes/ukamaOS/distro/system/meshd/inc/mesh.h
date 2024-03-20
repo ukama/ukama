@@ -16,9 +16,8 @@
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_types.h"
+#include "usys_log.h"
 #include "usys_services.h"
-
-#include "log.h"
 
 #define SERVICE_NAME SERVICE_MESH
 
