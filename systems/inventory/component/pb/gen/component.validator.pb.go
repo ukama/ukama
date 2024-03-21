@@ -7,10 +7,6 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -19,15 +15,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-var _regex_GetRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *GetRequest) Validate() error {
-	if !_regex_GetRequest_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
-	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
 	return nil
 }
 func (this *GetResponse) Validate() error {
@@ -39,9 +27,6 @@ func (this *GetResponse) Validate() error {
 	return nil
 }
 func (this *GetByCompanyRequest) Validate() error {
-	if this.Company == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must not be an empty string`, this.Company))
-	}
 	return nil
 }
 func (this *GetByCompanyResponse) Validate() error {
@@ -55,21 +40,9 @@ func (this *GetByCompanyResponse) Validate() error {
 	return nil
 }
 func (this *AddRequest) Validate() error {
-	if this.Company == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must not be an empty string`, this.Company))
-	}
 	return nil
 }
-
-var _regex_AddResponse_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *AddResponse) Validate() error {
-	if !_regex_AddResponse_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
-	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
 	return nil
 }
 func (this *SyncComponentsRequest) Validate() error {
@@ -78,18 +51,6 @@ func (this *SyncComponentsRequest) Validate() error {
 func (this *SyncComponentsResponse) Validate() error {
 	return nil
 }
-
-var _regex_Component_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *Component) Validate() error {
-	if !_regex_Component_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
-	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
-	if this.Company == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Company", fmt.Errorf(`value '%v' must not be an empty string`, this.Company))
-	}
 	return nil
 }

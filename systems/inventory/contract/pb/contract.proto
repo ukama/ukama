@@ -10,11 +10,6 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/inventory/contract/pb/gen";
 
-import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
-
-
 package ukama.inventory.contract.v1;
 
 service ContractService {
@@ -23,7 +18,7 @@ service ContractService {
 }
 
 message GetContractsRequest{
-    string company = 1 [(validator.field) = {string_not_empty: true}];
+    string company = 1;
     bool active = 2;
 }
 
@@ -42,10 +37,10 @@ message SyncContractsResponse {}
 
 
 message Contract {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string id = 1;
     string name = 2;
     string vat = 3;
-    string company = 4 [(validator.field) = {string_not_empty: true}];
+    string company = 4;
     ContractType type = 5;
     string description = 6;
     string opexFee =7 [json_name = "opex_fee"];

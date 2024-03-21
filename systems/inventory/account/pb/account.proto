@@ -10,11 +10,6 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/inventory/account/pb/gen";
 
-import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
-
-
 package ukama.inventory.account.v1;
 
 service AccountService {
@@ -25,7 +20,7 @@ service AccountService {
 }
 
 message GetAcountRequest {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string id = 1;
 }
 
 message GetAcountResponse {
@@ -33,7 +28,7 @@ message GetAcountResponse {
 }
 
 message GetAcountsRequest {
-    string company = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string company = 1;
     Category category = 2;
 }
 
@@ -46,8 +41,8 @@ message SyncAcountsRequest {}
 message SyncAcountsResponse {}
 
 message Account {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string company = 2 [(validator.field) = {string_not_empty: true}];
+    string id = 1;
+    string company = 2;
     string item = 3;
     uint32 quantity = 4;
     Category category = 5;
