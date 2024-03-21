@@ -26,7 +26,7 @@ type Site struct {
     CreatedAt      time.Time
     UpdatedAt      time.Time
     DeletedAt      gorm.DeletedAt `gorm:"index"`
-    Networks       []Network       `gorm:"many2many:site_networks"`
+	Network       *Network         
 }
 
 // Network model

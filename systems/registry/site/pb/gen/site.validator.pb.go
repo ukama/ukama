@@ -160,11 +160,14 @@ func (this *Site) Validate() error {
 	if this.SwitchId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must not be an empty string`, this.SwitchId))
 	}
-	for _, item := range this.Networks {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Networks", err)
-			}
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+		}
+	}
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
 		}
 	}
 	return nil

@@ -523,8 +523,6 @@ github.com/ugorji/go/codec v0.0.0-20190128213124-ee1426cffec0/go.mod h1:iT03XoTw
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ=
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
-github.com/ukama/ukama/systems/registry/network v0.0.0-20240229210932-9e1cc8c6c952 h1:Pn4dDrhIOhpJFzagq9AX3CvtfrKNwfwm7lZqAN/qu0M=
-github.com/ukama/ukama/systems/registry/network v0.0.0-20240229210932-9e1cc8c6c952/go.mod h1:eb8WrwGuliQP94DEk5ZS8gGuopU8Bsb4q3AywSW2YvY=
 github.com/vektra/mockery/v2 v2.32.0 h1:IXUoQ3s5VxJPpi95DECUmkRUXZ44I1spQ3YatEypIF4=
 github.com/vektra/mockery/v2 v2.32.0/go.mod h1:9lREs4VEeQiUS3rizYQx1saxHu2JiIhThP0q9+fDegM=
 github.com/wI2L/fizz v0.22.0 h1:mgRA+uUdESvgsIeBFkMSS/MEIQ4EZ4I2xyRxnCqkhJY=

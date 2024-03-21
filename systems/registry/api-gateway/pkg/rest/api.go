@@ -147,7 +147,7 @@ type AddNodeToSiteRequest struct {
 
 	// TODO: update RPC handlers for missing site_id (default site for network)
 	SiteId    string `json:"site_id"`
-	NetworkId string `json:"net_id" validate:"required"`
+	NetworkId string `json:"network_id" validate:"required"`
 }
 
 type ReleaseNodeFromSiteRequest struct {

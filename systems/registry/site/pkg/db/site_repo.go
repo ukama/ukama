@@ -40,7 +40,7 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 func (s *siteRepo) Get(netID, siteID uuid.UUID) (*Site, error) {
     var site Site
 
-    result := s.Db.GetGormDb().Where("network_id = ? AND id = ?", netID, siteID).First(&site)
+    result := s.Db.GetGormDb().Preload("Network").Where("network_id = ? AND id = ?", netID, siteID).First(&site)
     if result.Error != nil {
         return nil, result.Error
     }
@@ -79,13 +79,14 @@ func (s siteRepo) GetSites(netID uuid.UUID) ([]Site, error) {
     var sites []Site
     db := s.Db.GetGormDb()
 
-    result := db.Where("network_id = ?", netID).Find(&sites)
+    result := db.Preload("Network").Where("network_id = ?", netID).Find(&sites)
     if result.Error != nil {
         return nil, result.Error
     }
 
     return sites, nil
 }
+
 
 func (s *siteRepo) Update(site *Site) error {
     result := s.Db.GetGormDb().Model(site).Updates(site)

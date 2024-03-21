@@ -34,6 +34,8 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
+const uuidParsingError = "Error parsing UUID"
+
 
 type NodeServer struct {
 	orgName        string
@@ -370,22 +372,24 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 }
 
 func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteRequest) (*pb.AddNodeToSiteResponse, error) {
+	log.Infof("Add node req : %s",req )
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	net, err := uuid.FromString(req.GetNetworkId())
+	
+	netID, err := uuid.FromString(req.GetNetworkId())
+
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid network id %s. Error %s", req.GetNetworkId(), err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	// TODO: update RPC handlers for missing site_id (default site for network)
-	site, err := uuid.FromString(req.GetSiteId())
+
+	siteID, err := uuid.FromString(req.GetSiteId())
+
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid site id %s. Error %s", req.GetSiteId(), err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
 	svc, err := n.siteService.GetClient()
@@ -393,20 +397,21 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 		return nil, err
 	}
 
-	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: site.String()})
+	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: siteID.String(),NetworkId:netID.String()})
 	if err != nil {
+
 		return nil, err
 	}
 
-	if remoteSite.Site.NetworkId != net.String() {
+	if remoteSite.Site.NetworkId != netID.String() {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"provided networkId and site's networkId mismatch")
 	}
 
 	node := &db.Site{
 		NodeId:    nodeId.StringLowercase(),
-		SiteId:    site,
-		NetworkId: net,
+		SiteId:    siteID,
+		NetworkId: netID,
 	}
 
 	err = n.siteRepo.AddNode(node, nil)
@@ -419,8 +424,8 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 	evt := &epb.NodeAssignedEvent{
 		NodeId:  nodeId.StringLowercase(),
 		Type:    nodeId.GetNodeType(),
-		Site:    site.String(),
-		Network: net.String(),
+		Site:    siteID.String(),
+		Network: netID.String(),
 	}
 
 	err = n.msgbus.PublishRequest(route, evt)

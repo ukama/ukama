@@ -198,7 +198,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sites.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 		sites.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 		sites.GET("/:net_id/sites/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
-		sites.PUT("/:net_id/sites/:site_id", formatDoc("Udpdate Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
+		sites.PUT("/:net_id/sites/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
 
 		// Node routes
 		const node = "/nodes"

@@ -57,95 +57,61 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 }
 
 func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+    log.Infof("Adding site %s", req.Name)
 
-	log.Infof("Adding site %s", req.Name)
-
-	backhaulID, err := uuid.FromString(req.BackhaulId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	powerID, err := uuid.FromString(req.PowerId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	accessID, err := uuid.FromString(req.AccessId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	switchID, err := uuid.FromString(req.SwitchId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	netID, err := uuid.FromString(req.NetworkId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-		instDate, err := ValidateInstallDate(req.GetInstallDate())
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
-		}
-	
-
-	svc, err := s.networkService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("checking if network exist %s", req.NetworkId)
-
-	networkRes, err := svc.Get(ctx, &npb.GetRequest{
-		NetworkId: netID.String(),
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-
-	}
-	
-	sites, err := s.siteRepo.GetSites(netID)
+    backhaulID, err := uuid.FromString(req.BackhaulId)
     if err != nil {
-        return nil, grpc.SqlErrorToGrpc(err, "site")
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+    powerID, err := uuid.FromString(req.PowerId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
 
-   
-	site := &db.Site{
-		NetworkID:     netID,
-		Name:          req.Name,
-		BackhaulID:    backhaulID,
-		PowerID:       powerID,
-		AccessID:      accessID,
-		SwitchID:      switchID,
-		IsDeactivated: req.IsDeactivated,
-		Latitude:      req.Latitude,
-		Longitude:     req.Longitude,
-		InstallDate:   instDate.String(),
-
-	}
-	resNetworkID, err := uuid.FromString( networkRes.Network.Id)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	resOrgID, err := uuid.FromString( networkRes.Network.OrgId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	
-	for _, site := range sites {
-        for _, existingNetwork := range site.Networks {
-            if existingNetwork.ID == resNetworkID {
-                return nil, status.Errorf(codes.InvalidArgument, "network with the same ID already exists in the site")
-            }
-        }
+    accessID, err := uuid.FromString(req.AccessId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
-	newNetwork := &db.Network{
-        ID:              resNetworkID,
+
+    switchID, err := uuid.FromString(req.SwitchId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    netID, err := uuid.FromString(req.NetworkId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    instDate, err := ValidateInstallDate(req.GetInstallDate())
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, err.Error())
+    }
+
+    svc, err := s.networkService.GetClient()
+    if err != nil {
+        return nil, err
+    }
+
+    log.Infof("checking if network exist %s", req.NetworkId)
+    networkRes, err := svc.Get(ctx, &npb.GetRequest{
+        NetworkId: netID.String(),
+    })
+    if err != nil {
+        return nil, grpc.SqlErrorToGrpc(err, "network")
+    }
+
+    resNetworkID, err := uuid.FromString(networkRes.Network.Id)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+    resOrgID, err := uuid.FromString(networkRes.Network.OrgId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    newNetwork := &db.Network{
+        ID:               resNetworkID,
         Name:             networkRes.Network.Name,
         OrgID:            resOrgID,
         Deactivated:      networkRes.Network.IsDeactivated,
@@ -155,31 +121,46 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
         Overdraft:        networkRes.Network.Overdraft,
         TrafficPolicy:    networkRes.Network.TrafficPolicy,
         PaymentLinks:     networkRes.Network.PaymentLinks,
-        CreatedAt:        time.Unix(networkRes.Network.CreatedAt.Seconds, int64(networkRes.Network.CreatedAt.Nanos)),		
+        CreatedAt:        time.Unix(networkRes.Network.CreatedAt.Seconds, int64(networkRes.Network.CreatedAt.Nanos)),
         SyncStatus:       ukama.ParseStatusType(networkRes.Network.SyncStatus),
     }
-	
-	site.Networks = append(site.Networks, *newNetwork)
 
-	err = s.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
-		site.ID = uuid.NewV4()
-		return nil
-	})
+    site := &db.Site{
+        NetworkID:     netID,
+        Name:          req.Name,
+        BackhaulID:    backhaulID,
+        PowerID:       powerID,
+        AccessID:      accessID,
+        SwitchID:      switchID,
+        IsDeactivated: req.IsDeactivated,
+        Latitude:      req.Latitude,
+        Longitude:     req.Longitude,
+        InstallDate:   instDate.String(),
+        Network:       newNetwork, 
+    }
 
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-	route := s.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
+    err = s.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
+        site.ID = uuid.NewV4()
+        return nil
+    })
+    if err != nil {
+        return nil, grpc.SqlErrorToGrpc(err, "site")
+    }
 
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-	s.pushSiteCount(netID)
+    route := s.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
 
-	return &pb.AddResponse{
-		Site: dbSiteToPbSite(site)}, nil
+    err = s.msgbus.PublishRequest(route, req)
+    if err != nil {
+        log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+    }
+
+    s.pushSiteCount(netID)
+
+    return &pb.AddResponse{
+        Site: dbSiteToPbSite(site),
+    }, nil
 }
+
 
 func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting site %s-%s", req.NetworkId, req.SiteId)
@@ -307,40 +288,42 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 }
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {
-	var networks []*pb.Network
-	for _, network := range site.Networks {
-		// Convert db.Network to pb.Network
-		pbNetwork := &pb.Network{
-			Id:               network.ID.String(),
-			Name:             network.Name,
-			OrgId:            network.OrgID.String(),
-			AllowedCountries: network.AllowedCountries,
-			AllowedNetworks:  network.AllowedNetworks,
-			IsDeactivated:    network.Deactivated,
-			Budget:           network.Budget,
-			Overdraft:        network.Overdraft,
-			TrafficPolicy:    network.TrafficPolicy,
-			PaymentLinks:     network.PaymentLinks,
-			CreatedAt:        timestamppb.New(network.CreatedAt),
-			SyncStatus:       network.SyncStatus.String(),
+	var pbNetwork *pb.Network
+
+	if site.Network != nil {
+		pbNetwork = &pb.Network{
+			Id:               site.Network.ID.String(),
+			Name:             site.Network.Name,
+			OrgId:            site.Network.OrgID.String(),
+			AllowedCountries: site.Network.AllowedCountries,
+			AllowedNetworks:  site.Network.AllowedNetworks,
+			IsDeactivated:    site.Network.Deactivated,
+			Budget:           site.Network.Budget,
+			Overdraft:        site.Network.Overdraft,
+			TrafficPolicy:    site.Network.TrafficPolicy,
+			PaymentLinks:     site.Network.PaymentLinks,
+			CreatedAt:        timestamppb.New(site.Network.CreatedAt),
+			SyncStatus:       site.Network.SyncStatus.String(),
 		}
-		networks = append(networks, pbNetwork)
 	}
+
 	return &pb.Site{
 		Id:            site.ID.String(),
 		Name:          site.Name,
 		NetworkId:     site.NetworkID.String(),
+		IsDeactivated: site.IsDeactivated,
 		BackhaulId:    site.BackhaulID.String(),
 		PowerId:       site.PowerID.String(),
 		AccessId:      site.AccessID.String(),
 		SwitchId:      site.SwitchID.String(),
-		Networks:      networks,
-		IsDeactivated: site.IsDeactivated,
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
-		InstallDate:   site.InstallDate, 
+		InstallDate:   site.InstallDate,
+		Network:       pbNetwork, // Assign the single network
+		CreatedAt:     timestamppb.New(site.CreatedAt),
 	}
 }
+
 
 func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 	res := []*pb.Site{}
