@@ -25,6 +25,7 @@ extern "C" {
 #define SERVICE_METRICS       "metrics"
 #define SERVICE_CONFIG        "config"
 #define SERVICE_NOTIFY        "notify"
+#define SERVICE_RLOG          "rlog"    
 #define SERVICE_REMOTE        "remote"
 
 #ifdef __cplusplus
