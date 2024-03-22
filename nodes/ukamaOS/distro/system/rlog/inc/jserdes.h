@@ -1,0 +1,27 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2024-present, Ukama Inc.
+ */
+
+#ifndef JSERDES_H
+#define JSERDES_H
+
+#include <jansson.h>
+
+#include "nodeInfo.h"
+
+#define JSON_NODE_INFO      "nodeInfo"
+#define JSON_UUID           "UUID"
+#define JSON_NAME           "name"
+#define JSON_TYPE           "type"
+#define JSON_PART_NUMBER    "partNumber"
+#define JSON_SKEW           "skew"
+#define JSON_MAC            "mac"
+#define JSON_OEM            "oemName"
+#define JSON_ASSEMBLY_DATE  "assemblyDate"
+
+int deserialize_node_info(NodeInfo **nodeInfo, json_t *json);
+#endif /* JSERDES_H */
