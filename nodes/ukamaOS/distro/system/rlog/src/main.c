@@ -113,7 +113,7 @@ int main (int argc, char **argv) {
 	}
 
     /* start web-service */
-    if (start_web_service(nodedPort, &serviceInst) != USYS_TRUE){
+    if (start_web_service(rlogdPort, &serviceInst) != USYS_TRUE){
 
     }
 
