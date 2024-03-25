@@ -63,24 +63,84 @@ func (_m *GitClient) CreateTempDir() bool {
 	return r0
 }
 
-// ReadFile provides a mock function with given fields: path
-func (_m *GitClient) ReadFile(path string) (map[string]interface{}, error) {
+// GetFilesPath provides a mock function with given fields: key
+func (_m *GitClient) GetFilesPath(key string) ([]string, error) {
+	ret := _m.Called(key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFilesPath")
+	}
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(key)
+	}
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(key)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReadFileJSON provides a mock function with given fields: path
+func (_m *GitClient) ReadFileJSON(path string) ([]byte, error) {
 	ret := _m.Called(path)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ReadFile")
+		panic("no return value specified for ReadFileJSON")
 	}
 
-	var r0 map[string]interface{}
+	var r0 []byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (map[string]interface{}, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) ([]byte, error)); ok {
 		return rf(path)
 	}
-	if rf, ok := ret.Get(0).(func(string) map[string]interface{}); ok {
+	if rf, ok := ret.Get(0).(func(string) []byte); ok {
 		r0 = rf(path)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]interface{})
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(path)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReadFileYML provides a mock function with given fields: path
+func (_m *GitClient) ReadFileYML(path string) ([]byte, error) {
+	ret := _m.Called(path)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReadFileYML")
+	}
+
+	var r0 []byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]byte, error)); ok {
+		return rf(path)
+	}
+	if rf, ok := ret.Get(0).(func(string) []byte); ok {
+		r0 = rf(path)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
 		}
 	}
 
@@ -111,12 +171,12 @@ func (_m *GitClient) RemoveTempDir() bool {
 	return r0
 }
 
-// RemoveTempDirIfExist provides a mock function with given fields:
-func (_m *GitClient) RemoveTempDirIfExist() bool {
+// SetupDir provides a mock function with given fields:
+func (_m *GitClient) SetupDir() bool {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for RemoveTempDirIfExist")
+		panic("no return value specified for SetupDir")
 	}
 
 	var r0 bool

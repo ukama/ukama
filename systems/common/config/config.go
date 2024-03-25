@@ -124,13 +124,6 @@ type MsgClient struct {
 	ListenerRoutes []string
 }
 
-type GitClient struct {
-	RepoUrl  string `default:""`
-	Username string `default:""`
-	Token    string `default:""`
-	Path     string `default:""`
-}
-
 type Service struct {
 	Host string `default:"localhost"`
 	Port string `default:"9090"`

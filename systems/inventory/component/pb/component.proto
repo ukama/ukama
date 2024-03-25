@@ -15,7 +15,6 @@ package ukama.inventory.component.v1;
 service ComponentService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByCompany(GetByCompanyRequest) returns (GetByCompanyResponse);
-    rpc Add(AddRequest) returns (AddResponse);
 
     rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
 }
@@ -30,30 +29,11 @@ message GetResponse {
 
 message GetByCompanyRequest {
     string company = 1;
-    ComponentType type = 2;
+    ComponentCategory category = 2;
 }
 
 message GetByCompanyResponse {
     repeated Component components = 1;
-}
-
-message AddRequest {
-    string company = 1;
-    string inventoryId = 2 [json_name = "inventory_id"];
-    string category = 3;
-    ComponentType type = 4;
-    string description = 5;
-    string datasheetURL = 6 [json_name = "datasheet_url"];
-    string imagesURL = 7 [json_name = "images_url"];
-    string partNumber = 8 [json_name = "part_number"];
-    string manufacturer = 9;
-    string managed = 10;
-    uint32 warranty = 11;
-    string specification = 12;
-}
-
-message AddResponse {
-    string id = 1;
 }
 
 message SyncComponentsRequest {}
@@ -64,8 +44,8 @@ message Component {
     string id = 1;
     string company = 2;
     string inventoryId = 3 [json_name = "inventory_id"];
-    string category = 4;
-    ComponentType type = 5;
+    ComponentCategory category = 4;
+    string type = 5;
     string description = 6;
     string datasheetURL = 7 [json_name = "datasheet_url"];
     string imagesURL = 8 [json_name = "images_url"];
@@ -76,9 +56,9 @@ message Component {
     string specification = 13;
 }
 
-enum ComponentType {
-    POWER = 0;
-    BACKHAUL = 1;
-    SWITCH = 2;
-    ACCESS = 3;
+enum ComponentCategory {
+    access = 0;
+    backhaul = 1;
+    power = 2;
+    uswitch = 3;
 }

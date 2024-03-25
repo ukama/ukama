@@ -11,14 +11,13 @@ package db
 import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
-	GetByCompany(company string, ctype string) ([]*Component, error)
-
-	Add(component *Component, nestedFunc func(*Component, *gorm.DB) error) error
+	GetByCompany(company string, category int32) ([]*Component, error)
+	Add(components []Component) error
 }
 
 type componentRepo struct {
@@ -40,28 +39,22 @@ func (c *componentRepo) Get(id uuid.UUID) (*Component, error) {
 	return &component, nil
 }
 
-func (c *componentRepo) GetByCompany(company string, ctype string) ([]*Component, error) {
+func (c *componentRepo) GetByCompany(company string, category int32) ([]*Component, error) {
 	var components []*Component
-	err := c.Db.GetGormDb().Where("company = ?", company).Where("type", ctype).Find(&components).Error
+	err := c.Db.GetGormDb().Where("company = ?", company).Where("category", category).Find(&components).Error
 	if err != nil {
 		return nil, err
 	}
 	return components, nil
 }
 
-func (c *componentRepo) Add(component *Component, nestedFunc func(*Component, *gorm.DB) error) error {
-	err := c.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc(component, tx)
-			if nestErr != nil {
-				return nestErr
-			}
-		}
-
-		if err := tx.Create(component).Error; err != nil {
-			return err
-		}
-		return nil
+func (c *componentRepo) Add(components []Component) error {
+	db := c.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoNothing: true,
 	})
-	return err
+
+	result := db.Create(&components)
+
+	return result.Error
 }

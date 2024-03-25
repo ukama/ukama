@@ -24,7 +24,6 @@ const _ = grpc.SupportPackageIsVersion7
 type ComponentServiceClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByCompany(ctx context.Context, in *GetByCompanyRequest, opts ...grpc.CallOption) (*GetByCompanyResponse, error)
-	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	SyncComponents(ctx context.Context, in *SyncComponentsRequest, opts ...grpc.CallOption) (*SyncComponentsResponse, error)
 }
 
@@ -54,15 +53,6 @@ func (c *componentServiceClient) GetByCompany(ctx context.Context, in *GetByComp
 	return out, nil
 }
 
-func (c *componentServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
-	out := new(AddResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.component.v1.ComponentService/Add", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *componentServiceClient) SyncComponents(ctx context.Context, in *SyncComponentsRequest, opts ...grpc.CallOption) (*SyncComponentsResponse, error) {
 	out := new(SyncComponentsResponse)
 	err := c.cc.Invoke(ctx, "/ukama.inventory.component.v1.ComponentService/SyncComponents", in, out, opts...)
@@ -78,7 +68,6 @@ func (c *componentServiceClient) SyncComponents(ctx context.Context, in *SyncCom
 type ComponentServiceServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByCompany(context.Context, *GetByCompanyRequest) (*GetByCompanyResponse, error)
-	Add(context.Context, *AddRequest) (*AddResponse, error)
 	SyncComponents(context.Context, *SyncComponentsRequest) (*SyncComponentsResponse, error)
 	mustEmbedUnimplementedComponentServiceServer()
 }
@@ -92,9 +81,6 @@ func (UnimplementedComponentServiceServer) Get(context.Context, *GetRequest) (*G
 }
 func (UnimplementedComponentServiceServer) GetByCompany(context.Context, *GetByCompanyRequest) (*GetByCompanyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByCompany not implemented")
-}
-func (UnimplementedComponentServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
 func (UnimplementedComponentServiceServer) SyncComponents(context.Context, *SyncComponentsRequest) (*SyncComponentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncComponents not implemented")
@@ -148,24 +134,6 @@ func _ComponentService_GetByCompany_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComponentService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ComponentServiceServer).Add(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.inventory.component.v1.ComponentService/Add",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComponentServiceServer).Add(ctx, req.(*AddRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ComponentService_SyncComponents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SyncComponentsRequest)
 	if err := dec(in); err != nil {
@@ -198,10 +166,6 @@ var ComponentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetByCompany",
 			Handler:    _ComponentService_GetByCompany_Handler,
-		},
-		{
-			MethodName: "Add",
-			Handler:    _ComponentService_Add_Handler,
 		},
 		{
 			MethodName: "SyncComponents",

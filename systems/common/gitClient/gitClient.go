@@ -20,58 +20,41 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	thttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	uconf "github.com/ukama/ukama/systems/common/config"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type GitClient interface {
 	CreateTempDir() bool
-	RemoveTempDirIfExist() bool
+	SetupDir() bool
 	RemoveTempDir() bool
 	CloneGitRepo() error
 	BranchCheckout(branch string) error
-	ReadFile(path string) (map[string]interface{}, error)
+	ReadFileJSON(path string) ([]byte, error)
+	ReadFileYML(path string) ([]byte, error)
+	GetFilesPath(key string) ([]string, error)
 }
 
 type gitClient struct {
-	config *uconf.GitClient
-	repo   *git.Repository
+	url      string
+	username string
+	token    string
+	rootPath string
+	repo     *git.Repository
 }
 
-func NewGitClient(gcc *uconf.GitClient) *gitClient {
+func NewGitClient(url, username, token, path string) *gitClient {
 	return &gitClient{
-		config: gcc,
-		repo:   nil,
+		url:      url,
+		username: username,
+		token:    token,
+		rootPath: path,
+		repo:     nil,
 	}
 }
 
-type Company struct {
-	Company       string `json:"company"`
-	GitBranchName string `json:"git_branch_name"`
-	Email         string `json:"email"`
-}
-
-type Environment struct {
-	Production []Company `json:"production"`
-	Test       []Company `json:"test"`
-}
-
-type Component struct {
-	Company       string `json:"company"`
-	Category      string `json:"category"`
-	Type          string `json:"type"`
-	Description   string `json:"description"`
-	ImagesURL     string `json:"imagesURL" yaml:"imagesURL"`
-	DatasheetURL  string `json:"datasheetURL" yaml:"datasheetURL"`
-	InventoryID   string `json:"inventoryID" yaml:"inventoryID"`
-	PartNumber    string `json:"partNumber" yaml:"partNumber"`
-	Manufacturer  string `json:"manufacturer"`
-	Managed       string `json:"managed"`
-	Warranty      uint32 `json:"warranty"`
-	Specification string `json:"specification" yaml:"specification"`
-}
-
 func (g *gitClient) RemoveTempDir() bool {
-	err := os.RemoveAll("temp")
+	err := os.RemoveAll(g.rootPath)
 	if err != nil {
 		log.Printf("remove temp dir failed: %v", err)
 		return false
@@ -80,14 +63,14 @@ func (g *gitClient) RemoveTempDir() bool {
 }
 
 func (g *gitClient) CreateTempDir() bool {
-	if err := os.MkdirAll(g.config.Path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(g.rootPath, os.ModePerm); err != nil {
 		log.Printf("create temp dir failed: %v", err)
 		return false
 	}
 	return true
 }
 
-func (g *gitClient) RemoveTempDirIfExist() bool {
+func (g *gitClient) SetupDir() bool {
 	r := g.RemoveTempDir()
 	c := g.CreateTempDir()
 	if !r || !c {
@@ -97,14 +80,15 @@ func (g *gitClient) RemoveTempDirIfExist() bool {
 }
 
 func (g *gitClient) CloneGitRepo() error {
-	r, err := git.PlainClone(g.config.Path, false, &git.CloneOptions{
+	fmt.Print(g.rootPath, g.username, g.token, g.url)
+	r, err := git.PlainClone(g.rootPath, false, &git.CloneOptions{
 		Auth: &thttp.BasicAuth{
-			Username: g.config.Username,
-			Password: g.config.Token,
+			Username: g.username,
+			Password: g.token,
 		},
 
 		SingleBranch: true,
-		URL:          g.config.RepoUrl,
+		URL:          g.url,
 		Progress:     os.Stdout,
 	})
 	g.repo = r
@@ -126,7 +110,7 @@ func (g *gitClient) BranchCheckout(branch string) error {
 
 	if err := w.Checkout(&branchCoOpts); err != nil {
 		mirrorRemoteBranchRefSpec := fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch)
-		err = fetchOrigin(g.repo, mirrorRemoteBranchRefSpec, g.config.Username, g.config.Token)
+		err = fetchOrigin(g.repo, mirrorRemoteBranchRefSpec, g.username, g.token)
 		if err != nil {
 			return err
 		}
@@ -142,46 +126,32 @@ func (g *gitClient) BranchCheckout(branch string) error {
 	return nil
 }
 
-func (g *gitClient) ReadFile(path string) (map[string]interface{}, error) {
+func (g *gitClient) ReadFileJSON(path string) ([]byte, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal(content, &jsonObj)
 	if err != nil {
 		return nil, err
 	}
 
-	return jsonObj, nil
+	json, err := json.Marshal(jsonObj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal json. Error %s", err.Error())
+	}
+
+	return json, nil
 }
 
-func GetFilesPath(lpath string) (map[string][]string, error) {
-	set := make(map[string][]string)
-	set["accounting"] = []string{}
-	set["components"] = []string{}
-	set["contracts"] = []string{}
-	err := filepath.Walk(lpath,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if !info.IsDir() {
-				rp := strings.Replace(path, lpath, "", -1)
-				parts := strings.Split(rp, "/")
-				if len(parts) > 2 && (parts[0] == "components" || parts[0] == "contracts") {
-					set[parts[0]] = append(set[parts[0]], path)
-				} else if len(parts) > 1 && parts[0] == "accounting" {
-					set[parts[0]] = append(set[parts[0]], path)
-				}
-			}
-			return nil
-		})
+func (g *gitClient) ReadFileYML(path string) ([]byte, error) {
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return set, nil
+
+	return content, nil
 }
 
 func fetchOrigin(repo *git.Repository, refSpecStr string, username string, token string) error {
@@ -213,4 +183,24 @@ func fetchOrigin(repo *git.Repository, refSpecStr string, username string, token
 	}
 
 	return nil
+}
+
+func (g *gitClient) GetFilesPath(key string) ([]string, error) {
+	paths := []string{}
+	err := filepath.Walk(g.rootPath,
+		func(_path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				if strings.Contains(_path, key) {
+					paths = append(paths, _path)
+				}
+			}
+			return nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	return paths, nil
 }

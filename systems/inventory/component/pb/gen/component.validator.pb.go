@@ -39,12 +39,6 @@ func (this *GetByCompanyResponse) Validate() error {
 	}
 	return nil
 }
-func (this *AddRequest) Validate() error {
-	return nil
-}
-func (this *AddResponse) Validate() error {
-	return nil
-}
 func (this *SyncComponentsRequest) Validate() error {
 	return nil
 }
