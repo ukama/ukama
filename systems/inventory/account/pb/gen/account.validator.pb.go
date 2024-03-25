@@ -15,10 +15,10 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetAcountRequest) Validate() error {
+func (this *GetRequest) Validate() error {
 	return nil
 }
-func (this *GetAcountResponse) Validate() error {
+func (this *GetResponse) Validate() error {
 	if this.Account != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Account); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Account", err)
@@ -26,10 +26,10 @@ func (this *GetAcountResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetAcountsRequest) Validate() error {
+func (this *GetByCompanmyRequest) Validate() error {
 	return nil
 }
-func (this *GetAcountsResponse) Validate() error {
+func (this *GetByCompanmyResponse) Validate() error {
 	for _, item := range this.Accounts {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

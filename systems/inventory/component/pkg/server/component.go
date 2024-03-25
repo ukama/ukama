@@ -32,11 +32,11 @@ import (
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName        string
-	gitClient      gitClient.GitClient
 	componentRepo  db.ComponentRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
+	gitClient      gitClient.GitClient
 	gitDirPath     string
 }
 

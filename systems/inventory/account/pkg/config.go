@@ -29,6 +29,10 @@ type Config struct {
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string `default:"ukama"`
+	RepoUrl          string `default:"https://github.com/ukama/networks.git"`
+	Username         string `default:"ukama"`
+	Token            string `default:""`
+	RepoPath         string `default:"/temp/git/networks"`
 }
 
 var NetworkMetric = []metric.MetricConfig{}

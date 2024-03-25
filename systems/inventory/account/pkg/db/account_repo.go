@@ -11,14 +11,14 @@ package db
 import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AccountRepo interface {
 	Get(id uuid.UUID) (*Account, error)
-	GetByCompany(company string, ctype string) ([]*Account, error)
+	GetByCompany(company string) ([]*Account, error)
 
-	Add(account *Account, nestedFunc func(*Account, *gorm.DB) error) error
+	Add(accounts []Account) error
 }
 
 type accountRepo struct {
@@ -40,28 +40,22 @@ func (c *accountRepo) Get(id uuid.UUID) (*Account, error) {
 	return &account, nil
 }
 
-func (c *accountRepo) GetByCompany(company string, ctype string) ([]*Account, error) {
+func (c *accountRepo) GetByCompany(company string) ([]*Account, error) {
 	var accounts []*Account
-	err := c.Db.GetGormDb().Where("company = ?", company).Where("type", ctype).Find(&accounts).Error
+	err := c.Db.GetGormDb().Where("company = ?", company).Find(&accounts).Error
 	if err != nil {
 		return nil, err
 	}
 	return accounts, nil
 }
 
-func (c *accountRepo) Add(account *Account, nestedFunc func(*Account, *gorm.DB) error) error {
-	err := c.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc(account, tx)
-			if nestErr != nil {
-				return nestErr
-			}
-		}
-
-		if err := tx.Create(account).Error; err != nil {
-			return err
-		}
-		return nil
+func (c *accountRepo) Add(accounts []Account) error {
+	db := c.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoNothing: true,
 	})
-	return err
+
+	result := db.Create(&accounts)
+
+	return result.Error
 }

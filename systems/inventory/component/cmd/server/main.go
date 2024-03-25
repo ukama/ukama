@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ukama/ukama/systems/common/gitClient"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/cmd/version"
@@ -78,16 +79,16 @@ func runGrpcServer(gormdb sql.Db) {
 
 	gc := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
 
-	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-	// 	serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-	// 	serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
-		nil, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
+		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
 
-	// log.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterComponentServiceServer(s, componentServer)
@@ -95,7 +96,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go grpcServer.StartServer()
 
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	waitForExit()
 }

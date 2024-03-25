@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/account/cmd/version"
@@ -70,6 +71,13 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current working directory. Error %s", err.Error())
+	}
+
+	gc := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
+
 	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 	// 	serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -77,7 +85,7 @@ func runGrpcServer(gormdb sql.Db) {
 	// 	serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	accountServer := server.NewAccountServer(serviceConfig.OrgName, db.NewAccountRepo(gormdb),
-		nil, serviceConfig.PushGateway)
+		nil, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
 
 	// log.Debugf("MessageBus Client is %+v", mbClient)
 

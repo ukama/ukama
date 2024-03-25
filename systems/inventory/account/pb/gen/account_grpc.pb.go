@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountServiceClient interface {
-	GetAccount(ctx context.Context, in *GetAcountRequest, opts ...grpc.CallOption) (*GetAcountResponse, error)
-	GetAcounts(ctx context.Context, in *GetAcountsRequest, opts ...grpc.CallOption) (*GetAcountsResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByCompany(ctx context.Context, in *GetByCompanmyRequest, opts ...grpc.CallOption) (*GetByCompanmyResponse, error)
 	SyncAccounts(ctx context.Context, in *SyncAcountsRequest, opts ...grpc.CallOption) (*SyncAcountsResponse, error)
 }
 
@@ -35,18 +35,18 @@ func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
 	return &accountServiceClient{cc}
 }
 
-func (c *accountServiceClient) GetAccount(ctx context.Context, in *GetAcountRequest, opts ...grpc.CallOption) (*GetAcountResponse, error) {
-	out := new(GetAcountResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.account.v1.AccountService/GetAccount", in, out, opts...)
+func (c *accountServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.inventory.account.v1.AccountService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) GetAcounts(ctx context.Context, in *GetAcountsRequest, opts ...grpc.CallOption) (*GetAcountsResponse, error) {
-	out := new(GetAcountsResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.account.v1.AccountService/GetAcounts", in, out, opts...)
+func (c *accountServiceClient) GetByCompany(ctx context.Context, in *GetByCompanmyRequest, opts ...grpc.CallOption) (*GetByCompanmyResponse, error) {
+	out := new(GetByCompanmyResponse)
+	err := c.cc.Invoke(ctx, "/ukama.inventory.account.v1.AccountService/GetByCompany", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func (c *accountServiceClient) SyncAccounts(ctx context.Context, in *SyncAcounts
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility
 type AccountServiceServer interface {
-	GetAccount(context.Context, *GetAcountRequest) (*GetAcountResponse, error)
-	GetAcounts(context.Context, *GetAcountsRequest) (*GetAcountsResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByCompany(context.Context, *GetByCompanmyRequest) (*GetByCompanmyResponse, error)
 	SyncAccounts(context.Context, *SyncAcountsRequest) (*SyncAcountsResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
@@ -76,11 +76,11 @@ type AccountServiceServer interface {
 type UnimplementedAccountServiceServer struct {
 }
 
-func (UnimplementedAccountServiceServer) GetAccount(context.Context, *GetAcountRequest) (*GetAcountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
+func (UnimplementedAccountServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedAccountServiceServer) GetAcounts(context.Context, *GetAcountsRequest) (*GetAcountsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAcounts not implemented")
+func (UnimplementedAccountServiceServer) GetByCompany(context.Context, *GetByCompanmyRequest) (*GetByCompanmyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByCompany not implemented")
 }
 func (UnimplementedAccountServiceServer) SyncAccounts(context.Context, *SyncAcountsRequest) (*SyncAcountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncAccounts not implemented")
@@ -98,38 +98,38 @@ func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceSer
 	s.RegisterService(&AccountService_ServiceDesc, srv)
 }
 
-func _AccountService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAcountRequest)
+func _AccountService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).GetAccount(ctx, in)
+		return srv.(AccountServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.inventory.account.v1.AccountService/GetAccount",
+		FullMethod: "/ukama.inventory.account.v1.AccountService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).GetAccount(ctx, req.(*GetAcountRequest))
+		return srv.(AccountServiceServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_GetAcounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAcountsRequest)
+func _AccountService_GetByCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByCompanmyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).GetAcounts(ctx, in)
+		return srv.(AccountServiceServer).GetByCompany(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.inventory.account.v1.AccountService/GetAcounts",
+		FullMethod: "/ukama.inventory.account.v1.AccountService/GetByCompany",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).GetAcounts(ctx, req.(*GetAcountsRequest))
+		return srv.(AccountServiceServer).GetByCompany(ctx, req.(*GetByCompanmyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,12 +160,12 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetAccount",
-			Handler:    _AccountService_GetAccount_Handler,
+			MethodName: "Get",
+			Handler:    _AccountService_Get_Handler,
 		},
 		{
-			MethodName: "GetAcounts",
-			Handler:    _AccountService_GetAcounts_Handler,
+			MethodName: "GetByCompany",
+			Handler:    _AccountService_GetByCompany_Handler,
 		},
 		{
 			MethodName: "SyncAccounts",

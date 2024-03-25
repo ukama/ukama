@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/inventory/account/pkg/db"
-	gorm "gorm.io/gorm"
-
 	mock "github.com/stretchr/testify/mock"
+	db "github.com/ukama/ukama/systems/inventory/account/pkg/db"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -16,17 +14,17 @@ type AccountRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: account, nestedFunc
-func (_m *AccountRepo) Add(account *db.Account, nestedFunc func(*db.Account, *gorm.DB) error) error {
-	ret := _m.Called(account, nestedFunc)
+// Add provides a mock function with given fields: accounts
+func (_m *AccountRepo) Add(accounts []db.Account) error {
+	ret := _m.Called(accounts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Account, func(*db.Account, *gorm.DB) error) error); ok {
-		r0 = rf(account, nestedFunc)
+	if rf, ok := ret.Get(0).(func([]db.Account) error); ok {
+		r0 = rf(accounts)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -64,9 +62,9 @@ func (_m *AccountRepo) Get(id uuid.UUID) (*db.Account, error) {
 	return r0, r1
 }
 
-// GetByCompany provides a mock function with given fields: company, ctype
-func (_m *AccountRepo) GetByCompany(company string, ctype string) ([]*db.Account, error) {
-	ret := _m.Called(company, ctype)
+// GetByCompany provides a mock function with given fields: company
+func (_m *AccountRepo) GetByCompany(company string) ([]*db.Account, error) {
+	ret := _m.Called(company)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByCompany")
@@ -74,19 +72,19 @@ func (_m *AccountRepo) GetByCompany(company string, ctype string) ([]*db.Account
 
 	var r0 []*db.Account
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) ([]*db.Account, error)); ok {
-		return rf(company, ctype)
+	if rf, ok := ret.Get(0).(func(string) ([]*db.Account, error)); ok {
+		return rf(company)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) []*db.Account); ok {
-		r0 = rf(company, ctype)
+	if rf, ok := ret.Get(0).(func(string) []*db.Account); ok {
+		r0 = rf(company)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Account)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(company, ctype)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(company)
 	} else {
 		r1 = ret.Error(1)
 	}
