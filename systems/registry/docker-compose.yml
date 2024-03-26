@@ -172,7 +172,9 @@ services:
    - postgresd-registry
 
  initclient-registry:
-  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
