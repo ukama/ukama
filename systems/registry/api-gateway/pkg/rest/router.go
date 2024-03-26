@@ -198,7 +198,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sites := auth.Group(site, "Sites", "Operations on sites")
 		sites.GET("network/:network_id", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 		sites.POST("/:network_id", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
-		sites.GET("/site/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+		sites.GET("/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
 		sites.PUT("/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
 
 		// Node routes
