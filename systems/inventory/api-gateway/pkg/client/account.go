@@ -58,11 +58,39 @@ func (r *AccountInventory) Close() {
 	r.conn.Close()
 }
 
-func (r *AccountInventory) Get() (*pb.GetTestResponse, error) {
+func (r *AccountInventory) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetTest(ctx, &pb.GetTestRequest{})
+	res, err := r.client.Get(ctx, &pb.GetRequest{
+		Id: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *AccountInventory) GetByCompany(c string) (*pb.GetByCompanmyResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.GetByCompany(ctx, &pb.GetByCompanmyRequest{
+		Company: c,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *AccountInventory) SyncAccounts() (*pb.SyncAcountsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.SyncAccounts(ctx, &pb.SyncAcountsRequest{})
 	if err != nil {
 		return nil, err
 	}

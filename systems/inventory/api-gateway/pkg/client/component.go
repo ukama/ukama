@@ -62,7 +62,9 @@ func (r *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{})
+	res, err := r.client.Get(ctx, &pb.GetRequest{
+		Id: id,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +77,8 @@ func (r *ComponentInventory) GetByCompany(c string, t string) (*pb.GetByCompanyR
 	defer cancel()
 
 	res, err := r.client.GetByCompany(ctx, &pb.GetByCompanyRequest{
-		Company: c,
-		Type:    pb.ComponentType(pb.ComponentType_value[t]),
+		Company:  c,
+		Category: pb.ComponentCategory(pb.ComponentCategory_value[t]),
 	})
 	if err != nil {
 		return nil, err

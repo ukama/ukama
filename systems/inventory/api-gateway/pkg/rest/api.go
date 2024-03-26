@@ -10,16 +10,20 @@ package rest
 
 type GetTestRequest struct{}
 
-type GetComponent struct {
-	uuid string `example:"{{ComponentUUID}}" path:"uuid" validate:"required"`
+type GetRequest struct {
+	Uuid string `example:"{{ComponentUUID}}" path:"uuid" validate:"required"`
 }
 
 type GetComponents struct {
-	company       string `example:"{{company}}" path:"company" validate:"required"`
-	componentType string `example:"{{componentType}}" path:"query" validate:"required"`
+	Company  string `example:"{{company}}" path:"company" validate:"required"`
+	Category string `example:"{{componentType}}" query:"category" validate:"required"`
+}
+
+type GetAccounts struct {
+	Company string `example:"{{company}}" path:"company" validate:"required"`
 }
 
 type GetContracts struct {
-	company  string `example:"{{company}}" path:"company" validate:"required"`
-	isActive bool   `example:"{{true}}" path:"query" validate:"required"`
+	Company  string `example:"{{company}}" path:"company" validate:"required"`
+	IsActive bool   `example:"{{true}}" query:"is_active" validate:"required"`
 }
