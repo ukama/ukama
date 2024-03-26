@@ -17,7 +17,7 @@ import (
 type Component struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Company       string
-	InventoryId   string
+	Inventory     string
 	Category      ComponentCategory
 	Type          string
 	Description   string

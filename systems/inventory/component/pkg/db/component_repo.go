@@ -17,7 +17,8 @@ import (
 type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
 	GetByCompany(company string, category int32) ([]*Component, error)
-	Add(components []Component) error
+	Add(components []*Component) error
+	Delete(ids []string) error
 }
 
 type componentRepo struct {
@@ -48,7 +49,7 @@ func (c *componentRepo) GetByCompany(company string, category int32) ([]*Compone
 	return components, nil
 }
 
-func (c *componentRepo) Add(components []Component) error {
+func (c *componentRepo) Add(components []*Component) error {
 	db := c.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoNothing: true,
@@ -57,4 +58,10 @@ func (c *componentRepo) Add(components []Component) error {
 	result := db.Create(&components)
 
 	return result.Error
+}
+
+func (c *componentRepo) Delete(ids []string) error {
+	db := c.Db.GetGormDb().Where("inventory IN ?", ids).Delete(&Component{})
+
+	return db.Error
 }

@@ -18,7 +18,8 @@ type AccountRepo interface {
 	Get(id uuid.UUID) (*Account, error)
 	GetByCompany(company string) ([]*Account, error)
 
-	Add(accounts []Account) error
+	Add(accounts []*Account) error
+	Delete(ids []string) error
 }
 
 type accountRepo struct {
@@ -49,7 +50,7 @@ func (c *accountRepo) GetByCompany(company string) ([]*Account, error) {
 	return accounts, nil
 }
 
-func (c *accountRepo) Add(accounts []Account) error {
+func (c *accountRepo) Add(accounts []*Account) error {
 	db := c.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoNothing: true,
@@ -58,4 +59,10 @@ func (c *accountRepo) Add(accounts []Account) error {
 	result := db.Create(&accounts)
 
 	return result.Error
+}
+
+func (c *accountRepo) Delete(ids []string) error {
+	db := c.Db.GetGormDb().Where("inventory IN ?", ids).Delete(&Account{})
+
+	return db.Error
 }

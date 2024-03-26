@@ -32,11 +32,11 @@ import (
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName        string
+	gitClient      gitClient.GitClient
 	componentRepo  db.ComponentRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
-	gitClient      gitClient.GitClient
 	gitDirPath     string
 }
 
@@ -121,6 +121,13 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			components = append(components, component)
 		}
 		cdb := utilComponentsToDbComponents(components)
+		componentIds := utils.UniqueComponentIds(dbComponentsToPbComponents(cdb))
+		err = c.componentRepo.Delete(componentIds)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "account")
+		}
+		log.Info("Deleted components with inventory ids: ", componentIds)
+
 		err = c.componentRepo.Add(cdb)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "component")
@@ -134,7 +141,7 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	return &pb.Component{
 		Id:            component.Id.String(),
 		Company:       component.Company,
-		InventoryId:   component.InventoryId,
+		Inventory:     component.Inventory,
 		Category:      pb.ComponentCategory(component.Category),
 		Type:          component.Type,
 		Description:   component.Description,
@@ -158,14 +165,14 @@ func dbComponentsToPbComponents(components []*db.Component) []*pb.Component {
 	return res
 }
 
-func utilComponentsToDbComponents(components []utils.Component) []db.Component {
-	res := []db.Component{}
+func utilComponentsToDbComponents(components []utils.Component) []*db.Component {
+	res := []*db.Component{}
 
 	for _, i := range components {
-		res = append(res, db.Component{
+		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
 			Company:       i.Company,
-			InventoryId:   i.InventoryID,
+			Inventory:     i.InventoryID,
 			Category:      db.ParseType(i.Category),
 			Type:          i.Type,
 			Description:   i.Description,

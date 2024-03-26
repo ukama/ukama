@@ -92,37 +92,41 @@ func (a *AccountServer) SyncAccounts(ctx context.Context, req *pb.SyncAcountsReq
 
 	rootFileContent, err := a.gitClient.ReadFileJSON(a.gitDirPath + "/root.json")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to read file. Error %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to read root file. Error %s", err.Error())
 	}
 
 	var enviroment gitClient.Environment
 	err = json.Unmarshal(rootFileContent, &enviroment)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal root json file. Error %s", err.Error())
 	}
 
 	for _, company := range enviroment.Test {
 		a.gitClient.BranchCheckout(company.GitBranchName)
-		paths, _ := a.gitClient.GetFilesPath("accounts")
-		var accounts []utils.Account
-		for _, path := range paths {
-			content, err := a.gitClient.ReadFileYML(path)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to read file. Error %s", err.Error())
-			}
-			var account utils.Account
-			err = json.Unmarshal(content, &account)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
-			}
-			account.Company = company.Company
-			accounts = append(accounts, account)
+		manifestFileContent, err := a.gitClient.ReadFileJSON(a.gitDirPath + "/manifest.json")
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to read manifest file. Error %s", err.Error())
 		}
-		adb := utilAccountsToDbAccounts(accounts)
+
+		var account utils.Account
+		err = json.Unmarshal(manifestFileContent, &account)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal manifest json file. Error %s", err.Error())
+		}
+
+		adb := utilAccountsToDbAccounts(account, company.Company)
+		inventoryIds := utils.UniqueInventoryIds(dbAccountsToPbAccounts(adb))
+		err = a.accountRepo.Delete(inventoryIds)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "account")
+		}
+		log.Info("Deleted accounts with inventory ids: ", inventoryIds)
+
 		err = a.accountRepo.Add(adb)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "account")
 		}
+		log.Info("Added accounts: ", adb)
 	}
 
 	return &pb.SyncAcountsResponse{}, nil
@@ -151,13 +155,25 @@ func dbAccountsToPbAccounts(accounts []*db.Account) []*pb.Account {
 	return res
 }
 
-func utilAccountsToDbAccounts(accounts []utils.Account) []db.Account {
-	res := []db.Account{}
+func utilAccountsToDbAccounts(account utils.Account, company string) []*db.Account {
+	res := []*db.Account{}
 
-	for _, i := range accounts {
-		res = append(res, db.Account{
+	for _, i := range account.Ukama {
+		res = append(res, &db.Account{
 			Id:            uuid.NewV4(),
-			Company:       i.Company,
+			Company:       company,
+			Description:   i.Description,
+			Item:          i.Item,
+			Inventory:     i.Inventory,
+			EffectiveDate: i.EffectiveDate,
+			OpexFee:       i.OpexFee,
+			Vat:           i.Vat,
+		})
+	}
+	for _, i := range account.Backhaul {
+		res = append(res, &db.Account{
+			Id:            uuid.NewV4(),
+			Company:       company,
 			Description:   i.Description,
 			Item:          i.Item,
 			Inventory:     i.Inventory,

@@ -18,7 +18,7 @@ type Account struct {
 	Company       string
 	Inventory     string
 	EffectiveDate string
-	OpexFee       float64 `gorm:"type:float"`
-	Vat           float64 `gorm:"type:float"`
+	OpexFee       string
+	Vat           string
 	Description   string
 }

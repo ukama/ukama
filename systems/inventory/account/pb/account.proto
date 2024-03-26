@@ -45,8 +45,8 @@ message Account {
     string item = 3;
     string description = 4;
     string inventory = 5;
-    double opexFee = 6 [json_name = "opex_fee"];
-    double vat = 7;
+    string opexFee = 6 [json_name = "opex_fee"];
+    string vat = 7;
     string effectiveDate = 8 [json_name = "effective_date"];
 }
 

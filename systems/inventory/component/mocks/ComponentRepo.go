@@ -15,7 +15,7 @@ type ComponentRepo struct {
 }
 
 // Add provides a mock function with given fields: components
-func (_m *ComponentRepo) Add(components []db.Component) error {
+func (_m *ComponentRepo) Add(components []*db.Component) error {
 	ret := _m.Called(components)
 
 	if len(ret) == 0 {
@@ -23,8 +23,26 @@ func (_m *ComponentRepo) Add(components []db.Component) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]db.Component) error); ok {
+	if rf, ok := ret.Get(0).(func([]*db.Component) error); ok {
 		r0 = rf(components)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Delete provides a mock function with given fields: ids
+func (_m *ComponentRepo) Delete(ids []string) error {
+	ret := _m.Called(ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]string) error); ok {
+		r0 = rf(ids)
 	} else {
 		r0 = ret.Error(0)
 	}

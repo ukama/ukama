@@ -43,7 +43,7 @@ message SyncComponentsResponse {}
 message Component {
     string id = 1;
     string company = 2;
-    string inventoryId = 3 [json_name = "inventory_id"];
+    string inventory = 3 [json_name = "inventory_id"];
     ComponentCategory category = 4;
     string type = 5;
     string description = 6;
