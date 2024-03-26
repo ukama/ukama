@@ -34,8 +34,8 @@ type AddPackageReq struct {
 	OrgId         string   `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
 	OwnerId       string   `example:"{{OwnerUUID}}" json:"owner_id" validation:"required"`
 	SimType       string   `example:"test" json:"sim_type" validation:"required"`
-	SmsVolume     int64    `example:"0" json:"sms_volume" validation:"required"`
-	DataVolume    int64    `example:"1024" json:"data_volume" validation:"required"`
+	SmsVolume     uint64   `example:"0" json:"sms_volume" validation:"required"`
+	DataVolume    uint64   `example:"1024" json:"data_volume" validation:"required"`
 	DataUnit      string   `example:"MegaBytes" json:"data_unit" validation:"required"`
 	VoiceUnit     string   `example:"seconds" json:"voice_unit" validation:"required"`
 	Duration      uint64   `example:"1" json:"duration" validation:"required"`
@@ -45,7 +45,7 @@ type AddPackageReq struct {
 	Markup        float64  `example:"0" json:"markup" default:"0.00"`
 	Apn           string   `example:"ukama.tel" json:"apn" default:"ukama.tel"`
 	Active        bool     `example:"true" json:"active" validation:"required"`
-	VoiceVolume   int64    `example:"0" json:"voice_volume" default:"0"`
+	VoiceVolume   uint64   `example:"0" json:"voice_volume" default:"0"`
 	BaserateId    string   `example:"{{baserate}}" json:"baserate_id" validation:"required"`
 	Overdraft     float64  `json:"overdraft"`
 	TrafficPolicy uint32   `json:"traffic_policy"`

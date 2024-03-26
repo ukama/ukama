@@ -17,10 +17,10 @@ import (
 type SimType uint8
 
 const (
-	SimTypeUnknown      SimType = iota
-	SimTypeTest                 = 1
-	SimTypeOperatorData         = 2
-	SimTypeUkamaData            = 3
+	SimTypeUnknown SimType = iota
+	SimTypeTest
+	SimTypeOperatorData
+	SimTypeUkamaData
 )
 
 func (s *SimType) Scan(value interface{}) error {

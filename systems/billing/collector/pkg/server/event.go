@@ -213,7 +213,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	// Get the cost of the package per bytke
 	dataUnit := ukama.ParseDataUnitType(pkg.DataUnit)
 	if dataUnit == ukama.DataUnitTypeUnknown {
-		return fmt.Errorf("invalid data unit type")
+		return fmt.Errorf("invalid data unit type: %s", pkg.DataUnit)
 	}
 
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))

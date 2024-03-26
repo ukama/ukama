@@ -60,10 +60,14 @@ func TestNodeClient_Get(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -82,9 +86,9 @@ func TestNodeClient_Get(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId)
 
 			return &http.Response{
-				StatusCode: 200,
-				Status:     "200 OK",
-				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+				StatusCode: 201,
+				Status:     "201 CREATED",
+				Body:       io.NopCloser(bytes.NewBufferString(`CREATED`)),
 				Header:     make(http.Header),
 			}
 		}
@@ -159,11 +163,14 @@ func TestNodeClient_Add(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint)
 
+			// error payload
+			resp := `{"error":"internal server error"}`
+
 			return &http.Response{
 				StatusCode: 500,
 				Status:     "500 INTERNAL SERVER ERROR",
-				Body:       io.NopCloser(bytes.NewBufferString(`INTERNAL SERVER ERROR`)),
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -261,10 +268,14 @@ func TestNodeClient_Delete(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId)
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -328,11 +339,14 @@ func TestNodeClient_Attach(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId+"/attach")
 
+			// error payload
+			resp := `{"error":"internal server error"}`
+
 			return &http.Response{
 				StatusCode: 500,
 				Status:     "500 INTERNAL SERVER ERROR",
-				Body:       io.NopCloser(bytes.NewBufferString(`INTERNAL SERVER ERROR`)),
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -399,10 +413,14 @@ func TestNodeClient_Detach(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId+"/attach")
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -466,11 +484,14 @@ func TestNodeClient_AddToSite(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId+"/sites")
 
+			// error payload
+			resp := `{"error":"internal server error"}`
+
 			return &http.Response{
 				StatusCode: 500,
 				Status:     "500 INTERNAL SERVER ERROR",
-				Body:       io.NopCloser(bytes.NewBufferString(`INTERNAL SERVER ERROR`)),
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 
@@ -537,10 +558,14 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/"+testNodeId+"/sites")
 
+			// error payload
+			resp := `{"error":"not found"}`
+
 			return &http.Response{
 				StatusCode: 404,
 				Status:     "404 NOT FOUND",
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 

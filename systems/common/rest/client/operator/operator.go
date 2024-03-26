@@ -13,8 +13,9 @@ import (
 	"fmt"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -36,7 +37,7 @@ type operatorClient struct {
 	R *client.Resty
 }
 
-func NewOperatorClient(h string) *operatorClient {
+func NewOperatorClient(h string, options ...client.Option) *operatorClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -45,7 +46,7 @@ func NewOperatorClient(h string) *operatorClient {
 
 	return &operatorClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

@@ -13,8 +13,9 @@ import (
 	"fmt"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const MailerEndpoint = "/v1/mailer"
@@ -34,7 +35,7 @@ type mailerClient struct {
 	R *client.Resty
 }
 
-func NewMailerClient(h string) *mailerClient {
+func NewMailerClient(h string, options ...client.Option) *mailerClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -43,7 +44,7 @@ func NewMailerClient(h string) *mailerClient {
 
 	return &mailerClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 
