@@ -11,6 +11,10 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -35,6 +39,7 @@ type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
+	logger  *logrus.Logger 
 }
 
 type RouterConfig struct {
@@ -98,9 +103,26 @@ func (r *Router) init() {
     endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
     endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
     endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
-	
+	endpoint.POST("/logger/nodes/:node_id",  formatDoc("Log data", "Endpoint to log data"),r.logHandler,)
+
 }
 
+func (r *Router) logHandler(c *gin.Context) {
+    var requestData map[string]string
+    if err := c.BindJSON(&requestData); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    r.logger.WithFields(logrus.Fields{
+        "node_id":  requestData["node_id"],
+        "app_name": requestData["app_name"],
+        "time":     requestData["time"],
+        "level":    requestData["level"],
+        "message":  requestData["message"],
+    }).Info("Received log data")
+
+    c.JSON(http.StatusOK, gin.H{"message": "Log data received"})
+}
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
 	var genSystems []*gen.System
 	for _, sys := range req.System {
@@ -166,4 +188,20 @@ func (r *Router) pingHandler(c *gin.Context) error {
     c.JSON(http.StatusOK, response)
 
     return nil
+}
+func setupLogger() *logrus.Logger {
+    logger := logrus.New()
+
+    logFileName := "log_" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"
+    logFilePath := filepath.Join("logs", logFileName)
+    file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+    if err == nil {
+        logger.SetOutput(file)
+    } else {
+        logger.Info("Failed to log to file, using default stderr")
+    }
+
+    logger.SetLevel(logrus.InfoLevel)
+
+    return logger
 }
