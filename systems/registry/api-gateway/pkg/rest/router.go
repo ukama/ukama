@@ -60,10 +60,10 @@ type network interface {
 }
 
 type site interface {
-	AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
-	GetSite(netID, siteID string) (*sitepb.GetResponse, error)
-	GetSites(netID string) (*sitepb.GetSitesResponse, error)
-	UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse,error)
+	AddSite(networkId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
+	GetSite(siteId string) (*sitepb.GetResponse, error)
+	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
+	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse,error)
 }
 
 type invitation interface {
@@ -193,12 +193,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Vendors
 
 		// Sites
+		
 		const site = "/sites"
 		sites := auth.Group(site, "Sites", "Operations on sites")
-		sites.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
-		sites.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
-		sites.GET("/:net_id/sites/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
-		sites.PUT("/:net_id/sites/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
+		sites.GET("network/:network_id", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
+		sites.POST("/:network_id", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
+		sites.GET("/site/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+		sites.PUT("/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
 
 		// Node routes
 		const node = "/nodes"
@@ -313,7 +314,7 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.GetResponse, error) {
-	return r.clients.Site.GetSite(req.NetworkId, req.SiteId)
+	return r.clients.Site.GetSite(req.SiteId)
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.GetSitesResponse, error) {
@@ -322,7 +323,6 @@ func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.
 
 func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sitepb.UpdateResponse, error) {
 	return r.clients.Site.UpdateSite(
-		req.NetworkId,
 		req.SiteId,
 		req.Name,
 		req.BackhaulId,

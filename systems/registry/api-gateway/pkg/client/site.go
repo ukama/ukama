@@ -58,11 +58,11 @@ func (r *SiteRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *SiteRegistry) GetSite(networkID, siteID string) (*pb.GetResponse, error) {
+func (r *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{NetworkId: networkID, SiteId: siteID})
+	res, err := r.client.Get(ctx, &pb.GetRequest{ SiteId: siteId})
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +71,11 @@ func (r *SiteRegistry) GetSite(networkID, siteID string) (*pb.GetResponse, error
 }
 
 
-func (r *SiteRegistry) GetSites(networkID string) (*pb.GetSitesResponse, error) {
+func (r *SiteRegistry) GetSites(networkId string) (*pb.GetSitesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetSites(ctx, &pb.GetSitesRequest{NetworkId: networkID})
+	res, err := r.client.GetSites(ctx, &pb.GetSitesRequest{NetworkId: networkId})
 	if err != nil {
 		return nil, err
 	}
@@ -83,16 +83,16 @@ func (r *SiteRegistry) GetSites(networkID string) (*pb.GetSitesResponse, error) 
 	return res, nil
 }
 
-func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
+func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	res, err := r.client.Add(ctx, &pb.AddRequest{
 		Name:          name,
-		NetworkId:     networkID,
-		BackhaulId:    backhaulID,
-		PowerId:       powerID,
-		AccessId:      accessID,
-		SwitchId:      switchID,
+		NetworkId:     networkId,
+		BackhaulId:    backhaulId,
+		PowerId:       powerId,
+		AccessId:      accessId,
+		SwitchId:      switchId,
 		IsDeactivated: isDeactivated,
 		Latitude:      latitude,
 		Longitude:     longitude,
@@ -105,18 +105,17 @@ func (r *SiteRegistry) AddSite(networkID, name, backhaulID, powerID, accessID, s
 	return res, nil
 }
 
-func (r *SiteRegistry) UpdateSite(networkID, siteID, name, backhaulID, powerID, accessID, switchID string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.UpdateResponse, error) {
+func (r *SiteRegistry) UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.UpdateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	req := &pb.UpdateRequest{
-		NetworkId:     networkID,
-		SiteId:        siteID,
+		SiteId:        siteId,
 		Name:          name,
-		BackhaulId:    backhaulID,
-		PowerId:       powerID,
-		AccessId:      accessID,
-		SwitchId:      switchID,
+		BackhaulId:    backhaulId,
+		PowerId:       powerId,
+		AccessId:      accessId,
+		SwitchId:      switchId,
 		IsDeactivated: isDeactivated,
 		Latitude:      latitude,
 		Longitude:     longitude,
