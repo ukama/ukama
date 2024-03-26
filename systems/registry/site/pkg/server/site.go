@@ -14,9 +14,9 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -59,26 +59,26 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
     log.Infof("Adding site %s", req.Name)
 
-    backhaulID, err := uuid.FromString(req.BackhaulId)
+    backhaulId, err := uuid.FromString(req.BackhaulId)
     if err != nil {
         return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
-    powerID, err := uuid.FromString(req.PowerId)
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-    }
-
-    accessID, err := uuid.FromString(req.AccessId)
+    powerId, err := uuid.FromString(req.PowerId)
     if err != nil {
         return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
 
-    switchID, err := uuid.FromString(req.SwitchId)
+    accessId, err := uuid.FromString(req.AccessId)
     if err != nil {
         return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
 
-    netID, err := uuid.FromString(req.NetworkId)
+    switchId, err := uuid.FromString(req.SwitchId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+    }
+
+    networkId, err := uuid.FromString(req.NetworkId)
     if err != nil {
         return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
     }
@@ -94,67 +94,55 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
     }
 
     log.Infof("checking if network exist %s", req.NetworkId)
-    networkRes, err := svc.Get(ctx, &npb.GetRequest{
-        NetworkId: netID.String(),
+    _, err = svc.Get(ctx, &npb.GetRequest{
+        NetworkId: networkId.String(),
     })
     if err != nil {
         return nil, grpc.SqlErrorToGrpc(err, "network")
     }
 
-    resNetworkID, err := uuid.FromString(networkRes.Network.Id)
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-    }
-    resOrgID, err := uuid.FromString(networkRes.Network.OrgId)
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-    }
-
-    newNetwork := &db.Network{
-        ID:               resNetworkID,
-        Name:             networkRes.Network.Name,
-        OrgID:            resOrgID,
-        Deactivated:      networkRes.Network.IsDeactivated,
-        AllowedCountries: networkRes.Network.AllowedCountries,
-        AllowedNetworks:  networkRes.Network.AllowedNetworks,
-        Budget:           networkRes.Network.Budget,
-        Overdraft:        networkRes.Network.Overdraft,
-        TrafficPolicy:    networkRes.Network.TrafficPolicy,
-        PaymentLinks:     networkRes.Network.PaymentLinks,
-        CreatedAt:        time.Unix(networkRes.Network.CreatedAt.Seconds, int64(networkRes.Network.CreatedAt.Nanos)),
-        SyncStatus:       ukama.ParseStatusType(networkRes.Network.SyncStatus),
-    }
-
     site := &db.Site{
-        NetworkID:     netID,
+        NetworkId:     networkId,
         Name:          req.Name,
-        BackhaulID:    backhaulID,
-        PowerID:       powerID,
-        AccessID:      accessID,
-        SwitchID:      switchID,
+        BackhaulId:    backhaulId,
+        PowerId:       powerId,
+        AccessId:      accessId,
+        SwitchId:      switchId,
         IsDeactivated: req.IsDeactivated,
         Latitude:      req.Latitude,
         Longitude:     req.Longitude,
         InstallDate:   instDate.String(),
-        Network:       newNetwork, 
     }
 
     err = s.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
-        site.ID = uuid.NewV4()
+        site.Id = uuid.NewV4()
         return nil
     })
     if err != nil {
         return nil, grpc.SqlErrorToGrpc(err, "site")
     }
+	evt := &epb.AddSiteEventRequest{
+		SiteId:            site.Id.String(),
+		Name:          site.Name,
+		NetworkId:     site.NetworkId.String(),
+		IsDeactivated: site.IsDeactivated,
+		BackhaulId:    site.BackhaulId.String(),
+		PowerId:       site.PowerId.String(),
+		AccessId:      site.AccessId.String(),
+		SwitchId:      site.SwitchId.String(),
+		Latitude:      site.Latitude,
+		Longitude:     site.Longitude,
+		InstallDate:   site.InstallDate,
+	}
 
     route := s.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
 
     err = s.msgbus.PublishRequest(route, req)
     if err != nil {
-        log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+        log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
     }
 
-    s.pushSiteCount(netID)
+    s.pushSiteCount(networkId)
 
     return &pb.AddResponse{
         Site: dbSiteToPbSite(site),
@@ -163,20 +151,15 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 
 func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Infof("Getting site %s-%s", req.NetworkId, req.SiteId)
+	log.Infof("Getting site %s", req.SiteId)
 
-	netID, err := uuid.FromString(req.NetworkId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-	siteID, err := uuid.FromString(req.SiteId)
+	siteId, err := uuid.FromString(req.SiteId)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	site, err := s.siteRepo.Get(netID, siteID)
+	site, err := s.siteRepo.Get(siteId)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
@@ -185,17 +168,18 @@ func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 		Site: dbSiteToPbSite(site)}, nil
 }
 
+
 func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb.GetSitesResponse, error) {
 
 	log.Infof("Getting sites %s", req.NetworkId)
 
-	netID, err := uuid.FromString(req.NetworkId)
+	networkId, err := uuid.FromString(req.NetworkId)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	sites, err := s.siteRepo.GetSites(netID)
+	sites, err := s.siteRepo.GetSites(networkId)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
@@ -208,118 +192,91 @@ func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb
 }
 
 func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	log.Infof("Updating site %s-%s", req.NetworkId, req.SiteId)
+	log.Infof("Updating site %s", req.SiteId)
 
-	netID, err := uuid.FromString(req.NetworkId)
+	siteId, err := uuid.FromString(req.SiteId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	siteID, err := uuid.FromString(req.SiteId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
 
-	site, err := s.siteRepo.Get(netID, siteID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	if req.Name != "" {
-		site.Name = req.Name
-	}
-
-	if req.Latitude != 0 {
-		site.Latitude = req.Latitude
-	}
-
-	if req.Longitude != 0 {
-		site.Longitude = req.Longitude
-	}
-
-	if req.IsDeactivated {
-		site.IsDeactivated = req.IsDeactivated
-	}
-
-	if req.InstallDate != "" {
-		site.InstallDate = req.InstallDate
-	}
-
-	if req.BackhaulId != "" {
-		backhaulID, err := uuid.FromString(req.BackhaulId)
+		backhaulId, err := uuid.FromString(req.BackhaulId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		site.BackhaulID = backhaulID
-	}
+	
 
-	if req.AccessId != "" {
-		accessID, err := uuid.FromString(req.AccessId)
+		accessId, err := uuid.FromString(req.AccessId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		site.AccessID = accessID
-	}
+	
 
-	if req.PowerId != "" {
-		powerID, err := uuid.FromString(req.PowerId)
+		powerId, err := uuid.FromString(req.PowerId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		site.PowerID = powerID
-	}
+	
 
-	if req.SwitchId != "" {
-		switchID, err := uuid.FromString(req.SwitchId)
+		switchId, err := uuid.FromString(req.SwitchId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		site.SwitchID = switchID
+	
+
+	site:=&db.Site{
+		Id:			   siteId,
+        Name:          req.Name,
+        BackhaulId:    backhaulId,
+        PowerId:       powerId,
+        AccessId:      accessId,
+        SwitchId:      switchId,
+        IsDeactivated: req.IsDeactivated,
+        Latitude:      req.Latitude,
+        Longitude:     req.Longitude,
+        InstallDate:   req.InstallDate,
 	}
 
 	err = s.siteRepo.Update(site)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
+	evt := &epb.UpdateSiteEventRequest{
+		SiteId:            site.Id.String(),
+		Name:          site.Name,
+		IsDeactivated: site.IsDeactivated,
+		BackhaulId:    site.BackhaulId.String(),
+		PowerId:       site.PowerId.String(),
+		AccessId:      site.AccessId.String(),
+		SwitchId:      site.SwitchId.String(),
+		Latitude:      site.Latitude,
+		Longitude:     site.Longitude,
+	}
 
+	route := s.baseRoutingKey.SetAction("update").SetObject("site").MustBuild()
+
+    err = s.msgbus.PublishRequest(route, req)
+    if err != nil {
+        log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+    }
 	return &pb.UpdateResponse{
 		Site: dbSiteToPbSite(site),
 	}, nil
 }
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {
-	var pbNetwork *pb.Network
-
-	if site.Network != nil {
-		pbNetwork = &pb.Network{
-			Id:               site.Network.ID.String(),
-			Name:             site.Network.Name,
-			OrgId:            site.Network.OrgID.String(),
-			AllowedCountries: site.Network.AllowedCountries,
-			AllowedNetworks:  site.Network.AllowedNetworks,
-			IsDeactivated:    site.Network.Deactivated,
-			Budget:           site.Network.Budget,
-			Overdraft:        site.Network.Overdraft,
-			TrafficPolicy:    site.Network.TrafficPolicy,
-			PaymentLinks:     site.Network.PaymentLinks,
-			CreatedAt:        timestamppb.New(site.Network.CreatedAt),
-			SyncStatus:       site.Network.SyncStatus.String(),
-		}
-	}
-
 	return &pb.Site{
-		Id:            site.ID.String(),
+		Id:            site.Id.String(),
 		Name:          site.Name,
-		NetworkId:     site.NetworkID.String(),
+		NetworkId:     site.NetworkId.String(),
 		IsDeactivated: site.IsDeactivated,
-		BackhaulId:    site.BackhaulID.String(),
-		PowerId:       site.PowerID.String(),
-		AccessId:      site.AccessID.String(),
-		SwitchId:      site.SwitchID.String(),
+		BackhaulId:    site.BackhaulId.String(),
+		PowerId:       site.PowerId.String(),
+		AccessId:      site.AccessId.String(),
+		SwitchId:      site.SwitchId.String(),
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
 		InstallDate:   site.InstallDate,
-		Network:       pbNetwork, // Assign the single network
 		CreatedAt:     timestamppb.New(site.CreatedAt),
 	}
 }
@@ -334,13 +291,13 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 
 	return res
 }
-func (s *SiteServer) pushSiteCount(netID uuid.UUID) {
-	siteCount, err := s.siteRepo.GetSiteCount(netID)
+func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
+	siteCount, err := s.siteRepo.GetSiteCount(networkId)
 	if err != nil {
 		log.Errorf("failed to get site count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(s.pushGateway, pkg.SiteMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"network": netID.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(s.pushGateway, pkg.SiteMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"network": networkId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
 	}

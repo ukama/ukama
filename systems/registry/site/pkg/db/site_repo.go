@@ -19,10 +19,10 @@ import (
 
 type SiteRepo interface {
 	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
-	Get(netID,siteID uuid.UUID) (*Site, error)
-	GetSites(netID uuid.UUID) ([]Site, error) 
+	Get(siteID uuid.UUID) (*Site, error)
+	GetSites(networkId uuid.UUID) ([]Site, error) 
 	Update(site *Site) error
-	GetSiteCount(netID uuid.UUID) (int64, error)
+	GetSiteCount(networkId uuid.UUID) (int64, error)
 }
 
 type siteRepo struct {
@@ -37,17 +37,14 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 
 
 
-func (s *siteRepo) Get(netID, siteID uuid.UUID) (*Site, error) {
-    var site Site
-
-    result := s.Db.GetGormDb().Preload("Network").Where("network_id = ? AND id = ?", netID, siteID).First(&site)
-    if result.Error != nil {
-        return nil, result.Error
-    }
-
-    return &site, nil
+func (s *siteRepo) Get(siteId uuid.UUID) (*Site, error) {
+	var site Site
+	err := s.Db.GetGormDb().First(&site, siteId).Error
+	if err != nil {
+		return nil, err
+	}
+	return &site, nil
 }
-
 
 
 func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error) error {
@@ -75,16 +72,15 @@ func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error
 	return err
 }
 
-func (s siteRepo) GetSites(netID uuid.UUID) ([]Site, error) {
+func (s siteRepo) GetSites(networkId uuid.UUID) ([]Site, error) {
     var sites []Site
-    db := s.Db.GetGormDb()
 
-    result := db.Preload("Network").Where("network_id = ?", netID).Find(&sites)
-    if result.Error != nil {
-        return nil, result.Error
-    }
+	err := s.Db.GetGormDb().Where("network_id = ?", networkId).Find(&sites).Error
+	if err != nil {
+		return nil, err
+	}
+	return sites, nil
 
-    return sites, nil
 }
 
 
@@ -97,9 +93,9 @@ func (s *siteRepo) Update(site *Site) error {
     return nil
 }
 
-func (s siteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+func (s siteRepo) GetSiteCount(networkId uuid.UUID) (int64, error) {
 	var count int64
-	result := s.Db.GetGormDb().Model(&Site{}).Where("network_id = ?", netID).Count(&count)
+	result := s.Db.GetGormDb().Model(&Site{}).Where("network_id = ?", networkId).Count(&count)
 	if result.Error != nil {
 		return 0, result.Error
 	}

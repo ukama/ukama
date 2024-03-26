@@ -36,11 +36,11 @@ func TestSiteService_Get(t *testing.T) {
 		netId := uuid.NewV4()
 
 		siteRepo.On("Get",netId,siteId).Return(&db.Site{
-			ID: siteId,
-			NetworkID: netId,
+			Id: siteId,
+			NetworkId: netId,
 		}, nil)
 
-		uResp, err := s.Get(context.TODO(), &pb.GetRequest{NetworkId: netId.String(), SiteId:siteId.String() })
+		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId:siteId.String() })
 
 		assert.NoError(t, err)
 		assert.NotNil(t, uResp)
@@ -56,7 +56,7 @@ func TestSiteService_Get(t *testing.T) {
 
 		siteRepo.On("Get", netId,siteId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String(), NetworkId: netId.String()})
+		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, uResp)
@@ -75,8 +75,8 @@ func TestSiteService_GetSites(t *testing.T) {
 
         mockSites := []*db.Site{
             {
-                ID:        uuid.NewV4(),
-                NetworkID: netId,
+                Id:        uuid.NewV4(),
+                NetworkId: netId,
             },
         }
 

@@ -60,13 +60,13 @@ import (
 		 // Arrange
 		 siteId := uuid.NewV4()
 		 site := db_site.Site{
-			ID:            siteId,
+			Id:            siteId,
 			Name:          "pamoja-net",
-			NetworkID:     uuid.NewV4(),
-			BackhaulID:    uuid.NewV4(),
-			PowerID:       uuid.NewV4(),
-			AccessID:      uuid.NewV4(),
-			SwitchID:      uuid.NewV4(),
+			NetworkId:     uuid.NewV4(),
+			BackhaulId:    uuid.NewV4(),
+			PowerId:       uuid.NewV4(),
+			AccessId:      uuid.NewV4(),
+			SwitchId:      uuid.NewV4(),
 			IsDeactivated: false,
 			Latitude:      40.7128,   // Dummy latitude
 			Longitude:     -74.0060,  // Dummy longitude
@@ -82,11 +82,11 @@ import (
 		 assert.NoError(t, err)
  
 		 rows := sqlmock.NewRows([]string{"id", "name", "latitude","network_id"}).
-			 AddRow(siteId, site.Name, site.Latitude,site.NetworkID)
+			 AddRow(siteId, site.Name, site.Latitude,site.NetworkId)
 
 
 			 mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(site.ID,site.NetworkID, 1). // Add '1' for the LIMIT clause
+			WithArgs(site.Id,site.NetworkId, 1). // Add '1' for the LIMIT clause
 			WillReturnRows(rows)
  
 		 dialector := postgres.New(postgres.Config{
@@ -106,7 +106,7 @@ import (
 		 assert.NoError(t, err)
  
 		 // Act
-		 rm, err := r.Get(site.ID,site.NetworkID)
+		 rm, err := r.Get(site.Id)
  
 		 // Assert
 		 assert.NoError(t, err)
@@ -122,9 +122,9 @@ import (
         // Arrange
         netID := uuid.NewV4()
         site1 := db_site.Site{
-            ID:            uuid.NewV4(),
+            Id:            uuid.NewV4(),
             Name:          "Site1",
-            NetworkID:     netID,
+            NetworkId:     netID,
             Latitude:      40.7128,
             Longitude:     -74.0060,
             InstallDate:   "07-03-2023",
@@ -133,9 +133,9 @@ import (
             DeletedAt:     gorm.DeletedAt{},
         }
         site2 := db_site.Site{
-            ID:            uuid.NewV4(),
+            Id:            uuid.NewV4(),
             Name:          "Site2",
-            NetworkID:     netID,
+            NetworkId:     netID,
             Latitude:      40.7128,
             Longitude:     -74.0060,
             InstallDate:    "07-03-2023",
@@ -150,8 +150,8 @@ import (
         assert.NoError(t, err)
 
         rows := sqlmock.NewRows([]string{"id", "name", "latitude", "network_id"}).
-            AddRow(site1.ID, site1.Name, site1.Latitude, site1.NetworkID).
-            AddRow(site2.ID, site2.Name, site2.Latitude, site2.NetworkID)
+            AddRow(site1.Id, site1.Name, site1.Latitude, site1.NetworkId).
+            AddRow(site2.Id, site2.Name, site2.Latitude, site2.NetworkId)
 
         mock.ExpectQuery(`^SELECT.*sites.*`).
             WithArgs(netID).
@@ -180,8 +180,8 @@ import (
         assert.NoError(t, err)
         assert.NotNil(t, sites)
         assert.Equal(t, 2, len(sites)) // Ensure that both sites are retrieved
-        assert.Equal(t, site1.ID, sites[0].ID)
-        assert.Equal(t, site2.ID, sites[1].ID)
+        assert.Equal(t, site1.Id, sites[0].Id)
+        assert.Equal(t, site2.Id, sites[1].Id)
 
         err = mock.ExpectationsWereMet()
         assert.NoError(t, err)
@@ -192,13 +192,13 @@ func TestSiteRepo_Add(t *testing.T) {
     t.Run("ValidSite", func(t *testing.T) {
         // Arrange
         site := &db_site.Site{
-            ID:            uuid.NewV4(),
+            Id:            uuid.NewV4(),
             Name:          "valid-site",
-            NetworkID:     uuid.NewV4(),
-            BackhaulID:    uuid.NewV4(),
-            AccessID:      uuid.NewV4(),
-            PowerID:       uuid.NewV4(),
-            SwitchID:      uuid.NewV4(),
+            NetworkId:     uuid.NewV4(),
+            BackhaulId:    uuid.NewV4(),
+            AccessId:      uuid.NewV4(),
+            PowerId:       uuid.NewV4(),
+            SwitchId:      uuid.NewV4(),
             IsDeactivated: false,
             Latitude:      40.7128,
             Longitude:     -74.0060,
@@ -216,8 +216,8 @@ func TestSiteRepo_Add(t *testing.T) {
         mock.ExpectBegin()
         mock.ExpectExec(`^INSERT INTO "sites"`).
             WithArgs(
-                site.ID, site.Name, site.NetworkID, site.BackhaulID,
-                site.PowerID, site.AccessID, site.SwitchID, site.IsDeactivated,
+                site.Id, site.Name, site.NetworkId, site.BackhaulId,
+                site.PowerId, site.AccessId, site.SwitchId, site.IsDeactivated,
                 site.Latitude, site.Longitude, site.InstallDate,
                 sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
             WillReturnResult(sqlmock.NewResult(1, 1))
@@ -252,9 +252,9 @@ func TestSiteRepo_Add(t *testing.T) {
     t.Run("InvalidSiteName", func(t *testing.T) {
         // Arrange
         invalidSite := &db_site.Site{
-            ID:            uuid.NewV4(),
+            Id:            uuid.NewV4(),
             Name:          "invalid_site_name!", // Invalid site name with special characters
-            NetworkID:     uuid.NewV4(),
+            NetworkId:     uuid.NewV4(),
             Latitude:      40.7128,
             Longitude:     -74.0060,
             InstallDate:    "07-03-2023",
