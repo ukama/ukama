@@ -21,8 +21,6 @@
 #define MODULE_TYPE_MASK "mask"
 #define MODULE_TYPE_NONE ""
 
-#define MAX_URL_LEN 1024
-
 /* overall node info */
 typedef struct nodeInfo_ {
 

@@ -9,17 +9,38 @@
 #include <ulfius.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "usys_types.h"
 #include "usys_log.h"
 
 #include "rlogd.h"
-#include "web_service.h"
+#include "websocket.h"
+
+static int init_framework(UInst *inst,
+                          struct sockaddr_in *bindAddr,
+                          int bindPort) {
+
+    if (ulfius_init_instance(inst,
+                             bindPort,
+                             bindAddr,
+                             NULL)!= U_OK) {
+        log_error("Error initializing instance for websocket: %d",
+                  bindPort);
+        return USYS_FALSE;
+    }
+
+    u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
+
+    return USYS_TRUE;
+}
 
 static int start_framework(UInst *instance) {
 
     if (ulfius_start_framework(instance) != U_OK) {
-        usys_log_error("Error starting the webservice/websocket.");
+        usys_log_error("Error starting the websocket server");
 
         ulfius_stop_framework(instance);
         ulfius_clean_instance(instance);
@@ -31,35 +52,47 @@ static int start_framework(UInst *instance) {
     return USYS_TRUE;
 }
 
-static void setup_webservice_endpoints(UInst *instance) {
+static void setup_websocket_endpoints(char *nodeID, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
-                               &web_service_cb_ping, NULL);
+                               &web_socket_cb_ping, NULL);
 
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("log/"), 0,
-                               &web_service_cb_post_log, NULL);
+    ulfius_add_endpoint_by_val(instance, "PUT", URL_PREFIX,
+                               API_RES_EP("logit/"), 0,
+                               &web_socket_cb_post_log, nodeID);
 
-    ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
+    ulfius_set_default_endpoint(instance, &web_socket_cb_default, NULL);
 }
 
-int start_web_service(int port, UInst *serviceInst) {
+int start_websocket_server(char *nodeID, int port, UInst *websocketInst) {
 
-    if (ulfius_init_instance(serviceInst, port, NULL, NULL) != U_OK) {
-        usys_log_error("Error initializing instance for webservice port %d", port);
+    struct sockaddr_in bindAddr;
+
+    memset(&bindAddr, 0, sizeof(bindAddr));
+    bindAddr.sin_family = AF_INET;
+    bindAddr.sin_port   = htons(port);
+
+    if (getenv(ENV_BINDING_IP) == NULL) {
+        bindAddr.sin_addr.s_addr = inet_addr(DEF_BINDING_IP);
+    } else {
+        bindAddr.sin_addr.s_addr = inet_addr(getenv(ENV_BINDING_IP));
+    }
+
+    if (init_framework(websocketInst, &bindAddr, port) != USYS_TRUE) {
+        log_error("Error initializing websocket framework on port: %d", port);
         return USYS_FALSE;
     }
 
-    u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
-    setup_webservice_endpoints(serviceInst);
+    /* setup endpoints and methods callback. */
+    setup_websocket_endpoints(nodeID, websocketInst);
 
-    if (!start_framework(serviceInst)) {
-        usys_log_error("Failed to start webservices on port: %d", port);
+    if (start_framework(websocketInst) == USYS_FALSE) {
+        log_error("Failed to start websocket at remote port %d", port);
         return USYS_FALSE;
     }
 
-    usys_log_debug("Webservice started on port: %d", port);
+    log_debug("Websocket accepting on port: %d", port);
 
     return USYS_TRUE;
 }

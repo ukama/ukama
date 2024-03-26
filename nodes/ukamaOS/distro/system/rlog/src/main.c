@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <pthread.h>
 
 #include "ulfius.h"
 
@@ -17,13 +18,17 @@
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_file.h"
+#include "usys_mem.h"
 #include "usys_services.h"
 
 #include "nodeInfo.h"
 #include "rlogd.h"
 
 /* network.c */
-extern int start_web_service(int port, UInst *serviceInst);
+extern int start_websocket_server(char *nodeID, int port, UInst *serviceInst);
+
+/* Global */
+ThreadData *gData = NULL;
 
 static void usage() {
 
@@ -42,12 +47,24 @@ void set_log_level(char *slevel) {
     if (!strcmp(slevel, "DEBUG")) {
         ilevel = USYS_LOG_DEBUG;
     } else if (!strcmp(slevel, "INFO")) {
-        ilevel = LOG_INFO;
+        ilevel = USYS_LOG_INFO;
     } else if (!strcmp(slevel, "ERROR")) {
-        ilevel = LOG_ERROR;
+        ilevel = USYS_LOG_ERROR;
     }
 
     log_set_level(ilevel);
+}
+
+void init_config_and_buffer() {
+
+    gData = (ThreadData *)malloc(sizeof(ThreadData));
+
+    gData->output        = DEF_OUTPUT;
+    gData->level         = USYS_LOG_DEBUG;
+    gData->flushTime     = DEF_FLUSH_TIME;
+    gData->bufferSize    = 0;
+    gData->jOutputBuffer = json_pack("{s:[]}", JTAG_LOGS);
+    pthread_mutex_init(&gData->bufferMutex, NULL);
 }
 
 int main (int argc, char **argv) {
@@ -59,8 +76,9 @@ int main (int argc, char **argv) {
     UInst serviceInst;
 
     log_set_service(SERVICE_NAME);
+    init_config_and_buffer();
 
-    while (1) {
+    while (USYS_TRUE) {
         opt    = 0;
         opdidx = 0;
 
@@ -105,20 +123,23 @@ int main (int argc, char **argv) {
         exit(1);
     }
 
-    /* find node-ID from node.d */
 	if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) != USYS_TRUE) {
-	    usys_log_error("Error retreiving NodeID from noded.d at %s:%s",
+	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
                        DEF_NODED_HOST, nodedPort);
 		goto done;
 	}
 
-    /* start web-service */
-    if (start_web_service(rlogdPort, &serviceInst) != USYS_TRUE){
-
+    if (start_websocket_server(nodeID, rlogdPort, &serviceInst) != USYS_TRUE){
+        usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
+        goto done;
     }
 
+    pause();
+
 done:
-	free(nodeID);
+    ulfius_stop_framework(&serviceInst);
+    ulfius_clean_instance(&serviceInst);
+	usys_free(nodeID);
 
 	return 0;
 }

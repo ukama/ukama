@@ -88,10 +88,10 @@ int deserialize_node_info(NodeInfo **nodeInfo, json_t *json) {
 
     log_json(json);
 	
-    jNodeInfo = json_object_get(json, JSON_NODE_INFO);
+    jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
 
     if (jNodeInfo == NULL) {
-        usys_log_error("Missing mandatory %s from JSON", JSON_NODE_INFO);
+        usys_log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
         return USYS_FALSE;
     }
 
@@ -101,19 +101,19 @@ int deserialize_node_info(NodeInfo **nodeInfo, json_t *json) {
         return USYS_FALSE;
     }
 
-    ret |= get_json_entry(jNodeInfo, JSON_UUID, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_UUID, JSON_STRING,
                           &(*nodeInfo)->uuid, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_NAME, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_NAME, JSON_STRING,
                           &(*nodeInfo)->name, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_PART_NUMBER, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_PART_NUMBER, JSON_STRING,
                           &(*nodeInfo)->partNumber, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_SKEW, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_SKEW, JSON_STRING,
                           &(*nodeInfo)->skew, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_MAC, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_MAC, JSON_STRING,
                           &(*nodeInfo)->mac, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_ASSEMBLY_DATE, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_ASSEMBLY_DATE, JSON_STRING,
                           &(*nodeInfo)->assemblyDate, NULL);
-    ret |= get_json_entry(jNodeInfo, JSON_OEM, JSON_STRING,
+    ret |= get_json_entry(jNodeInfo, JTAG_OEM, JSON_STRING,
                           &(*nodeInfo)->oem, NULL);
 
     if (ret == USYS_FALSE) {

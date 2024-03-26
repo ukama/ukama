@@ -13,15 +13,21 @@
 
 #include "nodeInfo.h"
 
-#define JSON_NODE_INFO      "nodeInfo"
-#define JSON_UUID           "UUID"
-#define JSON_NAME           "name"
-#define JSON_TYPE           "type"
-#define JSON_PART_NUMBER    "partNumber"
-#define JSON_SKEW           "skew"
-#define JSON_MAC            "mac"
-#define JSON_OEM            "oemName"
-#define JSON_ASSEMBLY_DATE  "assemblyDate"
+#define JTAG_NODE_INFO      "nodeInfo"
+#define JTAG_UUID           "UUID"
+#define JTAG_NAME           "name"
+#define JTAG_TYPE           "type"
+#define JTAG_PART_NUMBER    "partNumber"
+#define JTAG_SKEW           "skew"
+#define JTAG_MAC            "mac"
+#define JTAG_OEM            "oemName"
+#define JTAG_ASSEMBLY_DATE  "assemblyDate"
+
+#define JTAG_LOGS      "logs"
+#define JTAG_APP_NAME  "app_name"
+#define JTAG_TIME      "time"
+#define JTAG_LEVEL     "level"
+#define JTAG_MESSAGE   "message"
 
 int deserialize_node_info(NodeInfo **nodeInfo, json_t *json);
 #endif /* JSERDES_H */

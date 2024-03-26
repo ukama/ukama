@@ -16,6 +16,7 @@
 #include "usys_mem.h"
 #include "usys_types.h"
 
+#include "rlogd.h"
 #include "nodeInfo.h"
 #include "jserdes.h"
 
