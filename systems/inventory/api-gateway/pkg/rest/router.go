@@ -24,7 +24,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	accountpb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
+	accountingpb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
 	componentpb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 	contractpb "github.com/ukama/ukama/systems/inventory/contract/pb/gen"
 )
@@ -45,7 +45,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	Component component
-	Account   account
+	Account   accounting
 	Contract  contract
 }
 
@@ -55,10 +55,10 @@ type component interface {
 	SyncComponent() (*componentpb.SyncComponentsResponse, error)
 }
 
-type account interface {
-	Get(id string) (*accountpb.GetResponse, error)
-	GetByCompany(c string) (*accountpb.GetByCompanmyResponse, error)
-	SyncAccounts() (*accountpb.SyncAcountsResponse, error)
+type accounting interface {
+	Get(id string) (*accountingpb.GetResponse, error)
+	GetByCompany(c string) (*accountingpb.GetByCompanmyResponse, error)
+	SyncAccounts() (*accountingpb.SyncAcountingResponse, error)
 }
 
 type contract interface {
@@ -67,7 +67,7 @@ type contract interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Account = client.NewAccountInventory(endpoints.Account, endpoints.Timeout)
+	c.Account = client.NewAccountingInventory(endpoints.Account, endpoints.Timeout)
 	c.Contract = client.NewContractInventory(endpoints.Contract, endpoints.Timeout)
 	c.Component = client.NewComponentInventory(endpoints.Component, endpoints.Timeout)
 
@@ -133,10 +133,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		components.GET("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 
 		// Account routes
-		const account = "/accounts"
+		const account = "/accounting"
 		accounts := auth.Group(account, "Account", "Operations on Account")
-		accounts.GET("/:uuid", formatDoc("Get account", "Get account by id"), tonic.Handler(r.getAccountByIdHandler, http.StatusOK))
-		accounts.GET("/company/:company", formatDoc("Get accounts", "Get accounts by company name"), tonic.Handler(r.getAccountsByCompanyHandler, http.StatusOK))
+		accounts.GET("/:uuid", formatDoc("Get accounting", "Get accounting by id"), tonic.Handler(r.getAccountByIdHandler, http.StatusOK))
+		accounts.GET("/company/:company", formatDoc("Get accountings", "Get accountings by company name"), tonic.Handler(r.getAccountsByCompanyHandler, http.StatusOK))
 		accounts.GET("/sync", formatDoc("Sync accounts", "Sync accounts with repo"), tonic.Handler(r.syncAccountsHandler, http.StatusOK))
 
 		// Contract routes
@@ -158,15 +158,15 @@ func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponen
 	return r.clients.Component.SyncComponent()
 }
 
-func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accountpb.GetResponse, error) {
+func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accountingpb.GetResponse, error) {
 	return r.clients.Account.Get(req.Uuid)
 }
 
-func (r *Router) getAccountsByCompanyHandler(c *gin.Context, req *GetAccounts) (*accountpb.GetByCompanmyResponse, error) {
+func (r *Router) getAccountsByCompanyHandler(c *gin.Context, req *GetAccounts) (*accountingpb.GetByCompanmyResponse, error) {
 	return r.clients.Account.GetByCompany(req.Company)
 }
 
-func (r *Router) syncAccountsHandler(c *gin.Context) (*accountpb.SyncAcountsResponse, error) {
+func (r *Router) syncAccountsHandler(c *gin.Context) (*accountingpb.SyncAcountingResponse, error) {
 	return r.clients.Account.SyncAccounts()
 }
 
