@@ -78,16 +78,16 @@ func runGrpcServer(gormdb sql.Db) {
 
 	gc := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
 
-	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-	// 	serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-	// 	serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	accountServer := server.NewAccountServer(serviceConfig.OrgName, db.NewAccountRepo(gormdb),
-		nil, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
+	mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
 
-	// log.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterAccountServiceServer(s, accountServer)
@@ -95,7 +95,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go grpcServer.StartServer()
 
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	waitForExit()
 }

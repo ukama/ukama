@@ -29,7 +29,7 @@ type Config struct {
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string
-	RepoUrl          string `default:"https://github.com/ukama/networks.git"`
+	RepoUrl          string `default:""`
 	Username         string `default:"ukama"`
 	Token            string `default:""`
 	RepoPath         string `default:"/temp/git/networks"`
