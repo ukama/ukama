@@ -318,8 +318,14 @@ func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.Ge
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.GetSitesResponse, error) {
+	network, ok := c.GetQuery("network")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "networkId is a mandatory query parameter"}
+	}
 
- return r.clients.Site.GetSites(req.NetworkId)
+	return r.clients.Site.GetSites(network)
+
 }
 
 func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sitepb.UpdateResponse, error) {

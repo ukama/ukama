@@ -60,7 +60,7 @@ type GetSiteRequest struct {
 }
 
 type GetSitesRequest struct {
-	NetworkId string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" form:"org" json:"network" query:"network" binding:"required" validate:"required"`
 }
 type UpdateSiteRequest struct {
 	SiteId        string    `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
