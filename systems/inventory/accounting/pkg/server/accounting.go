@@ -102,7 +102,10 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 	}
 
 	for _, company := range enviroment.Test {
-		a.gitClient.BranchCheckout(company.GitBranchName)
+		err := a.gitClient.BranchCheckout(company.GitBranchName)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to checkout branch. Error %s", err.Error())
+		}
 		manifestFileContent, err := a.gitClient.ReadFileJSON(a.gitDirPath + "/manifest.json")
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to read manifest file. Error %s", err.Error())
@@ -116,11 +119,13 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 
 		adb := utilAccountsToDbAccounts(accounting, company.Company)
 		inventoryIds := utils.UniqueInventoryIds(adb)
-		err = a.accountingRepo.Delete(inventoryIds)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "accounting")
+		if len(inventoryIds) > 0 {
+			err = a.accountingRepo.Delete(inventoryIds)
+			if err != nil {
+				return nil, grpc.SqlErrorToGrpc(err, "accounting")
+			}
+			log.Info("Deleted accountings with inventory ids: ", inventoryIds)
 		}
-		log.Info("Deleted accountings with inventory ids: ", inventoryIds)
 
 		err = a.accountingRepo.Add(adb)
 		if err != nil {

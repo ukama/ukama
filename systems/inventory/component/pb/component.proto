@@ -57,8 +57,8 @@ message Component {
 }
 
 enum ComponentCategory {
-    access = 0;
-    backhaul = 1;
-    power = 2;
-    uswitch = 3;
+    ACCESS = 0;
+    BACKHAUL = 1;
+    POWER = 2;
+    SWITCH = 3;
 }

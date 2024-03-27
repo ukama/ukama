@@ -104,7 +104,11 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 	}
 
 	for _, company := range enviroment.Test {
-		c.gitClient.BranchCheckout(company.GitBranchName)
+		err := c.gitClient.BranchCheckout(company.GitBranchName)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to checkout branch. Error %s", err.Error())
+		}
+		
 		paths, _ := c.gitClient.GetFilesPath("components")
 		var components []utils.Component
 		for _, path := range paths {
@@ -122,11 +126,13 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		}
 		cdb := utilComponentsToDbComponents(components)
 		componentIds := utils.UniqueComponentIds(dbComponentsToPbComponents(cdb))
-		err = c.componentRepo.Delete(componentIds)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "account")
+		if len(componentIds) > 0 {
+			err = c.componentRepo.Delete(componentIds)
+			if err != nil {
+				return nil, grpc.SqlErrorToGrpc(err, "account")
+			}
+			log.Info("Deleted components with inventory ids: ", componentIds)
 		}
-		log.Info("Deleted components with inventory ids: ", componentIds)
 
 		err = c.componentRepo.Add(cdb)
 		if err != nil {

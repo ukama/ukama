@@ -33,10 +33,10 @@ type Component struct {
 type ComponentCategory uint8
 
 const (
-	access   ComponentCategory = 0
-	backhaul ComponentCategory = 1
-	power    ComponentCategory = 2
-	uswitch  ComponentCategory = 3
+	ACCESS   ComponentCategory = 0
+	BACKHAUL ComponentCategory = 1
+	POWER    ComponentCategory = 2
+	SWITCH   ComponentCategory = 3
 )
 
 func (c *ComponentCategory) Scan(value interface{}) error {
