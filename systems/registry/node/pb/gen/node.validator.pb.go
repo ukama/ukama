@@ -181,25 +181,9 @@ func (this *DetachNodeRequest) Validate() error {
 func (this *DetachNodeResponse) Validate() error {
 	return nil
 }
-
-var _regex_AddNodeToSiteRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_AddNodeToSiteRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *AddNodeToSiteRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if !_regex_AddNodeToSiteRequest_NetworkId.MatchString(this.NetworkId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
-	}
-	if this.NetworkId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
-	}
-	if !_regex_AddNodeToSiteRequest_SiteId.MatchString(this.SiteId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SiteId))
-	}
-	if this.SiteId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
 	}
 	return nil
 }

@@ -4,7 +4,7 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/registry/network => ../../registry/network
+replace github.com/ukama/ukama/systems/registry/network => ../network
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 

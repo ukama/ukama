@@ -34,7 +34,6 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
-const uuidParsingError = "Error parsing UUID"
 
 
 type NodeServer struct {
@@ -382,14 +381,15 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 	netID, err := uuid.FromString(req.GetNetworkId())
 
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
 
 	siteID, err := uuid.FromString(req.GetSiteId())
 
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
+
 	}
 
 	svc, err := n.siteService.GetClient()
@@ -397,7 +397,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 		return nil, err
 	}
 
-	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: siteID.String(),NetworkId:netID.String()})
+	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: siteID.String()})
 	if err != nil {
 
 		return nil, err

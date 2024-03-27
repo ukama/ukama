@@ -34,6 +34,7 @@ import (
 	mmocks "github.com/ukama/ukama/systems/registry/member/pb/gen/mocks"
 	netmocks "github.com/ukama/ukama/systems/registry/network/pb/gen/mocks"
 	nmocks "github.com/ukama/ukama/systems/registry/node/pb/gen/mocks"
+	sitmocks "github.com/ukama/ukama/systems/registry/site/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -149,6 +150,7 @@ func TestGetInvitation_Found(t *testing.T) {
 	invId := "f24bf990-9f69-460d-938c-68ce3c8d40b3"
 
 	w := httptest.NewRecorder()
+
 	req, _ := http.NewRequest("GET", "/v1/invitations/"+invId, nil)
 	arc := &providers.AuthRestClient{}
 
@@ -156,6 +158,8 @@ func TestGetInvitation_Found(t *testing.T) {
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
+	site := &sitmocks.SiteServiceClient{}
+
 	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
 		Invitation: &invpb.Invitation{
 			Id:    invId,
@@ -170,6 +174,7 @@ func TestGetInvitation_Found(t *testing.T) {
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Node:       client.NewNodeFromClient(node),
 		Member:     client.NewRegistryFromClient(mem),
+		Site: client.NewSiteRegistryFromClient(site),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)

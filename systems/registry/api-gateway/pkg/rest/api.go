@@ -56,11 +56,11 @@ type AddNetworkRequest struct {
 }
 
 type GetSiteRequest struct {
-	SiteId    string `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
+	SiteId string `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
 }
 
 type GetSitesRequest struct {
-	NetworkId string `example:"{{NetworkUUID}}" path:"network_id" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 }
 type UpdateSiteRequest struct {
 	SiteId        string    `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
@@ -76,7 +76,7 @@ type UpdateSiteRequest struct {
 }
 
 type AddSiteRequest struct {
-	NetworkId     string  `example:"{{NetworkUUID}}" path:"network_id" validate:"required"`
+	NetworkId     string  `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 	Name          string  `example:"s1-site" json:"site" validate:"required"`
 	BackhaulId    string  `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
 	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`

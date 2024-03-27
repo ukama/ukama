@@ -42,14 +42,14 @@ func (o *siteClientProvider) GetClient() (pb.SiteServiceClient, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		log.Infoln("Connecting to Network service ", o.siteHost)
+		log.Infoln("Connecting to Site service ", o.siteHost)
 
 		conn, err := grpc.DialContext(ctx, o.siteHost, grpc.WithBlock(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Errorf("Failed to connect to Site service %s. Error: %v", o.siteHost, err)
 
-			return nil, fmt.Errorf("failed to connect to remote network service: %w", err)
+			return nil, fmt.Errorf("failed to connect to remote site service: %w", err)
 		}
 
 		o.siteService = pb.NewSiteServiceClient(conn)
