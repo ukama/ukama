@@ -49,7 +49,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:   10 * time.Second,
-			Component: "component:9090",
+			Component: "localhost:9090",
 			Account:   "accounting:9090",
 		},
 		HttpServices: HttpEndpoints{

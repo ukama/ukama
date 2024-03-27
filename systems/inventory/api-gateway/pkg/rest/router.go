@@ -49,13 +49,13 @@ type Clients struct {
 
 type component interface {
 	Get(id string) (*componentpb.GetResponse, error)
-	GetByCompany(c string, t string) (*componentpb.GetByCompanyResponse, error)
+	GetByUser(uid string, c string) (*componentpb.GetByUserResponse, error)
 	SyncComponent() (*componentpb.SyncComponentsResponse, error)
 }
 
 type accounting interface {
 	Get(id string) (*accountingpb.GetResponse, error)
-	GetByCompany(c string) (*accountingpb.GetByCompanmyResponse, error)
+	GetByUser(uid string) (*accountingpb.GetByUserResponse, error)
 	SyncAccounts() (*accountingpb.SyncAcountingResponse, error)
 }
 
@@ -122,14 +122,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const component = "/components"
 		components := auth.Group(component, "Component", "Operations on Component")
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
-		components.GET("/company/:company", formatDoc("Get components", "Get components by company name"), tonic.Handler(r.getComponentsByCompanyHandler, http.StatusOK))
+		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
 		components.GET("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 
 		// Account routes
 		const account = "/accounting"
 		accounts := auth.Group(account, "Account", "Operations on Account")
 		accounts.GET("/:uuid", formatDoc("Get accounting", "Get accounting by id"), tonic.Handler(r.getAccountByIdHandler, http.StatusOK))
-		accounts.GET("/company/:company", formatDoc("Get accountings", "Get accountings by company name"), tonic.Handler(r.getAccountsByCompanyHandler, http.StatusOK))
+		accounts.GET("/user/:uuid", formatDoc("Get accountings", "Get accountings by user id"), tonic.Handler(r.getAccountsByUserHandler, http.StatusOK))
 		accounts.GET("/sync", formatDoc("Sync accounts", "Sync accounts with repo"), tonic.Handler(r.syncAccountsHandler, http.StatusOK))
 	}
 }
@@ -138,8 +138,8 @@ func (r *Router) getComponentByIdHandler(c *gin.Context, req *GetRequest) (*comp
 	return r.clients.Component.Get(req.Uuid)
 }
 
-func (r *Router) getComponentsByCompanyHandler(c *gin.Context, req *GetComponents) (*componentpb.GetByCompanyResponse, error) {
-	return r.clients.Component.GetByCompany(req.Company, req.Category)
+func (r *Router) getComponentsByUserHandler(c *gin.Context, req *GetComponents) (*componentpb.GetByUserResponse, error) {
+	return r.clients.Component.GetByUser(req.UserId, req.Category)
 }
 
 func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponentsResponse, error) {
@@ -150,8 +150,8 @@ func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accoun
 	return r.clients.Accounting.Get(req.Uuid)
 }
 
-func (r *Router) getAccountsByCompanyHandler(c *gin.Context, req *GetAccounts) (*accountingpb.GetByCompanmyResponse, error) {
-	return r.clients.Accounting.GetByCompany(req.Company)
+func (r *Router) getAccountsByUserHandler(c *gin.Context, req *GetAccounts) (*accountingpb.GetByUserResponse, error) {
+	return r.clients.Accounting.GetByUser(req.UserId)
 }
 
 func (r *Router) syncAccountsHandler(c *gin.Context) (*accountingpb.SyncAcountingResponse, error) {

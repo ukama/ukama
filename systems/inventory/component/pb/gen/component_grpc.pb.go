@@ -23,7 +23,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ComponentServiceClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	GetByCompany(ctx context.Context, in *GetByCompanyRequest, opts ...grpc.CallOption) (*GetByCompanyResponse, error)
 	GetByUser(ctx context.Context, in *GetByUserRequest, opts ...grpc.CallOption) (*GetByUserResponse, error)
 	SyncComponents(ctx context.Context, in *SyncComponentsRequest, opts ...grpc.CallOption) (*SyncComponentsResponse, error)
 }
@@ -39,15 +38,6 @@ func NewComponentServiceClient(cc grpc.ClientConnInterface) ComponentServiceClie
 func (c *componentServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.inventory.component.v1.ComponentService/Get", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *componentServiceClient) GetByCompany(ctx context.Context, in *GetByCompanyRequest, opts ...grpc.CallOption) (*GetByCompanyResponse, error) {
-	out := new(GetByCompanyResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.component.v1.ComponentService/GetByCompany", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +67,6 @@ func (c *componentServiceClient) SyncComponents(ctx context.Context, in *SyncCom
 // for forward compatibility
 type ComponentServiceServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	GetByCompany(context.Context, *GetByCompanyRequest) (*GetByCompanyResponse, error)
 	GetByUser(context.Context, *GetByUserRequest) (*GetByUserResponse, error)
 	SyncComponents(context.Context, *SyncComponentsRequest) (*SyncComponentsResponse, error)
 	mustEmbedUnimplementedComponentServiceServer()
@@ -89,9 +78,6 @@ type UnimplementedComponentServiceServer struct {
 
 func (UnimplementedComponentServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
-}
-func (UnimplementedComponentServiceServer) GetByCompany(context.Context, *GetByCompanyRequest) (*GetByCompanyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByCompany not implemented")
 }
 func (UnimplementedComponentServiceServer) GetByUser(context.Context, *GetByUserRequest) (*GetByUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByUser not implemented")
@@ -126,24 +112,6 @@ func _ComponentService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ComponentServiceServer).Get(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ComponentService_GetByCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByCompanyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ComponentServiceServer).GetByCompany(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.inventory.component.v1.ComponentService/GetByCompany",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComponentServiceServer).GetByCompany(ctx, req.(*GetByCompanyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -194,10 +162,6 @@ var ComponentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _ComponentService_Get_Handler,
-		},
-		{
-			MethodName: "GetByCompany",
-			Handler:    _ComponentService_GetByCompany_Handler,
 		},
 		{
 			MethodName: "GetByUser",

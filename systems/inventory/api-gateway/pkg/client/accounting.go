@@ -72,12 +72,12 @@ func (r *AccountingInventory) Get(id string) (*pb.GetResponse, error) {
 	return res, nil
 }
 
-func (r *AccountingInventory) GetByCompany(c string) (*pb.GetByCompanmyResponse, error) {
+func (r *AccountingInventory) GetByUser(uid string) (*pb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetByCompany(ctx, &pb.GetByCompanmyRequest{
-		Company: c,
+	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
+		UserId: uid,
 	})
 	if err != nil {
 		return nil, err

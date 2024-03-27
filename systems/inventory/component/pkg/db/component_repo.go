@@ -11,12 +11,12 @@ package db
 import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
-	GetByCompany(company string, category int32) ([]*Component, error)
 	GetByUser(userId string, category int32) ([]*Component, error)
 	Add(components []*Component) error
 	Delete(ids []string) error
@@ -41,21 +41,24 @@ func (c *componentRepo) Get(id uuid.UUID) (*Component, error) {
 	return &component, nil
 }
 
-func (c *componentRepo) GetByCompany(company string, category int32) ([]*Component, error) {
-	var components []*Component
-	err := c.Db.GetGormDb().Where("company = ?", company).Where("category", category).Find(&components).Error
-	if err != nil {
-		return nil, err
-	}
-	return components, nil
-}
-
 func (c *componentRepo) GetByUser(userId string, category int32) ([]*Component, error) {
 	var components []*Component
-	err := c.Db.GetGormDb().Where("user_id = ?", userId).Where("category", category).Find(&components).Error
-	if err != nil {
-		return nil, err
+
+	tx := c.Db.GetGormDb().Preload(clause.Associations)
+
+	if category != 0 {
+		tx = tx.Where("category = ?", category)
 	}
+
+	result := tx.Find(&components)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
 	return components, nil
 }
 

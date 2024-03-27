@@ -15,7 +15,6 @@ import (
 type Accounting struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Item          string
-	Company       string
 	UserId        string
 	Inventory     string
 	EffectiveDate string

@@ -23,7 +23,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountingServiceClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	GetByCompany(ctx context.Context, in *GetByCompanmyRequest, opts ...grpc.CallOption) (*GetByCompanmyResponse, error)
 	GetByUser(ctx context.Context, in *GetByUserRequest, opts ...grpc.CallOption) (*GetByUserResponse, error)
 	SyncAccounting(ctx context.Context, in *SyncAcountingRequest, opts ...grpc.CallOption) (*SyncAcountingResponse, error)
 }
@@ -39,15 +38,6 @@ func NewAccountingServiceClient(cc grpc.ClientConnInterface) AccountingServiceCl
 func (c *accountingServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.inventory.accounting.v1.AccountingService/Get", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountingServiceClient) GetByCompany(ctx context.Context, in *GetByCompanmyRequest, opts ...grpc.CallOption) (*GetByCompanmyResponse, error) {
-	out := new(GetByCompanmyResponse)
-	err := c.cc.Invoke(ctx, "/ukama.inventory.accounting.v1.AccountingService/GetByCompany", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +67,6 @@ func (c *accountingServiceClient) SyncAccounting(ctx context.Context, in *SyncAc
 // for forward compatibility
 type AccountingServiceServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	GetByCompany(context.Context, *GetByCompanmyRequest) (*GetByCompanmyResponse, error)
 	GetByUser(context.Context, *GetByUserRequest) (*GetByUserResponse, error)
 	SyncAccounting(context.Context, *SyncAcountingRequest) (*SyncAcountingResponse, error)
 	mustEmbedUnimplementedAccountingServiceServer()
@@ -89,9 +78,6 @@ type UnimplementedAccountingServiceServer struct {
 
 func (UnimplementedAccountingServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
-}
-func (UnimplementedAccountingServiceServer) GetByCompany(context.Context, *GetByCompanmyRequest) (*GetByCompanmyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByCompany not implemented")
 }
 func (UnimplementedAccountingServiceServer) GetByUser(context.Context, *GetByUserRequest) (*GetByUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByUser not implemented")
@@ -126,24 +112,6 @@ func _AccountingService_Get_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountingServiceServer).Get(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AccountingService_GetByCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByCompanmyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountingServiceServer).GetByCompany(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.inventory.accounting.v1.AccountingService/GetByCompany",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountingServiceServer).GetByCompany(ctx, req.(*GetByCompanmyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -194,10 +162,6 @@ var AccountingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _AccountingService_Get_Handler,
-		},
-		{
-			MethodName: "GetByCompany",
-			Handler:    _AccountingService_GetByCompany_Handler,
 		},
 		{
 			MethodName: "GetByUser",

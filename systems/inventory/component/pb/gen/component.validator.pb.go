@@ -26,19 +26,6 @@ func (this *GetResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetByCompanyRequest) Validate() error {
-	return nil
-}
-func (this *GetByCompanyResponse) Validate() error {
-	for _, item := range this.Components {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Components", err)
-			}
-		}
-	}
-	return nil
-}
 func (this *GetByUserRequest) Validate() error {
 	return nil
 }

@@ -16,7 +16,6 @@ import (
 
 type Component struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Company       string
 	Inventory     string
 	UserId        string
 	Category      ComponentCategory
@@ -34,10 +33,11 @@ type Component struct {
 type ComponentCategory uint8
 
 const (
-	ACCESS   ComponentCategory = 0
-	BACKHAUL ComponentCategory = 1
-	POWER    ComponentCategory = 2
-	SWITCH   ComponentCategory = 3
+	ALL      ComponentCategory = 0
+	ACCESS   ComponentCategory = 1
+	BACKHAUL ComponentCategory = 2
+	POWER    ComponentCategory = 3
+	SWITCH   ComponentCategory = 4
 )
 
 func (c *ComponentCategory) Scan(value interface{}) error {
@@ -51,7 +51,7 @@ func (c ComponentCategory) Value() (uint8, error) {
 }
 
 func (c ComponentCategory) String() string {
-	t := map[ComponentCategory]string{0: "access", 1: "backhaul", 2: "power", 3: "switch"}
+	t := map[ComponentCategory]string{0: "all", 1: "access", 2: "backhaul", 3: "power", 4: "switch"}
 
 	v, ok := t[c]
 	if !ok {
@@ -67,7 +67,7 @@ func ParseType(value string) ComponentCategory {
 		return ComponentCategory(i)
 	}
 
-	t := map[string]ComponentCategory{"access": 0, "backhaul": 1, "power": 2, "switch": 3}
+	t := map[string]ComponentCategory{"all": 0, "access": 1, "backhaul": 2, "power": 3, "switch": 4}
 
 	v, ok := t[value]
 	if !ok {

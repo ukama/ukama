@@ -15,12 +15,12 @@ type GetRequest struct {
 }
 
 type GetComponents struct {
-	Company  string `example:"{{company}}" path:"company" validate:"required"`
+	UserId   string `example:"{{userId}}" path:"uuid" validate:"required"`
 	Category string `example:"{{componentType}}" query:"category" validate:"required"`
 }
 
 type GetAccounts struct {
-	Company string `example:"{{company}}" path:"company" validate:"required"`
+	UserId string `example:"{{userId}}" path:"uuid" validate:"required"`
 }
 
 type GetContracts struct {

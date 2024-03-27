@@ -67,25 +67,12 @@ func (a *AccountingServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.Get
 	}, nil
 }
 
-func (a *AccountingServer) GetByCompany(ctx context.Context, req *pb.GetByCompanmyRequest) (*pb.GetByCompanmyResponse, error) {
-	log.Infof("Getting accountings %v", req)
-
-	accountings, err := a.accountingRepo.GetByCompany(req.GetCompany())
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "component")
-	}
-
-	return &pb.GetByCompanmyResponse{
-		Accounting: dbAccountingsToPbAccountings(accountings),
-	}, nil
-}
-
 func (a *AccountingServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting accountings by user %v", req)
 
 	accountings, err := a.accountingRepo.GetByUser(req.GetUserId())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "component")
+		return nil, grpc.SqlErrorToGrpc(err, "accounting")
 	}
 
 	return &pb.GetByUserResponse{
@@ -128,7 +115,7 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to unmarshal manifest json file. Error %s", err.Error())
 		}
-		adb := utilAccountsToDbAccounts(accounting, company.Company, company.UserId)
+		adb := utilAccountsToDbAccounts(accounting, company.UserId)
 		inventoryIds := utils.UniqueInventoryIds(adb)
 		if len(inventoryIds) > 0 {
 			err = a.accountingRepo.Delete(inventoryIds)
@@ -154,17 +141,16 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 	return &pb.SyncAcountingResponse{}, nil
 }
 
-func dbAccountingToPbAccounting(component *db.Accounting) *pb.Accounting {
+func dbAccountingToPbAccounting(accounting *db.Accounting) *pb.Accounting {
 	return &pb.Accounting{
-		Id:            component.Id.String(),
-		Company:       component.Company,
-		Item:          component.Item,
-		UserId:        component.UserId,
-		Description:   component.Description,
-		Inventory:     component.Inventory,
-		OpexFee:       component.OpexFee,
-		Vat:           component.Vat,
-		EffectiveDate: component.EffectiveDate,
+		Id:            accounting.Id.String(),
+		Item:          accounting.Item,
+		UserId:        accounting.UserId,
+		Description:   accounting.Description,
+		Inventory:     accounting.Inventory,
+		OpexFee:       accounting.OpexFee,
+		Vat:           accounting.Vat,
+		EffectiveDate: accounting.EffectiveDate,
 	}
 }
 
@@ -178,13 +164,12 @@ func dbAccountingsToPbAccountings(accountings []*db.Accounting) []*pb.Accounting
 	return res
 }
 
-func utilAccountsToDbAccounts(accounting utils.Accounting, company string, userId string) []*db.Accounting {
+func utilAccountsToDbAccounts(accounting utils.Accounting, userId string) []*db.Accounting {
 	res := []*db.Accounting{}
 
 	for _, i := range accounting.Ukama {
 		res = append(res, &db.Accounting{
 			Id:            uuid.NewV4(),
-			Company:       company,
 			UserId:        userId,
 			Description:   i.Description,
 			Item:          i.Item,
@@ -197,7 +182,6 @@ func utilAccountsToDbAccounts(accounting utils.Accounting, company string, userI
 	for _, i := range accounting.Backhaul {
 		res = append(res, &db.Accounting{
 			Id:            uuid.NewV4(),
-			Company:       company,
 			UserId:        userId,
 			Description:   i.Description,
 			Item:          i.Item,

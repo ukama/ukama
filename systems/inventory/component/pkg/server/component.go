@@ -70,19 +70,6 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
-func (c *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompanyRequest) (*pb.GetByCompanyResponse, error) {
-	log.Infof("Getting components by company %v", req)
-
-	components, err := c.componentRepo.GetByCompany(req.GetCompany(), int32(req.GetCategory()))
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "component")
-	}
-
-	return &pb.GetByCompanyResponse{
-		Components: dbComponentsToPbComponents(components),
-	}, nil
-}
-
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 
@@ -134,7 +121,6 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
 			}
-			component.Company = company.Company
 			component.UserId = company.UserId
 			components = append(components, component)
 		}
@@ -166,7 +152,6 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	return &pb.Component{
 		Id:            component.Id.String(),
-		Company:       component.Company,
 		Inventory:     component.Inventory,
 		UserId:        component.UserId,
 		Category:      pb.ComponentCategory(component.Category),
@@ -198,7 +183,6 @@ func utilComponentsToDbComponents(components []utils.Component) []*db.Component 
 	for _, i := range components {
 		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
-			Company:       i.Company,
 			Inventory:     i.InventoryID,
 			Category:      db.ParseType(i.Category),
 			UserId:        i.UserId,

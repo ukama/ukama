@@ -72,13 +72,13 @@ func (r *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
 	return res, nil
 }
 
-func (r *ComponentInventory) GetByCompany(c string, t string) (*pb.GetByCompanyResponse, error) {
+func (r *ComponentInventory) GetByUser(uid string, c string) (*pb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetByCompany(ctx, &pb.GetByCompanyRequest{
-		Company:  c,
-		Category: pb.ComponentCategory(pb.ComponentCategory_value[t]),
+	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
+		UserId:   uid,
+		Category: pb.ComponentCategory(pb.ComponentCategory_value[c]),
 	})
 	if err != nil {
 		return nil, err

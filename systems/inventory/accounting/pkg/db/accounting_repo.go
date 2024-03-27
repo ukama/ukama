@@ -16,7 +16,6 @@ import (
 
 type AccountingRepo interface {
 	Get(id uuid.UUID) (*Accounting, error)
-	GetByCompany(company string) ([]*Accounting, error)
 	GetByUser(userId string) ([]*Accounting, error)
 
 	Add(accounts []*Accounting) error
@@ -40,15 +39,6 @@ func (c *accountingRepo) Get(id uuid.UUID) (*Accounting, error) {
 		return nil, err
 	}
 	return &account, nil
-}
-
-func (c *accountingRepo) GetByCompany(company string) ([]*Accounting, error) {
-	var accounts []*Accounting
-	err := c.Db.GetGormDb().Where("company = ?", company).Find(&accounts).Error
-	if err != nil {
-		return nil, err
-	}
-	return accounts, nil
 }
 
 func (c *accountingRepo) GetByUser(userId string) ([]*Accounting, error) {
