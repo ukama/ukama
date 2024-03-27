@@ -57,7 +57,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Network{}, &db.Site{})
+	err := d.Init(&db.Org{}, &db.Network{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -79,7 +79,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),
-		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb), cnucl.NewOrgClient(serviceConfig.OrgHost),
+		db.NewOrgRepo(gormdb),cnucl.NewOrgClient(serviceConfig.OrgHost),
 		mbClient, serviceConfig.PushGateway, serviceConfig.Country, serviceConfig.Currency,
 		serviceConfig.Language)
 

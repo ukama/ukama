@@ -112,43 +112,5 @@ func (r *NetworkRegistry) GetNetworks(orgID string) (*netpb.GetByOrgResponse, er
 	return res, nil
 }
 
-func (r *NetworkRegistry) AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
 
-	res, err := r.client.AddSite(ctx, &netpb.AddSiteRequest{NetworkId: netID, SiteName: siteName})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (r *NetworkRegistry) GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	res, err := r.client.GetSiteByName(ctx, &netpb.GetSiteByNameRequest{NetworkId: netID, SiteName: siteName})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (r *NetworkRegistry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	res, err := r.client.GetSitesByNetwork(ctx, &netpb.GetSitesByNetworkRequest{NetworkId: netID})
-	if err != nil {
-		return nil, err
-	}
-
-	if res.Sites == nil {
-		return &netpb.GetSitesByNetworkResponse{Sites: []*netpb.Site{}, NetworkId: netID}, nil
-	}
-
-	return res, nil
-}
