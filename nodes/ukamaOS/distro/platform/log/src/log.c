@@ -41,6 +41,9 @@ static struct {
     Callback callbacks[MAX_CALLBACKS];
 } l;
 
+/* websocket.c */
+extern int log_rlogd(char *message);
+
 static const char *levelStrings[] = { "TRACE", "DEBUG", "INFO",
                                       "WARN",  "ERROR", "FATAL" };
 
@@ -63,7 +66,9 @@ static void stdout_callback(log_Event *ev) {
 #endif
     vfprintf(ev->udata, ev->fmt, ev->ap);
     fprintf(ev->udata, "\n");
-    fflush(ev->udata);
+
+    if (!log_rlogd((char *)ev->udata))
+        fflush(ev->udata);
 }
 
 static void file_callback(log_Event *ev) {

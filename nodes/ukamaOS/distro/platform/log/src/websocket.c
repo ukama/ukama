@@ -13,10 +13,12 @@
 #include <pthread.h>
 
 #include "usys_types.h"
+#include "usys_services.h"
 
 #define PREFIX_WEBSOCKET "logit/"
 #define ENV_BINDING_IP   "ENV_BINDING_IP"
 #define DEF_BINDING_IP   "127.0.0.1"
+#define MAX_LOG_LEN      512
 
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
@@ -29,7 +31,9 @@ typedef struct {
 } ThreadArgs;
 
 static struct _websocket_client_handler *handler = NULL;
+static pthread_mutex_t hasData = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t monitorThread = NULL;
+static char dataToSend[MAX_LOG_LEN] = {0};
 
 static int is_websocket_valid(WSManager *manager) {
 
@@ -72,10 +76,21 @@ static void websocket_manager(const URequest *request,
                               void *data) {
 
     do {
-        sleep(5);
+
+        pthread_mutex_lock(&hasData);
         if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
             return;
         }
+
+        /* send the message */
+        if (ulfius_websocket_send_message(manager,
+                                          U_WEBSOCKET_OPCODE_TEXT,
+                                          strlen(dataToSend),
+                                          dataToSend) != U_OK) {
+            printf("Unable to send message: %s", dataToSend);
+        }
+        memset(dataToSend, 0, MAX_LOG_LEN);
+        pthread_mutex_unlock(&hasData);
     } while (1);
 
     return;
@@ -99,7 +114,7 @@ int start_websocket_client(char *serviceName, int rlogdPort) {
 
     int ret = USYS_FALSE;
     char *hostname = NULL;
-    char url[128] = {0};
+    char url[128]  = {0};
     
     struct _u_request request;
     struct _u_response response;
@@ -147,7 +162,7 @@ done:
 void log_init(char *serviceName, int rlogdPort) {
 
     ThreadArgs threadArgs;
-    
+
     if (handler) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
 
@@ -167,3 +182,15 @@ void log_init(char *serviceName, int rlogdPort) {
     pthread_detach(monitorThread);
 }
 
+int log_rlogd(char *message) {
+
+    if (strlen(message) > MAX_LOG_LEN -1) return USYS_FALSE;
+
+    if (!is_websocket_valid(handler)) return USYS_FALSE;
+
+    pthread_mutex_lock(&hasData);
+    strncpy(dataToSend, message, strlen(message));
+    pthread_mutex_unlock(&hasData);
+
+    return USYS_TRUE;
+}
