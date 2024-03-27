@@ -110,6 +110,36 @@ func (_m *AccountingRepo) GetByCompany(company string) ([]*db.Accounting, error)
 	return r0, r1
 }
 
+// GetByUser provides a mock function with given fields: userId
+func (_m *AccountingRepo) GetByUser(userId string) ([]*db.Accounting, error) {
+	ret := _m.Called(userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByUser")
+	}
+
+	var r0 []*db.Accounting
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]*db.Accounting, error)); ok {
+		return rf(userId)
+	}
+	if rf, ok := ret.Get(0).(func(string) []*db.Accounting); ok {
+		r0 = rf(userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.Accounting)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewAccountingRepo creates a new instance of AccountingRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewAccountingRepo(t interface {

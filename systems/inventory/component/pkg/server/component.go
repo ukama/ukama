@@ -71,7 +71,7 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 }
 
 func (c *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompanyRequest) (*pb.GetByCompanyResponse, error) {
-	log.Infof("Getting components %v", req)
+	log.Infof("Getting components by company %v", req)
 
 	components, err := c.componentRepo.GetByCompany(req.GetCompany(), int32(req.GetCategory()))
 	if err != nil {
@@ -79,6 +79,19 @@ func (c *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompany
 	}
 
 	return &pb.GetByCompanyResponse{
+		Components: dbComponentsToPbComponents(components),
+	}, nil
+}
+
+func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
+	log.Infof("Getting components by user %v", req)
+
+	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(req.GetCategory()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "component")
+	}
+
+	return &pb.GetByUserResponse{
 		Components: dbComponentsToPbComponents(components),
 	}, nil
 }
@@ -103,14 +116,14 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
 	}
 
+	var components []utils.Component
 	for _, company := range enviroment.Test {
 		err := c.gitClient.BranchCheckout(company.GitBranchName)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to checkout branch. Error %s", err.Error())
 		}
-		
+
 		paths, _ := c.gitClient.GetFilesPath("components")
-		var components []utils.Component
 		for _, path := range paths {
 			content, err := c.gitClient.ReadFileYML(path)
 			if err != nil {
@@ -122,6 +135,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
 			}
 			component.Company = company.Company
+			component.UserId = company.UserId
 			components = append(components, component)
 		}
 		cdb := utilComponentsToDbComponents(components)
@@ -129,7 +143,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		if len(componentIds) > 0 {
 			err = c.componentRepo.Delete(componentIds)
 			if err != nil {
-				return nil, grpc.SqlErrorToGrpc(err, "account")
+				return nil, grpc.SqlErrorToGrpc(err, "component")
 			}
 			log.Info("Deleted components with inventory ids: ", componentIds)
 		}
@@ -137,6 +151,12 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		err = c.componentRepo.Add(cdb)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "component")
+		}
+
+		route := c.baseRoutingKey.SetAction("sync").SetObject("components").MustBuild()
+		err = c.msgbus.PublishRequest(route, req)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
 	}
 
@@ -148,6 +168,7 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 		Id:            component.Id.String(),
 		Company:       component.Company,
 		Inventory:     component.Inventory,
+		UserId:        component.UserId,
 		Category:      pb.ComponentCategory(component.Category),
 		Type:          component.Type,
 		Description:   component.Description,
@@ -180,6 +201,7 @@ func utilComponentsToDbComponents(components []utils.Component) []*db.Component 
 			Company:       i.Company,
 			Inventory:     i.InventoryID,
 			Category:      db.ParseType(i.Category),
+			UserId:        i.UserId,
 			Type:          i.Type,
 			Description:   i.Description,
 			DatasheetURL:  i.DatasheetURL,

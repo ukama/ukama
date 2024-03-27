@@ -110,6 +110,36 @@ func (_m *ComponentRepo) GetByCompany(company string, category int32) ([]*db.Com
 	return r0, r1
 }
 
+// GetByUser provides a mock function with given fields: userId, category
+func (_m *ComponentRepo) GetByUser(userId string, category int32) ([]*db.Component, error) {
+	ret := _m.Called(userId, category)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByUser")
+	}
+
+	var r0 []*db.Component
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int32) ([]*db.Component, error)); ok {
+		return rf(userId, category)
+	}
+	if rf, ok := ret.Get(0).(func(string, int32) []*db.Component); ok {
+		r0 = rf(userId, category)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.Component)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, int32) error); ok {
+		r1 = rf(userId, category)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewComponentRepo creates a new instance of ComponentRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewComponentRepo(t interface {

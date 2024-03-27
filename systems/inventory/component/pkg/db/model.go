@@ -18,6 +18,7 @@ type Component struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Company       string
 	Inventory     string
+	UserId        string
 	Category      ComponentCategory
 	Type          string
 	Description   string

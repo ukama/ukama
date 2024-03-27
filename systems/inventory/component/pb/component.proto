@@ -15,6 +15,7 @@ package ukama.inventory.component.v1;
 service ComponentService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByCompany(GetByCompanyRequest) returns (GetByCompanyResponse);
+    rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
 
     rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
 }
@@ -36,6 +37,15 @@ message GetByCompanyResponse {
     repeated Component components = 1;
 }
 
+message GetByUserRequest {
+    string userId = 1 [json_name = "user_id"];
+    ComponentCategory category = 2;
+}
+
+message GetByUserResponse {
+    repeated Component components = 1;
+}
+
 message SyncComponentsRequest {}
 
 message SyncComponentsResponse {}
@@ -46,14 +56,15 @@ message Component {
     string inventory = 3 [json_name = "inventory_id"];
     ComponentCategory category = 4;
     string type = 5;
-    string description = 6;
-    string datasheetURL = 7 [json_name = "datasheet_url"];
-    string imagesURL = 8 [json_name = "images_url"];
-    string partNumber = 9 [json_name = "part_number"];
-    string manufacturer = 10;
-    string managed = 11;
-    uint32 warranty = 12;
-    string specification = 13;
+    string userId = 6 [json_name = "user_id"];
+    string description = 7;
+    string datasheetURL = 8 [json_name = "datasheet_url"];
+    string imagesURL = 9 [json_name = "images_url"];
+    string partNumber = 10 [json_name = "part_number"];
+    string manufacturer = 11;
+    string managed = 12;
+    uint32 warranty = 13;
+    string specification = 14;
 }
 
 enum ComponentCategory {

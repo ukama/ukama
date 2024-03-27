@@ -90,6 +90,43 @@ func (_m *AccountingServiceClient) GetByCompany(ctx context.Context, in *gen.Get
 	return r0, r1
 }
 
+// GetByUser provides a mock function with given fields: ctx, in, opts
+func (_m *AccountingServiceClient) GetByUser(ctx context.Context, in *gen.GetByUserRequest, opts ...grpc.CallOption) (*gen.GetByUserResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByUser")
+	}
+
+	var r0 *gen.GetByUserResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) (*gen.GetByUserResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) *gen.GetByUserResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByUserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SyncAccounting provides a mock function with given fields: ctx, in, opts
 func (_m *AccountingServiceClient) SyncAccounting(ctx context.Context, in *gen.SyncAcountingRequest, opts ...grpc.CallOption) (*gen.SyncAcountingResponse, error) {
 	_va := make([]interface{}, len(opts))

@@ -15,6 +15,7 @@ package ukama.inventory.accounting.v1;
 service AccountingService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByCompany(GetByCompanmyRequest) returns (GetByCompanmyResponse);
+    rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
 
     rpc SyncAccounting(SyncAcountingRequest) returns (SyncAcountingResponse);
 }
@@ -35,6 +36,14 @@ message GetByCompanmyResponse {
     repeated Accounting accounting = 1;
 }
 
+message GetByUserRequest {
+    string userId = 1 [json_name = "user_id"];
+}
+
+message GetByUserResponse {
+    repeated Accounting accounting = 1;
+}
+
 message SyncAcountingRequest {}
 
 message SyncAcountingResponse {}
@@ -42,11 +51,12 @@ message SyncAcountingResponse {}
 message Accounting {
     string id = 1;
     string company = 2;
-    string item = 3;
-    string description = 4;
-    string inventory = 5;
-    string opexFee = 6 [json_name = "opex_fee"];
-    string vat = 7;
-    string effectiveDate = 8 [json_name = "effective_date"];
+    string userId = 3 [json_name = "user_id"];
+    string item = 4;
+    string description = 5;
+    string inventory = 6;
+    string opexFee = 7 [json_name = "opex_fee"];
+    string vat = 8;
+    string effectiveDate = 9 [json_name = "effective_date"];
 }
 

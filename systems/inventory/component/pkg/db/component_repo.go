@@ -17,6 +17,7 @@ import (
 type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
 	GetByCompany(company string, category int32) ([]*Component, error)
+	GetByUser(userId string, category int32) ([]*Component, error)
 	Add(components []*Component) error
 	Delete(ids []string) error
 }
@@ -43,6 +44,15 @@ func (c *componentRepo) Get(id uuid.UUID) (*Component, error) {
 func (c *componentRepo) GetByCompany(company string, category int32) ([]*Component, error) {
 	var components []*Component
 	err := c.Db.GetGormDb().Where("company = ?", company).Where("category", category).Find(&components).Error
+	if err != nil {
+		return nil, err
+	}
+	return components, nil
+}
+
+func (c *componentRepo) GetByUser(userId string, category int32) ([]*Component, error) {
+	var components []*Component
+	err := c.Db.GetGormDb().Where("user_id = ?", userId).Where("category", category).Find(&components).Error
 	if err != nil {
 		return nil, err
 	}
