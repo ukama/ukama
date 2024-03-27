@@ -23,16 +23,7 @@ service NetworkService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
-    // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
-
-  /* Sites */
-    rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
-    rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
-    rpc GetSiteByName(GetSiteByNameRequest) returns (GetSiteResponse);
-    rpc GetSitesByNetwork(GetSitesByNetworkRequest) returns (GetSitesByNetworkResponse);
-    // UpdateSite
-    // RemoveSite
 }
 
 
@@ -87,38 +78,6 @@ message DeleteRequest{
 message DeleteResponse{
 }
 
-message AddSiteRequest{
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
-}
-
-message AddSiteResponse{
-    Site site = 1;
-}
-
-message GetSiteRequest{
-    string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
-}
-
-message GetSiteResponse{
-    Site site = 1;
-}
-
-message GetSiteByNameRequest{
-    string networkId = 1 [json_name = "network_id"];
-    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
-}
-
-message GetSitesByNetworkRequest{
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-}
-
-message GetSitesByNetworkResponse{
-    string networkId = 1 [json_name = "network_id"];
-    repeated Site sites = 2;
-}
-
-
 message Network {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2;
@@ -132,12 +91,4 @@ message Network {
     bool paymentLinks = 10 [json_name = "payment_links"];
     google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
     string syncStatus = 12 [json_name = "sync_status"];
-}
-
-message Site {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string name = 2;
-    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    bool isDeactivated = 4 [json_name = "is_deactivated"];
-    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
 }

@@ -49,16 +49,6 @@ type Network struct {
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	SyncStatus       ukama.StatusType
 }
-type Site struct {
-	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name        string    `gorm:"uniqueIndex:site_name_network_idx"`
-	NetworkId   uuid.UUID `gorm:"uniqueIndex:site_name_network_idx;type:uuid"`
-	Network     *Network
-	Deactivated bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
-}
 
 type LanguageType uint8
 

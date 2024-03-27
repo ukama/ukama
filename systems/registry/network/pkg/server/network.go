@@ -38,7 +38,6 @@ type NetworkServer struct {
 	orgName        string
 	netRepo        db.NetRepo
 	orgRepo        db.OrgRepo
-	siteRepo       db.SiteRepo
 	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -48,13 +47,11 @@ type NetworkServer struct {
 	currency       string
 }
 
-func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService cnucl.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway, country, language, currency string) *NetworkServer {
+func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo,orgService cnucl.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway, country, language, currency string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,
 		orgRepo:        orgRepo,
-		siteRepo:       siteRepo,
 		orgClient:      orgService,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -233,106 +230,6 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	return &pb.DeleteResponse{}, nil
 }
 
-func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
-	netId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	// We need to improve ukama/common/sql for more sql errors like foreign keys violations
-	// which will allow us to skip these extra calls to DBs
-	ntwk, err := n.netRepo.Get(netId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-	}
-
-	site := &db.Site{
-		NetworkId: ntwk.Id,
-		Name:      req.SiteName,
-	}
-
-	err = n.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
-		site.Id = uuid.NewV4()
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	route := n.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
-
-	err = n.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	n.pushSiteCount(ntwk.OrgId, ntwk.Id)
-
-	return &pb.AddSiteResponse{
-		Site: dbSiteToPbSite(site)}, nil
-}
-
-func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
-	siteId, err := uuid.FromString(req.SiteId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	site, err := n.siteRepo.Get(siteId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	return &pb.GetSiteResponse{
-		Site: dbSiteToPbSite(site)}, nil
-}
-
-func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
-	netId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	ntwk, err := n.netRepo.Get(netId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-	}
-
-	site, err := n.siteRepo.GetByName(ntwk.Id, req.SiteName)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
-	}
-
-	return &pb.GetSiteResponse{
-		Site: dbSiteToPbSite(site)}, nil
-}
-
-func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesByNetworkRequest) (*pb.GetSitesByNetworkResponse, error) {
-	netId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	ntwk, err := n.netRepo.Get(netId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-	}
-
-	sites, err := n.siteRepo.GetByNetwork(ntwk.Id)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sites")
-	}
-
-	resp := &pb.GetSitesByNetworkResponse{
-		NetworkId: ntwk.Id.String(),
-		Sites:     dbSitesToPbSites(sites),
-	}
-
-	return resp, nil
-}
-
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
 		Id:               ntwk.Id.String(),
@@ -360,25 +257,7 @@ func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
 	return res
 }
 
-func dbSiteToPbSite(site *db.Site) *pb.Site {
-	return &pb.Site{
-		Id:            site.Id.String(),
-		Name:          site.Name,
-		NetworkId:     site.NetworkId.String(),
-		IsDeactivated: site.Deactivated,
-		CreatedAt:     timestamppb.New(site.CreatedAt),
-	}
-}
 
-func dbSitesToPbSites(sites []db.Site) []*pb.Site {
-	res := []*pb.Site{}
-
-	for _, s := range sites {
-		res = append(res, dbSiteToPbSite(&s))
-	}
-
-	return res
-}
 
 func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
 	networkCount, err := n.netRepo.GetNetworkCount(orgId)
@@ -392,17 +271,7 @@ func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
 	}
 }
 
-func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
-	siteCount, err := n.siteRepo.GetSiteCount(netId)
-	if err != nil {
-		log.Errorf("failed to get site count: %s", err.Error())
-	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
-	if err != nil {
-		log.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
-	}
-}
 
 func (n *NetworkServer) PushMetrics() error {
 
@@ -415,17 +284,6 @@ func (n *NetworkServer) PushMetrics() error {
 
 	for _, org := range orgs {
 		n.pushNetworkCount(org.Id)
-	}
-
-	// Push Site count metric per network to pushgateway
-	networks, err := n.netRepo.GetAll()
-	if err != nil {
-		log.Errorf("Failed to get all networks. Error %s", err.Error())
-		return err
-	}
-
-	for _, network := range networks {
-		n.pushSiteCount(network.OrgId, network.Id)
 	}
 
 	return nil
