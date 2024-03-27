@@ -125,14 +125,12 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			components = append(components, component)
 		}
 		cdb := utilComponentsToDbComponents(components)
-		componentIds := utils.UniqueComponentIds(dbComponentsToPbComponents(cdb))
-		if len(componentIds) > 0 {
-			err = c.componentRepo.Delete(componentIds)
-			if err != nil {
-				return nil, grpc.SqlErrorToGrpc(err, "component")
-			}
-			log.Info("Deleted components with inventory ids: ", componentIds)
+
+		err = c.componentRepo.Delete()
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "component")
 		}
+		log.Info("Deleted all component records")
 
 		err = c.componentRepo.Add(cdb)
 		if err != nil {

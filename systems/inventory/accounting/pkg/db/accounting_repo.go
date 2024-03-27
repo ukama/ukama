@@ -19,7 +19,7 @@ type AccountingRepo interface {
 	GetByUser(userId string) ([]*Accounting, error)
 
 	Add(accounts []*Accounting) error
-	Delete(ids []string) error
+	Delete() error
 }
 
 type accountingRepo struct {
@@ -61,8 +61,8 @@ func (c *accountingRepo) Add(accounts []*Accounting) error {
 	return result.Error
 }
 
-func (c *accountingRepo) Delete(ids []string) error {
-	db := c.Db.GetGormDb().Where("inventory IN ?", ids).Delete(&Accounting{})
+func (c *accountingRepo) Delete() error {
+	db := c.Db.GetGormDb().Delete(&Accounting{})
 
 	return db.Error
 }

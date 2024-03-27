@@ -19,7 +19,7 @@ type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
 	GetByUser(userId string, category int32) ([]*Component, error)
 	Add(components []*Component) error
-	Delete(ids []string) error
+	Delete() error
 }
 
 type componentRepo struct {
@@ -73,8 +73,7 @@ func (c *componentRepo) Add(components []*Component) error {
 	return result.Error
 }
 
-func (c *componentRepo) Delete(ids []string) error {
-	db := c.Db.GetGormDb().Where("inventory IN ?", ids).Delete(&Component{})
-
+func (c *componentRepo) Delete() error {
+	db := c.Db.GetGormDb().Delete(&Component{})
 	return db.Error
 }

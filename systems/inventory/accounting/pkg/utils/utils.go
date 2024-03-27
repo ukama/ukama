@@ -1,7 +1,5 @@
 package utils
 
-import "github.com/ukama/ukama/systems/inventory/accounting/pkg/db"
-
 type Accounting struct {
 	EffectiveDate        string               `json:"effective_date"`
 	ConnectivityProvider ConnectivityProvider `json:"connectivityProvider"`
@@ -30,20 +28,4 @@ type Item struct {
 	OpexFee       string `json:"opex_fee"`
 	Vat           string `json:"vat"`
 	EffectiveDate string `json:"effective_date"`
-}
-
-func UniqueInventoryIds(accounting []*db.Accounting) []string {
-	uniqueIds := make(map[string]bool)
-	for _, account := range accounting {
-		if _, exists := uniqueIds[account.Inventory]; !exists {
-			uniqueIds[account.Inventory] = true
-		}
-	}
-
-	ids := make([]string, 0, len(uniqueIds))
-	for id := range uniqueIds {
-		ids = append(ids, id)
-	}
-
-	return ids
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/accounting/pkg"
 	"github.com/ukama/ukama/systems/inventory/accounting/pkg/db"
@@ -116,23 +117,33 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 			return nil, status.Errorf(codes.Internal, "failed to unmarshal manifest json file. Error %s", err.Error())
 		}
 		adb := utilAccountsToDbAccounts(accounting, company.UserId)
-		inventoryIds := utils.UniqueInventoryIds(adb)
-		if len(inventoryIds) > 0 {
-			err = a.accountingRepo.Delete(inventoryIds)
-			if err != nil {
-				return nil, grpc.SqlErrorToGrpc(err, "accounting")
-			}
-			log.Info("Deleted accountings with inventory ids: ", inventoryIds)
+
+		err = a.accountingRepo.Delete()
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "accounting")
 		}
+		log.Info("Deleted all accountings records")
 
 		err = a.accountingRepo.Add(adb)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "accounting")
 		}
-		log.Info("Added accountings: ", adb)
+		log.Info("Added accountings records: ", adb)
+
+		dbacc, err := a.accountingRepo.GetByUser(company.UserId)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "accounting")
+		}
+
+		euacc := dbAccountingToEventAccounting(dbacc, company.UserId)
+
+		eac := &epb.UserAccountingEvent{
+			UserId:     company.UserId,
+			Accounting: euacc,
+		}
 
 		route := a.baseRoutingKey.SetAction("sync").SetObject("accounting").MustBuild()
-		err = a.msgbus.PublishRequest(route, req)
+		err = a.msgbus.PublishRequest(route, eac)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
@@ -191,5 +202,24 @@ func utilAccountsToDbAccounts(accounting utils.Accounting, userId string) []*db.
 			Vat:           i.Vat,
 		})
 	}
+	return res
+}
+
+func dbAccountingToEventAccounting(accountings []*db.Accounting, userId string) []*epb.UserAccounting {
+	res := []*epb.UserAccounting{}
+
+	for _, i := range accountings {
+		res = append(res, &epb.UserAccounting{
+			Id:            i.Id.String(),
+			UserId:        i.UserId,
+			Description:   i.Description,
+			Item:          i.Item,
+			Inventory:     i.Inventory,
+			EffectiveDate: i.EffectiveDate,
+			OpexFee:       i.OpexFee,
+			Vat:           i.Vat,
+		})
+	}
+
 	return res
 }
