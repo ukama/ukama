@@ -72,7 +72,7 @@ func TestInvoiceRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(invoice.Id, invoice.InvoiceeId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(invoice.Id, invoice.InvoiceeId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
