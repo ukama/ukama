@@ -46,7 +46,7 @@ int log_add_callback(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
 
 /* routines for rlogd */
-void log_init(char *serviceName, int rlogdPort);
+void log_remote_init(char *serviceName);
 int log_rlogd(char *message);
 int is_connect_with_rlogd();
 

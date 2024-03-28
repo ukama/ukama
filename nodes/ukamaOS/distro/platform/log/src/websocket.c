@@ -12,6 +12,7 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "usys_file.h"
 #include "usys_types.h"
 #include "usys_services.h"
 
@@ -158,10 +159,13 @@ done:
     return ret;
 }
 
-void log_init(char *serviceName, int rlogdPort) {
+void log_remote_init(char *serviceName) {
 
     ThreadArgs threadArgs;
+    int rlogdPort = 0;
 
+    rlogdPort = usys_find_service_port(SERVICE_RLOG);
+    
     if (handler.websocket) return;
     if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
