@@ -39,24 +39,24 @@ const (
 )
 
 const invoiceId = "87052671-38c6-4064-8f4b-55f13aa52384"
-const subscriberId = "a2041828-737b-48d4-81c0-9c02500a23ff"
+const invoiceeId = "a2041828-737b-48d4-81c0-9c02500a23ff"
 const networkId = "63b0ab7b-18f0-46a1-8d07-309440e7d93e"
 
 var invoicePb = pb.GetResponse{
 	Invoice: &pb.Invoice{
-		Id:           invoiceId,
-		SubscriberId: subscriberId,
-		IsPaid:       false,
+		Id:         invoiceId,
+		InvoiceeId: invoiceeId,
+		IsPaid:     false,
 	},
 }
 
-var SubscriberinvoicesPb = pb.GetBySubscriberResponse{
-	SubscriberId: subscriberId,
+var InvoiceeinvoicesPb = pb.GetByInvoiceeResponse{
+	InvoiceeId: invoiceeId,
 	Invoices: []*pb.Invoice{
 		&pb.Invoice{
-			Id:           invoiceId,
-			SubscriberId: subscriberId,
-			IsPaid:       false,
+			Id:         invoiceId,
+			InvoiceeId: invoiceeId,
+			IsPaid:     false,
 		},
 	},
 }
@@ -261,16 +261,16 @@ func TestRouter_GetInvoice(t *testing.T) {
 func TestRouter_GetInvoices(t *testing.T) {
 	t.Run("InvoicesFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s", invoiceEndpoint, subscriberId), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?invoicee=%s", invoiceEndpoint, invoiceeId), nil)
 
 		im := &imocks.InvoiceServiceClient{}
 		pm := &pmocks.PdfClient{}
 
-		pReq := &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId,
+		pReq := &pb.GetByInvoiceeRequest{
+			InvoiceeId: invoiceeId,
 		}
 
-		im.On("GetBySubscriber", mock.Anything, pReq).Return(&SubscriberinvoicesPb, nil)
+		im.On("GetByInvoicee", mock.Anything, pReq).Return(&InvoiceeinvoicesPb, nil)
 
 		r := NewRouter(&Clients{
 			Billing: client.NewBillingFromClient(im, pm),
@@ -312,8 +312,8 @@ func TestRouter_GetInvoices(t *testing.T) {
 
 	t.Run("BadRequest", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?subscriber=%s&network=%s",
-			invoiceEndpoint, subscriberId, networkId), nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s?invoicee=%s&network=%s",
+			invoiceEndpoint, invoiceeId, networkId), nil)
 
 		im := &imocks.InvoiceServiceClient{}
 		pm := &pmocks.PdfClient{}

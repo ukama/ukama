@@ -25,7 +25,7 @@ import (
 )
 
 func TestBillingClient_AddInvoice(t *testing.T) {
-	t.Run("SubscriberIdValid", func(t *testing.T) {
+	t.Run("InvoiceeIdValid", func(t *testing.T) {
 		var bc = &mocks.InvoiceServiceClient{}
 
 		var raw = `{
@@ -125,9 +125,9 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 		}
 
 		invoiceResp := &pb.AddResponse{Invoice: &pb.Invoice{
-			Id:           uuid.NewV4().String(),
-			SubscriberId: "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
-			NetworkId:    uuid.NewV4().String(),
+			Id:         uuid.NewV4().String(),
+			InvoiceeId: "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+			NetworkId:  uuid.NewV4().String(),
 		}}
 
 		bc.On("Add", mock.Anything, invoiceReq).Return(invoiceResp, nil)
@@ -141,7 +141,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 		bc.AssertExpectations(t)
 	})
 
-	t.Run("SubscriberIdNotValid", func(t *testing.T) {
+	t.Run("InvoiceeIdNotValid", func(t *testing.T) {
 		var bc = &mocks.InvoiceServiceClient{}
 
 		var raw = `{
@@ -241,7 +241,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 		}
 
 		bc.On("Add", mock.Anything, invoiceReq).Return(nil,
-			status.Errorf(codes.InvalidArgument, "invalid subscriberId"))
+			status.Errorf(codes.InvalidArgument, "invalid invoiceeId"))
 
 		b := client.NewBillingFromClient(bc, nil)
 
@@ -265,8 +265,8 @@ func TestBillingClient_GetInvoice(t *testing.T) {
 		}
 
 		invoiceResp := &pb.GetResponse{Invoice: &pb.Invoice{
-			Id:           invoiceId.String(),
-			SubscriberId: uuid.NewV4().String(),
+			Id:         invoiceId.String(),
+			InvoiceeId: uuid.NewV4().String(),
 		}}
 
 		bc.On("Get", mock.Anything, invoiceReq).Return(invoiceResp, nil)
@@ -303,47 +303,47 @@ func TestBillingClient_GetInvoice(t *testing.T) {
 	})
 }
 
-func TestBillingClient_GetInvoicesBySubscriber(t *testing.T) {
+func TestBillingClient_GetInvoicesByInvoicee(t *testing.T) {
 	var bc = &mocks.InvoiceServiceClient{}
 
-	t.Run("SubscriberFound", func(t *testing.T) {
-		subscriberId := uuid.NewV4()
+	t.Run("InvoiceeFound", func(t *testing.T) {
+		invoiceeId := uuid.NewV4()
 		invoiceId := uuid.NewV4()
 
-		req := &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId.String(),
+		req := &pb.GetByInvoiceeRequest{
+			InvoiceeId: invoiceeId.String(),
 		}
 
-		invoiceResp := &pb.GetBySubscriberResponse{Invoices: []*pb.Invoice{
+		invoiceResp := &pb.GetByInvoiceeResponse{Invoices: []*pb.Invoice{
 			&pb.Invoice{
-				Id:           invoiceId.String(),
-				SubscriberId: subscriberId.String(),
+				Id:         invoiceId.String(),
+				InvoiceeId: invoiceeId.String(),
 			}}}
 
-		bc.On("GetBySubscriber", mock.Anything, req).Return(invoiceResp, nil)
+		bc.On("GetByInvoicee", mock.Anything, req).Return(invoiceResp, nil)
 
 		b := client.NewBillingFromClient(bc, nil)
 
-		resp, err := b.GetInvoicesBySubscriber(subscriberId.String())
+		resp, err := b.GetInvoicesByInvoicee(invoiceeId.String())
 
 		assert.NoError(t, err)
 		assert.Equal(t, resp.Invoices[0].Id, invoiceId.String())
 		bc.AssertExpectations(t)
 	})
 
-	t.Run("SubscriberNotFound", func(t *testing.T) {
-		subscriberId := uuid.NewV4()
+	t.Run("InvoiceeNotFound", func(t *testing.T) {
+		invoiceeId := uuid.NewV4()
 
-		req := &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId.String(),
+		req := &pb.GetByInvoiceeRequest{
+			InvoiceeId: invoiceeId.String(),
 		}
 
-		bc.On("GetBySubscriber", mock.Anything, req).Return(nil,
-			status.Errorf(codes.NotFound, "subscriber not found"))
+		bc.On("GetByInvoicee", mock.Anything, req).Return(nil,
+			status.Errorf(codes.NotFound, "invoicee not found"))
 
 		b := client.NewBillingFromClient(bc, nil)
 
-		resp, err := b.GetInvoicesBySubscriber(subscriberId.String())
+		resp, err := b.GetInvoicesByInvoicee(invoiceeId.String())
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
