@@ -54,7 +54,7 @@ type Clients struct {
 type billing interface {
 	AddInvoice(rawInvoice string) (*pb.AddResponse, error)
 	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
-	GetInvoicesBySubscriber(subscriber string) (*pb.GetBySubscriberResponse, error)
+	GetInvoicesByInvoicee(invoicee string) (*pb.GetByInvoiceeResponse, error)
 	GetInvoicesByNetwork(network string) (*pb.GetByNetworkResponse, error)
 	RemoveInvoice(invoiceId string) error
 	GetInvoicePDF(invoiceId string) ([]byte, error)
@@ -108,9 +108,9 @@ func (r *Router) init() {
 	const invoice = "/invoices"
 
 	invoices := v1.Group(invoice, "JSON Invoice", "Operations on Invoices")
-	invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a subscriber"), tonic.Handler(r.getInvoicesHandler, http.StatusOK))
+	invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a invoicee"), tonic.Handler(r.getInvoicesHandler, http.StatusOK))
 	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvoiceHandler, http.StatusOK))
-	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a subscriber"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
+	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a invoicee"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
 	// update invoice
 	invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.removeInvoiceHandler, http.StatusOK))
 
@@ -134,17 +134,17 @@ func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) ([]
 	var invoices []*pb.Invoice
 	var err error
 
-	subscriberId, sOK := c.GetQuery("subscriber")
+	invoiceeId, sOK := c.GetQuery("invoicee")
 	networkId, nOK := c.GetQuery("network")
 
 	if sOK == nOK {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusBadRequest,
-			Message:  "either subscriber or network must be provided as a mandatory query parameter, but not both"}
+			Message:  "either invoicee or network must be provided as a mandatory query parameter, but not both"}
 	}
 
 	if sOK {
-		res, sErr := r.clients.Billing.GetInvoicesBySubscriber(subscriberId)
+		res, sErr := r.clients.Billing.GetInvoicesByInvoicee(invoiceeId)
 		if sErr == nil {
 			invoices = res.Invoices
 		}

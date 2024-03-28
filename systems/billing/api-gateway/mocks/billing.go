@@ -102,6 +102,36 @@ func (_m *billing) GetInvoicePDF(invoiceId string) ([]byte, error) {
 	return r0, r1
 }
 
+// GetInvoicesByInvoicee provides a mock function with given fields: invoicee
+func (_m *billing) GetInvoicesByInvoicee(invoicee string) (*gen.GetByInvoiceeResponse, error) {
+	ret := _m.Called(invoicee)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetInvoicesByInvoicee")
+	}
+
+	var r0 *gen.GetByInvoiceeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.GetByInvoiceeResponse, error)); ok {
+		return rf(invoicee)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.GetByInvoiceeResponse); ok {
+		r0 = rf(invoicee)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByInvoiceeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(invoicee)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetInvoicesByNetwork provides a mock function with given fields: network
 func (_m *billing) GetInvoicesByNetwork(network string) (*gen.GetByNetworkResponse, error) {
 	ret := _m.Called(network)
@@ -125,36 +155,6 @@ func (_m *billing) GetInvoicesByNetwork(network string) (*gen.GetByNetworkRespon
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(network)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetInvoicesBySubscriber provides a mock function with given fields: subscriber
-func (_m *billing) GetInvoicesBySubscriber(subscriber string) (*gen.GetBySubscriberResponse, error) {
-	ret := _m.Called(subscriber)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetInvoicesBySubscriber")
-	}
-
-	var r0 *gen.GetBySubscriberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetBySubscriberResponse, error)); ok {
-		return rf(subscriber)
-	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetBySubscriberResponse); ok {
-		r0 = rf(subscriber)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBySubscriberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(subscriber)
 	} else {
 		r1 = ret.Error(1)
 	}

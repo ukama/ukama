@@ -35,14 +35,14 @@ func NewBilling(invoiceHost, fileHost string, timeout time.Duration) *Billing {
 
 	conn, err := grpc.DialContext(ctx, invoiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to invoice host %q.Error: %v", invoiceHost, err)
 	}
 
 	invoiceClient := pb.NewInvoiceServiceClient(conn)
 
 	pdfClient, err := NewPdfClient(fileHost, false)
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to pdf host %q.Error: %v", invoiceHost, err)
 	}
 
 	return &Billing{
@@ -98,19 +98,19 @@ func (b *Billing) GetInvoice(invoiceId string, AsPDF bool) (*pb.GetResponse, err
 	return res, nil
 }
 
-func (r *Billing) GetInvoicesBySubscriber(subscriberId string) (*pb.GetBySubscriberResponse, error) {
+func (r *Billing) GetInvoicesByInvoicee(invoiceeId string) (*pb.GetByInvoiceeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.invoiceClient.GetBySubscriber(ctx,
-		&pb.GetBySubscriberRequest{SubscriberId: subscriberId})
+	res, err := r.invoiceClient.GetByInvoicee(ctx,
+		&pb.GetByInvoiceeRequest{InvoiceeId: invoiceeId})
 
 	if err != nil {
 		return nil, err
 	}
 
 	if res.Invoices == nil {
-		return &pb.GetBySubscriberResponse{Invoices: []*pb.Invoice{}, SubscriberId: subscriberId}, nil
+		return &pb.GetByInvoiceeResponse{Invoices: []*pb.Invoice{}, InvoiceeId: invoiceeId}, nil
 	}
 
 	return res, nil
