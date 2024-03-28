@@ -61,7 +61,7 @@ type accounting interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Accounting = client.NewAccountingInventory(endpoints.Account, endpoints.Timeout)
+	c.Accounting = client.NewAccountingInventory(endpoints.Accounting, endpoints.Timeout)
 	c.Component = client.NewComponentInventory(endpoints.Component, endpoints.Timeout)
 
 	return c
@@ -123,14 +123,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		components := auth.Group(component, "Component", "Operations on Component")
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
 		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
-		components.GET("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
+		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 
 		// Account routes
 		const account = "/accounting"
 		accounts := auth.Group(account, "Account", "Operations on Account")
 		accounts.GET("/:uuid", formatDoc("Get accounting", "Get accounting by id"), tonic.Handler(r.getAccountByIdHandler, http.StatusOK))
 		accounts.GET("/user/:uuid", formatDoc("Get accountings", "Get accountings by user id"), tonic.Handler(r.getAccountsByUserHandler, http.StatusOK))
-		accounts.GET("/sync", formatDoc("Sync accounts", "Sync accounts with repo"), tonic.Handler(r.syncAccountsHandler, http.StatusOK))
+		accounts.PUT("/sync", formatDoc("Sync accounts", "Sync accounts with repo"), tonic.Handler(r.syncAccountsHandler, http.StatusOK))
 	}
 }
 

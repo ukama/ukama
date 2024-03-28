@@ -28,7 +28,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
-	OrgName          string
+	OrgName          string `default:"ukama"`
 	RepoUrl          string `default:""`
 	Username         string `default:"ukama"`
 	Token            string `default:""`

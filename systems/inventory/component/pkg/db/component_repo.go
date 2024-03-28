@@ -74,6 +74,6 @@ func (c *componentRepo) Add(components []*Component) error {
 }
 
 func (c *componentRepo) Delete() error {
-	db := c.Db.GetGormDb().Delete(&Component{})
+	db := c.Db.GetGormDb().Exec("DELETE FROM components")
 	return db.Error
 }

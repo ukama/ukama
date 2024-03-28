@@ -62,7 +62,6 @@ func (c *accountingRepo) Add(accounts []*Accounting) error {
 }
 
 func (c *accountingRepo) Delete() error {
-	db := c.Db.GetGormDb().Delete(&Accounting{})
-
+	db := c.Db.GetGormDb().Exec("DELETE FROM accountings")
 	return db.Error
 }

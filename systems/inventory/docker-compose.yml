@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.9'
 services:
  postgresd-inventory:
   image: postgres:13.3
@@ -27,17 +27,18 @@ services:
    - COMPONENT_SERVICE_HOST=component
    - COMPONENT_SERVICE_PORT=9090
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - REPO_URL=
-   - TOKEN=
+   - REPOURL=${REPOURL}
+   - TOKEN=${TOKEN}
   restart: always
   networks:
    - ukama-net
   depends_on:
    - msgclient-inventory
+   - postgresd-inventory
 
- account:
+ accounting:
   build:
-   context: ./account
+   context: ./accounting
    dockerfile: ./Dockerfile
   environment:
    - DEBUGMODE=true
@@ -47,37 +48,17 @@ services:
    - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-inventory:9095
-   - ACCOUNT_SERVICE_HOST=account
-   - ACCOUNT_SERVICE_PORT=9090
+   - ACCOUNTING_SERVICE_HOST=account
+   - ACCOUNTING_SERVICE_PORT=9090
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - REPO_URL=
-   - TOKEN=
+   - REPOURL=${REPOURL}
+   - TOKEN=${TOKEN}
   restart: always
   networks:
    - ukama-net
   depends_on:
    - msgclient-inventory
-
- contract:
-  build:
-   context: ./contract
-   dockerfile: ./Dockerfile
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-inventory
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - ORGNAME=${ORGNAME}
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-inventory:9095
-   - CONTRACT_SERVICE_HOST=contract
-   - CONTRACT_SERVICE_PORT=9090
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - msgclient-inventory
+   - postgresd-inventory
 
  api-gateway-inventory:
   build:
@@ -92,10 +73,8 @@ services:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
   depends_on:
-   - site
-   - account
-   - contract
-   - postgresd-inventory
+   - accounting
+   - component
 
  msgclient-inventory:
   build: ../services/msgClient
@@ -113,7 +92,7 @@ services:
    - postgresd-inventory
 
  initclient-inventory:
-  image: salman-init
+  image: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
