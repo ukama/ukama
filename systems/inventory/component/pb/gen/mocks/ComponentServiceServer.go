@@ -14,36 +14,6 @@ type ComponentServiceServer struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: _a0, _a1
-func (_m *ComponentServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.AddResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
-	var r0 *gen.AddResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) (*gen.AddResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.AddResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Get provides a mock function with given fields: _a0, _a1
 func (_m *ComponentServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -74,28 +44,28 @@ func (_m *ComponentServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) 
 	return r0, r1
 }
 
-// GetByCompany provides a mock function with given fields: _a0, _a1
-func (_m *ComponentServiceServer) GetByCompany(_a0 context.Context, _a1 *gen.GetByCompanyRequest) (*gen.GetByCompanyResponse, error) {
+// GetByUser provides a mock function with given fields: _a0, _a1
+func (_m *ComponentServiceServer) GetByUser(_a0 context.Context, _a1 *gen.GetByUserRequest) (*gen.GetByUserResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByCompany")
+		panic("no return value specified for GetByUser")
 	}
 
-	var r0 *gen.GetByCompanyResponse
+	var r0 *gen.GetByUserResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByCompanyRequest) (*gen.GetByCompanyResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest) (*gen.GetByUserResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByCompanyRequest) *gen.GetByCompanyResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest) *gen.GetByUserResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetByCompanyResponse)
+			r0 = ret.Get(0).(*gen.GetByUserResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByCompanyRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByUserRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

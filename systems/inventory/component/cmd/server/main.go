@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -28,7 +29,6 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	generated "github.com/ukama/ukama/systems/inventory/component/pb/gen"
-	provider "github.com/ukama/ukama/systems/inventory/component/pkg/providers"
 )
 
 var serviceConfig *pkg.Config
@@ -72,6 +72,13 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current working directory. Error %s", err.Error())
+	}
+
+	gc := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
+
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -79,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
-		mbClient, serviceConfig.PushGateway, provider.NewGitClientProvider(serviceConfig.GitClient))
+		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -95,6 +102,7 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
+
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}

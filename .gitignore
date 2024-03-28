@@ -21,6 +21,8 @@ node_modules
 .env
 
 systems/data-plan/base-rate/cover.
+systems/inventory/component/temp
+systems/inventory/accounting/temp
 systems/console-bff/.cache/*
 systems/testing/integration/pkg/user_stories/coverage.out
 systems/console-bff/.cache/*

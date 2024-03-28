@@ -10,45 +10,49 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
+	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
+
+	log "github.com/sirupsen/logrus"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
-	pkgP "github.com/ukama/ukama/systems/inventory/component/pkg/providers"
-	gpb "github.com/ukama/ukama/systems/services/gitClient/pb/gen"
 )
 
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName        string
-	gitService     pkgP.GitClientProvider
+	gitClient      gitClient.GitClient
 	componentRepo  db.ComponentRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
+	gitDirPath     string
 }
 
-func NewComponentServer(orgName string, componentRepo db.ComponentRepo,
-	msgBus mb.MsgBusServiceClient, pushGateway string, gitService pkgP.GitClientProvider) *ComponentServer {
+func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string) *ComponentServer {
 	return &ComponentServer{
-		msgbus:         msgBus,
+		gitClient:      gc,
 		orgName:        orgName,
-		gitService:     gitService,
-		pushGateway:    pushGateway,
 		componentRepo:  componentRepo,
+		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		pushGateway:    pushGateway,
+		gitDirPath:     path,
 	}
 }
 
-func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting component %v", req)
 
 	cuuid, err := uuid.FromString(req.GetId())
@@ -56,7 +60,7 @@ func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of component uuid. Error %s", err.Error())
 	}
-	component, err := s.componentRepo.Get(cuuid)
+	component, err := c.componentRepo.Get(cuuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -66,85 +70,77 @@ func (s *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
-func (s *ComponentServer) GetByCompany(ctx context.Context, req *pb.GetByCompanyRequest) (*pb.GetByCompanyResponse, error) {
-	log.Infof("Getting components %v", req)
+func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
+	log.Infof("Getting components by user %v", req)
 
-	components, err := s.componentRepo.GetByCompany(req.GetCompany(), req.GetType().Enum().String())
+	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(req.GetCategory()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
 
-	return &pb.GetByCompanyResponse{
+	return &pb.GetByUserResponse{
 		Components: dbComponentsToPbComponents(components),
 	}, nil
 }
 
-func (s *ComponentServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	log.Infof("Adding component %v", req)
-
-	cuuid := uuid.NewV4()
-
-	component := &db.Component{
-		Id:            cuuid,
-		Company:       req.GetCompany(),
-		InventoryId:   req.GetInventoryId(),
-		Category:      req.GetCategory(),
-		Type:          db.ComponentType(req.GetType()),
-		Description:   req.GetDescription(),
-		DatasheetURL:  req.GetDatasheetURL(),
-		ImagesURL:     req.GetImagesURL(),
-		PartNumber:    req.GetPartNumber(),
-		Manufacturer:  req.GetManufacturer(),
-		Managed:       req.GetManaged(),
-		Warranty:      req.GetWarranty(),
-		Specification: req.GetSpecification(),
-	}
-
-	err := s.componentRepo.Add(component, nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "component")
-	}
-
-	return &pb.AddResponse{
-		Id: cuuid.String(),
-	}, nil
-}
-
-func (s *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
+func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
 	log.Infof("Syncing components %v", req)
 
-	gc, err := s.gitService.GetClient()
+	c.gitClient.SetupDir()
+	err := c.gitClient.CloneGitRepo()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get git client. Error: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to clone git repo. Error %s", err.Error())
 	}
 
-	fcr, err := gc.FetchComponents(ctx, &gpb.FetchComponentsRequest{})
+	rootFileContent, err := c.gitClient.ReadFileJSON(c.gitDirPath + "/root.json")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to fetch components from git client. Error: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to read file. Error %s", err.Error())
 	}
 
-	for _, c := range fcr.Component {
-		cuuid := uuid.NewV4()
+	var enviroment gitClient.Environment
+	err = json.Unmarshal(rootFileContent, &enviroment)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+	}
 
-		component := &db.Component{
-			Id:            cuuid,
-			Company:       c.GetCompany(),
-			InventoryId:   c.GetInventoryId(),
-			Category:      c.GetCategory(),
-			Type:          db.ComponentType(c.GetType()),
-			Description:   c.GetDescription(),
-			DatasheetURL:  c.GetDatasheetURL(),
-			ImagesURL:     c.GetImagesURL(),
-			PartNumber:    c.GetPartNumber(),
-			Manufacturer:  c.GetManufacturer(),
-			Managed:       c.GetManaged(),
-			Warranty:      c.GetWarranty(),
-			Specification: c.GetSpecification(),
+	var components []utils.Component
+	for _, company := range enviroment.Test {
+		err := c.gitClient.BranchCheckout(company.GitBranchName)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to checkout branch. Error %s", err.Error())
 		}
 
-		err = s.componentRepo.Add(component, nil)
+		paths, _ := c.gitClient.GetFilesPath("components")
+		for _, path := range paths {
+			content, err := c.gitClient.ReadFileYML(path)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to read file. Error %s", err.Error())
+			}
+			var component utils.Component
+			err = yaml.Unmarshal(content, &component)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+			}
+			component.UserId = company.UserId
+			components = append(components, component)
+		}
+		cdb := utilComponentsToDbComponents(components)
+
+		err = c.componentRepo.Delete()
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "component")
+		}
+		log.Info("Deleted all component records")
+
+		err = c.componentRepo.Add(cdb)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "component")
+		}
+
+		route := c.baseRoutingKey.SetAction("sync").SetObject("components").MustBuild()
+		err = c.msgbus.PublishRequest(route, req)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
 	}
 
@@ -154,10 +150,10 @@ func (s *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	return &pb.Component{
 		Id:            component.Id.String(),
-		Company:       component.Company,
-		InventoryId:   component.InventoryId,
-		Category:      component.Category,
-		Type:          pb.ComponentType(component.Type),
+		Inventory:     component.Inventory,
+		UserId:        component.UserId,
+		Category:      pb.ComponentCategory(component.Category),
+		Type:          component.Type,
 		Description:   component.Description,
 		DatasheetURL:  component.DatasheetURL,
 		ImagesURL:     component.ImagesURL,
@@ -176,5 +172,28 @@ func dbComponentsToPbComponents(components []*db.Component) []*pb.Component {
 		res = append(res, dbComponentToPbComponent(i))
 	}
 
+	return res
+}
+
+func utilComponentsToDbComponents(components []utils.Component) []*db.Component {
+	res := []*db.Component{}
+
+	for _, i := range components {
+		res = append(res, &db.Component{
+			Id:            uuid.NewV4(),
+			Inventory:     i.InventoryID,
+			Category:      db.ParseType(i.Category),
+			UserId:        i.UserId,
+			Type:          i.Type,
+			Description:   i.Description,
+			DatasheetURL:  i.DatasheetURL,
+			ImagesURL:     i.ImagesURL,
+			PartNumber:    i.PartNumber,
+			Manufacturer:  i.Manufacturer,
+			Managed:       i.Managed,
+			Warranty:      i.Warranty,
+			Specification: i.Specification,
+		})
+	}
 	return res
 }

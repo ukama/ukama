@@ -12,10 +12,6 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
 
-import "validator.proto";
-import "google/protobuf/any.proto";
-
-
 message Notification {
     string id = 1;
     string nodeId = 2 [json_name = "node_id"];
