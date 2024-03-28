@@ -25,7 +25,8 @@
 #include "rlogd.h"
 
 /* network.c */
-extern int start_websocket_server(char *nodeID, int port, UInst *serviceInst);
+extern int start_websocket_server(char *nodeID, int port, UInst *websocketInst);
+extern int start_web_services(int port, UInst *serviceInst);
 
 /* Global */
 ThreadData *gData = NULL;
@@ -72,7 +73,9 @@ int main (int argc, char **argv) {
     char *debug=DEF_LOG_LEVEL;
     char *nodeID=NULL;
     int  opt, opdidx;
-    int  nodedPort = 0, rlogdPort = 0;
+    int  nodedPort = 0;
+    int  rlogdPort = 0, rlogdAdminPort = 0;
+    UInst websocketInst;
     UInst serviceInst;
 
     log_set_service(SERVICE_NAME);
@@ -115,10 +118,11 @@ int main (int argc, char **argv) {
         }
     }
 
-    nodedPort = usys_find_service_port(SERVICE_NODE);
-    rlogdPort = usys_find_service_port(SERVICE_RLOG);
+    nodedPort      = usys_find_service_port(SERVICE_NODE);
+    rlogdPort      = usys_find_service_port(SERVICE_RLOG);
+    rlogdAdminPort = usys_find_service_port(SERVICE_RLOG_ADMIN);
 
-    if (nodedPort == 0 || rlogdPort == 0) {
+    if (nodedPort == 0 || rlogdPort == 0 || rlogdAdminPort == 0) {
         usys_log_error("Error getting noded/rlogd port from service db");
         exit(1);
     }
@@ -129,16 +133,21 @@ int main (int argc, char **argv) {
 		goto done;
 	}
 
-    if (start_websocket_server(nodeID, rlogdPort, &serviceInst) != USYS_TRUE){
+    if (start_websocket_server(nodeID, rlogdPort, &websocketInst) != USYS_TRUE){
         usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
         goto done;
     }
 
+    if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
+        usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
+        goto done;
+    }
+    
     pause();
 
 done:
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
+    ulfius_stop_framework(&websocketInst);
+    ulfius_clean_instance(&websocketInst);
 	usys_free(nodeID);
 
 	return 0;
