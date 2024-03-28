@@ -18,7 +18,7 @@ import (
 type InvoiceRepo interface {
 	Add(invoice *Invoice, nestedFunc func(*Invoice, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invoice, error)
-	GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error)
+	GetByInvoicee(invoiceeId uuid.UUID) ([]Invoice, error)
 	GetByNetwork(networkId uuid.UUID) ([]Invoice, error)
 
 	// Update(orgId uint, network *Network) error
@@ -66,11 +66,11 @@ func (i *invoiceRepo) Get(id uuid.UUID) (*Invoice, error) {
 	return &inv, nil
 }
 
-func (i *invoiceRepo) GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error) {
+func (i *invoiceRepo) GetByInvoicee(invoiceeId uuid.UUID) ([]Invoice, error) {
 	db := i.Db.GetGormDb()
 	var invoices []Invoice
 
-	result := db.Where(&Invoice{SubscriberId: subscriberId}).Find(&invoices)
+	result := db.Where(&Invoice{InvoiceeId: invoiceeId}).Find(&invoices)
 	if result.Error != nil {
 		return nil, result.Error
 	}
