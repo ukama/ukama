@@ -30,7 +30,7 @@ typedef struct {
     int  port;
 } ThreadArgs;
 
-static struct _websocket_client_handler *handler = NULL;
+static struct _websocket_client_handler handler = {NULL, NULL};
 static pthread_mutex_t hasData = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
@@ -42,7 +42,7 @@ static int is_websocket_valid(WSManager *manager) {
     if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_OPEN) {
         return USYS_TRUE;
     } else {
-        handler = NULL;
+        handler.websocket = NULL;
         return USYS_FALSE;
     }
 
@@ -58,7 +58,7 @@ static void* monitor_websocket(void *args) {
     
     while (USYS_TRUE) {
         sleep(5);
-        if (!is_websocket_valid(handler)) {
+        if (!is_websocket_valid(handler.websocket)) {
             while (start_websocket_client(threadArgs->serviceName,
                                           threadArgs->port) == USYS_FALSE) {
                 sleep(5);
@@ -133,18 +133,18 @@ int start_websocket_client(char *serviceName, int rlogdPort) {
                                      "permessage-deflate") == U_OK) {
         /* Setup request parameters */
         u_map_put(request.map_header, "User-Agent", serviceName);
-        ulfius_add_websocket_client_deflate_extension(handler);
+        ulfius_add_websocket_client_deflate_extension(&handler);
         request.check_server_certificate = USYS_FALSE;
 
         ret = ulfius_open_websocket_client_connection(&request,
                                                       &websocket_manager, NULL,
                                                       &websocket_incoming_message, NULL,
                                                       &websocket_onclose, NULL,
-                                                      handler, &response);
+                                                      &handler, &response);
         if ( ret == U_OK) {
             ret = USYS_TRUE;
         } else {
-            handler->websocket = NULL;
+            handler.websocket = NULL;
             ret = USYS_FALSE;
         }
     } else {
@@ -162,11 +162,12 @@ void log_init(char *serviceName, int rlogdPort) {
 
     ThreadArgs threadArgs;
 
-    if (handler) return;
+    if (handler.websocket) return;
+    if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
 
     if (start_websocket_client(serviceName, rlogdPort) == USYS_FALSE) {
-        handler = NULL;
+        handler.websocket = NULL;
     }
 
     threadArgs.serviceName = strdup(serviceName);
@@ -185,7 +186,7 @@ int log_rlogd(char *message) {
 
     if (strlen(message) > MAX_LOG_LEN -1) return USYS_FALSE;
 
-    if (handler == NULL) return USYS_FALSE;
+    if (handler.websocket == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&hasData);
     strncpy(dataToSend, message, strlen(message));
@@ -196,7 +197,7 @@ int log_rlogd(char *message) {
 
 int is_connect_with_rlogd() {
 
-    if (handler == NULL) return USYS_FALSE;
+    if (handler.websocket == NULL) return USYS_FALSE;
 
     return USYS_TRUE;
 }
