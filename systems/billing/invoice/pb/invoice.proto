@@ -12,8 +12,6 @@ option go_package = "github.com/ukama/ukama/systems/billing/invoice/pb/gen";
 
 
 import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
 
 package ukama.billing.invoice.v1;
@@ -79,10 +77,10 @@ message Invoice {
     string invoiceeId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoicee_id"];
     string invoiceeType = 3 [json_name = "invoicee_type"];
     string networkId = 4 [json_name = "network_Id"];
-    google.protobuf.Timestamp period = 5;
+    string period = 5;
     RawInvoice rawInvoice = 6 [json_name = "raw_invoice"];
     bool isPaid = 7 [json_name = "is_paid"];
-    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
+    string createdAt = 8 [json_name = "created_at"];
 }
 
 
@@ -107,10 +105,10 @@ message Subscription {
     string externalId = 2 [json_name = "external_id"];
     string planCode = 3 [json_name = "plan_code"];
     string status = 4 [json_name = "status"];
-    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
-    google.protobuf.Timestamp startedAt = 6 [json_name = "started_at"];
-    google.protobuf.Timestamp canceldAt = 7 [json_name = "canceled_at"];
-    google.protobuf.Timestamp terminatedAt = 8 [json_name = "terminated_at"];
+    string createdAt = 5 [json_name = "created_at"];
+    string startedAt = 6 [json_name = "started_at"];
+    string canceldAt = 7 [json_name = "canceled_at"];
+    string terminatedAt = 8 [json_name = "terminated_at"];
 }
 
 
@@ -123,7 +121,7 @@ message Customer {
     string legalNumber = 6 [json_name = "legal_number"];
     string phone = 7 [json_name = "phone"];
     double vatRate = 8 [json_name = "vat_rate"];
-    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
+    string createdAt = 9 [json_name = "created_at"];
 }
 
 message Fee {

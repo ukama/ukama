@@ -9,10 +9,10 @@
 package db
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"gorm.io/gorm"
 )
 
 type InvoiceRepo interface {
