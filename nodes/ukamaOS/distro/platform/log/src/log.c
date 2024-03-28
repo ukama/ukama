@@ -41,9 +41,6 @@ static struct {
     Callback callbacks[MAX_CALLBACKS];
 } l;
 
-/* websocket.c */
-extern int log_rlogd(char *message);
-
 static const char *levelStrings[] = { "TRACE", "DEBUG", "INFO",
                                       "WARN",  "ERROR", "FATAL" };
 
