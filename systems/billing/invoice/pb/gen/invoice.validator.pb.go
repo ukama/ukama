@@ -8,8 +8,6 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -126,19 +124,9 @@ func (this *Invoice) Validate() error {
 	if this.InvoiceeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceeId", fmt.Errorf(`value '%v' must not be an empty string`, this.InvoiceeId))
 	}
-	if this.Period != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Period); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Period", err)
-		}
-	}
 	if this.RawInvoice != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.RawInvoice); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("RawInvoice", err)
-		}
-	}
-	if this.CreatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
 		}
 	}
 	return nil
@@ -166,34 +154,9 @@ func (this *RawInvoice) Validate() error {
 	return nil
 }
 func (this *Subscription) Validate() error {
-	if this.CreatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
-		}
-	}
-	if this.StartedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("StartedAt", err)
-		}
-	}
-	if this.CanceldAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CanceldAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("CanceldAt", err)
-		}
-	}
-	if this.TerminatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TerminatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("TerminatedAt", err)
-		}
-	}
 	return nil
 }
 func (this *Customer) Validate() error {
-	if this.CreatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
-		}
-	}
 	return nil
 }
 func (this *Fee) Validate() error {

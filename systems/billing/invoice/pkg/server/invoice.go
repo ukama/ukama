@@ -15,6 +15,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
@@ -22,13 +28,6 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
@@ -263,9 +262,9 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 		Id:           invoice.Id.String(),
 		InvoiceeId:   invoice.InvoiceeId.String(),
 		InvoiceeType: invoice.InvoiceeType.String(),
-		Period:       timestamppb.New(invoice.Period),
+		Period:       invoice.Period.String(),
 		IsPaid:       invoice.IsPaid,
-		CreatedAt:    timestamppb.New(invoice.CreatedAt),
+		CreatedAt:    invoice.CreatedAt.String(),
 	}
 
 	if invoice.NetworkId != uuid.Nil {
