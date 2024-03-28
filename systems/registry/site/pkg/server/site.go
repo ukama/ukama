@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -42,10 +43,11 @@ type SiteServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	networkService providers.NetworkClientProvider
+	inventoryClient providers.InventoryClientProvider
 	pushGateway    string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider providers.InventoryClientProvider) *SiteServer {
 	return &SiteServer{
 		orgName:        orgName,
 		siteRepo:       siteRepo,
@@ -53,6 +55,7 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		networkService: networkService,
 		pushGateway:    pushGateway,
+		inventoryClient: inventoryClientProvider,
 	}
 }
 
@@ -88,10 +91,23 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
         return nil, status.Errorf(codes.InvalidArgument, err.Error())
     }
 
+	for _, componentIdStr := range []string{
+		backhaulId.String(),
+		powerId.String(),
+		accessId.String(),
+		switchId.String(),
+	} {
+		// Validate the parsed UUID using s.inventoryClient
+		if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
+			return nil,fmt.Errorf("failed to validate component: %s", err.Error())
+		}
+	}
+
     svc, err := s.networkService.GetClient()
     if err != nil {
         return nil, err
     }
+
 
     log.Infof("checking if network exist %s", req.NetworkId)
     _, err = svc.Get(ctx, &npb.GetRequest{
@@ -223,6 +239,17 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
 	
+		for _, componentIdStr := range []string{
+			backhaulId.String(),
+			powerId.String(),
+			accessId.String(),
+			switchId.String(),
+		} {
+			// Validate the parsed UUID using s.inventoryClient
+			if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
+				return nil,fmt.Errorf("failed to validate component: %s", err.Error())
+			}
+		}
 
 	site:=&db.Site{
 		Id:			   siteId,

@@ -19,7 +19,7 @@ import (
  const Version = "/v1/"
  const SystemName = "inventory"
  
- type InventoryProvider interface {
+ type InventoryClientProvider interface {
 	ValidateComponent(Id string, orgName string) error
  }
  
@@ -37,7 +37,7 @@ import (
  func (r *inventoryProvider) GetInventoryClient(org string) (*rest.RestClient, error) {
 	 url, err := ic.GetHostUrl(ic.CreateHostString(org, SystemName), r.icHost, &org, r.debug)
 	 if err != nil {
-		 log.Errorf("Failed to resolve registry address to node/site: %v", err)
+		 log.Errorf("Failed to resolve inventory address to inventory/component: %v", err)
 		 return nil, fmt.Errorf("failed to resolve org registry address. Error: %v", err)
 	 }
  
@@ -81,8 +81,8 @@ import (
 	 }
  
 	 if !resp.IsSuccess() {
-		 log.Errorf("Failedto get site from inventory at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
-		 return fmt.Errorf("failed to get power component from inventory at %s. Error %s", r.R.URL.String(), errStatus.Message)
+		 log.Errorf("Failedvto get component from inventory at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		 return fmt.Errorf("failed to get component from inventory at %s. Error %s", r.R.URL.String(), errStatus.Message)
 	 }
  
 	 return nil

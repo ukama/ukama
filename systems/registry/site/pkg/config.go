@@ -31,6 +31,7 @@ type Config struct {
 	OrgName          string
 	Network      	 string `default:"network:9090"`
 	PushGateway      string `default:"http://localhost:9091"`
+	InventoryHost	 string `default:"http://localhost:8077"`
 }
 
 var SiteMetric = []metric.MetricConfig{
