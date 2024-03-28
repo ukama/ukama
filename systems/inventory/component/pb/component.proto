@@ -1,0 +1,65 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/inventory/component/pb/gen";
+
+package ukama.inventory.component.v1;
+
+service ComponentService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
+
+    rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
+}
+
+message GetRequest {
+    string id = 1 ;
+}
+
+message GetResponse {
+    Component component = 1;
+}
+
+message GetByUserRequest {
+    string userId = 1 [json_name = "user_id"];
+    ComponentCategory category = 2;
+}
+
+message GetByUserResponse {
+    repeated Component components = 1;
+}
+
+message SyncComponentsRequest {}
+
+message SyncComponentsResponse {}
+
+message Component {
+    string id = 1;
+    string inventory = 2 [json_name = "inventory_id"];
+    ComponentCategory category = 3;
+    string type = 4;
+    string userId = 5 [json_name = "user_id"];
+    string description = 6;
+    string datasheetURL = 7 [json_name = "datasheet_url"];
+    string imagesURL = 8[json_name = "images_url"];
+    string partNumber = 9 [json_name = "part_number"];
+    string manufacturer = 10;
+    string managed = 11;
+    uint32 warranty = 12;
+    string specification = 13;
+}
+
+enum ComponentCategory {
+    ALL = 0;
+    ACCESS = 1;
+    BACKHAUL = 2;
+    POWER = 3;
+    SWITCH = 4;
+}
