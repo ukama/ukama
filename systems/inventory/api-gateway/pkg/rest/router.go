@@ -24,9 +24,8 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	accountpb "github.com/ukama/ukama/systems/inventory/account/pb/gen"
+	accountingpb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
 	componentpb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
-	contractpb "github.com/ukama/ukama/systems/inventory/contract/pb/gen"
 )
 
 type Router struct {
@@ -44,29 +43,25 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Component component
-	Account   account
-	Contract  contract
+	Component  component
+	Accounting accounting
 }
 
 type component interface {
 	Get(id string) (*componentpb.GetResponse, error)
-	GetByCompany(c string, t string) (*componentpb.GetByCompanyResponse, error)
+	GetByUser(uid string, c string) (*componentpb.GetByUserResponse, error)
 	SyncComponent() (*componentpb.SyncComponentsResponse, error)
 }
 
-type account interface {
-	Get() (*accountpb.GetTestResponse, error)
-}
-
-type contract interface {
-	GetContracts(c string, a bool) (*contractpb.GetContractsResponse, error)
+type accounting interface {
+	Get(id string) (*accountingpb.GetResponse, error)
+	GetByUser(uid string) (*accountingpb.GetByUserResponse, error)
+	SyncAccounts() (*accountingpb.SyncAcountingResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Account = client.NewAccountInventory(endpoints.Account, endpoints.Timeout)
-	c.Contract = client.NewContractInventory(endpoints.Contract, endpoints.Timeout)
+	c.Accounting = client.NewAccountingInventory(endpoints.Accounting, endpoints.Timeout)
 	c.Component = client.NewComponentInventory(endpoints.Component, endpoints.Timeout)
 
 	return c
@@ -127,39 +122,40 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const component = "/components"
 		components := auth.Group(component, "Component", "Operations on Component")
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
-		components.GET("/:company", formatDoc("Get components", "Get components by company name"), tonic.Handler(r.getComponentsByCompanyHandler, http.StatusOK))
-		components.GET("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
+		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
+		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 
 		// Account routes
-		const account = "/account"
+		const account = "/accounting"
 		accounts := auth.Group(account, "Account", "Operations on Account")
-		accounts.GET("", formatDoc("Get Test", "Get account test call"), tonic.Handler(r.getTestAccountHandler, http.StatusOK))
-
-		// Contract routes
-		const contract = "/contracts"
-		contracts := auth.Group(contract, "Contracts", "Operations on Contract")
-		contracts.GET("/:company", formatDoc("Get Contracts", "Get contracts by company"), tonic.Handler(r.getContractsHandler, http.StatusOK))
+		accounts.GET("/:uuid", formatDoc("Get accounting", "Get accounting by id"), tonic.Handler(r.getAccountByIdHandler, http.StatusOK))
+		accounts.GET("/user/:uuid", formatDoc("Get accountings", "Get accountings by user id"), tonic.Handler(r.getAccountsByUserHandler, http.StatusOK))
+		accounts.PUT("/sync", formatDoc("Sync accounts", "Sync accounts with repo"), tonic.Handler(r.syncAccountsHandler, http.StatusOK))
 	}
 }
 
-func (r *Router) getComponentByIdHandler(c *gin.Context, req *GetComponent) (*componentpb.GetResponse, error) {
-	return r.clients.Component.Get(req.uuid)
+func (r *Router) getComponentByIdHandler(c *gin.Context, req *GetRequest) (*componentpb.GetResponse, error) {
+	return r.clients.Component.Get(req.Uuid)
 }
 
-func (r *Router) getComponentsByCompanyHandler(c *gin.Context, req *GetComponents) (*componentpb.GetByCompanyResponse, error) {
-	return r.clients.Component.GetByCompany(req.company, req.componentType)
+func (r *Router) getComponentsByUserHandler(c *gin.Context, req *GetComponents) (*componentpb.GetByUserResponse, error) {
+	return r.clients.Component.GetByUser(req.UserId, req.Category)
 }
 
 func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponentsResponse, error) {
 	return r.clients.Component.SyncComponent()
 }
 
-func (r *Router) getTestAccountHandler(c *gin.Context, req *GetTestRequest) (*accountpb.GetTestResponse, error) {
-	return r.clients.Account.Get()
+func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accountingpb.GetResponse, error) {
+	return r.clients.Accounting.Get(req.Uuid)
 }
 
-func (r *Router) getContractsHandler(c *gin.Context, req *GetContracts) (*contractpb.GetContractsResponse, error) {
-	return r.clients.Contract.GetContracts(req.company, req.isActive)
+func (r *Router) getAccountsByUserHandler(c *gin.Context, req *GetAccounts) (*accountingpb.GetByUserResponse, error) {
+	return r.clients.Accounting.GetByUser(req.UserId)
+}
+
+func (r *Router) syncAccountsHandler(c *gin.Context) (*accountingpb.SyncAcountingResponse, error) {
+	return r.clients.Accounting.SyncAccounts()
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -4,8 +4,6 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
 
 package ukama.config.v1;
 
-import "validator.proto";
-
 message Config {
     string filename = 1;
     string app = 2;

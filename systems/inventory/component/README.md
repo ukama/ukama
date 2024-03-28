@@ -1,1 +1,1 @@
-# Site service
+# Component service

@@ -10,55 +10,30 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/inventory/component/pb/gen";
 
-import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
-
-
 package ukama.inventory.component.v1;
 
 service ComponentService {
     rpc Get(GetRequest) returns (GetResponse);
-    rpc GetByCompany(GetByCompanyRequest) returns (GetByCompanyResponse);
-    rpc Add(AddRequest) returns (AddResponse);
+    rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
 
     rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
 }
 
 message GetRequest {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string id = 1 ;
 }
 
 message GetResponse {
     Component component = 1;
 }
 
-message GetByCompanyRequest {
-    string company = 1 [(validator.field) = {string_not_empty: true}];
-    ComponentType type = 2;
+message GetByUserRequest {
+    string userId = 1 [json_name = "user_id"];
+    ComponentCategory category = 2;
 }
 
-message GetByCompanyResponse {
+message GetByUserResponse {
     repeated Component components = 1;
-}
-
-message AddRequest {
-    string company = 2 [(validator.field) = {string_not_empty: true}];
-    string inventoryId = 3 [json_name = "inventory_id"];
-    string category = 4;
-    ComponentType type = 5;
-    string description = 6;
-    string datasheetURL = 7 [json_name = "datasheet_url"];
-    string imagesURL = 8 [json_name = "images_url"];
-    string partNumber = 9 [json_name = "part_number"];
-    string manufacturer = 10;
-    string managed = 11;
-    uint32 warranty = 12;
-    string specification = 13;
-}
-
-message AddResponse {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 
 message SyncComponentsRequest {}
@@ -66,14 +41,14 @@ message SyncComponentsRequest {}
 message SyncComponentsResponse {}
 
 message Component {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string company = 2 [(validator.field) = {string_not_empty: true}];
-    string inventoryId = 3 [json_name = "inventory_id"];
-    string category = 4;
-    ComponentType type = 5;
+    string id = 1;
+    string inventory = 2 [json_name = "inventory_id"];
+    ComponentCategory category = 3;
+    string type = 4;
+    string userId = 5 [json_name = "user_id"];
     string description = 6;
     string datasheetURL = 7 [json_name = "datasheet_url"];
-    string imagesURL = 8 [json_name = "images_url"];
+    string imagesURL = 8[json_name = "images_url"];
     string partNumber = 9 [json_name = "part_number"];
     string manufacturer = 10;
     string managed = 11;
@@ -81,11 +56,10 @@ message Component {
     string specification = 13;
 }
 
-enum ComponentType {
-    POWER = 0;
-    BACKHAUL = 1;
-    SWITCH = 2;
-    ACCESS = 3;
+enum ComponentCategory {
+    ALL = 0;
+    ACCESS = 1;
+    BACKHAUL = 2;
+    POWER = 3;
+    SWITCH = 4;
 }
-
-

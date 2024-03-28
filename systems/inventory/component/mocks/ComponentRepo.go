@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/inventory/component/pkg/db"
-	gorm "gorm.io/gorm"
-
 	mock "github.com/stretchr/testify/mock"
+	db "github.com/ukama/ukama/systems/inventory/component/pkg/db"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -16,17 +14,35 @@ type ComponentRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: component, nestedFunc
-func (_m *ComponentRepo) Add(component *db.Component, nestedFunc func(*db.Component, *gorm.DB) error) error {
-	ret := _m.Called(component, nestedFunc)
+// Add provides a mock function with given fields: components
+func (_m *ComponentRepo) Add(components []*db.Component) error {
+	ret := _m.Called(components)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Component, func(*db.Component, *gorm.DB) error) error); ok {
-		r0 = rf(component, nestedFunc)
+	if rf, ok := ret.Get(0).(func([]*db.Component) error); ok {
+		r0 = rf(components)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Delete provides a mock function with given fields: ids
+func (_m *ComponentRepo) Delete(ids []string) error {
+	ret := _m.Called(ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]string) error); ok {
+		r0 = rf(ids)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -64,29 +80,29 @@ func (_m *ComponentRepo) Get(id uuid.UUID) (*db.Component, error) {
 	return r0, r1
 }
 
-// GetByCompany provides a mock function with given fields: company, ctype
-func (_m *ComponentRepo) GetByCompany(company string, ctype string) ([]*db.Component, error) {
-	ret := _m.Called(company, ctype)
+// GetByUser provides a mock function with given fields: userId, category
+func (_m *ComponentRepo) GetByUser(userId string, category int32) ([]*db.Component, error) {
+	ret := _m.Called(userId, category)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByCompany")
+		panic("no return value specified for GetByUser")
 	}
 
 	var r0 []*db.Component
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) ([]*db.Component, error)); ok {
-		return rf(company, ctype)
+	if rf, ok := ret.Get(0).(func(string, int32) ([]*db.Component, error)); ok {
+		return rf(userId, category)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) []*db.Component); ok {
-		r0 = rf(company, ctype)
+	if rf, ok := ret.Get(0).(func(string, int32) []*db.Component); ok {
+		r0 = rf(userId, category)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Component)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(company, ctype)
+	if rf, ok := ret.Get(1).(func(string, int32) error); ok {
+		r1 = rf(userId, category)
 	} else {
 		r1 = ret.Error(1)
 	}

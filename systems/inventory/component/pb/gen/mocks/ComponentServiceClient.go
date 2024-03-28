@@ -16,43 +16,6 @@ type ComponentServiceClient struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: ctx, in, opts
-func (_m *ComponentServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ...grpc.CallOption) (*gen.AddResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
-	var r0 *gen.AddResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) (*gen.AddResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) *gen.AddResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Get provides a mock function with given fields: ctx, in, opts
 func (_m *ComponentServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts ...grpc.CallOption) (*gen.GetResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -90,8 +53,8 @@ func (_m *ComponentServiceClient) Get(ctx context.Context, in *gen.GetRequest, o
 	return r0, r1
 }
 
-// GetByCompany provides a mock function with given fields: ctx, in, opts
-func (_m *ComponentServiceClient) GetByCompany(ctx context.Context, in *gen.GetByCompanyRequest, opts ...grpc.CallOption) (*gen.GetByCompanyResponse, error) {
+// GetByUser provides a mock function with given fields: ctx, in, opts
+func (_m *ComponentServiceClient) GetByUser(ctx context.Context, in *gen.GetByUserRequest, opts ...grpc.CallOption) (*gen.GetByUserResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -102,23 +65,23 @@ func (_m *ComponentServiceClient) GetByCompany(ctx context.Context, in *gen.GetB
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByCompany")
+		panic("no return value specified for GetByUser")
 	}
 
-	var r0 *gen.GetByCompanyResponse
+	var r0 *gen.GetByUserResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByCompanyRequest, ...grpc.CallOption) (*gen.GetByCompanyResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) (*gen.GetByUserResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByCompanyRequest, ...grpc.CallOption) *gen.GetByCompanyResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) *gen.GetByUserResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetByCompanyResponse)
+			r0 = ret.Get(0).(*gen.GetByUserResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByCompanyRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByUserRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
