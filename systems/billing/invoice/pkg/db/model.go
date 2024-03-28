@@ -21,15 +21,15 @@ import (
 )
 
 type Invoice struct {
-	Id           uuid.UUID      `gorm:"primaryKey;type:uuid"`
-	SubscriberId uuid.UUID      `gorm:"uniqueIndex:subscriber_id_period,where:deleted_at is null;not null;type:uuid"`
-	NetworkId    uuid.UUID      `gorm:"not null;type:uuid"`
-	Period       time.Time      `gorm:"uniqueIndex:subscriber_id_period,where:deleted_at is null;not null"`
-	RawInvoice   datatypes.JSON `gorm:"not null"`
-	IsPaid       bool           `gorm:"default:false"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Id         uuid.UUID      `gorm:"primaryKey;type:uuid"`
+	InvoiceeId uuid.UUID      `gorm:"uniqueIndex:invoicee_id_period,where:deleted_at is null;not null;type:uuid"`
+	NetworkId  uuid.UUID      `gorm:"not null;type:uuid"`
+	Period     time.Time      `gorm:"uniqueIndex:invoicee_id_period,where:deleted_at is null;not null"`
+	RawInvoice datatypes.JSON `gorm:"not null"`
+	IsPaid     bool           `gorm:"default:false"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
 
 type InvoiceeType uint8
