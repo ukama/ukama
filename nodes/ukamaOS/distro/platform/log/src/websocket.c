@@ -35,6 +35,7 @@ static struct _websocket_client_handler handler = {NULL, NULL};
 static pthread_mutex_t hasData = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
+static ThreadArgs gThreadArgs;
 
 static int is_websocket_valid(WSManager *manager) {
 
@@ -52,16 +53,13 @@ static int is_websocket_valid(WSManager *manager) {
 
 static void* monitor_websocket(void *args) {
 
-    ThreadArgs *threadArgs;
     struct timespec ts;
-
-    threadArgs = (ThreadArgs *)args;
     
     while (USYS_TRUE) {
         sleep(5);
         if (!is_websocket_valid(handler.websocket)) {
-            while (start_websocket_client(threadArgs->serviceName,
-                                          threadArgs->port) == USYS_FALSE) {
+            while (start_websocket_client(gThreadArgs.serviceName,
+                                          gThreadArgs.port) == USYS_FALSE) {
                 sleep(5);
             }
         } else {
@@ -161,7 +159,6 @@ done:
 
 void log_remote_init(char *serviceName) {
 
-    ThreadArgs threadArgs;
     int rlogdPort = 0;
 
     rlogdPort = usys_find_service_port(SERVICE_RLOG);
@@ -174,12 +171,12 @@ void log_remote_init(char *serviceName) {
         handler.websocket = NULL;
     }
 
-    threadArgs.serviceName = strdup(serviceName);
-    threadArgs.port        = rlogdPort;
+    gThreadArgs.serviceName = strdup(serviceName);
+    gThreadArgs.port        = rlogdPort;
     if (pthread_create(&monitorThread,
                        NULL,
                        monitor_websocket,
-                       (void *)&threadArgs) != 0) {
+                       NULL) != 0) {
         return;
     }
 
