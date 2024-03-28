@@ -68,6 +68,25 @@ void init_config_and_buffer() {
     pthread_mutex_init(&gData->bufferMutex, NULL);
 }
 
+void clean_for_exit(int stage, UInst *service, UInst *socket, char **id) {
+
+    switch (stage) {
+    case NORMAL_EXIT:
+        ulfius_stop_framework(socket);
+        ulfius_clean_instance(socket);
+    case WEB_SOCKET_FAIL:
+        ulfius_stop_framework(service);
+        ulfius_clean_instance(service);
+    case WEB_SERVICE_FAIL:
+        usys_free(*id);
+    case NODED_FAIL:
+        json_decref(gData->jOutputBuffer);
+    default:
+        usys_free(gData);
+        return;
+    }
+}
+
 int main (int argc, char **argv) {
 
     char *debug=DEF_LOG_LEVEL;
@@ -130,30 +149,25 @@ int main (int argc, char **argv) {
 	if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) != USYS_TRUE) {
 	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
                        DEF_NODED_HOST, nodedPort);
+        clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst, &nodeID);
         return 0;
 	}
 
-    if (start_websocket_server(nodeID, rlogdPort, &websocketInst) != USYS_TRUE){
-        usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
-        usys_free(nodeID);
+    if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
+        usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
+        clean_for_exit(WEB_SOCKET_FAIL, &serviceInst, &websocketInst, &nodeID);
         return 0;
     }
 
-    if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
-        ulfius_stop_framework(&websocketInst);
-        ulfius_clean_instance(&websocketInst);
-        usys_free(nodeID);
-        usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
+    if (start_websocket_server(nodeID, rlogdPort, &websocketInst) != USYS_TRUE){
+        usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
+        clean_for_exit(WEB_SOCKET_FAIL, &serviceInst, &websocketInst, &nodeID);
         return 0;
     }
 
     pause();
 
-    ulfius_stop_framework(&websocketInst);
-    ulfius_clean_instance(&websocketInst);
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
-	usys_free(nodeID);
+    clean_for_exit(NORMAL_EXIT, &serviceInst, &websocketInst, &nodeID);
 
 	return 0;
 }

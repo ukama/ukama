@@ -21,6 +21,11 @@
 #define LOG_FILE      3
 #define UKAMA_SERVICE 4
 
+#define NORMAL_EXIT      1
+#define WEB_SOCKET_FAIL  2
+#define WEB_SERVICE_FAIL 3
+#define NODED_FAIL       4
+
 #define DEF_LOG_LEVEL           "TRACE"
 #define DEF_SERVICE_CLIENT_HOST "localhost"
 #define RLOGD_VERSION           "0.0.1"
