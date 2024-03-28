@@ -127,6 +127,43 @@ func (_m *InvoiceServiceClient) Get(ctx context.Context, in *gen.GetRequest, opt
 	return r0, r1
 }
 
+// GetByInvoicee provides a mock function with given fields: ctx, in, opts
+func (_m *InvoiceServiceClient) GetByInvoicee(ctx context.Context, in *gen.GetByInvoiceeRequest, opts ...grpc.CallOption) (*gen.GetByInvoiceeResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByInvoicee")
+	}
+
+	var r0 *gen.GetByInvoiceeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByInvoiceeRequest, ...grpc.CallOption) (*gen.GetByInvoiceeResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByInvoiceeRequest, ...grpc.CallOption) *gen.GetByInvoiceeResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByInvoiceeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByInvoiceeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByNetwork provides a mock function with given fields: ctx, in, opts
 func (_m *InvoiceServiceClient) GetByNetwork(ctx context.Context, in *gen.GetByNetworkRequest, opts ...grpc.CallOption) (*gen.GetByNetworkResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -156,43 +193,6 @@ func (_m *InvoiceServiceClient) GetByNetwork(ctx context.Context, in *gen.GetByN
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByNetworkRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetBySubscriber provides a mock function with given fields: ctx, in, opts
-func (_m *InvoiceServiceClient) GetBySubscriber(ctx context.Context, in *gen.GetBySubscriberRequest, opts ...grpc.CallOption) (*gen.GetBySubscriberResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetBySubscriber")
-	}
-
-	var r0 *gen.GetBySubscriberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) (*gen.GetBySubscriberResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) *gen.GetBySubscriberResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBySubscriberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

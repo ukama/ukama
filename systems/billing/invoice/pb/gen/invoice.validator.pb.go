@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -51,18 +51,18 @@ func (this *GetResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetBySubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_GetByInvoiceeRequest_InvoiceeId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *GetBySubscriberRequest) Validate() error {
-	if !_regex_GetBySubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+func (this *GetByInvoiceeRequest) Validate() error {
+	if !_regex_GetByInvoiceeRequest_InvoiceeId.MatchString(this.InvoiceeId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceeId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.InvoiceeId))
 	}
-	if this.SubscriberId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	if this.InvoiceeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceeId", fmt.Errorf(`value '%v' must not be an empty string`, this.InvoiceeId))
 	}
 	return nil
 }
-func (this *GetBySubscriberResponse) Validate() error {
+func (this *GetByInvoiceeResponse) Validate() error {
 	for _, item := range this.Invoices {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -111,8 +111,7 @@ func (this *DeleteResponse) Validate() error {
 }
 
 var _regex_Invoice_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Invoice_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Invoice_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Invoice_InvoiceeId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Invoice) Validate() error {
 	if !_regex_Invoice_Id.MatchString(this.Id) {
@@ -121,17 +120,11 @@ func (this *Invoice) Validate() error {
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
 	}
-	if !_regex_Invoice_SubscriberId.MatchString(this.SubscriberId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+	if !_regex_Invoice_InvoiceeId.MatchString(this.InvoiceeId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceeId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.InvoiceeId))
 	}
-	if this.SubscriberId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
-	}
-	if !_regex_Invoice_NetworkId.MatchString(this.NetworkId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
-	}
-	if this.NetworkId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
+	if this.InvoiceeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceeId", fmt.Errorf(`value '%v' must not be an empty string`, this.InvoiceeId))
 	}
 	if this.Period != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Period); err != nil {
