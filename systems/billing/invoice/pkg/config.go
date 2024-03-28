@@ -29,6 +29,7 @@ type Config struct {
 	PdfPrefix         string `default:"/pdf/"`
 	PdfFolder         string `default:"/srv/static"`
 	OrgName           string
+	OrgId             string
 }
 
 func NewConfig(name string) *Config {

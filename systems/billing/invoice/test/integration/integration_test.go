@@ -142,8 +142,8 @@ func init() {
 }
 
 func Test_FullFlow(t *testing.T) {
-	// we need real subscriberId from subscriber-registry
-	subscriberId := uuid.NewV4().String()
+	// we need real subscriberId from subscriber-registry or a real orgId
+	invoiceeId := uuid.NewV4().String()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -176,9 +176,9 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("GetInvoiceBySubscriber", func(t *testing.T) {
-		_, err := c.GetBySubscriber(ctx, &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId,
+	t.Run("GetInvoiceByInvoicee", func(t *testing.T) {
+		_, err := c.GetByInvoicee(ctx, &pb.GetByInvoiceeRequest{
+			InvoiceeId: invoiceeId,
 		})
 
 		assert.NoError(t, err)
