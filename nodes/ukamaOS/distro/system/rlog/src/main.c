@@ -130,24 +130,29 @@ int main (int argc, char **argv) {
 	if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) != USYS_TRUE) {
 	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
                        DEF_NODED_HOST, nodedPort);
-		goto done;
+        return 0;
 	}
 
     if (start_websocket_server(nodeID, rlogdPort, &websocketInst) != USYS_TRUE){
         usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
-        goto done;
+        usys_free(nodeID);
+        return 0;
     }
 
     if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
+        ulfius_stop_framework(&websocketInst);
+        ulfius_clean_instance(&websocketInst);
+        usys_free(nodeID);
         usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
-        goto done;
+        return 0;
     }
-    
+
     pause();
 
-done:
     ulfius_stop_framework(&websocketInst);
     ulfius_clean_instance(&websocketInst);
+    ulfius_stop_framework(&serviceInst);
+    ulfius_clean_instance(&serviceInst);
 	usys_free(nodeID);
 
 	return 0;
