@@ -90,7 +90,8 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	invoice := &db.Invoice{
-		InvoiceeId: invoiceeId,
+		InvoiceeId:   invoiceeId,
+		InvoiceeType: db.InvoiceeTypeOrg,
 	}
 
 	if invoiceeId != i.OrgId {
@@ -100,6 +101,7 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		}
 
 		invoice.NetworkId = subscriberInfo.NetworkId
+		invoice.InvoiceeType = db.InvoiceeTypeSubscriber
 	}
 
 	log.Infof("Adding invoice for invoicee: %s", invoiceeId)
@@ -258,12 +260,16 @@ func generateInvoicePDF(data any, templatePath, outputPath string) error {
 
 func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	inv := &pb.Invoice{
-		Id:         invoice.Id.String(),
-		InvoiceeId: invoice.InvoiceeId.String(),
-		NetworkId:  invoice.NetworkId.String(),
-		Period:     timestamppb.New(invoice.Period),
-		IsPaid:     invoice.IsPaid,
-		CreatedAt:  timestamppb.New(invoice.CreatedAt),
+		Id:           invoice.Id.String(),
+		InvoiceeId:   invoice.InvoiceeId.String(),
+		InvoiceeType: invoice.InvoiceeType.String(),
+		Period:       timestamppb.New(invoice.Period),
+		IsPaid:       invoice.IsPaid,
+		CreatedAt:    timestamppb.New(invoice.CreatedAt),
+	}
+
+	if invoice.NetworkId != uuid.Nil {
+		inv.NetworkId = invoice.NetworkId.String()
 	}
 
 	val := &pb.RawInvoice{}
