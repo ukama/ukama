@@ -62,8 +62,8 @@ func TestInvoiceRepo_Add(t *testing.T) {
 		var db *sql.DB
 
 		invoice := invoicedb.Invoice{
-			Id:           uuid.NewV4(),
-			SubscriberId: uuid.NewV4(),
+			Id:         uuid.NewV4(),
+			InvoiceeId: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -72,7 +72,7 @@ func TestInvoiceRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(invoice.Id, invoice.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(invoice.Id, invoice.InvoiceeId, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -109,15 +109,15 @@ func TestInvoiceRepo_Get(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
 		// Arrange
 		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+		var invoiceeId = uuid.NewV4()
 
 		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "subscriber_id"}).
-			AddRow(invoiceId, subscriberId)
+		rows := sqlmock.NewRows([]string{"id", "invoicee_id"}).
+			AddRow(invoiceId, invoiceeId)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
 			WithArgs(invoiceId, sqlmock.AnyArg()).
@@ -191,22 +191,22 @@ func TestInvoiceRepo_Get(t *testing.T) {
 	})
 }
 
-func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
-	t.Run("SubscriberFound", func(t *testing.T) {
+func TestINvoiceRepo_GetByInvoicee(t *testing.T) {
+	t.Run("InvoiceeFound", func(t *testing.T) {
 		// Arrange
 		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+		var invoiceeId = uuid.NewV4()
 
 		var db *sql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "subscriber_id"}).
-			AddRow(invoiceId, subscriberId)
+		rows := sqlmock.NewRows([]string{"id", "invoicee_id"}).
+			AddRow(invoiceId, invoiceeId)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(subscriberId).
+			WithArgs(invoiceeId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -226,7 +226,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		invoices, err := r.GetBySubscriber(subscriberId)
+		invoices, err := r.GetByInvoicee(invoiceeId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -236,9 +236,9 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		assert.NotNil(t, invoices)
 	})
 
-	t.Run("SubscriberNotFound", func(t *testing.T) {
+	t.Run("InvoiceeNotFound", func(t *testing.T) {
 		// Arrange
-		var subscriberId = uuid.NewV4()
+		var invoiceeId = uuid.NewV4()
 
 		var db *sql.DB
 
@@ -246,7 +246,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(subscriberId).
+			WithArgs(invoiceeId).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -266,7 +266,7 @@ func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		invoices, err := r.GetBySubscriber(subscriberId)
+		invoices, err := r.GetByInvoicee(invoiceeId)
 
 		// Assert
 		assert.Error(t, err)
