@@ -144,6 +144,15 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
         .level = level,
     };
 
+    if (is_connect_with_rlogd()) {
+        char buf[512] = {0};
+        init_event(&ev, &buf[0]);
+        stdout_callback(&ev);
+        va_end(ev.ap);
+        log_rlogd(&buf[0]);
+        return;
+    }
+
     lock();
 
     if (!l.quiet && level >= l.level) {

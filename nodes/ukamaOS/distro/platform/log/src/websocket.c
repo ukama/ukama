@@ -136,7 +136,6 @@ int start_websocket_client(char *serviceName, int rlogdPort) {
         ulfius_add_websocket_client_deflate_extension(handler);
         request.check_server_certificate = USYS_FALSE;
 
-        /* Open websocket connection to remote host. */
         ret = ulfius_open_websocket_client_connection(&request,
                                                       &websocket_manager, NULL,
                                                       &websocket_incoming_message, NULL,
@@ -186,11 +185,18 @@ int log_rlogd(char *message) {
 
     if (strlen(message) > MAX_LOG_LEN -1) return USYS_FALSE;
 
-    if (!is_websocket_valid(handler)) return USYS_FALSE;
+    if (handler == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&hasData);
     strncpy(dataToSend, message, strlen(message));
     pthread_mutex_unlock(&hasData);
+
+    return USYS_TRUE;
+}
+
+int is_connect_with_rlogd() {
+
+    if (handler == NULL) return USYS_FALSE;
 
     return USYS_TRUE;
 }
