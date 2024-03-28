@@ -32,17 +32,17 @@ func (_m *AccountingRepo) Add(accounts []*db.Accounting) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: ids
-func (_m *AccountingRepo) Delete(ids []string) error {
-	ret := _m.Called(ids)
+// Delete provides a mock function with given fields:
+func (_m *AccountingRepo) Delete() error {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]string) error); ok {
-		r0 = rf(ids)
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Error(0)
 	}
