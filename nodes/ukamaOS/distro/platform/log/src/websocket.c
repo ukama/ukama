@@ -73,36 +73,28 @@ static void* monitor_websocket(void *args) {
 static void websocket_manager(const URequest *request,
                               WSManager *manager,
                               void *data) {
-
-    struct timespec ts;
     int ret;
+
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&hasData, NULL);
 
     while (USYS_TRUE) {
 
-        pthread_mutex_lock(&mutex);
+        if (pthread_cond_wait(&hasData, &mutex) != 0) return;
 
-        clock_gettime(CLOCK_REALTIME, &ts);
-        ts.tv_sec += 5;
-
-        ret = pthread_cond_timedwait(&hasData, &mutex, &ts);
-        if (ret == ETIMEDOUT) {
-            pthread_mutex_unlock(&mutex);
-            if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
-                return;
-            } else {
-                continue;
-            }
+        if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
+            return;
         }
 
         /* send the message */
         if (ulfius_websocket_send_message(manager,
                                           U_WEBSOCKET_OPCODE_TEXT,
-                                          strlen(dataToSend),
+                                          sizeof(dataToSend),
                                           dataToSend) != U_OK) {
             printf("Unable to send message: %s", dataToSend);
         }
 
-        memset(dataToSend, 0, MAX_LOG_LEN);
+        memset(&dataToSend[0], 0, MAX_LOG_LEN);
         pthread_mutex_unlock(&mutex);
     }
 
@@ -180,8 +172,6 @@ void log_remote_init(char *serviceName) {
     if (handler.websocket) return;
     if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
-
-    pthread_mutex_lock(&mutex);
     
     if (start_websocket_client(serviceName, rlogdPort) == USYS_FALSE) {
         handler.websocket = NULL;
@@ -206,10 +196,9 @@ int log_rlogd(char *message) {
     if (handler.websocket == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&mutex);
-    strncpy(dataToSend, message, strlen(message));
-
-    pthread_cond_broadcast(&hasData);
+    strncpy(&dataToSend[0], message, strlen(message));
     pthread_mutex_unlock(&mutex);
+    pthread_cond_broadcast(&hasData);
 
     return USYS_TRUE;
 }
