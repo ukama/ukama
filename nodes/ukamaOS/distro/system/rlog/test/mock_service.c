@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 
     while (1) {
         
-        sleep (5);
+        //        sleep (1);
 
         memset(&logMessage[0], 0, MSG_LENGTH+1);
         generate_random_message(logMessage);
