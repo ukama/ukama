@@ -16,7 +16,7 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
-#define PREFIX_WEBSOCKET "logit/"
+#define PREFIX_WEBSOCKET "v1/logit/"
 #define ENV_BINDING_IP   "ENV_BINDING_IP"
 #define DEF_BINDING_IP   "127.0.0.1"
 #define MAX_LOG_LEN      512
