@@ -39,8 +39,6 @@ int main(int argc, char **argv) {
     usys_log_remote_init(SERVICE_NAME);
 
     while (1) {
-        
-        //        sleep (1);
 
         memset(&logMessage[0], 0, MSG_LENGTH+1);
         generate_random_message(logMessage);

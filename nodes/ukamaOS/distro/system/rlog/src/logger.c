@@ -208,23 +208,40 @@ static void write_to_stderr(const char *buffer) {
 
 void process_logs(void *nodeID, const char *log) {
 
+    char appName[MAX_SIZE] = {0};
+    char logTime[9] = {0};
+    char logLevel[16] = {0};
+    char sourceFile[MAX_SIZE] = {0};
+    char message[MAX_MSG_LEN] = {0};
+    int sourceLine = 0;
+
     if (strlen(log) > MAX_LOG_LEN) return;
 
-    switch (gData->output) {
-    case STDOUT:
-        write_to_stdout(log);
-        break;
-    case STDERR:
-        write_to_stderr(log);
-        break;
-    case LOG_FILE:
-        write_to_log_file(log);
-        break;
-    case UKAMA_SERVICE:
-        write_to_ukama_service((char *)nodeID, log);
-        break;
-    default:
-        break;
+    /* <app_name> <time> <level> <file_name:line_number> <message> */
+    if (sscanf(log, LOG_FORMAT, appName, logTime, logLevel,
+               sourceFile, &sourceLine, message) != LOG_ELEMENTS) {
+        usys_log_debug("Invalid log message: %s", log);
+        return;
+    }
+
+    if (log_level(logLevel) >= gData->level) {
+
+        switch (gData->output) {
+        case STDOUT:
+            write_to_stdout(log);
+            break;
+        case STDERR:
+            write_to_stderr(log);
+            break;
+        case LOG_FILE:
+            write_to_log_file(log);
+            break;
+        case UKAMA_SERVICE:
+            write_to_ukama_service((char *)nodeID, log);
+            break;
+        default:
+            break;
+        }
     }
 
     return;

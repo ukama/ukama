@@ -34,9 +34,7 @@ void websocket_incoming_message(const URequest *request,
                                 WSMessage *message,
 								void *nodeID) {
 
-    usys_log_debug("Recevied message: %s", message->data);
     process_logs(nodeID, message->data);
-
 	return;
 }
 
