@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "websocket.h"
+#include "usys_log.h"
 
 /* logger.c */
 extern void process_logs(void *nodeID, const char *log);
@@ -33,6 +34,7 @@ void websocket_incoming_message(const URequest *request,
                                 WSMessage *message,
 								void *nodeID) {
 
+    usys_log_debug("Recevied message: %s", message->data);
     process_logs(nodeID, message->data);
 
 	return;

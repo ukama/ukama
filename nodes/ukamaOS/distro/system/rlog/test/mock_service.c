@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "usys_log.h"
 #include "usys_services.h"
@@ -38,14 +40,14 @@ int main(int argc, char **argv) {
 
     while (1) {
         
-        sleep (1);
+        sleep (5);
 
-        memset(logMessage, 0, MSG_LENGTH+1);
+        memset(&logMessage[0], 0, MSG_LENGTH+1);
         generate_random_message(logMessage);
 
-        usys_log_error(logMessage);
-        usys_log_debug(logMessage);
-        usys_log_info(logMessage);
+        usys_log_error(&logMessage[0]);
+        usys_log_debug(&logMessage[0]);
+        usys_log_info(&logMessage[0]);
     }
     
 	return 0;

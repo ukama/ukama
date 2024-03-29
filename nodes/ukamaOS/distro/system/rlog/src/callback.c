@@ -50,6 +50,6 @@ int web_socket_cb_post_log(const URequest *request,
                                         HttpStatus_InternalServerError,
                                         HttpStatusStr(HttpStatus_InternalServerError));
     }
-    
+
     return U_CALLBACK_CONTINUE;
 }
