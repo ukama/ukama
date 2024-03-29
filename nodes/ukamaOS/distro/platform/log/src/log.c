@@ -63,9 +63,16 @@ static void stdout_callback(log_Event *ev) {
 #endif
     vfprintf(ev->udata, ev->fmt, ev->ap);
     fprintf(ev->udata, "\n");
+    fflush(ev->udata);
+}
 
-    if (!log_rlogd((char *)ev->udata))
-        fflush(ev->udata);
+static void rlogd_callback(log_Event *ev) {
+    char buf[16];
+    buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
+    sprintf(ev->udata, "%s %s %-5s %s:%d: ", l.service, buf,
+            levelStrings[ev->level], ev->file, ev->line);
+    vsprintf(ev->udata, ev->fmt, ev->ap);
+    sprintf(ev->udata, "\n");
 }
 
 static void file_callback(log_Event *ev) {
@@ -143,10 +150,16 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
 
     if (is_connect_with_rlogd()) {
         char buf[512] = {0};
+
+        lock();
         init_event(&ev, &buf[0]);
-        stdout_callback(&ev);
+        va_start(ev.ap, fmt);
+        rlogd_callback(&ev);
         va_end(ev.ap);
+        unlock();
+
         log_rlogd(&buf[0]);
+
         return;
     }
 
