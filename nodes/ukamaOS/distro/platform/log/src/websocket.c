@@ -32,7 +32,8 @@ typedef struct {
 } ThreadArgs;
 
 static struct _websocket_client_handler handler = {NULL, NULL};
-static pthread_mutex_t hasData = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex   = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  hasData = PTHREAD_COND_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
 static ThreadArgs gThreadArgs;
@@ -52,10 +53,9 @@ static int is_websocket_valid(WSManager *manager) {
 }
 
 static void* monitor_websocket(void *args) {
-
-    struct timespec ts;
     
     while (USYS_TRUE) {
+
         sleep(5);
         if (!is_websocket_valid(handler.websocket)) {
             while (start_websocket_client(gThreadArgs.serviceName,
@@ -74,11 +74,24 @@ static void websocket_manager(const URequest *request,
                               WSManager *manager,
                               void *data) {
 
-    do {
+    struct timespec ts;
+    int ret;
 
-        pthread_mutex_lock(&hasData);
-        if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
-            return;
+    while (USYS_TRUE) {
+
+        pthread_mutex_lock(&mutex);
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 5;
+
+        ret = pthread_cond_timedwait(&hasData, &mutex, &ts);
+        if (ret == ETIMEDOUT) {
+            pthread_mutex_unlock(&mutex);
+            if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
+                return;
+            } else {
+                continue;
+            }
         }
 
         /* send the message */
@@ -88,9 +101,10 @@ static void websocket_manager(const URequest *request,
                                           dataToSend) != U_OK) {
             printf("Unable to send message: %s", dataToSend);
         }
+
         memset(dataToSend, 0, MAX_LOG_LEN);
-        pthread_mutex_unlock(&hasData);
-    } while (1);
+        pthread_mutex_unlock(&mutex);
+    }
 
     return;
 }
@@ -114,7 +128,7 @@ int start_websocket_client(char *serviceName, int rlogdPort) {
     int ret = USYS_FALSE;
     char *hostname = NULL;
     char url[128]  = {0};
-    
+
     struct _u_request request;
     struct _u_response response;
 
@@ -153,7 +167,7 @@ int start_websocket_client(char *serviceName, int rlogdPort) {
 done:
     ulfius_clean_request(&request);
     ulfius_clean_response(&response);
-    
+
     return ret;
 }
 
@@ -167,6 +181,8 @@ void log_remote_init(char *serviceName) {
     if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
 
+    pthread_mutex_lock(&mutex);
+    
     if (start_websocket_client(serviceName, rlogdPort) == USYS_FALSE) {
         handler.websocket = NULL;
     }
@@ -189,9 +205,11 @@ int log_rlogd(char *message) {
 
     if (handler.websocket == NULL) return USYS_FALSE;
 
-    pthread_mutex_lock(&hasData);
+    pthread_mutex_lock(&mutex);
     strncpy(dataToSend, message, strlen(message));
-    pthread_mutex_unlock(&hasData);
+
+    pthread_cond_broadcast(&hasData);
+    pthread_mutex_unlock(&mutex);
 
     return USYS_TRUE;
 }
