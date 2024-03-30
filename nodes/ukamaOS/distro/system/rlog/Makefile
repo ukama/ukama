@@ -78,6 +78,8 @@ $(PLATFORM):
 	$(XCC) $(CFLAGS) -c $< -o $@
 
 all: rlog.d
+	cd test; make all; cd -
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)
+	cd test; make clean; cd -
