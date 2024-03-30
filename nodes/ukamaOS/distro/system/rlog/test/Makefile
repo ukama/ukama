@@ -6,7 +6,8 @@
 
 include ../../../../config.mk
 
-TARGET_EXEC = mock_service
+MOCK_SERVICE = mock_service
+MOCK_UKAMA   = mock_ukama
 
 UKAMAOS_ROOT = ../../../../
 
@@ -32,6 +33,7 @@ CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I../inc
 CFLAGS+=-I../../common/inc
 CFLAGS+=-D_REENTRANT
 CFLAGS+=-I$(PLATFORM_INC_SYS)
@@ -52,10 +54,13 @@ OBJFILES = $(CFILES:.c=.o)
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: $(MOCK_SERVICE) $(MOCK_UKAMA)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+$(MOCK_SERVICE): $(VENDOR_PKG) $(OBJFILES)
+	$(XCC) -o $(MOCK_SERVICE) mock_service.o $(LDFLAGS) $(LIBS)
+
+$(MOCK_UKAMA):  $(VENDOR_PKG) $(OBJFILES)
+	$(XCC) -o $(MOCK_UKAMA) mock_ukama.o $(LDFLAGS) $(LIBS)
 
 $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@
@@ -66,7 +71,7 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: mock_service
+all: mock_service mock_ukama
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(MOCK_SERVICE) $(MOCK_UKAMA) $(OBJFILES)
