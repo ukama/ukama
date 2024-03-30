@@ -23,6 +23,44 @@ int web_service_cb_ping(const URequest *request, UResponse *response,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_get_level(const URequest *request, UResponse *response,
+                             void *data) {
+
+    char *level = NULL;
+
+    if (gData->level == USYS_LOG_DEBUG) {
+        level = "debug";
+    } else if (gData->level == USYS_LOG_INFO) {
+        level = "info";
+    } else if (gData->level == USYS_LOG_ERROR) {
+        level = "error";
+    }
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, level);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_output(const URequest *request, UResponse *response,
+                              void *data) {
+
+    char *output = NULL;
+
+    if (gData->output == STDOUT) {
+        output = "stdout";
+    } else if (gData->output == STDERR) {
+        output = "stderr";
+    } else if (gData->output == LOG_FILE) {
+        output = "file";
+    } else if (gData->output == UKAMA_SERVICE) {
+        output = "ukama";
+    }
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, output);
+
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_default(const URequest *request, UResponse *response,
                            void *data) {
 

@@ -72,6 +72,14 @@ static void setup_webservice_endpoints(UInst *instance) {
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, NULL);
 
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("level"), 0,
+                               &web_service_cb_get_level, NULL);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("output"), 0,
+                               &web_service_cb_get_output, NULL);
+
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("level/:level"), 0,
                                &web_service_cb_post_level, NULL);
