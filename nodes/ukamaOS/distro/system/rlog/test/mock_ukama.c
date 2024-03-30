@@ -24,32 +24,11 @@ typedef struct _u_request  req_t;
 typedef struct _u_response resp_t;
 typedef struct _u_map      map_t;
 
-void print_map(map_t *map) {
+void print_log(const struct _u_request *request) {
 
-    if (map == NULL) return;
-
-    for (int i=0; i<map->nb_values; i++) {
-        fprintf(stdout, "\t %s:%s \n", map->keys[i], map->values[i]);
-    }
-
-    fprintf(stdout, "----------------------\n");
-}
-
-void print_request(const struct _u_request *request) {
-
-    fprintf(stdout, "Recevied Packet: \n");
-    fprintf(stdout, " Protocol: %s \n Method: %s \n Path: %s\n",
-            request->http_protocol, request->http_verb, request->http_url);
-
-    if (request->map_header) {
-        fprintf(stdout, "Packet header: \n");
-        print_map(request->map_header);
-    }
-
-    if (request->map_url) {
-        fprintf(stdout, "Packet URL variables: \n");
-        print_map(request->map_url);
-    }
+    fprintf(stdout, "Recevied log message: \n");
+    fprintf(stdout, " Length: %ld \n Data: %s \n",
+            request->binary_body_length, (char *)request->binary_body);
 }
 
 int callback_default(const URequest *request, UResponse *response,
@@ -65,11 +44,7 @@ int callback_default(const URequest *request, UResponse *response,
 int callback_post_log(const URequest *request, UResponse *response,
                       void *data) {
 
-    char *nodeID = NULL;
-
-    nodeID = u_map_get(request->map_url, "nodeID");
-
-    print_request(request);
+    print_log(request);
     
     ulfius_set_string_body_response(response,
                                     HttpStatus_OK,
