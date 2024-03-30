@@ -18,7 +18,7 @@
 
 #include "rlogd.h"
 
-#define EP_SERVICE       "v1/node/:nodeID/logger"
+#define EP_SERVICE       "v1/nodes/logger/:nodeID"
 
 typedef struct _u_request  req_t;
 typedef struct _u_response resp_t;

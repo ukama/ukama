@@ -127,7 +127,7 @@ static void write_to_ukama_service(char *nodeID, const char *log) {
             return;
         }
 
-        sprintf(url, "http://localhost:%d/%s/node/logger/%s",
+        sprintf(url, "http://localhost:%d/%s/nodes/logger/%s",
                 port, API_VERSION, nodeID);
 
         send_request_to_server(&url[0], buffer);
