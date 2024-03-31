@@ -38,6 +38,7 @@ static struct {
     int level;
     bool quiet;
     char *service;
+    int  rlogdEnable;
     Callback callbacks[MAX_CALLBACKS];
 } l;
 
@@ -117,6 +118,11 @@ void log_set_quiet(bool enable) {
 
 void log_set_service(char *service) {
     l.service = service;
+    l.rlogdEnable = 0;
+}
+
+void log_enable_rlogd(int flag) {
+    l.rlogdEnable = flag;
 }
 
 int log_add_callback(log_LogFn fn, void *udata, int level) {
@@ -148,6 +154,10 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
         .line = line,
         .level = level,
     };
+
+    if (!is_connect_with_rlogd() && l.rlogdEnable) {
+        log_remote_init(l.service);
+    }
 
     if (is_connect_with_rlogd()) {
         char buf[512] = {0};

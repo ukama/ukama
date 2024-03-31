@@ -21,6 +21,8 @@
 #define DEF_BINDING_IP   "127.0.0.1"
 #define MAX_LOG_LEN      512
 
+#define WEBSOCKET_MONITOR_TIMEOUT 5
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
@@ -32,8 +34,10 @@ typedef struct {
 } ThreadArgs;
 
 static struct _websocket_client_handler handler = {NULL, NULL};
-static pthread_mutex_t mutex   = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  hasData = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t mutex          = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t websocketMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  hasData        = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t  websocketFail  = PTHREAD_COND_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
 static ThreadArgs gThreadArgs;
@@ -53,17 +57,26 @@ static int is_websocket_valid(WSManager *manager) {
 }
 
 static void* monitor_websocket(void *args) {
-    
+
+    struct timespec ts;
+
     while (USYS_TRUE) {
 
-        sleep(5);
-        if (!is_websocket_valid(handler.websocket)) {
-            while (start_websocket_client(gThreadArgs.serviceName,
-                                          gThreadArgs.port) == USYS_FALSE) {
-                sleep(5);
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += WEBSOCKET_MONITOR_TIMEOUT;
+
+        /* timeout or socket failure */
+        if (pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts) == ETIMEDOUT) {
+            pthread_mutex_unlock(&websocketMutex);
+            if (!is_websocket_valid(handler.websocket)) {
+                while (start_websocket_client(gThreadArgs.serviceName,
+                                              gThreadArgs.port) == USYS_FALSE) {
+                    printf("Retrying again ...");
+                    sleep(WEBSOCKET_MONITOR_TIMEOUT);
+                }
+            } else {
+                continue;
             }
-        } else {
-            continue;
         }
     }
 
@@ -82,7 +95,9 @@ static void websocket_manager(const URequest *request,
 
         if (pthread_cond_wait(&hasData, &mutex) != 0) return;
 
-        if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
+        if (ulfius_websocket_status(manager) != U_WEBSOCKET_STATUS_OPEN) {
+            handler.websocket = NULL;
+            pthread_cond_broadcast(&websocketFail);
             return;
         }
 
@@ -187,6 +202,7 @@ void log_remote_init(char *serviceName) {
     }
 
     pthread_detach(monitorThread);
+    log_enable_rlogd(USYS_TRUE);
 }
 
 int log_rlogd(char *message) {
