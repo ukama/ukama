@@ -45,7 +45,7 @@ func Test_orgRepo_Get(t *testing.T) {
 			AddRow(orgName, orgCert, dIp)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+			WithArgs(orgName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

@@ -21,10 +21,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/common/providers"
 
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
@@ -61,6 +61,7 @@ func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
+		Lookup:  "localhost:8080",
 	})
 }
 

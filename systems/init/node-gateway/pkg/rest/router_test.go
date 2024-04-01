@@ -56,6 +56,7 @@ func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
+		Lookup:  "localhost:8080",
 	})
 }
 

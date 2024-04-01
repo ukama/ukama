@@ -73,7 +73,7 @@ func Test_nodeRepo_Get(t *testing.T) {
 			AddRow(uuidStr, orgId)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(id).
+			WithArgs(id, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
