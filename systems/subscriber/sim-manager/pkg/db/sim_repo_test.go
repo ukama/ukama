@@ -77,7 +77,7 @@ func TestSimRepo_Get(t *testing.T) {
 			AddRow(packageID, simID)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(simID).
+			WithArgs(simID, sqlmock.AnyArg()).
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
@@ -123,7 +123,7 @@ func TestSimRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(simID).
+			WithArgs(simID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
