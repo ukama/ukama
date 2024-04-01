@@ -29,6 +29,8 @@ import (
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
 
+const uuidParsingError = "Error parsing UUID"
+
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName        string
@@ -121,10 +123,14 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
 			}
-			component.UserId = company.UserId
+
 			components = append(components, component)
 		}
-		cdb := utilComponentsToDbComponents(components)
+		userId, err := uuid.FromString(company.UserId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		}
+		cdb := utilComponentsToDbComponents(components, userId)
 
 		err = c.componentRepo.Delete()
 		if err != nil {
@@ -151,7 +157,7 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	return &pb.Component{
 		Id:            component.Id.String(),
 		Inventory:     component.Inventory,
-		UserId:        component.UserId,
+		UserId:        component.UserId.String(),
 		Category:      pb.ComponentCategory(component.Category),
 		Type:          component.Type,
 		Description:   component.Description,
@@ -175,7 +181,7 @@ func dbComponentsToPbComponents(components []*db.Component) []*pb.Component {
 	return res
 }
 
-func utilComponentsToDbComponents(components []utils.Component) []*db.Component {
+func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) []*db.Component {
 	res := []*db.Component{}
 
 	for _, i := range components {
@@ -183,7 +189,7 @@ func utilComponentsToDbComponents(components []utils.Component) []*db.Component 
 			Id:            uuid.NewV4(),
 			Inventory:     i.InventoryID,
 			Category:      db.ParseType(i.Category),
-			UserId:        i.UserId,
+			UserId:        uId,
 			Type:          i.Type,
 			Description:   i.Description,
 			DatasheetURL:  i.DatasheetURL,

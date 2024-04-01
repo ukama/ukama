@@ -15,7 +15,7 @@ import (
 type Accounting struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Item          string
-	UserId        string
+	UserId        uuid.UUID `gorm:"type:uuid"`
 	Inventory     string
 	EffectiveDate string
 	OpexFee       string

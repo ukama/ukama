@@ -26,10 +26,9 @@ type Config struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout   time.Duration
-	Component string
-	Accounting   string
-	Contract  string
+	Timeout    time.Duration
+	Component  string
+	Accounting string
 }
 
 type HttpEndpoints struct {
@@ -48,9 +47,9 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:   10 * time.Second,
-			Component: "component:9090",
-			Accounting:   "accounting:9090",
+			Timeout:    10 * time.Second,
+			Component:  "component:9090",
+			Accounting: "accounting:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

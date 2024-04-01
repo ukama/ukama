@@ -45,6 +45,7 @@ func (c *componentRepo) GetByUser(userId string, category int32) ([]*Component, 
 	var components []*Component
 
 	tx := c.Db.GetGormDb().Preload(clause.Associations)
+	tx = tx.Where("user_id = ?", userId)
 
 	if category != 0 {
 		tx = tx.Where("category = ?", category)

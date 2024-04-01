@@ -70,7 +70,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 			[]*db.Component{
 				{
 					Id:            cId,
-					UserId:        uId.String(),
+					UserId:        uId,
 					Inventory:     "2",
 					Category:      1,
 					Type:          "tower node",

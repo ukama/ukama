@@ -15,10 +15,6 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 )
 
-const (
-	GaugeType = "gauge"
-)
-
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`

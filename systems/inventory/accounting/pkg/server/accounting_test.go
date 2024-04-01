@@ -72,7 +72,7 @@ func TestAccountingServer_GetByUser(t *testing.T) {
 					Id:            aId,
 					Vat:           "10",
 					Item:          "Product-1",
-					UserId:        uId.String(),
+					UserId:        uId,
 					Inventory:     "1",
 					OpexFee:       "100",
 					EffectiveDate: "2023-01-01",

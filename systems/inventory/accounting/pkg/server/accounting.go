@@ -28,6 +28,8 @@ import (
 	pb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
 )
 
+const uuidParsingError = "Error parsing UUID"
+
 type AccountingServer struct {
 	pb.UnimplementedAccountingServiceServer
 	orgName        string
@@ -116,7 +118,12 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to unmarshal manifest json file. Error %s", err.Error())
 		}
-		adb := utilAccountsToDbAccounts(accounting, company.UserId)
+
+		userId, err := uuid.FromString(company.UserId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		}
+		adb := utilAccountsToDbAccounts(accounting, userId)
 
 		err = a.accountingRepo.Delete()
 		if err != nil {
@@ -156,7 +163,7 @@ func dbAccountingToPbAccounting(accounting *db.Accounting) *pb.Accounting {
 	return &pb.Accounting{
 		Id:            accounting.Id.String(),
 		Item:          accounting.Item,
-		UserId:        accounting.UserId,
+		UserId:        accounting.UserId.String(),
 		Description:   accounting.Description,
 		Inventory:     accounting.Inventory,
 		OpexFee:       accounting.OpexFee,
@@ -175,7 +182,7 @@ func dbAccountingsToPbAccountings(accountings []*db.Accounting) []*pb.Accounting
 	return res
 }
 
-func utilAccountsToDbAccounts(accounting utils.Accounting, userId string) []*db.Accounting {
+func utilAccountsToDbAccounts(accounting utils.Accounting, userId uuid.UUID) []*db.Accounting {
 	res := []*db.Accounting{}
 
 	for _, i := range accounting.Ukama {
@@ -211,7 +218,7 @@ func dbAccountingToEventAccounting(accountings []*db.Accounting, userId string) 
 	for _, i := range accountings {
 		res = append(res, &epb.UserAccounting{
 			Id:            i.Id.String(),
-			UserId:        i.UserId,
+			UserId:        i.UserId.String(),
 			Description:   i.Description,
 			Item:          i.Item,
 			Inventory:     i.Inventory,

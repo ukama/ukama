@@ -14,7 +14,7 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -33,7 +33,7 @@ func NewAccountingInventory(accountHost string, timeout time.Duration) *Accounti
 
 	conn, err := grpc.DialContext(ctx, accountHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewAccountingServiceClient(conn)
 
