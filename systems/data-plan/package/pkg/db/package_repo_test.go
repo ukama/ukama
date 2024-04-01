@@ -99,7 +99,7 @@ func Test_Package_Get(t *testing.T) {
 			AddRow(packID, 100, 0.001, 0.001, 0.010)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packID).
+			WithArgs(packID, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 		mock.ExpectQuery(`^SELECT.*package_rates.*`).
 			WithArgs(packID).
@@ -179,7 +179,7 @@ func Test_Package_Get(t *testing.T) {
 			AddRow(packID, baserate, 20)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packID).
+			WithArgs(packID, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		mock.ExpectQuery(`^SELECT.*package_details.*`).
@@ -219,7 +219,6 @@ func Test_Package_Get(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
 	})
-
 }
 
 func Test_Package_GetByOrg(t *testing.T) {
