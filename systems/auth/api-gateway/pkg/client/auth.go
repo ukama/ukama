@@ -91,7 +91,7 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 	} else if t == "header" {
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
-	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
+	resp, r, err := am.client.FrontendAPI.ToSession(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 }
 
 func (am *AuthManager) LoginUser(email string, password string) (*ory.SuccessfulNativeLogin, error) {
-	flow, _, err := am.client.FrontendApi.CreateNativeLoginFlow(context.Background()).Execute()
+	flow, _, err := am.client.FrontendAPI.CreateNativeLoginFlow(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (am *AuthManager) LoginUser(email string, password string) (*ory.Successful
 	body := ory.UpdateLoginFlowBody{
 		UpdateLoginFlowWithPasswordMethod: &b,
 	}
-	flow1, resp, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
+	flow1, resp, err := am.client.FrontendAPI.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
 	if err != nil {
 		if resp.StatusCode == http.StatusBadRequest {
 			u := UIErrorResp{}
@@ -149,7 +149,7 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 
-	_, r, err := am.client.IdentityApi.UpdateIdentity(
+	_, r, err := am.client.IdentityAPI.UpdateIdentity(
 		context.Background(), user.Id,
 	).UpdateIdentityBody(
 		ory.UpdateIdentityBody(
@@ -192,7 +192,7 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 	} else if t == "header" {
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
-	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
+	resp, r, err := am.client.FrontendAPI.ToSession(context.Background()).Execute()
 
 	if err != nil {
 		if r.StatusCode == http.StatusBadRequest {
@@ -214,7 +214,7 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
 
-	check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
+	check, _, err := am.ketoc.PermissionAPI.CheckPermission(context.Background()).
 		Namespace(orgId).
 		Object(object).
 		Relation(relation).
