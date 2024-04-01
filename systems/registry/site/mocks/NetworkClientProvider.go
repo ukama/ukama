@@ -16,6 +16,10 @@ type NetworkClientProvider struct {
 func (_m *NetworkClientProvider) GetClient() (gen.NetworkServiceClient, error) {
 	ret := _m.Called()
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetClient")
+	}
+
 	var r0 gen.NetworkServiceClient
 	var r1 error
 	if rf, ok := ret.Get(0).(func() (gen.NetworkServiceClient, error)); ok {

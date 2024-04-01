@@ -16,6 +16,10 @@ type network struct {
 func (_m *network) AddNetwork(orgName string, netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
 	ret := _m.Called(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 
+	if len(ret) == 0 {
+		panic("no return value specified for AddNetwork")
+	}
+
 	var r0 *gen.AddResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
@@ -42,6 +46,10 @@ func (_m *network) AddNetwork(orgName string, netName string, allowedCountries [
 func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 	ret := _m.Called(netID)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetNetwork")
+	}
+
 	var r0 *gen.GetResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*gen.GetResponse, error)); ok {
@@ -67,6 +75,10 @@ func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 // GetNetworks provides a mock function with given fields: org
 func (_m *network) GetNetworks(org string) (*gen.GetByOrgResponse, error) {
 	ret := _m.Called(org)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNetworks")
+	}
 
 	var r0 *gen.GetByOrgResponse
 	var r1 error

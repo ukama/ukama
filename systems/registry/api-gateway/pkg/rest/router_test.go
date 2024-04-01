@@ -64,6 +64,7 @@ func init() {
 		Network:    "network:9090",
 		Member:     "member:9090",
 		Node:       "node:9090",
+		Site:       "site:9090",
 		Invitation: "invitation:9090",
 	})
 }
@@ -174,7 +175,7 @@ func TestGetInvitation_Found(t *testing.T) {
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Node:       client.NewNodeFromClient(node),
 		Member:     client.NewRegistryFromClient(mem),
-		Site: client.NewSiteRegistryFromClient(site),
+		Site:       client.NewSiteRegistryFromClient(site),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)

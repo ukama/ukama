@@ -16,6 +16,10 @@ type member struct {
 func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, error) {
 	ret := _m.Called(userUUID, role)
 
+	if len(ret) == 0 {
+		panic("no return value specified for AddMember")
+	}
+
 	var r0 *gen.MemberResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string) (*gen.MemberResponse, error)); ok {
@@ -41,6 +45,10 @@ func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, 
 // AddOtherMember provides a mock function with given fields: userUUID, role
 func (_m *member) AddOtherMember(userUUID string, role string) (*gen.MemberResponse, error) {
 	ret := _m.Called(userUUID, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddOtherMember")
+	}
 
 	var r0 *gen.MemberResponse
 	var r1 error
@@ -68,6 +76,10 @@ func (_m *member) AddOtherMember(userUUID string, role string) (*gen.MemberRespo
 func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
 	ret := _m.Called(userUUID)
 
+	if len(ret) == 0 {
+		panic("no return value specified for GetMember")
+	}
+
 	var r0 *gen.MemberResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*gen.MemberResponse, error)); ok {
@@ -93,6 +105,10 @@ func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
 // GetMembers provides a mock function with given fields:
 func (_m *member) GetMembers() (*gen.GetMembersResponse, error) {
 	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMembers")
+	}
 
 	var r0 *gen.GetMembersResponse
 	var r1 error
@@ -120,6 +136,10 @@ func (_m *member) GetMembers() (*gen.GetMembersResponse, error) {
 func (_m *member) RemoveMember(userUUID string) error {
 	ret := _m.Called(userUUID)
 
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveMember")
+	}
+
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(userUUID)
@@ -133,6 +153,10 @@ func (_m *member) RemoveMember(userUUID string) error {
 // UpdateMember provides a mock function with given fields: userUUID, isDeactivated, role
 func (_m *member) UpdateMember(userUUID string, isDeactivated bool, role string) error {
 	ret := _m.Called(userUUID, isDeactivated, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMember")
+	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, bool, string) error); ok {
