@@ -82,59 +82,29 @@ func (_m *InvoiceRepo) Get(id uuid.UUID) (*db.Invoice, error) {
 	return r0, r1
 }
 
-// GetByInvoicee provides a mock function with given fields: invoiceeId
-func (_m *InvoiceRepo) GetByInvoicee(invoiceeId uuid.UUID) ([]db.Invoice, error) {
-	ret := _m.Called(invoiceeId)
+// List provides a mock function with given fields: invoiceeId, invoiceeType, networkId, isPaid, count, sort
+func (_m *InvoiceRepo) List(invoiceeId string, invoiceeType db.InvoiceeType, networkId string, isPaid bool, count uint32, sort bool) ([]db.Invoice, error) {
+	ret := _m.Called(invoiceeId, invoiceeType, networkId, isPaid, count, sort)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByInvoicee")
+		panic("no return value specified for List")
 	}
 
 	var r0 []db.Invoice
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Invoice, error)); ok {
-		return rf(invoiceeId)
+	if rf, ok := ret.Get(0).(func(string, db.InvoiceeType, string, bool, uint32, bool) ([]db.Invoice, error)); ok {
+		return rf(invoiceeId, invoiceeType, networkId, isPaid, count, sort)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Invoice); ok {
-		r0 = rf(invoiceeId)
+	if rf, ok := ret.Get(0).(func(string, db.InvoiceeType, string, bool, uint32, bool) []db.Invoice); ok {
+		r0 = rf(invoiceeId, invoiceeType, networkId, isPaid, count, sort)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Invoice)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(invoiceeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetByNetwork provides a mock function with given fields: networkId
-func (_m *InvoiceRepo) GetByNetwork(networkId uuid.UUID) ([]db.Invoice, error) {
-	ret := _m.Called(networkId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByNetwork")
-	}
-
-	var r0 []db.Invoice
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Invoice, error)); ok {
-		return rf(networkId)
-	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Invoice); ok {
-		r0 = rf(networkId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Invoice)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(networkId)
+	if rf, ok := ret.Get(1).(func(string, db.InvoiceeType, string, bool, uint32, bool) error); ok {
+		r1 = rf(invoiceeId, invoiceeType, networkId, isPaid, count, sort)
 	} else {
 		r1 = ret.Error(1)
 	}
