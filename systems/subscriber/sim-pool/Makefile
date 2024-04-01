@@ -22,7 +22,7 @@ integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
 test:
-	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+	go test ./...
 
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
