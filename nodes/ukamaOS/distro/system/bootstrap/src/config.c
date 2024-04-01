@@ -11,9 +11,11 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "usys_log.h"
+
 #include "config.h"
 #include "toml.h"
-#include "log.h"
+
 
 int parse_config(Config *config, toml_table_t *configData) {
 
@@ -28,7 +30,7 @@ int parse_config(Config *config, toml_table_t *configData) {
 	/* noded-host */
 	nodedHost = toml_string_in(configData, NODED_HOST);
 	if (!nodedHost.ok) {
-		log_debug("[%s] is missing, setting to default: %s", NODED_HOST,
+		usys_log_debug("[%s] is missing, setting to default: %s", NODED_HOST,
 				  DEF_NODED_HOST);
 		config->nodedHost = strdup(DEF_NODED_HOST);
 	} else {
@@ -38,7 +40,7 @@ int parse_config(Config *config, toml_table_t *configData) {
 	/* mesh-config */
 	meshConfig = toml_string_in(configData, MESH_CONFIG);
 	if (!meshConfig.ok) {
-		log_debug("[%s] is missing, setting to default: %s", MESH_CONFIG,
+		usys_log_debug("[%s] is missing, setting to default: %s", MESH_CONFIG,
 				  DEF_MESH_CONFIG);
 		config->meshConfig = strdup(DEF_MESH_CONFIG);
 	} else {
@@ -48,7 +50,7 @@ int parse_config(Config *config, toml_table_t *configData) {
 	/* remote-IP-file */
 	remoteIPFile = toml_string_in(configData, REMOTE_IP_FILE);
 	if (!remoteIPFile.ok) {
-		log_debug("[%s] is missing, setting to default: %s", REMOTE_IP_FILE,
+		usys_log_debug("[%s] is missing, setting to default: %s", REMOTE_IP_FILE,
 				  DEF_REMOTE_IP_FILE);
 		config->remoteIPFile = strdup(DEF_REMOTE_IP_FILE);
 	} else {
@@ -68,7 +70,7 @@ bool read_bootstrap_server_info(char **buffer) {
     long length = 0;
 
     if ((file = fopen(DEF_BOOTSTRAP_FILE, "r")) == NULL) {
-        log_error("Error opening bootstrap file: %s %s",
+        usys_log_error("Error opening bootstrap file: %s %s",
                   DEF_BOOTSTRAP_FILE, strerror(errno));
         return FALSE;
     }
@@ -79,7 +81,7 @@ bool read_bootstrap_server_info(char **buffer) {
 
     *buffer = (char *)calloc((length + 1), sizeof(char));
     if (*buffer == NULL) {
-        log_error("Memory allocation failed: %s",
+        usys_log_error("Memory allocation failed: %s",
                   (length + 1) * sizeof(char));
         fclose(file);
         return FALSE;
@@ -100,7 +102,7 @@ int process_config_file(char *fileName, Config *config) {
 	char errBuf[MAX_BUFFER];
 
 	if ((fp = fopen(fileName, "r")) == NULL) {
-		log_error("Error opening config file: %s: %s", fileName,
+		usys_log_error("Error opening config file: %s: %s", fileName,
 				  strerror(errno));
 		return FALSE;
 	}
@@ -109,7 +111,7 @@ int process_config_file(char *fileName, Config *config) {
 	fileData = toml_parse_file(fp, errBuf, sizeof(errBuf));
 	fclose(fp);
 	if (!fileData) {
-		log_error("Error parsing the config file %s: %s", fileName, errBuf);
+		usys_log_error("Error parsing the config file %s: %s", fileName, errBuf);
 		return FALSE;
 	}
 
@@ -117,19 +119,19 @@ int process_config_file(char *fileName, Config *config) {
 	configData = toml_table_in(fileData, CONFIG);
 
 	if (configData == NULL) {
-		log_error("[Config] section parsing error in file: %s", fileName);
+		usys_log_error("[Config] section parsing error in file: %s", fileName);
 		toml_free(fileData);
 		return FALSE;
 	}
 
 	if (!parse_config(config, configData)) {
-        log_error("Unable to prase config file: %s", fileName);
+        usys_log_error("Unable to prase config file: %s", fileName);
         toml_free(fileData);
         return FALSE;
     }
 
     if (!read_bootstrap_server_info(&config->bootstrapServer)) {
-        log_debug("Unable to read bootstrap server info");
+        usys_log_debug("Unable to read bootstrap server info");
         config->bootstrapServer = strdup(DEF_BOOTSTRAP_SERVER);
     }
 
@@ -142,25 +144,25 @@ void print_config(Config *config) {
 	if (config == NULL) return;
 
 	if (config->nodedHost) {
-		log_debug("noded host: %s", config->nodedHost);
+		usys_log_debug("noded host: %s", config->nodedHost);
 	}
 
-    log_debug("noded port: %d", config->nodedPort);
+    usys_log_debug("noded port: %d", config->nodedPort);
 
 	if (config->meshConfig) {
-		log_debug("mesh config: %s", config->meshConfig);
+		usys_log_debug("mesh config: %s", config->meshConfig);
 	}
 
 	if (config->remoteIPFile) {
-		log_debug("remote IP file: %s", config->remoteIPFile);
+		usys_log_debug("remote IP file: %s", config->remoteIPFile);
 	}
 
 	if (config->bootstrapServer) {
-	    log_debug("bootstrap server: %s", config->bootstrapServer);
+	    usys_log_debug("bootstrap server: %s", config->bootstrapServer);
 	}
 
     if (config->bootstrapPort) {
-        log_debug("bootstrap port: %d", config->bootstrapPort);
+        usys_log_debug("bootstrap port: %d", config->bootstrapPort);
     }
 }
 

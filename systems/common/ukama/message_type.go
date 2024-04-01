@@ -18,7 +18,7 @@ type MessageUnitType uint8
 
 const (
 	MessageUnitTypeUnknown MessageUnitType = iota
-	MessageUnitTypeInt                     = 1
+	MessageUnitTypeInt
 )
 
 func (s *MessageUnitType) Scan(value interface{}) error {

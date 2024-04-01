@@ -95,7 +95,7 @@ func handleRestErrorStatus(err error) error {
 	if errors.As(err, &e) {
 		return crest.HttpError{
 			HttpCode: e.StatusCode,
-			Message:  err.Error(),
+			Message:  e.Error(),
 		}
 	}
 

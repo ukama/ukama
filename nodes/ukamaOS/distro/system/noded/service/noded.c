@@ -12,12 +12,13 @@
 #include "usys_getopt.h"
 #include "usys_log.h"
 #include "usys_types.h"
+#include "usys_services.h"
 
 #define DEV_PROPERTY_JSON "mfgdata/property/property.json"
 #define INVENTORY_DB "/tmp/sys/tnode_inventory_db"
 #define NOTIF_SERVER_URL "http://localhost:8085"
 #define DEF_LOG_LEVEL "TRACE"
-
+#define SERVICE_NAME  SERVICE_NODE
 #define NODED_VERSION "0.0.0"
 
 /**
@@ -153,6 +154,8 @@ int main(int argc, char **argv) {
     char *invDb = INVENTORY_DB;
     char *debug = DEF_LOG_LEVEL;
     char *notifServer = NOTIF_SERVER_URL;
+
+    log_set_service(SERVICE_NAME);
 
     /* Parsing command line args. */
     while (true) {

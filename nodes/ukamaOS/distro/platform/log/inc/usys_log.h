@@ -1,3 +1,4 @@
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,6 +103,14 @@ static inline int usys_log_add_fp(FILE *fp, int level) {
     return log_add_fp(fp, level);
 }
 
+static inline void usys_log_remote_init(char *name) {
+    return log_remote_init(name);
+}
+
+static inline void usys_log_set_service(char *name) {
+    return log_set_service(name);
+}    
+    
 #ifdef __cplusplus
 extern "C" {
 #endif

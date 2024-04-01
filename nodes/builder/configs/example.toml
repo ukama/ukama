@@ -1,7 +1,3 @@
-#
-# Sample config file to build and create capp 
-#
-
 [build-from]
 	rootfs="default"     # default is busybox minimal capp config
 	contained="default"  # default namespace, cgroup, etc.
@@ -15,11 +11,11 @@
 	bin_to="/sbin"
 
 [build-rootfs]
-	mkdir="/conf"
+	mkdir="/ukama/conf/example"
 
 [build-conf]
         from="/nodes/configs/capps/example/config.file"
-        to="/conf/config.file"
+        to="/ukama/conf/example/config.file"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
@@ -28,7 +24,7 @@
 	version="latest"
 	bin="example.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
-	args="-f /conf/config.file.garbage"
+	args="-f /ukama/conf/example/config.file"
 	envs="key1=value1"
 	
 # Final output format for capp

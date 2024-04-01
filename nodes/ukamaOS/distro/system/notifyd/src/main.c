@@ -128,6 +128,8 @@ int main(int argc, char **argv) {
 
     Config serviceConfig = {0};
 
+    log_set_service(SERVICE_NAME);
+
     /* Parsing command line args. */
     while (true) {
         int opt = 0;

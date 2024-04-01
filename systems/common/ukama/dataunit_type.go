@@ -11,17 +11,16 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
-	"strings"
 )
 
 type DataUnitType uint8
 
 const (
 	DataUnitTypeUnknown DataUnitType = iota
-	DataUnitTypeB                    = 1
-	DataUnitTypeKB                   = 2
-	DataUnitTypeMB                   = 3
-	DataUnitTypeGB                   = 4
+	DataUnitTypeB
+	DataUnitTypeKB
+	DataUnitTypeMB
+	DataUnitTypeGB
 )
 
 func (s *DataUnitType) Scan(value interface{}) error {
@@ -52,7 +51,7 @@ func ParseDataUnitType(value string) DataUnitType {
 
 	t := map[string]DataUnitType{"unknown": 0, "Bytes": 1, "KiloBytes": 2, "MegaBytes": 3, "GigaBytes": 4}
 
-	v, ok := t[strings.ToLower(value)]
+	v, ok := t[value]
 	if !ok {
 		return DataUnitType(0)
 	}

@@ -12,8 +12,9 @@
 #include <time.h>
 #include <errno.h>
 
+#include "usys_log.h"
+
 #include "mesh.h"
-#include "log.h"
 #include "work.h"
 #include "jserdes.h"
 #include "data.h"
@@ -29,10 +30,6 @@ extern int start_websocket_client(Config *config,
 static 	pthread_mutex_t websocketMutex;
 static	pthread_cond_t  websocketFail;
 
-/*
- * clear_response -- free up memory from MResponse.
- *
- */
 static void clear_response(MResponse **resp) {
 
 	if (*resp==NULL) return;
@@ -46,10 +43,6 @@ static void clear_response(MResponse **resp) {
 	free(*resp);
 }
 
-/*
- * is_websocket_valid --
- *
- */
 static int is_websocket_valid(WSManager *manager, char *port) {
 
     int status;
@@ -61,17 +54,13 @@ static int is_websocket_valid(WSManager *manager, char *port) {
     if (status == U_WEBSOCKET_STATUS_OPEN) {
         return TRUE;
     } else {
-        log_debug("Websocket connection is closed with cloud at: %s", port);
+        usys_log_debug("Websocket connection is closed with cloud at: %s", port);
         return FALSE;
     }
 
     return FALSE;
 }
 
-/*
- * monitor_websocket --
- *
- */
 void* monitor_websocket(void *args){
 
     int ret;
@@ -95,10 +84,10 @@ void* monitor_websocket(void *args){
         if (ret == ETIMEDOUT) {
             pthread_mutex_unlock(&websocketMutex);
             if (!is_websocket_valid(handler, config->remoteConnect)) {
-                log_error("Trying to reconnect ...");
+                usys_log_error("Trying to reconnect ...");
                 /* Connect again */
                 while (start_websocket_client(config, handler) == FALSE) {
-                    log_error("Remote websocket connect failure. Retrying: %d",
+                    usys_log_error("Remote websocket connect failure. Retrying: %d",
                               MESH_LOCK_TIMEOUT);
                     sleep(MESH_LOCK_TIMEOUT);
                 }
@@ -111,9 +100,6 @@ void* monitor_websocket(void *args){
     return NULL;
 }
 
-/*
- * websocket related callback functions.
- */
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
@@ -181,7 +167,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 			U_WEBSOCKET_STATUS_OPEN) {
             jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
 			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
-				log_error("Error sending JSON message.");
+				usys_log_error("Error sending JSON message.");
 			}
 		}
 
@@ -197,8 +183,6 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	return;
 }
 
-/* handles incoming message over websocket.
- */
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager,
                                 WSMessage *message,
@@ -212,17 +196,17 @@ void websocket_incoming_message(const URequest *request,
 
     data = (char *)calloc(1, message->data_len+1);
     if (data == NULL) {
-        log_error("Unable to allocate memory of size: %d",
+        usys_log_error("Unable to allocate memory of size: %d",
                   message->data_len+1);
         return;
     }
     strncpy(data, message->data, message->data_len);
     
-	log_debug("Packet recevied. Data: %s", data);
+	usys_log_debug("Packet recevied. Data: %s", data);
 
 	json = json_loads(data, JSON_DECODE_ANY, NULL);
 	if (json == NULL) {
-		log_error("Error loading recevied data into JSON format: %s",
+		usys_log_error("Error loading recevied data into JSON format: %s",
 				  data);
 		goto done;
 	}
@@ -238,7 +222,7 @@ void websocket_incoming_message(const URequest *request,
     } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
         process_incoming_websocket_response(rcvdMessage, config);
     } else {
-        log_error("Invalid incoming message on the websocket. Ignored");
+        usys_log_error("Invalid incoming message on the websocket. Ignored");
     }
 
 done:
@@ -247,11 +231,6 @@ done:
 	clear_response(&rcvdResp);
 	return;
 }
-
-/*
- * websocket_onclose -- is called when the websocket is closed.
- *
- */
 
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {

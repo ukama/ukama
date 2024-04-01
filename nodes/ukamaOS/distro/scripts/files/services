@@ -1193,6 +1193,7 @@ wimc       	18006/tcp   wimcd
 metrics     	18007/tcp   metricsd
 config      	18008/tcp   configd
 notify		18009/tcp   notifyd
+rlog            18010/tcp   rlogd
+rlog-admin      18011/tcp   rlogd-admin
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote
-

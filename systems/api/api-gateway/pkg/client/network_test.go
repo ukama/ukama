@@ -90,7 +90,10 @@ func TestCient_GetNetwork(t *testing.T) {
 		netClient.On("Get", netId.String()).
 			Return(nil,
 				fmt.Errorf("GetNetwork failure: %w",
-					cclient.ErrorStatus{StatusCode: 404})).Once()
+					cclient.ErrorStatus{
+						StatusCode: 404,
+						RawError:   crest.ErrorResponse{Err: "not found"},
+					})).Once()
 
 		netInfo, err := n.GetNetwork(netId.String())
 

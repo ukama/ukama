@@ -17,9 +17,9 @@ import (
 type PackageType uint8
 
 const (
-	PackageTypeUnknown  PackageType = iota
-	PackageTypePrepaid              = 1
-	PackageTypePostpaid             = 2
+	PackageTypeUnknown PackageType = iota
+	PackageTypePrepaid
+	PackageTypePostpaid
 )
 
 func (s *PackageType) Scan(value interface{}) error {
