@@ -17,8 +17,8 @@ import (
 	"google.golang.org/grpc/codes"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ukama "github.com/ukama/ukama/systems/common/validation"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -83,7 +83,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	instDate, err := ValidateInstallDate(req.GetInstallDate())
+	instDate, err := ukama.ValidateDate(req.GetInstallDate())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -111,7 +111,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		IsDeactivated: req.IsDeactivated,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
-		InstallDate:   instDate.String(),
+		InstallDate:   instDate,
 	}
 
 	err = s.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
@@ -217,6 +217,11 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
+	instDate, err := ukama.ValidateDate(req.GetInstallDate())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
 	site := &db.Site{
 		Id:            siteId,
 		Name:          req.Name,
@@ -227,7 +232,7 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 		IsDeactivated: req.IsDeactivated,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
-		InstallDate:   req.InstallDate,
+		InstallDate:   instDate,
 	}
 
 	err = s.siteRepo.Update(site)
@@ -244,6 +249,7 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 		SwitchId:      site.SwitchId.String(),
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
+		InstallDate:   site.InstallDate,
 	}
 
 	route := s.baseRoutingKey.SetAction("update").SetObject("site").MustBuild()
@@ -258,6 +264,7 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 }
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {
+
 	return &pb.Site{
 		Id:            site.Id.String(),
 		Name:          site.Name,
@@ -270,7 +277,7 @@ func dbSiteToPbSite(site *db.Site) *pb.Site {
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
 		InstallDate:   site.InstallDate,
-		CreatedAt:     timestamppb.New(site.CreatedAt),
+		CreatedAt:     site.CreatedAt.String(),
 	}
 }
 

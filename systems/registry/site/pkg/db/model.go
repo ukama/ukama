@@ -11,8 +11,8 @@ import (
 // Site model
 type Site struct {
     Id            uuid.UUID       `gorm:"primaryKey;type:uuid"`
-    Name          string          
-    NetworkId     uuid.UUID       `gorm:"uniqueIndex;type:uuid;index"`
+    Name          string
+    NetworkId     uuid.UUID       `gorm:"type:uuid;index:idx_site_network,unique"` // Composite unique index
     BackhaulId    uuid.UUID       `gorm:"type:uuid"`
     PowerId       uuid.UUID       `gorm:"type:uuid"`
     AccessId      uuid.UUID       `gorm:"type:uuid"`
@@ -25,3 +25,5 @@ type Site struct {
     UpdatedAt     time.Time
     DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
+
+

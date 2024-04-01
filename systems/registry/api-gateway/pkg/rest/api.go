@@ -8,8 +8,6 @@
 
 package rest
 
-import "time"
-
 type MemberRequest struct {
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
 	Role     string `example:"member" json:"role" validate:"required"`
@@ -72,7 +70,7 @@ type UpdateSiteRequest struct {
 	IsDeactivated bool      `json:"is_deactivated"`
 	Latitude      float64   `json:"latitude"`
 	Longitude     float64   `json:"longitude"`
-	InstallDate   time.Time `json:"install_date" validate:"required"`
+	InstallDate   string `json:"install_date" validate:"required"`
 }
 
 type AddSiteRequest struct {

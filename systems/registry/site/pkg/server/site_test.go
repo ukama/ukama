@@ -33,11 +33,9 @@ func TestSiteService_Get(t *testing.T) {
 
 	t.Run("SiteFound", func(t *testing.T) {
 		siteId := uuid.NewV4()
-		netId := uuid.NewV4()
 
-		siteRepo.On("Get",netId,siteId).Return(&db.Site{
+		siteRepo.On("Get",siteId).Return(&db.Site{
 			Id: siteId,
-			NetworkId: netId,
 		}, nil)
 
 		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId:siteId.String() })
@@ -52,9 +50,8 @@ func TestSiteService_Get(t *testing.T) {
 
 	t.Run("SiteNotFound", func(t *testing.T) {
 		siteId := uuid.NewV4()
-		netId := uuid.NewV4()
 
-		siteRepo.On("Get", netId,siteId).Return(nil, gorm.ErrRecordNotFound).Once()
+		siteRepo.On("Get", siteId).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
 
@@ -112,4 +109,6 @@ func TestSiteService_GetSites(t *testing.T) {
         siteRepo.AssertNotCalled(t, "GetSites") 
     })
 }
+
+
 

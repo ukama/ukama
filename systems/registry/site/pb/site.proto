@@ -71,7 +71,7 @@ message Site {
     double latitude = 9;
     double longitude = 10;
     string installDate = 11 [json_name = "install_date"];
-    google.protobuf.Timestamp createdAt = 12 [json_name = "created_at"];
+    string createdAt = 12 [json_name = "created_at"];
 
 }
 message UpdateRequest {

@@ -84,7 +84,7 @@ func TestSiteRepo_GetSite(t *testing.T) {
 			AddRow(siteId, site.Name, site.Latitude, site.NetworkId)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(site.Id, site.NetworkId, 1). // Add '1' for the LIMIT clause
+			WithArgs(site.Id, 1). // Add '1' for the LIMIT clause
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -187,6 +187,91 @@ func TestSiteRepo_GetSites(t *testing.T) {
 }
 
 func TestSiteRepo_Add(t *testing.T) {
+	t.Run("ValidSite", func(t *testing.T) {
+		// Arrange
+		site := &db_site.Site{
+			Id:            uuid.NewV4(),
+			Name:          "valid-site",
+			NetworkId:     uuid.NewV4(),
+			BackhaulId:    uuid.NewV4(),
+			AccessId:      uuid.NewV4(),
+			PowerId:       uuid.NewV4(),
+			SwitchId:      uuid.NewV4(),
+			IsDeactivated: false,
+			Latitude:      40.7128,
+			Longitude:     -74.0060,
+			InstallDate:   "07-03-2023",
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
+			DeletedAt:     gorm.DeletedAt{},
+		}
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(`^INSERT INTO "sites"`).
+			WithArgs(
+				site.Id, site.Name, site.NetworkId, site.BackhaulId,
+				site.PowerId, site.AccessId, site.SwitchId, site.IsDeactivated,
+				site.Latitude, site.Longitude, site.InstallDate,
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := db_site.NewSiteRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Add(site, nil)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("InvalidSiteName", func(t *testing.T) {
+		// Arrange
+		invalidSite := &db_site.Site{
+			Id:          uuid.NewV4(),
+			Name:        "invalid_site_name!", // Invalid site name with special characters
+			NetworkId:   uuid.NewV4(),
+			Latitude:    40.7128,
+			Longitude:   -74.0060,
+			InstallDate: "07-03-2023",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			DeletedAt:   gorm.DeletedAt{},
+		}
+
+		r := db_site.NewSiteRepo(&UkamaDbMock{})
+
+		// Act
+		err := r.Add(invalidSite, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid name")
+	})
+}
+func TestSiteRepo_AddSite(t *testing.T) {
 	t.Run("ValidSite", func(t *testing.T) {
 		// Arrange
 		site := &db_site.Site{

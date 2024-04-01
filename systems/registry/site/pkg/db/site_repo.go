@@ -19,7 +19,7 @@ import (
 
 type SiteRepo interface {
 	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
-	Get(siteID uuid.UUID) (*Site, error)
+	Get(siteId uuid.UUID) (*Site, error)
 	GetSites(networkId uuid.UUID) ([]Site, error) 
 	Update(site *Site) error
 	GetSiteCount(networkId uuid.UUID) (int64, error)
