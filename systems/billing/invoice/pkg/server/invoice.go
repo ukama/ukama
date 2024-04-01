@@ -167,44 +167,45 @@ func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	}, nil
 }
 
-func (i *InvoiceServer) GetByInvoicee(ctx context.Context, req *pb.GetByInvoiceeRequest) (*pb.GetByInvoiceeResponse, error) {
-	invoiceeId, err := uuid.FromString(req.InvoiceeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of invoicee uuid. Error %s", err.Error())
+func (i *InvoiceServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("Getting invoices matching: %v", req)
+
+	if req.InvoiceeId != "" {
+		invoiceeId, err := uuid.FromString(req.GetInvoiceeId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for %s invoicee uuid: %s. Error %v",
+				req.InvoiceeType, req.InvoiceeId, err)
+		}
+
+		req.InvoiceeId = invoiceeId.String()
 	}
 
-	invoices, err := i.invoiceRepo.GetByInvoicee(invoiceeId)
+	invoiceeType := db.InvoiceeTypeUnknown
+	if req.InvoiceeType != "" {
+		invoiceeType = db.ParseInvoiceeType(req.InvoiceeType)
+		if invoiceeType == db.InvoiceeTypeUnknown {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid value for invoicee type: %s", req.InvoiceeType)
+		}
+	}
+
+	if req.NetworkId != "" {
+		networkId, err := uuid.FromString(req.GetNetworkId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for network uuid: %s. Error %v", req.NetworkId, err)
+		}
+
+		req.NetworkId = networkId.String()
+	}
+
+	invoices, err := i.invoiceRepo.List(req.InvoiceeId, invoiceeType, req.NetworkId, req.IsPaid, req.Count, req.Sort)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoices")
 	}
 
-	resp := &pb.GetByInvoiceeResponse{
-		InvoiceeId: req.InvoiceeId,
-		Invoices:   dbInvoicesToPbInvoices(invoices),
-	}
-
-	return resp, nil
-}
-
-func (i *InvoiceServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	networkId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
-	}
-
-	invoices, err := i.invoiceRepo.GetByNetwork(networkId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invoices")
-	}
-
-	resp := &pb.GetByNetworkResponse{
-		NetworkId: req.NetworkId,
-		Invoices:  dbInvoicesToPbInvoices(invoices),
-	}
-
-	return resp, nil
+	return &pb.ListResponse{Invoices: dbInvoicesToPbInvoices(invoices)}, nil
 }
 
 func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
