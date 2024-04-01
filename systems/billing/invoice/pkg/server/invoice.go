@@ -35,8 +35,10 @@ import (
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
-const defaultTemplate = "templates/invoice.html.tmpl"
-const pdfFolder = "/srv/static/"
+const (
+	defaultTemplate = "templates/invoice.html.tmpl"
+	pdfFolder       = "/srv/static/"
+)
 
 type InvoiceServer struct {
 	OrgName          string

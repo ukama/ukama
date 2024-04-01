@@ -16,14 +16,15 @@ import (
 	"testing"
 	"time"
 
-	rconf "github.com/num30/config"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 )
 
@@ -177,7 +178,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("GetInvoiceByInvoicee", func(t *testing.T) {
-		_, err := c.GetByInvoicee(ctx, &pb.GetByInvoiceeRequest{
+		_, err := c.List(ctx, &pb.ListRequest{
 			InvoiceeId: invoiceeId,
 		})
 
