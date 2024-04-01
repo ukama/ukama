@@ -140,7 +140,7 @@ func TestUserRepo_Get(t *testing.T) {
 			AddRow(userId, name, email, phone, authId)
 
 		mock.ExpectQuery(`^SELECT.*users.*`).
-			WithArgs(userId).
+			WithArgs(userId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
@@ -164,7 +164,7 @@ func TestUserRepo_Get(t *testing.T) {
 		var userId = uuid.NewV4()
 
 		mock.ExpectQuery(`^SELECT.*users.*`).
-			WithArgs(userId).
+			WithArgs(userId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
@@ -211,7 +211,7 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 			AddRow(userId, name, email, phone, authId)
 
 		mock.ExpectQuery(`^SELECT.*users.*`).
-			WithArgs(authId).
+			WithArgs(authId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
@@ -235,7 +235,7 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 		var authId = uuid.NewV4()
 
 		mock.ExpectQuery(`^SELECT.*users.*`).
-			WithArgs(authId).
+			WithArgs(authId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
