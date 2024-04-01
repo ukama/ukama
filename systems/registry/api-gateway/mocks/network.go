@@ -16,10 +16,6 @@ type network struct {
 func (_m *network) AddNetwork(orgName string, netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
 	ret := _m.Called(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AddNetwork")
-	}
-
 	var r0 *gen.AddResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
@@ -42,43 +38,9 @@ func (_m *network) AddNetwork(orgName string, netName string, allowedCountries [
 	return r0, r1
 }
 
-// AddSite provides a mock function with given fields: netID, siteName
-func (_m *network) AddSite(netID string, siteName string) (*gen.AddSiteResponse, error) {
-	ret := _m.Called(netID, siteName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddSite")
-	}
-
-	var r0 *gen.AddSiteResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.AddSiteResponse, error)); ok {
-		return rf(netID, siteName)
-	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.AddSiteResponse); ok {
-		r0 = rf(netID, siteName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddSiteResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(netID, siteName)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetNetwork provides a mock function with given fields: netID
 func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 	ret := _m.Called(netID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNetwork")
-	}
 
 	var r0 *gen.GetResponse
 	var r1 error
@@ -106,10 +68,6 @@ func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 func (_m *network) GetNetworks(org string) (*gen.GetByOrgResponse, error) {
 	ret := _m.Called(org)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetNetworks")
-	}
-
 	var r0 *gen.GetByOrgResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*gen.GetByOrgResponse, error)); ok {
@@ -125,66 +83,6 @@ func (_m *network) GetNetworks(org string) (*gen.GetByOrgResponse, error) {
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(org)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSite provides a mock function with given fields: netID, siteName
-func (_m *network) GetSite(netID string, siteName string) (*gen.GetSiteResponse, error) {
-	ret := _m.Called(netID, siteName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSite")
-	}
-
-	var r0 *gen.GetSiteResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.GetSiteResponse, error)); ok {
-		return rf(netID, siteName)
-	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.GetSiteResponse); ok {
-		r0 = rf(netID, siteName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSiteResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(netID, siteName)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSites provides a mock function with given fields: netID
-func (_m *network) GetSites(netID string) (*gen.GetSitesByNetworkResponse, error) {
-	ret := _m.Called(netID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSites")
-	}
-
-	var r0 *gen.GetSitesByNetworkResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSitesByNetworkResponse, error)); ok {
-		return rf(netID)
-	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSitesByNetworkResponse); ok {
-		r0 = rf(netID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSitesByNetworkResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(netID)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -4,15 +4,13 @@ go 1.22
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/nucleus/users => ../../nucleus/users
-
 replace github.com/ukama/ukama/systems/registry/network => ../network
 
 replace github.com/ukama/ukama/systems/registry/node => ../node
 
 replace github.com/ukama/ukama/systems/registry/invitation => ../invitation
 
-replace github.com/ukama/ukama/systems/nucleus/org => ../../nucleus/org
+replace github.com/ukama/ukama/systems/registry/site => ../site
 
 replace github.com/ukama/ukama/systems/registry/api-gateway => ./
 
@@ -27,8 +25,9 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/registry/invitation v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/network v0.0.0-20240229210932-9e1cc8c6c952
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/site v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.62.1
 )

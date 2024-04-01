@@ -18,10 +18,6 @@ type OrgRepo struct {
 func (_m *OrgRepo) Add(org *db.Org) error {
 	ret := _m.Called(org)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
 		r0 = rf(org)
@@ -35,10 +31,6 @@ func (_m *OrgRepo) Add(org *db.Org) error {
 // Get provides a mock function with given fields: id
 func (_m *OrgRepo) Get(id uuid.UUID) (*db.Org, error) {
 	ret := _m.Called(id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
 
 	var r0 *db.Org
 	var r1 error
@@ -66,10 +58,6 @@ func (_m *OrgRepo) Get(id uuid.UUID) (*db.Org, error) {
 func (_m *OrgRepo) GetAll() ([]db.Org, error) {
 	ret := _m.Called()
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetAll")
-	}
-
 	var r0 []db.Org
 	var r1 error
 	if rf, ok := ret.Get(0).(func() ([]db.Org, error)); ok {
@@ -95,10 +83,6 @@ func (_m *OrgRepo) GetAll() ([]db.Org, error) {
 // GetByName provides a mock function with given fields: name
 func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	ret := _m.Called(name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByName")
-	}
 
 	var r0 *db.Org
 	var r1 error

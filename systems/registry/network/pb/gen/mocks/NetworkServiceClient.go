@@ -27,10 +27,6 @@ func (_m *NetworkServiceClient) Add(ctx context.Context, in *gen.AddRequest, opt
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
 	var r0 *gen.AddResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) (*gen.AddResponse, error)); ok {
@@ -53,43 +49,6 @@ func (_m *NetworkServiceClient) Add(ctx context.Context, in *gen.AddRequest, opt
 	return r0, r1
 }
 
-// AddSite provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) AddSite(ctx context.Context, in *gen.AddSiteRequest, opts ...grpc.CallOption) (*gen.AddSiteResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddSite")
-	}
-
-	var r0 *gen.AddSiteResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSiteRequest, ...grpc.CallOption) (*gen.AddSiteResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSiteRequest, ...grpc.CallOption) *gen.AddSiteResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddSiteResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSiteRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Delete provides a mock function with given fields: ctx, in, opts
 func (_m *NetworkServiceClient) Delete(ctx context.Context, in *gen.DeleteRequest, opts ...grpc.CallOption) (*gen.DeleteResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -100,10 +59,6 @@ func (_m *NetworkServiceClient) Delete(ctx context.Context, in *gen.DeleteReques
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Delete")
-	}
 
 	var r0 *gen.DeleteResponse
 	var r1 error
@@ -138,10 +93,6 @@ func (_m *NetworkServiceClient) Get(ctx context.Context, in *gen.GetRequest, opt
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
 	var r0 *gen.GetResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) (*gen.GetResponse, error)); ok {
@@ -174,10 +125,6 @@ func (_m *NetworkServiceClient) GetByName(ctx context.Context, in *gen.GetByName
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByName")
-	}
 
 	var r0 *gen.GetByNameResponse
 	var r1 error
@@ -212,10 +159,6 @@ func (_m *NetworkServiceClient) GetByOrg(ctx context.Context, in *gen.GetByOrgRe
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetByOrg")
-	}
-
 	var r0 *gen.GetByOrgResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) (*gen.GetByOrgResponse, error)); ok {
@@ -230,117 +173,6 @@ func (_m *NetworkServiceClient) GetByOrg(ctx context.Context, in *gen.GetByOrgRe
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSite provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) GetSite(ctx context.Context, in *gen.GetSiteRequest, opts ...grpc.CallOption) (*gen.GetSiteResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSite")
-	}
-
-	var r0 *gen.GetSiteResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteRequest, ...grpc.CallOption) (*gen.GetSiteResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteRequest, ...grpc.CallOption) *gen.GetSiteResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSiteResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSiteByName provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) GetSiteByName(ctx context.Context, in *gen.GetSiteByNameRequest, opts ...grpc.CallOption) (*gen.GetSiteResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSiteByName")
-	}
-
-	var r0 *gen.GetSiteResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNameRequest, ...grpc.CallOption) (*gen.GetSiteResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNameRequest, ...grpc.CallOption) *gen.GetSiteResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSiteResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNameRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSitesByNetwork provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) GetSitesByNetwork(ctx context.Context, in *gen.GetSitesByNetworkRequest, opts ...grpc.CallOption) (*gen.GetSitesByNetworkResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSitesByNetwork")
-	}
-
-	var r0 *gen.GetSitesByNetworkResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSitesByNetworkRequest, ...grpc.CallOption) (*gen.GetSitesByNetworkResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSitesByNetworkRequest, ...grpc.CallOption) *gen.GetSitesByNetworkResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSitesByNetworkResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSitesByNetworkRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

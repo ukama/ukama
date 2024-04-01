@@ -20,10 +20,6 @@ type NetRepo struct {
 func (_m *NetRepo) Add(network *db.Network, nestedFunc func(*db.Network, *gorm.DB) error) error {
 	ret := _m.Called(network, nestedFunc)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Network, func(*db.Network, *gorm.DB) error) error); ok {
 		r0 = rf(network, nestedFunc)
@@ -38,10 +34,6 @@ func (_m *NetRepo) Add(network *db.Network, nestedFunc func(*db.Network, *gorm.D
 func (_m *NetRepo) Delete(orgName string, network string) error {
 	ret := _m.Called(orgName, network)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Delete")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string) error); ok {
 		r0 = rf(orgName, network)
@@ -55,10 +47,6 @@ func (_m *NetRepo) Delete(orgName string, network string) error {
 // Get provides a mock function with given fields: id
 func (_m *NetRepo) Get(id uuid.UUID) (*db.Network, error) {
 	ret := _m.Called(id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
 
 	var r0 *db.Network
 	var r1 error
@@ -86,10 +74,6 @@ func (_m *NetRepo) Get(id uuid.UUID) (*db.Network, error) {
 func (_m *NetRepo) GetAll() ([]db.Network, error) {
 	ret := _m.Called()
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetAll")
-	}
-
 	var r0 []db.Network
 	var r1 error
 	if rf, ok := ret.Get(0).(func() ([]db.Network, error)); ok {
@@ -115,10 +99,6 @@ func (_m *NetRepo) GetAll() ([]db.Network, error) {
 // GetByName provides a mock function with given fields: orgName, network
 func (_m *NetRepo) GetByName(orgName string, network string) (*db.Network, error) {
 	ret := _m.Called(orgName, network)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByName")
-	}
 
 	var r0 *db.Network
 	var r1 error
@@ -146,10 +126,6 @@ func (_m *NetRepo) GetByName(orgName string, network string) (*db.Network, error
 func (_m *NetRepo) GetByOrg(orgID uuid.UUID) ([]db.Network, error) {
 	ret := _m.Called(orgID)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetByOrg")
-	}
-
 	var r0 []db.Network
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Network, error)); ok {
@@ -176,10 +152,6 @@ func (_m *NetRepo) GetByOrg(orgID uuid.UUID) ([]db.Network, error) {
 func (_m *NetRepo) GetDistinctOrg() ([]uuid.UUID, error) {
 	ret := _m.Called()
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetDistinctOrg")
-	}
-
 	var r0 []uuid.UUID
 	var r1 error
 	if rf, ok := ret.Get(0).(func() ([]uuid.UUID, error)); ok {
@@ -205,10 +177,6 @@ func (_m *NetRepo) GetDistinctOrg() ([]uuid.UUID, error) {
 // GetNetworkCount provides a mock function with given fields: orgID
 func (_m *NetRepo) GetNetworkCount(orgID uuid.UUID) (int64, error) {
 	ret := _m.Called(orgID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNetworkCount")
-	}
 
 	var r0 int64
 	var r1 error

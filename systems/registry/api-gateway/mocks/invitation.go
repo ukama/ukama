@@ -16,10 +16,6 @@ type invitation struct {
 func (_m *invitation) AddInvitation(org string, name string, email string, role string) (*gen.AddInvitationResponse, error) {
 	ret := _m.Called(org, name, email, role)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AddInvitation")
-	}
-
 	var r0 *gen.AddInvitationResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.AddInvitationResponse, error)); ok {
@@ -45,10 +41,6 @@ func (_m *invitation) AddInvitation(org string, name string, email string, role 
 // GetInvitationById provides a mock function with given fields: invitationId
 func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetInvitationResponse, error) {
 	ret := _m.Called(invitationId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetInvitationById")
-	}
 
 	var r0 *gen.GetInvitationResponse
 	var r1 error
@@ -76,10 +68,6 @@ func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetInvitation
 func (_m *invitation) GetInvitationByOrg(org string) (*gen.GetInvitationByOrgResponse, error) {
 	ret := _m.Called(org)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetInvitationByOrg")
-	}
-
 	var r0 *gen.GetInvitationByOrgResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*gen.GetInvitationByOrgResponse, error)); ok {
@@ -106,10 +94,6 @@ func (_m *invitation) GetInvitationByOrg(org string) (*gen.GetInvitationByOrgRes
 func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteInvitationResponse, error) {
 	ret := _m.Called(invitationId)
 
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveInvitation")
-	}
-
 	var r0 *gen.DeleteInvitationResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteInvitationResponse, error)); ok {
@@ -135,10 +119,6 @@ func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteInvitati
 // UpdateInvitation provides a mock function with given fields: invitationId, status
 func (_m *invitation) UpdateInvitation(invitationId string, status string) (*gen.UpdateInvitationStatusResponse, error) {
 	ret := _m.Called(invitationId, status)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateInvitation")
-	}
 
 	var r0 *gen.UpdateInvitationStatusResponse
 	var r1 error

@@ -22,10 +22,6 @@ type NodeRepo struct {
 func (_m *NodeRepo) Add(_a0 *db.Node, _a1 func(*db.Node, *gorm.DB) error) error {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Add")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Node, func(*db.Node, *gorm.DB) error) error); ok {
 		r0 = rf(_a0, _a1)
@@ -39,10 +35,6 @@ func (_m *NodeRepo) Add(_a0 *db.Node, _a1 func(*db.Node, *gorm.DB) error) error 
 // AttachNodes provides a mock function with given fields: nodeId, attachedNodeId
 func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
 	ret := _m.Called(nodeId, attachedNodeId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AttachNodes")
-	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(ukama.NodeID, []string) error); ok {
@@ -58,10 +50,6 @@ func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) er
 func (_m *NodeRepo) Delete(_a0 ukama.NodeID, _a1 func(ukama.NodeID, *gorm.DB) error) error {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for Delete")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error); ok {
 		r0 = rf(_a0, _a1)
@@ -76,10 +64,6 @@ func (_m *NodeRepo) Delete(_a0 ukama.NodeID, _a1 func(ukama.NodeID, *gorm.DB) er
 func (_m *NodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	ret := _m.Called(detachNodeId)
 
-	if len(ret) == 0 {
-		panic("no return value specified for DetachNode")
-	}
-
 	var r0 error
 	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
 		r0 = rf(detachNodeId)
@@ -93,10 +77,6 @@ func (_m *NodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 // Get provides a mock function with given fields: _a0
 func (_m *NodeRepo) Get(_a0 ukama.NodeID) (*db.Node, error) {
 	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
 
 	var r0 *db.Node
 	var r1 error
@@ -124,10 +104,6 @@ func (_m *NodeRepo) Get(_a0 ukama.NodeID) (*db.Node, error) {
 func (_m *NodeRepo) GetAll() ([]db.Node, error) {
 	ret := _m.Called()
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetAll")
-	}
-
 	var r0 []db.Node
 	var r1 error
 	if rf, ok := ret.Get(0).(func() ([]db.Node, error)); ok {
@@ -154,10 +130,6 @@ func (_m *NodeRepo) GetAll() ([]db.Node, error) {
 func (_m *NodeRepo) GetForOrg(_a0 uuid.UUID) ([]db.Node, error) {
 	ret := _m.Called(_a0)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetForOrg")
-	}
-
 	var r0 []db.Node
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Node, error)); ok {
@@ -183,10 +155,6 @@ func (_m *NodeRepo) GetForOrg(_a0 uuid.UUID) ([]db.Node, error) {
 // GetNodeCount provides a mock function with given fields:
 func (_m *NodeRepo) GetNodeCount() (int64, int64, int64, error) {
 	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodeCount")
-	}
 
 	var r0 int64
 	var r1 int64
@@ -225,10 +193,6 @@ func (_m *NodeRepo) GetNodeCount() (int64, int64, int64, error) {
 // Update provides a mock function with given fields: _a0, _a1
 func (_m *NodeRepo) Update(_a0 *db.Node, _a1 func(*db.Node, *gorm.DB) error) error {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Update")
-	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Node, func(*db.Node, *gorm.DB) error) error); ok {

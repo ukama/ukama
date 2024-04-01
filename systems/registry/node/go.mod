@@ -4,7 +4,7 @@ go 1.22
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/nucleus/org => ../../nucleus/org
+replace github.com/ukama/ukama/systems/registry/site => ../site
 
 replace github.com/ukama/ukama/systems/registry/network => ../network
 

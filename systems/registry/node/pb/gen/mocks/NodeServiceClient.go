@@ -27,10 +27,6 @@ func (_m *NodeServiceClient) AddNode(ctx context.Context, in *gen.AddNodeRequest
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AddNode")
-	}
-
 	var r0 *gen.AddNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeRequest, ...grpc.CallOption) (*gen.AddNodeResponse, error)); ok {
@@ -63,10 +59,6 @@ func (_m *NodeServiceClient) AddNodeToSite(ctx context.Context, in *gen.AddNodeT
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddNodeToSite")
-	}
 
 	var r0 *gen.AddNodeToSiteResponse
 	var r1 error
@@ -101,10 +93,6 @@ func (_m *NodeServiceClient) AttachNodes(ctx context.Context, in *gen.AttachNode
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AttachNodes")
-	}
-
 	var r0 *gen.AttachNodesResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.AttachNodesRequest, ...grpc.CallOption) (*gen.AttachNodesResponse, error)); ok {
@@ -137,10 +125,6 @@ func (_m *NodeServiceClient) DeleteNode(ctx context.Context, in *gen.DeleteNodeR
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteNode")
-	}
 
 	var r0 *gen.DeleteNodeResponse
 	var r1 error
@@ -175,10 +159,6 @@ func (_m *NodeServiceClient) DetachNode(ctx context.Context, in *gen.DetachNodeR
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for DetachNode")
-	}
-
 	var r0 *gen.DetachNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.DetachNodeRequest, ...grpc.CallOption) (*gen.DetachNodeResponse, error)); ok {
@@ -211,10 +191,6 @@ func (_m *NodeServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNode")
-	}
 
 	var r0 *gen.GetNodeResponse
 	var r1 error
@@ -249,10 +225,6 @@ func (_m *NodeServiceClient) GetNodes(ctx context.Context, in *gen.GetNodesReque
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodes")
-	}
-
 	var r0 *gen.GetNodesResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest, ...grpc.CallOption) (*gen.GetNodesResponse, error)); ok {
@@ -285,10 +257,6 @@ func (_m *NodeServiceClient) GetNodesForNetwork(ctx context.Context, in *gen.Get
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForNetwork")
-	}
 
 	var r0 *gen.GetByNetworkResponse
 	var r1 error
@@ -323,10 +291,6 @@ func (_m *NodeServiceClient) GetNodesForOrg(ctx context.Context, in *gen.GetByOr
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForOrg")
-	}
-
 	var r0 *gen.GetByOrgResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) (*gen.GetByOrgResponse, error)); ok {
@@ -359,10 +323,6 @@ func (_m *NodeServiceClient) GetNodesForSite(ctx context.Context, in *gen.GetByS
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForSite")
-	}
 
 	var r0 *gen.GetBySiteResponse
 	var r1 error
@@ -397,10 +357,6 @@ func (_m *NodeServiceClient) ReleaseNodeFromSite(ctx context.Context, in *gen.Re
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for ReleaseNodeFromSite")
-	}
-
 	var r0 *gen.ReleaseNodeFromSiteResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromSiteRequest, ...grpc.CallOption) (*gen.ReleaseNodeFromSiteResponse, error)); ok {
@@ -434,10 +390,6 @@ func (_m *NodeServiceClient) UpdateNode(ctx context.Context, in *gen.UpdateNodeR
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateNode")
-	}
-
 	var r0 *gen.UpdateNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest, ...grpc.CallOption) (*gen.UpdateNodeResponse, error)); ok {
@@ -470,10 +422,6 @@ func (_m *NodeServiceClient) UpdateNodeState(ctx context.Context, in *gen.Update
 	_ca = append(_ca, ctx, in)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateNodeState")
-	}
 
 	var r0 *gen.UpdateNodeResponse
 	var r1 error

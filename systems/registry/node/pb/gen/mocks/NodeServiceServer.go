@@ -18,10 +18,6 @@ type NodeServiceServer struct {
 func (_m *NodeServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeRequest) (*gen.AddNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AddNode")
-	}
-
 	var r0 *gen.AddNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeRequest) (*gen.AddNodeResponse, error)); ok {
@@ -47,10 +43,6 @@ func (_m *NodeServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeReques
 // AddNodeToSite provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) AddNodeToSite(_a0 context.Context, _a1 *gen.AddNodeToSiteRequest) (*gen.AddNodeToSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddNodeToSite")
-	}
 
 	var r0 *gen.AddNodeToSiteResponse
 	var r1 error
@@ -78,10 +70,6 @@ func (_m *NodeServiceServer) AddNodeToSite(_a0 context.Context, _a1 *gen.AddNode
 func (_m *NodeServiceServer) AttachNodes(_a0 context.Context, _a1 *gen.AttachNodesRequest) (*gen.AttachNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for AttachNodes")
-	}
-
 	var r0 *gen.AttachNodesResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.AttachNodesRequest) (*gen.AttachNodesResponse, error)); ok {
@@ -107,10 +95,6 @@ func (_m *NodeServiceServer) AttachNodes(_a0 context.Context, _a1 *gen.AttachNod
 // DeleteNode provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteNode")
-	}
 
 	var r0 *gen.DeleteNodeResponse
 	var r1 error
@@ -138,10 +122,6 @@ func (_m *NodeServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNode
 func (_m *NodeServiceServer) DetachNode(_a0 context.Context, _a1 *gen.DetachNodeRequest) (*gen.DetachNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for DetachNode")
-	}
-
 	var r0 *gen.DetachNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.DetachNodeRequest) (*gen.DetachNodeResponse, error)); ok {
@@ -167,10 +147,6 @@ func (_m *NodeServiceServer) DetachNode(_a0 context.Context, _a1 *gen.DetachNode
 // GetNode provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNode")
-	}
 
 	var r0 *gen.GetNodeResponse
 	var r1 error
@@ -198,10 +174,6 @@ func (_m *NodeServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeReques
 func (_m *NodeServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesRequest) (*gen.GetNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodes")
-	}
-
 	var r0 *gen.GetNodesResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) (*gen.GetNodesResponse, error)); ok {
@@ -227,10 +199,6 @@ func (_m *NodeServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesRequ
 // GetNodesForNetwork provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) GetNodesForNetwork(_a0 context.Context, _a1 *gen.GetByNetworkRequest) (*gen.GetByNetworkResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForNetwork")
-	}
 
 	var r0 *gen.GetByNetworkResponse
 	var r1 error
@@ -258,10 +226,6 @@ func (_m *NodeServiceServer) GetNodesForNetwork(_a0 context.Context, _a1 *gen.Ge
 func (_m *NodeServiceServer) GetNodesForOrg(_a0 context.Context, _a1 *gen.GetByOrgRequest) (*gen.GetByOrgResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForOrg")
-	}
-
 	var r0 *gen.GetByOrgResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest) (*gen.GetByOrgResponse, error)); ok {
@@ -287,10 +251,6 @@ func (_m *NodeServiceServer) GetNodesForOrg(_a0 context.Context, _a1 *gen.GetByO
 // GetNodesForSite provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) GetNodesForSite(_a0 context.Context, _a1 *gen.GetBySiteRequest) (*gen.GetBySiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodesForSite")
-	}
 
 	var r0 *gen.GetBySiteResponse
 	var r1 error
@@ -318,10 +278,6 @@ func (_m *NodeServiceServer) GetNodesForSite(_a0 context.Context, _a1 *gen.GetBy
 func (_m *NodeServiceServer) ReleaseNodeFromSite(_a0 context.Context, _a1 *gen.ReleaseNodeFromSiteRequest) (*gen.ReleaseNodeFromSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for ReleaseNodeFromSite")
-	}
-
 	var r0 *gen.ReleaseNodeFromSiteResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromSiteRequest) (*gen.ReleaseNodeFromSiteResponse, error)); ok {
@@ -348,10 +304,6 @@ func (_m *NodeServiceServer) ReleaseNodeFromSite(_a0 context.Context, _a1 *gen.R
 func (_m *NodeServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateNode")
-	}
-
 	var r0 *gen.UpdateNodeResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error)); ok {
@@ -377,10 +329,6 @@ func (_m *NodeServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNode
 // UpdateNodeState provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) UpdateNodeState(_a0 context.Context, _a1 *gen.UpdateNodeStateRequest) (*gen.UpdateNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateNodeState")
-	}
 
 	var r0 *gen.UpdateNodeResponse
 	var r1 error
