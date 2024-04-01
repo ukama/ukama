@@ -2,8 +2,6 @@ module github.com/ukama/ukama/systems/inventory/accounting
 
 go 1.22
 
-toolchain go1.22.1
-
 replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/inventory/accounting => ./
@@ -23,7 +21,7 @@ require (
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.8
+	gorm.io/gorm v1.25.9
 )
 
 require (

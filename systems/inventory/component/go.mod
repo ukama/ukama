@@ -2,8 +2,6 @@ module github.com/ukama/ukama/systems/inventory/component
 
 go 1.22
 
-toolchain go1.22.1
-
 replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/inventory/component => ./
