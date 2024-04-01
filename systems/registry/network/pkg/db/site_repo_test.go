@@ -40,7 +40,7 @@ func Test_SiteRepo_Get(t *testing.T) {
 			AddRow(siteId, siteName, netId)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(siteId).
+			WithArgs(siteId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -80,7 +80,7 @@ func Test_SiteRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(siteId).
+			WithArgs(siteId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -127,7 +127,7 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 			AddRow(siteId, siteName, netId)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(netId, siteName).
+			WithArgs(netId, siteName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -168,7 +168,7 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WithArgs(netId, siteName).
+			WithArgs(netId, siteName, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{

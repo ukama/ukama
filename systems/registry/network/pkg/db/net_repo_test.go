@@ -78,7 +78,7 @@ func Test_NetRepo_Get(t *testing.T) {
 			AddRow(netID, netName, orgID, networks, countries)
 
 		mock.ExpectQuery(`^SELECT.*networks.*`).
-			WithArgs(netID).
+			WithArgs(netID, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -122,7 +122,7 @@ func Test_NetRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*networks.*`).
-			WithArgs(netID).
+			WithArgs(netID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
