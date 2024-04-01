@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -103,26 +104,63 @@ func (r *Router) init() {
     endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
     endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
     endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
-	endpoint.POST("/logger/nodes/:node_id",  formatDoc("Log data", "Endpoint to log data"),r.logHandler,)
+	endpoint.POST("/logger/nodes/:node_id", formatDoc("Log data", "Endpoint to log data"),tonic.Handler(r.logHandler,http.StatusCreated))
 
 }
 
-func (r *Router) logHandler(c *gin.Context) {
-    var requestData map[string]string
-    if err := c.BindJSON(&requestData); err != nil {
+func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error) {
+    if err := c.BindJSON(&req.Logs); err != nil {
+        r.logger.Errorf("Failed to bind JSON: %v", err)
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
+        return "", err
     }
-    r.logger.WithFields(logrus.Fields{
-        "node_id":  requestData["node_id"],
-        "app_name": requestData["app_name"],
-        "time":     requestData["time"],
-        "level":    requestData["level"],
-        "message":  requestData["message"],
-    }).Info("Received log data")
 
-    c.JSON(http.StatusOK, gin.H{"message": "Log data received"})
+    // Ensure that the NodeID is provided
+    if req.NodeId == "" {
+        r.logger.Error("NodeID is required")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "NodeID is required"})
+        return "", errors.New("NodeID is required")
+    }
+
+    // Log the NodeID
+    r.logger.WithField("node_id", req.NodeId).Info("Received log data")
+
+    // Define the log file path
+    logFileName := "log_" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"
+    logFilePath := filepath.Join("logs", logFileName)
+
+    // Create the "logs" directory if it doesn't exist
+    if err := os.MkdirAll("logs", 0755); err != nil {
+        r.logger.Errorf("Failed to create logs directory: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+        return "", err
+    }
+
+    // Open the log file for appending
+    file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+    if err != nil {
+        r.logger.Errorf("Failed to open log file: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+        return "", err
+    }
+    defer file.Close()
+
+    // Write each log entry to the log file
+    for _, logEntry := range req.Logs {
+        logLine := fmt.Sprintf("%s %s %s %s %s\n", req.NodeId, logEntry.AppName, logEntry.Time, logEntry.Level, logEntry.Message)
+        if _, err := file.WriteString(logLine); err != nil {
+            r.logger.Errorf("Failed to write log entry to file: %v", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+            return "", err
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Log data received and saved"})
+    return "Logs received", nil
 }
+
+
+
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
 	var genSystems []*gen.System
 	for _, sys := range req.System {
@@ -188,20 +226,4 @@ func (r *Router) pingHandler(c *gin.Context) error {
     c.JSON(http.StatusOK, response)
 
     return nil
-}
-func setupLogger() *logrus.Logger {
-    logger := logrus.New()
-
-    logFileName := "log_" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"
-    logFilePath := filepath.Join("logs", logFileName)
-    file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-    if err == nil {
-        logger.SetOutput(file)
-    } else {
-        logger.Info("Failed to log to file, using default stderr")
-    }
-
-    logger.SetLevel(logrus.InfoLevel)
-
-    return logger
 }

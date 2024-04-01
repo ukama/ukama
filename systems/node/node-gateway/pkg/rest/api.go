@@ -11,6 +11,17 @@ package rest
 type GetRunningAppsRequest struct {
 	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
 }
+
+type AddLogsRequest struct {
+    NodeId string `example:"{{NodeId}}" json:"node_id" path:"node_id"`
+    Logs   []struct {
+        AppName string `json:"app_name"`
+        Time    string `json:"time"`
+        Level   string `json:"level"`
+        Message string `json:"message"`
+    } `json:"logs"`
+}
+
 type StoreRunningAppsInfoRequest struct {
 	NodeId    string   `validate:"required" example:"{{NodeId}}" path:"node_id" `
 	Timestamp string   `json:"timestamp" validate:"required" example:"{{time}}"`
