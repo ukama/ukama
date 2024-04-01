@@ -54,12 +54,36 @@ type AddNetworkRequest struct {
 }
 
 type GetSiteRequest struct {
-	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
-	SiteName  string `example:"s1-site" path:"site" validate:"required"`
+	SiteId string `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
 }
+
+type GetSitesRequest struct {
+	NetworkId string `example:"{{NetworkUUID}}" form:"org" json:"network" query:"network" binding:"required" validate:"required"`
+}
+type UpdateSiteRequest struct {
+	SiteId        string    `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
+	Name          string    `json:"name" validate:"required"`
+	BackhaulId    string    `json:"backhaul_id" validate:"required"`
+	PowerId       string    `json:"power_id" validate:"required"`
+	AccessId      string    `json:"access_id" validate:"required"`
+	SwitchId      string    `json:"switch_id" validate:"required"`
+	IsDeactivated bool      `json:"is_deactivated"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	InstallDate   string `json:"install_date" validate:"required"`
+}
+
 type AddSiteRequest struct {
-	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
-	SiteName  string `example:"s1-site" json:"site" validate:"required"`
+	NetworkId     string  `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	Name          string  `example:"s1-site" json:"site" validate:"required"`
+	BackhaulId    string  `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
+	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
+	AccessId      string  `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
+	SwitchId      string  `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
+	IsDeactivated bool    `json:"is_deactivated" validate:"required"`
+	Latitude      float64 `json:"latitude" validate:"required"`
+	Longitude     float64 `json:"longitude" validate:"required"`
+	InstallDate   string  `json:"install_date"`
 }
 
 type AttachNodesRequest struct {
@@ -119,7 +143,7 @@ type AddNodeToSiteRequest struct {
 
 	// TODO: update RPC handlers for missing site_id (default site for network)
 	SiteId    string `json:"site_id"`
-	NetworkId string `json:"net_id" validate:"required"`
+	NetworkId string `json:"network_id" validate:"required"`
 }
 
 type ReleaseNodeFromSiteRequest struct {

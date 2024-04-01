@@ -20,6 +20,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
+	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
@@ -49,15 +50,20 @@ type Clients struct {
 	Node       node
 	Member     member
 	Invitation invitation
+	Site       site
 }
 
 type network interface {
 	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
-	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
-	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
-	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
+}
+
+type site interface {
+	AddSite(networkId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
+	GetSite(siteId string) (*sitepb.GetResponse, error)
+	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
+	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse,error)
 }
 
 type invitation interface {
@@ -99,6 +105,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Node = client.NewNode(endpoints.Node, endpoints.Timeout)
 	c.Member = client.NewMemberRegistry(endpoints.Member, endpoints.Timeout)
 	c.Invitation = client.NewInvitationRegistry(endpoints.Invitation, endpoints.Timeout)
+	c.Site = client.NewSiteRegistry(endpoints.Site, endpoints.Timeout)
 
 	return c
 }
@@ -186,11 +193,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Vendors
 
 		// Sites
-		networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
-		networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
-		networks.GET("/:net_id/sites/:site", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
-		// update sites
-		// delete sites
+		
+		const site = "/sites"
+		sites := auth.Group(site, "Sites", "Operations on sites")
+		sites.GET("", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
+		sites.POST("", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
+		sites.GET("/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+		sites.PATCH("/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
 
 		// Node routes
 		const node = "/nodes"
@@ -304,16 +313,50 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
-func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
-	return r.clients.Network.GetSite(req.NetworkId, req.SiteName)
+func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.GetResponse, error) {
+	return r.clients.Site.GetSite(req.SiteId)
 }
 
-func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSitesByNetworkResponse, error) {
-	return r.clients.Network.GetSites(req.NetworkId)
+func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.GetSitesResponse, error) {
+	network, ok := c.GetQuery("network")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "networkId is a mandatory query parameter"}
+	}
+
+	return r.clients.Site.GetSites(network)
+
 }
 
-func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*netpb.AddSiteResponse, error) {
-	return r.clients.Network.AddSite(req.NetworkId, req.SiteName)
+func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sitepb.UpdateResponse, error) {
+	return r.clients.Site.UpdateSite(
+		req.SiteId,
+		req.Name,
+		req.BackhaulId,
+		req.PowerId,
+		req.AccessId,
+		req.SwitchId,
+		req.IsDeactivated,
+		req.Latitude,
+		req.Longitude,
+		req.InstallDate,
+	)
+}
+
+func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {
+	
+	return r.clients.Site.AddSite(
+		req.NetworkId,
+		req.Name,
+		req.BackhaulId,
+		req.PowerId,
+		req.AccessId,
+		req.SwitchId,
+		req.IsDeactivated,
+		req.Latitude,
+		req.Longitude,
+		req.InstallDate,
+	)
 }
 
 func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
