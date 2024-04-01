@@ -10,7 +10,6 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/billing/invoice/pb/gen";
 
-
 import "validator.proto";
 
 
@@ -19,8 +18,7 @@ package ukama.billing.invoice.v1;
 service InvoiceService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
-    rpc GetByInvoicee(GetByInvoiceeRequest) returns (GetByInvoiceeResponse);
-    rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
+    rpc List(ListRequest) returns (ListResponse);
     // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
@@ -45,24 +43,19 @@ message GetResponse{
 }
 
 
-message GetByInvoiceeRequest{
-    string invoiceeId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoicee_id"];
-}
-
-message GetByInvoiceeResponse{
+message ListRequest {
     string invoiceeId = 1 [json_name = "invoicee_id"];
-    repeated Invoice invoices = 2;
+    string invoiceeType = 2 [json_name = "invoicee_type"];
+    string networkId = 3 [json_name = "network_Id"];
+    bool isPaid = 4 [json_name = "is_paid"];
+    uint32 count = 5;
+    bool sort = 6;
 }
 
-
-message GetByNetworkRequest{
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+message ListResponse {
+    repeated Invoice invoices = 1;
 }
 
-message GetByNetworkResponse{
-    string networkId = 1 [json_name = "network_id"];
-    repeated Invoice invoices = 2;
-}
 
 message DeleteRequest{
     string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
@@ -133,10 +126,10 @@ message Fee {
     string totalAmountCurrency = 6 [json_name = "total_amount_currency"];
     int64 eventsCount = 7 [json_name = "events_count"];
     double units = 8 [json_name = "units"];
-    FeeItem item = 9 [json_name = "item"];
+    Feeinvoicee invoicee = 9 [json_name = "invoicee"];
 }
 
-message FeeItem {
+message Feeinvoicee {
     string type = 1 [json_name = "type"];
     string code = 2 [json_name = "code"];
     string name = 3 [json_name = "name"];

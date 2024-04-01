@@ -104,58 +104,28 @@ func (_m *InvoiceServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*
 	return r0, r1
 }
 
-// GetByInvoicee provides a mock function with given fields: _a0, _a1
-func (_m *InvoiceServiceServer) GetByInvoicee(_a0 context.Context, _a1 *gen.GetByInvoiceeRequest) (*gen.GetByInvoiceeResponse, error) {
+// List provides a mock function with given fields: _a0, _a1
+func (_m *InvoiceServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByInvoicee")
+		panic("no return value specified for List")
 	}
 
-	var r0 *gen.GetByInvoiceeResponse
+	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByInvoiceeRequest) (*gen.GetByInvoiceeResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByInvoiceeRequest) *gen.GetByInvoiceeResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetByInvoiceeResponse)
+			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByInvoiceeRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetByNetwork provides a mock function with given fields: _a0, _a1
-func (_m *InvoiceServiceServer) GetByNetwork(_a0 context.Context, _a1 *gen.GetByNetworkRequest) (*gen.GetByNetworkResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByNetwork")
-	}
-
-	var r0 *gen.GetByNetworkResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByNetworkRequest) (*gen.GetByNetworkResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByNetworkRequest) *gen.GetByNetworkResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetByNetworkResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByNetworkRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
