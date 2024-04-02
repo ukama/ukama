@@ -123,7 +123,7 @@ func Test_GetByIccid(t *testing.T) {
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(false, iccid).
+			WithArgs(false, iccid, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -171,7 +171,7 @@ func Test_Get(t *testing.T) {
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(false, true, SimTypeTest).
+			WithArgs(false, true, SimTypeTest, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

@@ -23,7 +23,6 @@ deps:
 	go get github.com/vektra/mockery/v2/.../
 
 gen:
-	# check for protos
 	mockery --all --recursive
 
 clean:

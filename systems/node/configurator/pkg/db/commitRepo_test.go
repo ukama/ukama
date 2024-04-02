@@ -69,7 +69,7 @@ func TestCommitRepo_Get(t *testing.T) {
 			AddRow(hash)
 
 		mock.ExpectQuery(`^SELECT.*commits.*`).
-			WithArgs(hash).
+			WithArgs(hash, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -111,7 +111,7 @@ func TestCommitRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*commits.*`).
-			WithArgs(hash).
+			WithArgs(hash, sqlmock.AnyArg()).
 			WillReturnError(gorm.ErrRecordNotFound)
 
 		dialector := postgres.New(postgres.Config{

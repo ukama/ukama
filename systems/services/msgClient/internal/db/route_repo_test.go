@@ -86,7 +86,7 @@ func Test_routeRepo_Get(t *testing.T) {
 			AddRow(key)
 
 		mock.ExpectQuery(`^SELECT.*routes.*`).
-			WithArgs(key).
+			WithArgs(key, 1).
 			WillReturnRows(rows)
 
 		// Act
@@ -171,7 +171,7 @@ func Test_routeRepo_Add(t *testing.T) {
 			AddRow(key)
 
 		mock.ExpectQuery(`^SELECT.*routes.*`).
-			WithArgs(key).
+			WithArgs(key, 1).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

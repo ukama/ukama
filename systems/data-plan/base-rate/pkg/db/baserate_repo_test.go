@@ -91,7 +91,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(ratID.String()).
+			WithArgs(ratID.String(), sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -153,7 +153,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, sqlmock.AnyArg()).
+			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

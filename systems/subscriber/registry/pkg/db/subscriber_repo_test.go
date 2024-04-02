@@ -136,7 +136,7 @@ func TestSubscriber_Get(t *testing.T) {
 			AddRow(subID)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(subID).
+			WithArgs(subID, sqlmock.AnyArg()).
 			WillReturnRows(subRow)
 
 		assert.NoError(t, err)
@@ -173,7 +173,7 @@ func TestSubscriber_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(subID).
+			WithArgs(subID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
 			GormDb: gdb,
@@ -211,7 +211,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 			AddRow(networkId)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(networkId).
+			WithArgs(networkId, sqlmock.AnyArg()).
 			WillReturnRows(subRow)
 
 		assert.NoError(t, err)
@@ -246,7 +246,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(networkId).
+			WithArgs(networkId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
 			GormDb: gdb,

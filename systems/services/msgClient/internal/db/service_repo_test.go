@@ -70,7 +70,7 @@ func Test_serviceRepo_Get(t *testing.T) {
 			AddRow(service1.Name, service1.InstanceId, service1.ServiceUuid, service1.MsgBusUri, service1.ListQueue, service1.PublQueue, service1.Exchange, service1.ServiceUri, service1.GrpcTimeout)
 
 		mock.ExpectQuery(`^SELECT.*services.*`).
-			WithArgs(service1.ServiceUuid).
+			WithArgs(service1.ServiceUuid, 1).
 			WillReturnRows(rows)
 
 		// Act

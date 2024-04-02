@@ -136,7 +136,7 @@ func TestNodeRepo_Get(t *testing.T) {
 			AddRow(nodeId, name)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
@@ -167,7 +167,7 @@ func TestNodeRepo_Get(t *testing.T) {
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnError(extsql.ErrNoRows)
 
 		// Act
@@ -286,7 +286,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	t.Run("NodeFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
@@ -325,7 +325,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	t.Run("NodeOnSite", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
 		// Act
@@ -340,7 +340,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	t.Run("NodeErrorGrouped", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnError(extsql.ErrNoRows)
 
 		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
@@ -359,7 +359,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	t.Run("NodeStillGrouped", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(nodeId).
+			WithArgs(nodeId, sqlmock.AnyArg()).
 			WillReturnError(extsql.ErrNoRows)
 
 		// mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).

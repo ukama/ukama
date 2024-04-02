@@ -15,7 +15,7 @@ lint:
 	golangci-lint run
 
 test:
-	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+	go test ./...
 
 deps:
 	go get github.com/vektra/mockery/v2/.../

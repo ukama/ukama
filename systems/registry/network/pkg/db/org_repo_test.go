@@ -39,7 +39,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 			AddRow(orgID, orgName)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgID).
+			WithArgs(orgID, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -79,7 +79,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgID).
+			WithArgs(orgID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -125,7 +125,7 @@ func Test_OrgRepo_GetByName(t *testing.T) {
 			AddRow(orgID, orgName)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+			WithArgs(orgName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -165,7 +165,7 @@ func Test_OrgRepo_GetByName(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+			WithArgs(orgName, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{

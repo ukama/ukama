@@ -120,7 +120,7 @@ func TestInvoiceRepo_Get(t *testing.T) {
 			AddRow(invoiceId, subscriberId)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(invoiceId).
+			WithArgs(invoiceId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -160,7 +160,7 @@ func TestInvoiceRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(invoiceId).
+			WithArgs(invoiceId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{

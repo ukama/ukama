@@ -39,7 +39,7 @@ func TestConfigRepo_Get(t *testing.T) {
 			AddRow(nid.String())
 
 		mock.ExpectQuery(`^SELECT.*configurations.*`).
-			WithArgs(nid.String()).
+			WithArgs(nid.String(), sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -80,7 +80,7 @@ func TestConfigRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*configurations.*`).
-			WithArgs(nid.String()).
+			WithArgs(nid.String(), sqlmock.AnyArg()).
 			WillReturnError(gorm.ErrRecordNotFound)
 
 		dialector := postgres.New(postgres.Config{

@@ -136,7 +136,7 @@ func TestInvitationRepo_Getinvitation(t *testing.T) {
 			AddRow(invId, invitation.UserId, invitation.Role)
 
 		mock.ExpectQuery(`^SELECT.*invitations.*`).
-			WithArgs(invitation.Id).
+			WithArgs(invitation.Id, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
