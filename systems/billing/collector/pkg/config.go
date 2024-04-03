@@ -28,6 +28,7 @@ type Config struct {
 	LagoPort          uint   `default:"3000"`
 	LagoAPIKey        string
 	OrgName           string
+	OrgId             string
 }
 
 func NewConfig(name string) *Config {

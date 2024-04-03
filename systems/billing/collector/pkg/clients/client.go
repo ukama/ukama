@@ -17,6 +17,7 @@ type BillingClient interface {
 	GetBillableMetricId(context.Context, string) (string, error)
 	CreateBillableMetric(context.Context, BillableMetric) (string, error)
 	CreatePlan(context.Context, Plan, ...PlanCharge) (string, error)
+	GetCustomer(context.Context, string) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
 	DeleteCustomer(context.Context, string) (string, error)

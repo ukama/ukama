@@ -15,11 +15,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/ukama"
-
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
@@ -45,16 +45,17 @@ type BillableMetric struct {
 }
 
 type BillingCollectorEventServer struct {
-	org     string
+	orgName string
+	orgId   string
 	client  client.BillingClient
 	bMetric BillableMetric
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewBillingCollectorEventServer(org string, client client.BillingClient) *BillingCollectorEventServer {
-	log.Infof("Starting billing collector for org: %s", org)
+func NewBillingCollectorEventServer(orgName, orgId string, client client.BillingClient) *BillingCollectorEventServer {
+	log.Infof("Starting billing collector for org: %s", orgName)
 
-	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
+	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId)
 	if err != nil {
 		log.Fatalf("Failed to initialize billable metric: %v", err)
 	}
@@ -65,7 +66,8 @@ func NewBillingCollectorEventServer(org string, client client.BillingClient) *Bi
 	}
 
 	return &BillingCollectorEventServer{
-		org:     org,
+		orgName: orgName,
+		orgId:   orgId,
 		client:  client,
 		bMetric: bMetric,
 	}
@@ -77,7 +79,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	switch e.RoutingKey {
 
 	// Send usage event
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -89,7 +91,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create plan
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -101,7 +103,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -113,7 +115,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Update customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -125,7 +127,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Delete customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -137,7 +139,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// add subscrition to customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
 		msg, err := unmarshalSimAllocation(e.Msg)
 		if err != nil {
 			return nil, err
@@ -149,7 +151,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// update subscrition to customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -461,11 +463,22 @@ func unmarshalSimAllocation(msg *anypb.Any) (*epb.SimAllocation, error) {
 	return p, nil
 }
 
-func initBillableMetric(clt client.BillingClient, bmCode string) (string, error) {
+func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string) (string, error) {
+	log.Infof("Initializing billing defaults")
+
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	log.Infof("Sending get request for billable metric %q to billing server", bmCode)
+	_, err := clt.GetCustomer(ctx, orgId)
+	if err != nil {
+		log.Warnf("Error while getting org billable account: %v", err)
+		log.Infof("Creating org billable account: %s", orgId)
+
+		_, err = createOrgCustomer(clt, orgId, orgName)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	bmId, err := clt.GetBillableMetricId(ctx, bmCode)
 	if err != nil {
@@ -481,6 +494,31 @@ func initBillableMetric(clt client.BillingClient, bmCode string) (string, error)
 	log.Infof("Successfuly returning billable metric. Id: %s", bmId)
 
 	return bmId, nil
+}
+
+func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	customer := client.Customer{
+		Id:   orgId,
+		Name: OrgName,
+		// Email:   subscriber.Email,
+		// Address: subscriber.Address,
+		// Phone:   subscriber.PhoneNumber,
+	}
+
+	log.Infof("Sending org customer create event %v to billing server", customer)
+
+	customerBillingId, err := clt.CreateCustomer(ctx, customer)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("New org customer: %q", customerBillingId)
+	log.Infof("Successfuly registered org %q as billing customer", orgId)
+
+	return customerBillingId, nil
 }
 
 func createBillableMetric(clt client.BillingClient) (string, error) {

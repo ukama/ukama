@@ -120,6 +120,16 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 	return plan.LagoID.String(), nil
 }
 
+func (l *lagoClient) GetCustomer(ctx context.Context, id string) (string, error) {
+	customer, pErr := l.c.Customer().Get(ctx, id)
+	if pErr != nil {
+		return "", fmt.Errorf("error while getting customer with ID %s: %s. code: %d. %w",
+			id, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
+	}
+
+	return customer.LagoID.String(), nil
+}
+
 func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string, error) {
 	newCust := &lago.CustomerInput{
 		ExternalID:   cust.Id,
