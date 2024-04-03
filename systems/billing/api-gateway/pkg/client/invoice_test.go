@@ -11,20 +11,19 @@ package client_test
 import (
 	"testing"
 
-	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/billing/invoice/pb/gen/mocks"
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pmocks "github.com/ukama/ukama/systems/billing/api-gateway/mocks"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/billing/invoice/pb/gen/mocks"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 )
 
-func TestBillingClient_AddInvoice(t *testing.T) {
+func TestInvoiceClient_Add(t *testing.T) {
 	t.Run("InvoiceeIdValid", func(t *testing.T) {
 		var bc = &mocks.InvoiceServiceClient{}
 
@@ -34,7 +33,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	"number": "LAG-1234-001-002",
 	"issuing_date": "2022-04-30",
 	"status": "finalized",
-	"payment_status": "succeeded",
+	"invoice_status": "succeeded",
 	"amount_cents": 100,
 	"amount_currency": "EUR",
 	"vat_amount_cents": 20,
@@ -82,7 +81,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	{
 	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
 	"lago_group_id": null,
-	"item": {
+	"invoicee": {
 	"type": "subscription",
 	"code": "plan_code",
 	"name": "Plan"
@@ -100,7 +99,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	"credits": [
 	{
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"item": {
+	"invoicee": {
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
 	"type": "coupon",
 	"code": "coupon_code",
@@ -132,9 +131,9 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 
 		bc.On("Add", mock.Anything, invoiceReq).Return(invoiceResp, nil)
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(bc)
 
-		resp, err := b.AddInvoice(raw)
+		resp, err := i.Add(raw)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -150,7 +149,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	"number": "LAG-1234-001-002",
 	"issuing_date": "2022-04-30",
 	"status": "finalized",
-	"payment_status": "succeeded",
+	"invoice_status": "succeeded",
 	"amount_cents": 100,
 	"amount_currency": "EUR",
 	"vat_amount_cents": 20,
@@ -198,7 +197,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	{
 	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
 	"lago_group_id": null,
-	"item": {
+	"invoicee": {
 	"type": "subscription",
 	"code": "plan_code",
 	"name": "Plan"
@@ -216,7 +215,7 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	"credits": [
 	{
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"item": {
+	"invoicee": {
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
 	"type": "coupon",
 	"code": "coupon_code",
@@ -243,9 +242,9 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 		bc.On("Add", mock.Anything, invoiceReq).Return(nil,
 			status.Errorf(codes.InvalidArgument, "invalid invoiceeId"))
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(bc)
 
-		resp, err := b.AddInvoice(raw)
+		resp, err := i.Add(raw)
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -253,8 +252,8 @@ func TestBillingClient_AddInvoice(t *testing.T) {
 	})
 }
 
-func TestBillingClient_GetInvoice(t *testing.T) {
-	var bc = &mocks.InvoiceServiceClient{}
+func TestInvoiceClient_Get(t *testing.T) {
+	var ic = &mocks.InvoiceServiceClient{}
 
 	t.Run("InvoiceFound", func(t *testing.T) {
 		invoiceId := uuid.NewV4()
@@ -269,16 +268,16 @@ func TestBillingClient_GetInvoice(t *testing.T) {
 			InvoiceeId: uuid.NewV4().String(),
 		}}
 
-		bc.On("Get", mock.Anything, invoiceReq).Return(invoiceResp, nil)
+		ic.On("Get", mock.Anything, invoiceReq).Return(invoiceResp, nil)
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(ic)
 
-		resp, err := b.GetInvoice(invoiceId.String(), false)
+		resp, err := i.Get(invoiceId.String(), false)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, resp.Invoice.Id, invoiceId.String())
-		bc.AssertExpectations(t)
+		ic.AssertExpectations(t)
 	})
 
 	t.Run("InvoiceNotFound", func(t *testing.T) {
@@ -289,119 +288,62 @@ func TestBillingClient_GetInvoice(t *testing.T) {
 			AsPdf:     false,
 		}
 
-		bc.On("Get", mock.Anything, invoiceReq).Return(nil,
+		ic.On("Get", mock.Anything, invoiceReq).Return(nil,
 			status.Errorf(codes.NotFound, "invoice not found"))
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(ic)
 
-		resp, err := b.GetInvoice(invoiceId.String(), false)
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "not found")
-		bc.AssertExpectations(t)
-	})
-}
-
-func TestBillingClient_GetInvoicesByInvoicee(t *testing.T) {
-	var bc = &mocks.InvoiceServiceClient{}
-
-	t.Run("InvoiceeFound", func(t *testing.T) {
-		invoiceeId := uuid.NewV4()
-		invoiceId := uuid.NewV4()
-
-		req := &pb.GetByInvoiceeRequest{
-			InvoiceeId: invoiceeId.String(),
-		}
-
-		invoiceResp := &pb.GetByInvoiceeResponse{Invoices: []*pb.Invoice{
-			&pb.Invoice{
-				Id:         invoiceId.String(),
-				InvoiceeId: invoiceeId.String(),
-			}}}
-
-		bc.On("GetByInvoicee", mock.Anything, req).Return(invoiceResp, nil)
-
-		b := client.NewBillingFromClient(bc, nil)
-
-		resp, err := b.GetInvoicesByInvoicee(invoiceeId.String())
-
-		assert.NoError(t, err)
-		assert.Equal(t, resp.Invoices[0].Id, invoiceId.String())
-		bc.AssertExpectations(t)
-	})
-
-	t.Run("InvoiceeNotFound", func(t *testing.T) {
-		invoiceeId := uuid.NewV4()
-
-		req := &pb.GetByInvoiceeRequest{
-			InvoiceeId: invoiceeId.String(),
-		}
-
-		bc.On("GetByInvoicee", mock.Anything, req).Return(nil,
-			status.Errorf(codes.NotFound, "invoicee not found"))
-
-		b := client.NewBillingFromClient(bc, nil)
-
-		resp, err := b.GetInvoicesByInvoicee(invoiceeId.String())
+		resp, err := i.Get(invoiceId.String(), false)
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		assert.Contains(t, err.Error(), "not found")
-		bc.AssertExpectations(t)
+		ic.AssertExpectations(t)
 	})
 }
+func TestInvoiceClient_List(t *testing.T) {
+	var (
+		ic = &mocks.InvoiceServiceClient{}
 
-func TestBillingClient_GetInvoicesByNetwork(t *testing.T) {
-	var bc = &mocks.InvoiceServiceClient{}
+		invoiceId              = uuid.NewV4().String()
+		invoiceeId             = uuid.NewV4().String()
+		networkId              = uuid.NewV4().String()
+		InvoiceeTypeSubscriber = "subscriber"
+		// InvoiceeTypeOrg        = "org"
 
-	t.Run("NetworkFound", func(t *testing.T) {
-		networkId := uuid.NewV4()
-		invoiceId := uuid.NewV4()
+		isPaid = true
+	)
 
-		req := &pb.GetByNetworkRequest{
-			NetworkId: networkId.String(),
-		}
+	listReq := &pb.ListRequest{
+		InvoiceeId:   invoiceeId,
+		InvoiceeType: InvoiceeTypeSubscriber,
+		NetworkId:    networkId,
+		IsPaid:       isPaid,
+		Count:        uint32(1),
+		Sort:         true}
 
-		invoiceResp := &pb.GetByNetworkResponse{Invoices: []*pb.Invoice{
-			&pb.Invoice{
-				Id:        invoiceId.String(),
-				NetworkId: networkId.String(),
-			}}}
+	listResp := &pb.ListResponse{Invoices: []*pb.Invoice{
+		&pb.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: InvoiceeTypeSubscriber,
+			NetworkId:    networkId,
+			IsPaid:       isPaid,
+		}}}
 
-		bc.On("GetByNetwork", mock.Anything, req).Return(invoiceResp, nil)
+	ic.On("List", mock.Anything, listReq).Return(listResp, nil)
 
-		b := client.NewBillingFromClient(bc, nil)
+	n := client.NewInvoiceFromClient(ic)
 
-		resp, err := b.GetInvoicesByNetwork(networkId.String())
+	resp, err := n.List(invoiceeId, InvoiceeTypeSubscriber, networkId,
+		isPaid, uint32(1), true)
 
-		assert.NoError(t, err)
-		assert.Equal(t, resp.Invoices[0].Id, invoiceId.String())
-		bc.AssertExpectations(t)
-	})
-
-	t.Run("InvoiceNotFound", func(t *testing.T) {
-		networkId := uuid.NewV4()
-
-		req := &pb.GetByNetworkRequest{
-			NetworkId: networkId.String(),
-		}
-
-		bc.On("GetByNetwork", mock.Anything, req).Return(nil,
-			status.Errorf(codes.NotFound, "network not found"))
-
-		b := client.NewBillingFromClient(bc, nil)
-
-		resp, err := b.GetInvoicesByNetwork(networkId.String())
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "not found")
-		bc.AssertExpectations(t)
-	})
+	assert.NoError(t, err)
+	assert.Equal(t, resp.Invoices[0].Id, invoiceId)
+	ic.AssertExpectations(t)
 }
 
-func TestBillingClient_RemoveInvoice(t *testing.T) {
+func TestInvoiceClient_Remove(t *testing.T) {
 	var bc = &mocks.InvoiceServiceClient{}
 
 	t.Run("InvoiceFound", func(t *testing.T) {
@@ -413,9 +355,9 @@ func TestBillingClient_RemoveInvoice(t *testing.T) {
 
 		bc.On("Delete", mock.Anything, invoiceReq).Return(nil, nil)
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(bc)
 
-		err := b.RemoveInvoice(invoiceId.String())
+		err := i.Remove(invoiceId.String())
 
 		assert.NoError(t, err)
 		bc.AssertExpectations(t)
@@ -431,47 +373,12 @@ func TestBillingClient_RemoveInvoice(t *testing.T) {
 		bc.On("Delete", mock.Anything, invoiceReq).Return(nil,
 			status.Errorf(codes.NotFound, "invoice not found"))
 
-		b := client.NewBillingFromClient(bc, nil)
+		i := client.NewInvoiceFromClient(bc)
 
-		err := b.RemoveInvoice(invoiceId.String())
+		err := i.Remove(invoiceId.String())
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 		bc.AssertExpectations(t)
-	})
-}
-
-func TestBillingClient_GetInvoicePDF(t *testing.T) {
-	var pc = &pmocks.PdfClient{}
-	var bc = &mocks.InvoiceServiceClient{}
-
-	t.Run("InvoiceFound", func(t *testing.T) {
-		invoiceId := uuid.NewV4()
-
-		pc.On("GetPdf", invoiceId.String()).Return([]byte("some fake pdf data"), nil)
-
-		b := client.NewBillingFromClient(bc, pc)
-
-		resp, err := b.GetInvoicePDF(invoiceId.String())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		pc.AssertExpectations(t)
-	})
-
-	t.Run("InvoiceNotFound", func(t *testing.T) {
-		invoiceId := uuid.NewV4()
-
-		pc.On("GetPdf", invoiceId.String()).Return(nil,
-			status.Errorf(codes.NotFound, "invoice not found"))
-
-		b := client.NewBillingFromClient(bc, pc)
-
-		resp, err := b.GetInvoicePDF(invoiceId.String())
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "not found")
-		pc.AssertExpectations(t)
 	})
 }

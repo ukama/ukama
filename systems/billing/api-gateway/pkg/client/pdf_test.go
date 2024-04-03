@@ -48,9 +48,7 @@ func TestPdfClient_GetPdf(t *testing.T) {
 			}
 		}
 
-		testPdfClient, err := client.NewPdfClient("", false)
-
-		assert.NoError(tt, err)
+		testPdfClient := client.NewPdfClient("", false)
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -72,9 +70,27 @@ func TestPdfClient_GetPdf(t *testing.T) {
 			}
 		}
 
-		testPdfClient, err := client.NewPdfClient("", false)
+		testPdfClient := client.NewPdfClient("", false)
 
-		assert.NoError(tt, err)
+		testPdfClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		p, err := testPdfClient.GetPdf(invoiceId)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, p)
+	})
+
+	t.Run("PdfUnexpectedError", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), client.FileServerEndpoint+invoiceId+".pdf")
+
+			return &http.Response{
+				StatusCode: 500,
+				Header:     make(http.Header),
+			}
+		}
+
+		testPdfClient := client.NewPdfClient("", false)
 
 		testPdfClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -90,9 +106,7 @@ func TestPdfClient_GetPdf(t *testing.T) {
 			return nil
 		}
 
-		testPdfClient, err := client.NewPdfClient("", false)
-
-		assert.NoError(tt, err)
+		testPdfClient := client.NewPdfClient("", false)
 
 		testPdfClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
