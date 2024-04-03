@@ -28,10 +28,30 @@ func NewLagoClient(APIKey, Host string, Port uint) BillingClient {
 	}
 }
 
+func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
+	eventInput := &lago.EventInput{
+		TransactionID:          ev.TransactionId,
+		ExternalCustomerID:     ev.CustomerId,
+		ExternalSubscriptionID: ev.SubscriptionId,
+		Code:                   ev.Code,
+		Timestamp:              ev.SentAt.Unix(),
+		Properties:             ev.AdditionalProperties,
+	}
+
+	err := l.c.Event().Create(ctx, eventInput)
+
+	if err != nil {
+		return fmt.Errorf("error while sending sim usage event: %s. code: %d. %w",
+			err.Msg, err.HTTPStatusCode, err.Err)
+	}
+
+	return nil
+}
+
 func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (string, error) {
 	bm, pErr := l.c.BillableMetric().Get(ctx, code)
 	if pErr != nil {
-		return "", fmt.Errorf("error while getting billable metrict ID: %s. code: %d. %w",
+		return "", fmt.Errorf("error while getting billable metrict Id: %s. code: %d. %w",
 			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
 	}
 
@@ -56,24 +76,14 @@ func (l *lagoClient) CreateBillableMetric(ctx context.Context, bMetric BillableM
 	return bm.LagoID.String(), nil
 }
 
-func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
-	eventInput := &lago.EventInput{
-		TransactionID:          ev.TransactionId,
-		ExternalCustomerID:     ev.CustomerId,
-		ExternalSubscriptionID: ev.SubscriptionId,
-		Code:                   ev.Code,
-		Timestamp:              ev.SentAt.Unix(),
-		Properties:             ev.AdditionalProperties,
+func (l *lagoClient) GetPlan(ctx context.Context, planCode string) (string, error) {
+	plan, pErr := l.c.Plan().Get(ctx, planCode)
+	if pErr != nil {
+		return "", fmt.Errorf("error while getting plan with Id %s: %s. code: %d. %w",
+			planCode, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
 	}
 
-	err := l.c.Event().Create(ctx, eventInput)
-
-	if err != nil {
-		return fmt.Errorf("error while sending sim usage event: %s. code: %d. %w",
-			err.Msg, err.HTTPStatusCode, err.Err)
-	}
-
-	return nil
+	return plan.LagoID.String(), nil
 }
 
 func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCharge) (string, error) {
@@ -90,7 +100,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 	for _, charge := range charges {
 		bMetricId, err := guuid.Parse(charge.BillableMetricID)
 		if err != nil {
-			return "", fmt.Errorf("fail to parse billable metric ID: %w", err)
+			return "", fmt.Errorf("fail to parse billable metric Id: %w", err)
 		}
 
 		props := make(map[string]interface{})
@@ -120,11 +130,22 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 	return plan.LagoID.String(), nil
 }
 
-func (l *lagoClient) GetCustomer(ctx context.Context, id string) (string, error) {
-	customer, pErr := l.c.Customer().Get(ctx, id)
+func (l *lagoClient) TerminatePlan(ctx context.Context, planCode string) (string, error) {
+	plan, err := l.c.Plan().Delete(ctx, planCode)
+
+	if err != nil {
+		return "", fmt.Errorf("error while sending plan delete event: %s. code: %d. %w",
+			err.Msg, err.HTTPStatusCode, err.Err)
+	}
+
+	return plan.LagoID.String(), nil
+}
+
+func (l *lagoClient) GetCustomer(ctx context.Context, custId string) (string, error) {
+	customer, pErr := l.c.Customer().Get(ctx, custId)
 	if pErr != nil {
-		return "", fmt.Errorf("error while getting customer with ID %s: %s. code: %d. %w",
-			id, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
+		return "", fmt.Errorf("error while getting customer with Id %s: %s. code: %d. %w",
+			custId, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
 	}
 
 	return customer.LagoID.String(), nil

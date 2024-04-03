@@ -16,13 +16,19 @@ import (
 type BillingClient interface {
 	GetBillableMetricId(context.Context, string) (string, error)
 	CreateBillableMetric(context.Context, BillableMetric) (string, error)
+
+	GetPlan(context.Context, string) (string, error)
 	CreatePlan(context.Context, Plan, ...PlanCharge) (string, error)
+	TerminatePlan(context.Context, string) (string, error)
+
 	GetCustomer(context.Context, string) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
 	DeleteCustomer(context.Context, string) (string, error)
+
 	CreateSubscription(context.Context, Subscription) (string, error)
 	TerminateSubscription(context.Context, string) (string, error)
+
 	AddUsageEvent(context.Context, Event) error
 }
 

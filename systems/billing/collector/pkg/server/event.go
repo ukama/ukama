@@ -78,6 +78,18 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	switch e.RoutingKey {
 
+	// Update org subscription
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"):
+		msg, err := unmarshalOrgSubscription(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleOrgSubscriptionEvent(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
 	// Send usage event
 	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
@@ -168,6 +180,84 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	return &epb.EventResponse{}, nil
 }
+func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingEvent,
+	b *BillingCollectorEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, usrAccountItems)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	for _, accountItem := range usrAccountItems.Accounting {
+		// Do we already have a plan with the same code for that org
+		_, err := b.client.GetPlan(ctx, accountItem.Id)
+		if err == nil {
+			// The plan, therefore the subscription exist. Remove those
+			log.Warnf("Plan with similar code %s was found", accountItem.Id)
+			log.Infof("Removing plan and subscription associated with code: %s", accountItem.Id)
+
+			_, err := b.client.TerminateSubscription(ctx, accountItem.Id)
+			if err != nil {
+				return err
+			}
+
+			_, err = b.client.TerminatePlan(ctx, accountItem.Id)
+			if err != nil {
+				return err
+			}
+		}
+
+		amount, err := strconv.Atoi(accountItem.OpexFee)
+		if err != nil {
+			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
+				accountItem.OpexFee, accountItem.Id, err)
+		}
+
+		// Then we recreate the plan and the subscription
+		newPlan := client.Plan{
+			Name:     accountItem.Item + ": " + accountItem.Id,
+			Code:     accountItem.Id,
+			Interval: testBillingInterval,
+
+			// 0 values are not sent by the upstream billing provider client. see above Todos
+			AmountCents: amount * 100,
+
+			AmountCurrency: defaultCurrency,
+
+			// fails on false (postpaid). See abouve Todos
+			PayInAdvance: true,
+		}
+
+		log.Infof("Sending plan create event %v with no charge to billing", newPlan)
+
+		plan, err := b.client.CreatePlan(ctx, newPlan)
+		if err != nil {
+			return err
+		}
+
+		log.Infof("New billing plan: %q", plan)
+		log.Infof("Successfuly created org item plan from account item  %q", accountItem.Id)
+
+		subscriptionInput := client.Subscription{
+			Id:         accountItem.Id,
+			CustomerId: b.orgId,
+			PlanCode:   accountItem.Id,
+			// SubscriptionAt: &subscriptionAt,
+		}
+
+		log.Infof("Sending org subscription event %v to billing server", subscriptionInput)
+
+		subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
+		if err != nil {
+			return err
+		}
+
+		log.Infof("New subscription created on billing server:  %q", subscriptionId)
+		log.Infof("Successfuly created new subscription org item from account item: %q", accountItem.Id)
+
+	}
+
+	return nil
+}
 
 func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
@@ -230,7 +320,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	}
 
 	newPlan := client.Plan{
-		Name:     "Plan " + pkg.Uuid,
+		Name:     "Plan: " + pkg.Uuid,
 		Code:     pkg.Uuid,
 		Interval: testBillingInterval,
 
@@ -394,6 +484,20 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActiveP
 	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
 
 	return nil
+}
+
+func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) {
+	p := &epb.UserAccountingEvent{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal SimUsage message with : %+v. Error %s.",
+			msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.SimActivePackage, error) {

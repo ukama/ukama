@@ -50,6 +50,9 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 				"event.cloud.local.{{ .Org}}.dataplan.package.package.create",
+
+				// "event.cloud.global.{{ .Org}}.orchestrator.package.package.create",
+				"event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync",
 			},
 		},
 	}

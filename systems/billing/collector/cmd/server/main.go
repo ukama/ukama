@@ -75,11 +75,10 @@ func runGrpcServer() {
 	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
+		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
