@@ -295,7 +295,7 @@ func TestInvoiceRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List("", db.InvoiceeTypeUnknown, "", true, 1, true)
+		list, err := r.List("", db.InvoiceeTypeUnknown, "", true, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
