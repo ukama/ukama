@@ -219,6 +219,14 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
 	amountCents := strconv.Itoa(int(pkg.DataUnitCost * 100))
 
+	charge := client.PlanCharge{
+		BillableMetricID:     b.bMetric.Id,
+		ChargeModel:          defaultChargeModel,
+		ChargeAmountCents:    amountCents,
+		ChargeAmountCurrency: defaultCurrency,
+		PackageSize:          int(billableDataSize),
+	}
+
 	newPlan := client.Plan{
 		Name:     "Plan " + pkg.Uuid,
 		Code:     pkg.Uuid,
@@ -231,17 +239,11 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 
 		// fails on false (postpaid). See abouve Todos
 		PayInAdvance: true,
-
-		BillableMetricID:     b.bMetric.Id,
-		ChargeModel:          defaultChargeModel,
-		ChargeAmountCents:    amountCents,
-		ChargeAmountCurrency: defaultCurrency,
-		PackageSize:          int(billableDataSize),
 	}
 
-	log.Infof("Sending plan create event %v to billing", newPlan)
+	log.Infof("Sending plan create event %v with charges %v to billing", newPlan, charge)
 
-	plan, err := b.client.CreatePlan(ctx, newPlan)
+	plan, err := b.client.CreatePlan(ctx, newPlan, charge)
 	if err != nil {
 		return err
 	}
@@ -477,6 +479,7 @@ func initBillableMetric(clt client.BillingClient, bmCode string) (string, error)
 	}
 
 	log.Infof("Successfuly returning billable metric. Id: %s", bmId)
+
 	return bmId, nil
 }
 

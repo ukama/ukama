@@ -34,6 +34,7 @@ func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (stri
 		return "", fmt.Errorf("error while getting billable metrict ID: %s. code: %d. %w",
 			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
 	}
+
 	return bm.LagoID.String(), nil
 }
 
@@ -75,26 +76,7 @@ func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	return nil
 }
 
-func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan) (string, error) {
-	bMetricId, err := guuid.Parse(pl.BillableMetricID)
-	if err != nil {
-		return "", fmt.Errorf("fail to parse billable metric ID: %w", err)
-	}
-
-	props := make(map[string]interface{})
-
-	props["amount"] = pl.ChargeAmountCents
-	props["free_units"] = pl.FreeUnits
-	props["package_size"] = pl.PackageSize
-
-	newCharge := lago.PlanChargeInput{
-		BillableMetricID: bMetricId,
-		ChargeModel:      lago.ChargeModel(pl.ChargeModel),
-		AmountCurrency:   lago.Currency(pl.AmountCurrency),
-		// PayInAdvance:     true,
-		Properties: props,
-	}
-
+func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCharge) (string, error) {
 	newPlan := &lago.PlanInput{
 		Name:           pl.Name,
 		Code:           pl.Code,
@@ -102,7 +84,31 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan) (string, error) {
 		PayInAdvance:   pl.PayInAdvance,
 		AmountCents:    pl.AmountCents,
 		AmountCurrency: lago.Currency(pl.AmountCurrency),
-		Charges:        []lago.PlanChargeInput{newCharge},
+	}
+
+	// Processing each charge, if any
+	for _, charge := range charges {
+		bMetricId, err := guuid.Parse(charge.BillableMetricID)
+		if err != nil {
+			return "", fmt.Errorf("fail to parse billable metric ID: %w", err)
+		}
+
+		props := make(map[string]interface{})
+
+		props["amount"] = charge.ChargeAmountCents
+		props["free_units"] = charge.FreeUnits
+		props["package_size"] = charge.PackageSize
+
+		newCharge := lago.PlanChargeInput{
+			BillableMetricID: bMetricId,
+			ChargeModel:      lago.ChargeModel(charge.ChargeModel),
+			AmountCurrency:   lago.Currency(pl.AmountCurrency),
+			// PayInAdvance:     true,
+			Properties: props,
+		}
+
+		// Appending charge to plan
+		newPlan.Charges = append(newPlan.Charges, newCharge)
 	}
 
 	plan, pErr := l.c.Plan().Create(ctx, newPlan)

@@ -99,7 +99,7 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
 
 	t.Run("PackageCreateEventSent", func(t *testing.T) {
-		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("da337d0e-5678-446f-95c3-e94ac27a93b3", nil).Once()
 
 		pkg := epb.CreatePackageEvent{
@@ -131,7 +131,7 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	})
 
 	t.Run("CreatePackageEventNotSent", func(t *testing.T) {
-		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create package event")).Once()
 
 		pkg := epb.CreatePackageEvent{}
