@@ -79,7 +79,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	switch e.RoutingKey {
 
 	// Update org subscription
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
 		msg, err := unmarshalOrgSubscription(e.Msg)
 		if err != nil {
 			return nil, err
@@ -197,12 +197,14 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 			_, err := b.client.TerminateSubscription(ctx, accountItem.Id)
 			if err != nil {
-				return err
+				return fmt.Errorf("fail to terminate org subscription from item %s: %w",
+					accountItem.Id, err)
 			}
 
 			_, err = b.client.TerminatePlan(ctx, accountItem.Id)
 			if err != nil {
-				return err
+				return fmt.Errorf("fail to terminate org plan from item %s: %w",
+					accountItem.Id, err)
 			}
 		}
 
@@ -231,7 +233,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		plan, err := b.client.CreatePlan(ctx, newPlan)
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to create org plan: %w", err)
 		}
 
 		log.Infof("New billing plan: %q", plan)
@@ -248,7 +250,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to create org subscripton: %w", err)
 		}
 
 		log.Infof("New subscription created on billing server:  %q", subscriptionId)
@@ -337,7 +339,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 
 	plan, err := b.client.CreatePlan(ctx, newPlan, charge)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber plan: %w", err)
 	}
 
 	log.Infof("New billing plan: %q", plan)
@@ -365,7 +367,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.CreateCustomer(ctx, customer)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber: %w", err)
 	}
 
 	log.Infof("New billing customer: %q", customerBillingId)
@@ -393,7 +395,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.UpdateCustomer(ctx, customer)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to update subscriber: %w", err)
 	}
 
 	log.Infof("Updated billing customer: %q", customerBillingId)
@@ -411,7 +413,7 @@ func handleRegistrySubscriberDeleteEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.SubscriberId)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to delete subscriber: %w", err)
 	}
 
 	log.Infof("Successfuly deleted customer %v", customerBillingId)
@@ -441,7 +443,7 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 
 	subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
 	log.Infof("New subscription created on billing server:  %q", subscriptionId)
@@ -459,7 +461,7 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActiveP
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to terminate subscriber subscripton: %w", err)
 	}
 
 	log.Infof("Successfuly terminated previous subscription: %q", subscriptionId)
@@ -477,7 +479,7 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActiveP
 
 	subscriptionId, err = b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
 	log.Infof("New subscription created on billing server:  %q", subscriptionId)
