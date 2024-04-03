@@ -71,6 +71,7 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
+	invSrv := providers.NewInventoryProvider(serviceConfig.InventoryHost, serviceConfig.DebugMode)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -79,7 +80,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	siteServer := server.NewSiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
-		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network),serviceConfig.PushGateway)
+		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network),serviceConfig.PushGateway,invSrv)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
