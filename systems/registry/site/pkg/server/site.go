@@ -96,7 +96,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		switchId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
-		if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
+		if err := s.inventoryClient.ValidateComponent(s.orgName,componentIdStr); err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "component")
 		}
 	}

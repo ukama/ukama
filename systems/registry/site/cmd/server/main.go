@@ -71,7 +71,7 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	invSrv := providers.NewInventoryProvider(serviceConfig.InventoryHost, serviceConfig.DebugMode)
+	invSrv := providers.NewInventoryProvider(serviceConfig.InitClientHost, serviceConfig.DebugMode)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
