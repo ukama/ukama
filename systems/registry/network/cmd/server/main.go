@@ -57,7 +57,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Network{})
+	err := d.Init(&db.Network{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -78,10 +78,9 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),
-		db.NewOrgRepo(gormdb),cnucl.NewOrgClient(serviceConfig.OrgHost),
+	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb),cnucl.NewOrgClient(serviceConfig.OrgHost),
 		mbClient, serviceConfig.PushGateway, serviceConfig.Country, serviceConfig.Currency,
-		serviceConfig.Language)
+		serviceConfig.Language,serviceConfig.OrgId)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

@@ -23,22 +23,20 @@ import (
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
 const OrgName = "testorg"
 
 func TestNetworkServer_Add(t *testing.T) {
-	t.Run("OrgFound", func(t *testing.T) {
+	t.Run("networkSuccess", func(t *testing.T) {
 		// Arrange
 		netRepo := &mocks.NetRepo{}
-		orgRepo := &mocks.OrgRepo{}
+		orgId := uuid.NewV4()
 
 		const netName = "network-1"
-		const orgName = "org-1"
 
-		var orgId = uuid.NewV4()
+
 		var netCount = int64(1)
 
 		msgbusClient := &cmocks.MsgBusServiceClient{}
@@ -46,93 +44,25 @@ func TestNetworkServer_Add(t *testing.T) {
 
 		network := &db.Network{
 			Name:       netName,
-			OrgId:      orgId,
 			SyncStatus: ukama.StatusTypePending,
 		}
 
-		orgRepo.On("GetByName", orgName).Return(
-			&db.Org{
-				Id:          orgId,
-				Name:        orgName,
-				Deactivated: false,
-			}, nil).Once()
-
-		netRepo.On("GetNetworkCount", mock.Anything).Return(netCount, nil).Once()
+		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
 		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, msgbusClient, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgbusClient, "", "", "", "",orgId.String())
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
 			Name:    netName,
-			OrgName: orgName,
 		})
-
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, netName, res.Network.Name)
-		assert.Equal(t, orgId.String(), res.Network.OrgId)
 		netRepo.AssertExpectations(t)
 	})
 
-	t.Run("OrgNotFound", func(t *testing.T) {
-		// Arrange
-		netRepo := &mocks.NetRepo{}
-		orgRepo := &mocks.OrgRepo{}
-		orgClient := &cmocks.OrgClient{}
-
-		const netName = "network-1"
-		const orgName = "org-1"
-
-		var orgId = uuid.NewV4()
-		var netCount = int64(1)
-
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		netRepo.On("GetNetworkCount", mock.Anything).Return(netCount, nil).Once()
-
-		org := &db.Org{
-			Id:          orgId,
-			Name:        orgName,
-			Deactivated: false,
-		}
-
-		network := &db.Network{
-			Name:       netName,
-			OrgId:      orgId,
-			SyncStatus: ukama.StatusTypePending,
-		}
-
-		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		orgClient.On("Get", orgName).Return(
-			&cnucl.OrgInfo{
-				Id:            orgId.String(),
-				Name:          orgName,
-				IsDeactivated: false,
-			}, nil).Once()
-
-		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
-
-		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
-
-		s := NewNetworkServer(OrgName, netRepo, orgRepo, orgClient, msgbusClient, "", "", "", "")
-
-		// Act
-		res, err := s.Add(context.TODO(), &pb.AddRequest{
-			Name:    netName,
-			OrgName: orgName,
-		})
-
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, netName, res.Network.Name)
-		assert.Equal(t, orgId.String(), res.Network.OrgId)
-		netRepo.AssertExpectations(t)
-	})
 }
 
 func TestNetworkServer_Get(t *testing.T) {
@@ -149,13 +79,12 @@ func TestNetworkServer_Get(t *testing.T) {
 		netRepo.On("Get", netId).Return(
 			&db.Network{Id: netId,
 				Name:             netName,
-				OrgId:            uuid.NewV4(),
 				AllowedCountries: countries,
 				AllowedNetworks:  networks,
 				Deactivated:      false,
 			}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, nil, msgcRepo, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil,msgcRepo, "", "", "", "","")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netId.String()})
 
@@ -176,7 +105,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 		netRepo.On("Get", netId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, nil, msgcRepo, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil,msgcRepo, "" , "", "", "", "")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netId.String()})
 
@@ -187,24 +116,22 @@ func TestNetworkServer_Get(t *testing.T) {
 }
 
 func TestNetworkServer_GetByName(t *testing.T) {
-	t.Run("Org and Network found", func(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
 		var netId = uuid.NewV4()
-		const orgName = "org-1"
 		const netName = "network-1"
 		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 
-		netRepo.On("GetByName", orgName, netName).Return(
+		netRepo.On("GetByName", netName).Return(
 			&db.Network{Id: netId,
 				Name:        netName,
-				OrgId:       uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, nil, msgcRepo, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo,"" , "", "", "", "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
-			Name: netName, OrgName: orgName})
+			Name: netName})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
@@ -213,18 +140,17 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		netRepo.AssertExpectations(t)
 	})
 
-	t.Run("Org or Network not found", func(t *testing.T) {
-		const orgName = "org-1"
+	t.Run("Network not found", func(t *testing.T) {
 		const netName = "network-1"
 		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
 
-		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
+		netRepo.On("GetByName", netName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, nil, msgcRepo, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo,"" , "", "", "", "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
-			Name: netName, OrgName: orgName})
+			Name: netName})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
@@ -232,55 +158,47 @@ func TestNetworkServer_GetByName(t *testing.T) {
 	})
 }
 
-func TestNetworkServer_GetByOrg(t *testing.T) {
-	t.Run("Org found", func(t *testing.T) {
+func TestNetworkServer_GetAll(t *testing.T) {
+	t.Run("networks found", func(t *testing.T) {
 		var netId = uuid.NewV4()
-		var orgId = uuid.NewV4()
 		const netName = "network-1"
 		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
-		orgRepo := &mocks.OrgRepo{}
 
-		netRepo.On("GetByOrg", orgId).Return(
+		netRepo.On("GetAll").Return(
 			[]db.Network{
 				{Id: netId,
 					Name:        netName,
-					OrgId:       orgId,
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, msgcRepo, "", "", "", "")
-		netResp, err := s.GetByOrg(context.TODO(),
-			&pb.GetByOrgRequest{OrgId: orgId.String()})
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "","")
+		netResp, err := s.GetAll(context.TODO(),
+			&pb.GetNetworksRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
 		assert.Equal(t, netId.String(), netResp.GetNetworks()[0].GetId())
-		assert.Equal(t, orgId.String(), netResp.OrgId)
 		netRepo.AssertExpectations(t)
 	})
 }
 
 func TestNetworkServer_Delete(t *testing.T) {
-	t.Run("Org and Network exist", func(t *testing.T) {
-		const orgName = "org-1"
+	t.Run("Network exist", func(t *testing.T) {
 		orgId := uuid.NewV4()
 		const netName = "network-1"
 		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
-		netRepo := &mocks.NetRepo{}
-		orgRepo := &mocks.OrgRepo{}
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-		netRepo.On("Delete", orgName, netName).Return(nil).Once()
+		netRepo := &mocks.NetRepo{}	
+		netRepo.On("Delete", netName).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
 			Name:    netName,
-			OrgName: orgName,
 		}).Return(nil).Once()
-		netRepo.On("GetNetworkCount", orgId).Return(int64(2), nil).Once()
-		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, msgclientRepo, "", "", "", "")
+		netRepo.On("GetNetworkCount").Return(int64(2), nil).Once()
+		s := NewNetworkServer(OrgName, netRepo, nil, msgclientRepo, "", "", "", "",orgId.String())
 		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
-			Name: netName, OrgName: orgName})
+			Name: netName})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -288,20 +206,18 @@ func TestNetworkServer_Delete(t *testing.T) {
 	})
 
 	t.Run("Network does not exist", func(t *testing.T) {
-		// const netId = 1
-		const orgName = "org-1"
 		orgId := uuid.NewV4()
+
 		const netName = "network-1"
 		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
-		orgRepo := &mocks.OrgRepo{}
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-		netRepo.On("Delete", orgName, netName).Return(gorm.ErrRecordNotFound).Once()
+		
+		netRepo.On("Delete",netName).Return(gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, orgRepo, nil, msgcRepo, "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo,nil, msgcRepo,"", "", "", "", orgId.String())
 		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
-			Name: netName, OrgName: orgName})
+			Name: netName})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
