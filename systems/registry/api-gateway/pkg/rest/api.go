@@ -42,7 +42,6 @@ type GetNetworkRequest struct {
 }
 
 type AddNetworkRequest struct {
-	OrgName          string   `example:"milky-way"  json:"org" validate:"required"`
 	NetName          string   `example:"mesh-network" json:"network_name" validate:"required"`
 	AllowedCountries []string `json:"allowed_countries"`
 	AllowedNetworks  []string `json:"allowed_networks"`

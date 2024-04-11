@@ -61,7 +61,7 @@ func (r *NetworkRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *NetworkRegistry) AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string,
+func (r *NetworkRegistry) AddNetwork(netName string, allowedCountries, allowedNetworks []string,
 	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

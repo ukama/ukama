@@ -54,7 +54,7 @@ type Clients struct {
 }
 
 type network interface {
-	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
+	AddNetwork(netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks() (*netpb.GetNetworksResponse, error)
 }
@@ -84,9 +84,9 @@ type member interface {
 }
 
 type node interface {
-	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
+	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
-	GetOrgNodes(orgId string, free bool) (*nodepb.GetByOrgResponse, error)
+	GetOrgNodes(free bool) (*nodepb.GetByOrgResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
@@ -236,7 +236,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId, req.State)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
@@ -304,7 +304,7 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 }
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
-	return r.clients.Network.AddNetwork(req.OrgName, req.NetName, req.AllowedCountries, req.AllowedNetworks,
+	return r.clients.Network.AddNetwork(req.NetName, req.AllowedCountries, req.AllowedNetworks,
 		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
