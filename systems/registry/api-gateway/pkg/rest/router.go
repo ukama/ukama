@@ -56,7 +56,7 @@ type Clients struct {
 type network interface {
 	AddNetwork(orgName, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
-	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
+	GetNetworks() (*netpb.GetNetworksResponse, error)
 }
 
 type site interface {
@@ -298,14 +298,9 @@ func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*net
 	return r.clients.Network.GetNetwork(req.NetworkId)
 }
 
-func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
-	orgName, ok := c.GetQuery("org")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "org is a mandatory query parameter"}
-	}
+func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetNetworksResponse, error) {
 
-	return r.clients.Network.GetNetworks(orgName)
+	return r.clients.Network.GetNetworks()
 }
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {

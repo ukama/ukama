@@ -35,7 +35,6 @@ type UpdateMemberRequest struct {
 
 // Network group
 type GetNetworksRequest struct {
-	OrgUuid string `example:"{{OrgUUID}}" form:"org" json:"org" query:"org" binding:"required" validate:"required"`
 }
 
 type GetNetworkRequest struct {
