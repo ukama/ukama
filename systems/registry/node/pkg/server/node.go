@@ -83,7 +83,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 	node := &db.Node{
 		Id:    nId.StringLowercase(),
-		OrgId: n.org,
 		Status: db.NodeStatus{
 			NodeId: nId.StringLowercase(),
 			Conn:   db.Unknown,
@@ -103,7 +102,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	evt := &epb.NodeCreatedEvent{
 		NodeId: nId.StringLowercase(),
 		Name:   node.Name,
-		Org:    node.OrgId.String(),
 		Type:   node.Type,
 	}
 
@@ -613,7 +611,6 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 		},
 		Type:      dbn.Type,
 		Name:      dbn.Name,
-		OrgId:     dbn.OrgId.String(),
 		CreatedAt: timestamppb.New(dbn.CreatedAt),
 	}
 

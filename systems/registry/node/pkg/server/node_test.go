@@ -46,7 +46,6 @@ func TestNodeServer_Add(t *testing.T) {
 	node := &db.Node{
 		Id:    nodeId,
 		Name:  nodeName,
-		OrgId: orgId,
 		Type:  testNode.GetNodeType(),
 		Status: db.NodeStatus{
 			NodeId: nodeId,
