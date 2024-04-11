@@ -113,7 +113,6 @@ type GetNodesRequest struct {
 }
 
 type GetOrgNodesRequest struct {
-	OrgId string `example:"{{OrgId}}" path:"org" validate:"required"`
 	Free  bool   `form:"free" json:"free" query:"free" binding:"required"`
 }
 
@@ -128,7 +127,6 @@ type GetNetworkNodesRequest struct {
 type AddNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`
-	OrgId  string `json:"org_id" validate:"required"`
 	State  string `json:"state" validate:"required"`
 }
 
