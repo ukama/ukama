@@ -67,7 +67,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	orgName := n.orgName
 	networkName := req.GetName()
 
-	log.Infof("lookup for org %s remotely", n.orgName)
+	log.Infof("lookup for org %s remotely", orgName)
 	remoteOrg, err := n.orgClient.Get(orgName)
 	if err != nil {
 		return nil, err

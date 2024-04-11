@@ -17,6 +17,7 @@ import (
 	"github.com/tj/assert"
 	"gorm.io/gorm"
 
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/mocks"
@@ -33,24 +34,33 @@ func TestNetworkServer_Add(t *testing.T) {
 		// Arrange
 		netRepo := &mocks.NetRepo{}
 		orgId := uuid.NewV4()
+		orgClient := &cmocks.OrgClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		const orgName = "org-1"
 
 		const netName = "network-1"
 
 
 		var netCount = int64(1)
 
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
+	
 		network := &db.Network{
 			Name:       netName,
 			SyncStatus: ukama.StatusTypePending,
 		}
-
-		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
+		orgClient.On("Get", orgName).Return(
+			&cnucl.OrgInfo{
+				Id:            orgId.String(),
+				Name:          orgName,
+				IsDeactivated: false,
+			}, nil).Once()
 		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, msgbusClient, "", "", "", "",orgId.String())
+		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "",orgId.String())
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
