@@ -147,14 +147,12 @@ type ReleaseNodeFromSiteRequest struct {
 }
 
 type AddInvitationRequest struct {
-	Org   string `json:"org" path:"org" validate:"required"`
 	Name  string `json:"name" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role  string `json:"role" validate:"required"`
 }
 
 type GetInvitationByOrgRequest struct {
-	Org string `json:"org" path:"org" validate:"required"`
 }
 
 type GetInvitationRequest struct {

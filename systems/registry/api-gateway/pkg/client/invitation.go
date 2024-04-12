@@ -82,11 +82,10 @@ func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResp
 	return res, nil
 }
 
-func (r *InvitationRegistry) AddInvitation(org, name, email, role string) (*pb.AddInvitationResponse, error) {
+func (r *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	res, err := r.client.Add(ctx, &pb.AddInvitationRequest{
-		Org:   org,
 		Name:  name,
 		Email: email,
 		Role:  pb.RoleType(pb.RoleType_value[role]),
@@ -98,13 +97,11 @@ func (r *InvitationRegistry) AddInvitation(org, name, email, role string) (*pb.A
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetInvitationByOrg(org string) (*pb.GetInvitationByOrgResponse, error) {
+func (r *InvitationRegistry) GetAllInvitations() (*pb.GetInvitationByOrgResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	invitation := &pb.GetInvitationByOrgRequest{
-		Org: org,
-	}
+	invitation := &pb.GetInvitationByOrgRequest{}
 	res, err := r.client.GetByOrg(ctx, invitation)
 
 	if err != nil {

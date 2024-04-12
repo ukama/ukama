@@ -164,7 +164,6 @@ func TestGetInvitation_Found(t *testing.T) {
 	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
 		Invitation: &invpb.Invitation{
 			Id:    invId,
-			Org:   "ukama",
 			Link:  "http://dev.ukama.com",
 			Name:  "ukama",
 			Email: "test@ukama.com",
@@ -186,12 +185,11 @@ func TestGetInvitation_Found(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "\"id\":\"f24bf990-9f69-460d-938c-68ce3c8d40b3\"")
 }
 
-func TestGetInvitationByOrg(t *testing.T) {
-	const orgName = "ukama"
+func TestGetAllInvitations(t *testing.T) {
 
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/invitations/org/"+orgName, nil)
+	req, _ := http.NewRequest("GET", "/v1/invitations", nil)
 	arc := &providers.AuthRestClient{}
 	inv := &imocks.InvitationServiceClient{}
 	invId := uuid.NewV4()
@@ -202,7 +200,6 @@ func TestGetInvitationByOrg(t *testing.T) {
 	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
 		Invitations: []*invpb.Invitation{{
 			Id:     invId.String(),
-			Org:    "ukama",
 			Name:   "ukama",
 			Email:  "test@ukama.com",
 			Role:   invpb.RoleType_USERS,

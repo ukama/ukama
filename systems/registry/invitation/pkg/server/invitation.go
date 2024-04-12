@@ -65,7 +65,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 	log.Infof("Adding invitation %v", req)
 	invitationId := uuid.NewV4()
 
-	if req.GetOrg() == "" || req.GetEmail() == "" || req.GetName() == "" {
+	if i.orgName == "" || req.GetEmail() == "" || i.orgName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
 	}
 
@@ -75,7 +75,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, err
 	}
 
-	orgInfo, err := i.orgClient.Get(req.GetOrg())
+	orgInfo, err := i.orgClient.Get(i.orgName)
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +106,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		log.Errorf("Failed to get invited user info. Error %s", err.Error())
 	}
 
-	// userId := ""
-	// if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo.User, reflect.Zero(reflect.TypeOf(invitedUserInfo.User)).Interface()) {
-	// userId = invitedUserInfo.User.Id
-	// } else {
-	// userId = "00000000-0000-0000-0000-000000000000"
-	// }
-
 	userId := "00000000-0000-0000-0000-000000000000"
 	if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo, reflect.Zero(reflect.TypeOf(invitedUserInfo)).Interface()) {
 		userId = invitedUserInfo.Id
@@ -120,7 +113,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 
 	invite := &db.Invitation{
 		Id:        invitationId,
-		Org:       req.GetOrg(),
 		Name:      req.GetName(),
 		Link:      link,
 		Email:     req.GetEmail(),
@@ -225,15 +217,11 @@ func (u *InvitationServer) GetInvitationByEmail(ctx context.Context, req *pb.Get
 }
 
 func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationByOrgRequest) (*pb.GetInvitationByOrgResponse, error) {
-	log.Infof("Getting invitation %v", req)
+	log.Infof("Getting invitations")
 
-	if req.GetOrg() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
-	}
-
-	invitations, err := i.iRepo.GetByOrg(req.GetOrg())
+	invitations, err := i.iRepo.GetAllInvitations()
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+		return nil, grpc.SqlErrorToGrpc(err, "invitations")
 	}
 
 	return &pb.GetInvitationByOrgResponse{
@@ -241,28 +229,11 @@ func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationBy
 	}, nil
 }
 
-// unused?
-// func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-// switch role {
-// case pb.RoleType_ADMIN:
-// return db.Admin
-// case pb.RoleType_VENDOR:
-// return db.Vendor
-// case pb.RoleType_USERS:
-// return db.Users
-// case pb.RoleType_OWNER:
-// return db.Owner
-// case pb.RoleType_EMPLOYEE:
-// return db.Employee
-// default:
-// return db.Users
-// }
-// }
+
 
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{
 		Id:       invitation.Id.String(),
-		Org:      invitation.Org,
 		Link:     invitation.Link,
 		Email:    invitation.Email,
 		Role:     pb.RoleType(invitation.Role),

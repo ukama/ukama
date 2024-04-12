@@ -67,11 +67,11 @@ type site interface {
 }
 
 type invitation interface {
-	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
+	AddInvitation(name, email, role string) (*invpb.AddInvitationResponse, error)
 	GetInvitationById(invitationId string) (*invpb.GetInvitationResponse, error)
 	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
 	RemoveInvitation(invitationId string) (*invpb.DeleteInvitationResponse, error)
-	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
+	GetAllInvitations() (*invpb.GetInvitationByOrgResponse, error)
 }
 
 type member interface {
@@ -174,11 +174,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Invitation routes
 		const inv = "/invitations"
 		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
-		invitations.POST("/:org", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
+		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("/org/:org", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationByOrgHandler, http.StatusOK))
+		invitations.GET("", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationAllInvitationsHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -355,7 +355,7 @@ func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.A
 }
 
 func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
-	return r.clients.Invitation.AddInvitation(req.Org, req.Name, req.Email, req.Role)
+	return r.clients.Invitation.AddInvitation(req.Name, req.Email, req.Role)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
@@ -370,8 +370,8 @@ func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRe
 	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
 }
 
-func (r *Router) getInvitationByOrgHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
-	return r.clients.Invitation.GetInvitationByOrg(req.Org)
+func (r *Router) getInvitationAllInvitationsHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
+	return r.clients.Invitation.GetAllInvitations()
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
