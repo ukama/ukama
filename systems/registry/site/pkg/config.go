@@ -31,6 +31,7 @@ type Config struct {
 	OrgName          string
 	Network      	 string `default:"network:9090"`
 	PushGateway      string `default:"http://localhost:9091"`
+	InitClientHost    string `default:"http://ukama.initclient:8080"`
 }
 
 var SiteMetric = []metric.MetricConfig{
