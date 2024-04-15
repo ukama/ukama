@@ -58,11 +58,11 @@ func (r *InvitationRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteInvitationResponse, error) {
+func (r *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Delete(ctx, &pb.DeleteInvitationRequest{Id: invitationId})
+	res, err := r.client.Delete(ctx, &pb.DeleteRequest{Id: invitationId})
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +70,11 @@ func (r *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteIn
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResponse, error) {
+func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetInvitationRequest{Id: id})
+	res, err := r.client.Get(ctx, &pb.GetRequest{Id: id})
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +82,10 @@ func (r *InvitationRegistry) GetInvitationById(id string) (*pb.GetInvitationResp
 	return res, nil
 }
 
-func (r *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddInvitationResponse, error) {
+func (r *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-	res, err := r.client.Add(ctx, &pb.AddInvitationRequest{
+	res, err := r.client.Add(ctx, &pb.AddRequest{
 		Name:  name,
 		Email: email,
 		Role:  pb.RoleType(pb.RoleType_value[role]),
@@ -97,12 +97,12 @@ func (r *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddInv
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetAllInvitations() (*pb.GetInvitationByOrgResponse, error) {
+func (r *InvitationRegistry) GetAllInvitations() (*pb.GetAllResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	invitation := &pb.GetInvitationByOrgRequest{}
-	res, err := r.client.GetByOrg(ctx, invitation)
+	invitation := &pb.GetAllRequest{}
+	res, err := r.client.GetAll(ctx, invitation)
 
 	if err != nil {
 		return nil, err
@@ -111,11 +111,11 @@ func (r *InvitationRegistry) GetAllInvitations() (*pb.GetInvitationByOrgResponse
 	return res, nil
 }
 
-func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateInvitationStatusResponse, error) {
+func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.UpdateStatus(ctx, &pb.UpdateInvitationStatusRequest{
+	res, err := r.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{
 		Id:     id,
 		Status: pb.StatusType(pb.StatusType_value[status]),
 	})
@@ -131,7 +131,7 @@ func (r *InvitationRegistry) GetInvitationByEmail(email string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	_, err := r.client.GetInvitationByEmail(ctx, &pb.GetInvitationByEmailRequest{
+	_, err := r.client.GetByEmail(ctx, &pb.GetByEmailRequest{
 		Email: email,
 	},
 	)

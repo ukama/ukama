@@ -61,7 +61,7 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, aut
 	}
 }
 
-func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
+func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding invitation %v", req)
 	invitationId := uuid.NewV4()
 
@@ -133,12 +133,12 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.AddInvitationResponse{
+	return &pb.AddResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
 
-func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
+func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -152,12 +152,12 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationR
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.DeleteInvitationResponse{
+	return &pb.DeleteResponse{
 		Id: req.GetId(),
 	}, nil
 }
 
-func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvitationStatusRequest) (*pb.UpdateInvitationStatusResponse, error) {
+func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
 	log.Infof("Updating invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -175,13 +175,13 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvit
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.UpdateInvitationStatusResponse{
+	return &pb.UpdateStatusResponse{
 		Id:     req.GetId(),
 		Status: *req.GetStatus().Enum(),
 	}, nil
 }
 
-func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
+func (i *InvitationServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -194,7 +194,7 @@ func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.GetInvitationResponse{
+	return &pb.GetResponse{
 		Invitation: dbInvitationToPbInvitation(invitation),
 	}, nil
 }

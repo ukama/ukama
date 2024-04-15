@@ -12,25 +12,25 @@ type node struct {
 	mock.Mock
 }
 
-// AddNode provides a mock function with given fields: nodeId, name, orgId, state
-func (_m *node) AddNode(nodeId string, name string, orgId string, state string) (*gen.AddNodeResponse, error) {
-	ret := _m.Called(nodeId, name, orgId, state)
+// AddNode provides a mock function with given fields: nodeId, name, state
+func (_m *node) AddNode(nodeId string, name string, state string) (*gen.AddNodeResponse, error) {
+	ret := _m.Called(nodeId, name, state)
 
 	var r0 *gen.AddNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.AddNodeResponse, error)); ok {
-		return rf(nodeId, name, orgId, state)
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AddNodeResponse, error)); ok {
+		return rf(nodeId, name, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.AddNodeResponse); ok {
-		r0 = rf(nodeId, name, orgId, state)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddNodeResponse); ok {
+		r0 = rf(nodeId, name, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(nodeId, name, orgId, state)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(nodeId, name, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -220,25 +220,25 @@ func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
 	return r0, r1
 }
 
-// GetOrgNodes provides a mock function with given fields: orgId, free
-func (_m *node) GetOrgNodes(orgId string, free bool) (*gen.GetByOrgResponse, error) {
-	ret := _m.Called(orgId, free)
+// GetOrgNodes provides a mock function with given fields: free
+func (_m *node) GetOrgNodes(free bool) (*gen.GetByOrgResponse, error) {
+	ret := _m.Called(free)
 
 	var r0 *gen.GetByOrgResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, bool) (*gen.GetByOrgResponse, error)); ok {
-		return rf(orgId, free)
+	if rf, ok := ret.Get(0).(func(bool) (*gen.GetByOrgResponse, error)); ok {
+		return rf(free)
 	}
-	if rf, ok := ret.Get(0).(func(string, bool) *gen.GetByOrgResponse); ok {
-		r0 = rf(orgId, free)
+	if rf, ok := ret.Get(0).(func(bool) *gen.GetByOrgResponse); ok {
+		r0 = rf(free)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetByOrgResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, bool) error); ok {
-		r1 = rf(orgId, free)
+	if rf, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = rf(free)
 	} else {
 		r1 = ret.Error(1)
 	}

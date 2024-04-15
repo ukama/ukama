@@ -161,7 +161,7 @@ func TestGetInvitation_Found(t *testing.T) {
 	mem := &mmocks.MemberServiceClient{}
 	site := &sitmocks.SiteServiceClient{}
 
-	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
+	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetResponse{
 		Invitation: &invpb.Invitation{
 			Id:    invId,
 			Link:  "http://dev.ukama.com",
@@ -197,7 +197,7 @@ func TestGetAllInvitations(t *testing.T) {
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
 
-	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
+	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetAllResponse{
 		Invitations: []*invpb.Invitation{{
 			Id:     invId.String(),
 			Name:   "ukama",

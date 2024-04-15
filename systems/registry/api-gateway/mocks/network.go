@@ -12,25 +12,25 @@ type network struct {
 	mock.Mock
 }
 
-// AddNetwork provides a mock function with given fields: orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks
-func (_m *network) AddNetwork(orgName string, netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
-	ret := _m.Called(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+// AddNetwork provides a mock function with given fields: netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks
+func (_m *network) AddNetwork(netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
+	ret := _m.Called(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
-		return rf(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(0).(func(string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
+		return rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, []string, []string, float64, float64, uint32, bool) *gen.AddResponse); ok {
-		r0 = rf(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(0).(func(string, []string, []string, float64, float64, uint32, bool) *gen.AddResponse); ok {
+		r0 = rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, []string, []string, float64, float64, uint32, bool) error); ok {
-		r1 = rf(orgName, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(1).(func(string, []string, []string, float64, float64, uint32, bool) error); ok {
+		r1 = rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	} else {
 		r1 = ret.Error(1)
 	}
