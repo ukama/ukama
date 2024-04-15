@@ -211,7 +211,7 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rm, err := r.GetAllInvitations()
+		rm, err := r.GetAll()
 
 		// Assert
 		assert.NoError(t, err)

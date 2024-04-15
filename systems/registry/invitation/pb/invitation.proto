@@ -20,63 +20,63 @@ import "google/protobuf/wrappers.proto";
 service InvitationService {
 
     /* Invitations */
-    rpc Add(AddInvitationRequest) returns (AddInvitationResponse);
-    rpc Get(GetInvitationRequest) returns (GetInvitationResponse);
-    rpc UpdateStatus(UpdateInvitationStatusRequest) returns (UpdateInvitationStatusResponse);
-    rpc Delete(DeleteInvitationRequest) returns (DeleteInvitationResponse);
-    rpc GetByOrg(GetInvitationByOrgRequest) returns (GetInvitationByOrgResponse);
-    rpc GetInvitationByEmail(GetInvitationByEmailRequest) returns (GetInvitationByEmailResponse);
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc GetAll(GetAllRequest) returns (GetAllResponse);
+    rpc GetByEmail(GetByEmailRequest) returns (GetByEmailResponse);
  
 }
 
-message GetInvitationByEmailRequest {
+message GetByEmailRequest {
     string email = 1  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
 }
 
-message GetInvitationByEmailResponse {
+message GetByEmailResponse {
     Invitation invitation = 1;
 }
 
-message AddInvitationRequest {
+message AddRequest {
     string name = 3;
     string email = 4;
     RoleType role = 5;
     google.protobuf.Timestamp expire_at = 6;
 }
 
-message GetInvitationByOrgRequest {
+message GetAllRequest {
 }
 
-message GetInvitationByOrgResponse {
+message GetAllResponse {
     repeated Invitation invitations = 1;
 }
 
-message AddInvitationResponse {
+message AddResponse {
     Invitation invitation = 1;
 }
 
-message GetInvitationRequest {
+message GetRequest {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
 }
 
-message GetInvitationResponse {
+message GetResponse {
     Invitation invitation = 1;
 }
 
-message DeleteInvitationRequest {
+message DeleteRequest {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
 }
 
-message DeleteInvitationResponse {
+message DeleteResponse {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
 }
 
-message UpdateInvitationStatusRequest {
+message UpdateStatusRequest {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     StatusType status = 2 [(validator.field) = {string_not_empty: true}];
 }
 
-message UpdateInvitationStatusResponse {
+message UpdateStatusResponse {
    string  id = 1;
     StatusType status = 2;
 }

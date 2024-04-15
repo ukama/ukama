@@ -26,12 +26,12 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InvitationService_Add_FullMethodName                  = "/ukama.registry.invitation.v1.InvitationService/Add"
-	InvitationService_Get_FullMethodName                  = "/ukama.registry.invitation.v1.InvitationService/Get"
-	InvitationService_UpdateStatus_FullMethodName         = "/ukama.registry.invitation.v1.InvitationService/UpdateStatus"
-	InvitationService_Delete_FullMethodName               = "/ukama.registry.invitation.v1.InvitationService/Delete"
-	InvitationService_GetByOrg_FullMethodName             = "/ukama.registry.invitation.v1.InvitationService/GetByOrg"
-	InvitationService_GetInvitationByEmail_FullMethodName = "/ukama.registry.invitation.v1.InvitationService/GetInvitationByEmail"
+	InvitationService_Add_FullMethodName          = "/ukama.registry.invitation.v1.InvitationService/Add"
+	InvitationService_Get_FullMethodName          = "/ukama.registry.invitation.v1.InvitationService/Get"
+	InvitationService_UpdateStatus_FullMethodName = "/ukama.registry.invitation.v1.InvitationService/UpdateStatus"
+	InvitationService_Delete_FullMethodName       = "/ukama.registry.invitation.v1.InvitationService/Delete"
+	InvitationService_GetAll_FullMethodName       = "/ukama.registry.invitation.v1.InvitationService/GetAll"
+	InvitationService_GetByEmail_FullMethodName   = "/ukama.registry.invitation.v1.InvitationService/GetByEmail"
 )
 
 // InvitationServiceClient is the client API for InvitationService service.
@@ -39,12 +39,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InvitationServiceClient interface {
 	// Invitations
-	Add(ctx context.Context, in *AddInvitationRequest, opts ...grpc.CallOption) (*AddInvitationResponse, error)
-	Get(ctx context.Context, in *GetInvitationRequest, opts ...grpc.CallOption) (*GetInvitationResponse, error)
-	UpdateStatus(ctx context.Context, in *UpdateInvitationStatusRequest, opts ...grpc.CallOption) (*UpdateInvitationStatusResponse, error)
-	Delete(ctx context.Context, in *DeleteInvitationRequest, opts ...grpc.CallOption) (*DeleteInvitationResponse, error)
-	GetByOrg(ctx context.Context, in *GetInvitationByOrgRequest, opts ...grpc.CallOption) (*GetInvitationByOrgResponse, error)
-	GetInvitationByEmail(ctx context.Context, in *GetInvitationByEmailRequest, opts ...grpc.CallOption) (*GetInvitationByEmailResponse, error)
+	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (*GetAllResponse, error)
+	GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*GetByEmailResponse, error)
 }
 
 type invitationServiceClient struct {
@@ -55,8 +55,8 @@ func NewInvitationServiceClient(cc grpc.ClientConnInterface) InvitationServiceCl
 	return &invitationServiceClient{cc}
 }
 
-func (c *invitationServiceClient) Add(ctx context.Context, in *AddInvitationRequest, opts ...grpc.CallOption) (*AddInvitationResponse, error) {
-	out := new(AddInvitationResponse)
+func (c *invitationServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
+	out := new(AddResponse)
 	err := c.cc.Invoke(ctx, InvitationService_Add_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (c *invitationServiceClient) Add(ctx context.Context, in *AddInvitationRequ
 	return out, nil
 }
 
-func (c *invitationServiceClient) Get(ctx context.Context, in *GetInvitationRequest, opts ...grpc.CallOption) (*GetInvitationResponse, error) {
-	out := new(GetInvitationResponse)
+func (c *invitationServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, InvitationService_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -73,8 +73,8 @@ func (c *invitationServiceClient) Get(ctx context.Context, in *GetInvitationRequ
 	return out, nil
 }
 
-func (c *invitationServiceClient) UpdateStatus(ctx context.Context, in *UpdateInvitationStatusRequest, opts ...grpc.CallOption) (*UpdateInvitationStatusResponse, error) {
-	out := new(UpdateInvitationStatusResponse)
+func (c *invitationServiceClient) UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error) {
+	out := new(UpdateStatusResponse)
 	err := c.cc.Invoke(ctx, InvitationService_UpdateStatus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,8 +82,8 @@ func (c *invitationServiceClient) UpdateStatus(ctx context.Context, in *UpdateIn
 	return out, nil
 }
 
-func (c *invitationServiceClient) Delete(ctx context.Context, in *DeleteInvitationRequest, opts ...grpc.CallOption) (*DeleteInvitationResponse, error) {
-	out := new(DeleteInvitationResponse)
+func (c *invitationServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, InvitationService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -91,18 +91,18 @@ func (c *invitationServiceClient) Delete(ctx context.Context, in *DeleteInvitati
 	return out, nil
 }
 
-func (c *invitationServiceClient) GetByOrg(ctx context.Context, in *GetInvitationByOrgRequest, opts ...grpc.CallOption) (*GetInvitationByOrgResponse, error) {
-	out := new(GetInvitationByOrgResponse)
-	err := c.cc.Invoke(ctx, InvitationService_GetByOrg_FullMethodName, in, out, opts...)
+func (c *invitationServiceClient) GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (*GetAllResponse, error) {
+	out := new(GetAllResponse)
+	err := c.cc.Invoke(ctx, InvitationService_GetAll_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *invitationServiceClient) GetInvitationByEmail(ctx context.Context, in *GetInvitationByEmailRequest, opts ...grpc.CallOption) (*GetInvitationByEmailResponse, error) {
-	out := new(GetInvitationByEmailResponse)
-	err := c.cc.Invoke(ctx, InvitationService_GetInvitationByEmail_FullMethodName, in, out, opts...)
+func (c *invitationServiceClient) GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*GetByEmailResponse, error) {
+	out := new(GetByEmailResponse)
+	err := c.cc.Invoke(ctx, InvitationService_GetByEmail_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -114,12 +114,12 @@ func (c *invitationServiceClient) GetInvitationByEmail(ctx context.Context, in *
 // for forward compatibility
 type InvitationServiceServer interface {
 	// Invitations
-	Add(context.Context, *AddInvitationRequest) (*AddInvitationResponse, error)
-	Get(context.Context, *GetInvitationRequest) (*GetInvitationResponse, error)
-	UpdateStatus(context.Context, *UpdateInvitationStatusRequest) (*UpdateInvitationStatusResponse, error)
-	Delete(context.Context, *DeleteInvitationRequest) (*DeleteInvitationResponse, error)
-	GetByOrg(context.Context, *GetInvitationByOrgRequest) (*GetInvitationByOrgResponse, error)
-	GetInvitationByEmail(context.Context, *GetInvitationByEmailRequest) (*GetInvitationByEmailResponse, error)
+	Add(context.Context, *AddRequest) (*AddResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	GetAll(context.Context, *GetAllRequest) (*GetAllResponse, error)
+	GetByEmail(context.Context, *GetByEmailRequest) (*GetByEmailResponse, error)
 	mustEmbedUnimplementedInvitationServiceServer()
 }
 
@@ -127,23 +127,23 @@ type InvitationServiceServer interface {
 type UnimplementedInvitationServiceServer struct {
 }
 
-func (UnimplementedInvitationServiceServer) Add(context.Context, *AddInvitationRequest) (*AddInvitationResponse, error) {
+func (UnimplementedInvitationServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedInvitationServiceServer) Get(context.Context, *GetInvitationRequest) (*GetInvitationResponse, error) {
+func (UnimplementedInvitationServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedInvitationServiceServer) UpdateStatus(context.Context, *UpdateInvitationStatusRequest) (*UpdateInvitationStatusResponse, error) {
+func (UnimplementedInvitationServiceServer) UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatus not implemented")
 }
-func (UnimplementedInvitationServiceServer) Delete(context.Context, *DeleteInvitationRequest) (*DeleteInvitationResponse, error) {
+func (UnimplementedInvitationServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedInvitationServiceServer) GetByOrg(context.Context, *GetInvitationByOrgRequest) (*GetInvitationByOrgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByOrg not implemented")
+func (UnimplementedInvitationServiceServer) GetAll(context.Context, *GetAllRequest) (*GetAllResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
-func (UnimplementedInvitationServiceServer) GetInvitationByEmail(context.Context, *GetInvitationByEmailRequest) (*GetInvitationByEmailResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetInvitationByEmail not implemented")
+func (UnimplementedInvitationServiceServer) GetByEmail(context.Context, *GetByEmailRequest) (*GetByEmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByEmail not implemented")
 }
 func (UnimplementedInvitationServiceServer) mustEmbedUnimplementedInvitationServiceServer() {}
 
@@ -159,7 +159,7 @@ func RegisterInvitationServiceServer(s grpc.ServiceRegistrar, srv InvitationServ
 }
 
 func _InvitationService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddInvitationRequest)
+	in := new(AddRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -171,13 +171,13 @@ func _InvitationService_Add_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: InvitationService_Add_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).Add(ctx, req.(*AddInvitationRequest))
+		return srv.(InvitationServiceServer).Add(ctx, req.(*AddRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _InvitationService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetInvitationRequest)
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -189,13 +189,13 @@ func _InvitationService_Get_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: InvitationService_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).Get(ctx, req.(*GetInvitationRequest))
+		return srv.(InvitationServiceServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _InvitationService_UpdateStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateInvitationStatusRequest)
+	in := new(UpdateStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -207,13 +207,13 @@ func _InvitationService_UpdateStatus_Handler(srv interface{}, ctx context.Contex
 		FullMethod: InvitationService_UpdateStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).UpdateStatus(ctx, req.(*UpdateInvitationStatusRequest))
+		return srv.(InvitationServiceServer).UpdateStatus(ctx, req.(*UpdateStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _InvitationService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteInvitationRequest)
+	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -225,43 +225,43 @@ func _InvitationService_Delete_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: InvitationService_Delete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).Delete(ctx, req.(*DeleteInvitationRequest))
+		return srv.(InvitationServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InvitationService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetInvitationByOrgRequest)
+func _InvitationService_GetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InvitationServiceServer).GetByOrg(ctx, in)
+		return srv.(InvitationServiceServer).GetAll(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: InvitationService_GetByOrg_FullMethodName,
+		FullMethod: InvitationService_GetAll_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).GetByOrg(ctx, req.(*GetInvitationByOrgRequest))
+		return srv.(InvitationServiceServer).GetAll(ctx, req.(*GetAllRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InvitationService_GetInvitationByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetInvitationByEmailRequest)
+func _InvitationService_GetByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InvitationServiceServer).GetInvitationByEmail(ctx, in)
+		return srv.(InvitationServiceServer).GetByEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: InvitationService_GetInvitationByEmail_FullMethodName,
+		FullMethod: InvitationService_GetByEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvitationServiceServer).GetInvitationByEmail(ctx, req.(*GetInvitationByEmailRequest))
+		return srv.(InvitationServiceServer).GetByEmail(ctx, req.(*GetByEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -290,12 +290,12 @@ var InvitationService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InvitationService_Delete_Handler,
 		},
 		{
-			MethodName: "GetByOrg",
-			Handler:    _InvitationService_GetByOrg_Handler,
+			MethodName: "GetAll",
+			Handler:    _InvitationService_GetAll_Handler,
 		},
 		{
-			MethodName: "GetInvitationByEmail",
-			Handler:    _InvitationService_GetInvitationByEmail_Handler,
+			MethodName: "GetByEmail",
+			Handler:    _InvitationService_GetByEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

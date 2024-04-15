@@ -199,32 +199,32 @@ func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest
 	}, nil
 }
 
-func (u *InvitationServer) GetInvitationByEmail(ctx context.Context, req *pb.GetInvitationByEmailRequest) (*pb.GetInvitationByEmailResponse, error) {
+func (u *InvitationServer) GetByEmail(ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetByEmailResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
 	if req.GetEmail() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
 	}
 
-	invitation, err := u.iRepo.GetInvitationByEmail(req.GetEmail())
+	invitation, err := u.iRepo.GetByEmail(req.GetEmail())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.GetInvitationByEmailResponse{
+	return &pb.GetByEmailResponse{
 		Invitation: dbInvitationToPbInvitation(invitation),
 	}, nil
 }
 
-func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationByOrgRequest) (*pb.GetInvitationByOrgResponse, error) {
+func (i *InvitationServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
 	log.Infof("Getting invitations")
 
-	invitations, err := i.iRepo.GetAllInvitations()
+	invitations, err := i.iRepo.GetAll()
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitations")
 	}
 
-	return &pb.GetInvitationByOrgResponse{
+	return &pb.GetAllResponse{
 		Invitations: dbInvitationsToPbInvitations(invitations),
 	}, nil
 }

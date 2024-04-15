@@ -70,8 +70,8 @@ func (_m *InvitationRepo) Get(id uuid.UUID) (*db.Invitation, error) {
 	return r0, r1
 }
 
-// GetAllInvitations provides a mock function with given fields:
-func (_m *InvitationRepo) GetAllInvitations() ([]*db.Invitation, error) {
+// GetAll provides a mock function with given fields:
+func (_m *InvitationRepo) GetAll() ([]*db.Invitation, error) {
 	ret := _m.Called()
 
 	var r0 []*db.Invitation
@@ -96,8 +96,8 @@ func (_m *InvitationRepo) GetAllInvitations() ([]*db.Invitation, error) {
 	return r0, r1
 }
 
-// GetInvitationByEmail provides a mock function with given fields: email
-func (_m *InvitationRepo) GetInvitationByEmail(email string) (*db.Invitation, error) {
+// GetByEmail provides a mock function with given fields: email
+func (_m *InvitationRepo) GetByEmail(email string) (*db.Invitation, error) {
 	ret := _m.Called(email)
 
 	var r0 *db.Invitation
