@@ -10,10 +10,7 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/billing/invoice/pb/gen";
 
-
 import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
 
 package ukama.billing.invoice.v1;
@@ -21,8 +18,7 @@ package ukama.billing.invoice.v1;
 service InvoiceService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
-    rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
-    rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
+    rpc List(ListRequest) returns (ListResponse);
     // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
@@ -47,24 +43,19 @@ message GetResponse{
 }
 
 
-message GetBySubscriberRequest{
-    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+message ListRequest {
+    string invoiceeId = 1 [json_name = "invoicee_id"];
+    string invoiceeType = 2 [json_name = "invoicee_type"];
+    string networkId = 3 [json_name = "network_Id"];
+    bool isPaid = 4 [json_name = "is_paid"];
+    uint32 count = 5;
+    bool sort = 6;
 }
 
-message GetBySubscriberResponse{
-    string subscriberId = 1 [json_name = "subscriber_id"];
-    repeated Invoice invoices = 2;
+message ListResponse {
+    repeated Invoice invoices = 1;
 }
 
-
-message GetByNetworkRequest{
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-}
-
-message GetByNetworkResponse{
-    string networkId = 1 [json_name = "network_id"];
-    repeated Invoice invoices = 2;
-}
 
 message DeleteRequest{
     string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
@@ -76,12 +67,13 @@ message DeleteResponse{
 
 message Invoice {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    google.protobuf.Timestamp period = 4;
-    RawInvoice rawInvoice = 5 [json_name = "raw_invoice"];
-    bool isPaid = 6 [json_name = "is_paid"];
-    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
+    string invoiceeId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoicee_id"];
+    string invoiceeType = 3 [json_name = "invoicee_type"];
+    string networkId = 4 [json_name = "network_Id"];
+    string period = 5;
+    RawInvoice rawInvoice = 6 [json_name = "raw_invoice"];
+    bool isPaid = 7 [json_name = "is_paid"];
+    string createdAt = 8 [json_name = "created_at"];
 }
 
 
@@ -106,10 +98,10 @@ message Subscription {
     string externalId = 2 [json_name = "external_id"];
     string planCode = 3 [json_name = "plan_code"];
     string status = 4 [json_name = "status"];
-    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
-    google.protobuf.Timestamp startedAt = 6 [json_name = "started_at"];
-    google.protobuf.Timestamp canceldAt = 7 [json_name = "canceled_at"];
-    google.protobuf.Timestamp terminatedAt = 8 [json_name = "terminated_at"];
+    string createdAt = 5 [json_name = "created_at"];
+    string startedAt = 6 [json_name = "started_at"];
+    string canceldAt = 7 [json_name = "canceled_at"];
+    string terminatedAt = 8 [json_name = "terminated_at"];
 }
 
 
@@ -122,7 +114,7 @@ message Customer {
     string legalNumber = 6 [json_name = "legal_number"];
     string phone = 7 [json_name = "phone"];
     double vatRate = 8 [json_name = "vat_rate"];
-    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
+    string createdAt = 9 [json_name = "created_at"];
 }
 
 message Fee {
@@ -134,10 +126,10 @@ message Fee {
     string totalAmountCurrency = 6 [json_name = "total_amount_currency"];
     int64 eventsCount = 7 [json_name = "events_count"];
     double units = 8 [json_name = "units"];
-    FeeItem item = 9 [json_name = "item"];
+    Feeinvoicee invoicee = 9 [json_name = "invoicee"];
 }
 
-message FeeItem {
+message Feeinvoicee {
     string type = 1 [json_name = "type"];
     string code = 2 [json_name = "code"];
     string name = 3 [json_name = "name"];

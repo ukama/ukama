@@ -14,15 +14,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/rest"
-
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+
+	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 
 	log "github.com/sirupsen/logrus"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
@@ -41,33 +41,25 @@ type Router struct {
 }
 
 type RouterConfig struct {
-	metricsConfig config.Metrics
-	httpEndpoints *pkg.HttpEndpoints
-	debugMode     bool
-	serverConf    *rest.HttpConfig
+	debugMode  bool
+	serverConf *rest.HttpConfig
+	auth       *config.Auth
 }
 
 type Clients struct {
-	Billing billing
+	i client.Invoice
+	p client.Pdf
 }
 
-type billing interface {
-	AddInvoice(rawInvoice string) (*pb.AddResponse, error)
-	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
-	GetInvoicesBySubscriber(subscriber string) (*pb.GetBySubscriberResponse, error)
-	GetInvoicesByNetwork(network string) (*pb.GetByNetworkResponse, error)
-	RemoveInvoice(invoiceId string) error
-	GetInvoicePDF(invoiceId string) ([]byte, error)
-}
-
-func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
+func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
-	c.Billing = client.NewBilling(endpoints.Invoice, endpoints.Files, endpoints.Timeout)
+	c.i = client.NewInvoiceClient(grpcEndpoints.Invoice, grpcEndpoints.Timeout)
+	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
 
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -77,17 +69,16 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 
 	return r
 }
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
-		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
-		serverConf:    &svcConf.Server,
-		debugMode:     svcConf.DebugMode,
+		serverConf: &svcConf.Server,
+		debugMode:  svcConf.DebugMode,
+		auth:       svcConf.Auth,
 	}
 }
 
@@ -100,67 +91,61 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
-	v1 := r.f.Group("/v1", "API gateway", "Billing system version v1")
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
+		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
-	// Invoice routes
-	const invoice = "/invoices"
+	auth := r.f.Group("/v1", "API GW ", "Payments system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			log.Info("Bypassing auth")
 
-	invoices := v1.Group(invoice, "JSON Invoice", "Operations on Invoices")
-	invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a subscriber"), tonic.Handler(r.getInvoicesHandler, http.StatusOK))
-	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvoiceHandler, http.StatusOK))
-	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a subscriber"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
-	// update invoice
-	invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.removeInvoiceHandler, http.StatusOK))
-
-	const pdf = "/pdf"
-	pdfs := v1.Group(pdf, "PDF Invoices", "Operations on invoice PDF files")
-	pdfs.GET("/:invoice_id", formatDoc("Get Invoice PDF file", "Get a specific invoice file as PDF"), tonic.Handler(r.GetInvoicePdfHandler, http.StatusOK))
-}
-
-func (r *Router) GetInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) (*pb.GetResponse, error) {
-	asPDF := false
-
-	pdf, ok := c.GetQuery("type")
-	if ok && pdf == "pdf" {
-		asPDF = true
-	}
-
-	return r.clients.Billing.GetInvoice(req.InvoiceId, asPDF)
-}
-
-func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) ([]*pb.Invoice, error) {
-	var invoices []*pb.Invoice
-	var err error
-
-	subscriberId, sOK := c.GetQuery("subscriber")
-	networkId, nOK := c.GetQuery("network")
-
-	if sOK == nOK {
-		return nil, rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  "either subscriber or network must be provided as a mandatory query parameter, but not both"}
-	}
-
-	if sOK {
-		res, sErr := r.clients.Billing.GetInvoicesBySubscriber(subscriberId)
-		if sErr == nil {
-			invoices = res.Invoices
+			return
 		}
-		err = sErr
-	} else {
-		res, nErr := r.clients.Billing.GetInvoicesByNetwork(networkId)
-		if nErr == nil {
-			invoices = res.Invoices
-		}
-		err = nErr
-	}
 
-	return invoices, err
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+
+		err := f(ctx, r.config.auth.AuthServerUrl)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+
+			return
+		}
+
+		if err == nil {
+			return
+		}
+	})
+
+	auth.Use()
+	{
+		// Invoice routes
+		invoices := auth.Group("invoices", "JSON Invoices", "Operations on Invoices")
+		invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a invoicee"), tonic.Handler(r.GetInvoices, http.StatusOK))
+		invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvoice, http.StatusOK))
+		invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a invoicee"), tonic.Handler(r.PostInvoice, http.StatusCreated))
+		// update invoice
+		invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.RemoveInvoice, http.StatusOK))
+
+		// pdf file routes
+		pdfs := auth.Group("pdf", "PDF Invoices", "Operations on invoice PDF files")
+		pdfs.GET("/:invoice_id", formatDoc("Get Invoice PDF file", "Get a specific invoice file as PDF"), tonic.Handler(r.Pdf, http.StatusOK))
+	}
 }
 
-func (r *Router) postInvoiceHandler(c *gin.Context, req *WebHookRequest) error {
+func (r *Router) GetInvoice(c *gin.Context, req *GetInvoiceRequest) (*pb.GetResponse, error) {
+	return r.clients.i.Get(req.InvoiceId, req.AsPdf)
+}
+
+func (r *Router) GetInvoices(c *gin.Context, req *GetInvoicesRequest) (*pb.ListResponse, error) {
+	return r.clients.i.List(req.InvoiceeId, req.InvoiceeType, req.NetworkId, req.IsPaid, req.Count, req.Sort)
+}
+
+func (r *Router) RemoveInvoice(c *gin.Context, req *GetInvoiceRequest) error {
+	return r.clients.i.Remove(req.InvoiceId)
+}
+
+func (r *Router) PostInvoice(c *gin.Context, req *WebHookRequest) error {
 	log.Infof("Webhook event of type %q for object %q received form billing provider",
 		req.WebhookType, req.ObjectType)
 
@@ -184,7 +169,7 @@ func (r *Router) postInvoiceHandler(c *gin.Context, req *WebHookRequest) error {
 		return fmt.Errorf("failed to marshal RawInvoice payload into rawInvoice JSON %w", err)
 	}
 
-	resp, err := r.clients.Billing.AddInvoice(string(rwInvoiceBytes))
+	resp, err := r.clients.i.Add(string(rwInvoiceBytes))
 	if err == nil {
 		c.JSON(http.StatusCreated, resp)
 	}
@@ -192,12 +177,8 @@ func (r *Router) postInvoiceHandler(c *gin.Context, req *WebHookRequest) error {
 	return err
 }
 
-func (r *Router) removeInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) error {
-	return r.clients.Billing.RemoveInvoice(req.InvoiceId)
-}
-
-func (r *Router) GetInvoicePdfHandler(c *gin.Context, req *GetInvoiceRequest) error {
-	content, err := r.clients.Billing.GetInvoicePDF(req.InvoiceId)
+func (r *Router) Pdf(c *gin.Context, req *GetInvoiceRequest) error {
+	content, err := r.clients.p.GetPdf(req.InvoiceId)
 	if err != nil {
 		if errors.Is(err, client.ErrInvoicePDFNotFound) {
 			c.Status(http.StatusNotFound)

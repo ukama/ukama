@@ -10,28 +10,34 @@ package server_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
-
-	"github.com/ukama/ukama/systems/billing/invoice/mocks"
-	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
-	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
-	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/billing/invoice/mocks"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
-const OrgName = "testorg"
+const (
+	OrgName                = "testorg"
+	OrgId                  = "fb97e9fa-45ad-4ba2-b42d-64eb80769b16"
+	invoiceeTypeOrg        = "org"
+	invoiceeTypeSubscriber = "subscriber"
+)
 
 func TestInvoiceServer_Add(t *testing.T) {
-	t.Run("SubscriberIsValid", func(t *testing.T) {
+	t.Run("InvoiceeIsValid", func(t *testing.T) {
 		// Arrange
 		var raw = `{
 	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
@@ -125,11 +131,11 @@ func TestInvoiceServer_Add(t *testing.T) {
 	]
 	}`
 
-		var sId = "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba"
+		var invoiceeIdString = "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba"
 
-		subscriberId, err := uuid.FromString(sId)
+		invoiceeId, err := uuid.FromString(invoiceeIdString)
 		if err != nil {
-			t.Fatalf("invalid subscriberId input: %s", sId)
+			t.Fatalf("invalid invoiceeId input: %s", invoiceeIdString)
 		}
 
 		invoiceRepo := &mocks.InvoiceRepo{}
@@ -138,14 +144,14 @@ func TestInvoiceServer_Add(t *testing.T) {
 
 		invoiceRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
-		subscriberClient.On("Get", subscriberId.String()).Return(&csub.SubscriberInfo{
-			SubscriberId: subscriberId,
+		subscriberClient.On("Get", invoiceeId.String()).Return(&csub.SubscriberInfo{
+			SubscriberId: invoiceeId,
 			NetworkId:    uuid.NewV4(),
 		}, nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, subscriberClient, msgbusClient)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, subscriberClient, msgbusClient)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -155,11 +161,11 @@ func TestInvoiceServer_Add(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		assert.Equal(t, subscriberId.String(), res.Invoice.SubscriberId)
+		assert.Equal(t, invoiceeId.String(), res.Invoice.InvoiceeId)
 		invoiceRepo.AssertExpectations(t)
 	})
 
-	t.Run("SubscriberIsNotValid", func(t *testing.T) {
+	t.Run("InvoiceeIsNotValid", func(t *testing.T) {
 		// Arrange
 		invoiceRepo := &mocks.InvoiceRepo{}
 		subscriberClient := &cmocks.SubscriberClient{}
@@ -256,7 +262,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 	]
 	}`
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, subscriberClient, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, subscriberClient, nil)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -276,7 +282,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 		invoiceRepo := &mocks.InvoiceRepo{}
 		subscriberClient := &cmocks.SubscriberClient{}
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, subscriberClient, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, subscriberClient, nil)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -293,7 +299,7 @@ func TestInvoiceServer_Add(t *testing.T) {
 func TestInvoiceServer_Get(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
 		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+		var invoiceeId = uuid.NewV4()
 		var period = time.Now().UTC()
 
 		var raw = `{
@@ -392,16 +398,16 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoice := invoiceRepo.On("Get", invoiceId).
 			Return(&db.Invoice{
-				Id:           invoiceId,
-				SubscriberId: subscriberId,
-				Period:       period,
-				RawInvoice:   datatypes.JSON([]byte(raw)),
-				IsPaid:       false,
+				Id:         invoiceId,
+				InvoiceeId: invoiceeId,
+				Period:     period,
+				RawInvoice: datatypes.JSON([]byte(raw)),
+				IsPaid:     false,
 			}, nil).
 			Once().
 			ReturnArguments.Get(0).(*db.Invoice)
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -419,7 +425,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo.On("Get", invoiceId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, nil)
 		resp, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -433,7 +439,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId})
 
@@ -443,121 +449,186 @@ func TestInvoiceServer_Get(t *testing.T) {
 	})
 }
 
-func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
-	t.Run("SubscriberFound", func(t *testing.T) {
-		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+func TestInvoiceServer_List(t *testing.T) {
+	resp := make([]db.Invoice, 1)
+	var invoiceId = uuid.NewV4()
+	var invoiceeId = uuid.NewV4()
+	var networkId = uuid.NewV4()
+	var isPaid = true
 
-		invoiceRepo := &mocks.InvoiceRepo{}
+	t.Run("ListAll", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		invoiceResp := db.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: db.InvoiceeTypeOrg,
+		}
 
-		invoiceRepo.On("GetBySubscriber", subscriberId).Return(
-			[]db.Invoice{
-				{Id: invoiceId,
-					SubscriberId: subscriberId,
-					IsPaid:       false,
-				}}, nil).Once()
+		resp[0] = invoiceResp
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		repo.On("List", "", db.InvoiceeTypeUnknown, "", false,
+			uint32(0), false).Return(resp, nil)
 
-		res, err := s.GetBySubscriber(context.TODO(),
-			&pb.GetBySubscriberRequest{SubscriberId: subscriberId.String()})
-
-		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, invoiceId.String(), res.GetInvoices()[0].GetId())
-		assert.Equal(t, subscriberId.String(), res.SubscriberId)
-		invoiceRepo.AssertExpectations(t)
-	})
-
-	t.Run("SubscriberNotFound", func(t *testing.T) {
-		var subscriberId = uuid.Nil
-
-		invoiceRepo := &mocks.InvoiceRepo{}
-
-		invoiceRepo.On("GetBySubscriber", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
-
-		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId.String()})
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		invoiceRepo.AssertExpectations(t)
-	})
-
-	t.Run("SubscriberUUIDInvalid", func(t *testing.T) {
-		var subscriberID = "1"
-
-		invoiceRepo := &mocks.InvoiceRepo{}
-
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
-
-		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberID})
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		invoiceRepo.AssertExpectations(t)
-	})
-}
-
-func TestInvoiceServer_GetInvoiceByNetwork(t *testing.T) {
-	t.Run("NetworkFound", func(t *testing.T) {
-		var invoiceId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-
-		invoiceRepo := &mocks.InvoiceRepo{}
-
-		invoiceRepo.On("GetByNetwork", networkId).Return(
-			[]db.Invoice{
-				{Id: invoiceId,
-					NetworkId: networkId,
-					IsPaid:    false,
-				}}, nil).Once()
-
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
-
-		res, err := s.GetByNetwork(context.TODO(),
-			&pb.GetByNetworkRequest{NetworkId: networkId.String()})
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{})
 
 		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, invoiceId.String(), res.GetInvoices()[0].GetId())
-		assert.Equal(t, networkId.String(), res.NetworkId)
-		invoiceRepo.AssertExpectations(t)
+		assert.NotNil(t, list)
+		assertList(t, list, resp)
 	})
 
-	t.Run("NetworkNotFound", func(t *testing.T) {
-		var networkId = uuid.Nil
+	t.Run("ListSpecificInvoicee", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		invoiceResp := db.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: db.InvoiceeTypeSubscriber,
+		}
 
-		invoiceRepo := &mocks.InvoiceRepo{}
+		resp[0] = invoiceResp
 
-		invoiceRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
+		repo.On("List", invoiceeId.String(), db.InvoiceeTypeUnknown, "",
+			false, uint32(0), false).Return(resp, nil)
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeId: invoiceeId.String(),
+		})
 
-		res, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
-			NetworkId: networkId.String()})
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		invoiceRepo.AssertExpectations(t)
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assertList(t, list, resp)
 	})
 
-	t.Run("NetworkUUIDInvalid", func(t *testing.T) {
-		var networkId = "1"
+	t.Run("SpecificInvoiceeNotFound", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		notFoundId := uuid.NewV4()
 
-		invoiceRepo := &mocks.InvoiceRepo{}
+		repo.On("List", notFoundId.String(), db.InvoiceeTypeUnknown, "",
+			false, uint32(0), false).
+			Return(nil, errors.New("not found"))
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
-
-		res, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
-			NetworkId: networkId})
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeId: notFoundId.String(),
+		})
 
 		assert.Error(t, err)
-		assert.Nil(t, res)
-		invoiceRepo.AssertExpectations(t)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ListSpecificNetwork", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		invoiceResp := db.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: db.InvoiceeTypeSubscriber,
+			NetworkId:    networkId,
+		}
+
+		resp[0] = invoiceResp
+
+		repo.On("List", "", db.InvoiceeTypeUnknown, networkId.String(),
+			false, uint32(0), false).Return(resp, nil)
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			NetworkId: networkId.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assertList(t, list, resp)
+	})
+
+	t.Run("InvalidInvoiceNetwork", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		repo.On("List", "", "", "lol", "", uint32(0), false).Return(nil, errors.New("invalid"))
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			NetworkId: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ListSortedUnpaidOrgInvoices", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		invoiceResp := db.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: db.InvoiceeTypeOrg,
+		}
+
+		resp[0] = invoiceResp
+
+		repo.On("List", "", db.InvoiceeTypeOrg, "", false,
+			uint32(0), true).
+			Return(resp, nil)
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeType: invoiceeTypeOrg,
+			IsPaid:       false,
+			Sort:         true,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assertList(t, list, resp)
+	})
+
+	t.Run("ListPaidSubscriberInvoices", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		invoiceResp := db.Invoice{
+			Id:           invoiceId,
+			InvoiceeId:   invoiceeId,
+			InvoiceeType: db.InvoiceeTypeSubscriber,
+			IsPaid:       true,
+		}
+
+		resp[0] = invoiceResp
+
+		repo.On("List", "", db.InvoiceeTypeSubscriber, "", isPaid,
+			uint32(0), false).Return(resp, nil)
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeType: invoiceeTypeSubscriber,
+			IsPaid:       true,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assertList(t, list, resp)
+	})
+
+	t.Run("InvalidInvoiceeId", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		repo.On("List", "lol", "", "", "", uint32(0), false).Return(nil, errors.New("invalid"))
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeId: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("InvalidInvoiceeType", func(t *testing.T) {
+		repo := &mocks.InvoiceRepo{}
+		repo.On("List", "", "lol", "", "", uint32(0), false).Return(nil, errors.New("invalid"))
+
+		s := server.NewInvoiceServer(OrgName, OrgId, repo, nil, nil)
+		list, err := s.List(context.TODO(), &pb.ListRequest{
+			InvoiceeType: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
 	})
 }
 
@@ -571,7 +642,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, msgbusClient)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, msgbusClient)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -589,7 +660,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -605,7 +676,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(OrgName, invoiceRepo, nil, nil)
+		s := server.NewInvoiceServer(OrgName, OrgId, invoiceRepo, nil, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId,
@@ -615,4 +686,11 @@ func TestInvoiceServer_Delete(t *testing.T) {
 		assert.Nil(t, res)
 		invoiceRepo.AssertExpectations(t)
 	})
+}
+
+func assertList(t *testing.T, list *pb.ListResponse, resp []db.Invoice) {
+	for idx, paymt := range list.Invoices {
+		assert.Equal(t, paymt.InvoiceeId, resp[idx].InvoiceeId.String())
+		assert.Equal(t, paymt.InvoiceeType, resp[idx].InvoiceeType.String())
+	}
 }

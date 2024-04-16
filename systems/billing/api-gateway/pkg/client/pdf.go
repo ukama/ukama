@@ -22,30 +22,26 @@ const FileServerEndpoint = "/pdf/"
 
 var ErrInvoicePDFNotFound = errors.New("invoice PDF file not found")
 
-type PdfClient interface {
+type Pdf interface {
 	GetPdf(invoiceId string) ([]byte, error)
 }
 
-type pdfClient struct {
+type pdf struct {
 	R *rest.RestClient
 }
 
-func NewPdfClient(url string, debug bool) (*pdfClient, error) {
-	f, err := rest.NewRestClient(url, debug)
+func NewPdfClient(fileHost string, debug bool) *pdf {
+	f, err := rest.NewRestClient(fileHost, debug)
 	if err != nil {
-		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
-
-		return nil, err
+		log.Fatalf("Can't conncet to pdf host  %s url. Error %s", fileHost, err.Error())
 	}
 
-	N := &pdfClient{
+	return &pdf{
 		R: f,
 	}
-
-	return N, nil
 }
 
-func (p *pdfClient) GetPdf(invoiceId string) ([]byte, error) {
+func (p *pdf) GetPdf(invoiceId string) ([]byte, error) {
 	errStatus := &rest.ErrorMessage{}
 
 	resp, err := p.R.C.R().
@@ -53,13 +49,14 @@ func (p *pdfClient) GetPdf(invoiceId string) ([]byte, error) {
 		Get(p.R.URL.String() + FileServerEndpoint + invoiceId + ".pdf")
 
 	if err != nil {
-		log.Errorf("Failed to send request to billing/invoice. Error %s", err.Error())
+		log.Errorf("Failed to send request to invoice/pdf. Error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to billing system failure: %w", err)
+		return nil, fmt.Errorf("api request to invoice service failure: %w", err)
 	}
 
 	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch invoice file. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		log.Tracef("Failed to fetch invoice file. HTTP resp code %d and Error message is %s",
+			resp.StatusCode(), errStatus.Message)
 
 		if resp.StatusCode() == http.StatusNotFound {
 			return nil, fmt.Errorf("%w: %s", ErrInvoicePDFNotFound, errStatus.Message)

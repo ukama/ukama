@@ -15,7 +15,9 @@ import (
 	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/rest"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/providers"
 
+	log "github.com/sirupsen/logrus"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 )
@@ -26,11 +28,16 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	clientSet := rest.NewClientsSet(&svcConf.Services)
+	clientSet := rest.NewClientsSet(&svcConf.Services, &svcConf.HttpServices, svcConf.DebugMode)
+
+	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to create auth client: %v", err)
+	}
 
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	r.Run()
 }
 
