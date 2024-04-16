@@ -196,8 +196,9 @@ func TestGetAllInvitations(t *testing.T) {
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
+	siteM := &sitmocks.SiteServiceClient{}
 
-	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetAllResponse{
+	inv.On("GetAll", mock.Anything, mock.Anything).Return(&invpb.GetAllResponse{
 		Invitations: []*invpb.Invitation{{
 			Id:     invId.String(),
 			Name:   "ukama",
@@ -212,11 +213,11 @@ func TestGetAllInvitations(t *testing.T) {
 		Member:     client.NewRegistryFromClient(mem),
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Invitation: client.NewInvitationRegistryFromClient(inv),
+		Site: client.NewSiteRegistryFromClient(siteM),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
 	inv.AssertExpectations(t)
-	assert.Equal(t, 200, w.Code)
-
+	assert.Equal(t, http.StatusOK, w.Code)
 }
