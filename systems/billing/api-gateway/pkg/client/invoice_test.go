@@ -33,7 +33,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	"number": "LAG-1234-001-002",
 	"issuing_date": "2022-04-30",
 	"status": "finalized",
-	"invoice_status": "succeeded",
+	"payment_status": "succeeded",
 	"amount_cents": 100,
 	"amount_currency": "EUR",
 	"vat_amount_cents": 20,
@@ -81,7 +81,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	{
 	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
 	"lago_group_id": null,
-	"invoicee": {
+	"item": {
 	"type": "subscription",
 	"code": "plan_code",
 	"name": "Plan"
@@ -99,7 +99,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	"credits": [
 	{
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"invoicee": {
+	"item": {
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
 	"type": "coupon",
 	"code": "coupon_code",
@@ -149,7 +149,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	"number": "LAG-1234-001-002",
 	"issuing_date": "2022-04-30",
 	"status": "finalized",
-	"invoice_status": "succeeded",
+	"payment_status": "succeeded",
 	"amount_cents": 100,
 	"amount_currency": "EUR",
 	"vat_amount_cents": 20,
@@ -197,7 +197,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	{
 	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
 	"lago_group_id": null,
-	"invoicee": {
+	"item": {
 	"type": "subscription",
 	"code": "plan_code",
 	"name": "Plan"
@@ -215,7 +215,7 @@ func TestInvoiceClient_Add(t *testing.T) {
 	"credits": [
 	{
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
-	"invoicee": {
+	"item": {
 	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
 	"type": "coupon",
 	"code": "coupon_code",
