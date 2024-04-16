@@ -51,7 +51,9 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 				"event.cloud.local.{{ .Org}}.dataplan.package.package.create",
 
-				// "event.cloud.global.{{ .Org}}.orchestrator.package.package.create",
+				// TODO: we need to add the relevant arch in order to support listening
+				// global events from Ukama to a local deployed org.
+				"event.cloud.global.{{ .Org}}.orchestrator.constructor.org.deploy",
 				"event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync",
 			},
 		},

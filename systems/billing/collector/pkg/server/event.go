@@ -27,8 +27,8 @@ import (
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
-// TODO: We need to think about retry policies for failing interaction between our backend and the upstream billing service
-// provider
+// TODO: We need to think about retry policies for failing interaction between
+// our backend and the upstream billing service provider.
 
 const (
 	handlerTimeoutFactor      = 3
@@ -609,9 +609,8 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 	customer := client.Customer{
 		Id:   orgId,
 		Name: OrgName,
-		// Email:   subscriber.Email,
-		// Address: subscriber.Address,
-		// Phone:   subscriber.PhoneNumber,
+
+		// TODO: we might need additional fields such as Email, Address, Phone.
 	}
 
 	log.Infof("Sending org customer create event %v to billing server", customer)
