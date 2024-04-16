@@ -9,8 +9,17 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -35,6 +44,7 @@ type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
+	logger  *logrus.Logger
 }
 
 type RouterConfig struct {
@@ -61,17 +71,18 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 }
 
 func NewRouter(clients *Clients, config *RouterConfig) *Router {
-    r := &Router{
-        clients: clients,
-        config:  config,
-    }
+	r := &Router{
+		clients: clients,
+		config:  config,
+		logger:  log.New(), // Initialize the logger
+	}
 
-    if !config.debugMode {
-        gin.SetMode(gin.ReleaseMode)
-    }
+	if !config.debugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
-    r.init() // Remove the authfunc parameter
-    return r
+	r.init() // Remove the authfunc parameter
+	return r
 }
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
@@ -92,13 +103,66 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-    r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode,"")
-    
-    endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
-    endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
-    endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
-    endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
-	
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
+
+	endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
+	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
+	endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
+	endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
+	endpoint.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
+
+}
+
+func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error) {
+	// Ensure that the NodeID is provided
+	if req.NodeId == "" {
+		r.logger.Error("NodeID is required")
+		return "", errors.New("NodeID is required")
+	}
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return "", status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	// Log the NodeID
+	r.logger.WithField("node_id", nId).Info("Received log data")
+
+	// Define the log file path
+	logFileName := "log_" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"
+	logFilePath := filepath.Join("logs", logFileName)
+
+	if err := os.MkdirAll("logs", 0755); err != nil {
+		r.logger.Errorf("Failed to create logs directory: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+		return "", err
+	}
+
+	file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		r.logger.Errorf("Failed to open log file: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+		return "", err
+	}
+	defer file.Close()
+
+	for _, logEntry := range req.Logs {
+		logLine := fmt.Sprintf("%s %s %s %s %s\n", nId, logEntry.AppName, logEntry.Time, logEntry.Level, logEntry.Message)
+		if _, err := file.WriteString(logLine); err != nil {
+			r.logger.Errorf("Failed to write log entry to file: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+			return "", err
+		}
+		if err := file.Sync(); err != nil {
+			r.logger.Errorf("Failed to flush log data to file: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
+			return "", err
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Log data received and saved"})
+	return "Logs received", nil
 }
 
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
@@ -155,15 +219,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-
-
 func (r *Router) pingHandler(c *gin.Context) error {
-    response := make(map[string]string)
+	response := make(map[string]string)
 
-    response["status"] = pkg.SystemName+" is running"
-    response["version"] = version.Version
+	response["status"] = pkg.SystemName + " is running"
+	response["version"] = version.Version
 
-    c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response)
 
-    return nil
+	return nil
 }

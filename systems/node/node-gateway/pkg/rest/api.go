@@ -11,6 +11,19 @@ package rest
 type GetRunningAppsRequest struct {
 	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
 }
+
+type Logs struct {
+	AppName string `json:"app_name" validate:"required"`
+	Time    string `json:"time"`
+	Level   string `json:"level"`
+	Message string `json:"message"`
+}
+
+type AddLogsRequest struct {
+	NodeId string `example:"{{NodeId}}" json:"node_id" path:"node_id"`
+	Logs   []Logs `json:"logs" validate:"required"`
+}
+
 type StoreRunningAppsInfoRequest struct {
 	NodeId    string   `validate:"required" example:"{{NodeId}}" path:"node_id" `
 	Timestamp string   `json:"timestamp" validate:"required" example:"{{time}}"`
@@ -24,7 +37,7 @@ type System struct {
 }
 
 type Capps struct {
-	Space    string      `json:"space" validate:"required" example:"{{space}}"`
+	Space     string      `json:"space" validate:"required" example:"{{space}}"`
 	Name      string      `json:"name" validate:"required" example:"{{name}}"`
 	Tag       string      `json:"tag" validate:"required" example:"{{tag}}"`
 	Status    string      `json:"status" validate:"required" example:"{{status}}"`
