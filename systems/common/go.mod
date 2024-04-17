@@ -1,10 +1,10 @@
 module github.com/ukama/ukama/systems/common
 
-go 1.22
+go 1.22.0
 
 replace github.com/ukama/ukama/systems/common => ./
 
-//replace github.com/ukama/ukama/systems/services/msgClient => ../services/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../services/msgClient
 
 require (
 	github.com/gin-contrib/cors v1.7.1

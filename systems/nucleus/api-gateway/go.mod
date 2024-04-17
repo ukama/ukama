@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/nucleus/api-gateway
 
-go 1.22
+go 1.22.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
