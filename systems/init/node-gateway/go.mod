@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/node-gateway
 
-go 1.22
+go 1.22.0
 
 replace github.com/ukama/ukama/systems/common => ../../../systems/common
 
