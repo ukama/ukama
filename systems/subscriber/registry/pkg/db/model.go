@@ -19,7 +19,6 @@ type Subscriber struct {
 	FirstName             string    `gorm:"size:255"`
 	LastName              string    `gorm:"size:255"`
 	NetworkId             uuid.UUID `gorm:"type:uuid;index"`
-	OrgId                 uuid.UUID `gorm:"type:uuid"`
 	Email                 string    `gorm:"size:255"`
 	PhoneNumber           string    `gorm:"size:15"`
 	Gender                string    `gorm:"size:255"`
