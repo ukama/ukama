@@ -178,7 +178,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
+		invitations.GET("", formatDoc("Get Invitations", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
