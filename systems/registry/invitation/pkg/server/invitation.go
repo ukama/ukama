@@ -16,7 +16,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -65,11 +64,12 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 	log.Infof("Adding invitation %v", req)
 	invitationId := uuid.NewV4()
 
-	if i.orgName == "" || req.GetEmail() == "" || i.orgName == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
+	if i.orgName == "" || req.GetEmail() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgName, Email, and Name are required")
 	}
 
 	expiry := time.Now().Add(time.Hour * time.Duration(i.invitationExpiryTime))
+
 	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(), expiry)
 	if err != nil {
 		return nil, err
@@ -229,8 +229,6 @@ func (i *InvitationServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*
 	}, nil
 }
 
-
-
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{
 		Id:       invitation.Id.String(),
@@ -240,7 +238,7 @@ func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 		Name:     invitation.Name,
 		Status:   pb.StatusType(invitation.Status),
 		UserId:   invitation.UserId,
-		ExpireAt: timestamppb.New(invitation.ExpiresAt),
+		ExpireAt: invitation.ExpiresAt.String(),
 	}
 }
 

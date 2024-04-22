@@ -24,7 +24,7 @@ service NodeService {
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
     rpc GetNodesForNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
-    rpc GetNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    rpc GetAll(GetAllRequest) returns (GetAllResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
@@ -75,12 +75,12 @@ message GetByNetworkResponse{
 }
 
 
-message GetByOrgRequest{
+message GetAllRequest{
     bool free = 2;
 }
 
 
-message GetByOrgResponse{
+message GetAllResponse{
     repeated Node nodes = 2;
 }
 

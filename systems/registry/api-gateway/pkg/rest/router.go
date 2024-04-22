@@ -86,7 +86,7 @@ type member interface {
 type node interface {
 	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
-	GetOrgNodes(free bool) (*nodepb.GetByOrgResponse, error)
+	GetAll(free bool) (*nodepb.GetAllResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
@@ -178,7 +178,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationAllInvitationsHandler, http.StatusOK))
+		invitations.GET("", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -298,7 +298,7 @@ func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*net
 	return r.clients.Network.GetNetwork(req.NetworkId)
 }
 
-func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetNetworksResponse, error) {
+func (r *Router) getNetworksHandler(c *gin.Context) (*netpb.GetNetworksResponse, error) {
 
 	return r.clients.Network.GetNetworks()
 }
@@ -370,7 +370,7 @@ func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRe
 	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
 }
 
-func (r *Router) getInvitationAllInvitationsHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetAllResponse, error) {
+func (r *Router) getAllInvitationsHandler(c *gin.Context) (*invpb.GetAllResponse, error) {
 	return r.clients.Invitation.GetAllInvitations()
 }
 

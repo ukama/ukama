@@ -89,11 +89,11 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetOrgNodes(free bool) (*pb.GetByOrgResponse, error) {
+func (n *Node) GetAll(free bool) (*pb.GetAllResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.GetNodesForOrg(ctx, &pb.GetByOrgRequest{
+	res, err := n.client.GetAll(ctx, &pb.GetAllRequest{
 		Free:  free,
 	})
 	if err != nil {

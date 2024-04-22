@@ -22,7 +22,7 @@ import (
 
 type Network struct {
 	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name             string    `gorm:"uniqueIndex:network_name_org_idx"`
+	Name             string    `gorm:"uniqueIndex:network_name"` 
 	Deactivated      bool
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
 	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`

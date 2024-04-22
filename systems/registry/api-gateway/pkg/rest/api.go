@@ -33,9 +33,6 @@ type UpdateMemberRequest struct {
 	Role          string `example:"member" json:"role,omitempty"`
 }
 
-// Network group
-type GetNetworksRequest struct {
-}
 
 type GetNetworkRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
@@ -150,9 +147,6 @@ type AddInvitationRequest struct {
 	Name  string `json:"name" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role  string `json:"role" validate:"required"`
-}
-
-type GetInvitationByOrgRequest struct {
 }
 
 type GetInvitationRequest struct {

@@ -221,19 +221,19 @@ func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
 }
 
 // GetOrgNodes provides a mock function with given fields: free
-func (_m *node) GetOrgNodes(free bool) (*gen.GetByOrgResponse, error) {
+func (_m *node) GetOrgNodes(free bool) (*gen.GetAllResponse, error) {
 	ret := _m.Called(free)
 
-	var r0 *gen.GetByOrgResponse
+	var r0 *gen.GetAllResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bool) (*gen.GetByOrgResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(bool) (*gen.GetAllResponse, error)); ok {
 		return rf(free)
 	}
-	if rf, ok := ret.Get(0).(func(bool) *gen.GetByOrgResponse); ok {
+	if rf, ok := ret.Get(0).(func(bool) *gen.GetAllResponse); ok {
 		r0 = rf(free)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetByOrgResponse)
+			r0 = ret.Get(0).(*gen.GetAllResponse)
 		}
 	}
 

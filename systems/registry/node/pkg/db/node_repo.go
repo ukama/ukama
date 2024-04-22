@@ -26,7 +26,6 @@ const MaxAttachedNodes = 2
 type NodeRepo interface {
 	Add(*Node, func(*Node, *gorm.DB) error) error
 	Get(ukama.NodeID) (*Node, error)
-	GetForOrg(uuid.UUID) ([]Node, error)
 	GetAll() ([]Node, error)
 	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
 	Update(*Node, func(*Node, *gorm.DB) error) error
@@ -34,6 +33,7 @@ type NodeRepo interface {
 	DetachNode(detachNodeId ukama.NodeID) error
 	GetNodeCount() (int64, int64, int64, error)
 }
+
 
 type nodeRepo struct {
 	Db sql.Db
@@ -76,19 +76,6 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	}
 
 	return &node, nil
-}
-
-func (n *nodeRepo) GetForOrg(orgId uuid.UUID) ([]Node, error) {
-	var nodes []Node
-
-	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
-		Where("org_id = ?", orgId.String()).Find(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
 }
 
 func (n *nodeRepo) GetAll() ([]Node, error) {
