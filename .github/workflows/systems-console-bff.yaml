@@ -65,7 +65,7 @@ jobs:
         buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
         buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
         buildah push $REGISTRY\:latest
-        working-directory: ${{ env.working-directory }}
+      working-directory: ${{ env.working-directory }}
     
   sonar-scan:
     name: sonar-scan
