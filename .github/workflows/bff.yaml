@@ -95,7 +95,7 @@ jobs:
             #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
             #       buildah push $REGISTRY\:latest-test
             - name: SonarCloud Scan
-              uses: sonarsource/sonarcloud-github-action@v1.6
+              uses: sonarsource/sonarcloud-github-action@v2
               env:
                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
