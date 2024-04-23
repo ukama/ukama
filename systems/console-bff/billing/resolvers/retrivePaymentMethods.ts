@@ -24,7 +24,7 @@ export class RetrivePaymentMethodsResolver {
     const { headers } = ctx;
     const stripe = new Stripe(STRIP_SK, {
       typescript: true,
-      apiVersion: "2022-11-15",
+      apiVersion: "2024-04-10",
     });
     const pm: Stripe.ApiList<Stripe.PaymentMethod> =
       await stripe.customers.listPaymentMethods(

@@ -20,7 +20,7 @@ export class CreateCustomerResolver {
   ): Promise<StripeCustomer> {
     const stripe = new Stripe(STRIP_SK, {
       typescript: true,
-      apiVersion: "2022-11-15",
+      apiVersion: "2024-04-10",
     });
     const customer = await stripe.customers.create({
       name: req.name,
