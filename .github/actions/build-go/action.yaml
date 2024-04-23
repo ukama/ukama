@@ -30,9 +30,9 @@ runs:
     uses: ./.github/actions/git-vars
 
   - name: Set up Go
-    uses: actions/setup-go@v5
+    uses: actions/setup-go@v4
     with:
-      go-version: 1.22.0
+      go-version: 1.20.1
 
   - name: Granting private modules access
     shell: bash
