@@ -19,7 +19,7 @@ runs:
   using: "composite"
   steps:  
 
-  - uses: actions/cache@v3
+  - uses: actions/cache@v4
     with:
       path: |
         ~/.cache/go-build
@@ -30,7 +30,7 @@ runs:
         ${{ runner.os }}-go-
   
   - name: Download code coverage results
-    uses: actions/download-artifact@v3
+    uses: actions/download-artifact@v4
     with:
       name: code-coverage-${{ github.run_number }}
       path: ${{ inputs.working-directory }}

@@ -18,7 +18,7 @@ jobs:
     name: build and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: install wkhtmltopdf
       run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
@@ -40,7 +40,7 @@ jobs:
     env: 
       working-directory: systems/billing/invoice
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: install wkhtmltopdf
         run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
@@ -59,7 +59,7 @@ jobs:
     env: 
       working-directory: systems/billing/invoice
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: install wkhtmltopdf
         run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
@@ -79,7 +79,7 @@ jobs:
       env:
         working-directory: systems/billing/invoice
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
 
         - name: install wkhtmltopdf
           run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf

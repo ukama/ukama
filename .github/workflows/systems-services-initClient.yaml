@@ -18,7 +18,7 @@ jobs:
     name: build and test
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Checkout submodules
       run: git submodule update --init --recursive
@@ -49,7 +49,7 @@ jobs:
       env:
         working-directory: systems/services/initClient
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         
         - name: Init vars
           id: vars_step
