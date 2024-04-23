@@ -39,7 +39,7 @@ runs:
     run: |
       git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
-  - uses: actions/cache@v3
+  - uses: actions/cache@v4
     with:
       path: |
         ~/.cache/go-build
@@ -62,7 +62,7 @@ runs:
     working-directory: ${{ inputs.working-directory }}
   
   - name: Archive code coverage results
-    uses: actions/upload-artifact@v3
+    uses: actions/upload-artifact@v4
     with:
       name: code-coverage-${{ github.run_number }}
       path: ${{ inputs.working-directory }}/coverage.out
