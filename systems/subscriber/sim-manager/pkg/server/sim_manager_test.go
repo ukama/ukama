@@ -421,7 +421,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var subscriberID = uuid.NewV4()
 		var networkID = uuid.NewV4()
 		var packageID = uuid.NewV4()
-		var orgID = uuid.NewV4()
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
@@ -447,13 +446,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				Subscriber: &subspb.Subscriber{
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
-					OrgId:        orgID.String(),
 				},
 			}, nil).Once()
 
 		packageClient.On("Get", packageID.String()).
 			Return(&cdplan.PackageInfo{
-				OrgId:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
 				SimType:  simTypeTest,
@@ -461,7 +458,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		netClient.On("Get", networkID.String()).
 			Return(&creg.NetworkInfo{
-				OrgId:         orgID.String(),
 				IsDeactivated: false,
 				TrafficPolicy: 0,
 			}, nil).Once()
@@ -487,7 +483,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		sim := &db.Sim{
 			SubscriberId: subscriberID,
 			NetworkId:    networkID,
-			OrgId:        orgID,
 			Iccid:        testIccid,
 			Type:         ukama.SimTypeTest,
 			Status:       ukama.SimStatusInactive,
@@ -588,7 +583,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var subscriberID = uuid.NewV4()
 		var networkID = uuid.NewV4()
 		var packageID = uuid.NewV4()
-		var orgID = uuid.NewV4()
 
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
@@ -604,7 +598,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				Subscriber: &subspb.Subscriber{
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
-					OrgId:        orgID.String(),
 				},
 			}, nil).Once()
 
@@ -657,7 +650,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				Subscriber: &subspb.Subscriber{
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
-					OrgId:        orgID.String(),
 				},
 			}, nil).Once()
 
@@ -709,7 +701,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				Subscriber: &subspb.Subscriber{
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
-					OrgId:        orgID.String(),
 				},
 			}, nil).Once()
 
@@ -1002,7 +993,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		sim := simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
-				OrgId:      orgID,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusInactive,
 				Type:       ukama.SimTypeTest,
@@ -1083,7 +1073,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
-				OrgId:      orgID,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusInactive,
 				Type:       ukama.SimTypeTest,
@@ -1120,7 +1109,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 	t.Run("SimOrgAndPackageOrgMismatch", func(t *testing.T) {
 		var simID = uuid.NewV4()
 		var packageID = uuid.NewV4()
-		var orgID = uuid.NewV4()
 		startDate := time.Now().UTC().AddDate(0, 0, 1) // tomorrow
 
 		simRepo := &mocks.SimRepo{}
@@ -1129,7 +1117,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
-				OrgId:      orgID,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusInactive,
 				Type:       ukama.SimTypeTest,
@@ -1175,7 +1162,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
-				OrgId:      orgID,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusInactive,
 				Type:       ukama.SimTypeOperatorData,
@@ -1221,7 +1207,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		sim := simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
-				OrgId:      orgID,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusInactive,
 				Type:       ukama.SimTypeTest,

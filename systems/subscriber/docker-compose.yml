@@ -43,6 +43,7 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
@@ -67,6 +68,7 @@ services:
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - KEY=${KEY}
    - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
    - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
