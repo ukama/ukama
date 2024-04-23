@@ -27,12 +27,12 @@ import {
   SUB_GRAPH_LIST,
 } from "../common/configs";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
+import { configureExpress } from "../common/express/configureExpress";
 import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
 import UserApi from "../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "./../user/resolver/types";
-import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
   return new Promise(resolve => setTimeout(resolve, time));
@@ -121,7 +121,8 @@ const startServer = async () => {
         else res.send(new HTTP500Error("Metrics service ping failed"));
       })
       .catch(err => {
-        res.send(new HTTP500Error("Metrics service ping failed: " + err));
+        // res.send(new HTTP500Error("Metrics service ping failed: " + err));
+        throw err;
       });
   });
 
