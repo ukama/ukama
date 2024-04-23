@@ -55,20 +55,20 @@ jobs:
                     --password-stdin \
                     003664043471.dkr.ecr.us-east-1.amazonaws.com
 
-            - name: OCI build and push
-              env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
-              run: |
-                  buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
-                      -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
-                      -t $REGISTRY\:latest .  && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
-                  buildah push $REGISTRY\:latest
-              working-directory: ${{ env.working-directory }}
+            # - name: OCI build and push
+            #   env:
+            #       REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
+            #   run: |
+            #       buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+            #           -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+            #           -t $REGISTRY\:latest .  && \
+            #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
+            #       buildah push $REGISTRY\:latest
+            #   working-directory: ${{ env.working-directory }}
 
             # - name: Set up Go
-            #   uses: actions/setup-go@v5
+            #   uses: actions/setup-go@v4
             #   with:
             #       go-version: 1.20.1
 
