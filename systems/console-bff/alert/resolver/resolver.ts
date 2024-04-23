@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, PubSub, PubSubEngine, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { PaginationDto } from "../../common/types";
 import { Context } from "../context";
@@ -16,12 +16,10 @@ export class GetAlertsResolver {
   @Query(() => AlertsResponse)
   async getAlerts(
     @Arg("data") data: PaginationDto,
-    @PubSub() pubsub: PubSubEngine,
     @Ctx() context: Context
   ): Promise<AlertsResponse> {
     const { dataSources } = context;
     const alerts = dataSources.dataSource.getAlerts(data);
-    pubsub.publish("getAlerts", alerts);
     return alerts;
   }
 }
