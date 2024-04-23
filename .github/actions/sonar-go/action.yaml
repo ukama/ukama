@@ -54,3 +54,6 @@ runs:
         -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
         -Dsonar.tests=.
         -Dsonar.test.inclusions=**/*_test.go
+        -Dsonar.pullrequest.key=5
+        -Dsonar.pullrequest.branch=*
+        -Dsonar.pullrequest.base=main
