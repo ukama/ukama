@@ -56,18 +56,16 @@ jobs:
             003664043471.dkr.ecr.us-east-1.amazonaws.com
 
     - name: OCI build and push
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
       run: |
-        buildah bud --pull -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
-          -t $REGISTRY\:${{ steps.vars_step.outputs.tag }} \
-          -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
-          -t $REGISTRY\:latest .  && \
+        buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+            -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+            -t $REGISTRY\:latest .  && \
         buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-        buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}  && \
-        buildah push $REGISTRY\:${{ steps.vars_step.outputs.tag }}  
+        buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
+        buildah push $REGISTRY\:latest
+        working-directory: ${{ env.working-directory }}
     
   sonar-scan:
     name: sonar-scan
