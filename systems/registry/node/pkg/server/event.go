@@ -92,9 +92,7 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 	if node == nil {
 		req := &pb.AddNodeRequest{
 			NodeId: msg.GetNodeId(),
-			OrgId:  n.s.org.String(),
 		}
-
 		_, err = n.s.AddNode(context.Background(), req)
 		if err != nil {
 			return err

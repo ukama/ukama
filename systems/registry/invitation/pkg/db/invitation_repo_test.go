@@ -60,7 +60,6 @@ func TestInvitationRepo_AddInvitation(t *testing.T) {
 		Id:        uuid.NewV4(),
 		Name:      "test",
 		Email:     "test@ukama.com",
-		Org:       "ukama",
 		Role:      db_inv.Employee,
 		Status:    db_inv.Pending,
 		UserId:    uuid.NewV4().String(),
@@ -92,8 +91,8 @@ func TestInvitationRepo_AddInvitation(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(invitation.Id, invitation.Org, invitation.Link, invitation.Email, invitation.Name, invitation.ExpiresAt, invitation.Role, invitation.Status,
-				invitation.UserId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(invitation.Id, invitation.Link, invitation.Email, invitation.Name, invitation.ExpiresAt, invitation.Role, invitation.Status,
+				invitation.UserId, sqlmock.AnyArg(),sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -116,7 +115,6 @@ func TestInvitationRepo_Getinvitation(t *testing.T) {
 			Id:        invId,
 			Name:      "test",
 			Email:     "test@ukama.com",
-			Org:       "ukama",
 			Role:      db_inv.Employee,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
@@ -174,7 +172,6 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama.com",
-			Org:       "ukama",
 			Role:      db_inv.Employee,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
@@ -194,7 +191,7 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 			AddRow(invitation.Id, invitation.UserId, invitation.Role)
 
 		mock.ExpectQuery(`^SELECT.*invitations.*`).
-			WithArgs(invitation.Org).
+			WithArgs().
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -214,7 +211,7 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rm, err := r.GetByOrg(invitation.Org)
+		rm, err := r.GetAll()
 
 		// Assert
 		assert.NoError(t, err)
@@ -232,7 +229,6 @@ func TestInvitationRepo_Delete(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama",
-			Org:       "ukama",
 			Role:      db_inv.Employee,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
