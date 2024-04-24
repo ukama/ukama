@@ -1,0 +1,85 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.notification.eventToNotify.v1;
+
+service EventToNotifyService {
+    rpc NotificationsStream(NotificationsStreamRequest) returns (stream Notification);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetAll(GetAllRequest) returns (GetAllResponse);
+    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+}
+
+message NotificationsStreamRequest {
+    string orgId = 1 [json_name = "org_id"];
+}
+
+message GetRequest {
+    string id = 1;
+}
+
+message GetResponse {
+    Notification notification = 1;
+}
+
+message GetAllRequest {
+    string orgId = 1 [json_name = "org_id"];
+    string networkId = 2 [json_name = "network_id"];
+    string subscriberId = 3 [json_name = "subscriber_id"];
+    string userId = 4 [json_name = "user_id"];
+}
+
+message GetAllResponse {
+    repeated Notification notifications = 1;
+}
+
+message UpdateStatusRequest {
+    string id = 1;
+    bool is_read = 2;
+}
+
+message UpdateStatusResponse {
+    string id = 1;
+}
+
+message Notification {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string title = 2;
+    string description = 3;
+    NotificationType type = 4;
+    NotificationScope scope = 5;
+    string orgId = 6 [json_name = "org_id"];
+    string networkId = 7 [json_name = "network_id"];
+    string subscriberId = 8 [json_name = "subscriber_id"];
+    string userId = 9 [json_name = "user_id"];
+    bool isRead = 10 [json_name = "is_read"];
+}
+
+enum NotificationType {
+    UNKNOWN = 0;
+    INFO = 1;
+    WARNING = 2;
+    ERROR = 3;
+}
+
+enum NotificationScope {
+    ORG = 0;
+	NETWORK = 1;
+	SITE = 2;
+	SUBSCRIBER = 3;
+	USER = 4;
+}
