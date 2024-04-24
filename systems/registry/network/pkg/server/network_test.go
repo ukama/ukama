@@ -41,10 +41,8 @@ func TestNetworkServer_Add(t *testing.T) {
 
 		const netName = "network-1"
 
-
 		var netCount = int64(1)
 
-	
 		network := &db.Network{
 			Name:       netName,
 			SyncStatus: ukama.StatusTypePending,
@@ -60,11 +58,11 @@ func TestNetworkServer_Add(t *testing.T) {
 		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "",orgId.String())
+		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "", orgId.String())
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
-			Name:    netName,
+			Name: netName,
 		})
 		// Assert
 		assert.NoError(t, err)
@@ -94,7 +92,7 @@ func TestNetworkServer_Get(t *testing.T) {
 				Deactivated:      false,
 			}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil,msgcRepo, "", "", "", "","")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netId.String()})
 
@@ -115,7 +113,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 		netRepo.On("Get", netId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil,msgcRepo, "" , "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netId.String()})
 
@@ -139,7 +137,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo,"" , "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName})
 
@@ -158,7 +156,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 
 		netRepo.On("GetByName", netName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo,"" , "", "", "", "")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName})
 
@@ -183,7 +181,7 @@ func TestNetworkServer_GetAll(t *testing.T) {
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "","")
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
 		netResp, err := s.GetAll(context.TODO(),
 			&pb.GetNetworksRequest{})
 
@@ -197,18 +195,19 @@ func TestNetworkServer_GetAll(t *testing.T) {
 func TestNetworkServer_Delete(t *testing.T) {
 	t.Run("Network exist", func(t *testing.T) {
 		orgId := uuid.NewV4()
-		const netName = "network-1"
+		netId := uuid.NewV4()
+
 		msgclientRepo := &cmocks.MsgBusServiceClient{}
 
-		netRepo := &mocks.NetRepo{}	
-		netRepo.On("Delete", netName).Return(nil).Once()
+		netRepo := &mocks.NetRepo{}
+		netRepo.On("Delete", netId).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
-			Name:    netName,
+			NetworkId: netId.String(),
 		}).Return(nil).Once()
 		netRepo.On("GetNetworkCount").Return(int64(2), nil).Once()
-		s := NewNetworkServer(OrgName, netRepo, nil, msgclientRepo, "", "", "", "",orgId.String())
+		s := NewNetworkServer(OrgName, netRepo, nil, msgclientRepo, "", "", "", "", orgId.String())
 		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
-			Name: netName})
+			NetworkId: netId.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -218,20 +217,19 @@ func TestNetworkServer_Delete(t *testing.T) {
 	t.Run("Network does not exist", func(t *testing.T) {
 		orgId := uuid.NewV4()
 
-		const netName = "network-1"
+		netId := uuid.NewV4()
 		msgcRepo := &cmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
-		
-		netRepo.On("Delete",netName).Return(gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(OrgName, netRepo,nil, msgcRepo,"", "", "", "", orgId.String())
+		netRepo.On("Delete", netId).Return(gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", orgId.String())
 		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
-			Name: netName})
+			NetworkId: netId.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
 		netRepo.AssertExpectations(t)
 	})
 }
-

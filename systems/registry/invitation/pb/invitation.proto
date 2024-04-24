@@ -40,7 +40,6 @@ message AddRequest {
     string name = 3;
     string email = 4;
     RoleType role = 5;
-    string expire_at = 6;
 }
 
 message GetAllRequest {

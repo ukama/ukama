@@ -14,7 +14,6 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
-	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"gorm.io/gorm"
 )
 
@@ -23,9 +22,7 @@ type NetRepo interface {
 	Get(id uuid.UUID) (*Network, error)
 	GetByName(network string) (*Network, error)
 	GetAll() ([]Network, error)
-	// GetByOrgName(orgName string) ([]Network, error)
-	// Update(orgId uint, network *Network) error
-	Delete(network string) error
+	Delete(id uuid.UUID) error
 	GetNetworkCount() (int64, error)
 }
 
@@ -113,26 +110,21 @@ func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gor
 	return err
 }
 
-func (n netRepo) Delete(network string) error {
-	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		txGorm := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-		txr := NewNetRepo(txGorm)
 
-		net, err := txr.GetByName(network)
-		if err != nil {
-			return err
-		}
 
-		err = tx.Delete(net).Error
-		if err != nil {
-			return err
-		}
 
-		return nil
-	})
+func (s netRepo) Delete(networkId uuid.UUID) error {
+	result := s.Db.GetGormDb().Where("id = ?", networkId).Delete(&Network{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 
-	return err
+	return nil
 }
+
 
 func (n netRepo) GetNetworkCount() (int64, error) {
     var count int64
