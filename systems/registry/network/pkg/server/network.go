@@ -174,9 +174,13 @@ func (n *NetworkServer) GetAll(ctx context.Context, req *pb.GetNetworksRequest) 
 }
 
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	log.Infof("Deleting network %s", req.Name)
+	log.Infof("Deleting network %s", req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
 
-	err := n.netRepo.Delete(req.Name)
+	err = n.netRepo.Delete(netId)
 	if err != nil {
 		log.Error(err)
 

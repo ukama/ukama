@@ -28,7 +28,7 @@ func TestSiteService_Get(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "")
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "",nil)
 
 
 	t.Run("SiteFound", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestSiteService_GetSites(t *testing.T) {
     msgclientRepo := &cmocks.MsgBusServiceClient{}
     netRepo := &mocks.NetworkClientProvider{}
 
-    s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "")
+    s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "",nil)
 
     t.Run("ValidRequest", func(t *testing.T) {
         netId := uuid.NewV4()

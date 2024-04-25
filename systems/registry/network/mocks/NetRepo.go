@@ -30,13 +30,13 @@ func (_m *NetRepo) Add(network *db.Network, nestedFunc func(*db.Network, *gorm.D
 	return r0
 }
 
-// Delete provides a mock function with given fields: network
-func (_m *NetRepo) Delete(network string) error {
-	ret := _m.Called(network)
+// Delete provides a mock function with given fields: id
+func (_m *NetRepo) Delete(id uuid.UUID) error {
+	ret := _m.Called(id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(network)
+	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}

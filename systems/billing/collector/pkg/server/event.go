@@ -15,11 +15,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/ukama"
-
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
@@ -27,8 +27,8 @@ import (
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
-// TODO: We need to think about retry policies for failing interaction between our backend and the upstream billing service
-// provider
+// TODO: We need to think about retry policies for failing interaction between
+// our backend and the upstream billing service provider.
 
 const (
 	handlerTimeoutFactor      = 3
@@ -45,16 +45,17 @@ type BillableMetric struct {
 }
 
 type BillingCollectorEventServer struct {
-	org     string
+	orgName string
+	orgId   string
 	client  client.BillingClient
 	bMetric BillableMetric
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewBillingCollectorEventServer(org string, client client.BillingClient) *BillingCollectorEventServer {
-	log.Infof("Starting billing collector for org: %s", org)
+func NewBillingCollectorEventServer(orgName, orgId string, client client.BillingClient) *BillingCollectorEventServer {
+	log.Infof("Starting billing collector for org: %s", orgName)
 
-	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
+	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId)
 	if err != nil {
 		log.Fatalf("Failed to initialize billable metric: %v", err)
 	}
@@ -65,7 +66,8 @@ func NewBillingCollectorEventServer(org string, client client.BillingClient) *Bi
 	}
 
 	return &BillingCollectorEventServer{
-		org:     org,
+		orgName: orgName,
+		orgId:   orgId,
 		client:  client,
 		bMetric: bMetric,
 	}
@@ -76,8 +78,20 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	switch e.RoutingKey {
 
+	// Update org subscription
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
+		msg, err := unmarshalOrgSubscription(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleOrgSubscriptionEvent(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
 	// Send usage event
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -89,7 +103,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create plan
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -101,7 +115,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Create customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -113,7 +127,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Update customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -125,7 +139,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// Delete customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -137,7 +151,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// add subscrition to customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
 		msg, err := unmarshalSimAllocation(e.Msg)
 		if err != nil {
 			return nil, err
@@ -149,7 +163,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// update subscrition to customer
-	case msgbus.PrepareRoute(b.org, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
+	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -165,6 +179,86 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	}
 
 	return &epb.EventResponse{}, nil
+}
+func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingEvent,
+	b *BillingCollectorEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, usrAccountItems)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	for _, accountItem := range usrAccountItems.Accounting {
+		// Do we already have a plan with the same code for that org
+		_, err := b.client.GetPlan(ctx, accountItem.Id)
+		if err == nil {
+			// The plan, therefore the subscription exist. Remove those
+			log.Warnf("Plan with similar code %s was found", accountItem.Id)
+			log.Infof("Removing plan and subscription associated with code: %s", accountItem.Id)
+
+			_, err := b.client.TerminateSubscription(ctx, accountItem.Id)
+			if err != nil {
+				return fmt.Errorf("fail to terminate org subscription from item %s: %w",
+					accountItem.Id, err)
+			}
+
+			_, err = b.client.TerminatePlan(ctx, accountItem.Id)
+			if err != nil {
+				return fmt.Errorf("fail to terminate org plan from item %s: %w",
+					accountItem.Id, err)
+			}
+		}
+
+		amount, err := strconv.Atoi(accountItem.OpexFee)
+		if err != nil {
+			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
+				accountItem.OpexFee, accountItem.Id, err)
+		}
+
+		// Then we recreate the plan and the subscription
+		newPlan := client.Plan{
+			Name:     accountItem.Item + ": " + accountItem.Id,
+			Code:     accountItem.Id,
+			Interval: testBillingInterval,
+
+			// 0 values are not sent by the upstream billing provider client. see above Todos
+			AmountCents: amount * 100,
+
+			AmountCurrency: defaultCurrency,
+
+			// fails on false (postpaid). See abouve Todos
+			PayInAdvance: true,
+		}
+
+		log.Infof("Sending plan create event %v with no charge to billing", newPlan)
+
+		plan, err := b.client.CreatePlan(ctx, newPlan)
+		if err != nil {
+			return fmt.Errorf("fail to create org plan: %w", err)
+		}
+
+		log.Infof("New billing plan: %q", plan)
+		log.Infof("Successfuly created org item plan from account item  %q", accountItem.Id)
+
+		subscriptionInput := client.Subscription{
+			Id:         accountItem.Id,
+			CustomerId: b.orgId,
+			PlanCode:   accountItem.Id,
+			// SubscriptionAt: &subscriptionAt,
+		}
+
+		log.Infof("Sending org subscription event %v to billing server", subscriptionInput)
+
+		subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
+		if err != nil {
+			return fmt.Errorf("fail to create org subscripton: %w", err)
+		}
+
+		log.Infof("New subscription created on billing server:  %q", subscriptionId)
+		log.Infof("Successfuly created new subscription org item from account item: %q", accountItem.Id)
+
+	}
+
+	return nil
 }
 
 func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollectorEventServer) error {
@@ -219,8 +313,16 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
 	amountCents := strconv.Itoa(int(pkg.DataUnitCost * 100))
 
+	charge := client.PlanCharge{
+		BillableMetricID:     b.bMetric.Id,
+		ChargeModel:          defaultChargeModel,
+		ChargeAmountCents:    amountCents,
+		ChargeAmountCurrency: defaultCurrency,
+		PackageSize:          int(billableDataSize),
+	}
+
 	newPlan := client.Plan{
-		Name:     "Plan " + pkg.Uuid,
+		Name:     "Plan: " + pkg.Uuid,
 		Code:     pkg.Uuid,
 		Interval: testBillingInterval,
 
@@ -231,19 +333,13 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 
 		// fails on false (postpaid). See abouve Todos
 		PayInAdvance: true,
-
-		BillableMetricID:     b.bMetric.Id,
-		ChargeModel:          defaultChargeModel,
-		ChargeAmountCents:    amountCents,
-		ChargeAmountCurrency: defaultCurrency,
-		PackageSize:          int(billableDataSize),
 	}
 
-	log.Infof("Sending plan create event %v to billing", newPlan)
+	log.Infof("Sending plan create event %v with charges %v to billing", newPlan, charge)
 
-	plan, err := b.client.CreatePlan(ctx, newPlan)
+	plan, err := b.client.CreatePlan(ctx, newPlan, charge)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber plan: %w", err)
 	}
 
 	log.Infof("New billing plan: %q", plan)
@@ -271,7 +367,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.CreateCustomer(ctx, customer)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber: %w", err)
 	}
 
 	log.Infof("New billing customer: %q", customerBillingId)
@@ -299,7 +395,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.UpdateCustomer(ctx, customer)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to update subscriber: %w", err)
 	}
 
 	log.Infof("Updated billing customer: %q", customerBillingId)
@@ -317,7 +413,7 @@ func handleRegistrySubscriberDeleteEvent(key string, subscriber *subpb.Subscribe
 
 	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.SubscriberId)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to delete subscriber: %w", err)
 	}
 
 	log.Infof("Successfuly deleted customer %v", customerBillingId)
@@ -347,7 +443,7 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 
 	subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
 	log.Infof("New subscription created on billing server:  %q", subscriptionId)
@@ -365,7 +461,7 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActiveP
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to terminate subscriber subscripton: %w", err)
 	}
 
 	log.Infof("Successfuly terminated previous subscription: %q", subscriptionId)
@@ -383,13 +479,27 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActiveP
 
 	subscriptionId, err = b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
 	log.Infof("New subscription created on billing server:  %q", subscriptionId)
 	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
 
 	return nil
+}
+
+func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) {
+	p := &epb.UserAccountingEvent{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal SimUsage message with : %+v. Error %s.",
+			msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.SimActivePackage, error) {
@@ -459,11 +569,22 @@ func unmarshalSimAllocation(msg *anypb.Any) (*epb.SimAllocation, error) {
 	return p, nil
 }
 
-func initBillableMetric(clt client.BillingClient, bmCode string) (string, error) {
+func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string) (string, error) {
+	log.Infof("Initializing billing defaults")
+
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	log.Infof("Sending get request for billable metric %q to billing server", bmCode)
+	_, err := clt.GetCustomer(ctx, orgId)
+	if err != nil {
+		log.Warnf("Error while getting org billable account: %v", err)
+		log.Infof("Creating org billable account: %s", orgId)
+
+		_, err = createOrgCustomer(clt, orgId, orgName)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	bmId, err := clt.GetBillableMetricId(ctx, bmCode)
 	if err != nil {
@@ -477,7 +598,32 @@ func initBillableMetric(clt client.BillingClient, bmCode string) (string, error)
 	}
 
 	log.Infof("Successfuly returning billable metric. Id: %s", bmId)
+
 	return bmId, nil
+}
+
+func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	customer := client.Customer{
+		Id:   orgId,
+		Name: OrgName,
+
+		// TODO: we might need additional fields such as Email, Address, Phone.
+	}
+
+	log.Infof("Sending org customer create event %v to billing server", customer)
+
+	customerBillingId, err := clt.CreateCustomer(ctx, customer)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("New org customer: %q", customerBillingId)
+	log.Infof("Successfuly registered org %q as billing customer", orgId)
+
+	return customerBillingId, nil
 }
 
 func createBillableMetric(clt client.BillingClient) (string, error) {

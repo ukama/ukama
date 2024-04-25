@@ -9,17 +9,18 @@
 package db
 
 import (
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"gorm.io/gorm"
 )
 
 type InvoiceRepo interface {
 	Add(invoice *Invoice, nestedFunc func(*Invoice, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invoice, error)
-	GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error)
-	GetByNetwork(networkId uuid.UUID) ([]Invoice, error)
+	List(invoiceeId string, invoiceeType InvoiceeType, networkId string,
+		isPaid bool, count uint32, sort bool) ([]Invoice, error)
 
 	// Update(orgId uint, network *Network) error
 	Delete(invoiceId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
@@ -66,25 +67,43 @@ func (i *invoiceRepo) Get(id uuid.UUID) (*Invoice, error) {
 	return &inv, nil
 }
 
-func (i *invoiceRepo) GetBySubscriber(subscriberId uuid.UUID) ([]Invoice, error) {
-	db := i.Db.GetGormDb()
-	var invoices []Invoice
+func (i *invoiceRepo) List(invoiceeId string, invoiceeType InvoiceeType, networkId string,
+	isPaid bool, count uint32, sort bool) ([]Invoice, error) {
+	invoices := []Invoice{}
 
-	result := db.Where(&Invoice{SubscriberId: subscriberId}).Find(&invoices)
+	tx := i.Db.GetGormDb().Preload(clause.Associations)
+
+	if invoiceeId != "" {
+		tx = tx.Where("invoicee_id = ?", invoiceeId)
+	}
+
+	if invoiceeType != InvoiceeTypeUnknown {
+		tx = tx.Where("invoicee_type = ?", invoiceeType)
+	}
+
+	if networkId != "" {
+		tx = tx.Where("network_id = ?", networkId)
+	}
+
+	if isPaid {
+		tx = tx.Where("is_paid = ?", isPaid)
+	}
+
+	if sort {
+		tx = tx.Order("time DESC")
+	}
+
+	if count > 0 {
+		tx = tx.Limit(int(count))
+	}
+
+	result := tx.Find(&invoices)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return invoices, nil
-}
-
-func (i *invoiceRepo) GetByNetwork(networkId uuid.UUID) ([]Invoice, error) {
-	db := i.Db.GetGormDb()
-	var invoices []Invoice
-
-	result := db.Where(&Invoice{NetworkId: networkId}).Find(&invoices)
-	if result.Error != nil {
-		return nil, result.Error
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return invoices, nil

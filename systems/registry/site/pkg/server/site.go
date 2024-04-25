@@ -37,22 +37,24 @@ const uuidParsingError = "Error parsing UUID"
 
 type SiteServer struct {
 	pb.UnimplementedSiteServiceServer
-	orgName        string
-	siteRepo       db.SiteRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	networkService providers.NetworkClientProvider
-	pushGateway    string
+	orgName         string
+	siteRepo        db.SiteRepo
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	networkService  providers.NetworkClientProvider
+	inventoryClient providers.InventoryClientProvider
+	pushGateway     string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider providers.InventoryClientProvider) *SiteServer {
 	return &SiteServer{
-		orgName:        orgName,
-		siteRepo:       siteRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		networkService: networkService,
-		pushGateway:    pushGateway,
+		orgName:         orgName,
+		siteRepo:        siteRepo,
+		msgbus:          msgBus,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		networkService:  networkService,
+		pushGateway:     pushGateway,
+		inventoryClient: inventoryClientProvider,
 	}
 }
 
@@ -87,7 +89,17 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-
+	for _, componentIdStr := range []string{
+		backhaulId.String(),
+		powerId.String(),
+		accessId.String(),
+		switchId.String(),
+	} {
+		// Validate the parsed UUID using s.inventoryClient
+		if err := s.inventoryClient.ValidateComponent(s.orgName,componentIdStr); err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "component")
+		}
+	}
 	svc, err := s.networkService.GetClient()
 	if err != nil {
 		return nil, err
@@ -221,7 +233,16 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-
+	for _, componentIdStr := range []string{
+		backhaulId.String(),
+		powerId.String(),
+		accessId.String(),
+		switchId.String(),
+	} {
+		if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "component")
+		}
+	}
 	site := &db.Site{
 		Id:            siteId,
 		Name:          req.Name,

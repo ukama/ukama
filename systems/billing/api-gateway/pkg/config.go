@@ -22,16 +22,17 @@ type Config struct {
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Invoice string
-	Files   string
 }
 
 type HttpEndpoints struct {
 	Timeout     time.Duration
+	Files       string
 	NodeMetrics string
 }
 
@@ -48,10 +49,10 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
 			Invoice: "billing-invoice:9090",
-			Files:   `http://billing-invoice:3000`,
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
+			Files:       `http://billing-invoice:3000`,
 			NodeMetrics: "http://localhost",
 		},
 
@@ -60,5 +61,6 @@ func NewConfig() *Config {
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }

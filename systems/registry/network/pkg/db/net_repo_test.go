@@ -15,6 +15,7 @@ import (
 	"log"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
@@ -23,6 +24,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	net_db "github.com/ukama/ukama/systems/registry/network/pkg/db"
 )
 
@@ -165,8 +167,8 @@ func Test_NetRepo_GetByName(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name"}).
 			AddRow(netID, netName)
 
-			mock.ExpectQuery(`^SELECT.*networks.*`).
-			WithArgs(netName,sqlmock.AnyArg()).
+		mock.ExpectQuery(`^SELECT.*networks.*`).
+			WithArgs(netName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -206,7 +208,7 @@ func Test_NetRepo_GetByName(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*network.*`).
-			WithArgs(netName,sqlmock.AnyArg()).
+			WithArgs(netName, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -249,7 +251,7 @@ func Test_NetRepo_GetAll(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(netID, netName, )
+			AddRow(netID, netName)
 
 		mock.ExpectQuery(`^SELECT.*networks.*`).
 			WithArgs().
@@ -328,8 +330,8 @@ func Test_NetRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		network := net_db.Network{
-			Id:    uuid.NewV4(),
-			Name:  "network1",
+			Id:   uuid.NewV4(),
+			Name: "network1",
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -374,38 +376,36 @@ func Test_NetRepo_Add(t *testing.T) {
 }
 
 func Test_NetRepo_Delete(t *testing.T) {
-	t.Run("DeleteNetwork", func(t *testing.T) {
+	t.Run("NetworkExist", func(t *testing.T) {
+		// Arrange
+		net := db.Network{
+			Id:        uuid.NewV4(),
+			Name:      "test",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			DeletedAt: gorm.DeletedAt{},
+		}
 		var db *extsql.DB
-
-		const netName = "net1"
-		var netID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(netID,netName,)
-
 		mock.ExpectBegin()
-
-		mock.ExpectQuery(`^SELECT.*networks.*`).
-			WithArgs(netName,sqlmock.AnyArg()).
-			WillReturnRows(rows)
-
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "networks" SET`)).
-			WithArgs(sqlmock.AnyArg(), netID).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "networks"`)).
+			WithArgs(sqlmock.AnyArg(), net.Id).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-
 		mock.ExpectCommit()
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
+			DSN:        "sqlmock_db_0",
+			DriverName: "postgres",
+			Conn:       db,
+
 			PreferSimpleProtocol: true,
 		})
 
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
+
 		assert.NoError(t, err)
 
 		r := net_db.NewNetRepo(&UkamaDbMock{
@@ -415,9 +415,10 @@ func Test_NetRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(netName)
+		err = r.Delete(net.Id)
 
 		// Assert
+
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()

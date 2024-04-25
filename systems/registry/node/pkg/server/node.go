@@ -470,24 +470,6 @@ func processNodeDuplErrors(err error, nodeId string) error {
 	return grpc.SqlErrorToGrpc(err, "node")
 }
 
-func (n *NodeServer) getAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
-	log.Infof("Getting all nodes")
-
-	nodes, err := n.nodeRepo.GetAll()
-	if err != nil {
-		log.Error("error getting all nodes" + err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "nodes")
-	}
-
-	resp := &pb.GetAllResponse{
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
-}
-
-
 func (n *NodeServer) getAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Getting all nodes.")
 
