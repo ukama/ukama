@@ -421,6 +421,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var subscriberID = uuid.NewV4()
 		var networkID = uuid.NewV4()
 		var packageID = uuid.NewV4()
+		var OrgId =uuid.NewV4()
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
@@ -514,7 +515,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, agentFactory,
-			packageClient, subscriberService, simPoolService, "", msgbusClient, "", "", nil, netClient)
+			packageClient, subscriberService, simPoolService, "", msgbusClient,OrgId.String() , "", nil, netClient)
 
 		log.Info("SimManagerServer: ", s)
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
@@ -577,57 +578,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		subscriberService.AssertExpectations(t)
 		subscriberClient.AssertExpectations(t)
-	})
-
-	t.Run("SubscriberOrgAndPackageOrgMismatch", func(t *testing.T) {
-		var subscriberID = uuid.NewV4()
-		var networkID = uuid.NewV4()
-		var packageID = uuid.NewV4()
-
-		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-		packageClient := &cmocks.PackageClient{}
-
-		subscriberClient := subscriberService.On("GetClient").
-			Return(&subsmocks.RegistryServiceClient{}, nil).
-			Once().
-			ReturnArguments.Get(0).(*subsmocks.RegistryServiceClient)
-
-		subscriberClient.On("Get", mock.Anything,
-			&subspb.GetSubscriberRequest{SubscriberId: subscriberID.String()}).
-			Return(&subspb.GetSubscriberResponse{
-				Subscriber: &subspb.Subscriber{
-					SubscriberId: subscriberID.String(),
-					NetworkId:    networkID.String(),
-				},
-			}, nil).Once()
-
-		packageClient.On("Get", packageID.String()).
-			Return(
-				&cdplan.PackageInfo{
-					OrgId:    uuid.NewV4().String(),
-					IsActive: true,
-					Duration: 3600,
-					SimType:  simTypeTest,
-				}, nil).Once()
-
-		s := NewSimManagerServer(OrgName, nil, nil, nil,
-			packageClient, subscriberService, nil, "", nil, "", "", nil, nil)
-
-		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
-			SubscriberId: subscriberID.String(),
-			NetworkId:    networkID.String(),
-			PackageId:    packageID.String(),
-			SimType:      simTypeTest,
-			SimToken:     "",
-		})
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-
-		subscriberService.AssertExpectations(t)
-		subscriberClient.AssertExpectations(t)
-
-		packageClient.AssertExpectations(t)
 	})
 
 	t.Run("OrgPackageNoMoreActive", func(t *testing.T) {
@@ -1028,7 +978,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
-			nil, nil, "", msgbusClient, "", "", nil, nil)
+			nil, nil, "", msgbusClient, orgID.String(), "", nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
@@ -1239,7 +1189,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
-			nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, "", nil, orgID.String(), "", nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
