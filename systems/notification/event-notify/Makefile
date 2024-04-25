@@ -10,7 +10,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/event-notify/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/notification cmd/server/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/event-notify/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/event-notify cmd/server/main.go
 
 test:
 	go test -v ./...

@@ -27,10 +27,51 @@ type Notification struct {
 	NetworkId    string
 	SubscriberId string
 	UserId       string
-	IsRead       bool
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
+type User struct {
+	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
+	OrgId        string
+	NetworkId    string
+	SubscriberId string
+	UserId       string
+	Role         RoleType
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
+type UserNotification struct {
+	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
+	NotificationId uuid.UUID
+	UserId         uuid.UUID
+	IsRead         bool `gorm:"default:false"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
+type RoleType uint8
+
+const (
+	Owner    RoleType = 0
+	Admin    RoleType = 1
+	Employee RoleType = 2
+	Vendor   RoleType = 3
+	Users    RoleType = 4
+)
+
+func (e *RoleType) Scan(value interface{}) error {
+	*e = RoleType(uint8(value.(int64)))
+
+	return nil
+}
+
+func (e RoleType) Value() (uint8, error) {
+	return uint8(e), nil
 }
 
 type NotificationType uint8

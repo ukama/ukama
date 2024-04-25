@@ -28,18 +28,24 @@ const uuidParsingError = "Error parsing UUID"
 
 type EventToNotifyServer struct {
 	pb.UnimplementedEventToNotifyServiceServer
-	orgName          string
-	notificationRepo db.NotificationRepo
-	msgbus           mb.MsgBusServiceClient
-	baseRoutingKey   msgbus.RoutingKeyBuilder
+	orgName              string
+	orgId                string
+	notificationRepo     db.NotificationRepo
+	userRepo             db.UserRepo
+	userNotificationRepo db.UserNotificationRepo
+	msgbus               mb.MsgBusServiceClient
+	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, notificationRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.NotificationRepo, userRepo db.UserRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
 	return &EventToNotifyServer{
-		orgName:          orgName,
-		notificationRepo: notificationRepo,
-		msgbus:           msgBus,
-		baseRoutingKey:   msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:              orgName,
+		orgId:                orgId,
+		notificationRepo:     notificationRepo,
+		userNotificationRepo: userNotificationRepo,
+		userRepo:             userRepo,
+		msgbus:               msgBus,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -155,7 +161,6 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		Id:           notification.Id.String(),
 		Title:        notification.Title,
 		Description:  notification.Description,
-		IsRead:       notification.IsRead,
 		Type:         pb.NotificationType(pb.NotificationType_value[string(notification.Type)]),
 		Scope:        pb.NotificationScope(pb.NotificationScope_value[string(notification.Scope)]),
 		OrgId:        notification.OrgId,
@@ -173,4 +178,64 @@ func dbNotificationsToPbNotifications(notifications []db.Notification) []*pb.Not
 	}
 
 	return res
+}
+
+func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.User, error) {
+	var users []*db.User
+	var err error
+
+	done := make(chan bool)
+
+	go func() {
+		users, err = n.userRepo.GetUsers(orgId, networkId, subscriberId, userId, role)
+		done <- true
+	}()
+
+	<-done
+
+	if err != nil {
+		log.Errorf("Error getting users from db %v", err)
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notification) error {
+	err := n.notificationRepo.Add(notification)
+	if err != nil {
+		log.Errorf("Error adding notification to db %v", err)
+	}
+	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.Users)
+
+	if err != nil {
+		log.Errorf("Error getting users from db %v", err)
+		return err
+	}
+
+	un := []*db.UserNotification{}
+
+	for _, u := range users {
+
+		un = append(un, &db.UserNotification{
+			Id:             uuid.NewV4(),
+			NotificationId: notification.Id,
+			UserId:         u.Id,
+			IsRead:         false,
+		})
+	}
+
+	err = n.userNotificationRepo.Add(un)
+	if err != nil {
+		log.Errorf("Error adding users notification to db %v", err)
+	}
+	return nil
+}
+
+func (n *EventToNotifyServer) storeUser(user *db.User) error {
+	err := n.userRepo.Add(user)
+	if err != nil {
+		log.Errorf("Error adding user to db %v", err)
+	}
+	return nil
 }

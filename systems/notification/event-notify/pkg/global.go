@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "event-notify"
+const ServiceName = "eventnotify"
 const SystemName = "notification"
 
 var InstanceId = "debug"

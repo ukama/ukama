@@ -40,7 +40,6 @@ func main() {
 	runGrpcServer(eventToNotifyDb)
 }
 func initConfig() {
-
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -57,12 +56,13 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Notification{})
+	err := d.Init(&db.Notification{}, &db.User{}, &db.UserNotification{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 	return d
 }
+
 func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
@@ -78,7 +78,9 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
+	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, db.NewNotificationRepo(gormdb),
+		db.NewUserRepo(gormdb), db.NewUserNotificationRepo(gormdb), mbClient)
+
 	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, eventToNotifyServer)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

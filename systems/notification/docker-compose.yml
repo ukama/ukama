@@ -55,6 +55,27 @@ services:
   depends_on:
    - postgresd-notification
 
+ eventnotify:
+  build: ./event-notify
+  ports:
+   - '9078:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-notification
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-notification:9095
+   - EVENTNOTIFY_SERVICE_HOST=eventnotify
+   - EVENTNOTIFY_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-notification
+
  api-gateway-notification:
   build:
    dockerfile: ./Dockerfile
@@ -90,7 +111,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  image: ../services/initClient
+  image: salman-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
