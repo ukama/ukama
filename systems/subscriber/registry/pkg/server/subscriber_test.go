@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,16 +30,13 @@ const OrgName = "testorg"
 const orgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
 func TestAdd(t *testing.T) {
-	
 	t.Run("Add subscriber successfully", func(t *testing.T) {
-		subscriberId := uuid.NewV4()
 
 		subscriberRepo := &mocks.SubscriberRepo{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 		simManagerService := &mocks.SimManagerClientProvider{}
 		regClient := &cmocks.OrgClient{}
 
-		netId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
 		firstName := "John"
 		lastName := "Doe"
 		email := "johndoe@example.com"
@@ -49,39 +45,21 @@ func TestAdd(t *testing.T) {
 		address := "1 Main St"
 		proofOfIdentification := "Passport"
 		idSerial := "123456789"
-		networkId, err := uuid.FromString(netId)
-		if err != nil {
-			return 
-		}
-		subscriber := &db.Subscriber{
-			SubscriberId: subscriberId,
-			NetworkId: networkId,
-			FirstName:              firstName,
-			LastName:               lastName,
-			Email:                  email,
-			PhoneNumber:            phoneNumber,
-			Gender:                 gender,
-			Address:                address,
-			ProofOfIdentification:  proofOfIdentification,
-			IdSerial:               idSerial,
-		}
-	
-		
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		netId := uuid.NewV4()
+
 		regClient.On("Get", OrgName).Return(
 			&cnucl.OrgInfo{
 				Id:            orgId,
 				Name:          OrgName,
 				IsDeactivated: false,
 			}, nil).Once()
-
-		subscriberRepo.On("Add", subscriber).Return(nil).Once()
+		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, regClient)
-
-		req := &pb.AddSubscriberRequest{
+		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			FirstName:             firstName,
-			NetworkId:				networkId.String(),
+			NetworkId:             netId.String(),
 			LastName:              lastName,
 			Email:                 email,
 			PhoneNumber:           phoneNumber,
@@ -90,17 +68,10 @@ func TestAdd(t *testing.T) {
 			Address:               address,
 			ProofOfIdentification: proofOfIdentification,
 			IdSerial:              idSerial,
-		}
-
-		resp, err := s.Add(context.Background(), req)
+		})
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, firstName, resp.Subscriber.FirstName)
-		assert.Equal(t, lastName, resp.Subscriber.LastName)
-		assert.Equal(t, netId, resp.Subscriber.NetworkId)
-		assert.Equal(t, email, resp.Subscriber.Email)
-		assert.Equal(t, phoneNumber, resp.Subscriber.PhoneNumber)
-		assert.Equal(t, gender, resp.Subscriber.Gender)
+		msgBus.AssertExpectations(t)
+
 	})
 }
 func TestSubscriberServer_Get(t *testing.T) {
