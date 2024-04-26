@@ -176,6 +176,8 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 		}
 	}
 
+	log.Infof("Usage for imsi %s before CDR update is %+v and CDR is %+v ", imsi, ou, cdr)
+
 	recs, err := s.cdrRepo.GetByTime(cdr.Imsi, ou.LastCDRUpdatedAt, (uint64)(time.Now().Unix()))
 	if err != nil && recs != nil {
 		log.Errorf("Error getting CDR for imsi %s. Error %+v", imsi, err)
@@ -226,6 +228,14 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 	}
 
 	for _, cdr := range cdrs {
+
+		if ou.Policy != cdr.Policy {
+			log.Errorf("CDR policy is %s not matching usage policy %s for imsi %s. Ignoring CDR record %+v", cdr.Policy, ou.Policy, imsi, cdr)
+			continue
+		} else {
+			log.Infof("Handling CDR %v for imsi %s. Usage: %+v", cdr, imsi, u)
+		}
+
 		if cdr.NodeId == lastCDRNodeId {
 			tempUsage = u
 			if sessionId == lastSessionId {
