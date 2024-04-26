@@ -40,8 +40,11 @@ func NewConfig(name string) *Config {
 
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{},
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.update",
+			},
 		},
 		AsrHost: "asr:9090",
 	}

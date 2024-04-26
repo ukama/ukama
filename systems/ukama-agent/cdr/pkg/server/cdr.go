@@ -115,8 +115,9 @@ func (s *CDRServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp
 		return nil, err
 	}
 	return &pb.UsageResp{
-		Imsi:  req.Imsi,
-		Usage: usage.Usage,
+		Imsi:   req.Imsi,
+		Usage:  usage.Usage,
+		Policy: usage.Policy,
 	}, nil
 }
 
