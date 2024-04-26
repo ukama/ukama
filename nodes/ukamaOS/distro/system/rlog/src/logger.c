@@ -27,6 +27,11 @@
 
 extern ThreadData *gData;
 
+struct Response {
+    char *buffer;
+    size_t size;
+};
+
 /* Mutexs to ensure thread-safe writes for various dest */
 static pthread_mutex_t logFileMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stdoutMutex  = PTHREAD_MUTEX_INITIALIZER;
@@ -59,7 +64,33 @@ static int log_level(char *slevel) {
     }
 }
 
-static long send_request_to_server(char *url, const char *data) {
+
+static size_t response_callback(void *contents,
+                                size_t size,
+                                size_t nmemb,
+                                void *userp) {
+
+    size_t realsize = size * nmemb;
+    struct Response *response = (struct Response *)userp;
+
+    response->buffer = realloc(response->buffer, response->size + realsize + 1);
+
+    if(response->buffer == NULL) {
+        usys_log_error("Not enough memory to realloc of size: %d",
+                       response->size + realsize + 1);
+        return 0;
+    }
+
+    memcpy(&(response->buffer[response->size]), contents, realsize);
+    response->size += realsize;
+    response->buffer[response->size] = 0;
+
+    return realsize;
+}
+
+static long send_request_to_server(char *url,
+                                   const char *data,
+                                   struct Response *response) {
 
     long resCode=0;
     CURL *curl=NULL;
@@ -70,13 +101,18 @@ static long send_request_to_server(char *url, const char *data) {
     curl = curl_easy_init();
     if (curl == NULL) return resCode;
 
+    response->buffer = malloc(1);
+    response->size   = 0;
+
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "charset: utf-8");
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "logger/0.1");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)response);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "rlog/0.1");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
 
     res = curl_easy_perform(curl);
@@ -84,6 +120,7 @@ static long send_request_to_server(char *url, const char *data) {
     if (res != CURLE_OK) {
         usys_log_error("Error sending request to server at URL %s: %s", url,
                        curl_easy_strerror(res));
+        usys_free(response->buffer);
     } else {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resCode);
     }
@@ -110,6 +147,8 @@ static void write_to_ukama_service(char *nodeID, const char *log) {
     json_t *jArray = NULL;
     char *buffer = NULL;
 
+    struct Response response;
+
     time(&now);
 
     /* if buffer overflow or its been FLUSH_TIME. */
@@ -127,16 +166,20 @@ static void write_to_ukama_service(char *nodeID, const char *log) {
             return;
         }
 
-        sprintf(url, "http://localhost:%d/%s/logger/node/%s",
+        sprintf(url, "http://localhost:%d/%s/logger/nodes/%s",
                 port, API_VERSION, nodeID);
 
-        send_request_to_server(&url[0], buffer);
+        if (send_request_to_server(&url[0], buffer, &response) != HttpStatus_OK) {
+            usys_log_error("Unable to send log to ukama.");
+            usys_log_error("Log is: %s", log);
+        }
 
         json_decref(gData->jOutputBuffer);
         gData->bufferSize    = 0;
         gData->jOutputBuffer = json_pack("{s:[]}", JTAG_LOGS);
 
         usys_free(buffer);
+        usys_free(response.buffer);
         time(&gData->lastWriteTime);
     }
 
