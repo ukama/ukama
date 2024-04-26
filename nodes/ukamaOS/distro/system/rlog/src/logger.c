@@ -37,6 +37,10 @@ static pthread_mutex_t logFileMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stdoutMutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stderrMutex  = PTHREAD_MUTEX_INITIALIZER;
 
+static void write_to_log_file(const char *buffer);
+static void write_to_stdout(const char *buffer);
+static void write_to_stderr(const char *buffer);
+
 static int find_json_buffer_size(json_t *json) {
 
     char *jStr = NULL;
@@ -170,8 +174,8 @@ static void write_to_ukama_service(char *nodeID, const char *log) {
                 port, API_VERSION, nodeID);
 
         if (send_request_to_server(&url[0], buffer, &response) != HttpStatus_OK) {
-            usys_log_error("Unable to send log to ukama.");
-            usys_log_error("Log is: %s", log);
+            /* fall back to log-file */
+            write_to_log_file(log);
         }
 
         json_decref(gData->jOutputBuffer);
