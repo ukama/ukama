@@ -82,6 +82,7 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 	r, err := s.cdr.GetUsage(req.GetImsi())
 	if err != nil {
 		log.Errorf("Failed to get usage: %v for imsi %s", err, req.GetImsi())
+		return nil, err
 	}
 
 	resp := &pb.ReadResp{Record: &pb.Record{
