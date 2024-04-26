@@ -56,15 +56,16 @@ type Guti struct {
 }
 
 type Policy struct {
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-	Id        uuid.UUID      `gorm:"primarykey;type:uuid"`
-	Burst     uint64
-	Data      uint64
-	Dlbr      uint64
-	Ulbr      uint64
-	StartTime uint64
-	EndTime   uint64
-	AsrID     uint
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Id           uuid.UUID      `gorm:"primarykey;type:uuid"`
+	Burst        uint64
+	TotalData    uint64
+	ConsumedData uint64
+	Dlbr         uint64
+	Ulbr         uint64
+	StartTime    uint64
+	EndTime      uint64
+	AsrID        uint
 }

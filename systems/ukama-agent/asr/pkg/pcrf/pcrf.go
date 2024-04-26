@@ -60,17 +60,19 @@ func (p *pcrf) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	et := uint64(st) + pack.Duration
 
 	policy := db.Policy{
-		Id:        uuid.NewV4(),
-		Burst:     1500,
-		Data:      pack.DataVolume,
-		Dlbr:      pack.PackageDetails.Dlbr,
-		Ulbr:      pack.PackageDetails.Ulbr,
-		StartTime: st,
-		EndTime:   et,
+		Id:           uuid.NewV4(),
+		Burst:        1500,
+		TotalData:    pack.DataVolume,
+		ConsumedData: 0,
+		Dlbr:         pack.PackageDetails.Dlbr,
+		Ulbr:         pack.PackageDetails.Ulbr,
+		StartTime:    st,
+		EndTime:      et,
 	}
 
 	return &policy, nil
 }
+
 func (p *pcrf) AddPolicy(s *SimInfo, policy *db.Policy) error {
 
 	// err := p.pf.CreatePolicy(policy)

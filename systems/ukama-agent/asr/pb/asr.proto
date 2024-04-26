@@ -150,9 +150,10 @@ message UpdateTaiResp{
 message Policy {
 string Uuid = 1 [(validator.field) = { string_not_empty: true}, json_name="uuid"];
    uint64 Burst = 2 [json_name="burst"];
-   uint64 Data = 3 [json_name="data"];
-   uint64 Ulbr = 4 [json_name="ulbr"];
-   uint64 Dlbr = 5 [json_name="dlbr"];
-   uint64 StartTime = 6 [json_name="start_time"];
-   uint64 EndTime = 7 [json_name="end_time"];
+   uint64 TotalData = 3 [json_name="total_data"];
+   uint64 ConsumedData = 4 [json_name="consumed_data"];
+   uint64 Ulbr = 5 [json_name="ulbr"];
+   uint64 Dlbr = 6 [json_name="dlbr"];
+   uint64 StartTime = 7 [json_name="start_time"];
+   uint64 EndTime = 8 [json_name="end_time"];
 }

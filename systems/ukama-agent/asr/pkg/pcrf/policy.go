@@ -21,13 +21,14 @@ type policyFunction struct {
 }
 
 type MsgPoilcy struct {
-	Uuid      string `json:"uuid"`
-	Burst     uint64 `json:"burst"`
-	Data      uint64 `json:"data"`
-	Dlbr      uint64 `json:"dlbr"`
-	Ulbr      uint64 `json:"ulbr"`
-	StartTime uint64 `json:"start_time"`
-	EndTime   uint64 `json:"end_time"`
+	Uuid         string `json:"uuid"`
+	Burst        uint64 `json:"burst"`
+	TotalData    uint64 `json:"total_data"`
+	ConsumedData uint64 `json:"consumed_data"`
+	Dlbr         uint64 `json:"dlbr"`
+	Ulbr         uint64 `json:"ulbr"`
+	StartTime    uint64 `json:"start_time"`
+	EndTime      uint64 `json:"end_time"`
 }
 
 type MsgSubscriber struct {
@@ -58,13 +59,14 @@ func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
 
 	return &MsgSubscriber{
 		Policy: MsgPoilcy{
-			Uuid:      p.Id.String(),
-			Burst:     p.Burst,
-			Ulbr:      p.Ulbr,
-			Dlbr:      p.Dlbr,
-			Data:      p.Data,
-			StartTime: p.StartTime,
-			EndTime:   p.EndTime,
+			Uuid:         p.Id.String(),
+			Burst:        p.Burst,
+			Ulbr:         p.Ulbr,
+			Dlbr:         p.Dlbr,
+			TotalData:    p.TotalData,
+			ConsumedData: p.ConsumedData,
+			StartTime:    p.StartTime,
+			EndTime:      p.EndTime,
 		},
 		Reroute: reroute,
 	}

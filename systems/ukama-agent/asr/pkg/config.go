@@ -19,6 +19,7 @@ type Config struct {
 	NetworkHost       string            `default:"http://localhost:8085"`
 	FactoryHost       string            `default:"http://localhost:8085"`
 	Reroute           string            `default:"http://localhost:8085"`
+	CDRHost           string            `default:"http://localhost:8085"`
 	OrgName           string            `default:"ukama"`
 	OrgId             string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
@@ -47,5 +48,6 @@ func NewConfig(name string) *Config {
 		DataplanHost: "http://192.168.0.14:8085",
 		NetworkHost:  "http://192.168.0.14:8085",
 		FactoryHost:  "http://192.168.0.14:8085",
+		CDRHost:      "http://192.168.0.14:8085",
 	}
 }

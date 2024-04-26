@@ -28,6 +28,7 @@ type AsrRecordServer struct {
 	gutiRepo       db.GutiRepo
 	network        client.Network
 	factory        client.Factory
+	cdr            client.CDRService
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pcrf           pcrf.PCRFController
@@ -35,7 +36,7 @@ type AsrRecordServer struct {
 	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
@@ -47,6 +48,7 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db
 		pRepo:    pRepo,
 		msgbus:   msgBus,
 		pcrf:     pcrf,
+		cdr:      cdr,
 	}
 
 	if msgBus != nil {
@@ -77,6 +79,11 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		}
 	}
 
+	r, err := s.cdr.GetUsage(req.GetImsi())
+	if err != nil {
+		log.Errorf("Failed to get usage: %v for imsi %s", err, req.GetImsi())
+	}
+
 	resp := &pb.ReadResp{Record: &pb.Record{
 		Imsi:  sub.Imsi,
 		Iccid: sub.Iccid,
@@ -94,13 +101,14 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		UeUlAmbrBps: sub.UeDlAmbrBps,
 		PackageId:   sub.PackageId.String(),
 		Policy: &pb.Policy{
-			Uuid:      sub.Policy.Id.String(),
-			Burst:     sub.Policy.Burst,
-			Data:      sub.Policy.Data,
-			Ulbr:      sub.Policy.Ulbr,
-			Dlbr:      sub.Policy.Dlbr,
-			StartTime: sub.Policy.StartTime,
-			EndTime:   sub.Policy.EndTime,
+			Uuid:         sub.Policy.Id.String(),
+			Burst:        sub.Policy.Burst,
+			TotalData:    sub.Policy.TotalData,
+			ConsumedData: r.Usage,
+			Ulbr:         sub.Policy.Ulbr,
+			Dlbr:         sub.Policy.Dlbr,
+			StartTime:    sub.Policy.StartTime,
+			EndTime:      sub.Policy.EndTime,
 		},
 	}}
 

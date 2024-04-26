@@ -95,3 +95,35 @@ func (r *policyRepo) Update(id uint, newPolicy *Policy) error {
 
 	return err
 }
+
+func (r *policyRepo) UpdateConsumedData(id uint, consumedData uint64) error {
+
+	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+
+		policy := &Policy{}
+
+		res := tx.Model(&Policy{}).Where("asr_id = ?", id).Find(policy)
+		if res.Error != nil {
+			if !sql.IsNotFoundError(res.Error) {
+				log.Errorf("Error looking for policy for id %d.Error %+v", id, res.Error)
+				return res.Error
+			}
+		}
+
+		if err := tx.Delete(policy).Error; err != nil {
+			log.Errorf("Failed to delete policy %+v  for ASR id %d .Error %s", policy, id, err.Error())
+			return nil
+		}
+
+		newPolicy := policy
+		newPolicy.Id = uuid.NewV4()
+		newPolicy.ConsumedData = consumedData
+		if err := tx.Create(newPolicy).Error; err != nil {
+			log.Errorf("Failed to create policy %+v for ASR id %d .Error %s", newPolicy, id, err.Error())
+			return nil
+		}
+		return nil
+	})
+
+	return err
+}

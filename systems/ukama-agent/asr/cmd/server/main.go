@@ -108,15 +108,20 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Network Client initilization failed. Error: %v", err)
 	}
 
+	cdr, err := client.NewCDR(serviceConfig.CDRHost, serviceConfig.Timeout)
+	if err != nil {
+		log.Fatalf("CDR Client initilization failed. Error: %v", err)
+	}
+
 	pcrf := pcrf.NewPCRFController(policy, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
 
 	// asr service
 	asrServer, err := server.NewAsrRecordServer(asr, guti, policy,
-		factory, network, pcrf, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
+		factory, network, pcrf, cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
-	nSrv := server.NewAsrEventServer(asr, guti)
+	nSrv := server.NewAsrEventServer(asr, asrServer, guti, serviceConfig.OrgName)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterAsrRecordServiceServer(s, asrServer)

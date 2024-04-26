@@ -22,23 +22,24 @@ require (
 
 require (
 	github.com/creasty/defaults v1.6.0 // indirect
-	github.com/gin-contrib/cors v1.3.0 // indirect
-	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
-	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.12.4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 )
 
 require (
+	github.com/gin-contrib/cors v1.3.0
+	github.com/gin-gonic/gin v1.7.7
 	github.com/jarcoal/httpmock v1.2.0
+	github.com/loopfz/gadgeto v0.9.0
 	github.com/num30/config v0.0.7
 	github.com/satori/go.uuid v1.2.0
 	github.com/tj/assert v0.0.3
+	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
+	github.com/wI2L/fizz v0.22.0
 )
 
 require (
@@ -108,3 +109,5 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/ukama-agent/asr => ./
 
 replace github.com/ukama/ukama/systems/ukama-agent/asr/mocks => ./mocks
+
+replace github.com/ukama/ukama/systems/ukama-agent/cdr => ./../cdr
