@@ -38,6 +38,16 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.*.ukamaagent.asr.activesubscriber.update"):
+		msg, err := n.unmarshalActiveSubscriberUpdate(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleEventActiveSubscriberUpdate(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -49,7 +59,7 @@ func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.A
 	p := &epb.AsrUpdated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddSystemRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal Active Subscriber create message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
@@ -57,7 +67,28 @@ func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.A
 
 func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrUpdated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	err := n.s.ResetPackageUsage(msg.Subscriber.Imsi)
+	err := n.s.InitUsage(msg.Subscriber.Imsi, msg.Subscriber.Policy)
+	if err != nil {
+		log.Errorf("Failed to create the active subscriber %+s.Error: %+v", msg.Subscriber.Imsi, err)
+		return err
+	}
+
+	return nil
+}
+
+func (n *CDREventServer) unmarshalActiveSubscriberUpdate(msg *anypb.Any) (*epb.AsrUpdated, error) {
+	p := &epb.AsrUpdated{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal Active Subscriber update message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func (n *CDREventServer) handleEventActiveSubscriberUpdate(key string, msg *epb.AsrUpdated) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	err := n.s.ResetPackageUsage(msg.Subscriber.Imsi, msg.Subscriber.Policy)
 	if err != nil {
 		log.Errorf("Failed to update the active subscriber %+s.Error: %+v", msg.Subscriber.Imsi, err)
 		return err

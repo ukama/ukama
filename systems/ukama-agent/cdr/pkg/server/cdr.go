@@ -9,6 +9,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/sql"
 	dsql "github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
@@ -42,6 +43,33 @@ func NewCDRServer(cdrRepo db.CDRRepo, usageRepo db.UsageRepo, orgId, orgName str
 	log.Infof("CDR server is %+v", cdr)
 
 	return &cdr, nil
+}
+
+func (s *CDRServer) InitUsage(imsi string, policy string) error {
+	ou, err := s.usageRepo.Get(imsi)
+	if err != nil {
+		if !sql.IsNotFoundError(err) {
+			log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
+			return err
+		}
+	}
+
+	u := db.Usage{
+		Imsi:        imsi,
+		Policy:      policy,
+		Usage:       0,
+		LastSession: 0,
+		Historical:  ou.Historical,
+	}
+
+	err = s.usageRepo.Add(&u)
+	if err != nil {
+		log.Errorf("Error initalizing usage for imsi %s. Error %+v", imsi, err)
+		return err
+	}
+	log.Infof("Initilaize package usage for imsi %s to %+v", u.Imsi, u)
+
+	return nil
 }
 
 func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error) {
@@ -109,7 +137,7 @@ func (s *CDRServer) GetUsageDetails(c context.Context, req *pb.CycleUsageReq) (*
 	}, nil
 }
 
-func (s *CDRServer) ResetPackageUsage(imsi string) error {
+func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
@@ -119,6 +147,7 @@ func (s *CDRServer) ResetPackageUsage(imsi string) error {
 
 	u := db.Usage{
 		Imsi:        imsi,
+		Policy:      policy,
 		Usage:       0,
 		LastSession: 0,
 		Historical:  ou.Historical,
@@ -126,7 +155,7 @@ func (s *CDRServer) ResetPackageUsage(imsi string) error {
 
 	err = s.usageRepo.Add(&u)
 	if err != nil {
-		log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
+		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
 	}
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
@@ -174,12 +203,13 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 	lastCDRNodeId := ou.LastNodeId
 	var nodeChangedFlag bool = false
 	var newSessionFlag bool = false
+
 	//var policy string
 	if len(cdrs) > 0 {
 		if lastCDRNodeId != cdrs[0].NodeId {
 			/* since new node is reporting the session usage this means new session is created */
 			sessionId = cdrs[0].Session
-			lastSessionId = 0
+			lastSessionId = ou.LastSession
 		} else if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
 			// This means it's same session as last recorded session
 			sessionId = cdrs[0].Session
@@ -187,7 +217,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 		} else {
 			/* new session */
 			sessionId = cdrs[0].Session
-			lastSessionId = 0
+			lastSessionId = ou.LastSession
 		}
 	} else {
 		log.Infof("No usage update for imsi %s.Current usage stays: %+v", u.Imsi, u)
