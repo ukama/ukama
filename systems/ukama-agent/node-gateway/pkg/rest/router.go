@@ -101,11 +101,12 @@ func (r *Router) init() {
 	asr.GET("/:imsi", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
 	asr.POST("/:imsi/guti", formatDoc("GUTI update for subscriber", ""), tonic.Handler(r.postGuti, http.StatusOK))
 	asr.POST("/:imsi/tai", formatDoc("TAI update for subscriber", ""), tonic.Handler(r.postTai, http.StatusOK))
+	asr.GET("/:imsi/usage", formatDoc("Get total usage", ""), tonic.Handler(r.getUsage, http.StatusOK))
 
 	cdr := v1.Group("/cdr", "CDR", "Call Detail Record")
 	cdr.POST("/:imsi", formatDoc("Post CDR", ""), tonic.Handler(r.postCDR, http.StatusOK))
-	asr.GET("/:imsi", formatDoc("Get CDR", ""), tonic.Handler(r.getCDR, http.StatusOK))
-	asr.GET("/:imsi/usage", formatDoc("Get total usage", ""), tonic.Handler(r.getUsage, http.StatusOK))
+	cdr.GET("/:imsi", formatDoc("Get CDR", ""), tonic.Handler(r.getCDR, http.StatusOK))
+
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
