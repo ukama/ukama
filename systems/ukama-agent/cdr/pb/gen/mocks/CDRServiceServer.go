@@ -66,6 +66,32 @@ func (_m *CDRServiceServer) GetUsage(_a0 context.Context, _a1 *gen.UsageReq) (*g
 	return r0, r1
 }
 
+// GetUsageDetails provides a mock function with given fields: _a0, _a1
+func (_m *CDRServiceServer) GetUsageDetails(_a0 context.Context, _a1 *gen.CycleUsageReq) (*gen.CycleUsageResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.CycleUsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CycleUsageReq) (*gen.CycleUsageResp, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CycleUsageReq) *gen.CycleUsageResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.CycleUsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CycleUsageReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PostCDR provides a mock function with given fields: _a0, _a1
 func (_m *CDRServiceServer) PostCDR(_a0 context.Context, _a1 *gen.CDR) (*gen.CDRResp, error) {
 	ret := _m.Called(_a0, _a1)

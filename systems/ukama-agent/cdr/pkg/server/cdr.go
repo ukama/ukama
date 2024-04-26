@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	dsql "github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
@@ -52,6 +53,16 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		return nil, err
 	}
 
+	/* Publish event for new CDR */
+	e := dbCDRToepbCDR(*cdr)
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetActionCreate().SetObject("cdr").MustBuild()
+		merr := s.msgbus.PublishRequest(route, e)
+		if merr != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		}
+	}
+
 	err = s.UpdateUsage(req.Imsi, cdr)
 	if err != nil {
 		log.Errorf("Error updating usage for imsi %s", err)
@@ -78,6 +89,23 @@ func (s *CDRServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp
 	return &pb.UsageResp{
 		Imsi:  req.Imsi,
 		Usage: usage.Usage,
+	}, nil
+}
+
+func (s *CDRServer) GetUsageDetails(c context.Context, req *pb.CycleUsageReq) (*pb.CycleUsageResp, error) {
+	log.Debugf("Received get cycle usage request %+v", req)
+	usage, err := s.usageRepo.Get(req.Imsi)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.CycleUsageResp{
+		Imsi:             req.Imsi,
+		Usage:            usage.Usage,
+		Historical:       usage.Historical,
+		LastSessions:     usage.LastSession,
+		LastNodeId:       usage.LastNodeId,
+		LastCDRUpdatedAt: usage.LastCDRUpdatedAt,
+		Policy:           usage.Policy,
 	}, nil
 }
 
@@ -130,51 +158,133 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 	})
 
 	u := db.Usage{
-		Imsi:       imsi,
-		Usage:      ou.Usage,
-		Historical: ou.Historical,
+		Imsi:             imsi,
+		Usage:            ou.Usage,
+		Historical:       ou.Historical,
+		LastNodeId:       ou.LastNodeId,
+		Policy:           ou.Policy,
+		LastCDRUpdatedAt: ou.LastCDRUpdatedAt,
+		LastSession:      ou.LastSession,
 	}
 
 	var lastUpdatedAt uint64 = 0
-	var session uint64 = 0
-	var lastSession uint64 = 0
-	if len(cdrs) > 1 {
-		if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
+	var sessionId uint64 = 0
+	var lastSessionId uint64 = 0
+	tempUsage := db.Usage{}
+	lastCDRNodeId := ou.LastNodeId
+	var nodeChangedFlag bool = false
+	var newSessionFlag bool = false
+	//var policy string
+	if len(cdrs) > 0 {
+		if lastCDRNodeId != cdrs[0].NodeId {
+			/* since new node is reporting the session usage this means new session is created */
+			sessionId = cdrs[0].Session
+			lastSessionId = 0
+		} else if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
 			// This means it's same session as last recorded session
-			session = cdrs[0].Session
-			lastSession = cdrs[0].Session
-
+			sessionId = cdrs[0].Session
+			lastSessionId = cdrs[0].Session
 		} else {
 			/* new session */
-			session = cdrs[0].Session
-			lastSession = 0
+			sessionId = cdrs[0].Session
+			lastSessionId = 0
 		}
-
+	} else {
+		log.Infof("No usage update for imsi %s.Current usage stays: %+v", u.Imsi, u)
+		return nil
 	}
 
 	for _, cdr := range cdrs {
-		if session == lastSession {
-			/* if session is continued */
-			if cdr.LastUpdatedAt > lastUpdatedAt {
-				lastUpdatedAt = cdr.LastUpdatedAt
-				u.Historical = (u.Historical - u.Usage) + cdr.TotalBytes
-				u.Usage = u.LastSession + cdr.TotalBytes
+		if cdr.NodeId == lastCDRNodeId {
+			tempUsage = u
+			if sessionId == lastSessionId {
+				/* if session is continued */
+				/* check to avoid duplicates updates */
+				if cdr.LastUpdatedAt > lastUpdatedAt {
+					lastUpdatedAt = cdr.LastUpdatedAt
+					u.Historical = (u.Historical - u.Usage) + cdr.TotalBytes
+					u.Usage = u.LastSession + cdr.TotalBytes
+					u.LastNodeId = cdr.NodeId
+					u.LastCDRUpdatedAt = cdr.LastUpdatedAt
+					u.Policy = cdr.Policy
+
+				}
+
+			} else {
+				/* New session */
+				if cdr.LastUpdatedAt > lastUpdatedAt {
+					lastUpdatedAt = cdr.LastUpdatedAt
+					u.LastSession = u.Usage                      /* Usage till last session last cdr */
+					u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
+					u.Usage = u.LastSession + cdr.TotalBytes     /*usage for this package is last session + current */
+					u.LastNodeId = cdr.NodeId
+					u.LastCDRUpdatedAt = cdr.LastUpdatedAt
+					u.Policy = cdr.Policy
+					newSessionFlag = true
+				}
+
 			}
 
 		} else {
-			/* New session */
-			if cdr.LastUpdatedAt > lastUpdatedAt {
-				lastUpdatedAt = cdr.LastUpdatedAt
-				u.LastSession = u.Usage                      /* Usage till last session last cdr */
-				u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
-				u.Usage = u.LastSession + cdr.TotalBytes     /*usage for this package is last session + current */
-			}
-
+			/* This will always be new session as new node is reporting cdr now */
+			lastUpdatedAt = cdr.LastUpdatedAt
+			u.LastSession = u.Usage                      /* Usage till last session last cdr */
+			u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
+			u.Usage = u.LastSession + cdr.TotalBytes
+			u.LastNodeId = cdr.NodeId
+			u.LastCDRUpdatedAt = cdr.LastUpdatedAt
+			u.Policy = cdr.Policy
+			newSessionFlag = true
+			nodeChangedFlag = true
+			//policy = cdr.Policy
 		}
 
-		/* Session is changed */
-		lastSession = session
+		/* If new session created send a event regading last session */
+		if newSessionFlag == true && lastSessionId != 0 {
+			log.Infof("Session %d is terminated for imsi %s. Session details are: %+v", lastSessionId, imsi, tempUsage)
+			// Create session destroyed event
+			e := &epb.SessionDestroyed{
+				Imsi:         imsi,
+				SessionUsage: tempUsage.Usage - tempUsage.LastSession,
+				NodeId:       tempUsage.LastNodeId,
+				Policy:       tempUsage.Policy,
+				SessionId:    tempUsage.LastSession,
+				TotalUsage:   tempUsage.Usage,
+			}
 
+			if s.msgbus != nil {
+				route := s.baseRoutingKey.SetAction("terminated").SetObject("session").MustBuild()
+				merr := s.msgbus.PublishRequest(route, e)
+				if merr != nil {
+					log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+				}
+			}
+			newSessionFlag = false
+		}
+		/* Session is changed */
+		lastSessionId = sessionId
+	}
+
+	if nodeChangedFlag == true && lastCDRNodeId != "" {
+		log.Infof("Imsi %s performed a node handover from %s to %s node", imsi, lastCDRNodeId, cdr.NodeId)
+		/* subscriber node handover */
+		e := &epb.NodeChanged{
+			Imsi:              imsi,
+			Policy:            cdr.Policy,
+			NodeId:            cdr.NodeId,
+			OldNodeId:         lastCDRNodeId,
+			UsageTillLastNode: tempUsage.Usage,
+			TotalUsage:        u.Usage,
+		}
+
+		if s.msgbus != nil {
+			route := s.baseRoutingKey.SetActionCreate().SetObject("nodehandover").MustBuild()
+			merr := s.msgbus.PublishRequest(route, e)
+			if merr != nil {
+				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			}
+		}
+		nodeChangedFlag = false
 	}
 
 	err = s.usageRepo.Add(&u)
@@ -203,9 +313,9 @@ func dbCDRToRecordResp(cdrs *[]db.CDR) *pb.RecordResp {
 func dbCDRTopbCDR(req db.CDR) *pb.CDR {
 
 	pcdr := &pb.CDR{
-		Session: req.Session,
-		Imsi:    req.Imsi,
-		//NodeId:        req.NodeId, TBU
+		Session:       req.Session,
+		Imsi:          req.Imsi,
+		NodeId:        req.NodeId,
 		Policy:        req.Policy,
 		ApnName:       req.ApnName,
 		Ip:            req.Ip,
@@ -220,11 +330,30 @@ func dbCDRTopbCDR(req db.CDR) *pb.CDR {
 	return pcdr
 }
 
+func dbCDRToepbCDR(req db.CDR) *epb.CDRReported {
+
+	pcdr := &epb.CDRReported{
+		Session:       req.Session,
+		Imsi:          req.Imsi,
+		NodeId:        req.NodeId,
+		Policy:        req.Policy,
+		ApnName:       req.ApnName,
+		Ip:            req.Ip,
+		StartTime:     req.StartTime,
+		EndTime:       req.EndTime,
+		LastUpdatedAt: req.LastUpdatedAt,
+		TxBytes:       req.TotalBytes,
+		RxBytes:       req.RxBytes,
+		TotalBytes:    req.TotalBytes,
+	}
+
+	return pcdr
+}
 func pbCDRToDbCDR(req *pb.CDR) *db.CDR {
 	return &db.CDR{
 		Session:       req.Session,
 		Imsi:          req.Imsi,
-		NodeId:        "TBU",
+		NodeId:        req.NodeId,
 		Policy:        req.Policy,
 		ApnName:       req.ApnName,
 		Ip:            req.Ip,

@@ -28,6 +28,8 @@ type CDRServiceClient interface {
 	GetCDR(ctx context.Context, in *RecordReq, opts ...grpc.CallOption) (*RecordResp, error)
 	/// Get Usage for the subscriber current package
 	GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error)
+	/// Get Usage detsilsfor the subscriber current cycle
+	GetUsageDetails(ctx context.Context, in *CycleUsageReq, opts ...grpc.CallOption) (*CycleUsageResp, error)
 }
 
 type cDRServiceClient struct {
@@ -65,6 +67,15 @@ func (c *cDRServiceClient) GetUsage(ctx context.Context, in *UsageReq, opts ...g
 	return out, nil
 }
 
+func (c *cDRServiceClient) GetUsageDetails(ctx context.Context, in *CycleUsageReq, opts ...grpc.CallOption) (*CycleUsageResp, error) {
+	out := new(CycleUsageResp)
+	err := c.cc.Invoke(ctx, "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageDetails", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CDRServiceServer is the server API for CDRService service.
 // All implementations must embed UnimplementedCDRServiceServer
 // for forward compatibility
@@ -75,6 +86,8 @@ type CDRServiceServer interface {
 	GetCDR(context.Context, *RecordReq) (*RecordResp, error)
 	/// Get Usage for the subscriber current package
 	GetUsage(context.Context, *UsageReq) (*UsageResp, error)
+	/// Get Usage detsilsfor the subscriber current cycle
+	GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error)
 	mustEmbedUnimplementedCDRServiceServer()
 }
 
@@ -90,6 +103,9 @@ func (UnimplementedCDRServiceServer) GetCDR(context.Context, *RecordReq) (*Recor
 }
 func (UnimplementedCDRServiceServer) GetUsage(context.Context, *UsageReq) (*UsageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
+}
+func (UnimplementedCDRServiceServer) GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsageDetails not implemented")
 }
 func (UnimplementedCDRServiceServer) mustEmbedUnimplementedCDRServiceServer() {}
 
@@ -158,6 +174,24 @@ func _CDRService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CDRService_GetUsageDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CycleUsageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CDRServiceServer).GetUsageDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageDetails",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CDRServiceServer).GetUsageDetails(ctx, req.(*CycleUsageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CDRService_ServiceDesc is the grpc.ServiceDesc for CDRService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +210,10 @@ var CDRService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsage",
 			Handler:    _CDRService_GetUsage_Handler,
+		},
+		{
+			MethodName: "GetUsageDetails",
+			Handler:    _CDRService_GetUsageDetails_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

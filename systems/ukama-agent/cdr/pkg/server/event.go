@@ -13,20 +13,22 @@ import (
 )
 
 type CDREventServer struct {
-	s *CDRServer
+	s       *CDRServer
+	orgName string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewCDREventServer(s *CDRServer) *CDREventServer {
+func NewCDREventServer(s *CDRServer, org string) *CDREventServer {
 	return &CDREventServer{
-		s: s,
+		s:       s,
+		orgName: org,
 	}
 }
 
 func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch msgbus.UpdateToAcceptFromAllOrg(e.RoutingKey) {
-	case "event.cloud.local.*.ukamaagent.asr.activesubscriber.create": /* Todo: Some global event need to be triggered by system */
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.*.ukamaagent.asr.activesubscriber.create"):
 		msg, err := n.unmarshalActiveSubscriberCreate(e.Msg)
 		if err != nil {
 			return nil, err

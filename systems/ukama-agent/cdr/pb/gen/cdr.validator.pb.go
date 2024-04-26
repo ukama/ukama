@@ -77,3 +77,27 @@ func (this *UsageResp) Validate() error {
 	}
 	return nil
 }
+func (this *CycleUsageReq) Validate() error {
+	if this.Imsi == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
+	}
+	if !(len(this.Imsi) > 5) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
+	}
+	if !(len(this.Imsi) < 16) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	}
+	return nil
+}
+func (this *CycleUsageResp) Validate() error {
+	if this.Imsi == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
+	}
+	if !(len(this.Imsi) > 5) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
+	}
+	if !(len(this.Imsi) < 16) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	}
+	return nil
+}
