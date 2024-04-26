@@ -149,15 +149,17 @@ func (p *packageClient) Get(id string) (*PackageInfo, error) {
 	resp, err := p.R.Get(p.u.String() + PackageEndpoint + "/" + id)
 	if err != nil {
 		log.Errorf("GetPackage failure. error %s", err.Error())
-
 		return nil, fmt.Errorf("GetPackage failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
 		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
-
 		return nil, fmt.Errorf("package info deserailization failure: %w", err)
+	}
+
+	if pkg.PackageInfo == nil {
+		return nil, fmt.Errorf("package info empty: %+v", pkg)
 	}
 
 	log.Infof("Package Info: %+v", pkg.PackageInfo)
