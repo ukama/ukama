@@ -527,7 +527,7 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	}
 
 	/* Step-4: send the message to AMQP broker */
-	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
+	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 amqp_cstring_bytes(buff));
 	if (ret < 0) {
@@ -576,7 +576,7 @@ int publish_event(MeshEvent event, char *orgName,
     return TRUE;
 }
 
-int publish_boot_event(void) {
+int publish_boot_event(char *exchange) {
 
     WAMQPConn *conn=NULL;
     char *amqpHost=NULL, *amqpPort=NULL;
@@ -615,7 +615,7 @@ int publish_boot_event(void) {
     }
 
     /* send the message to AMQP broker */
-    ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
+    ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
                              amqp_cstring_bytes(key), 0, 0, &prop,
                              amqp_cstring_bytes(buff));
     if (ret < 0) {
