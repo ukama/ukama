@@ -1,10 +1,23 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+)
+
+type StatusReason int64
+
+const (
+	UNKNOWN StatusReason = iota
+	ACTIVATION
+	PACKAGE_UPDATE
+	DEACTIVATION
+	NO_DATA_AVAILABLE
+	POLICY_FAILURE
 )
 
 // Represents record in HSS db
@@ -21,18 +34,20 @@ type Asr struct {
 	// Pre Shared Key. Configured in operator’s DB in Authentication center and USIM
 	Amf []byte `gorm:"size:2;"`
 	// Key from the SIM
-	Key            []byte `gorm:"size:16;"`
-	AlgoType       uint32
-	UeDlAmbrBps    uint32
-	UeUlAmbrBps    uint32
-	Sqn            uint64
-	CsgIdPrsent    bool
-	CsgId          uint32
-	DefaultApnName string
-	NetworkID      uuid.UUID `gorm:"not null;type:uuid"`
-	Tai            Tai
-	PackageId      uuid.UUID `gorm:"not null;type uuid"`
-	Policy         Policy
+	Key                     []byte `gorm:"size:16;"`
+	AlgoType                uint32
+	UeDlAmbrBps             uint32
+	UeUlAmbrBps             uint32
+	Sqn                     uint64
+	CsgIdPrsent             bool
+	CsgId                   uint32
+	DefaultApnName          string
+	NetworkID               uuid.UUID `gorm:"not null;type:uuid"`
+	Tai                     Tai
+	PackageId               uuid.UUID `gorm:"not null;type uuid"`
+	Policy                  Policy
+	LastStatusChangeAt      time.Time
+	LastStatusChangeReasons StatusReason
 }
 
 // Tracking Area Identity (TAI)
@@ -68,4 +83,57 @@ type Policy struct {
 	StartTime    uint64
 	EndTime      uint64
 	AsrID        uint
+}
+
+func StatusReasonFromString(s string) StatusReason {
+	switch s {
+	case "ACTIVATION", "activation":
+		return StatusReason(ACTIVATION)
+	case "PACKAGE_UPDATE", "package_update":
+		return StatusReason(PACKAGE_UPDATE)
+	case "DEACTIVATION", "deactivation":
+		return StatusReason(DEACTIVATION)
+	case "NO_DATA_AVAILABLE", "no_data_available":
+		return StatusReason(NO_DATA_AVAILABLE)
+	case "POLICY_FAILURE", "policy_failure":
+		return StatusReason(POLICY_FAILURE)
+	default:
+		return StatusReason(UNKNOWN)
+	}
+}
+
+func (s StatusReason) String() string {
+	switch s {
+	case ACTIVATION:
+		return "ACTIVATION"
+	case PACKAGE_UPDATE:
+		return "PACKAGE_UPDATE"
+	case DEACTIVATION:
+		return "DEACTIVATION"
+	case NO_DATA_AVAILABLE:
+		return "NO_DATA_AVAILABLE"
+	case POLICY_FAILURE:
+		return "POLICY_FAILURE"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func (s StatusReason) Value() (driver.Value, error) {
+	return int64(s), nil
+}
+
+func (s *StatusReason) Scan(value interface{}) error {
+	val, ok := value.(int64)
+	if !ok {
+		return fmt.Errorf("invalid status value %v %T", value, value)
+	}
+
+	switch StatusReason(val) {
+	case ACTIVATION, PACKAGE_UPDATE, DEACTIVATION, NO_DATA_AVAILABLE, POLICY_FAILURE:
+		*s = StatusReason(val)
+	default:
+		*s = UNKNOWN
+	}
+	return nil
 }

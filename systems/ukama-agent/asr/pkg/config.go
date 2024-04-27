@@ -23,6 +23,8 @@ type Config struct {
 	OrgName           string            `default:"ukama"`
 	OrgId             string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
+	Period            time.Duration     `default:"3s"`
+	Monitor           bool              `default:"true"`
 }
 
 type SimManager struct {

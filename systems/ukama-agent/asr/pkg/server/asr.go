@@ -9,13 +9,12 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/pcrf"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,12 +30,12 @@ type AsrRecordServer struct {
 	cdr            client.CDRService
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	pcrf           pcrf.PCRFController
+	pc             pm.Controller
 	OrgName        string
 	OrgId          string
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pcrf pcrf.PCRFController, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:  asrRepo,
@@ -47,7 +46,7 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db
 		network:  network,
 		pRepo:    pRepo,
 		msgbus:   msgBus,
-		pcrf:     pcrf,
+		pc:       pc,
 		cdr:      cdr,
 	}
 
@@ -58,6 +57,29 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db
 	log.Infof("Asr is %+v", asr)
 
 	return &asr, nil
+}
+
+func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session uint64) error {
+	sub, err := s.asrRepo.GetByImsi(imsi)
+	if err != nil {
+		log.Errorf("Error getting ASR profile for ismi %s.Error: %v", imsi, err)
+		return grpc.SqlErrorToGrpc(err, "error getting imsi")
+	}
+
+	r, err := s.cdr.GetUsage(imsi)
+	if err != nil {
+		log.Errorf("Failed to get usage: %v for imsi %s", err, imsi)
+		return err
+	}
+
+	if r.Policy != sub.Policy.Id.String() {
+		log.Errorf("Looks like sync failure for the subcriber %s. Policy expected %s is not matching CDR session %d", imsi, sub.Policy.Id.String(), session)
+		return fmt.Errorf("Policy mismatch.")
+	}
+
+	//TODO
+
+	return nil
 }
 
 func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, error) {
@@ -143,7 +165,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		log.Errorf("PackageId not valid.")
 	}
 
-	pcrfData := &pcrf.SimInfo{
+	pcrfData := &pm.SimInfo{
 		Imsi:      sim.Imsi,
 		Iccid:     sim.Iccid,
 		PackageId: pId,
@@ -152,28 +174,30 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 	}
 
 	/* Send message to PCRF */
-	policy, err := s.pcrf.NewPolicy(pcrfData.PackageId)
+	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
 	}
 
 	/* Add to ASR */
 	asr := &db.Asr{
-		Iccid:          req.Iccid,
-		Imsi:           sim.Imsi,
-		Op:             sim.Op,
-		Key:            sim.Key,
-		Amf:            sim.Amf,
-		AlgoType:       sim.AlgoType,
-		UeDlAmbrBps:    sim.UeDlAmbrBps,
-		UeUlAmbrBps:    sim.UeUlAmbrBps,
-		Sqn:            uint64(sim.Sqn),
-		CsgIdPrsent:    sim.CsgIdPrsent,
-		CsgId:          sim.CsgId,
-		DefaultApnName: sim.DefaultApnName,
-		PackageId:      pId,
-		NetworkID:      nId,
-		Policy:         *policy,
+		Iccid:                   req.Iccid,
+		Imsi:                    sim.Imsi,
+		Op:                      sim.Op,
+		Key:                     sim.Key,
+		Amf:                     sim.Amf,
+		AlgoType:                sim.AlgoType,
+		UeDlAmbrBps:             sim.UeDlAmbrBps,
+		UeUlAmbrBps:             sim.UeUlAmbrBps,
+		Sqn:                     uint64(sim.Sqn),
+		CsgIdPrsent:             sim.CsgIdPrsent,
+		CsgId:                   sim.CsgId,
+		DefaultApnName:          sim.DefaultApnName,
+		PackageId:               pId,
+		NetworkID:               nId,
+		Policy:                  *policy,
+		LastStatusChangeAt:      time.Now(),
+		LastStatusChangeReasons: db.ACTIVATION,
 	}
 
 	err = s.asrRepo.Add(asr)
@@ -181,29 +205,9 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err = s.pcrf.AddPolicy(pcrfData, policy)
+	err = s.pc.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber")
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error adding policy")
-	}
-
-	/* Create event */
-	e := &epb.AsrActivated{
-		Subscriber: &epb.Subscriber{
-			Imsi:    asr.Imsi,
-			Iccid:   asr.Iccid,
-			Network: asr.NetworkID.String(),
-			Package: asr.PackageId.String(),
-			Org:     s.OrgId,
-			Policy:  policy.Id.String(),
-		},
-	}
-
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetAction("create").SetObject("activesubscriber").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
 	}
 
 	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
@@ -223,7 +227,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id")
 	}
 
-	pcrfData := &pcrf.SimInfo{
+	pcrfData := &pm.SimInfo{
 		ID:        asrRecord.ID,
 		Imsi:      asrRecord.Imsi,
 		Iccid:     asrRecord.Iccid,
@@ -232,7 +236,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	}
 
 	/* Send message to PCRF */
-	policy, err := s.pcrf.NewPolicy(pcrfData.PackageId)
+	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
 	}
@@ -242,29 +246,9 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err = s.pcrf.UpdatePolicy(pcrfData, policy)
+	err = s.pc.SyncProfile(pcrfData, nil, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
-	}
-
-	/* Create event */
-	e := &epb.AsrUpdated{
-		Subscriber: &epb.Subscriber{
-			Imsi:    asrRecord.Imsi,
-			Iccid:   asrRecord.Iccid,
-			Network: asrRecord.NetworkID.String(),
-			Package: req.PackageId,
-			Org:     s.OrgId,
-			Policy:  policy.Id.String(),
-		},
-	}
-
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionUpdate().SetObject("activesubscriber").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
 	}
 
 	asrRecord.Policy = *policy
@@ -279,40 +263,21 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 	}
 
-	pcrfData := &pcrf.SimInfo{
+	pcrfData := &pm.SimInfo{
 		ID:        delAsrRecord.ID,
 		Imsi:      delAsrRecord.Imsi,
 		Iccid:     delAsrRecord.Iccid,
 		NetworkId: delAsrRecord.NetworkID,
 	}
 
-	err = s.asrRepo.Delete(delAsrRecord.Imsi)
+	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err = s.pcrf.DeletePolicy(pcrfData)
+	err = s.pc.SyncProfile(pcrfData, nil, msgbus.ACTION_CRUD_DELETE, "activesubscriber")
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
-	}
-
-	/* Create event */
-	e := &epb.AsrInactivated{
-		Subscriber: &epb.Subscriber{
-			Imsi:    delAsrRecord.Imsi,
-			Iccid:   delAsrRecord.Iccid,
-			Network: delAsrRecord.NetworkID.String(),
-			Package: delAsrRecord.PackageId.String(),
-			Org:     s.OrgId,
-		},
-	}
-
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionDelete().SetObject("activesubscriber").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
 	}
 
 	log.Debugf("Deleted subscriber %+v", delAsrRecord)

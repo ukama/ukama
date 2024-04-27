@@ -6,7 +6,7 @@ import (
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/pcrf"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -94,9 +94,9 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("MsgBus is mandatory for service %s", pkg.ServiceName)
 	}
 
-	asr := db.NewAsrRecordRepo(gormdb)
-	guti := db.NewGutiRepo(gormdb)
-	policy := db.NewPolicyRepo(gormdb)
+	asrRepo := db.NewAsrRecordRepo(gormdb)
+	gutiRepo := db.NewGutiRepo(gormdb)
+	policyRepo := db.NewPolicyRepo(gormdb)
 
 	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
 	if err != nil {
@@ -113,15 +113,17 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("CDR Client initilization failed. Error: %v", err)
 	}
 
-	pcrf := pcrf.NewPCRFController(policy, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
+	//pcrf := pcrf.NewPCRFController(policyRepo, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
+
+	controller := pm.NewPolicyController(asrRepo, policyRepo, mbClient, serviceConfig.DataplanHost, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
 
 	// asr service
-	asrServer, err := server.NewAsrRecordServer(asr, guti, policy,
-		factory, network, pcrf, cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
+	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo, policyRepo,
+		factory, network, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
-	nSrv := server.NewAsrEventServer(asr, asrServer, guti, serviceConfig.OrgName)
+	nSrv := server.NewAsrEventServer(asrRepo, asrServer, gutiRepo, serviceConfig.OrgName)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterAsrRecordServiceServer(s, asrServer)

@@ -3,6 +3,7 @@ package db
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -18,12 +19,13 @@ const TaiNotUpdatedErr = "more recent tai for imsi exist"
 type AsrRecordRepo interface {
 	Add(record *Asr) error
 	Get(id int) (*Asr, error)
+	List() ([]Asr, error)
 	GetByImsi(imsi string) (*Asr, error)
 	GetByIccid(iccid string) (*Asr, error)
 	Update(imsi string, record *Asr) error
 	UpdatePackage(imsi string, packageId uuid.UUID, policy *Policy) error
-	DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error
-	Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error
+	DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
+	Delete(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
 }
 
@@ -67,6 +69,13 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 		if err != nil {
 			return errors.Wrap(err, "error adding policy")
 		}
+		asrRec.LastStatusChangeAt = time.Now()
+		asrRec.LastStatusChangeReasons = PACKAGE_UPDATE
+
+		err = tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Updates(asrRec).Error
+		if err != nil {
+			return errors.Wrap(err, "error updating reason")
+		}
 
 		return nil
 	})
@@ -81,6 +90,16 @@ func (r *asrRecordRepo) Get(id int) (*Asr, error) {
 	}
 
 	return &hss, nil
+}
+
+func (r *asrRecordRepo) List() ([]Asr, error) {
+	var p []Asr
+	result := r.db.GetGormDb().Preload(clause.Associations).Find(&p)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return p, nil
 }
 
 func (r *asrRecordRepo) GetByImsi(imsi string) (*Asr, error) {
@@ -103,7 +122,7 @@ func (r *asrRecordRepo) GetByIccid(iccid string) (*Asr, error) {
 	return &asr, nil
 }
 
-func (r *asrRecordRepo) Delete(imsi string, nestedFuncs ...func(*gorm.DB) error) error {
+func (r *asrRecordRepo) Delete(imsi string, reason StatusReason, nestedFuncs ...func(*gorm.DB) error) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
 		asrRec := &Asr{}
@@ -112,6 +131,14 @@ func (r *asrRecordRepo) Delete(imsi string, nestedFuncs ...func(*gorm.DB) error)
 			return errors.Wrap(err, "unable to find record for subscriber "+imsi)
 		}
 		log.Debugf("Deleting ASR record %+v", asrRec)
+
+		asrRec.LastStatusChangeAt = time.Now()
+		asrRec.LastStatusChangeReasons = reason
+
+		err = tx.Model(&Asr{}).Where("imsi=?", imsi).Updates(&asrRec).Error
+		if err != nil {
+			return errors.Wrap(err, "unable to update record for subscriber "+imsi)
+		}
 
 		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Policy{}).Error
 		if err != nil {
@@ -137,10 +164,36 @@ func (r *asrRecordRepo) Delete(imsi string, nestedFuncs ...func(*gorm.DB) error)
 	})
 }
 
-func (r *asrRecordRepo) DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error {
-	return r.db.ExecuteInTransaction2(func(tx *gorm.DB) *gorm.DB {
-		return tx.Where(&Asr{Iccid: iccid}).Delete(&Asr{})
-	}, nestedFunc...)
+func (r *asrRecordRepo) DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error {
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		s := &Asr{
+			LastStatusChangeAt:      time.Now(),
+			LastStatusChangeReasons: reason,
+		}
+
+		err := tx.Model(&Asr{}).Where("iccid=?", iccid).Updates(s).Error
+		if err != nil {
+			return errors.Wrap(err, "error updating reason")
+		}
+
+		err = tx.Where(&Asr{Iccid: iccid}).Delete(&Asr{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error deleting subscriber")
+		}
+
+		if len(nestedFunc) > 0 {
+			for _, n := range nestedFunc {
+				if n != nil {
+					nestErr := n(tx)
+					if nestErr != nil {
+						return nestErr
+					}
+				}
+			}
+		}
+
+		return nil
+	})
 
 }
 
