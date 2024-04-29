@@ -137,7 +137,7 @@ int serialize_system_response(char **response, Message *message,
 	}
 
 	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_NODE_RESPONSE));
-    json_object_set_new(json, JSON_SEQ, json_integer(message->seqNo));
+    json_object_set_new(json, JSON_SEQ, json_string(message->seqNo));
 
     /* Add node info. */
 	json_object_set_new(json, JSON_NODE_INFO, json_object());
@@ -286,8 +286,8 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 int deserialize_websocket_message(Message **message, char *data) {
 
     json_t *json;
-    json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jData, *jPort;
-    json_t *jMessage, *jName, *jNodeID, *jLength, *jSrcPort, *jCode;
+    json_t *jType, *jSeq, *jMessage;
+    json_t *jLength, *jData, *jCode;
 
     json = json_loads(data, JSON_DECODE_ANY, NULL);
 	if (json == NULL) {
@@ -337,7 +337,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 static void deserialize_map_array(UMap **map, json_t *json) {
 
 	json_t *jArray;
-	json_t *elem, *key, *val, *len;
+	json_t *elem, *key, *val;
 	int i, size=0;
 
 	*map = (UMap *)calloc(1, sizeof(UMap));
@@ -356,7 +356,6 @@ static void deserialize_map_array(UMap **map, json_t *json) {
 
 			key = json_object_get(elem, JSON_KEY);
 			val = json_object_get(elem, JSON_VALUE);
-			len = json_object_get(elem, JSON_LEN);
 
 			u_map_put(*map, json_string_value(key), json_string_value(val));
 		}

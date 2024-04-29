@@ -24,23 +24,6 @@
 
 extern MapTable *NodesTable;
 
-/*
- * clear_response -- free up memory from MResponse.
- *
- */
-static void clear_response(MResponse **resp) {
-
-	if (*resp==NULL) return;
-
-	free((*resp)->reqType);
-	free((*resp)->serviceInfo);
-	if ((*resp)->data) {
-		free((*resp)->data);
-	}
-
-	free(*resp);
-}
-
 static void free_message(Message *message) {
 
     if (message == NULL) return;
@@ -193,7 +176,6 @@ void websocket_incoming_message(const URequest *request,
 								void *data) {
     Message *rcvdMessage=NULL;
     char *responseRemote=NULL;
-	MRequest *rcvdData=NULL;
 	int ret;
     MapItem *map=NULL;
     Forward *forward=NULL;

@@ -618,7 +618,7 @@ int publish_boot_event(char *exchange) {
     ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
                              amqp_cstring_bytes(key), 0, 0, &prop,
                              amqp_cstring_bytes(buff));
-    if (ret < 0) {
+    if (ret != AMQP_STATUS_OK) {
         ret = FALSE;
         log_error("Error sending AMQP boot message. Error: %s",
                   amqp_error_string2(ret));
