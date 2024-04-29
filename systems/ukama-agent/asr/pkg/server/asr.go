@@ -33,21 +33,23 @@ type AsrRecordServer struct {
 	pc             pm.Controller
 	OrgName        string
 	OrgId          string
+	allowedToS     int64
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
-		asrRepo:  asrRepo,
-		gutiRepo: gutiRepo,
-		OrgName:  orgName,
-		OrgId:    orgId,
-		factory:  factory,
-		network:  network,
-		pRepo:    pRepo,
-		msgbus:   msgBus,
-		pc:       pc,
-		cdr:      cdr,
+		asrRepo:    asrRepo,
+		gutiRepo:   gutiRepo,
+		OrgName:    orgName,
+		OrgId:      orgId,
+		factory:    factory,
+		network:    network,
+		pRepo:      pRepo,
+		msgbus:     msgBus,
+		pc:         pc,
+		cdr:        cdr,
+		allowedToS: aToS,
 	}
 
 	if msgBus != nil {
@@ -194,9 +196,10 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		CsgId:                   sim.CsgId,
 		DefaultApnName:          sim.DefaultApnName,
 		PackageId:               pId,
-		NetworkID:               nId,
+		NetworkId:               nId,
 		Policy:                  *policy,
 		LastStatusChangeAt:      time.Now(),
+		AllowedTimeOfService:    s.allowedToS,
 		LastStatusChangeReasons: db.ACTIVATION,
 	}
 
@@ -205,9 +208,20 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
+	err, removed := s.pc.RunPolicyControl(asr.Imsi)
+	if err != nil {
+		log.Errorf("error running policy control for imsi %s. Error %s", asr.Imsi, err.Error())
+		return nil, err
+	}
+
+	if removed {
+		log.Infof("Profile not added to repo as one or more policies were failed for %s", asr.Imsi)
+		return nil, fmt.Errorf("policy failure for profile")
+	}
+
 	err = s.pc.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber")
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error adding policy")
+		return nil, err
 	}
 
 	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
@@ -232,7 +246,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		Imsi:      asrRecord.Imsi,
 		Iccid:     asrRecord.Iccid,
 		PackageId: pId,
-		NetworkId: asrRecord.NetworkID,
+		NetworkId: asrRecord.NetworkId,
 	}
 
 	/* Send message to PCRF */
@@ -244,6 +258,17 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi)
+	if err != nil {
+		log.Errorf("error running policy control for imsi %s. Error %s", asrRecord.Imsi, err.Error())
+		return nil, err
+	}
+
+	if removed {
+		log.Infof("Profile removed from repo as one or more policies were failed for %s", asrRecord.Imsi)
+		return nil, fmt.Errorf("policy failure for profile")
 	}
 
 	err = s.pc.SyncProfile(pcrfData, nil, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
@@ -267,7 +292,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		ID:        delAsrRecord.ID,
 		Imsi:      delAsrRecord.Imsi,
 		Iccid:     delAsrRecord.Iccid,
-		NetworkId: delAsrRecord.NetworkID,
+		NetworkId: delAsrRecord.NetworkId,
 	}
 
 	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
@@ -331,4 +356,52 @@ func (s *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*p
 	}
 
 	return &pb.UpdateTaiResp{}, nil
+}
+
+func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
+
+	sub, err := s.asrRepo.GetByImsi(imsi)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "error getting imsi")
+	}
+
+	r, err := s.cdr.GetUsage(imsi)
+	if err != nil {
+		log.Errorf("Failed to get usage: %v for imsi %s", err, imsi)
+		return err
+	}
+
+	sub.Policy.ConsumedData = r.Usage
+
+	err = s.asrRepo.Update(imsi, sub)
+	if err != nil {
+		log.Errorf("Failed to update usage: %v for imsi %s.Error%s", r, imsi, err.Error())
+		return err
+	}
+
+	err, removed := s.pc.RunPolicyControl(imsi)
+	if err != nil {
+		log.Errorf("error running policy control for imsi %s. Error %s", sub.Imsi, err.Error())
+		return err
+	}
+
+	if removed {
+		log.Infof("Profile removed from repo as one or more policies were failed for %s", sub.Imsi)
+		return fmt.Errorf("policy failure for profile")
+	}
+
+	pcrfData := &pm.SimInfo{
+		ID:        sub.ID,
+		Imsi:      sub.Imsi,
+		Iccid:     sub.Iccid,
+		PackageId: sub.PackageId,
+		NetworkId: sub.NetworkId,
+	}
+
+	err = s.pc.SyncProfile(pcrfData, sub, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -18,7 +18,7 @@ import (
 
 type policyController struct {
 	dp                   dataplan.PackageClient
-	PolicyType           []PolicyType
+	Rules                []Rule
 	asrRepo              db.AsrRecordRepo
 	nodePolicyPath       string
 	period               time.Duration
@@ -71,6 +71,7 @@ type Controller interface {
 	InitPolicyController()
 	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
 	SyncProfile(s *SimInfo, as *db.Asr, action string, object string) error
+	RunPolicyControl(imsi string) (error, bool)
 }
 
 func NewPolicyController(asrRepo db.AsrRecordRepo, pRepo db.PolicyRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
@@ -115,7 +116,7 @@ func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
 
 func (p *policyController) InitPolicyController() {
 	// This could be populated as apart of config
-	p.PolicyType = []PolicyType{
+	p.Rules = []Rule{
 		{
 			Name:   "DataCap",
 			ID:     1,
@@ -126,6 +127,12 @@ func (p *policyController) InitPolicyController() {
 			Name:   "AllowedServiceTime",
 			ID:     2,
 			Check:  AllowedTimeOfServiceCheck,
+			Action: RemoveProfile,
+		},
+		{
+			Name:   "ValidityCheck",
+			ID:     3,
+			Check:  ValidityCheck,
 			Action: RemoveProfile,
 		},
 	}
@@ -165,7 +172,7 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	subscriber := &epb.Subscriber{
 		Imsi:    as.Imsi,
 		Iccid:   as.Iccid,
-		Network: as.NetworkID.String(),
+		Network: as.NetworkId.String(),
 		Package: as.PackageId.String(),
 		Org:     p.OrgId,
 		Policy:  as.Policy.Id.String(),
@@ -208,7 +215,7 @@ func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
 		return err, removed
 	}
 
-	for _, pt := range p.PolicyType {
+	for _, pt := range p.Rules {
 		if pt.Check != nil {
 
 			valid := pt.Check(*pf)

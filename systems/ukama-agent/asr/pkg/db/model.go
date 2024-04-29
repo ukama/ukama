@@ -42,11 +42,12 @@ type Asr struct {
 	CsgIdPrsent             bool
 	CsgId                   uint32
 	DefaultApnName          string
-	NetworkID               uuid.UUID `gorm:"not null;type:uuid"`
+	NetworkId               uuid.UUID `gorm:"not null;type:uuid"`
 	Tai                     Tai
 	PackageId               uuid.UUID `gorm:"not null;type uuid"`
 	Policy                  Policy
 	LastStatusChangeAt      time.Time
+	AllowedTimeOfService    int64
 	LastStatusChangeReasons StatusReason
 }
 

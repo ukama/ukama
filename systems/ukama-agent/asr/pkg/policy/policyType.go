@@ -9,7 +9,7 @@ import (
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 )
 
-type PolicyType struct {
+type Rule struct {
 	Name   string `json:"name"`
 	ID     uint32 `json:"id"`
 	Check  func(pf db.Asr) bool
@@ -24,6 +24,11 @@ func DataCapCheck(p db.Asr) bool {
 /* Allowed Time of service Policy */
 func AllowedTimeOfServiceCheck(pf db.Asr) bool {
 	return (pf.LastStatusChangeAt.Unix() + pf.AllowedTimeOfService) > time.Now().Unix()
+}
+
+/* Validity check for */
+func ValidityCheck(pf db.Asr) bool {
+	return ((time.Now().Unix() >= (int64)(pf.Policy.StartTime)) && (time.Now().Unix() < (int64)(pf.Policy.EndTime)))
 }
 
 func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
@@ -41,13 +46,13 @@ func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
 			Package:              pf.PackageId.String(),
 			Org:                  p.OrgName,
 			AllowedTimeOfService: pf.AllowedTimeOfService,
-			TotalDataBytes:       pf.TotalDataBytes,
+			TotalDataBytes:       pf.Policy.ConsumedData,
 		},
 	}
 
-	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "policy", e)
+	_ = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
 
-	_ = p.syncProfile(http.MethodDelete, pf)
+	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "policy", e)
 
 	return nil, true
 }

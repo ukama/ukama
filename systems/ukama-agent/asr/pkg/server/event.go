@@ -60,11 +60,10 @@ func (l *AsrEventServer) unmarshalCDRCreate(msg *anypb.Any) (*epb.CDRReported, e
 
 func (l *AsrEventServer) handleEventCDRCreate(key string, msg *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	// err := l.s.UpdateUsage()
-	// if err != nil {
-	// 	log.Errorf("Failed to update the active subscriber %+s.Error: %+v", msg.Subscriber.Imsi, err)
-	// 	return err
-	// }
-
+	err := l.s.UpdateandSyncAsrProfile(msg.GetImsi())
+	if err != nil {
+		log.Errorf("Failed to update the active subscriber %+s.Error: %+v", msg.Imsi, err)
+		return err
+	}
 	return nil
 }
