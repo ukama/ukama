@@ -39,7 +39,7 @@ type PostCDRReq struct {
 }
 
 type GetCDRReq struct {
-	Imsi      string `json:"imsi" validate:"required"`
+	Imsi      string `json:"imsi" path:"imsi" validate:"required"`
 	StartTime uint64 `json:"start_time"`
 	EndTime   uint64 `json:"end_time"`
 	Policy    string `json:"policy"`
@@ -47,7 +47,7 @@ type GetCDRReq struct {
 }
 
 type GetUsageReq struct {
-	Imsi      string `json:"imsi" validate:"required"`
+	Imsi      string `json:"imsi" path:"imsi" validate:"required"`
 	StartTime uint64 `json:"start_time"`
 	EndTime   uint64 `json:"end_time"`
 	Policy    string `json:"policy"`
