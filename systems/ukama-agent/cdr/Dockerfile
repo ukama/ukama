@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/asr /usr/bin/asr
+COPY bin/cdr /usr/bin/cdr
 
-CMD ["/usr/bin/asr"]
+CMD ["/usr/bin/cdr"]

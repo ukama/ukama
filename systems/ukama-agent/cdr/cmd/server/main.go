@@ -18,6 +18,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
@@ -26,6 +27,7 @@ import (
 var serviceConfig *pkg.Config
 
 func main() {
+
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
@@ -44,7 +46,7 @@ func initConfig() {
 	} else if pkg.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			log.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n %s", string(b))
 		}
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
@@ -53,7 +55,7 @@ func initConfig() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	log.Infof("Config: %+v", serviceConfig)
+	log.Infof("Config: %+v and routes %+v", serviceConfig, serviceConfig.MsgClient.ListenerRoutes)
 }
 
 func initDb() sql.Db {
@@ -100,8 +102,13 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
 
+	nSrv := server.NewCDREventServer(cdrServer, serviceConfig.OrgName)
+
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterCDRServiceServer(s, cdrServer)
+		if serviceConfig.IsMsgBus {
+			egen.RegisterEventNotificationServiceServer(s, nSrv)
+		}
 	})
 
 	if serviceConfig.IsMsgBus {

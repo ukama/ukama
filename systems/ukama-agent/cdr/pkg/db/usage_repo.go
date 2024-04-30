@@ -39,7 +39,7 @@ func (p *usageRepo) Add(usage *Usage) error {
 
 func (p *usageRepo) Get(imsi string) (*Usage, error) {
 	var usage Usage
-	r := p.db.GetGormDb().Where("ismi = ?", imsi).Find(&usage)
+	r := p.db.GetGormDb().Where("imsi = ?", imsi).Find(&usage)
 	if r.Error != nil {
 		log.Errorf("error getting usage for imsi %s.Error: %+v", imsi, r.Error)
 		return nil, r.Error

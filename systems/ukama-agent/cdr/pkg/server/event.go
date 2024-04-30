@@ -26,9 +26,9 @@ func NewCDREventServer(s *CDRServer, org string) *CDREventServer {
 }
 
 func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+	log.Infof("Recieved a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch msgbus.UpdateToAcceptFromAllOrg(e.RoutingKey) {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.*.ukamaagent.asr.activesubscriber.create"):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
 		msg, err := n.unmarshalActiveSubscriberCreate(e.Msg)
 		if err != nil {
 			return nil, err
@@ -38,7 +38,7 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.*.ukamaagent.asr.activesubscriber.update"):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.update"):
 		msg, err := n.unmarshalActiveSubscriberUpdate(e.Msg)
 		if err != nil {
 			return nil, err
@@ -55,8 +55,8 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	return &epb.EventResponse{}, nil
 }
 
-func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.AsrUpdated, error) {
-	p := &epb.AsrUpdated{}
+func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.AsrActivated, error) {
+	p := &epb.AsrActivated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal Active Subscriber create message with : %+v. Error %s.", msg, err.Error())
@@ -65,7 +65,7 @@ func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.A
 	return p, nil
 }
 
-func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrUpdated) error {
+func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrActivated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 	err := n.s.InitUsage(msg.Subscriber.Imsi, msg.Subscriber.Policy)
 	if err != nil {
