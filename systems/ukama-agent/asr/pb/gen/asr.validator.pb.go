@@ -60,28 +60,6 @@ func (this *Apn) Validate() error {
 	return nil
 }
 func (this *ReadReq) Validate() error {
-	if oneOfNester, ok := this.GetId().(*ReadReq_Imsi); ok {
-		if oneOfNester.Imsi == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, oneOfNester.Imsi))
-		}
-		if !(len(oneOfNester.Imsi) > 5) {
-			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, oneOfNester.Imsi))
-		}
-		if !(len(oneOfNester.Imsi) < 16) {
-			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, oneOfNester.Imsi))
-		}
-	}
-	if oneOfNester, ok := this.GetId().(*ReadReq_Iccid); ok {
-		if oneOfNester.Iccid == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, oneOfNester.Iccid))
-		}
-		if !(len(oneOfNester.Iccid) > 18) {
-			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, oneOfNester.Iccid))
-		}
-		if !(len(oneOfNester.Iccid) < 22) {
-			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, oneOfNester.Iccid))
-		}
-	}
 	return nil
 }
 func (this *ReadResp) Validate() error {

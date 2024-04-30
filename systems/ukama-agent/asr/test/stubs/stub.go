@@ -206,7 +206,7 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
 				From:        "2023-04-01T00:00:00Z",
-				To:          "2023-04-01T00:00:00Z",
+				To:          "2025-04-01T00:00:00Z",
 				BaserateId:  uuid.NewV4().String(),
 				VoiceVolume: 0,
 				IsActive:    true,
@@ -224,16 +224,17 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Type:     "postpaid",
 				Flatrate: false,
 				Amount:   0,
+				Duration: 2592000, //30 days
 			},
 		}, nil
 	} else if req.Package == "40987edb-ebb6-4f84-a27c-99db7c136128" {
 		return &Package{
 			PackageInfo: &PackageInfo{
-				Name:        "Monthly Data 2",
+				Name:        "HalfMonthData",
 				OrgId:       uuid.NewV4().String(),
 				OwnerId:     uuid.NewV4().String(),
 				From:        "2023-04-01T00:00:00Z",
-				To:          "2023-04-01T00:00:00Z",
+				To:          "2028-04-01T00:00:00Z",
 				BaserateId:  uuid.NewV4().String(),
 				VoiceVolume: 0,
 				IsActive:    true,
@@ -251,6 +252,7 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Type:     "postpaid",
 				Flatrate: false,
 				Amount:   0,
+				Duration: 1296000, //15 days
 			},
 		}, nil
 	}

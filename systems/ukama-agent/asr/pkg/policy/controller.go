@@ -164,11 +164,7 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 
 func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, object string) error {
 
-	err := p.syncSubscriberPolicy(action, s.Imsi, s.NetworkId.String(), &as.Policy)
-	if err != nil {
-		return err
-	}
-
+	httpMethod := "POST"
 	subscriber := &epb.Subscriber{
 		Imsi:    as.Imsi,
 		Iccid:   as.Iccid,
@@ -186,17 +182,28 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 		e := &epb.AsrActivated{
 			Subscriber: subscriber,
 		}
+		httpMethod = "POST"
 		msg = e
 	case "delete":
 		e := &epb.AsrInactivated{
 			Subscriber: subscriber,
 		}
 		msg = e
+		httpMethod = "DELETE"
 	case "update":
 		e := &epb.AsrUpdated{
 			Subscriber: subscriber,
 		}
 		msg = e
+		httpMethod = "PATCH"
+	default:
+		log.Errorf("invalid action %s to sync subscriber profile called.", action)
+		return nil
+	}
+
+	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy)
+	if err != nil {
+		return err
 	}
 
 	return p.publishEvent(action, object, msg)

@@ -103,7 +103,7 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		}
 	}
 
-	r, err := s.cdr.GetUsage(req.GetImsi())
+	r, err := s.cdr.GetUsage(sub.Imsi)
 	if err != nil {
 		log.Errorf("Failed to get usage: %v for imsi %s", err, req.GetImsi())
 		return nil, err
@@ -271,13 +271,19 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, fmt.Errorf("policy failure for profile")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, nil, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
+	/* read the updated profile */
+	nRec, err := s.asrRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+	}
+
+	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
 	asrRecord.Policy = *policy
-	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, asrRecord)
+	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, nRec)
 	return &pb.UpdatePackageResp{}, nil
 }
 
@@ -300,7 +306,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, nil, msgbus.ACTION_CRUD_DELETE, "activesubscriber")
+	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber")
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}

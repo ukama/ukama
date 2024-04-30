@@ -53,7 +53,7 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
 		asrRec := &Asr{}
-		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
+		err := tx.Model(&Asr{}).Preload(clause.Associations).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
 		if err != nil {
 			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
 		}
@@ -69,6 +69,7 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 		if err != nil {
 			return errors.Wrap(err, "error adding policy")
 		}
+		asrRec.PackageId = packageId
 		asrRec.LastStatusChangeAt = time.Now()
 		asrRec.LastStatusChangeReasons = PACKAGE_UPDATE
 
@@ -197,7 +198,7 @@ func (r *asrRecordRepo) DeleteByIccid(iccid string, reason StatusReason, nestedF
 
 }
 
-// ReplaceTai removes all TAI record for IMSI and adds new ones
+// ReplaceTai removes all TAI record for IMSI and adds new onesactionName
 func (r *asrRecordRepo) UpdateTai(imsi string, tai Tai) error {
 	var imsiM Asr
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {

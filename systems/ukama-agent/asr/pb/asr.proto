@@ -73,8 +73,8 @@ message Apn {
 
 message ReadReq {
     oneof id {
-        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; ///oneof
-        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
+        string Imsi = 1 ;
+        string Iccid = 2 ;
     }
 }
 
