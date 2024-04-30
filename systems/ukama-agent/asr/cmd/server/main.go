@@ -29,6 +29,7 @@ import (
 var serviceConfig *pkg.Config
 
 func main() {
+	log.SetLevel(log.DebugLevel)
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()

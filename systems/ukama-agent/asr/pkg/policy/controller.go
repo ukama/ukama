@@ -80,7 +80,7 @@ func NewPolicyController(asrRepo db.AsrRecordRepo, pRepo db.PolicyRepo, msgB mb.
 		asrRepo:              asrRepo,
 		policyRepo:           pRepo,
 		msgbus:               msgB,
-		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
+		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
 		OrgName:              orgName,
 		OrgId:                orgId,
 		reroute:              reroute,

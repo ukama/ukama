@@ -30,20 +30,20 @@ func (_m *AsrRecordRepo) Add(record *db.Asr) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: imsi, nestedFunc
-func (_m *AsrRecordRepo) Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error {
+// Delete provides a mock function with given fields: iccid, reason, nestedFunc
+func (_m *AsrRecordRepo) Delete(iccid string, reason db.StatusReason, nestedFunc ...func(*gorm.DB) error) error {
 	_va := make([]interface{}, len(nestedFunc))
 	for _i := range nestedFunc {
 		_va[_i] = nestedFunc[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, imsi)
+	_ca = append(_ca, iccid, reason)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) error) error); ok {
-		r0 = rf(imsi, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(string, db.StatusReason, ...func(*gorm.DB) error) error); ok {
+		r0 = rf(iccid, reason, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -51,20 +51,20 @@ func (_m *AsrRecordRepo) Delete(imsi string, nestedFunc ...func(*gorm.DB) error)
 	return r0
 }
 
-// DeleteByIccid provides a mock function with given fields: iccid, nestedFunc
-func (_m *AsrRecordRepo) DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error {
+// DeleteByIccid provides a mock function with given fields: iccid, reason, nestedFunc
+func (_m *AsrRecordRepo) DeleteByIccid(iccid string, reason db.StatusReason, nestedFunc ...func(*gorm.DB) error) error {
 	_va := make([]interface{}, len(nestedFunc))
 	for _i := range nestedFunc {
 		_va[_i] = nestedFunc[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, iccid)
+	_ca = append(_ca, iccid, reason)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) error) error); ok {
-		r0 = rf(iccid, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(string, db.StatusReason, ...func(*gorm.DB) error) error); ok {
+		r0 = rf(iccid, reason, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}

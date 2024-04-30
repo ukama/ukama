@@ -31,7 +31,7 @@ func NewAsrEventServer(asrRepo db.AsrRecordRepo, s *AsrRecordServer, gutiRepo db
 func (l *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.*.ukamaagent.cdr.cdr.create"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create"):
 		msg, err := l.unmarshalCDRCreate(e.Msg)
 		if err != nil {
 			return nil, err

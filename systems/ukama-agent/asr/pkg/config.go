@@ -45,8 +45,10 @@ func NewConfig(name string) *Config {
 
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{},
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.*.ukamaagent.cdr.cdr.create",
+			},
 		},
 		DataplanHost: "http://192.168.0.14:8085",
 		NetworkHost:  "http://192.168.0.14:8085",
