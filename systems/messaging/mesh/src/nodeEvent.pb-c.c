@@ -7,84 +7,129 @@
 #endif
 
 #include "nodeEvent.pb-c.h"
-void   node_event__init
-                     (NodeEvent         *message)
+void   node_online_event__init
+                     (NodeOnlineEvent         *message)
 {
-  static const NodeEvent init_value = NODE_EVENT__INIT;
+  static const NodeOnlineEvent init_value = NODE_ONLINE_EVENT__INIT;
   *message = init_value;
 }
-size_t node_event__get_packed_size
-                     (const NodeEvent *message)
+size_t node_online_event__get_packed_size
+                     (const NodeOnlineEvent *message)
 {
-  assert(message->base.descriptor == &node_event__descriptor);
+  assert(message->base.descriptor == &node_online_event__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t node_event__pack
-                     (const NodeEvent *message,
+size_t node_online_event__pack
+                     (const NodeOnlineEvent *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &node_event__descriptor);
+  assert(message->base.descriptor == &node_online_event__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t node_event__pack_to_buffer
-                     (const NodeEvent *message,
+size_t node_online_event__pack_to_buffer
+                     (const NodeOnlineEvent *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &node_event__descriptor);
+  assert(message->base.descriptor == &node_online_event__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-NodeEvent *
-       node_event__unpack
+NodeOnlineEvent *
+       node_online_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (NodeEvent *)
-     protobuf_c_message_unpack (&node_event__descriptor,
+  return (NodeOnlineEvent *)
+     protobuf_c_message_unpack (&node_online_event__descriptor,
                                 allocator, len, data);
 }
-void   node_event__free_unpacked
-                     (NodeEvent *message,
+void   node_online_event__free_unpacked
+                     (NodeOnlineEvent *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &node_event__descriptor);
+  assert(message->base.descriptor == &node_online_event__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor node_event__field_descriptors[5] =
+void   node_offline_event__init
+                     (NodeOfflineEvent         *message)
+{
+  static const NodeOfflineEvent init_value = NODE_OFFLINE_EVENT__INIT;
+  *message = init_value;
+}
+size_t node_offline_event__get_packed_size
+                     (const NodeOfflineEvent *message)
+{
+  assert(message->base.descriptor == &node_offline_event__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t node_offline_event__pack
+                     (const NodeOfflineEvent *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &node_offline_event__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t node_offline_event__pack_to_buffer
+                     (const NodeOfflineEvent *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &node_offline_event__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+NodeOfflineEvent *
+       node_offline_event__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (NodeOfflineEvent *)
+     protobuf_c_message_unpack (&node_offline_event__descriptor,
+                                allocator, len, data);
+}
+void   node_offline_event__free_unpacked
+                     (NodeOfflineEvent *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &node_offline_event__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
 {
   {
     "nodeId",
     1,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeEvent, nodeid),
+    offsetof(NodeOnlineEvent, nodeid),
     NULL,
-    NULL,
+    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
     "nodeIp",
     2,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeEvent, nodeip),
+    offsetof(NodeOnlineEvent, nodeip),
     NULL,
-    NULL,
+    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
     "nodePort",
     3,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(NodeEvent, nodeport),
+    offsetof(NodeOnlineEvent, nodeport),
     NULL,
     NULL,
     0,             /* flags */
@@ -93,52 +138,103 @@ static const ProtobufCFieldDescriptor node_event__field_descriptors[5] =
   {
     "meshIp",
     4,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeEvent, meship),
+    offsetof(NodeOnlineEvent, meship),
     NULL,
-    NULL,
+    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
     "meshPort",
     5,
-    PROTOBUF_C_LABEL_REQUIRED,
+    PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(NodeEvent, meshport),
+    offsetof(NodeOnlineEvent, meshport),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "meshHostName",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(NodeOnlineEvent, meshhostname),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
-static const unsigned node_event__field_indices_by_name[] = {
+static const unsigned node_online_event__field_indices_by_name[] = {
+  5,   /* field[5] = meshHostName */
   3,   /* field[3] = meshIp */
   4,   /* field[4] = meshPort */
   0,   /* field[0] = nodeId */
   1,   /* field[1] = nodeIp */
   2,   /* field[2] = nodePort */
 };
-static const ProtobufCIntRange node_event__number_ranges[1 + 1] =
+static const ProtobufCIntRange node_online_event__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 6 }
 };
-const ProtobufCMessageDescriptor node_event__descriptor =
+const ProtobufCMessageDescriptor node_online_event__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "NodeEvent",
-  "NodeEvent",
-  "NodeEvent",
+  "NodeOnlineEvent",
+  "NodeOnlineEvent",
+  "NodeOnlineEvent",
   "",
-  sizeof(NodeEvent),
-  5,
-  node_event__field_descriptors,
-  node_event__field_indices_by_name,
-  1,  node_event__number_ranges,
-  (ProtobufCMessageInit) node_event__init,
+  sizeof(NodeOnlineEvent),
+  6,
+  node_online_event__field_descriptors,
+  node_online_event__field_indices_by_name,
+  1,  node_online_event__number_ranges,
+  (ProtobufCMessageInit) node_online_event__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor node_offline_event__field_descriptors[1] =
+{
+  {
+    "nodeId",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(NodeOfflineEvent, nodeid),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned node_offline_event__field_indices_by_name[] = {
+  0,   /* field[0] = nodeId */
+};
+static const ProtobufCIntRange node_offline_event__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor node_offline_event__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "NodeOfflineEvent",
+  "NodeOfflineEvent",
+  "NodeOfflineEvent",
+  "",
+  sizeof(NodeOfflineEvent),
+  1,
+  node_offline_event__field_descriptors,
+  node_offline_event__field_indices_by_name,
+  1,  node_offline_event__number_ranges,
+  (ProtobufCMessageInit) node_offline_event__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

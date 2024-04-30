@@ -393,19 +393,20 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
 static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
 
-	NodeEvent nodeEvent = NODE_EVENT__INIT;
+	NodeOnlineEvent nodeEvent = NODE_ONLINE_EVENT__INIT;
 	void *buff=NULL;
 	size_t len;
 
 	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
-    nodeEvent.nodeid   = strdup(nodeID);
-    nodeEvent.nodeip   = strdup(nodeIP);
-    nodeEvent.nodeport = nodePort;
-    nodeEvent.meship   = strdup(meshIP);
-    nodeEvent.meshport = meshPort;
+	nodeEvent.nodeid   = strdup(nodeID);
+	nodeEvent.nodeip   = strdup(nodeIP);
+	nodeEvent.nodeport = nodePort;
+	nodeEvent.meship   = strdup(meshIP);
+	nodeEvent.meshport = meshPort;
+	nodeEvent.meshhostname = strdup("localhost");
 
-	len = node_event__get_packed_size(&nodeEvent);
+	len = node_online_event__get_packed_size(&nodeEvent);
 
 	buff = malloc(len);
 	if (buff==NULL) {
@@ -413,11 +414,11 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
 		return NULL;
 	}
 
-	node_event__pack(&nodeEvent, buff);
+	node_online_event__pack(&nodeEvent, buff);
 
 	free(nodeEvent.nodeid);
-    free(nodeEvent.nodeip);
-    free(nodeEvent.meship);
+	free(nodeEvent.nodeip);
+	free(nodeEvent.meship);
 
 	return buff;
 }
