@@ -15,8 +15,8 @@ import (
 )
 
 type UserRepo interface {
-	Add(user *User) error
-	GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*User, error)
+	Add(user *Users) error
+	GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*Users, error)
 }
 
 type userRepo struct {
@@ -24,20 +24,41 @@ type userRepo struct {
 }
 
 func NewUserRepo(db sql.Db) UserRepo {
+	setTriggerToUserTable(db.GetGormDb())
 	return &userRepo{
 		Db: db,
 	}
 }
 
-func (r *userRepo) Add(user *User) (err error) {
+func setTriggerToUserTable(db *gorm.DB) {
+	db.Exec("create trigger users_trigger before insert on users for each row execute function eventnotify.users_trigger();")
+}
+
+func (r *userRepo) Add(user *Users) (err error) {
 	d := r.Db.GetGormDb().Create(user)
 	return d.Error
 }
 
-func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*User, error) {
-	var users []*User
+func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*Users, error) {
+	var users []*Users
 
-	tx := r.Db.GetGormDb().Preload(clause.Associations).Where("org_id = ?", orgId).Where("network_id = ?", networkId).Where("subscriber_id = ?", subscriberId).Where("user_id = ?", userId).Where("role = ?", role)
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+
+	if orgId != "" {
+		tx = tx.Where("org_id = ?", orgId)
+	}
+
+	if networkId != "" {
+		tx = tx.Where("network_id = ?", networkId)
+	}
+
+	if subscriberId != "" {
+		tx = tx.Where("subscriber_id = ?", subscriberId)
+	}
+
+	if userId != "" {
+		tx = tx.Where("user_id = ?", userId)
+	}
 
 	result := tx.Find(&users)
 	if result.Error != nil {

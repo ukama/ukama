@@ -19,7 +19,7 @@ import (
 
 type Notification struct {
 	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Title        string    `gorm:"uniqueIndex"`
+	Title        string
 	Description  string
 	Type         NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope        NotificationScope `gorm:"type:uint;not null;default:4"`
@@ -32,7 +32,7 @@ type Notification struct {
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
-type User struct {
+type Users struct {
 	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrgId        string
 	NetworkId    string
@@ -57,11 +57,12 @@ type UserNotification struct {
 type RoleType uint8
 
 const (
-	Owner    RoleType = 0
-	Admin    RoleType = 1
-	Employee RoleType = 2
-	Vendor   RoleType = 3
-	Users    RoleType = 4
+	Owner      RoleType = 0
+	Admin      RoleType = 1
+	Employee   RoleType = 2
+	Vendor     RoleType = 3
+	User       RoleType = 4
+	Subscriber RoleType = 5
 )
 
 func (e *RoleType) Scan(value interface{}) error {
@@ -100,6 +101,7 @@ const (
 	SITE       NotificationScope = 2
 	SUBSCRIBER NotificationScope = 3
 	USER       NotificationScope = 4
+	NODE       NotificationScope = 5
 )
 
 func (l *NotificationScope) Scan(value interface{}) error {

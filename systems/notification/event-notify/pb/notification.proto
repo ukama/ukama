@@ -81,4 +81,5 @@ enum NotificationScope {
 	SITE = 2;
 	SUBSCRIBER = 3;
 	USER = 4;
+	NODE = 5;
 }

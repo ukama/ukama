@@ -36,7 +36,6 @@ func NewNotificationEventServer(orgName string, n *EventToNotifyServer) *EventTo
 
 func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
-
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, pkg.EventPackageCreate):
 		msg, err := unmarshalMessage(e.Msg, &epb.CreatePackageEvent{})
@@ -52,7 +51,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			Type:         db.INFO,
 			Scope:        db.ORG,
 			OrgId:        event.OrgId,
-			UserId:       event.OwnerId,
+			UserId:       "",
 			NetworkId:    "",
 			SubscriberId: "",
 		}
@@ -78,7 +77,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			SubscriberId: "",
 		}
 		es.n.eventPbToDBNotification(notification)
-		user := &db.User{
+		user := &db.Users{
 			Id:           uuid.NewV4(),
 			OrgId:        event.OrgId,
 			UserId:       event.UserId,

@@ -30,7 +30,7 @@ type Config struct {
 }
 
 const (
-	EventOrgAdd             = "event.cloud.local.{{ .Org}}.event.cloud.local.{{ .Org}}.nucleus.org.org.add"
+	EventOrgAdd             = "event.cloud.local.{{ .Org}}.nucleus.org.org.add"
 	EventUserAdd            = "event.cloud.local.{{ .Org}}.nucleus.user.user.add"
 	EventUserDeactivate     = "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate"
 	EventUserDelete         = "event.cloud.local.{{ .Org}}.nucleus.user.user.delete"

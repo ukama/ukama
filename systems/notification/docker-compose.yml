@@ -69,7 +69,7 @@ services:
    - EVENTNOTIFY_SERVICE_HOST=eventnotify
    - EVENTNOTIFY_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
-   - ORGID=${ORGNAME}
+   - ORGID=${ORGID}
   restart: always
   networks:
    - ukama-net

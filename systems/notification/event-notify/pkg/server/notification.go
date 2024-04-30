@@ -82,7 +82,7 @@ func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateSt
 	}
 	err = n.notificationRepo.Update(nuuid, req.GetIsRead())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "event-notify")
+		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
 
 	return &pb.UpdateStatusResponse{
@@ -100,7 +100,7 @@ func (n *EventToNotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.
 	}
 	notification, err := n.notificationRepo.Get(nuuid)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "event-notify")
+		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
 
 	return &pb.GetResponse{
@@ -148,7 +148,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 
 	notifications, err := n.notificationRepo.GetAll(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "event-notify")
+		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
 
 	return &pb.GetAllResponse{
@@ -180,8 +180,8 @@ func dbNotificationsToPbNotifications(notifications []db.Notification) []*pb.Not
 	return res
 }
 
-func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.User, error) {
-	var users []*db.User
+func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.Users, error) {
+	var users []*db.Users
 	var err error
 
 	done := make(chan bool)
@@ -193,12 +193,7 @@ func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, network
 
 	<-done
 
-	if err != nil {
-		log.Errorf("Error getting users from db %v", err)
-		return nil, err
-	}
-
-	return users, nil
+	return users, err
 }
 
 func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notification) error {
@@ -206,7 +201,7 @@ func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notificat
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
 	}
-	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.Users)
+	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.Owner)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)
@@ -232,7 +227,7 @@ func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notificat
 	return nil
 }
 
-func (n *EventToNotifyServer) storeUser(user *db.User) error {
+func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 	err := n.userRepo.Add(user)
 	if err != nil {
 		log.Errorf("Error adding user to db %v", err)
