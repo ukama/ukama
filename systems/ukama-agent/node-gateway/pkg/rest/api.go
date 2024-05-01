@@ -27,15 +27,16 @@ type UpdateTaiReq struct {
 type PostCDRReq struct {
 	Session       int    `json:"session" validate:"required"`
 	Imsi          string `json:"imsi" path:"imsi" validate:"required"`
+	NodeId        string `json:"node_id" validate:"required"`
 	Policy        string `json:"policy" validate:"required"`
 	ApnName       string `json:"apn_name" validate:"required"`
 	Ip            string `json:"ip" validate:"required"`
 	StartTime     uint64 `json:"start_time" validate:"required"`
-	EndTime       uint64 `json:"end_time" validate:"required"`
+	EndTime       uint64 `json:"end_time"`
 	LastUpdatedAt uint64 `json:"last_updated_at" validate:"required"`
-	TxBytes       uint64 `json:"tx_bytes" validate:"required"`
-	RxBytes       uint64 `json:"rx_bytes" validate:"required"`
-	TotalBytes    uint64 `json:"total_bytes" validate:"required"`
+	TxBytes       uint64 `json:"tx_bytes"`
+	RxBytes       uint64 `json:"rx_bytes"`
+	TotalBytes    uint64 `json:"total_bytes"`
 }
 
 type GetCDRReq struct {

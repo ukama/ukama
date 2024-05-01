@@ -123,6 +123,7 @@ func (r *Router) postCDR(c *gin.Context, req *PostCDRReq) (*cpb.CDRResp, error) 
 		Imsi:          req.Imsi,
 		Policy:        req.Policy,
 		ApnName:       req.ApnName,
+		NodeId:        req.NodeId,
 		Ip:            req.Ip,
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
