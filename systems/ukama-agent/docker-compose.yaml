@@ -12,8 +12,34 @@ services:
       - postgress-data:/var/lib/postgresql  
 
   asr:
-    build:
+    build: 
       dockerfile: ./Dockerfile
+      context: ./asr
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-ukama-agent
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@10.1.0.11:5672
+      - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+      - ASR_SERVICE_HOST=asr
+      - ASR_SERVICE_PORT=9090
+      - ORGNAME=ukama
+      - ORGID=40987edb-ebb6-4f84-a27c-99db7c136100
+      - NETWORKHOST=http://stub:8085
+      - DATAPLANHOST=http://stub:8085
+      - FACTORYHOST=http://stub:8085
+      - CDRHOST=cdr:9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-ukama-agent
+      - postgresd-ukama-agent
+  
+  stub:
+    build:
+      dockerfile: ./Dockerfilestub
       context: ./asr
     environment:
       - DEBUGMODE=true
@@ -47,7 +73,8 @@ services:
       - ORGNAME=ukama
       - ORGID=40987edb-ebb6-4f84-a27c-99db7c136100
       - ASRHOST=asr:9090
-      
+      - CDR_SERVICE_HOST=cdr
+      - CDR_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
