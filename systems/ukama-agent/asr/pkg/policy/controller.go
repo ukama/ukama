@@ -70,7 +70,7 @@ type MsgSubscriber struct {
 type Controller interface {
 	InitPolicyController()
 	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
-	SyncProfile(s *SimInfo, as *db.Asr, action string, object string) error
+	SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error
 	RunPolicyControl(imsi string) (error, bool)
 }
 
@@ -162,7 +162,7 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	return &policy, nil
 }
 
-func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, object string) error {
+func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error {
 
 	httpMethod := "POST"
 	subscriber := &epb.Subscriber{
@@ -206,7 +206,11 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 		return err
 	}
 
-	return p.publishEvent(action, object, msg)
+	if event {
+		return p.publishEvent(action, object, msg)
+	} else {
+		return nil
+	}
 }
 
 /*

@@ -219,7 +219,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, fmt.Errorf("policy failure for profile")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber")
+	err = s.pc.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
+	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
@@ -306,7 +306,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber")
+	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber", true)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
@@ -404,7 +404,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 		NetworkId: sub.NetworkId,
 	}
 
-	err = s.pc.SyncProfile(pcrfData, sub, msgbus.ACTION_CRUD_UPDATE, "activesubscriber")
+	err = s.pc.SyncProfile(pcrfData, sub, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", false)
 	if err != nil {
 		return err
 	}
