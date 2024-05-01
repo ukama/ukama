@@ -26,8 +26,8 @@ func NewUsageRepo(db sql.Db) *usageRepo {
 func (p *usageRepo) Add(usage *Usage) error {
 
 	r := p.db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "imsi"}},                                                                                            // key colume
-		DoUpdates: clause.AssignmentColumns([]string{"usage", "historical", "last_session", "last_node_id", "last_cdr_updated_at", "policy"}), // column needed to be updated
+		Columns:   []clause.Column{{Name: "imsi"}},                                                                                                                     // key colume
+		DoUpdates: clause.AssignmentColumns([]string{"usage", "historical", "last_session_id", "last_session_usage", "last_node_id", "last_cdr_updated_at", "policy"}), // column needed to be updated
 	}).Create(&usage)
 	if r.Error != nil {
 		log.Errorf("error creating usage %+v. Error: %v", usage, r.Error)

@@ -2,10 +2,12 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm"
 )
 
 // declare interface so that we can mock it
@@ -16,6 +18,7 @@ type CDRRepo interface {
 	GetByFilters(imsi string, session uint64, policy string, startTime uint64, endTime uint64) (*[]CDR, error)
 	GetByPolicy(imsi string, policy string) (*[]CDR, error)
 	GetByTime(imsi string, startTime uint64, endTime uint64) (*[]CDR, error)
+	GetByTimeAndNodeId(imsi string, startTime uint64, endTime uint64, nodeid string) (*[]CDR, error)
 }
 
 type cdrRepo struct {
@@ -41,7 +44,7 @@ func (p *cdrRepo) Add(cdr *CDR) error {
 
 func (p *cdrRepo) GetByImsi(imsi string) (*[]CDR, error) {
 	var cdr []CDR
-	r := p.db.GetGormDb().Where("imsi = ?", imsi).Find(cdr)
+	r := p.db.GetGormDb().Where("imsi = ?", imsi).Find(&cdr)
 	if r.Error != nil {
 		log.Errorf("error getting cdr for imsi %s.Error: %+v", imsi, r.Error)
 		return nil, r.Error
@@ -51,7 +54,7 @@ func (p *cdrRepo) GetByImsi(imsi string) (*[]CDR, error) {
 
 func (p *cdrRepo) GetBySession(imsi string, session uint64) (*[]CDR, error) {
 	var cdr []CDR
-	r := p.db.GetGormDb().Where("imsi = ? AND session = ?", imsi, session).Find(cdr)
+	r := p.db.GetGormDb().Where("imsi = ? AND session = ?", imsi, session).Find(&cdr)
 	if r.Error != nil {
 		log.Errorf("error getting cdr for imsi %s with session %d.Error: %+v", imsi, session, r.Error)
 		return nil, r.Error
@@ -61,22 +64,48 @@ func (p *cdrRepo) GetBySession(imsi string, session uint64) (*[]CDR, error) {
 
 func (p *cdrRepo) GetByFilters(imsi string, session uint64, policy string, startTime uint64, endTime uint64) (*[]CDR, error) {
 	var cdr []CDR
-	var query string
+	var ret *gorm.DB
+	var count int64
+	var query, sessionq, policyq string
+
 	if policy == "" {
-		policy = "policy"
+		policyq = "policy = policy"
+	} else {
+		policyq = "policy = ?"
+	}
+
+	if session == 0 {
+		sessionq = "session <> ?"
+	} else {
+		sessionq = "session = ?"
 	}
 
 	if endTime == 0 {
 		endTime = uint64(time.Now().Unix())
 	}
 
-	if session == 0 {
-		query = "imsi = ? AND session <> ? AND policy = ? AND start_time >= ? AND end_time <= ?"
+	query = fmt.Sprintf("imsi = ? AND %s AND %s AND start_time >= ? AND end_time <= ?", sessionq, policyq)
+	if policy == "" {
+		ret = p.db.GetGormDb().Where(query, imsi, session, startTime, endTime).Find(&cdr)
+		if ret.Error != nil {
+			log.Errorf("error getting cdr for imsi %s with start time %d and end time %d.Error: %+v", imsi, startTime, endTime, ret.Error)
+			return nil, ret.Error
+		}
 	} else {
-		query = "imsi = ? AND session = ? AND policy = ? AND start_time >= ? AND end_time <= ?"
+		ret = p.db.GetGormDb().Where(query, imsi, session, policy, startTime, endTime).Find(&cdr)
+		if ret.Error != nil {
+			log.Errorf("error getting cdr for imsi %s with policy %s, start time %d and end time %d.Error: %+v", imsi, policy, startTime, endTime, ret.Error)
+			return nil, ret.Error
+		}
 	}
+	_ = ret.Count(&count)
+	log.Infof("%d CDR record found: %+v", count, cdr)
+	return &cdr, nil
+}
 
-	r := p.db.GetGormDb().Where(query, imsi, session, policy, startTime, endTime).Find(&cdr)
+func (p *cdrRepo) GetByTime(imsi string, startTime uint64, endTime uint64) (*[]CDR, error) {
+	var cdr []CDR
+	r := p.db.GetGormDb().Where("imsi = ? AND start_time >= ? AND end_time <= ?", imsi, startTime, endTime).Find(&cdr)
 	if r.Error != nil {
 		log.Errorf("error getting cdr for imsi %s with start time %d and end time %d.Error: %+v", imsi, startTime, endTime, r.Error)
 		return nil, r.Error
@@ -84,9 +113,9 @@ func (p *cdrRepo) GetByFilters(imsi string, session uint64, policy string, start
 	return &cdr, nil
 }
 
-func (p *cdrRepo) GetByTime(imsi string, startTime uint64, endTime uint64) (*[]CDR, error) {
+func (p *cdrRepo) GetByTimeAndNodeId(imsi string, startTime uint64, endTime uint64, nodeId string) (*[]CDR, error) {
 	var cdr []CDR
-	r := p.db.GetGormDb().Where("imsi = ? AND start_time >= ? AND end_time <= ?", imsi, startTime, endTime).Find(cdr)
+	r := p.db.GetGormDb().Where("imsi = ? AND start_time >= ? AND end_time <= ? AND node_id = ?", imsi, startTime, endTime, nodeId).Find(&cdr)
 	if r.Error != nil {
 		log.Errorf("error getting cdr for imsi %s with start time %d and end time %d.Error: %+v", imsi, startTime, endTime, r.Error)
 		return nil, r.Error
@@ -96,7 +125,7 @@ func (p *cdrRepo) GetByTime(imsi string, startTime uint64, endTime uint64) (*[]C
 
 func (p *cdrRepo) GetByPolicy(imsi string, policy string) (*[]CDR, error) {
 	var cdr []CDR
-	r := p.db.GetGormDb().Where("imsi = ? AND policy = ?", imsi, policy).Find(cdr)
+	r := p.db.GetGormDb().Where("imsi = ? AND policy = ?", imsi, policy).Find(&cdr)
 	if r.Error != nil {
 		log.Errorf("error getting cdr for imsi %s with policy %s.Error: %+v", imsi, policy, r.Error)
 		return nil, r.Error

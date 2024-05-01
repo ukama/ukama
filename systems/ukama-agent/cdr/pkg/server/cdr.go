@@ -55,11 +55,12 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 	}
 
 	u := db.Usage{
-		Imsi:        imsi,
-		Policy:      policy,
-		Usage:       0,
-		LastSession: 0,
-		Historical:  ou.Historical,
+		Imsi:             imsi,
+		Policy:           policy,
+		Usage:            0,
+		LastSessionId:    0,
+		LastSessionUsage: 0,
+		Historical:       ou.Historical,
 	}
 
 	err = s.usageRepo.Add(&u)
@@ -81,6 +82,11 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		return nil, err
 	}
 
+	err = s.UpdateUsage(req.Imsi, cdr)
+	if err != nil {
+		log.Errorf("Error updating usage for imsi %s", err)
+	}
+
 	/* Publish event for new CDR */
 	e := dbCDRToepbCDR(*cdr)
 	if s.msgbus != nil {
@@ -89,11 +95,6 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		if merr != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 		}
-	}
-
-	err = s.UpdateUsage(req.Imsi, cdr)
-	if err != nil {
-		log.Errorf("Error updating usage for imsi %s", err)
 	}
 
 	return &pb.CDRResp{}, nil
@@ -105,6 +106,7 @@ func (s *CDRServer) GetCDR(c context.Context, req *pb.RecordReq) (*pb.RecordResp
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("CDR read: %+v", cdrs)
 	return dbCDRToRecordResp(cdrs), nil
 }
 
@@ -131,7 +133,8 @@ func (s *CDRServer) GetUsageDetails(c context.Context, req *pb.CycleUsageReq) (*
 		Imsi:             req.Imsi,
 		Usage:            usage.Usage,
 		Historical:       usage.Historical,
-		LastSessions:     usage.LastSession,
+		LastSessionId:    usage.LastSessionId,
+		LastSessionUsage: usage.LastSessionUsage,
 		LastNodeId:       usage.LastNodeId,
 		LastCDRUpdatedAt: usage.LastCDRUpdatedAt,
 		Policy:           usage.Policy,
@@ -147,11 +150,12 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	}
 
 	u := db.Usage{
-		Imsi:        imsi,
-		Policy:      policy,
-		Usage:       0,
-		LastSession: 0,
-		Historical:  ou.Historical,
+		Imsi:             imsi,
+		Policy:           policy,
+		Usage:            0,
+		LastSessionId:    0,
+		LastSessionUsage: 0,
+		Historical:       ou.Historical,
 	}
 
 	err = s.usageRepo.Add(&u)
@@ -164,7 +168,7 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	return nil
 }
 
-func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
+func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
@@ -176,9 +180,14 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 		}
 	}
 
-	log.Infof("Usage for imsi %s before CDR update is %+v and CDR is %+v ", imsi, ou, cdr)
+	log.Infof("Usage for imsi %s before CDR update is %+v and CDR is %+v ", imsi, ou, cdrMsg)
 
-	recs, err := s.cdrRepo.GetByTime(cdr.Imsi, ou.LastCDRUpdatedAt, (uint64)(time.Now().Unix()))
+	/* Assumption: Make sure older CDR is sent from the node first
+	TODO: Handle the case if node A is not able to update CDR to the backend but
+	node B on which subcriber latches after node A was able to publish CDR on backend
+	In this case node A CDR will be rejeceted as of now
+	*/
+	recs, err := s.cdrRepo.GetByTimeAndNodeId(cdrMsg.Imsi, cdrMsg.StartTime, (uint64)(time.Now().Unix()), cdrMsg.NodeId)
 	if err != nil && recs != nil {
 		log.Errorf("Error getting CDR for imsi %s. Error %+v", imsi, err)
 		return err
@@ -196,7 +205,8 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 		LastNodeId:       ou.LastNodeId,
 		Policy:           ou.Policy,
 		LastCDRUpdatedAt: ou.LastCDRUpdatedAt,
-		LastSession:      ou.LastSession,
+		LastSessionId:    ou.LastSessionId,
+		LastSessionUsage: ou.LastSessionUsage,
 	}
 
 	var lastUpdatedAt uint64 = 0
@@ -209,87 +219,118 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 
 	//var policy string
 	if len(cdrs) > 0 {
-		if lastCDRNodeId != cdrs[0].NodeId {
-			/* since new node is reporting the session usage this means new session is created */
-			sessionId = cdrs[0].Session
-			lastSessionId = ou.LastSession
-		} else if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
-			// This means it's same session as last recorded session
-			sessionId = cdrs[0].Session
-			lastSessionId = cdrs[0].Session
-		} else {
-			/* new session */
-			sessionId = cdrs[0].Session
-			lastSessionId = ou.LastSession
-		}
+		//sessionId = cdrs[0].Session
+		lastSessionId = ou.LastSessionId
+		// if lastCDRNodeId != cdrs[0].NodeId {
+		// 	/* since new node is reporting the session usage this means new session is created */
+		// 	sessionId = cdrs[0].Session
+		// 	lastSessionId = ou.LastSessionId
+		// } else if cdrs[0].StartTime < ou.LastCDRUpdatedAt {
+		// 	// This means it's same session as last recorded session
+		// 	sessionId = cdrs[0].Session
+		// 	lastSessionId = cdrs[0].Session
+		// } else {
+		// 	/* new session */
+		// 	sessionId = cdrs[0].Session
+		// 	lastSessionId = ou.LastSessionId
+		// }
 	} else {
 		log.Infof("No usage update for imsi %s.Current usage stays: %+v", u.Imsi, u)
 		return nil
 	}
 
 	for _, cdr := range cdrs {
+		sessionId = cdr.Session
 
 		if ou.Policy != cdr.Policy {
 			log.Errorf("CDR policy is %s not matching usage policy %s for imsi %s. Ignoring CDR record %+v", cdr.Policy, ou.Policy, imsi, cdr)
 			continue
 		} else {
-			log.Infof("Handling CDR %v for imsi %s. Usage: %+v", cdr, imsi, u)
+			log.Infof("Handling CDR %+v for imsi %s. Usage: %+v", cdr, imsi, u)
 		}
 
+		/* Ignoring old CDR
+		This helps with multiple CDR from same session where start time is same
+		but lastUpdatedAt is incremented in new CDR's
+		*/
+		if cdr.LastUpdatedAt <= ou.LastCDRUpdatedAt {
+			log.Errorf("Last CDR updated was generated at %+v. Ignoring older CDR record %+v", ou.LastCDRUpdatedAt, cdr)
+			continue
+		}
 		if cdr.NodeId == lastCDRNodeId {
 			tempUsage = u
 			if sessionId == lastSessionId {
+				log.Infof("Session %d continued for imsi %s", sessionId, cdr.Imsi)
 				/* if session is continued */
 				/* check to avoid duplicates updates */
 				if cdr.LastUpdatedAt > lastUpdatedAt {
 					lastUpdatedAt = cdr.LastUpdatedAt
-					u.Historical = (u.Historical - u.Usage) + cdr.TotalBytes
-					u.Usage = u.LastSession + cdr.TotalBytes
+					u.Historical = (u.Historical - (u.Usage - u.LastSessionUsage)) + cdr.TotalBytes
+					u.Usage = u.LastSessionUsage + cdr.TotalBytes
 					u.LastNodeId = cdr.NodeId
 					u.LastCDRUpdatedAt = cdr.LastUpdatedAt
 					u.Policy = cdr.Policy
-
+					/* If this report says session is ending too */
+					if cdr.EndTime != 0 {
+						u.LastSessionUsage = u.Usage
+					}
 				}
 
 			} else {
-				/* New session */
+				/* New session
+				Assumption: We only allow the CDR which are generated(updated) after the last updated cdr in backend db
+				We mugth ahve to check it in future if we miss any CDR
+				We can still compile the report from CDR table as it contain all received CDR
+				*/
+				log.Infof("End session %d and create new session %d for imsi %s", ou.LastSessionId, sessionId, cdr.Imsi)
 				if cdr.LastUpdatedAt > lastUpdatedAt {
 					lastUpdatedAt = cdr.LastUpdatedAt
-					u.LastSession = u.Usage                      /* Usage till last session last cdr */
-					u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
-					u.Usage = u.LastSession + cdr.TotalBytes     /*usage for this package is last session + current */
+					u.LastSessionUsage = u.Usage                  /* Usage till last session last cdr */
+					u.Historical = u.Historical + cdr.TotalBytes  /* usage is hitorical + current */
+					u.Usage = u.LastSessionUsage + cdr.TotalBytes /*usage for this package is last session + current */
 					u.LastNodeId = cdr.NodeId
 					u.LastCDRUpdatedAt = cdr.LastUpdatedAt
 					u.Policy = cdr.Policy
+					u.LastSessionId = cdr.Session
 					newSessionFlag = true
+					/* If this report says session is ending too */
+					if cdr.EndTime != 0 {
+						u.LastSessionUsage = u.Usage
+					}
 				}
 
 			}
 
 		} else {
 			/* This will always be new session as new node is reporting cdr now */
+			log.Infof("End session %d and create new session %d for imsi %s because of node handover from %s to %s", ou.LastSessionId, sessionId, cdr.Imsi, lastCDRNodeId, cdr.NodeId)
 			lastUpdatedAt = cdr.LastUpdatedAt
-			u.LastSession = u.Usage                      /* Usage till last session last cdr */
+			u.LastSessionUsage = u.Usage                 /* Usage till last session last cdr */
 			u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
-			u.Usage = u.LastSession + cdr.TotalBytes
+			u.Usage = u.LastSessionUsage + cdr.TotalBytes
 			u.LastNodeId = cdr.NodeId
 			u.LastCDRUpdatedAt = cdr.LastUpdatedAt
 			u.Policy = cdr.Policy
+			u.LastSessionId = cdr.Session
 			newSessionFlag = true
 			nodeChangedFlag = true
+			/* If this report says session is ending too */
+			if cdr.EndTime != 0 {
+				u.LastSessionUsage = u.Usage
+			}
 			//policy = cdr.Policy
 		}
 
 		/* If new session created send a event regading last session */
-		if newSessionFlag == true && lastSessionId != 0 {
+		if newSessionFlag && lastSessionId != 0 {
 			log.Infof("Session %d is terminated for imsi %s. Session details are: %+v", lastSessionId, imsi, tempUsage)
 			// Create session destroyed event
 			e := &epb.SessionDestroyed{
 				Imsi:         imsi,
-				SessionUsage: tempUsage.Usage - tempUsage.LastSession,
+				SessionUsage: tempUsage.Usage - tempUsage.LastSessionUsage,
 				NodeId:       tempUsage.LastNodeId,
 				Policy:       tempUsage.Policy,
-				SessionId:    tempUsage.LastSession,
+				SessionId:    tempUsage.LastSessionId,
 				TotalUsage:   tempUsage.Usage,
 			}
 
@@ -306,13 +347,13 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 		lastSessionId = sessionId
 	}
 
-	if nodeChangedFlag == true && lastCDRNodeId != "" {
-		log.Infof("Imsi %s performed a node handover from %s to %s node", imsi, lastCDRNodeId, cdr.NodeId)
+	if nodeChangedFlag && lastCDRNodeId != "" {
+		log.Infof("Imsi %s performed a node handover from %s to %s node", imsi, lastCDRNodeId, cdrMsg.NodeId)
 		/* subscriber node handover */
 		e := &epb.NodeChanged{
 			Imsi:              imsi,
-			Policy:            cdr.Policy,
-			NodeId:            cdr.NodeId,
+			Policy:            cdrMsg.Policy,
+			NodeId:            cdrMsg.NodeId,
 			OldNodeId:         lastCDRNodeId,
 			UsageTillLastNode: tempUsage.Usage,
 			TotalUsage:        u.Usage,
@@ -339,10 +380,10 @@ func (s *CDRServer) UpdateUsage(imsi string, cdr *db.CDR) error {
 }
 
 func dbCDRToRecordResp(cdrs *[]db.CDR) *pb.RecordResp {
-	if len(*cdrs) > 0 {
+	if len(*cdrs) <= 0 {
 		return &pb.RecordResp{}
 	}
-	pcdrs := make([]*pb.CDR, 0, len(*cdrs))
+	pcdrs := make([]*pb.CDR, len(*cdrs))
 
 	for i, cdr := range *cdrs {
 		pcdrs[i] = dbCDRTopbCDR(cdr)
@@ -363,7 +404,7 @@ func dbCDRTopbCDR(req db.CDR) *pb.CDR {
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
 		LastUpdatedAt: req.LastUpdatedAt,
-		TxBytes:       req.TotalBytes,
+		TxBytes:       req.TxBytes,
 		RxBytes:       req.RxBytes,
 		TotalBytes:    req.TotalBytes,
 	}
@@ -383,7 +424,7 @@ func dbCDRToepbCDR(req db.CDR) *epb.CDRReported {
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
 		LastUpdatedAt: req.LastUpdatedAt,
-		TxBytes:       req.TotalBytes,
+		TxBytes:       req.TxBytes,
 		RxBytes:       req.RxBytes,
 		TotalBytes:    req.TotalBytes,
 	}
@@ -401,7 +442,7 @@ func pbCDRToDbCDR(req *pb.CDR) *db.CDR {
 		StartTime:     req.StartTime,
 		EndTime:       req.EndTime,
 		LastUpdatedAt: req.LastUpdatedAt,
-		TxBytes:       req.TotalBytes,
+		TxBytes:       req.TxBytes,
 		RxBytes:       req.RxBytes,
 		TotalBytes:    req.TotalBytes,
 	}
