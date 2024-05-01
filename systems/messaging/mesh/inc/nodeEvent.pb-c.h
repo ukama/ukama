@@ -15,8 +15,8 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 
-typedef struct _NodeOnlineEvent NodeOnlineEvent;
-typedef struct _NodeOfflineEvent NodeOfflineEvent;
+typedef struct _Ukama__Events__V1__NodeOnlineEvent Ukama__Events__V1__NodeOnlineEvent;
+typedef struct _Ukama__Events__V1__NodeOfflineEvent Ukama__Events__V1__NodeOfflineEvent;
 
 
 /* --- enums --- */
@@ -24,7 +24,7 @@ typedef struct _NodeOfflineEvent NodeOfflineEvent;
 
 /* --- messages --- */
 
-struct  _NodeOnlineEvent
+struct  _Ukama__Events__V1__NodeOnlineEvent
 {
   ProtobufCMessage base;
   char *nodeid;
@@ -34,66 +34,66 @@ struct  _NodeOnlineEvent
   int32_t meshport;
   char *meshhostname;
 };
-#define NODE_ONLINE_EVENT__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&node_online_event__descriptor) \
+#define UKAMA__EVENTS__V1__NODE_ONLINE_EVENT__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&ukama__events__v1__node_online_event__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string }
 
 
-struct  _NodeOfflineEvent
+struct  _Ukama__Events__V1__NodeOfflineEvent
 {
   ProtobufCMessage base;
   char *nodeid;
 };
-#define NODE_OFFLINE_EVENT__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&node_offline_event__descriptor) \
+#define UKAMA__EVENTS__V1__NODE_OFFLINE_EVENT__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&ukama__events__v1__node_offline_event__descriptor) \
     , (char *)protobuf_c_empty_string }
 
 
-/* NodeOnlineEvent methods */
-void   node_online_event__init
-                     (NodeOnlineEvent         *message);
-size_t node_online_event__get_packed_size
-                     (const NodeOnlineEvent   *message);
-size_t node_online_event__pack
-                     (const NodeOnlineEvent   *message,
+/* Ukama__Events__V1__NodeOnlineEvent methods */
+void   ukama__events__v1__node_online_event__init
+                     (Ukama__Events__V1__NodeOnlineEvent         *message);
+size_t ukama__events__v1__node_online_event__get_packed_size
+                     (const Ukama__Events__V1__NodeOnlineEvent   *message);
+size_t ukama__events__v1__node_online_event__pack
+                     (const Ukama__Events__V1__NodeOnlineEvent   *message,
                       uint8_t             *out);
-size_t node_online_event__pack_to_buffer
-                     (const NodeOnlineEvent   *message,
+size_t ukama__events__v1__node_online_event__pack_to_buffer
+                     (const Ukama__Events__V1__NodeOnlineEvent   *message,
                       ProtobufCBuffer     *buffer);
-NodeOnlineEvent *
-       node_online_event__unpack
+Ukama__Events__V1__NodeOnlineEvent *
+       ukama__events__v1__node_online_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   node_online_event__free_unpacked
-                     (NodeOnlineEvent *message,
+void   ukama__events__v1__node_online_event__free_unpacked
+                     (Ukama__Events__V1__NodeOnlineEvent *message,
                       ProtobufCAllocator *allocator);
-/* NodeOfflineEvent methods */
-void   node_offline_event__init
-                     (NodeOfflineEvent         *message);
-size_t node_offline_event__get_packed_size
-                     (const NodeOfflineEvent   *message);
-size_t node_offline_event__pack
-                     (const NodeOfflineEvent   *message,
+/* Ukama__Events__V1__NodeOfflineEvent methods */
+void   ukama__events__v1__node_offline_event__init
+                     (Ukama__Events__V1__NodeOfflineEvent         *message);
+size_t ukama__events__v1__node_offline_event__get_packed_size
+                     (const Ukama__Events__V1__NodeOfflineEvent   *message);
+size_t ukama__events__v1__node_offline_event__pack
+                     (const Ukama__Events__V1__NodeOfflineEvent   *message,
                       uint8_t             *out);
-size_t node_offline_event__pack_to_buffer
-                     (const NodeOfflineEvent   *message,
+size_t ukama__events__v1__node_offline_event__pack_to_buffer
+                     (const Ukama__Events__V1__NodeOfflineEvent   *message,
                       ProtobufCBuffer     *buffer);
-NodeOfflineEvent *
-       node_offline_event__unpack
+Ukama__Events__V1__NodeOfflineEvent *
+       ukama__events__v1__node_offline_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   node_offline_event__free_unpacked
-                     (NodeOfflineEvent *message,
+void   ukama__events__v1__node_offline_event__free_unpacked
+                     (Ukama__Events__V1__NodeOfflineEvent *message,
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
-typedef void (*NodeOnlineEvent_Closure)
-                 (const NodeOnlineEvent *message,
+typedef void (*Ukama__Events__V1__NodeOnlineEvent_Closure)
+                 (const Ukama__Events__V1__NodeOnlineEvent *message,
                   void *closure_data);
-typedef void (*NodeOfflineEvent_Closure)
-                 (const NodeOfflineEvent *message,
+typedef void (*Ukama__Events__V1__NodeOfflineEvent_Closure)
+                 (const Ukama__Events__V1__NodeOfflineEvent *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -101,8 +101,8 @@ typedef void (*NodeOfflineEvent_Closure)
 
 /* --- descriptors --- */
 
-extern const ProtobufCMessageDescriptor node_online_event__descriptor;
-extern const ProtobufCMessageDescriptor node_offline_event__descriptor;
+extern const ProtobufCMessageDescriptor ukama__events__v1__node_online_event__descriptor;
+extern const ProtobufCMessageDescriptor ukama__events__v1__node_offline_event__descriptor;
 
 PROTOBUF_C__END_DECLS
 

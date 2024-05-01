@@ -8,6 +8,8 @@
 
 syntax = "proto3";
 
+package ukama.events.v1;
+
 message NodeOnlineEvent{
     string nodeId = 1;
     string nodeIp = 2;

@@ -16,6 +16,7 @@
 #include "u_amqp.h"
 #include "nodeEvent.pb-c.h"
 #include "bootEvent.pb-c.h"
+#include "any.pb-c.h"
 
 /* 
  * AMQP Routing key:
@@ -29,6 +30,9 @@
  *             expired
  *
  */
+
+typedef Google__Protobuf__Any ANY;
+typedef Ukama__Events__V1__NodeOnlineEvent NodeOnlineEvent;
 
 static char *convert_type_to_str(MsgType type);
 static char *convert_source_to_str(MsgSource source);
@@ -393,9 +397,11 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
 static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
 
-	NodeOnlineEvent nodeEvent = NODE_ONLINE_EVENT__INIT;
+	NodeOnlineEvent nodeEvent = UKAMA__EVENTS__V1__NODE_ONLINE_EVENT__INIT;
+    ANY anyEvent = GOOGLE__PROTOBUF__ANY__INIT;
 	void *buff=NULL;
-	size_t len;
+    void *anyBuff=NULL;
+	size_t len, anyLen;
 
 	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
@@ -406,7 +412,7 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
 	nodeEvent.meshport = meshPort;
 	nodeEvent.meshhostname = strdup("localhost");
 
-	len = node_online_event__get_packed_size(&nodeEvent);
+	len = ukama__events__v1__node_online_event__get_packed_size(&nodeEvent);
 
 	buff = malloc(len);
 	if (buff==NULL) {
@@ -414,13 +420,37 @@ static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
 		return NULL;
 	}
 
-	node_online_event__pack(&nodeEvent, buff);
-
+	ukama__events__v1__node_online_event__pack(&nodeEvent, buff);
 	free(nodeEvent.nodeid);
 	free(nodeEvent.nodeip);
 	free(nodeEvent.meship);
 
-	return buff;
+    /* pack the event into any */
+    anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
+                strlen(ukama__events__v1__node_online_event__descriptor.name) + 1, 
+                                       sizeof(char));
+    sprintf(anyEvent.type_url, "%s/%s",
+            TYPE_URL_PREFIX,
+            ukama__events__v1__node_online_event__descriptor.name);
+
+    anyEvent.value.len  = len;
+    anyEvent.value.data = malloc(len);
+    memcpy(anyEvent.value.data, buff, len);
+
+    anyLen = google__protobuf__any__get_packed_size(&anyEvent);
+    anyBuff = malloc(anyLen);
+    if (anyBuff == NULL) {
+        log_error("Error allocating buffer of size: %d", anyLen);
+        // memory leak - XXX
+        return NULL;
+    }
+
+    google__protobuf__any__pack(&anyEvent, anyBuff);
+    free(anyEvent.type_url);
+    free(anyEvent.value.data);
+    free(buff);
+
+	return anyBuff;
 }
 
 static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {

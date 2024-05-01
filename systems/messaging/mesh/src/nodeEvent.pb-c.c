@@ -7,97 +7,97 @@
 #endif
 
 #include "nodeEvent.pb-c.h"
-void   node_online_event__init
-                     (NodeOnlineEvent         *message)
+void   ukama__events__v1__node_online_event__init
+                     (Ukama__Events__V1__NodeOnlineEvent         *message)
 {
-  static const NodeOnlineEvent init_value = NODE_ONLINE_EVENT__INIT;
+  static const Ukama__Events__V1__NodeOnlineEvent init_value = UKAMA__EVENTS__V1__NODE_ONLINE_EVENT__INIT;
   *message = init_value;
 }
-size_t node_online_event__get_packed_size
-                     (const NodeOnlineEvent *message)
+size_t ukama__events__v1__node_online_event__get_packed_size
+                     (const Ukama__Events__V1__NodeOnlineEvent *message)
 {
-  assert(message->base.descriptor == &node_online_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_online_event__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t node_online_event__pack
-                     (const NodeOnlineEvent *message,
+size_t ukama__events__v1__node_online_event__pack
+                     (const Ukama__Events__V1__NodeOnlineEvent *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &node_online_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_online_event__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t node_online_event__pack_to_buffer
-                     (const NodeOnlineEvent *message,
+size_t ukama__events__v1__node_online_event__pack_to_buffer
+                     (const Ukama__Events__V1__NodeOnlineEvent *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &node_online_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_online_event__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-NodeOnlineEvent *
-       node_online_event__unpack
+Ukama__Events__V1__NodeOnlineEvent *
+       ukama__events__v1__node_online_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (NodeOnlineEvent *)
-     protobuf_c_message_unpack (&node_online_event__descriptor,
+  return (Ukama__Events__V1__NodeOnlineEvent *)
+     protobuf_c_message_unpack (&ukama__events__v1__node_online_event__descriptor,
                                 allocator, len, data);
 }
-void   node_online_event__free_unpacked
-                     (NodeOnlineEvent *message,
+void   ukama__events__v1__node_online_event__free_unpacked
+                     (Ukama__Events__V1__NodeOnlineEvent *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &node_online_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_online_event__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   node_offline_event__init
-                     (NodeOfflineEvent         *message)
+void   ukama__events__v1__node_offline_event__init
+                     (Ukama__Events__V1__NodeOfflineEvent         *message)
 {
-  static const NodeOfflineEvent init_value = NODE_OFFLINE_EVENT__INIT;
+  static const Ukama__Events__V1__NodeOfflineEvent init_value = UKAMA__EVENTS__V1__NODE_OFFLINE_EVENT__INIT;
   *message = init_value;
 }
-size_t node_offline_event__get_packed_size
-                     (const NodeOfflineEvent *message)
+size_t ukama__events__v1__node_offline_event__get_packed_size
+                     (const Ukama__Events__V1__NodeOfflineEvent *message)
 {
-  assert(message->base.descriptor == &node_offline_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_offline_event__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t node_offline_event__pack
-                     (const NodeOfflineEvent *message,
+size_t ukama__events__v1__node_offline_event__pack
+                     (const Ukama__Events__V1__NodeOfflineEvent *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &node_offline_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_offline_event__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t node_offline_event__pack_to_buffer
-                     (const NodeOfflineEvent *message,
+size_t ukama__events__v1__node_offline_event__pack_to_buffer
+                     (const Ukama__Events__V1__NodeOfflineEvent *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &node_offline_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_offline_event__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-NodeOfflineEvent *
-       node_offline_event__unpack
+Ukama__Events__V1__NodeOfflineEvent *
+       ukama__events__v1__node_offline_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (NodeOfflineEvent *)
-     protobuf_c_message_unpack (&node_offline_event__descriptor,
+  return (Ukama__Events__V1__NodeOfflineEvent *)
+     protobuf_c_message_unpack (&ukama__events__v1__node_offline_event__descriptor,
                                 allocator, len, data);
 }
-void   node_offline_event__free_unpacked
-                     (NodeOfflineEvent *message,
+void   ukama__events__v1__node_offline_event__free_unpacked
+                     (Ukama__Events__V1__NodeOfflineEvent *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &node_offline_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__node_offline_event__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
+static const ProtobufCFieldDescriptor ukama__events__v1__node_online_event__field_descriptors[6] =
 {
   {
     "nodeId",
@@ -105,7 +105,7 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, nodeid),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, nodeid),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -117,7 +117,7 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, nodeip),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, nodeip),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -129,7 +129,7 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, nodeport),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, nodeport),
     NULL,
     NULL,
     0,             /* flags */
@@ -141,7 +141,7 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, meship),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, meship),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -153,7 +153,7 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, meshport),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, meshport),
     NULL,
     NULL,
     0,             /* flags */
@@ -165,14 +165,14 @@ static const ProtobufCFieldDescriptor node_online_event__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeOnlineEvent, meshhostname),
+    offsetof(Ukama__Events__V1__NodeOnlineEvent, meshhostname),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned node_online_event__field_indices_by_name[] = {
+static const unsigned ukama__events__v1__node_online_event__field_indices_by_name[] = {
   5,   /* field[5] = meshHostName */
   3,   /* field[3] = meshIp */
   4,   /* field[4] = meshPort */
@@ -180,27 +180,27 @@ static const unsigned node_online_event__field_indices_by_name[] = {
   1,   /* field[1] = nodeIp */
   2,   /* field[2] = nodePort */
 };
-static const ProtobufCIntRange node_online_event__number_ranges[1 + 1] =
+static const ProtobufCIntRange ukama__events__v1__node_online_event__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 6 }
 };
-const ProtobufCMessageDescriptor node_online_event__descriptor =
+const ProtobufCMessageDescriptor ukama__events__v1__node_online_event__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "ukama.events.v1.NodeOnlineEvent",
   "NodeOnlineEvent",
-  "NodeOnlineEvent",
-  "NodeOnlineEvent",
-  "",
-  sizeof(NodeOnlineEvent),
+  "Ukama__Events__V1__NodeOnlineEvent",
+  "ukama.events.v1",
+  sizeof(Ukama__Events__V1__NodeOnlineEvent),
   6,
-  node_online_event__field_descriptors,
-  node_online_event__field_indices_by_name,
-  1,  node_online_event__number_ranges,
-  (ProtobufCMessageInit) node_online_event__init,
+  ukama__events__v1__node_online_event__field_descriptors,
+  ukama__events__v1__node_online_event__field_indices_by_name,
+  1,  ukama__events__v1__node_online_event__number_ranges,
+  (ProtobufCMessageInit) ukama__events__v1__node_online_event__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor node_offline_event__field_descriptors[1] =
+static const ProtobufCFieldDescriptor ukama__events__v1__node_offline_event__field_descriptors[1] =
 {
   {
     "nodeId",
@@ -208,33 +208,33 @@ static const ProtobufCFieldDescriptor node_offline_event__field_descriptors[1] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(NodeOfflineEvent, nodeid),
+    offsetof(Ukama__Events__V1__NodeOfflineEvent, nodeid),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned node_offline_event__field_indices_by_name[] = {
+static const unsigned ukama__events__v1__node_offline_event__field_indices_by_name[] = {
   0,   /* field[0] = nodeId */
 };
-static const ProtobufCIntRange node_offline_event__number_ranges[1 + 1] =
+static const ProtobufCIntRange ukama__events__v1__node_offline_event__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 1 }
 };
-const ProtobufCMessageDescriptor node_offline_event__descriptor =
+const ProtobufCMessageDescriptor ukama__events__v1__node_offline_event__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "ukama.events.v1.NodeOfflineEvent",
   "NodeOfflineEvent",
-  "NodeOfflineEvent",
-  "NodeOfflineEvent",
-  "",
-  sizeof(NodeOfflineEvent),
+  "Ukama__Events__V1__NodeOfflineEvent",
+  "ukama.events.v1",
+  sizeof(Ukama__Events__V1__NodeOfflineEvent),
   1,
-  node_offline_event__field_descriptors,
-  node_offline_event__field_indices_by_name,
-  1,  node_offline_event__number_ranges,
-  (ProtobufCMessageInit) node_offline_event__init,
+  ukama__events__v1__node_offline_event__field_descriptors,
+  ukama__events__v1__node_offline_event__field_indices_by_name,
+  1,  ukama__events__v1__node_offline_event__number_ranges,
+  (ProtobufCMessageInit) ukama__events__v1__node_offline_event__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

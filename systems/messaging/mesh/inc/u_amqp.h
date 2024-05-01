@@ -20,6 +20,8 @@
 #define MAX_FRAME  131072
 #define MAX_EVENTS 10
 
+#define TYPE_URL_PREFIX "type.googleapis.com"
+
 /* type of object */
 #define OBJECT_NONE 0
 #define OBJECT_LINK 1
