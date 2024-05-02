@@ -317,6 +317,70 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 
 }
 
+func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp, error) {
+	log.Debugf("Received a usage request %+v", req)
+	var sub *db.Asr
+	var err error
+
+	switch req.Id.(type) {
+	case *pb.UsageReq_Imsi:
+
+		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+		}
+
+	case *pb.UsageReq_Iccid:
+		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+		}
+	}
+
+	r, err := s.cdr.GetUsage(sub.Imsi)
+	if err != nil {
+		log.Errorf("Failed to get usage: %v for imsi %s", err, req.GetImsi())
+		return nil, err
+	}
+
+	return &pb.UsageResp{
+		Usage: r.Usage,
+	}, nil
+}
+
+func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForPeriodReq) (*pb.UsageResp, error) {
+	log.Debugf("Received a usage request for period %+v", req)
+
+	var sub *db.Asr
+	var err error
+
+	switch req.Id.(type) {
+	case *pb.UsageForPeriodReq_Imsi:
+
+		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+		}
+
+	case *pb.UsageForPeriodReq_Iccid:
+		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+		}
+	}
+
+	r, err := s.cdr.GetUsageForPeriod(sub.Imsi, req.StartTime, req.EndTime)
+	if err != nil {
+		log.Errorf("Failed to get usage: %v for imsi %s. Error: %s", err, req.GetImsi(), err.Error())
+		return nil, err
+	}
+
+	return &pb.UsageResp{
+		Usage: r.Usage,
+	}, nil
+
+}
+
 func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
 	_, err := s.asrRepo.GetByImsi(req.Imsi)
 	if err != nil {

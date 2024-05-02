@@ -29,7 +29,7 @@ type CDRServiceClient interface {
 	/// Get Usage for the subscriber current package
 	GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error)
 	/// Get Usage for the subscriber current package
-	GetUsageForPackage(ctx context.Context, in *UsageForPackageReq, opts ...grpc.CallOption) (*UsageForPackageResp, error)
+	GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageForPeriodResp, error)
 	/// Get Usage detsilsfor the subscriber current cycle
 	GetUsageDetails(ctx context.Context, in *CycleUsageReq, opts ...grpc.CallOption) (*CycleUsageResp, error)
 }
@@ -69,9 +69,9 @@ func (c *cDRServiceClient) GetUsage(ctx context.Context, in *UsageReq, opts ...g
 	return out, nil
 }
 
-func (c *cDRServiceClient) GetUsageForPackage(ctx context.Context, in *UsageForPackageReq, opts ...grpc.CallOption) (*UsageForPackageResp, error) {
-	out := new(UsageForPackageResp)
-	err := c.cc.Invoke(ctx, "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageForPackage", in, out, opts...)
+func (c *cDRServiceClient) GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageForPeriodResp, error) {
+	out := new(UsageForPeriodResp)
+	err := c.cc.Invoke(ctx, "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageForPeriod", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ type CDRServiceServer interface {
 	/// Get Usage for the subscriber current package
 	GetUsage(context.Context, *UsageReq) (*UsageResp, error)
 	/// Get Usage for the subscriber current package
-	GetUsageForPackage(context.Context, *UsageForPackageReq) (*UsageForPackageResp, error)
+	GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageForPeriodResp, error)
 	/// Get Usage detsilsfor the subscriber current cycle
 	GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error)
 	mustEmbedUnimplementedCDRServiceServer()
@@ -117,8 +117,8 @@ func (UnimplementedCDRServiceServer) GetCDR(context.Context, *RecordReq) (*Recor
 func (UnimplementedCDRServiceServer) GetUsage(context.Context, *UsageReq) (*UsageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
 }
-func (UnimplementedCDRServiceServer) GetUsageForPackage(context.Context, *UsageForPackageReq) (*UsageForPackageResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUsageForPackage not implemented")
+func (UnimplementedCDRServiceServer) GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageForPeriodResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsageForPeriod not implemented")
 }
 func (UnimplementedCDRServiceServer) GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsageDetails not implemented")
@@ -190,20 +190,20 @@ func _CDRService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CDRService_GetUsageForPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UsageForPackageReq)
+func _CDRService_GetUsageForPeriod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsageForPeriodReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CDRServiceServer).GetUsageForPackage(ctx, in)
+		return srv.(CDRServiceServer).GetUsageForPeriod(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageForPackage",
+		FullMethod: "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageForPeriod",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CDRServiceServer).GetUsageForPackage(ctx, req.(*UsageForPackageReq))
+		return srv.(CDRServiceServer).GetUsageForPeriod(ctx, req.(*UsageForPeriodReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -246,8 +246,8 @@ var CDRService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CDRService_GetUsage_Handler,
 		},
 		{
-			MethodName: "GetUsageForPackage",
-			Handler:    _CDRService_GetUsageForPackage_Handler,
+			MethodName: "GetUsageForPeriod",
+			Handler:    _CDRService_GetUsageForPeriod_Handler,
 		},
 		{
 			MethodName: "GetUsageDetails",

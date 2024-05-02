@@ -75,3 +75,17 @@ func (a *Asr) Read(req *pb.ReadReq) (*pb.ReadResp, error) {
 
 	return a.client.Read(ctx, req)
 }
+
+func (a *Asr) GetUsage(req *pb.UsageReq) (*pb.UsageResp, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetUsage(ctx, req)
+}
+
+func (a *Asr) GetUsageForPeriod(req *pb.UsageForPeriodReq) (*pb.UsageResp, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetUsageForPeriod(ctx, req)
+}

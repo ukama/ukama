@@ -46,8 +46,33 @@ import "validator.proto";
 
     /// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
     rpc Read(ReadReq) returns (ReadResp);
+
+    /// This RPC provides you with the usage for current package
+    rpc GetUsage(UsageReq) returns (UsageResp);
+
+    /// This RPC provides you with the usage for period
+    rpc GetUsageForPeriod(UsageForPeriodReq) returns (UsageResp);
 }
 
+message UsageResp {
+    uint64 usage =1 ;
+}
+
+message UsageReq {
+    oneof id {
+        string Imsi = 1 ;
+        string Iccid = 2 ;
+    }
+}
+
+message UsageForPeriodReq {
+    oneof id {
+        string Imsi = 1 ;
+        string Iccid = 2 ;
+    }
+    uint64 startTime =3;
+    uint64 endTime = 4;
+}
 
 message Record {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];

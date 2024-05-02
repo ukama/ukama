@@ -34,6 +34,10 @@ type AsrRecordServiceClient interface {
 	UpdateTai(ctx context.Context, in *UpdateTaiReq, opts ...grpc.CallOption) (*UpdateTaiResp, error)
 	/// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
 	Read(ctx context.Context, in *ReadReq, opts ...grpc.CallOption) (*ReadResp, error)
+	/// This RPC provides you with the usage for current package
+	GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error)
+	/// This RPC provides you with the usage for period
+	GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageResp, error)
 }
 
 type asrRecordServiceClient struct {
@@ -98,6 +102,24 @@ func (c *asrRecordServiceClient) Read(ctx context.Context, in *ReadReq, opts ...
 	return out, nil
 }
 
+func (c *asrRecordServiceClient) GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error) {
+	out := new(UsageResp)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.asr.v1.AsrRecordService/GetUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *asrRecordServiceClient) GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageResp, error) {
+	out := new(UsageResp)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.asr.v1.AsrRecordService/GetUsageForPeriod", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AsrRecordServiceServer is the server API for AsrRecordService service.
 // All implementations must embed UnimplementedAsrRecordServiceServer
 // for forward compatibility
@@ -114,6 +136,10 @@ type AsrRecordServiceServer interface {
 	UpdateTai(context.Context, *UpdateTaiReq) (*UpdateTaiResp, error)
 	/// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
 	Read(context.Context, *ReadReq) (*ReadResp, error)
+	/// This RPC provides you with the usage for current package
+	GetUsage(context.Context, *UsageReq) (*UsageResp, error)
+	/// This RPC provides you with the usage for period
+	GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageResp, error)
 	mustEmbedUnimplementedAsrRecordServiceServer()
 }
 
@@ -138,6 +164,12 @@ func (UnimplementedAsrRecordServiceServer) UpdateTai(context.Context, *UpdateTai
 }
 func (UnimplementedAsrRecordServiceServer) Read(context.Context, *ReadReq) (*ReadResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+}
+func (UnimplementedAsrRecordServiceServer) GetUsage(context.Context, *UsageReq) (*UsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
+}
+func (UnimplementedAsrRecordServiceServer) GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsageForPeriod not implemented")
 }
 func (UnimplementedAsrRecordServiceServer) mustEmbedUnimplementedAsrRecordServiceServer() {}
 
@@ -260,6 +292,42 @@ func _AsrRecordService_Read_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AsrRecordService_GetUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AsrRecordServiceServer).GetUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.asr.v1.AsrRecordService/GetUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AsrRecordServiceServer).GetUsage(ctx, req.(*UsageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AsrRecordService_GetUsageForPeriod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsageForPeriodReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AsrRecordServiceServer).GetUsageForPeriod(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.asr.v1.AsrRecordService/GetUsageForPeriod",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AsrRecordServiceServer).GetUsageForPeriod(ctx, req.(*UsageForPeriodReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AsrRecordService_ServiceDesc is the grpc.ServiceDesc for AsrRecordService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +358,14 @@ var AsrRecordService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _AsrRecordService_Read_Handler,
+		},
+		{
+			MethodName: "GetUsage",
+			Handler:    _AsrRecordService_GetUsage_Handler,
+		},
+		{
+			MethodName: "GetUsageForPeriod",
+			Handler:    _AsrRecordService_GetUsageForPeriod_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -44,6 +44,8 @@ type asr interface {
 	Inactivate(req *pb.InactivateReq) (*pb.InactivateResp, error)
 	UpdatePackage(req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error)
 	Read(req *pb.ReadReq) (*pb.ReadResp, error)
+	GetUsage(req *pb.UsageReq) (*pb.UsageResp, error)
+	GetUsageForPeriod(req *pb.UsageForPeriodReq) (*pb.UsageResp, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -110,6 +112,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
 		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
+		asr.GET("/:iccid/usage", formatDoc("Get Subscriber usage for time", ""), tonic.Handler(r.getUsage, http.StatusOK))
+		asr.GET("/:iccid/period", formatDoc("Get Subscriber usage package", ""), tonic.Handler(r.getUsageForPeriod, http.StatusOK))
 	}
 
 }
@@ -159,5 +163,23 @@ func (r *Router) getActiveSubscriber(c *gin.Context, req *ReadSubscriberReq) (*p
 		Id: &pb.ReadReq_Iccid{
 			Iccid: req.Iccid,
 		},
+	})
+}
+
+func (r *Router) getUsage(c *gin.Context, req *UsageRequest) (*pb.UsageResp, error) {
+	return r.clients.a.GetUsage(&pb.UsageReq{
+		Id: &pb.UsageReq_Iccid{
+			Iccid: req.Iccid,
+		},
+	})
+}
+
+func (r *Router) getUsageForPeriod(c *gin.Context, req *UsageForPeriodRequest) (*pb.UsageResp, error) {
+	return r.clients.a.GetUsageForPeriod(&pb.UsageForPeriodReq{
+		Id: &pb.UsageForPeriodReq_Iccid{
+			Iccid: req.Iccid,
+		},
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
 	})
 }

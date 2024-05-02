@@ -17,6 +17,16 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *UsageResp) Validate() error {
+	return nil
+}
+func (this *UsageReq) Validate() error {
+	return nil
+}
+func (this *UsageForPeriodReq) Validate() error {
+	return nil
+}
+
 var _regex_Record_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Record) Validate() error {

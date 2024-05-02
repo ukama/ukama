@@ -19,7 +19,7 @@ import "validator.proto";
     rpc GetUsage(UsageReq) returns (UsageResp); 
 
     /// Get Usage for the subscriber current package
-    rpc GetUsageForPackage(UsageForPackageReq) returns (UsageForPackageResp); 
+    rpc GetUsageForPeriod(UsageForPeriodReq) returns (UsageForPeriodResp); 
    
      /// Get Usage detsilsfor the subscriber current cycle
      rpc GetUsageDetails(CycleUsageReq) returns (CycleUsageResp); 
@@ -85,12 +85,12 @@ message CycleUsageResp {
     string Policy = 8;
 }
 
-message UsageForPackageReq {
+message UsageForPeriodReq {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
     uint64 StartTime = 4;
     uint64 EndTime = 5;
 }
 
-message UsageForPackageResp {
+message UsageForPeriodResp {
   uint64 Usage = 1;
 }

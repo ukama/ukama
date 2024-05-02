@@ -49,6 +49,72 @@ func (_m *AsrRecordServiceClient) Activate(ctx context.Context, in *gen.Activate
 	return r0, r1
 }
 
+// GetUsage provides a mock function with given fields: ctx, in, opts
+func (_m *AsrRecordServiceClient) GetUsage(ctx context.Context, in *gen.UsageReq, opts ...grpc.CallOption) (*gen.UsageResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageReq, ...grpc.CallOption) (*gen.UsageResp, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageReq, ...grpc.CallOption) *gen.UsageResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetUsageForPeriod provides a mock function with given fields: ctx, in, opts
+func (_m *AsrRecordServiceClient) GetUsageForPeriod(ctx context.Context, in *gen.UsageForPeriodReq, opts ...grpc.CallOption) (*gen.UsageResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq, ...grpc.CallOption) (*gen.UsageResp, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq, ...grpc.CallOption) *gen.UsageResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageForPeriodReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Inactivate provides a mock function with given fields: ctx, in, opts
 func (_m *AsrRecordServiceClient) Inactivate(ctx context.Context, in *gen.InactivateReq, opts ...grpc.CallOption) (*gen.InactivateResp, error) {
 	_va := make([]interface{}, len(opts))

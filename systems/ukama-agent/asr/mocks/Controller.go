@@ -71,13 +71,13 @@ func (_m *Controller) RunPolicyControl(imsi string) (error, bool) {
 	return r0, r1
 }
 
-// SyncProfile provides a mock function with given fields: s, as, action, object
-func (_m *Controller) SyncProfile(s *policy.SimInfo, as *db.Asr, action string, object string) error {
-	ret := _m.Called(s, as, action, object)
+// SyncProfile provides a mock function with given fields: s, as, action, object, event
+func (_m *Controller) SyncProfile(s *policy.SimInfo, as *db.Asr, action string, object string, event bool) error {
+	ret := _m.Called(s, as, action, object, event)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*policy.SimInfo, *db.Asr, string, string) error); ok {
-		r0 = rf(s, as, action, object)
+	if rf, ok := ret.Get(0).(func(*policy.SimInfo, *db.Asr, string, string, bool) error); ok {
+		r0 = rf(s, as, action, object, event)
 	} else {
 		r0 = ret.Error(0)
 	}

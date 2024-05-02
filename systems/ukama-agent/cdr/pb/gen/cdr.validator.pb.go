@@ -101,7 +101,7 @@ func (this *CycleUsageResp) Validate() error {
 	}
 	return nil
 }
-func (this *UsageForPackageReq) Validate() error {
+func (this *UsageForPeriodReq) Validate() error {
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
@@ -113,6 +113,6 @@ func (this *UsageForPackageReq) Validate() error {
 	}
 	return nil
 }
-func (this *UsageForPackageResp) Validate() error {
+func (this *UsageForPeriodResp) Validate() error {
 	return nil
 }

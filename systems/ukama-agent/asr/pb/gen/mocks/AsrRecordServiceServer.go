@@ -40,6 +40,58 @@ func (_m *AsrRecordServiceServer) Activate(_a0 context.Context, _a1 *gen.Activat
 	return r0, r1
 }
 
+// GetUsage provides a mock function with given fields: _a0, _a1
+func (_m *AsrRecordServiceServer) GetUsage(_a0 context.Context, _a1 *gen.UsageReq) (*gen.UsageResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageReq) (*gen.UsageResp, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageReq) *gen.UsageResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetUsageForPeriod provides a mock function with given fields: _a0, _a1
+func (_m *AsrRecordServiceServer) GetUsageForPeriod(_a0 context.Context, _a1 *gen.UsageForPeriodReq) (*gen.UsageResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq) (*gen.UsageResp, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq) *gen.UsageResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageForPeriodReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Inactivate provides a mock function with given fields: _a0, _a1
 func (_m *AsrRecordServiceServer) Inactivate(_a0 context.Context, _a1 *gen.InactivateReq) (*gen.InactivateResp, error) {
 	ret := _m.Called(_a0, _a1)

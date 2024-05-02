@@ -141,16 +141,17 @@ func (s *CDRServer) GetUsageDetails(c context.Context, req *pb.CycleUsageReq) (*
 	}, nil
 }
 
-func (s *CDRServer) GetUsageForPackage(c context.Context, req *pb.UsageForPackageReq) (*pb.UsageForPackageResp, error) {
+func (s *CDRServer) GetUsageForPeriod(c context.Context, req *pb.UsageForPeriodReq) (*pb.UsageForPeriodResp, error) {
 	log.Debugf("Received request for usage during package %+v", req)
-	usage, err := s.GetPackageUsage(req.Imsi, req.StartTime, req.EndTime)
+	usage, err := s.GetPeriodUsage(req.Imsi, req.StartTime, req.EndTime)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.UsageForPackageResp{
+	return &pb.UsageForPeriodResp{
 		Usage: usage,
 	}, nil
 }
+
 func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 
 	ou, err := s.usageRepo.Get(imsi)
@@ -178,8 +179,8 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	return nil
 }
 
-/* This API to be used for package start date to any time till end date */
-func (s *CDRServer) GetPackageUsage(imsi string, startTime uint64, endTime uint64) (uint64, error) {
+/* This API to be used for period start date to any time till end date */
+func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64) (uint64, error) {
 	var lastSessionId uint64
 	var lastNodeId string
 	var usage uint64
@@ -256,6 +257,7 @@ func (s *CDRServer) GetPackageUsage(imsi string, startTime uint64, endTime uint6
 	return usage, nil
 }
 
+/* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and rport the usage */
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 	ou, err := s.usageRepo.Get(imsi)

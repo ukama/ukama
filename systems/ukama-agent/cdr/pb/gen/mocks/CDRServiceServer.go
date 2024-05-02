@@ -92,24 +92,24 @@ func (_m *CDRServiceServer) GetUsageDetails(_a0 context.Context, _a1 *gen.CycleU
 	return r0, r1
 }
 
-// GetUsageForPackage provides a mock function with given fields: _a0, _a1
-func (_m *CDRServiceServer) GetUsageForPackage(_a0 context.Context, _a1 *gen.UsageForPackageReq) (*gen.UsageForPackageResp, error) {
+// GetUsageForPeriod provides a mock function with given fields: _a0, _a1
+func (_m *CDRServiceServer) GetUsageForPeriod(_a0 context.Context, _a1 *gen.UsageForPeriodReq) (*gen.UsageForPeriodResp, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.UsageForPackageResp
+	var r0 *gen.UsageForPeriodResp
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPackageReq) (*gen.UsageForPackageResp, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq) (*gen.UsageForPeriodResp, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPackageReq) *gen.UsageForPackageResp); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UsageForPeriodReq) *gen.UsageForPeriodResp); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UsageForPackageResp)
+			r0 = ret.Get(0).(*gen.UsageForPeriodResp)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageForPackageReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageForPeriodReq) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
