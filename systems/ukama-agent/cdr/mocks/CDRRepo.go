@@ -156,6 +156,32 @@ func (_m *CDRRepo) GetByTime(imsi string, startTime uint64, endTime uint64) (*[]
 	return r0, r1
 }
 
+// GetByTimeAndNodeId provides a mock function with given fields: imsi, startTime, endTime, nodeid
+func (_m *CDRRepo) GetByTimeAndNodeId(imsi string, startTime uint64, endTime uint64, nodeid string) (*[]db.CDR, error) {
+	ret := _m.Called(imsi, startTime, endTime, nodeid)
+
+	var r0 *[]db.CDR
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, uint64, uint64, string) (*[]db.CDR, error)); ok {
+		return rf(imsi, startTime, endTime, nodeid)
+	}
+	if rf, ok := ret.Get(0).(func(string, uint64, uint64, string) *[]db.CDR); ok {
+		r0 = rf(imsi, startTime, endTime, nodeid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*[]db.CDR)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, uint64, uint64, string) error); ok {
+		r1 = rf(imsi, startTime, endTime, nodeid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewCDRRepo interface {
 	mock.TestingT
 	Cleanup(func())

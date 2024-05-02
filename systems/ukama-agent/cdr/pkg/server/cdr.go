@@ -141,6 +141,16 @@ func (s *CDRServer) GetUsageDetails(c context.Context, req *pb.CycleUsageReq) (*
 	}, nil
 }
 
+func (s *CDRServer) GetUsageForPackage(c context.Context, req *pb.UsageForPackageReq) (*pb.UsageForPackageResp, error) {
+	log.Debugf("Received request for usage during package %+v", req)
+	usage, err := s.GetPackageUsage(req.Imsi, req.StartTime, req.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.UsageForPackageResp{
+		Usage: usage,
+	}, nil
+}
 func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 
 	ou, err := s.usageRepo.Get(imsi)
@@ -166,6 +176,84 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
 
 	return nil
+}
+
+/* This API to be used for package start date to any time till end date */
+func (s *CDRServer) GetPackageUsage(imsi string, startTime uint64, endTime uint64) (uint64, error) {
+	var lastSessionId uint64
+	var lastNodeId string
+	var usage uint64
+	var lastUpdatedAt uint64
+	var usageTillLastSession uint64
+	recs, err := s.cdrRepo.GetByTime(imsi, startTime, endTime)
+	if err != nil && recs != nil {
+		log.Errorf("Error getting CDR for imsi %s. Error %+v", imsi, err)
+		return 0, err
+	}
+
+	log.Debugf("Found %d cdr for imsi %s. CDR: %+v", len(*recs), imsi, recs)
+	cdrs := *recs
+	sort.Slice(cdrs, func(i, j int) bool {
+		return cdrs[i].LastUpdatedAt < cdrs[j].LastUpdatedAt
+	})
+
+	if len(cdrs) > 0 {
+		lastSessionId = cdrs[0].Session
+		lastNodeId = cdrs[0].NodeId
+		usage = cdrs[0].TotalBytes
+		lastUpdatedAt = cdrs[0].LastUpdatedAt
+		usageTillLastSession = 0
+	}
+
+	for _, cdr := range cdrs {
+		log.Debugf("Handling CDR %+v", cdr)
+		if lastNodeId == cdr.NodeId {
+			if lastSessionId == cdr.Session {
+				/* same as previous session */
+				if cdr.LastUpdatedAt > lastUpdatedAt {
+					usage = usageTillLastSession + cdr.TotalBytes
+					lastUpdatedAt = cdr.LastUpdatedAt
+				} else {
+					log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+					continue
+				}
+				/* Handle end of session CDR */
+				if cdr.EndTime != 0 {
+					usageTillLastSession = usage
+				}
+			} else {
+				/* New session */
+				usageTillLastSession = usage
+				if cdr.LastUpdatedAt > lastUpdatedAt {
+					usage = usageTillLastSession + cdr.TotalBytes
+					lastUpdatedAt = cdr.LastUpdatedAt
+					lastSessionId = cdr.Session
+				} else {
+					log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+					continue
+				}
+				/* Handle end of session CDR */
+				if cdr.EndTime != 0 {
+					usageTillLastSession = usage
+				}
+			}
+		} else {
+			/* Node is changed this means new session */
+			if cdr.LastUpdatedAt > lastUpdatedAt {
+				usageTillLastSession = usage
+				lastNodeId = cdr.NodeId
+				usage = usageTillLastSession + cdr.TotalBytes
+				lastUpdatedAt = cdr.LastUpdatedAt
+				lastSessionId = cdr.Session
+			} else {
+				log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+				continue
+			}
+		}
+	}
+
+	log.Infof("Usage for imsi %s in time interval starting at %d and ending at %d is %d bytes", imsi, startTime, endTime, usage)
+	return usage, nil
 }
 
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
