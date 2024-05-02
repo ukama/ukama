@@ -7,9 +7,7 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -18,9 +16,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *NotificationsStreamRequest) Validate() error {
-	return nil
-}
 func (this *GetRequest) Validate() error {
 	return nil
 }
@@ -51,15 +46,6 @@ func (this *UpdateStatusRequest) Validate() error {
 func (this *UpdateStatusResponse) Validate() error {
 	return nil
 }
-
-var _regex_Notification_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *Notification) Validate() error {
-	if !_regex_Notification_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
-	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
 	return nil
 }

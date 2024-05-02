@@ -24,14 +24,9 @@ type userRepo struct {
 }
 
 func NewUserRepo(db sql.Db) UserRepo {
-	setTriggerToUserTable(db.GetGormDb())
 	return &userRepo{
 		Db: db,
 	}
-}
-
-func setTriggerToUserTable(db *gorm.DB) {
-	db.Exec("create trigger users_trigger before insert on users for each row execute function eventnotify.users_trigger();")
 }
 
 func (r *userRepo) Add(user *Users) (err error) {

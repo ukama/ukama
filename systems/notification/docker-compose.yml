@@ -76,6 +76,22 @@ services:
   depends_on:
    - postgresd-notification
 
+ distributor:
+  build: ./distributor
+  ports:
+   - '9079:9090'
+  environment:
+   - DEBUGMODE=true
+   - DISTRIBUTOR_SERVICE_HOST=distributor
+   - DISTRIBUTOR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-notification
+
  api-gateway-notification:
   build:
    dockerfile: ./Dockerfile

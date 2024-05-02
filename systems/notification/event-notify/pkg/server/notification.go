@@ -24,8 +24,6 @@ import (
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
-const uuidParsingError = "Error parsing UUID"
-
 type EventToNotifyServer struct {
 	pb.UnimplementedEventToNotifyServiceServer
 	orgName              string
@@ -47,29 +45,6 @@ func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.No
 		msgbus:               msgBus,
 		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
-}
-
-func (n *EventToNotifyServer) NotificationsStream(req *pb.NotificationsStreamRequest, srv pb.EventToNotifyService_NotificationsStreamServer) error {
-	log.Info("Notification stream started")
-	notification := &pb.Notification{
-		Id:           "A8C62136-E56C-4F93-9003-3307329117C2",
-		Title:        "Test",
-		Description:  "Test",
-		Type:         pb.NotificationType_INFO,
-		Scope:        pb.NotificationScope_ORG,
-		OrgId:        "ORG_ID",
-		NetworkId:    "NETWORK_ID",
-		SubscriberId: "SUBSCRIBER_ID",
-		UserId:       "USER_ID",
-		IsRead:       false,
-	}
-
-	if err := srv.Send(notification); err != nil {
-		log.Info("error generating response")
-		return err
-	}
-
-	return nil
 }
 
 func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
@@ -221,10 +196,7 @@ func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notificat
 	}
 
 	err = n.userNotificationRepo.Add(un)
-	if err != nil {
-		log.Errorf("Error adding users notification to db %v", err)
-	}
-	return nil
+	return err
 }
 
 func (n *EventToNotifyServer) storeUser(user *db.Users) error {

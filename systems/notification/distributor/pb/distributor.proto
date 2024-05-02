@@ -8,45 +8,18 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb/gen";
+option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
 
 import "google/protobuf/wrappers.proto";
 
+package ukama.notification.distributor.v1;
 
-package ukama.notification.eventToNotify.v1;
-
-service EventToNotifyService {
-    rpc Get(GetRequest) returns (GetResponse);
-    rpc GetAll(GetAllRequest) returns (GetAllResponse);
-    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+service DistributorService {
+    rpc NotificationStream(NotificationStreamRequest) returns (stream Notification);
 }
 
-message GetRequest {
-    string id = 1;
-}
-
-message GetResponse {
-    Notification notification = 1;
-}
-
-message GetAllRequest {
+message NotificationStreamRequest {
     string orgId = 1 [json_name = "org_id"];
-    string networkId = 2 [json_name = "network_id"];
-    string subscriberId = 3 [json_name = "subscriber_id"];
-    string userId = 4 [json_name = "user_id"];
-}
-
-message GetAllResponse {
-    repeated Notification notifications = 1;
-}
-
-message UpdateStatusRequest {
-    string id = 1;
-    bool is_read = 2;
-}
-
-message UpdateStatusResponse {
-    string id = 1;
 }
 
 message Notification {
@@ -60,6 +33,7 @@ message Notification {
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
     RoleType forRole = 10 [json_name = "for_role"];
+    bool isRead = 11 [json_name = "is_read"];
 }
 
 enum RoleType {
