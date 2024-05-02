@@ -4,11 +4,12 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
-	"net/http"
-	"strings"
-	"testing"
+	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg/rest"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
@@ -41,10 +42,16 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	client := resty.New()
 
 	t.Run("Activate", func(tt *testing.T) {
+		httpReq := &rest.ActivateReq{
+			Iccid:     iccid,
+			NetworkId: network,
+			PackageId: packageId,
+		}
+
 		resp, err := client.R().
 			EnableTrace().
-			SetBody(strings.NewReader(`{"network":"` + network + `","packageId":"` + packageId + `"}`)).
-			Put(getApiUrl() + "/v1/subscriber/" + iccid)
+			SetBody(httpReq).
+			Put(getApiUrl() + "/v1/asr/" + iccid)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
@@ -52,10 +59,15 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	})
 
 	t.Run("UpdatePackage", func(tt *testing.T) {
+		httpreq := &rest.UpdatePackageReq{
+			Iccid:     iccid,
+			PackageId: packageId,
+		}
+
 		resp, err := client.R().
 			EnableTrace().
-			SetBody(strings.NewReader(`{"packageId":"` + packageId + `"}`)).
-			Patch(getApiUrl() + "/v1/subscriber/" + iccid)
+			SetBody(httpreq).
+			Patch(getApiUrl() + "/v1/asr/" + iccid)
 
 		if err != nil {
 			if assert.Error(t, err) {
@@ -67,7 +79,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	t.Run("Read", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/v1/subscriber/" + iccid)
+			Get(getApiUrl() + "/v1/asr/" + iccid)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())
@@ -78,7 +90,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	t.Run("Inactivate", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Delete(getApiUrl() + "/v1/subscriber/" + iccid)
+			Delete(getApiUrl() + "/v1/asr/" + iccid)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())

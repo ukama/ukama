@@ -44,7 +44,7 @@ func TestAsrClient_Activate(t *testing.T) {
 
 	pReq := &pb.ActivateReq{
 		Iccid:     iccid,
-		Network:   network,
+		NetworkId: network,
 		PackageId: packageId,
 	}
 
@@ -120,13 +120,51 @@ func TestAsrClient_Inactivate(t *testing.T) {
 	}
 
 	pReq := &pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: iccid,
-		},
+		Iccid: iccid,
 	}
 
 	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
 
 	_, err := l.Inactivate(pReq)
+	assert.NoError(t, err)
+}
+
+func TestAsrClient_UsageRequest(t *testing.T) {
+	m := &amocks.AsrRecordServiceClient{}
+
+	l := &Asr{
+		client: m,
+	}
+
+	pReq := &pb.UsageReq{
+		Id: &pb.UsageReq_Iccid{
+			Iccid: iccid,
+		},
+	}
+
+	m.On("GetUsage", mock.Anything, pReq).Return(&pb.UsageResp{}, nil)
+
+	_, err := l.GetUsage(pReq)
+	assert.NoError(t, err)
+}
+
+func TestAsrClient_GetUsageForPeriod(t *testing.T) {
+	m := &amocks.AsrRecordServiceClient{}
+
+	l := &Asr{
+		client: m,
+	}
+
+	pReq := &pb.UsageForPeriodReq{
+		Id: &pb.UsageForPeriodReq_Iccid{
+			Iccid: iccid,
+		},
+		StartTime: 1714539000,
+		EndTime:   1714539344,
+	}
+
+	m.On("GetUsageForPeriod", mock.Anything, pReq).Return(&pb.UsageResp{}, nil)
+
+	_, err := l.GetUsageForPeriod(pReq)
 	assert.NoError(t, err)
 }

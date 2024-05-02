@@ -1,15 +1,17 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/stretchr/testify/assert"
@@ -30,6 +32,9 @@ var routerConfig = &RouterConfig{
 	},
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
+	},
+	auth: &config.Auth{
+		BypassAuthMode: true,
 	},
 }
 
@@ -63,6 +68,7 @@ func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
+		Asr:     "localhost:9090",
 	})
 }
 
@@ -70,7 +76,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -82,14 +88,23 @@ func TestRouter_PingRoute(t *testing.T) {
 
 func TestRouter_PutSubscriber(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/subscriber/"+iccid,
-		strings.NewReader(`{"network":"`+network+`","packageId":"`+packageId+`"}`))
+
+	httpreq := ActivateReq{
+		Iccid:     iccid,
+		NetworkId: network,
+		PackageId: packageId,
+	}
+
+	jReq, err := json.Marshal(httpreq)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest("PUT", "/v1/asr/"+iccid, bytes.NewReader(jReq))
 
 	m := &amocks.AsrRecordServiceClient{}
 
 	pReq := &pb.ActivateReq{
 		Iccid:     iccid,
-		Network:   network,
+		NetworkId: network,
 		PackageId: packageId,
 	}
 
@@ -97,7 +112,7 @@ func TestRouter_PutSubscriber(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
+	}, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -109,21 +124,19 @@ func TestRouter_PutSubscriber(t *testing.T) {
 
 func TestRouter_DeleteSubscriber(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+iccid, nil)
+	req, _ := http.NewRequest("DELETE", "/v1/asr/"+iccid, nil)
 
 	m := &amocks.AsrRecordServiceClient{}
 
 	pReq := &pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: iccid,
-		},
+		Iccid: iccid,
 	}
 
 	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
+	}, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -134,9 +147,16 @@ func TestRouter_DeleteSubscriber(t *testing.T) {
 }
 
 func TestRouter_PatchSubscriber(t *testing.T) {
+	httpreq := UpdatePackageReq{
+		Iccid:     iccid,
+		PackageId: packageId,
+	}
+
+	jReq, err := json.Marshal(httpreq)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/v1/subscriber/"+iccid,
-		strings.NewReader(`{"packageId":"`+packageId+`"}`))
+	req, _ := http.NewRequest("PATCH", "/v1/asr/"+iccid, bytes.NewReader(jReq))
 
 	m := &amocks.AsrRecordServiceClient{}
 	pReq := &pb.UpdatePackageReq{
@@ -147,7 +167,7 @@ func TestRouter_PatchSubscriber(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
+	}, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -161,7 +181,7 @@ func TestRouter_PatchSubscriber(t *testing.T) {
 func TestRouter_GetSubscriber(t *testing.T) {
 	t.Run("SubscriberExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
+		req, _ := http.NewRequest("GET", "/v1/asr/"+iccid, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
@@ -174,7 +194,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			a: client.NewAsrFromClient(m),
-		}, routerConfig).f.Engine()
+		}, routerConfig, nil).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -186,7 +206,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 
 	t.Run("SubscriberDoesn'tExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
+		req, _ := http.NewRequest("GET", "/v1/asr/"+iccid, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
@@ -200,7 +220,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			a: client.NewAsrFromClient(m),
-		}, routerConfig).f.Engine()
+		}, routerConfig, nil).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -209,4 +229,58 @@ func TestRouter_GetSubscriber(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})
+}
+
+func TestRouter_GetUsage(t *testing.T) {
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/asr/"+iccid+"/usage", nil)
+
+	m := &amocks.AsrRecordServiceClient{}
+	pReq := &pb.UsageReq{
+		Id: &pb.UsageReq_Iccid{
+			Iccid: iccid,
+		},
+	}
+	m.On("GetUsage", mock.Anything, pReq).Return(&pb.UsageResp{}, nil)
+
+	r := NewRouter(&Clients{
+		a: client.NewAsrFromClient(m),
+	}, routerConfig, nil).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+
+}
+
+func TestRouter_GetUsageForPeriod(t *testing.T) {
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/asr/"+iccid+"/period?start_time=1714008143&end_time=1714539344", nil)
+
+	m := &amocks.AsrRecordServiceClient{}
+	pReq := &pb.UsageForPeriodReq{
+		Id: &pb.UsageForPeriodReq_Iccid{
+			Iccid: iccid,
+		},
+		StartTime: 1714008143,
+		EndTime:   1714539344,
+	}
+	m.On("GetUsageForPeriod", mock.Anything, pReq).Return(&pb.UsageResp{}, nil)
+
+	r := NewRouter(&Clients{
+		a: client.NewAsrFromClient(m),
+	}, routerConfig, nil).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+
 }

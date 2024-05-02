@@ -38,6 +38,58 @@ func (_m *asr) Activate(req *gen.ActivateReq) (*gen.ActivateResp, error) {
 	return r0, r1
 }
 
+// GetUsage provides a mock function with given fields: req
+func (_m *asr) GetUsage(req *gen.UsageReq) (*gen.UsageResp, error) {
+	ret := _m.Called(req)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.UsageReq) (*gen.UsageResp, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.UsageReq) *gen.UsageResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.UsageReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetUsageForPeriod provides a mock function with given fields: req
+func (_m *asr) GetUsageForPeriod(req *gen.UsageForPeriodReq) (*gen.UsageResp, error) {
+	ret := _m.Called(req)
+
+	var r0 *gen.UsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.UsageForPeriodReq) (*gen.UsageResp, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.UsageForPeriodReq) *gen.UsageResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.UsageForPeriodReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Inactivate provides a mock function with given fields: req
 func (_m *asr) Inactivate(req *gen.InactivateReq) (*gen.InactivateResp, error) {
 	ret := _m.Called(req)
