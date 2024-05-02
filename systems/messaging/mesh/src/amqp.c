@@ -390,10 +390,6 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
 	return key;
 }
 
-/*
- * serialize_node_event -- Serialize the protobuf msg for the Link object
- *
- */
 static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
 
@@ -480,10 +476,6 @@ static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {
     return buff;
 }
 
-/*
- * object_type -- return object type of given event
- *
- */
 static int object_type(MeshEvent event) {
 
 	int type;
