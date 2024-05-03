@@ -38,6 +38,32 @@ func (_m *CDRService) GetUsage(req string) (*gen.UsageResp, error) {
 	return r0, r1
 }
 
+// GetUsageForPeriod provides a mock function with given fields: imsi, startTime, endTime
+func (_m *CDRService) GetUsageForPeriod(imsi string, startTime uint64, endTime uint64) (*gen.UsageForPeriodResp, error) {
+	ret := _m.Called(imsi, startTime, endTime)
+
+	var r0 *gen.UsageForPeriodResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, uint64, uint64) (*gen.UsageForPeriodResp, error)); ok {
+		return rf(imsi, startTime, endTime)
+	}
+	if rf, ok := ret.Get(0).(func(string, uint64, uint64) *gen.UsageForPeriodResp); ok {
+		r0 = rf(imsi, startTime, endTime)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UsageForPeriodResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, uint64, uint64) error); ok {
+		r1 = rf(imsi, startTime, endTime)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewCDRService interface {
 	mock.TestingT
 	Cleanup(func())

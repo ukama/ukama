@@ -35,12 +35,12 @@ type SimPackageUpdate struct {
 	PackageId uuid.UUID
 }
 
-NewPolicy(packageId uuid.UUID) (*db.Policy, error)
+type PCRFController interface {
+	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
 	AddPolicy(s *SimInfo, policy *db.Policy) error
 	UpdatePolicy(s *SimInfo, policy *db.Policy) error
 	DeletePolicy(s *SimInfo) error
-}type PCRFController interface {
-	
+}
 
 func NewPCRFController(db db.PolicyRepo, dataplanHost string, msgB mb.MsgBusServiceClient, orgName string, reroute string) *pcrf {
 	return &pcrf{
