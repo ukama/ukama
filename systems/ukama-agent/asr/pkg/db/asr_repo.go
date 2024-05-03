@@ -53,7 +53,7 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
 		asrRec := &Asr{}
-		err := tx.Model(&Asr{}).Preload(clause.Associations).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
+		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
 		if err != nil {
 			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
 		}
