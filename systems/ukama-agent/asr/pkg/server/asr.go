@@ -76,7 +76,7 @@ func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session 
 
 	if r.Policy != sub.Policy.Id.String() {
 		log.Errorf("Looks like sync failure for the subcriber %s. Policy expected %s is not matching CDR session %d", imsi, sub.Policy.Id.String(), session)
-		return fmt.Errorf("Policy mismatch.")
+		return fmt.Errorf("policy mismatch")
 	}
 
 	//TODO
