@@ -11,9 +11,6 @@
 
 #include "work.h"
 
-/*
- * init_work_list -- 
- */
 void init_work_list(WorkList **list) {
 
 	(*list)->first = NULL;
@@ -25,18 +22,12 @@ void init_work_list(WorkList **list) {
 	(*list)->exit = FALSE;
 }
 
-/*
- * create_work_item --
- *
- */
 static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 								  thread_func_t post, void *postArgs) {
 
 	WorkItem *work;
 
-	/* Sanity check */
-	if (data == NULL)
-		return NULL;
+	if (data == NULL) return NULL;
 
 	work = (WorkItem *)malloc(sizeof(WorkItem));
 	if (!work) {
@@ -55,18 +46,38 @@ static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 	return work;
 }
 
-/*
- * destroy_work_item --
- *
- */
-void destroy_work_item(WorkItem *work) {
+void free_work_item(WorkItem *work) {
 
-	if (!work) {
-		return;
-	}
+	if (work == NULL) return;
 
 	free(work->data);
 	free(work);
+}
+
+void free_work_list(WorkList *workList) {
+
+    WorkItem *current, *temp;
+
+    if (workList == NULL) return;
+
+    pthread_mutex_lock(&workList->mutex);
+
+    current = workList->first;
+    while (current != NULL) {
+        temp = current->next;
+        free(current->data);
+        free(current);
+        current = temp;
+    }
+
+    workList->first = NULL;
+    workList->last  = NULL;
+    pthread_mutex_unlock(&workList->mutex);
+
+    pthread_mutex_destroy(&workList->mutex);
+    pthread_cond_destroy(&workList->hasWork);
+
+    free(workList);
 }
 
 /*

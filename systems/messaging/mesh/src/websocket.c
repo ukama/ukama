@@ -60,6 +60,7 @@ static int is_websocket_valid(WSManager *manager, MapItem *map) {
                       map->nodeInfo->nodeID);
         }
 
+        remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
         return FALSE;
     }
 
@@ -161,7 +162,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		}
 
 		/* Free up the memory */
-		destroy_work_item(work);
+		free_work_item(work);
 	}
 
 	return;

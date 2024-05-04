@@ -469,6 +469,7 @@ static void *serialize_node_online_event(char *nodeID, char *nodeIP, int nodePor
     free(nodeEvent.nodeid);
 	free(nodeEvent.nodeip);
 	free(nodeEvent.meship);
+    free(nodeEvent.meshhostname);
     free(buff);
 
 	return anyBuff;
