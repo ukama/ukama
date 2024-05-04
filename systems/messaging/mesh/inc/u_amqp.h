@@ -78,7 +78,9 @@ typedef enum {
 	CERT_INVALID,
 	CERT_REQUIRED,
 
-	MAX_EVENT=10, /* Always is the last and is total number of events. */
+    MESH_BOOT,
+
+	MAX_EVENT=11, /* Always is the last and is total number of events. */
 }MeshEvent;
 
 typedef enum {

@@ -6,11 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-syntax = "proto2";
+syntax = "proto3";
 
 message BootEvent {
 
-    required string orgName = 1;
-    required string orgId   = 2;
-    required string Ip      = 3;
+    string orgName = 1;
+    string orgId   = 2;
+    string Ip      = 3;
 }

@@ -416,6 +416,14 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff) {
         sprintf(anyEvent.type_url, "%s/%s",
                 TYPE_URL_PREFIX,
                 ukama__events__v1__node_online_event__descriptor.name);
+    } else if (eventType == MESH_BOOT) {
+
+        anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
+                                           strlen(boot_event__descriptor.name) + 1,
+                                           sizeof(char));
+        sprintf(anyEvent.type_url, "%s/%s",
+                TYPE_URL_PREFIX,
+                boot_event__descriptor.name);
     } else {
         return NULL;
     }
@@ -505,7 +513,7 @@ static void *serialize_node_offline_event(char *nodeID) {
 static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {
 
     BootEvent bootEvent = BOOT_EVENT__INIT;
-    void *buff=NULL;
+    void *buff=NULL, *anyBuff=NULL;
     size_t len;
 
     bootEvent.orgname = strdup(orgName);
@@ -521,12 +529,15 @@ static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {
     }
 
     boot_event__pack(&bootEvent, buff);
+    anyBuff = serialize_any_packet(MESH_BOOT, len, buff);
 
     free(bootEvent.orgname);
     free(bootEvent.orgid);
     free(bootEvent.ip);
 
-    return buff;
+    free(buff);
+
+	return anyBuff;
 }
 
 static int object_type(MeshEvent event) {
