@@ -199,7 +199,7 @@ int main (int argc, char *argv[]) {
 	}
 
     /* Step-3: publish AMQP event with org name, org id and binding port */
-    if (publish_boot_event()) {
+    if (publish_boot_event(DEFAULT_MESH_AMQP_EXCHANGE)) {
         log_debug("Mesh running for Ukama Org: %s", config->orgName);
         pause();
     } else {

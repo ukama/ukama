@@ -20,6 +20,8 @@
 #define MAX_FRAME  131072
 #define MAX_EVENTS 10
 
+#define TYPE_URL_PREFIX "type.googleapis.com"
+
 /* type of object */
 #define OBJECT_NONE 0
 #define OBJECT_LINK 1
@@ -76,7 +78,9 @@ typedef enum {
 	CERT_INVALID,
 	CERT_REQUIRED,
 
-	MAX_EVENT=10, /* Always is the last and is total number of events. */
+    MESH_BOOT,
+
+	MAX_EVENT=11, /* Always is the last and is total number of events. */
 }MeshEvent;
 
 typedef enum {
@@ -119,7 +123,7 @@ typedef struct _routing_key {
 	ObjectState state;  /* State of the object. */
 } AMQPRoutingKey;
 
-int boot_event(void);
+int publish_boot_event(char *exchange);
 int publish_event(MeshEvent event, char *orgName, char *nodeID, char *nodeIP,
                   int nodePort, char *meshIP, int meshPort);
 #endif /* MESH_AMQP_H */

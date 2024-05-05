@@ -10,14 +10,11 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/registry/node/pb/gen";
 
-
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-
 package ukama.registry.node.v1;
-
 
 service NodeService {
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
@@ -34,7 +31,6 @@ service NodeService {
     rpc AddNodeToSite(AddNodeToSiteRequest)returns (AddNodeToSiteResponse);
     rpc ReleaseNodeFromSite(ReleaseNodeFromSiteRequest)returns (ReleaseNodeFromSiteResponse);
 }
-
 
 message AddNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
@@ -54,7 +50,6 @@ message GetNodeResponse{
     Node node = 1;
 }
 
-
 message GetBySiteRequest{
     string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
 }
@@ -63,7 +58,6 @@ message GetBySiteResponse{
     string siteId = 1 [json_name = "site_id"];
     repeated Node nodes = 2;
 }
-
 
 message GetByNetworkRequest{
     string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
@@ -74,16 +68,13 @@ message GetByNetworkResponse{
     repeated Node nodes = 2;
 }
 
-
 message GetAllRequest{
     bool free = 2;
 }
 
-
 message GetAllResponse{
     repeated Node nodes = 2;
 }
-
 
 message GetNodesRequest{
     bool free = 1;
@@ -143,7 +134,6 @@ message AddNodeToSiteRequest {
 message AddNodeToSiteResponse {
 }
 
-
 message ReleaseNodeFromSiteRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
@@ -151,12 +141,10 @@ message ReleaseNodeFromSiteRequest {
 message ReleaseNodeFromSiteResponse {
 }
 
-
 message NodeStatus {
     string connectivity = 1;
     string state = 2; 
 }
-
 
 message Site {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];

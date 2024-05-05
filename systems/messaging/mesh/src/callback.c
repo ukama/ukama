@@ -42,6 +42,9 @@ extern void websocket_incoming_message(const URequest *request,
 extern void  websocket_onclose(const URequest *request, WSManager *manager,
 							   void *data);
 
+/* network.c */
+extern int start_forward_service(Config *config, UInst **forwardInst);
+
 /*
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
@@ -96,7 +99,7 @@ int callback_websocket(const URequest *request, UResponse *response,
                       config->bindingIP,
                       forwardPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-        remove_map_item_from_table(&NodesTable, nodeID);
+        remove_map_item_from_table(NodesTable, nodeID);
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
         return U_CALLBACK_ERROR;
