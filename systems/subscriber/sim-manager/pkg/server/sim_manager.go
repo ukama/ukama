@@ -55,7 +55,7 @@ type SimManagerServer struct {
 	key                       string
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
-	orgId                       string
+	orgId                     string
 	orgName                   string
 	pushMetricHost            string
 	mailerClient              cnotif.MailerClient
@@ -86,7 +86,7 @@ func NewSimManagerServer(
 		key:                       key,
 		msgbus:                    msgBus,
 		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:                       orgId,
+		orgId:                     orgId,
 		pushMetricHost:            pushMetricHost,
 		mailerClient:              mailerClient,
 		networkClient:             networkClient,

@@ -10,22 +10,23 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -38,9 +39,10 @@ type SubcriberServer struct {
 	simManagerService client.SimManagerClientProvider
 	orgId             string
 	orgClient         cnucl.OrgClient
+	networkClient     creg.NetworkClient
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient) *SubcriberServer {
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient,networkClient creg.NetworkClient) *SubcriberServer {
 	return &SubcriberServer{
 		orgName:              orgName,
 		subscriberRepo:       subscriberRepo,
@@ -49,6 +51,7 @@ func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBu
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		orgId:                orgId,
 		orgClient:            orgService,
+		networkClient:        networkClient,
 	}
 }
 
@@ -72,6 +75,16 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	remoteOrg, err := s.orgClient.Get(s.orgName)
 	if err != nil {
 		return nil, err
+	}
+	networkInfo, err := s.networkClient.Get(networkId.String())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
+	}
+
+	if s.orgId != networkInfo.OrgId {
+		log.Error("Missing network.")
+
+		return nil, fmt.Errorf("Network mismatch")
 	}
 
 	if remoteOrg.IsDeactivated {

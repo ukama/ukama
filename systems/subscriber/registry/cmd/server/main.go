@@ -14,6 +14,7 @@ import (
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/subscriber/registry/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
@@ -73,6 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
+	networkClient := creg.NewNetworkClient(serviceConfig.RegistryHost)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -84,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
-	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, cnucl.NewOrgClient(serviceConfig.RegistryHost))
+	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, cnucl.NewOrgClient(serviceConfig.RegistryHost),networkClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterRegistryServiceServer(s, srv)
