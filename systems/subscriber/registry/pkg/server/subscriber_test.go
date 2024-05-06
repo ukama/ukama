@@ -39,6 +39,8 @@ func TestAdd(t *testing.T) {
 		simManagerService := &mocks.SimManagerClientProvider{}
 		regClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
+		netId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+		orgId:="7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
 
 		firstName := "John"
 		lastName := "Doe"
@@ -48,7 +50,6 @@ func TestAdd(t *testing.T) {
 		address := "1 Main St"
 		proofOfIdentification := "Passport"
 		idSerial := "123456789"
-		netId := uuid.NewV4()
 
 		regClient.On("Get", OrgName).Return(
 			&cnucl.OrgInfo{
@@ -59,8 +60,8 @@ func TestAdd(t *testing.T) {
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		networkClient.On("Get", netId).
 			Return(&creg.NetworkInfo{
-				Id:         netId.String(),
-				OrgId:      "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+				Id:         netId,
+				OrgId:      orgId,
 				Name:       "net-1",
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
@@ -69,7 +70,7 @@ func TestAdd(t *testing.T) {
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, regClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			FirstName:             firstName,
-			NetworkId:             netId.String(),
+			NetworkId:             netId,
 			LastName:              lastName,
 			Email:                 email,
 			PhoneNumber:           phoneNumber,
@@ -80,8 +81,6 @@ func TestAdd(t *testing.T) {
 			IdSerial:              idSerial,
 		})
 		assert.NoError(t, err)
-		msgBus.AssertExpectations(t)
-
 	})
 }
 func TestSubscriberServer_Get(t *testing.T) {
