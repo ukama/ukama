@@ -21,9 +21,15 @@ type userNotificationRepo struct {
 }
 
 func NewUserNotificationRepo(db sql.Db) UserNotificationRepo {
+	initTrigger(db)
 	return &userNotificationRepo{
 		Db: db,
 	}
+}
+
+func initTrigger(db sql.Db) {
+	db.GetGormDb().Exec("CREATE FUNCTION public.user_notifications_trigger() RETURNS TRIGGER AS $$ DECLARE notification_data text; BEGIN notification_data := NEW.id::text || ',' || NEW.notification_id::text; PERFORM pg_notify('user_notifications_channel', notification_data); RETURN NEW; END; $$ LANGUAGE plpgsql;")
+	db.GetGormDb().Exec("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON user_notifications FOR EACH ROW EXECUTE FUNCTION public.user_notifications_trigger();")
 }
 
 func (r *userNotificationRepo) Add(un []*UserNotification) error {

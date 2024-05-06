@@ -9,15 +9,15 @@
 package pkg
 
 import (
-	"time"
-
+	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	enpkg "github.com/ukama/ukama/systems/notification/event-notify/pkg"
 )
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	Grpc             *uconf.Grpc   `default:"{}"`
-	Timeout          time.Duration `default:"3s"`
+	DB               *uconf.Database `default:"{}"`
+	Grpc             *uconf.Grpc     `default:"{}"`
 	Service          *uconf.Service
 	OrgName          string
 	OrgId            string
@@ -25,6 +25,9 @@ type Config struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		DB: &config.Database{
+			DbName: enpkg.ServiceName,
+		},
 		Service: uconf.LoadServiceHostConfig(name),
 	}
 }

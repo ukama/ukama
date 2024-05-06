@@ -39,6 +39,7 @@ func main() {
 	eventToNotifyDb := initDb()
 	runGrpcServer(eventToNotifyDb)
 }
+
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
@@ -67,7 +68,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
-		/* used on local machines */
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}

@@ -57,7 +57,7 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	distributorServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId)
+	distributorServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.DB)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

@@ -4,7 +4,7 @@ services:
  postgresd-notification:
   image: postgres:13.3
   ports:
-   - '5406:5432'
+   - '5432:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -58,7 +58,7 @@ services:
  eventnotify:
   build: ./event-notify
   ports:
-   - '9078:9090'
+   - '9069:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification
@@ -79,7 +79,7 @@ services:
  distributor:
   build: ./distributor
   ports:
-   - '9079:9090'
+   - '9070:9090'
   environment:
    - DEBUGMODE=true
    - DISTRIBUTOR_SERVICE_HOST=distributor
