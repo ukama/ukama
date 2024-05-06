@@ -36,7 +36,7 @@ set -e  # Exit immediately if a command exits with a non-zero status.
 NODE_ID=$1
 UKAMA_REPO=$2
 
-UBUNTU_ISO_URL="https://releases.ubuntu.com/22.04/ubuntu-22.04.3-live-server-amd64.iso"
+UBUNTU_ISO_URL="https://releases.ubuntu.com/22.04/ubuntu-22.04.4-live-server-amd64.iso"
 ISO_FILE="ubuntu.iso"
 IMG_FILE="$NODE_ID.img"
 IMG_SIZE="5G"
