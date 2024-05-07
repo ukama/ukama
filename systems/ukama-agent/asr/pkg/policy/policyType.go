@@ -52,7 +52,7 @@ func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
 
 	_ = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
 
-	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "policy", e)
+	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
 
 	return nil, true
 }
