@@ -64,11 +64,11 @@ func (d *PackageClient) AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageRes
 	return d.packageClient.Add(ctx, req)
 }
 
-func (d *PackageClient) DeletePackage(id string, orgId string) (*pb.DeletePackageResponse, error) {
+func (d *PackageClient) DeletePackage(id string) (*pb.DeletePackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 
-	return d.packageClient.Delete(ctx, &pb.DeletePackageRequest{Uuid: id, OrgId: orgId})
+	return d.packageClient.Delete(ctx, &pb.DeletePackageRequest{Uuid: id})
 }
 
 func (d *PackageClient) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
@@ -92,8 +92,8 @@ func (d *PackageClient) GetPackageDetails(id string) (*pb.GetPackageResponse, er
 	return d.packageClient.GetDetails(ctx, &pb.GetPackageRequest{Uuid: id})
 }
 
-func (d *PackageClient) GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error) {
+func (d *PackageClient) GetPackages() (*pb.GetAllResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	return d.packageClient.GetByOrg(ctx, &pb.GetByOrgPackageRequest{OrgId: orgId})
+	return d.packageClient.GetAll(ctx, &pb.GetAllRequest{})
 }
