@@ -742,31 +742,27 @@ func TestRouter_Package(t *testing.T) {
 		m.AssertExpectations(t)
 	})
 
-	t.Run("GetPackageByOrgId", func(t *testing.T) {
-		ureq := GetPackageByOrgRequest{
-			OrgId: uuid.NewV4().String(),
-		}
+	t.Run("GetPackages", func(t *testing.T) {
 
 		w := httptest.NewRecorder()
-		hreq, _ := http.NewRequest("GET", "/v1/packages/orgs/"+ureq.OrgId, nil)
+		hreq, _ := http.NewRequest("GET", "/v1/packages", nil)
 
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
 		arc := &providers.AuthRestClient{}
-		pReq := &ppb.GetByOrgPackageRequest{
-			OrgId: ureq.OrgId,
+		pReq := &ppb.GetAllRequest{
 		}
 
-		pResp := &ppb.GetByOrgPackageResponse{
+		pResp := &ppb.GetAllResponse{
 			Packages: []*ppb.Package{
 				{
-					OrgId: ureq.OrgId,
+					Name:"my-pack",
 				},
 			},
 		}
 
-		p.On("GetByOrg", mock.Anything, pReq).Return(pResp, nil)
+		p.On("GetAll", mock.Anything, pReq).Return(pResp, nil)
 
 		r := NewRouter(&Clients{
 			r: client.NewRateClientFromClient(m),

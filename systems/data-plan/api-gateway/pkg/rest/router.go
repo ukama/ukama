@@ -72,8 +72,8 @@ type packageS interface {
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(id string) (*pb.GetPackageResponse, error)
 	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
-	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
-	DeletePackage(id string, orgId string) (*pb.DeletePackageResponse, error)
+	GetPackages() (*pb.GetAllResponse, error)
+	DeletePackage(id string) (*pb.DeletePackageResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -148,7 +148,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		packages := auth.Group("/packages", "Packages", "Packages operations")
 		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-		packages.GET("/orgs/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+		packages.GET("", formatDoc("Get all packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
 		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
@@ -176,8 +176,8 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest) (*pb.GetByOrgPackageResponse, error) {
-	resp, err := r.clients.p.GetPackageByOrg(req.OrgId)
+func (r *Router) getPackagesHandler(c *gin.Context) (*pb.GetAllResponse, error) {
+	resp, err := r.clients.p.GetPackages()
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -299,7 +299,7 @@ func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) 
 }
 
 func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := r.clients.p.DeletePackage(req.Uuid, c.Request.Header.Get("Org-id"))
+	resp, err := r.clients.p.DeletePackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -314,7 +314,6 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		Uuid:   req.Uuid,
 		Name:   req.Name,
 		Active: req.Active,
-		OrgId:  c.Request.Header.Get("Org-id"),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -329,7 +328,6 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 
 	pack := &pb.AddPackageRequest{
 		Name:          req.Name,
-		OrgId:         req.OrgId,
 		OwnerId:       req.OwnerId,
 		From:          req.From,
 		To:            req.To,

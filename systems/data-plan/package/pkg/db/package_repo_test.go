@@ -72,7 +72,6 @@ func Test_Package_Get(t *testing.T) {
 			Uuid:        packID,
 			Name:        "Silver Plan",
 			SimType:     ukama.SimTypeTest,
-			OrgId:       uuid.NewV4(),
 			OwnerId:     uuid.NewV4(),
 			Active:      true,
 			Duration:    30,
@@ -92,8 +91,8 @@ func Test_Package_Get(t *testing.T) {
 			Provider:     "ukama",
 		}
 
-		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "org_id", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
-			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.OrgId, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
+		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
+			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
 
 		rrows := sqlmock.NewRows([]string{"package_id", "amount", "sms_mo", "sms_mt", "data"}).
 			AddRow(packID, 100, 0.001, 0.001, 0.010)
@@ -146,7 +145,6 @@ func Test_Package_Get(t *testing.T) {
 			Uuid:        packID,
 			Name:        "Silver Plan",
 			SimType:     ukama.SimTypeTest,
-			OrgId:       uuid.NewV4(),
 			OwnerId:     uuid.NewV4(),
 			Active:      true,
 			Duration:    30,
@@ -166,8 +164,8 @@ func Test_Package_Get(t *testing.T) {
 			Provider:     "ukama",
 		}
 
-		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "org_id", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
-			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.OrgId, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
+		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
+			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
 
 		drows := sqlmock.NewRows([]string{"package_id", "dlbr", "ulbr", "apn"}).
 			AddRow(packID, 1024000, 102400, "uakam.tel")
@@ -221,7 +219,7 @@ func Test_Package_Get(t *testing.T) {
 	})
 }
 
-func Test_Package_GetByOrg(t *testing.T) {
+func Test_Package_GetAll(t *testing.T) {
 
 	t.Run("PackageExist", func(t *testing.T) {
 		// Arrange
@@ -233,12 +231,10 @@ func Test_Package_GetByOrg(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		id := uuid.NewV4()
 		pack := &int_db.Package{
 			Uuid:        packID,
 			Name:        "Silver Plan",
 			SimType:     ukama.SimTypeTest,
-			OrgId:       id,
 			OwnerId:     uuid.NewV4(),
 			Active:      true,
 			Duration:    30,
@@ -258,14 +254,14 @@ func Test_Package_GetByOrg(t *testing.T) {
 			Provider:     "ukama",
 		}
 
-		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "org_id", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
-			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.OrgId, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
+		rows := sqlmock.NewRows([]string{"uuid", "owner_id", "name", "sim_type", "active", "duration", "sms_volume", "data_volume", "voice_volume", "type", "data_units", "voice_units", "message_units", "flat_rate", "currency", "from", "to", "country", "provider"}).
+			AddRow(packID, pack.OwnerId, pack.Name, pack.SimType, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.Type, pack.DataUnits, pack.VoiceUnits, pack.MessageUnits, pack.Flatrate, pack.Currency, pack.From, pack.To, pack.Country, pack.Provider)
 
 		rrows := sqlmock.NewRows([]string{"package_id", "amount", "sms_mo", "sms_mt", "data"}).
 			AddRow(packID, 100, 0.001, 0.001, 0.010)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(id).
+			WithArgs().
 			WillReturnRows(rows)
 
 		mock.ExpectQuery(`^SELECT.*package_rates.*`).
@@ -288,7 +284,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		node, err := r.GetByOrg(id)
+		node, err := r.GetAll()
 
 		// Assert
 		assert.NoError(t, err)

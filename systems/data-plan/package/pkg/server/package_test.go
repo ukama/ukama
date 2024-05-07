@@ -34,6 +34,7 @@ import (
 )
 
 const OrgName = "testorg"
+const OrgId ="8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
 // Get Packages //
 // Success case
@@ -75,10 +76,11 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	packageUUID := uuid.NewV4()
 
+
 	var mockFilters = &pb.GetPackageRequest{
 		Uuid: packageUUID.String(),
 	}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,OrgId)
 	packageRepo.On("Get", packageUUID).Return(&db.Package{
 		Name: "Daily-pack",
 	}, nil)
@@ -91,7 +93,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 // Error case SQL error
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,OrgId)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.GetPackageRequest{
 		Uuid: packageUUID.String(),
@@ -103,19 +105,16 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 }
 
 func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
-	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgId: orgId.String(),
+	var mockFilters = &pb.GetAllRequest{
 	}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,OrgId)
 
-	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
+	packageRepo.On("GetAll").Return([]db.Package{{
 		Uuid:        uuid.NewV4(),
 		Name:        "Silver Plan",
 		SimType:     ukama.SimTypeTest,
-		OrgId:       orgId,
 		OwnerId:     uuid.NewV4(),
 		Active:      true,
 		Duration:    30,
@@ -134,7 +133,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 		Country:      "USA",
 		Provider:     "ukama",
 	}}, nil)
-	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
+	pkg, err := s.GetAll(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(5000000), pkg.Packages[0].DataVolume)
 	packageRepo.AssertExpectations(t)
@@ -142,18 +141,17 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 
 // Error cases
 
-func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
+func TestPackageServer_GetPackage_Error(t *testing.T) {
 	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgId: orgId.String(),
+	var mockFilters = &pb.GetAllRequest{
 	}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,orgId.String())
 
-	packageRepo.On("GetByOrg", orgId).
+	packageRepo.On("GetAll").
 		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
-	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
+	pkg, err := s.GetAll(context.TODO(), mockFilters)
 	assert.Error(t, err)
 	assert.Nil(t, pkg)
 	packageRepo.AssertExpectations(t)
@@ -183,12 +181,11 @@ func TestPackageServer_AddPackage(t *testing.T) {
 			Provider: "ukama",
 		},
 	}, nil).Once()
-	s := NewPackageServer(OrgName, packageRepo, rate, nil)
+	s := NewPackageServer(OrgName, packageRepo, rate, nil,OrgId)
 
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:     true,
 		Name:       "daily-pack",
-		OrgId:      uuid.NewV4().String(),
 		SimType:    testSim,
 		OwnerId:    ownerId,
 		BaserateId: baserate,
@@ -203,7 +200,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient)
+	s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient,OrgId)
 	packageUUID := uuid.NewV4()
 	mockPackage := &pb.UpdatePackageRequest{
 		Name: "Daily-pack-updated",
@@ -225,7 +222,7 @@ func TestPackageServer_UpdatePackage(t *testing.T) {
 
 func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,OrgId)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
 		Uuid: packageUUID.String(),
@@ -240,7 +237,7 @@ func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 // Error case: Id 0
 func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil)
+	s := NewPackageServer(OrgName, packageRepo, nil, nil,OrgId)
 	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
 		Uuid: packageUUID.String(),

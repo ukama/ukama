@@ -39,16 +39,19 @@ type PackageServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
+	orgId 		   string
 }
 
-func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient) *PackageServer {
+func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient, orgId string) *PackageServer {
 	return &PackageServer{
 		orgName:        orgName,
 		packageRepo:    packageRepo,
 		msgbus:         msgBus,
 		rate:           rate,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgId: orgId,
 	}
+
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
@@ -93,22 +96,16 @@ func (p *PackageServer) GetDetails(ctx context.Context, req *pb.GetPackageReques
 	return resp, nil
 }
 
-func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
-	log.Infof("GetPackage by Org: %v ", req.GetOrgId())
+func (p *PackageServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+	log.Infof("Get all packages")
 
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
-
-	packages, err := p.packageRepo.GetByOrg(orgId)
+	packages, err := p.packageRepo.GetAll()
 	if err != nil {
 		log.Error("error while getting package by Org" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
-	packageList := &pb.GetByOrgPackageResponse{
+	packageList := &pb.GetAllResponse{
 		Packages: dbpackagesToPbPackages(packages),
 	}
 
@@ -118,12 +115,6 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 
 	log.Infof("Adding package %v", req)
-
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
 
 	ownId, err := uuid.FromString(req.GetOwnerId())
 	if err != nil {
@@ -174,7 +165,6 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		OwnerId:      ownId,
 		Name:         req.GetName(),
 		SimType:      ukama.ParseSimType(req.GetSimType()),
-		OrgId:        orgId,
 		Active:       req.Active,
 		From:         from,
 		To:           to,
@@ -241,7 +231,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		route := p.baseRoutingKey.SetActionCreate().SetObject("package").MustBuild()
 		evt := &epb.CreatePackageEvent{
 			Uuid:            resp.Package.Uuid,
-			OrgId:           resp.Package.OrgId,
+			OrgId:           p.orgId,
 			OwnerId:         resp.Package.OwnerId,
 			Type:            resp.Package.Type,
 			Flatrate:        resp.Package.Flatrate,
@@ -286,7 +276,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 	if p.msgbus != nil {
 		evt := &epb.DeletePackageEvent{
 			Uuid:  req.Uuid,
-			OrgId: req.OrgId,
+			OrgId: p.orgId,
 		}
 		route := p.baseRoutingKey.SetActionDelete().SetObject("package").MustBuild()
 		err = p.msgbus.PublishRequest(route, evt)
@@ -323,7 +313,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	route := p.baseRoutingKey.SetAction("update").SetObject("package").MustBuild()
 	evt := &epb.UpdatePackageEvent{
 		Uuid:  req.Uuid,
-		OrgId: req.OrgId,
+		OrgId: p.orgId,
 	}
 	err = p.msgbus.PublishRequest(route, evt)
 	if err != nil {
@@ -350,7 +340,6 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
-		OrgId:       p.OrgId.String(),
 		Active:      p.Active,
 		From:        p.From.Format(time.RFC3339),
 		To:          p.To.Format(time.RFC3339),
