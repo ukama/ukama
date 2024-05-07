@@ -17,10 +17,9 @@ import (
 
 var Iccid = "0123456789012345678912"
 
+var subID uint = 1
 var sub = int_db.Asr{
-	Model: gorm.Model{
-		ID: 1,
-	},
+
 	Iccid:                   Iccid,
 	Imsi:                    Imsi,
 	Op:                      []byte("0123456789012345"),
@@ -90,6 +89,10 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.LastStatusChangeAt, sub.AllowedTimeOfService, sub.LastStatusChangeReasons).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		mock.ExpectCommit()
 
 		dialector := postgres.New(postgres.Config{
@@ -130,7 +133,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 		hrow := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id", "last_status_chang_at", "allowed_time_of_service", "last_status_change_reasons"}).
-			AddRow(sub.ID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.LastStatusChangeAt, sub.AllowedTimeOfService, sub.LastStatusChangeReasons)
+			AddRow(subID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.LastStatusChangeAt, sub.AllowedTimeOfService, sub.LastStatusChangeReasons)
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
@@ -138,15 +141,15 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 			WillReturnRows(hrow)
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), sub.ID).
+			WithArgs(sqlmock.AnyArg(), subID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sub.ID, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, PackageId.String(), sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.PACKAGE_UPDATE, sub.Imsi).
+			WithArgs(1, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, PackageId.String(), sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.PACKAGE_UPDATE, sub.Imsi).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
