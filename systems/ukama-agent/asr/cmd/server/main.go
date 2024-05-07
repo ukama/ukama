@@ -97,7 +97,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	asrRepo := db.NewAsrRecordRepo(gormdb)
 	gutiRepo := db.NewGutiRepo(gormdb)
-	policyRepo := db.NewPolicyRepo(gormdb)
+	//policyRepo := db.NewPolicyRepo(gormdb)
 
 	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
 	if err != nil {
@@ -116,10 +116,10 @@ func runGrpcServer(gormdb sql.Db) {
 
 	//pcrf := pcrf.NewPCRFController(policyRepo, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
 
-	controller := pm.NewPolicyController(asrRepo, policyRepo, mbClient, serviceConfig.DataplanHost, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
+	controller := pm.NewPolicyController(asrRepo, mbClient, serviceConfig.DataplanHost, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
 
 	// asr service
-	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo, policyRepo,
+	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo,
 		factory, network, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient, serviceConfig.AllowedTimeOfService) //
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)

@@ -114,7 +114,7 @@ var atos int64 = 7200
 func TestAsr_Read(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -131,7 +131,7 @@ func TestAsr_Read(t *testing.T) {
 
 		asrRepo.On("GetByIccid", reqPb.GetIccid()).Return(&sub, nil).Once()
 		cdr.On("GetUsage", sub.Imsi).Return(&usage, nil).Once()
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.Read(context.TODO(), &reqPb)
@@ -155,7 +155,7 @@ func TestAsr_Read(t *testing.T) {
 		asrRepo.On("GetByImsi", reqPb.GetImsi()).Return(&sub, nil).Once()
 		cdr.On("GetUsage", reqPb.GetImsi()).Return(&usage, nil).Once()
 
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.Read(context.TODO(), &reqPb)
@@ -173,7 +173,7 @@ func TestAsr_Read(t *testing.T) {
 func TestAsr_UpdatePackage(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -206,7 +206,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	ctrl.On("RunPolicyControl", sub.Imsi).Return(nil, false).Once()
 	ctrl.On("SyncProfile", pcrfData, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).Return(nil, false).Once()
 
-	s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+	s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 	assert.NoError(t, err)
 
 	hs, err := s.UpdatePackage(context.TODO(), &reqPb)
@@ -223,7 +223,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 func TestAsr_Activate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -284,7 +284,7 @@ func TestAsr_Activate(t *testing.T) {
 			return a1.Iccid == asr.Iccid
 		}), msgbus.ACTION_CRUD_CREATE, "activesubscriber", true).Return(nil, false).Once()
 
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.Activate(context.TODO(), &reqPb)
@@ -301,7 +301,7 @@ func TestAsr_Activate(t *testing.T) {
 func TestAsr_Inactivate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -327,7 +327,7 @@ func TestAsr_Inactivate(t *testing.T) {
 			return a1.Iccid == sub.Iccid
 		}), msgbus.ACTION_CRUD_DELETE, "activesubscriber", true).Return(nil, false).Once()
 
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.Inactivate(context.TODO(), &reqPb)
@@ -344,7 +344,7 @@ func TestAsr_Inactivate(t *testing.T) {
 func TestAsr_UpdateGuti(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -367,7 +367,7 @@ func TestAsr_UpdateGuti(t *testing.T) {
 		asrRepo.On("GetByImsi", reqPb.GetImsi()).Return(&sub, nil).Once()
 		gutiRepo.On("Update", &guti).Return(nil).Once()
 
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.UpdateGuti(context.TODO(), &reqPb)
@@ -384,7 +384,7 @@ func TestAsr_UpdateGuti(t *testing.T) {
 func TestAsr_UpdateTai(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	policyRepo := &mocks.PolicyRepo{}
+	
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
 	network := &mocks.Network{}
@@ -403,7 +403,7 @@ func TestAsr_UpdateTai(t *testing.T) {
 		asrRepo.On("GetByImsi", reqPb.GetImsi()).Return(&sub, nil).Once()
 		asrRepo.On("UpdateTai", sub.Imsi, tai).Return(nil).Once()
 
-		s, err := NewAsrRecordServer(asrRepo, gutiRepo, policyRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
 		assert.NoError(t, err)
 
 		hs, err := s.UpdateTai(context.TODO(), &reqPb)

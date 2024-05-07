@@ -17,13 +17,13 @@ import (
 )
 
 type policyController struct {
-	dp                   dataplan.PackageClient
-	Rules                []Rule
-	asrRepo              db.AsrRecordRepo
-	nodePolicyPath       string
-	period               time.Duration
-	pR                   chan bool
-	policyRepo           db.PolicyRepo
+	dp             dataplan.PackageClient
+	Rules          []Rule
+	asrRepo        db.AsrRecordRepo
+	nodePolicyPath string
+	period         time.Duration
+	pR             chan bool
+	//policyRepo           db.PolicyRepo
 	msgbus               mb.MsgBusServiceClient
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	OrgName              string
@@ -74,11 +74,10 @@ type Controller interface {
 	RunPolicyControl(imsi string) (error, bool)
 }
 
-func NewPolicyController(asrRepo db.AsrRecordRepo, pRepo db.PolicyRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
+func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
 	p := &policyController{
-		dp:                   dataplan.NewPackageClient(dataplanHost),
-		asrRepo:              asrRepo,
-		policyRepo:           pRepo,
+		dp:      dataplan.NewPackageClient(dataplanHost),
+		asrRepo: asrRepo,
 		msgbus:               msgB,
 		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
 		OrgName:              orgName,

@@ -23,7 +23,6 @@ import (
 type AsrRecordServer struct {
 	pb.UnimplementedAsrRecordServiceServer
 	asrRepo        db.AsrRecordRepo
-	pRepo          db.PolicyRepo
 	gutiRepo       db.GutiRepo
 	network        client.Network
 	factory        client.Factory
@@ -36,7 +35,7 @@ type AsrRecordServer struct {
 	allowedToS     int64
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db.PolicyRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
 		asrRepo:    asrRepo,
@@ -45,7 +44,6 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, pRepo db
 		OrgId:      orgId,
 		factory:    factory,
 		network:    network,
-		pRepo:      pRepo,
 		msgbus:     msgBus,
 		pc:         pc,
 		cdr:        cdr,
