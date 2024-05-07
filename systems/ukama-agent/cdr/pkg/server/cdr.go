@@ -52,6 +52,7 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 			log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
 			return err
 		}
+		ou = &db.Usage{}
 	}
 
 	u := db.Usage{
