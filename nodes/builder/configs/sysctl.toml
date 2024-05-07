@@ -11,11 +11,11 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/conf/sysctl /proc/sys"
+	mkdir="/ukama/configs/sysctl /proc/sys"
 
 [build-conf]
         from="/home/kashif/work/ukama/ukamaOS/distro/vendor/sysctl/00-linuxkit.conf"
-        to="/ukama/conf/sysctl/config.file"
+        to="/ukama/configs/sysctl/config.file"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
@@ -24,10 +24,8 @@
 	version="latest"
 	bin="sysctl"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="-configDir /ukama/conf/sysctl/config.file"
+	args="-configDir /ukama/configs/sysctl/config.file"
 
 # Final output format for capp
 [capp-output]
 	format="tar.gz"
-
-# Nothing to see here. Move on.

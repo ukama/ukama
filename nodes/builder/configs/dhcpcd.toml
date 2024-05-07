@@ -11,11 +11,11 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/conf/dhcpcd"
+	mkdir="/ukama/configs/dhcpcd"
 
 [build-conf]
         from="/nodes/ukamaOS/distro/vendor/build/etc/dhcpcd.conf"
-        to="/ukama/conf/dhcpcd/config.file"
+        to="/ukama/configs/dhcpcd/config.file"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
@@ -24,11 +24,9 @@
 	version="latest"
 	bin="dhcpcd"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="--config /ukama/conf/dhcpcd/config.file"
+	args="--config /ukama/configs/dhcpcd/config.file"
 
 	
 # Final output format for capp
 [capp-output]
 	format="tar.gz"
-
-# Nothing to see here. Move on.
