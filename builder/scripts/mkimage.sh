@@ -89,11 +89,11 @@ chroot /mnt/image /bin/bash <<'EOL'
     apt-get update
     apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic
 
-    mkdir -p /capps/pkgs
-    mkdir -p /capps/rootfs
-    mkdir -p /capps/registry
-
     mkdir -p /ukama
+    mkdir -p /ukama/apps/pkgs
+    mkdir -p /ukama/apps/rootfs
+    mkdir -p /ukama/apps/registry
+
     echo $NODE_ID > /ukama/nodeid
     echo $BOOTSTRAP_PORT > /ukama/bootstrap
 
