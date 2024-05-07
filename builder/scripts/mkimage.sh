@@ -9,10 +9,9 @@
 # this script create a bootable image which can then run with QEMU
 # and act as Ukama Node. Image is Ubuntu (20.04) with 5GB HD.
 
-extract_boostrap_port_and_write_to_file() {
+get_bootstrap_port() {
 
     local repo=$1
-    local output_file=$2
     local service_name="node-gateway-init"
 
     compose_file="${repo}/systems/init/docker-compose.yml"
@@ -27,7 +26,7 @@ extract_boostrap_port_and_write_to_file() {
         exit 1
     else
         # Write the port to the file
-        echo "$port" > "${output_file}"
+        BOOTSTRAP_PORT=$port
     fi
 }
 
@@ -40,6 +39,7 @@ UBUNTU_ISO_URL="https://releases.ubuntu.com/22.04/ubuntu-22.04.4-live-server-amd
 ISO_FILE="ubuntu.iso"
 IMG_FILE="$NODE_ID.img"
 IMG_SIZE="5G"
+BOOTSTRAP_PORT=0
 
 # Step 0: make sure have all the right packages
 apt-get update
@@ -74,6 +74,12 @@ mount --bind /proc /mnt/image/proc
 mount --bind /sys  /mnt/image/sys
 
 echo "Installing packages on the disk ..."
+
+#setup environment variables
+get_bootstrap_port $UKAMA_REPO
+export BOOTSTRAP_PORT
+export NODE_ID
+
 chroot /mnt/image /bin/bash <<'EOL'
     set -e	
     export DEBIAN_FRONTEND=noninteractive
@@ -89,7 +95,7 @@ chroot /mnt/image /bin/bash <<'EOL'
 
     mkdir -p /ukama
     echo $NODE_ID > /ukama/nodeid
-    extract_boostrap_port_and_write_to_file $UKAMA_REPO /ukama/bootstrap
+    echo $BOOTSTRAP_PORT > /ukama/bootstrap
 
     # create systemd service for the starter.d program
     cat > /etc/systemd/system/starterd.service << EOF
