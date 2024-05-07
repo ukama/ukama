@@ -43,6 +43,7 @@ services:
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - PACKAGE_SERVICE_HOST=package
    - PACKAGE_SERVICE_PORT=9090
+   - ORGID=${ORGID}
   restart: always
   networks:
    - ukama-net
