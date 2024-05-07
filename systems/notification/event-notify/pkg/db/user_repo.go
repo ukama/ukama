@@ -37,23 +37,27 @@ func (r *userRepo) Add(user *Users) (err error) {
 func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*Users, error) {
 	var users []*Users
 
+	const emptyUUID = "00000000-0000-0000-0000-000000000000"
+
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
 
-	if orgId != "" {
+	if orgId != "" && orgId != emptyUUID {
 		tx = tx.Where("org_id = ?", orgId)
 	}
 
-	if networkId != "" {
+	if networkId != "" && networkId != emptyUUID {
 		tx = tx.Where("network_id = ?", networkId)
 	}
 
-	if subscriberId != "" {
+	if subscriberId != "" && subscriberId != emptyUUID {
 		tx = tx.Where("subscriber_id = ?", subscriberId)
 	}
 
-	if userId != "" {
+	if userId != "" && userId != emptyUUID {
 		tx = tx.Where("user_id = ?", userId)
 	}
+
+	tx = tx.Where("role = ?", 0)
 
 	result := tx.Find(&users)
 	if result.Error != nil {

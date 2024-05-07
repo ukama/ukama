@@ -62,36 +62,6 @@ func (_m *NotificationRepo) Get(id uuid.UUID) (*db.Notification, error) {
 	return r0, r1
 }
 
-// GetAll provides a mock function with given fields: orgId, networkId, subscriberId, userId
-func (_m *NotificationRepo) GetAll(orgId string, networkId string, subscriberId string, userId string) ([]db.Notification, error) {
-	ret := _m.Called(orgId, networkId, subscriberId, userId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAll")
-	}
-
-	var r0 []db.Notification
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) ([]db.Notification, error)); ok {
-		return rf(orgId, networkId, subscriberId, userId)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) []db.Notification); ok {
-		r0 = rf(orgId, networkId, subscriberId, userId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Notification)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(orgId, networkId, subscriberId, userId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Update provides a mock function with given fields: id, isRead
 func (_m *NotificationRepo) Update(id uuid.UUID, isRead bool) error {
 	ret := _m.Called(id, isRead)

@@ -22,7 +22,7 @@ type Notification struct {
 	Title        string
 	Description  string
 	Type         NotificationType  `gorm:"type:uint;not null;default:0"`
-	Scope        NotificationScope `gorm:"type:uint;not null;default:4"`
+	Scope        NotificationScope `gorm:"type:uint;not null;default:0"`
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
@@ -38,7 +38,7 @@ type Users struct {
 	NetworkId    string
 	SubscriberId string
 	UserId       string
-	Role         RoleType
+	Role         RoleType `gorm:"type:uint;not null;default:0"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -46,7 +46,7 @@ type Users struct {
 
 type UserNotification struct {
 	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
-	NotificationId uuid.UUID
+	NotificationId uuid.UUID `gorm:"type:uuid"`
 	UserId         uuid.UUID
 	IsRead         bool `gorm:"default:false"`
 	CreatedAt      time.Time
@@ -54,15 +54,24 @@ type UserNotification struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
 }
 
+type Notifications struct {
+	Id          uuid.UUID `gorm:"type:uuid"`
+	Title       string
+	Description string
+	Type        NotificationType  `gorm:"type:uint;not null;default:0"`
+	Scope       NotificationScope `gorm:"type:uint;not null;default:0"`
+	IsRead      bool              `gorm:"type:bool;default:false;"`
+	CreatedAt   string
+	UpdatedAt   string
+}
+
 type RoleType uint8
 
 const (
-	Owner      RoleType = 0
-	Admin      RoleType = 1
-	Employee   RoleType = 2
-	Vendor     RoleType = 3
-	User       RoleType = 4
-	Subscriber RoleType = 5
+	OWNER  RoleType = 0
+	ADMIN  RoleType = 1
+	VENDOR RoleType = 2
+	USERS  RoleType = 3
 )
 
 func (e *RoleType) Scan(value interface{}) error {
@@ -90,7 +99,7 @@ func (l *NotificationType) Scan(value interface{}) error {
 }
 
 func (l NotificationType) Value() (driver.Value, error) {
-	return int64(l), nil
+	return uint8(l), nil
 }
 
 type NotificationScope uint8
@@ -110,5 +119,5 @@ func (l *NotificationScope) Scan(value interface{}) error {
 }
 
 func (l NotificationScope) Value() (driver.Value, error) {
-	return int64(l), nil
+	return uint8(l), nil
 }

@@ -49,3 +49,6 @@ func (this *UpdateStatusResponse) Validate() error {
 func (this *Notification) Validate() error {
 	return nil
 }
+func (this *Notifications) Validate() error {
+	return nil
+}

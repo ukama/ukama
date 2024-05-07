@@ -9,11 +9,14 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/ukama/ukama/systems/common/sql"
 )
 
 type UserNotificationRepo interface {
 	Add(un []*UserNotification) error
+	GetNotificationsByUserID(id string) ([]*Notifications, error)
 }
 
 type userNotificationRepo struct {
@@ -21,18 +24,22 @@ type userNotificationRepo struct {
 }
 
 func NewUserNotificationRepo(db sql.Db) UserNotificationRepo {
-	initTrigger(db)
 	return &userNotificationRepo{
 		Db: db,
 	}
 }
 
-func initTrigger(db sql.Db) {
-	db.GetGormDb().Exec("CREATE FUNCTION public.user_notifications_trigger() RETURNS TRIGGER AS $$ DECLARE notification_data text; BEGIN notification_data := NEW.id::text || ',' || NEW.notification_id::text; PERFORM pg_notify('user_notifications_channel', notification_data); RETURN NEW; END; $$ LANGUAGE plpgsql;")
-	db.GetGormDb().Exec("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON user_notifications FOR EACH ROW EXECUTE FUNCTION public.user_notifications_trigger();")
-}
-
 func (r *userNotificationRepo) Add(un []*UserNotification) error {
 	d := r.Db.GetGormDb().Create(un)
 	return d.Error
+}
+
+func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications, error) {
+	var notifications []*Notifications
+	q := fmt.Sprintf("SELECT user_notifications.is_read,notifications.title,notifications.description,notifications.scope,notifications.type,notifications.id,notifications.created_at,notifications.updated_at FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id WHERE user_notifications.user_id = '%s';", id)
+	d := r.Db.GetGormDb().Exec(q).Find(&notifications)
+	if d.Error != nil {
+		return nil, d.Error
+	}
+	return notifications, nil
 }

@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DistributorServiceClient interface {
 	NotificationStream(ctx context.Context, in *NotificationStreamRequest, opts ...grpc.CallOption) (DistributorService_NotificationStreamClient, error)
+	GetNotifications(ctx context.Context, in *NotificationsRequest, opts ...grpc.CallOption) (*NotificationsResponse, error)
 }
 
 type distributorServiceClient struct {
@@ -65,11 +66,21 @@ func (x *distributorServiceNotificationStreamClient) Recv() (*Notification, erro
 	return m, nil
 }
 
+func (c *distributorServiceClient) GetNotifications(ctx context.Context, in *NotificationsRequest, opts ...grpc.CallOption) (*NotificationsResponse, error) {
+	out := new(NotificationsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.notification.distributor.v1.DistributorService/GetNotifications", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DistributorServiceServer is the server API for DistributorService service.
 // All implementations must embed UnimplementedDistributorServiceServer
 // for forward compatibility
 type DistributorServiceServer interface {
 	NotificationStream(*NotificationStreamRequest, DistributorService_NotificationStreamServer) error
+	GetNotifications(context.Context, *NotificationsRequest) (*NotificationsResponse, error)
 	mustEmbedUnimplementedDistributorServiceServer()
 }
 
@@ -79,6 +90,9 @@ type UnimplementedDistributorServiceServer struct {
 
 func (UnimplementedDistributorServiceServer) NotificationStream(*NotificationStreamRequest, DistributorService_NotificationStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method NotificationStream not implemented")
+}
+func (UnimplementedDistributorServiceServer) GetNotifications(context.Context, *NotificationsRequest) (*NotificationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNotifications not implemented")
 }
 func (UnimplementedDistributorServiceServer) mustEmbedUnimplementedDistributorServiceServer() {}
 
@@ -114,13 +128,36 @@ func (x *distributorServiceNotificationStreamServer) Send(m *Notification) error
 	return x.ServerStream.SendMsg(m)
 }
 
+func _DistributorService_GetNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NotificationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DistributorServiceServer).GetNotifications(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.notification.distributor.v1.DistributorService/GetNotifications",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DistributorServiceServer).GetNotifications(ctx, req.(*NotificationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DistributorService_ServiceDesc is the grpc.ServiceDesc for DistributorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DistributorService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.notification.distributor.v1.DistributorService",
 	HandlerType: (*DistributorServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetNotifications",
+			Handler:    _DistributorService_GetNotifications_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "NotificationStream",

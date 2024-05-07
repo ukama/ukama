@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -121,7 +122,17 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		}
 	}
 
-	notifications, err := n.notificationRepo.GetAll(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), db.RoleType(*req.GetRole().Enum()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
+	}
+
+	if len(user) > 1 {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"Invalid arguments. Error %s", err.Error())
+	}
+
+	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].Id.String())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -129,6 +140,23 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 	return &pb.GetAllResponse{
 		Notifications: dbNotificationsToPbNotifications(notifications),
 	}, nil
+}
+
+func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
+	res := []*pb.Notifications{}
+	for _, i := range notifications {
+		fmt.Printf("Notifications to convert", pb.NotificationType(i.Type), pb.NotificationScope(i.Scope))
+		n := &pb.Notifications{
+			Id:          i.Id.String(),
+			Title:       i.Title,
+			Description: i.Description,
+			Type:        pb.NotificationType(i.Type),
+			Scope:       pb.NotificationScope(i.Scope),
+			IsRead:      i.IsRead,
+		}
+		res = append(res, n)
+	}
+	return res
 }
 
 func dbNotificationToPbNotification(notification *db.Notification) *pb.Notification {
@@ -143,16 +171,6 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
 	}
-}
-
-func dbNotificationsToPbNotifications(notifications []db.Notification) []*pb.Notification {
-	res := []*pb.Notification{}
-
-	for _, i := range notifications {
-		res = append(res, dbNotificationToPbNotification(&i))
-	}
-
-	return res
 }
 
 func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.Users, error) {
@@ -176,7 +194,7 @@ func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notificat
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
 	}
-	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.Owner)
+	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.OWNER)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)

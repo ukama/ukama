@@ -21,6 +21,7 @@ type Config struct {
 	Service          *uconf.Service
 	OrgName          string
 	OrgId            string
+	EventNotifyHost  string `default:"localhost:9069"`
 }
 
 func NewConfig(name string) *Config {

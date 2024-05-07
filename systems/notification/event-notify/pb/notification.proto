@@ -34,10 +34,11 @@ message GetAllRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
+    RoleType role = 5 [json_name = "role"];
 }
 
 message GetAllResponse {
-    repeated Notification notifications = 1;
+    repeated Notifications notifications = 1;
 }
 
 message UpdateStatusRequest {
@@ -62,6 +63,15 @@ message Notification {
     RoleType forRole = 10 [json_name = "for_role"];
 }
 
+message Notifications {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    NotificationType type = 4;
+    NotificationScope scope = 5;
+    bool isRead = 6 [json_name = "is_read"];
+}
+
 enum RoleType {
     OWNER = 0;
     ADMIN = 1;
@@ -70,10 +80,10 @@ enum RoleType {
 }
 
 enum NotificationType {
-    UNKNOWN = 0;
-    INFO = 1;
-    WARNING = 2;
-    ERROR = 3;
+    INFO = 0;
+    WARNING = 1;
+    ERROR = 2;
+    CRITICAL = 3;
 }
 
 enum NotificationScope {

@@ -10,7 +10,6 @@ package db
 
 import (
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -20,7 +19,6 @@ type NotificationRepo interface {
 	Add(org *Notification) error
 	Get(id uuid.UUID) (*Notification, error)
 	Update(id uuid.UUID, isRead bool) error
-	GetAll(orgId string, networkId string, subscriberId string, userId string) ([]Notification, error)
 }
 
 type notificationRepo struct {
@@ -45,39 +43,6 @@ func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
 		return nil, result.Error
 	}
 	return &notification, nil
-}
-
-func (r *notificationRepo) GetAll(orgId string, networkId string, subscriberId string, userId string) ([]Notification, error) {
-	var notifications []Notification
-
-	tx := r.Db.GetGormDb().Preload(clause.Associations)
-
-	if orgId != "" {
-		tx = tx.Where("org_id = ?", orgId)
-	}
-
-	if networkId != "" {
-		tx = tx.Where("network_id = ?", networkId)
-	}
-
-	if subscriberId != "" {
-		tx = tx.Where("subscriber_id = ?", subscriberId)
-	}
-
-	if userId != "" {
-		tx = tx.Where("user_id = ?", userId)
-	}
-
-	result := tx.Find(&notifications)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	return notifications, nil
 }
 
 func (r *notificationRepo) Update(id uuid.UUID, isRead bool) error {

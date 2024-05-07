@@ -73,6 +73,220 @@ const (
 	EventNotificationStore  = "event.cloud.local.{{ .Org}}.notification.notify.notification.store"
 )
 
+type Event struct {
+	Key   string
+	Scope uint8
+	Type  uint8
+}
+
+var EventsSTMapping = map[string]Event{
+	"EventOrgAdd": {
+		Key:   EventOrgAdd,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventUserAdd": {
+		Key:   EventUserAdd,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventUserDeactivate": {
+		Key:   EventUserDeactivate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventUserDelete": {
+		Key:   EventUserDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMemberCreate": {
+		Key:   EventMemberCreate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMemberDelete": {
+		Key:   EventMemberDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNetworkAdd": {
+		Key:   EventNetworkAdd,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNetworkDelete": {
+		Key:   EventNetworkDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNodeCreate": {
+		Key:   EventNodeCreate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNodeUpdate": {
+		Key:   EventNodeUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNodeDelete": {
+		Key:   EventNodeDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNodeAssign": {
+		Key:   EventNodeAssign,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNodeRelease": {
+		Key:   EventNodeRelease,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventInviteCreate": {
+		Key:   EventInviteCreate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventInviteDelete": {
+		Key:   EventInviteDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventInviteUpdate": {
+		Key:   EventInviteUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMeshNodeOnline": {
+		Key:   EventMeshNodeOnline,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMeshNodeOffline": {
+		Key:   EventMeshNodeOffline,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimActivate": {
+		Key:   EventSimActivate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimAllocate": {
+		Key:   EventSimAllocate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimDelete": {
+		Key:   EventSimDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimAddPackage": {
+		Key:   EventSimAddPackage,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimActivePackage": {
+		Key:   EventSimActivePackage,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimRemovePackage": {
+		Key:   EventSimRemovePackage,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSubscriberCreate": {
+		Key:   EventSubscriberCreate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSubscriberUpdate": {
+		Key:   EventSubscriberUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSubscriberDelete": {
+		Key:   EventSubscriberDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventSimUpload": {
+		Key:   EventSimUpload,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventRateUpdate": {
+		Key:   EventRateUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventPackageCreate": {
+		Key:   EventPackageCreate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventPackageUpdate": {
+		Key:   EventPackageUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventPackageDelete": {
+		Key:   EventPackageDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMarkupUpdate": {
+		Key:   EventMarkupUpdate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventMarkupDelete": {
+		Key:   EventMarkupDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventComponentsSync": {
+		Key:   EventComponentsSync,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventAccountingSync": {
+		Key:   EventAccountingSync,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventInvoiceGenerate": {
+		Key:   EventInvoiceGenerate,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventInvoiceDelete": {
+		Key:   EventInvoiceDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventHealthCAPPStore": {
+		Key:   EventHealthCAPPStore,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNotificationDelete": {
+		Key:   EventNotificationDelete,
+		Scope: 0,
+		Type:  0,
+	},
+	"EventNotificationStore": {
+		Key:   EventNotificationStore,
+		Scope: 0,
+		Type:  0,
+	},
+}
+
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &config.Database{
