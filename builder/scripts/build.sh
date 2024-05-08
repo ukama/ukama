@@ -11,7 +11,7 @@ mock_sysfs_for_noded() {
     repo=$1
     node_id=$2
 
-    mkdir -p /mnt/${node_id}/ukama/mocksysfs/
+    mkdir /mnt/${node_id}/ukama/mocksysfs/
     cp -p ./mocksysfs.sh /mnt/${node_id}/ukama/mocksysfs/
 
     cd ${repo}/nodes/ukamaOS/distro/system/noded; make
@@ -49,7 +49,7 @@ EOL
 EOF
 }
 
-install_starter_capp() {
+install_starter_app() {
 
     path=$1
 
@@ -101,7 +101,6 @@ elif [ "$1" = "node" ]; then
     # copy the apps and manifest.json into the os image
     echo "Copying apps, installing starter.d and manifesto to the OS image"
     mkdir -p /mnt/${node_id} || exit 1
-    mkdir -p /mnt/${node_id}/ukama/ || exit 1
     mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
 
     cp -r ./pkgs /mnt/${node_id}/ukama/apps/
