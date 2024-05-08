@@ -41,11 +41,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, pkg.EventPackageCreate):
 		c := pkg.EventsSTMapping["EventPackageCreate"]
-		msg, err := unmarshalMessage(e.Msg, &epb.CreatePackageEvent{})
+		_, err := unmarshalMessage(e.Msg, &epb.CreatePackageEvent{})
 		if err != nil {
 			return nil, err
 		}
-		event := msg.(*epb.CreatePackageEvent)
+		// event := msg.(*epb.CreatePackageEvent)
 		notification := &db.Notification{
 			Id:           uuid.NewV4(),
 			Title:        c.Title,
@@ -58,7 +58,206 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			SubscriberId: "",
 		}
 		es.n.eventPbToDBNotification(notification)
-		log.Infof("Received a message with Routing key %s and Message", event)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventPackageUpdate):
+		c := pkg.EventsSTMapping["EventPackageUpdate"]
+		_, err := unmarshalMessage(e.Msg, &epb.UpdatePackageEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.UpdatePackageEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNetworkAdd):
+		c := pkg.EventsSTMapping["EventNetworkAdd"]
+		_, err := unmarshalMessage(e.Msg, &epb.NetworkCreatedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NetworkCreatedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeCreate):
+		c := pkg.EventsSTMapping["EventNodeCreate"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeCreatedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeCreatedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeUpdate):
+		c := pkg.EventsSTMapping["EventNodeUpdate"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeUpdatedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeUpdatedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeStateUpdate):
+		c := pkg.EventsSTMapping["EventNodeStateUpdate"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeStateUpdatedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeStateUpdatedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeDelete):
+		c := pkg.EventsSTMapping["EventNodeDelete"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeDeletedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeDeletedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeAssign):
+		c := pkg.EventsSTMapping["EventNodeAssign"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeAssignedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeAssignedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventNodeRelease):
+		c := pkg.EventsSTMapping["EventNodeRelease"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeReleasedEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeReleasedEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventMeshNodeOnline):
+		c := pkg.EventsSTMapping["EventMeshNodeOnline"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeOnlineEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeOnlineEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
+
+	case msgbus.PrepareRoute(es.orgName, pkg.EventMeshNodeOffline):
+		c := pkg.EventsSTMapping["EventMeshNodeOffline"]
+		_, err := unmarshalMessage(e.Msg, &epb.NodeOfflineEvent{})
+		if err != nil {
+			return nil, err
+		}
+		// event := msg.(*epb.NodeOfflineEvent)
+		notification := &db.Notification{
+			Id:           uuid.NewV4(),
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
+			UserId:       "",
+			NetworkId:    "",
+			SubscriberId: "",
+		}
+		es.n.eventPbToDBNotification(notification)
 
 	case msgbus.PrepareRoute(es.orgName, pkg.EventMemberCreate):
 		c := pkg.EventsSTMapping[pkg.EventMemberCreate]
@@ -88,7 +287,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			SubscriberId: "",
 		}
 		es.n.storeUser(user)
-		log.Infof("Received a message with Routing key %s and Message", event)
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)

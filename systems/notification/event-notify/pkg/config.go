@@ -44,6 +44,7 @@ const (
 	EventNetworkDelete      = "event.cloud.local.{{ .Org}}.registry.network.network.delete"
 	EventNodeCreate         = "event.cloud.local.{{ .Org}}.registry.node.node.create"
 	EventNodeUpdate         = "event.cloud.local.{{ .Org}}.registry.node.node.update"
+	EventNodeStateUpdate    = "event.cloud.local.{{ .Org}}.registry.node.node.state.update"
 	EventNodeDelete         = "event.cloud.local.{{ .Org}}.registry.node.node.delete"
 	EventNodeAssign         = "event.cloud.local.{{ .Org}}.registry.node.node.assign"
 	EventNodeRelease        = "event.cloud.local.{{ .Org}}.registry.node.node.release"
