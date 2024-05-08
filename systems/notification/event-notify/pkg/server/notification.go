@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -145,13 +144,12 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
-		fmt.Printf("Notifications to convert", pb.NotificationType(i.Type), pb.NotificationScope(i.Scope))
 		n := &pb.Notifications{
 			Id:          i.Id.String(),
 			Title:       i.Title,
 			Description: i.Description,
-			Type:        pb.NotificationType(i.Type),
-			Scope:       pb.NotificationScope(i.Scope),
+			Type:        pb.NotificationType_name[int32(i.Type)],
+			Scope:       pb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
 		}
 		res = append(res, n)
@@ -164,8 +162,8 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		Id:           notification.Id.String(),
 		Title:        notification.Title,
 		Description:  notification.Description,
-		Type:         pb.NotificationType(pb.NotificationType_value[string(notification.Type)]),
-		Scope:        pb.NotificationScope(pb.NotificationScope_value[string(notification.Scope)]),
+		Type:         pb.NotificationType(notification.Type),
+		Scope:        pb.NotificationScope(notification.Scope),
 		OrgId:        notification.OrgId,
 		NetworkId:    notification.NetworkId,
 		SubscriberId: notification.SubscriberId,

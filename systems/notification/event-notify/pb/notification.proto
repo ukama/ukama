@@ -43,7 +43,7 @@ message GetAllResponse {
 
 message UpdateStatusRequest {
     string id = 1;
-    bool is_read = 2;
+    bool isRead = 2 [json_name = "is_read"];
 }
 
 message UpdateStatusResponse {
@@ -67,8 +67,8 @@ message Notifications {
     string id = 1;
     string title = 2;
     string description = 3;
-    NotificationType type = 4;
-    NotificationScope scope = 5;
+    string type = 4;
+    string scope = 5;
     bool isRead = 6 [json_name = "is_read"];
 }
 

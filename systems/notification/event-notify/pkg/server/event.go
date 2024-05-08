@@ -23,13 +23,15 @@ import (
 
 type EventToNotifyEventServer struct {
 	orgName string
+	orgId   string
 	n       *EventToNotifyServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNotificationEventServer(orgName string, n *EventToNotifyServer) *EventToNotifyEventServer {
+func NewNotificationEventServer(orgName string, orgId string, n *EventToNotifyServer) *EventToNotifyEventServer {
 	return &EventToNotifyEventServer{
 		orgName: orgName,
+		orgId:   orgId,
 		n:       n,
 	}
 }
@@ -38,19 +40,19 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, pkg.EventPackageCreate):
+		c := pkg.EventsSTMapping["EventPackageCreate"]
 		msg, err := unmarshalMessage(e.Msg, &epb.CreatePackageEvent{})
 		if err != nil {
 			return nil, err
 		}
 		event := msg.(*epb.CreatePackageEvent)
-
 		notification := &db.Notification{
 			Id:           uuid.NewV4(),
-			Title:        "Package Created",
-			Description:  "Package Created",
-			Type:         db.NotificationType(pkg.EventsSTMapping["EventPackageCreate"].Type),
-			Scope:        db.NotificationScope(pkg.EventsSTMapping["EventPackageCreate"].Scope),
-			OrgId:        event.OrgId,
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
+			OrgId:        es.orgId,
 			UserId:       "",
 			NetworkId:    "",
 			SubscriberId: "",
@@ -59,18 +61,18 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		log.Infof("Received a message with Routing key %s and Message", event)
 
 	case msgbus.PrepareRoute(es.orgName, pkg.EventMemberCreate):
+		c := pkg.EventsSTMapping[pkg.EventMemberCreate]
 		msg, err := unmarshalMessage(e.Msg, &epb.AddMemberEventRequest{})
 		if err != nil {
 			return nil, err
 		}
 		event := msg.(*epb.AddMemberEventRequest)
-
 		notification := &db.Notification{
 			Id:           uuid.NewV4(),
-			Title:        "Member added to org",
-			Description:  "New member added to org",
-			Type:         db.INFO,
-			Scope:        db.ORG,
+			Title:        c.Title,
+			Description:  c.Description,
+			Type:         db.NotificationType(c.Type),
+			Scope:        db.NotificationScope(c.Scope),
 			OrgId:        event.OrgId,
 			UserId:       event.UserId,
 			NetworkId:    "",
