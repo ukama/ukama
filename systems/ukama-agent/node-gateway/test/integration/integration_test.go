@@ -45,7 +45,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	t.Run("Read", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/v1/subscriber/" + imsi)
+			Get(getApiUrl() + "/v1/asr/" + imsi)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())

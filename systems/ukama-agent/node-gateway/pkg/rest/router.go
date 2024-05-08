@@ -59,7 +59,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
 		clients: clients,
@@ -70,7 +70,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -92,21 +92,37 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
-
+func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	v1 := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system")
+	auth := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
 
-	asr := v1.Group("/asr", "Asr", "Active susbcriber registry")
-	asr.GET("/:imsi", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
-	asr.POST("/:imsi/guti", formatDoc("GUTI update for subscriber", ""), tonic.Handler(r.postGuti, http.StatusOK))
-	asr.POST("/:imsi/tai", formatDoc("TAI update for subscriber", ""), tonic.Handler(r.postTai, http.StatusOK))
-	asr.GET("/:imsi/usage", formatDoc("Get total usage", ""), tonic.Handler(r.getUsage, http.StatusOK))
+		asr := auth.Group("/asr", "Asr", "Active susbcriber registry")
+		asr.GET("/:imsi", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
+		asr.POST("/:imsi/guti", formatDoc("GUTI update for subscriber", ""), tonic.Handler(r.postGuti, http.StatusOK))
+		asr.POST("/:imsi/tai", formatDoc("TAI update for subscriber", ""), tonic.Handler(r.postTai, http.StatusOK))
+		asr.GET("/:imsi/usage", formatDoc("Get total usage", ""), tonic.Handler(r.getUsage, http.StatusOK))
 
-	cdr := v1.Group("/cdr", "CDR", "Call Detail Record")
-	cdr.POST("/:imsi", formatDoc("Post CDR", ""), tonic.Handler(r.postCDR, http.StatusOK))
-	cdr.GET("/:imsi", formatDoc("Get CDR", ""), tonic.Handler(r.getCDR, http.StatusOK))
-
+		cdr := auth.Group("/cdr", "CDR", "Call Detail Record")
+		cdr.POST("/:imsi", formatDoc("Post CDR", ""), tonic.Handler(r.postCDR, http.StatusCreated))
+		cdr.GET("/:imsi", formatDoc("Get CDR", ""), tonic.Handler(r.getCDR, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -119,7 +135,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 func (r *Router) postCDR(c *gin.Context, req *PostCDRReq) (*cpb.CDRResp, error) {
 
 	return r.clients.c.PostCDR(&cpb.CDR{
-		Session:       uint64(req.Session),
+		Session:       req.Session,
 		Imsi:          req.Imsi,
 		Policy:        req.Policy,
 		ApnName:       req.ApnName,

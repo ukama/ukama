@@ -25,7 +25,7 @@ type UpdateTaiReq struct {
 }
 
 type PostCDRReq struct {
-	Session       int    `json:"session" validate:"required"`
+	Session       uint64 `json:"session" validate:"required"`
 	Imsi          string `json:"imsi" path:"imsi" validate:"required"`
 	NodeId        string `json:"node_id" validate:"required"`
 	Policy        string `json:"policy" validate:"required"`
@@ -40,11 +40,11 @@ type PostCDRReq struct {
 }
 
 type GetCDRReq struct {
-	Imsi      string `json:"imsi" path:"imsi" validate:"required"`
-	StartTime uint64 `json:"start_time"`
-	EndTime   uint64 `json:"end_time"`
-	Policy    string `json:"policy"`
-	SessionId uint64 `json:"session_id"`
+	Imsi      string `path:"imsi" validate:"required"`
+	StartTime uint64 `query:"start_time" validate:"required"`
+	EndTime   uint64 `query:"end_time" validate:"required"`
+	Policy    string `query:"policy"`
+	SessionId uint64 `query:"session_id"`
 }
 
 type GetUsageReq struct {

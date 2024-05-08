@@ -6,17 +6,23 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
+	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
+	cmocks "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/client"
 )
@@ -31,6 +37,9 @@ var routerConfig = &RouterConfig{
 	},
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
+	},
+	auth: &config.Auth{
+		BypassAuthMode: true,
 	},
 }
 
@@ -60,10 +69,27 @@ var sub = pb.ReadResp{
 	},
 }
 
+var cdrReq = PostCDRReq{
+	Session:       1,
+	NodeId:        ukama.NewVirtualHomeNodeId().String(),
+	Imsi:          imsi,
+	Policy:        uuid.NewV4().String(),
+	ApnName:       "ukama.co",
+	Ip:            "192.168.8.2",
+	StartTime:     uint64(time.Now().Unix() - 100000),
+	EndTime:       uint64(time.Now().Unix() - 50000),
+	LastUpdatedAt: uint64(time.Now().Unix() - 50000),
+	TxBytes:       2048000,
+	RxBytes:       1024000,
+	TotalBytes:    3072000,
+}
+
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
+		Asr:     "localhost:9090",
+		CDR:     "localhost:9090",
 	})
 }
 
@@ -71,7 +97,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -95,10 +121,11 @@ func TestRouter_PostGuti(t *testing.T) {
 
 	body, _ := json.Marshal(req)
 
-	hreq, _ := http.NewRequest("POST", "/v1/subscriber/"+imsi+"/guti",
+	hreq, _ := http.NewRequest("POST", "/v1/asr/"+imsi+"/guti",
 		bytes.NewBuffer(body))
 
 	m := &amocks.AsrRecordServiceClient{}
+
 	pReq := &pb.UpdateGutiReq{
 		Imsi:      imsi,
 		UpdatedAt: req.UpdatedAt,
@@ -112,9 +139,7 @@ func TestRouter_PostGuti(t *testing.T) {
 	m.On("UpdateGuti", mock.Anything, pReq).Return(&pb.UpdateGutiResp{}, nil)
 
 	r := NewRouter(&Clients{
-		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
-
+		a: client.NewAsrFromClient(m)}, routerConfig, nil).f.Engine()
 	// act
 	r.ServeHTTP(w, hreq)
 
@@ -134,7 +159,7 @@ func TestRouter_PostTai(t *testing.T) {
 
 	body, _ := json.Marshal(req)
 
-	hreq, _ := http.NewRequest("POST", "/v1/subscriber/"+imsi+"/tai",
+	hreq, _ := http.NewRequest("POST", "/v1/asr/"+imsi+"/tai",
 		bytes.NewBuffer(body))
 
 	m := &amocks.AsrRecordServiceClient{}
@@ -146,8 +171,7 @@ func TestRouter_PostTai(t *testing.T) {
 	m.On("UpdateTai", mock.Anything, pReq).Return(&pb.UpdateTaiResp{}, nil)
 
 	r := NewRouter(&Clients{
-		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
+		a: client.NewAsrFromClient(m)}, routerConfig, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -161,7 +185,7 @@ func TestRouter_PostTai(t *testing.T) {
 func TestRouter_GetSubscriber(t *testing.T) {
 	t.Run("SubscriberExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+imsi, nil)
+		req, _ := http.NewRequest("GET", "/v1/asr/"+imsi, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
@@ -173,8 +197,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 		m.On("Read", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
 
 		r := NewRouter(&Clients{
-			a: client.NewAsrFromClient(m),
-		}, routerConfig).f.Engine()
+			a: client.NewAsrFromClient(m)}, routerConfig, nil).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -186,7 +209,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 
 	t.Run("SubscriberDoesn'tExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+imsi, nil)
+		req, _ := http.NewRequest("GET", "/v1/asr/"+imsi, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
@@ -199,8 +222,7 @@ func TestRouter_GetSubscriber(t *testing.T) {
 		m.On("Read", mock.Anything, pReq).Return(&sub, nil)
 
 		r := NewRouter(&Clients{
-			a: client.NewAsrFromClient(m),
-		}, routerConfig).f.Engine()
+			a: client.NewAsrFromClient(m)}, routerConfig, nil).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -209,4 +231,88 @@ func TestRouter_GetSubscriber(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})
+}
+
+func TestRouter_PostCDR(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	body, _ := json.Marshal(cdrReq)
+
+	hreq, _ := http.NewRequest("POST", "/v1/cdr/"+imsi,
+		bytes.NewBuffer(body))
+
+	m := &cmocks.CDRServiceClient{}
+	pReq := &cpb.CDR{
+		Session:       cdrReq.Session,
+		NodeId:        cdrReq.NodeId,
+		Imsi:          cdrReq.Imsi,
+		Policy:        cdrReq.Policy,
+		ApnName:       cdrReq.ApnName,
+		Ip:            cdrReq.Ip,
+		StartTime:     cdrReq.StartTime,
+		EndTime:       cdrReq.EndTime,
+		LastUpdatedAt: cdrReq.LastUpdatedAt,
+		TxBytes:       cdrReq.TxBytes,
+		RxBytes:       cdrReq.RxBytes,
+		TotalBytes:    cdrReq.TotalBytes,
+	}
+	m.On("PostCDR", mock.Anything, pReq).Return(&cpb.CDRResp{}, nil)
+
+	r := NewRouter(&Clients{
+		c: client.NewCdrFromClient(m)}, routerConfig, nil).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusCreated, w.Code)
+	m.AssertExpectations(t)
+
+}
+
+func TestRouter_GetCDR(t *testing.T) {
+	w := httptest.NewRecorder()
+	req := &GetCDRReq{
+		Imsi:      cdrReq.Imsi,
+		StartTime: cdrReq.StartTime,
+		EndTime:   cdrReq.EndTime,
+	}
+
+	hreq, _ := http.NewRequest("GET", "/v1/cdr/"+req.Imsi+"?start_time="+strconv.FormatUint(req.StartTime, 10)+"&end_time="+strconv.FormatUint(req.EndTime, 10), nil)
+
+	m := &cmocks.CDRServiceClient{}
+	rCDR := &cpb.CDR{
+		Session:       cdrReq.Session,
+		NodeId:        cdrReq.NodeId,
+		Imsi:          cdrReq.Imsi,
+		Policy:        cdrReq.Policy,
+		ApnName:       cdrReq.ApnName,
+		Ip:            cdrReq.Ip,
+		StartTime:     cdrReq.StartTime,
+		EndTime:       cdrReq.EndTime,
+		LastUpdatedAt: cdrReq.LastUpdatedAt,
+		TxBytes:       cdrReq.TxBytes,
+		RxBytes:       cdrReq.RxBytes,
+		TotalBytes:    cdrReq.TotalBytes,
+	}
+
+	pReq := &cpb.RecordReq{
+		Imsi:      req.Imsi,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		Policy:    req.Policy,
+		SessionId: req.SessionId,
+	}
+	m.On("GetCDR", mock.Anything, pReq).Return(&cpb.RecordResp{Cdr: []*cpb.CDR{rCDR}}, nil)
+
+	r := NewRouter(&Clients{
+		c: client.NewCdrFromClient(m)}, routerConfig, nil).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+
 }
