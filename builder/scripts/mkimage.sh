@@ -90,6 +90,7 @@ chroot /mnt/image /bin/bash <<'EOL'
     apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic
 
     mkdir -p /ukama
+    mkdir -p /ukama/configs
     mkdir -p /ukama/apps/pkgs
     mkdir -p /ukama/apps/rootfs
     mkdir -p /ukama/apps/registry
