@@ -11,11 +11,11 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/configs/sysctl /proc/sys"
+	mkdir="/conf /proc/sys"
 
 [build-conf]
         from="/home/kashif/work/ukama/ukamaOS/distro/vendor/sysctl/00-linuxkit.conf"
-        to="/ukama/configs/sysctl/config.file"
+        to="/conf/config.file"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything

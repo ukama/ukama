@@ -11,11 +11,11 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/configs/dhcpcd"
+	mkdir="/conf/dhcpcd"
 
 [build-conf]
         from="/nodes/ukamaOS/distro/vendor/build/etc/dhcpcd.conf"
-        to="/ukama/configs/dhcpcd/config.file"
+        to="/conf/config.file"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything

@@ -11,11 +11,11 @@
 	bin_to="/sbin"
 
 [build-rootfs]
-	mkdir="/ukama/configs/notifyd"
+	mkdir="/conf"
 
 [build-conf]
     from="/nodes/configs/capps/notifyd/status.map"
-    to="/ukama/configs/notifyd/status.map"
+    to="/conf/status.map"
 
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
@@ -24,7 +24,7 @@
 	version="latest"
 	bin="notify.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
-	args="--map-file /ukama/conf/notifyd/status.map"
+	args="--map-file /ukama/configs/notifyd/status.map"
 
 # Final output format for capp
 [capp-output]
