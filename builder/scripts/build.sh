@@ -29,7 +29,7 @@ mock_sysfs_for_noded() {
 
         [Service]
         Type=oneshot
-        ExecStart=/ukama/mocksysfs.sh
+        ExecStart=/ukama/mocksysfs/mocksysfs.sh
 
         [Install]
         WantedBy=multi-user.target
