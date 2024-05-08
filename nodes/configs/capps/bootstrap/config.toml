@@ -3,7 +3,7 @@
 [config]
 
 	noded-host       = "localhost"
-	mesh-config      = "/ukama/conf/meshd/config.toml"
-	remote-ip-file   = "/ukama/conf/meshd/ip_file"
+	mesh-config      = "/ukama/configs/meshd/config.toml"
+	remote-ip-file   = "/ukama/configs/meshd/ip_file"
 
 #nothing here.

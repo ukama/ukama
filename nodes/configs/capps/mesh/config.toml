@@ -1,9 +1,7 @@
 # Config file for mesh.d
 
-[client-config]
-    remote-ip-file = "./configs/ip_file_2"
+[local-config]
+    remote-ip-file = "/ukama/configs/meshd/ip_file"
     local-hostname = "localhost"
-    cert           = "./conf/cert.crt"
-    key            = "./conf/pem.key"
-
-#nothing here.
+    cert           = "/ukama/configs/meshd/cert.crt"
+    key            = "/ukama/configs/meshd/pem.key"
