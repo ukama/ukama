@@ -257,15 +257,17 @@ static bool copy_folder(char *srcFolder, char *destFolder) {
     return USYS_TRUE;
 }
 
-static bool install_capp(char *rootPath) {
+static bool install_capp(char *appName, char *rootPath) {
 
-    char configFolder[MAX_BUFFER] = {0};
+    char srcConfigFolder[MAX_BUFFER] = {0};
+    char destConfigFolder[MAX_BUFFER]  = {0};
     char sbinFolder[MAX_BUFFER] = {0};
 
-    sprintf(configFolder, "%s/conf/", rootPath);
+    sprintf(srcConfigFolder, "%s/conf/", rootPath);
+    sprintf(destConfigFolder, "/ukama/configs/%s/", appName);
     sprintf(sbinFolder,   "%s/sbin/", rootPath);
 
-    if (copy_folder(configFolder, "/conf") == USYS_FALSE) {
+    if (copy_folder(srcConfigFolder, destConfigFolder) == USYS_FALSE) {
         usys_log_debug("No config for %s. Skipping", rootPath);
     }
 
@@ -287,7 +289,7 @@ static bool create_and_run_capps(Capp *capp, int *error) {
                                     strlen(DEF_CAPP_CONFIG_FILE) + 2);
     sprintf(configFileName, "%s/%s", capp->rootfs, DEF_CAPP_CONFIG_FILE);
 
-    if (!install_capp(capp->rootfs)) {
+    if (!install_capp(capp->name, capp->rootfs)) {
         usys_log_error("Unable to install app at config and sbin");
         free(configFileName);
         return USYS_FALSE;
