@@ -14,53 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type UkamaDbMock struct {
-	GormDb *gorm.DB
-}
-
-func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me")
-}
-
-func (u UkamaDbMock) Connect() error {
-	panic("implement me")
-}
-
-func (u UkamaDbMock) GetGormDb() *gorm.DB {
-	return u.GormDb
-}
-
-func (u UkamaDbMock) InitDB() error {
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
-
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error) {
-	return u.GormDb.Transaction(func(tx *gorm.DB) error {
-		d := dbOperation(tx)
-
-		if d.Error != nil {
-			return d.Error
-		}
-
-		if len(nestedFuncs) > 0 {
-			for _, n := range nestedFuncs {
-				if n != nil {
-					nestErr := n(tx)
-					if nestErr != nil {
-						return nestErr
-					}
-				}
-			}
-		}
-
-		return nil
-	})
-}
 
 var Imsi = "012345678912345"
 var Guti = int_db.Guti{
