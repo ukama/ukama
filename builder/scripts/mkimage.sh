@@ -96,6 +96,7 @@ chroot /mnt/image /bin/bash <<'EOL'
 
     echo $NODE_ID > /ukama/nodeid
     echo $BOOTSTRAP_PORT > /ukama/bootstrap
+    touch /ukama/apps.log
 
     # create systemd service for the starter.d program
     cat > /etc/systemd/system/starterd.service << EOF

@@ -103,7 +103,7 @@ elif [ "$1" = "node" ]; then
     mkdir -p /mnt/${node_id} || exit 1
     mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
 
-    cp -r ./pkgs /mnt/${node_id}/ukama/apps/
+    mv ./pkgs /mnt/${node_id}/ukama/apps/
     cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}/
 
     # install the starter.d app
