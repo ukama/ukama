@@ -52,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to read node info: %v", err)
 	}
+	log.Infof("PRCF running on node %s", NodeId)
 
 	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.SyncPeriod, NodeId, svcConf.DebugMode)
 	if err != nil {

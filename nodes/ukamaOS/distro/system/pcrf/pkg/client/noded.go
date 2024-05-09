@@ -21,14 +21,14 @@ import (
 const NodeEndpoint = "/noded/v1/nodeinfo"
 
 type Version struct {
-	Major string `json:"major"`
-	Minor string `json:"minor"`
+	Major int `json:"major"`
+	Minor int `json:"minor"`
 }
 
 type NodeInfo struct {
 	Id            string  `json:"uuid"`
 	Name          string  `json:"name"`
-	NodeType      string  `json:"type"`
+	NodeType      int     `json:"type"`
 	PartNumber    string  `json:"partNumber"`
 	Skew          string  `json:"skew"`
 	Mac           string  `json:"mac"`
@@ -37,6 +37,10 @@ type NodeInfo struct {
 	AssemblyDate  string  `json:"assemblyDate"`
 	OemName       string  `json:"oemName"`
 	ModuleCount   int     `json:"moduleCount"`
+}
+
+type Node struct {
+	NodeInfo NodeInfo `json:"nodeInfo"`
 }
 
 type NodedProvider interface {
@@ -75,7 +79,7 @@ func (r *nodedClient) GetNodeId() (string, error) {
 func (r *nodedClient) GetNodeInfo() (*NodeInfo, error) {
 	log.Debugf("Geeting NodeInfo from Noded.")
 
-	nodeInfo := &NodeInfo{}
+	node := &Node{}
 
 	url := r.u.String() + NodeEndpoint
 
@@ -86,14 +90,13 @@ func (r *nodedClient) GetNodeInfo() (*NodeInfo, error) {
 		return nil, fmt.Errorf("get NodeInfo failure: %s", err.Error())
 	}
 
-	err = json.Unmarshal(resp.Body(), &nodeInfo)
+	err = json.Unmarshal(resp.Body(), node)
 	if err != nil {
-		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
-
+		log.Errorf("Failed to deserialize node info. Error message is: %s", err.Error())
 		return nil, fmt.Errorf("node info deserailization failure: %w", err)
 	}
 
-	log.Infof("NodeInfo Info: %+v", nodeInfo)
+	log.Infof("NodeInfo Info: %+v", node)
 
-	return nodeInfo, nil
+	return &node.NodeInfo, nil
 }
