@@ -8,8 +8,8 @@
 
  syntax = "proto3";
 
+ import "events/invitation.proto";
  option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
- 
  import "validator.proto";
  package ukama.events.v1;
 
@@ -19,12 +19,4 @@
     RoleType role = 3 ;
     bool isDeactivated = 4 [json_name = "is_deactivated"];
     string created_at = 5 [json_name = "member_since"];
-}
-
-enum RoleType {
-    OWNER = 0;
-    ADMIN = 1;
-    VENDOR = 2;
-    USER = 3;
-    SUBSCRIBER = 4;
 }

@@ -1,0 +1,31 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+message EventInvitationCreated {
+    string id = 1;
+    string link=2;
+    string email=3;
+    string name = 4;
+    RoleType role = 5;
+    string status = 6;
+    string userId = 7 [json_name = "user_id"];
+    string expiresAt = 8 [json_name = "expires_at"];
+}
+
+enum RoleType {
+    OWNER = 0;
+    ADMIN = 1;
+    VENDOR = 2;
+    USER = 3;
+}

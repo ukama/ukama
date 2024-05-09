@@ -28,8 +28,8 @@ message GetBaseRatesResponse {
 message GetBaseRatesByCountryRequest{
     string country = 1;
     string provider =2;
-    string simType=5 [json_name = "sim_type"];
-    string effectiveAt = 6 [json_name = "effective_at"];
+    string simType=3 [json_name = "sim_type"];
+    string effectiveAt = 4 [json_name = "effective_at"];
 }
 
 message GetBaseRatesByPeriodRequest{

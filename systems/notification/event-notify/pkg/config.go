@@ -14,6 +14,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -97,6 +98,7 @@ type Event struct {
 	Description string
 	Scope       uint8
 	Type        uint8
+	PB          proto.Message
 }
 
 var EventsSTMapping = map[string]Event{
@@ -134,6 +136,7 @@ var EventsSTMapping = map[string]Event{
 		Description: "Member Created",
 		Scope:       uint8(db.ORG),
 		Type:        uint8(db.INFO),
+		PB:          &epb.AddMemberEventRequest{},
 	},
 	"EventMemberDelete": {
 		Key:         EventMemberDelete,
