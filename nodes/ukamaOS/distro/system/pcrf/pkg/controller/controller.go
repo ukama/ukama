@@ -92,6 +92,7 @@ func sessionResponse(s *store.Session) *api.SessionResponse {
 func policyResponse(p *store.Policy) *api.PolicyResponse {
 	return &api.PolicyResponse{
 		ID:        p.ID,
+		Burst:     p.Burst,
 		Data:      p.Data,
 		Dlbr:      p.Dlbr,
 		Ulbr:      p.Ulbr,

@@ -60,14 +60,14 @@ func NewConfig(name string) *Config {
 		},
 		DB: name,
 		Server: rest.HttpConfig{
-			Port: 8090,
+			Port: 18090,
 			Cors: defaultCors,
 		},
 
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
 			Policy:  "http://localhost:8087",
-			Noded:   "http://localhost:18090",
+			Noded:   "http://localhost:18000",
 		},
 		Metrics: *config.DefaultMetrics(),
 		//Auth:    config.LoadAuthHostConfig("auth"),
