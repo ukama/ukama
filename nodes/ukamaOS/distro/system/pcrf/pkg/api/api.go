@@ -33,6 +33,7 @@ type GetSessionByImsi struct {
 
 type CDR struct {
 	Session       int    `json:"session" validate:"required"`
+	NodeId        string `json:"node_id" validate:"required"`
 	Imsi          string `json:"imsi" validate:"required"`
 	Policy        string `json:"policy" validate:"required"`
 	ApnName       string `json:"apn_name" validate:"required"`
@@ -143,6 +144,7 @@ type UsageResponse struct {
 type SessionResponse struct {
 	ID         int
 	Imsi       string
+	NodeId     string
 	PolicyID   string
 	ApnName    string
 	UeIpaddr   string

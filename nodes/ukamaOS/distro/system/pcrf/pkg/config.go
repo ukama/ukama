@@ -40,6 +40,7 @@ type BrdigeConfig struct {
 type HttpEndpoints struct {
 	Timeout time.Duration
 	Policy  string
+	Noded   string `default:"localhost:9090"`
 }
 
 func NewConfig(name string) *Config {

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package store
 
 import "github.com/ukama/ukama/systems/common/uuid"
@@ -61,6 +61,7 @@ type Usage struct {
 
 type Session struct {
 	ID           int
+	NodeId       string
 	SubscriberID Subscriber
 	PolicyID     Policy
 	ApnName      string

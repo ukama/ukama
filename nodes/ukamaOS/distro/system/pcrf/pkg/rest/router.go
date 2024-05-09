@@ -36,6 +36,7 @@ type Router struct {
 	f          *fizz.Fizz
 	controller *controller.Controller
 	config     *RouterConfig
+	nodeId     string
 }
 
 type RouterConfig struct {
@@ -44,10 +45,11 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-func NewRouter(ctr *controller.Controller, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		controller: ctr,
 		config:     config,
+		nodeId:     nodeId,
 	}
 
 	if !config.debugMode {
@@ -95,9 +97,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 			return
 		}
-		if err == nil {
-			return
-		}
+
 	})
 
 	auth.Use()

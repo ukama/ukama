@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package controller
 
 import (
@@ -28,6 +28,7 @@ type Controller struct {
 	sm        session.SessionManager
 	rc        client.RemoteController
 	publisher *Publisher
+	nodeId    string
 }
 
 type Publisher struct {
@@ -43,7 +44,7 @@ func newPublisher(t time.Duration) *Publisher {
 	return p
 }
 
-func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Duration, debug bool) (*Controller, error) {
+func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Duration, nodeId string, debug bool) (*Controller, error) {
 	c := &Controller{}
 	store, err := store.NewStore(db)
 	if err != nil {
@@ -56,7 +57,7 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Du
 		log.Errorf("Failed to create client: %v", err)
 		return nil, err
 	}
-
+	c.nodeId = nodeId
 	c.sm = session.NewSessionManager(rc, store, br)
 	c.store = store
 	c.rc = rc
@@ -70,6 +71,7 @@ func NewController(db string, br pkg.BrdigeConfig, remote string, period time.Du
 func sessionResponse(s *store.Session) *api.SessionResponse {
 	return &api.SessionResponse{
 		ID:         s.ID,
+		NodeId:     s.NodeId,
 		Imsi:       s.SubscriberID.Imsi,
 		PolicyID:   s.PolicyID.ID.String(),
 		ApnName:    s.ApnName,
@@ -218,7 +220,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 	}
 
 	/* create session */
-	s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr)
+	s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr, c.nodeId)
 	if err != nil {
 		log.Errorf("Failed to create a session for subscriber %s.Error: %v", req.ImsiStr, err)
 		return err
