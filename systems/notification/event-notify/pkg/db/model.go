@@ -23,6 +23,7 @@ type Notification struct {
 	Description  string
 	Type         NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope        NotificationScope `gorm:"type:uint;not null;default:0"`
+	ResourceId   uuid.UUID
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
