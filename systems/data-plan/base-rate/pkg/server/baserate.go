@@ -210,7 +210,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	}
 
 	if b.msgBus != nil {
-		route := b.baseRoutingKey.SetActionCreate().SetObject("baserate").MustBuild()
+		route := b.baseRoutingKey.SetAction("upload").SetObject("rates").MustBuild()
 		evt := &epb.EventBaserateUploaded{
 			EffectiveAt: formattedEffectiveAt,
 			SimType:     strType,

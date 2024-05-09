@@ -126,7 +126,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	}
 
 	if p.msgbus != nil {
-		route := p.baseRoutingKey.SetActionCreate().SetObject("sims").MustBuild()
+		route := p.baseRoutingKey.SetAction("upload").SetObject("sims").MustBuild()
 		evt := &epb.EventSimsUploaded{
 			SimType: req.GetSimType(),
 		}

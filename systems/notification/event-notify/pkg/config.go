@@ -63,8 +63,8 @@ const (
 	EventSubscriberCreate   = "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"
 	EventSubscriberUpdate   = "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"
 	EventSubscriberDelete   = "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"
-	EventSimUpload          = "event.cloud.local.{{ .Org}}.subscriber.simpool.sim.upload"
-	EventRateUpdate         = "event.cloud.local.{{ .Org}}.dataplan.baserate.rate.update"
+	EventSimsUpload         = "event.cloud.local.{{ .Org}}.subscriber.simpool.sims.upload"
+	EventBaserateUpload     = "event.cloud.local.{{ .Org}}.dataplan.baserate.rates.upload"
 	EventPackageCreate      = "event.cloud.local.{{ .Org}}.dataplan.package.package.create"
 	EventPackageUpdate      = "event.cloud.local.{{ .Org}}.dataplan.package.package.update"
 	EventPackageDelete      = "event.cloud.local.{{ .Org}}.dataplan.package.package.delete"
@@ -293,7 +293,7 @@ var EventsSTMapping = map[string]Event{
 		Type:        TypeDefault,
 	},
 	"EventSimUpload": {
-		Key:         EventSimUpload,
+		Key:         EventSimsUpload,
 		Title:       "Sim Uploaded",
 		Description: "Sim Uploaded",
 		Scope:       ScopeDefault,
@@ -428,7 +428,7 @@ func NewConfig(name string) *Config {
 				EventSubscriberCreate,
 				EventSubscriberUpdate,
 				EventSubscriberDelete,
-				EventSimUpload,
+				EventSimsUpload,
 				EventRateUpdate,
 				EventPackageCreate,
 				EventPackageUpdate,
