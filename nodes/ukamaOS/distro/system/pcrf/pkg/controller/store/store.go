@@ -1159,10 +1159,9 @@ func (s *Store) InsertPolicy(policy *Policy) error {
 	/*TODO: PolicyID always have to be new even if it's a same plan.
 	This ID will be genrated by ASR for subscriber */
 	/* TODO: Check if this UPDATE on duplicate works */
-	_, err := s.db.Exec(`
-		INSERT INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst)
-		VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(?);
-	`, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, policy.Data)
+	query := fmt.Sprintf("INSERT INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET data = %d;", policy.Data)
+
+	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, policy.Data)
 	return err
 }
 

@@ -124,7 +124,8 @@ type SubscriberResponse struct {
 }
 
 type PolicyResponse struct {
-	ID        uuid.UUID `json:"id" path:"id"`
+	ID        uuid.UUID `json:"uuid" path:"id"`
+	Burst     uint64    `json:"burst" path:"burst"`
 	Data      uint64    `json:"data" path:"data"`
 	Dlbr      uint64    `json:"dlbr" path:"dlbr"`
 	Ulbr      uint64    `json:"ulbr" path:"ulbr"`
