@@ -1,0 +1,46 @@
+import os
+import re
+
+
+def find_message_names(directory):
+    message_names = set()
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            with open(file_path, 'r') as f:
+                for line in f:
+                    match = re.search(r'message\s+(\w+)\s*{', line)
+                    if match:
+                        message_name = match.group(1)
+                        message_names.add(message_name)
+    return message_names
+
+def generate_go_code(name):
+    print(f"func unmarshal{name}(msg *anypb.Any, emsg string) (*{name}, error) {{")
+    print(f"  p := &{name}" + "{}")
+    print("  err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})")
+    print("  if err != nil {")
+    print("    log.Errorf(\"%s : %+v. Error %s.\", emsg, msg, err.Error())")
+    print("    return nil, err")
+    print("  }")
+    print("  return p, nil")
+    print("}")
+    print("")
+    
+def clean_file(file_path):
+    with open(file_path, 'w') as f:
+        f.truncate(0)
+
+path = "./events"
+clean_file("./gen/events/unmarshals.go")
+
+message_names = find_message_names(path)
+print("package events")
+print("import (")
+print("\"google.golang.org/protobuf/types/known/anypb\"")
+print("\"google.golang.org/protobuf/proto\"")
+print("log \"github.com/sirupsen/logrus\"")
+print(")")
+
+for name in message_names:
+    generate_go_code(name)
