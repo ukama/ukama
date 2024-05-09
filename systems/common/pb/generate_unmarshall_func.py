@@ -1,3 +1,14 @@
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# 
+#  Copyright (c) 2023-present, Ukama Inc.
+ 
+# This script generates Go code for unmarshalling protobuf messages for events
+
+# To run this script, execute the following command:
+# python3 generate_unmarshall_func.py > ./gen/events/unmarshals.go
+
 import os
 import re
 
@@ -35,6 +46,15 @@ path = "./events"
 clean_file("./gen/events/unmarshals.go")
 
 message_names = find_message_names(path)
+print("""
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+""")
 print("package events")
 print("import (")
 print("\"google.golang.org/protobuf/types/known/anypb\"")
