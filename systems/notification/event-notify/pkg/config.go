@@ -299,10 +299,10 @@ var EventsSTMapping = map[string]Event{
 		Scope:       ScopeDefault,
 		Type:        TypeDefault,
 	},
-	"EventRateUpdate": {
-		Key:         EventRateUpdate,
-		Title:       "Rate Updated",
-		Description: "Rate Updated",
+	"EventBaserateUpload": {
+		Key:         EventBaserateUpload,
+		Title:       "Baserate uploaded",
+		Description: "Baserate uploaded",
 		Scope:       ScopeDefault,
 		Type:        TypeDefault,
 	},
@@ -429,7 +429,7 @@ func NewConfig(name string) *Config {
 				EventSubscriberUpdate,
 				EventSubscriberDelete,
 				EventSimsUpload,
-				EventRateUpdate,
+				EventBaserateUpload,
 				EventPackageCreate,
 				EventPackageUpdate,
 				EventPackageDelete,
