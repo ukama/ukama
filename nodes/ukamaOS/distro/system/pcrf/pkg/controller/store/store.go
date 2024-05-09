@@ -1156,12 +1156,13 @@ func (s *Store) UpdateFlow(flow *Flow) error {
 
 /* CRUD operations for Policy entity */
 func (s *Store) InsertPolicy(policy *Policy) error {
-	/* PolicyID always have to be new even if it's a same plan.
-	This ID will be genrated by SPR for subscriber */
+	/*TODO: PolicyID always have to be new even if it's a same plan.
+	This ID will be genrated by ASR for subscriber */
+	/* TODO: Check if this UPDATE on duplicate works */
 	_, err := s.db.Exec(`
 		INSERT INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst)
-		VALUES (?, ?, ?, ?, ?, ?, ?);
-	`, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst)
+		VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(?);
+	`, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, policy.Data)
 	return err
 }
 
