@@ -93,8 +93,8 @@ int main (int argc, char **argv) {
 	int opt, opdidx;
     char buffer[MAX_BUFFER] = {0};
 
-    log_set_service(SERVICE_NAME);
-    
+    usys_log_set_service(SERVICE_NAME);
+
 	/* Prase command line args. */
 	while (TRUE) {
 
@@ -178,7 +178,7 @@ int main (int argc, char **argv) {
 	/* Step-2: request node.d for NodeID */
 	if (get_nodeID_from_noded(&nodeID, config->nodedHost, config->nodedPort)
 		!= TRUE) {
-	    usys_log_error("Error retreiving NodeID from noded.d at %s:%s",
+	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
                        config->nodedHost, config->nodedPort);
 		goto done;
 	}
