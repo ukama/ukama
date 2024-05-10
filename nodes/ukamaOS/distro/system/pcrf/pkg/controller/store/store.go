@@ -68,8 +68,8 @@ func (s *Store) createPolicyTable() error {
 			starttime INTEGER,
 			endtime INTEGER,
 			burst INTEGER
-			created_at INTEGER
-			updated_at INTEGER
+			createdat INTEGER
+			updatedat INTEGER
 		);
 	`)
 	if err != nil {
@@ -853,7 +853,7 @@ func (s *Store) ResetUsageByImsi(imsi string) error {
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 	var id []byte
-	err := s.db.QueryRow("SELECT id,data,consumed,dlbr,ulbr,burst,starttime,endtime,created_at,updated_at FROM policies WHERE id = ?", policyID.Bytes()).
+	err := s.db.QueryRow("SELECT id,data,consumed,dlbr,ulbr,burst,starttime,endtime,createdat,updatedat FROM policies WHERE id = ?", policyID.Bytes()).
 		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime, &policy.CreatedAt, &policy.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -1169,7 +1169,7 @@ func (s *Store) UpdatePolicy(policy *Policy) error {
 	tn := time.Now().Unix()
 	_, err := s.db.Exec(`
 		UPDATE policies
-		SET cosumed = ?, updated_at = ?, 
+		SET cosumed = ?, updatedat = ?, 
 		WHERE id = ?; 
 		`, policy.Data, tn, policy.ID.Bytes())
 	return err
@@ -1202,7 +1202,7 @@ func (s *Store) InsertPolicy(policy *Policy) error {
 	 should be allocated.
 	*/
 	tn := time.Now().Unix()
-	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?) ON CONFLICT (id) DO UPDATE SET consumed = %d, updated_at = %d;", policy.Consumed, tn)
+	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst, createdat, updatedat) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?) ON CONFLICT (id) DO UPDATE SET consumed = %d, updatedat = %d;", policy.Consumed, tn)
 	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, &policy.Consumed, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, tn, tn)
 	return err
 }
