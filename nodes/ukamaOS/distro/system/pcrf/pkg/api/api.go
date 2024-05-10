@@ -83,7 +83,7 @@ type Policy struct {
 	Ulbr      uint64    `json:"ulbr" validate:"required"`
 	Dlbr      uint64    `json:"dlbr" validate:"required"`
 	Data      uint64    `json:"total_data" validate:"required"`
-	Consumed  uint64    `json:"consumed_data" validate:"required"`
+	Consumed  uint64    `json:"consumed_data"`
 	Burst     uint64    `json:"burst" validate:"required"`
 	StartTime int64     `json:"start_time" validate:"required"`
 	EndTime   int64     `json:"end_time" validate:"required"`
