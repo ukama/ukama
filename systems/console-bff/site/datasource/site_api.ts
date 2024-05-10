@@ -15,19 +15,17 @@ class SiteApi extends RESTDataSource {
   baseURL = REGISTRY_API_GW;
 
   getSites = async (): Promise<SitesResDto> => {
-    return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
-      dtoToSitesDto(res)
-    );
+    return this.get(`/${VERSION}/sites`).then(res => dtoToSitesDto(res));
   };
 
   getSite = async (siteId: string): Promise<SiteDto> => {
-    return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
-      res => dtoToSiteDto(res)
+    return this.get(`/${VERSION}/sites/${siteId}`).then(res =>
+      dtoToSiteDto(res)
     );
   };
 
   addSite = async (req: AddSiteInputDto): Promise<SiteDto> => {
-    return this.post(`/${VERSION}/networks/${networkId}/sites`, {
+    return this.post(`/${VERSION}/sites`, {
       body: req,
     }).then(res => dtoToSiteDto(res));
   };
