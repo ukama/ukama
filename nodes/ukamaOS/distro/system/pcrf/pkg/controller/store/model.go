@@ -51,6 +51,8 @@ type Policy struct {
 	Burst     uint64
 	StartTime int64
 	EndTime   int64
+	CreatedAt int64
+	UpdatedAt int64
 }
 
 type Usage struct {

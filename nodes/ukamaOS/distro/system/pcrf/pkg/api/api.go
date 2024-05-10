@@ -113,6 +113,8 @@ type CreateSubscriber struct {
 	ReRoute string `json:"reroute" validate:"required"`
 }
 
+type UpdateSubscriber CreateSubscriber
+
 type GetFlowsForImsi struct {
 	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
@@ -133,6 +135,8 @@ type PolicyResponse struct {
 	Ulbr      uint64    `json:"ulbr" path:"ulbr"`
 	StartTime int64     `json:"start_time" path:"start_time"`
 	EndTime   int64     `json:"end_time" path:"end_time"`
+	CreatedAt int64     `json:"created_at" path:"created_at"`
+	UpdatedAt int64     `json:"updated_at" path:"updated_at"`
 }
 
 type UsageRequest struct {

@@ -102,7 +102,7 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 			/* Only do this when RX or TX value changes */
 			if totalBytes != sc.s.TotalBytes {
-				sc.idleReportSent = false // Reset teh idleReportSent flag on change in stats
+				sc.idleReportSent = false // Reset the idleReportSent flag on change in stats
 				sc.s.UpdatedAt = uint64(tNow)
 				sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
 				err = s.store.UpdateSessionUsage(sc.s)

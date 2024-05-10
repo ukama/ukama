@@ -99,6 +99,8 @@ func policyResponse(p *store.Policy) *api.PolicyResponse {
 		Ulbr:      p.Ulbr,
 		StartTime: p.StartTime,
 		EndTime:   p.EndTime,
+		CreatedAt: p.CreatedAt,
+		UpdatedAt: p.UpdatedAt,
 	}
 }
 
@@ -433,7 +435,16 @@ func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscrib
 func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
 	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
 	if err != nil {
-		log.Errorf("failed to delete subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
+		log.Errorf("failed to create subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
+		return err
+	}
+	return nil
+}
+
+func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscriber) error {
+	_, err := c.store.UpdateSubscriber(req.Imsi, &req.Policy)
+	if err != nil {
+		log.Errorf("failed to update subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
 		return err
 	}
 	return nil

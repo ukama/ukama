@@ -68,6 +68,8 @@ func (s *Store) createPolicyTable() error {
 			starttime INTEGER,
 			endtime INTEGER,
 			burst INTEGER
+			created_at INTEGER
+			updated_at INTEGER
 		);
 	`)
 	if err != nil {
@@ -520,6 +522,38 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.
 	return sub, nil
 }
 
+func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
+
+	sub, err := s.GetSubscriber(imsi)
+	if err != nil {
+		log.Errorf("Failed to get subscriber %s from db. Error %s", imsi, err.Error())
+		if err == sql.ErrNoRows {
+			log.Infof("Converting request to add subscriber for %s", imsi)
+			return s.CreateSubscriber(imsi, p, nil, nil)
+		}
+	}
+
+	if sub.PolicyID.ID == p.Uuid {
+		log.Debugf("Updating policy %s for subscriber %s", sub.PolicyID.ID, imsi)
+
+		sub.PolicyID.Consumed = p.Consumed
+		err := s.UpdatePolicy(&sub.PolicyID)
+		if err != nil {
+			log.Errorf("Failed to update subscriber %s policy %s db. Error %s", imsi, sub.PolicyID.ID, err.Error())
+			return nil, err
+		}
+	}
+
+	/* Rereading sub from db */
+	usub, err := s.GetSubscriber(imsi)
+	if err != nil {
+		log.Errorf("Failed to get subscriber with imsi %s. Error: %s", imsi, err.Error())
+		return nil, err
+	}
+
+	return usub, nil
+}
+
 // CRUD operations for Session entity
 func (s *Store) InsertSession(se *Session) (*Session, error) {
 	res, err := s.db.Exec(`
@@ -602,7 +636,8 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 	}
 	log.Infof("Subscriber %s has usage %+v.", imsi, u)
 
-	if u.Data >= p.Data {
+	availData := p.Data - p.Consumed
+	if u.Data >= availData {
 		log.Errorf("Subscriber has usage %+v reached max data cap of %d", u, p.Data)
 		return fmt.Errorf("max data cap hit")
 	}
@@ -818,8 +853,8 @@ func (s *Store) ResetUsageByImsi(imsi string) error {
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 	var id []byte
-	err := s.db.QueryRow("SELECT id,data,consumed,dlbr,ulbr,burst,starttime,endtime FROM policies WHERE id = ?", policyID.Bytes()).
-		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
+	err := s.db.QueryRow("SELECT id,data,consumed,dlbr,ulbr,burst,starttime,endtime,created_at,updated_at FROM policies WHERE id = ?", policyID.Bytes()).
+		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime, &policy.CreatedAt, &policy.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +870,7 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 		SELECT * FROM policies
 		WHERE id = (SELECT policy_id FROM subscribers WHERE imsi = ?)
 	`, imsi).
-		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.StartTime, &policy.EndTime, &policy.Burst)
+		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.StartTime, &policy.EndTime, &policy.Burst, &policy.CreatedAt, &policy.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -1129,12 +1164,14 @@ func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
 	return sessions, nil
 }
 
+/* Only consumed data is allowed to update */
 func (s *Store) UpdatePolicy(policy *Policy) error {
+	tn := time.Now().Unix()
 	_, err := s.db.Exec(`
 		UPDATE policies
-		SET data = ?, cosumed = ?, dlbr = ?, ulbr = ?
+		SET cosumed = ?, updated_at = ?, 
 		WHERE id = ?; 
-		`, policy.Data, policy.Consumed, policy.Dlbr, policy.Ulbr, policy.ID.Bytes())
+		`, policy.Data, tn, policy.ID.Bytes())
 	return err
 }
 
@@ -1164,8 +1201,9 @@ func (s *Store) InsertPolicy(policy *Policy) error {
 	 Any changes to rates or time means package is changes which means new policy
 	 should be allocated.
 	*/
-	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET consumed = %d;", policy.Consumed)
-	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, &policy.Consumed, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst)
+	tn := time.Now().Unix()
+	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?) ON CONFLICT (id) DO UPDATE SET consumed = %d, updated_at = %d;", policy.Consumed, tn)
+	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, &policy.Consumed, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, tn, tn)
 	return err
 }
 
