@@ -136,4 +136,4 @@ docker exec -it cont1 /sbin/iptables -t nat -A POSTROUTING -s 192.168.8.0/22 -o 
 docker exec -it cont1 /sbin/ip route
 
 # block traffic from UE subnet
-ovs-ofctl -O OpenFlow15 add-flow br0 "priority=0, ip,nw_src=192.168.8.0/22, action=drop"
+ovs-ofctl -O OpenFlow15 add-flow br0 "priority=10, ip,nw_src=192.168.8.0/22, action=drop"
