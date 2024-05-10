@@ -540,7 +540,7 @@ func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 		sub.PolicyID.Consumed = p.Consumed
 		err := s.UpdatePolicy(&sub.PolicyID)
 		if err != nil {
-			log.Errorf("Failed to update subscriber %s policy %s db. Error %s", imsi, sub.PolicyID.ID, err.Error())
+			log.Errorf("Failed to update %s policy for subscriber %s in db. Error %s", sub.PolicyID.ID, imsi, err.Error())
 			return nil, err
 		}
 	} else {
@@ -1173,9 +1173,10 @@ func (s *Store) UpdatePolicy(policy *Policy) error {
 	tn := time.Now().Unix()
 	_, err := s.db.Exec(`
 		UPDATE policies
-		SET cosumed = ?, updatedat = ?, 
-		WHERE id = ?; 
-		`, policy.Data, tn, policy.ID.Bytes())
+		SET consumed = ?, updatedat = ?
+		WHERE id = ?;
+	`, policy.Consumed, tn, policy.ID.Bytes())
+
 	return err
 }
 

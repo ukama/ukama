@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package datapath
 
 import (
@@ -102,9 +102,9 @@ func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, er
 	go sw.ctrler.Connect(mgmt)
 
 	//wait for 8sec and see if switch connects
-	time.Sleep(8 * time.Second)
+	time.Sleep(10 * time.Second)
 	if !sw.ofActor.isSwitchConnected {
-		log.Fatalf("%s switch did not connect within 20sec", bridgeName)
+		log.Fatalf("%s switch did not connect within 10 sec", bridgeName)
 	}
 
 	// Create initial tables
