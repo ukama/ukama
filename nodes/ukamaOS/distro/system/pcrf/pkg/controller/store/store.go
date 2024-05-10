@@ -1164,7 +1164,7 @@ func (s *Store) InsertPolicy(policy *Policy) error {
 	 Any changes to rates or time means package is changes which means new policy
 	 should be allocated.
 	*/
-	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET consumed = %d;", policy.Consumed)
+	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET consumed = %d;", policy.Consumed)
 	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, &policy.Consumed, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst)
 	return err
 }
