@@ -37,6 +37,8 @@ static struct {
     log_LockFn lock;
     int level;
     bool quiet;
+    char *service;
+    int  rlogdEnable;
     Callback callbacks[MAX_CALLBACKS];
 } l;
 
@@ -52,23 +54,34 @@ static void stdout_callback(log_Event *ev) {
     char buf[16];
     buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 #ifdef LOG_USE_COLOR
-    fprintf(ev->udata, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ", buf,
-            level_colors[ev->level], level_strings[ev->level], ev->file,
+    fprintf(ev->udata, "%s %s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ",
+            l.service, buf,
+            level_colors[ev->level], levelStrings[ev->level], ev->file,
             ev->line);
 #else
-    fprintf(ev->udata, "%s %-5s %s:%d: ", buf, levelStrings[ev->level],
-            ev->file, ev->line);
+    fprintf(ev->udata, "%s %s %-5s %s:%d: ", l.service, buf,
+            levelStrings[ev->level], ev->file, ev->line);
 #endif
     vfprintf(ev->udata, ev->fmt, ev->ap);
     fprintf(ev->udata, "\n");
     fflush(ev->udata);
 }
 
+static void rlogd_callback(log_Event *ev) {
+    char buf[16];
+    char msg[256] = {0};
+    buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
+    sprintf(ev->udata, "%s %s %-5s %s:%d: ", l.service, buf,
+            levelStrings[ev->level], ev->file, ev->line);
+    vsprintf(&msg[0], ev->fmt, ev->ap);
+    sprintf(ev->udata, "%s %s\n", ev->udata, &msg[0]);
+}
+
 static void file_callback(log_Event *ev) {
     char buf[64];
     buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
-    fprintf(ev->udata, "%s %-5s %s:%d: ", buf, levelStrings[ev->level],
-            ev->file, ev->line);
+    fprintf(ev->udata, "%s %s %-5s %s:%d: ", l.service, buf,
+            levelStrings[ev->level], ev->file, ev->line);
     vfprintf(ev->udata, ev->fmt, ev->ap);
     fprintf(ev->udata, "\n");
     fflush(ev->udata);
@@ -103,6 +116,15 @@ void log_set_quiet(bool enable) {
     l.quiet = enable;
 }
 
+void log_set_service(char *service) {
+    l.service = service;
+    l.rlogdEnable = 0;
+}
+
+void log_enable_rlogd(int flag) {
+    l.rlogdEnable = flag;
+}
+
 int log_add_callback(log_LogFn fn, void *udata, int level) {
     for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (!l.callbacks[i].fn) {
@@ -132,6 +154,24 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
         .line = line,
         .level = level,
     };
+
+    if (!is_connect_with_rlogd() && l.rlogdEnable) {
+        log_remote_init(l.service);
+    }
+
+    if (is_connect_with_rlogd()) {
+        char buf[512] = {0};
+
+        lock();
+        init_event(&ev, &buf[0]);
+        va_start(ev.ap, fmt);
+        rlogd_callback(&ev);
+        va_end(ev.ap);
+        log_rlogd(&buf[0]);
+
+        unlock();
+        return;
+    }
 
     lock();
 

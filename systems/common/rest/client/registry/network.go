@@ -14,8 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const NetworkEndpoint = "/v1/networks"
@@ -60,7 +61,7 @@ type networkClient struct {
 	R *client.Resty
 }
 
-func NewNetworkClient(h string) *networkClient {
+func NewNetworkClient(h string, options ...client.Option) *networkClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -69,7 +70,7 @@ func NewNetworkClient(h string) *networkClient {
 
 	return &networkClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

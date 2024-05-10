@@ -121,7 +121,7 @@ func Test_GetMember(t *testing.T) {
 			AddRow(1, member.UserId, member.Role)
 
 		mock.ExpectQuery(`^SELECT.*members.*`).
-			WithArgs(member.UserId).
+			WithArgs(member.UserId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

@@ -16,9 +16,10 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
+#include "usys_log.h"
+
 #include "callback.h"
 #include "mesh.h"
-#include "log.h"
 #include "work.h"
 #include "jserdes.h"
 #include "map.h"
@@ -47,20 +48,20 @@ int callback_websocket (const URequest *request, UResponse *response,
 
 	nodeID = u_map_get(request->map_header, "User-Agent");
 	if (nodeID == NULL) {
-		log_error("Missing NodeID as User-Agent");
+		usys_log_error("Missing NodeID as User-Agent");
 		return U_CALLBACK_ERROR;
 	}
 
 	if (config->deviceInfo) {
 		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
 			/* Only accept one device at a time until the socket is closed. */
-			log_error("Only accept one device at a time. Ignoring");
+			usys_log_error("Only accept one device at a time. Ignoring");
 			return U_CALLBACK_ERROR;
 		}
 	} else {
 		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 		if (config->deviceInfo == NULL) {
-			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
+			usys_log_error("Error allocating memory: %d", sizeof(DeviceInfo));
             free(nodeID);
 			return U_CALLBACK_ERROR;
 		}
@@ -135,13 +136,13 @@ int callback_forward_service(const URequest *request,
     ret = serialize_websocket_message(&requestStr, request, destHost, destPort,
                                       service, sourcePort);
 	if (ret == FALSE && requestStr == NULL) {
-		log_error("Failed to convert request to JSON");
+		usys_log_error("Failed to convert request to JSON");
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
 	} else {
-		log_debug("Forward request JSON: %s", requestStr);
+		usys_log_debug("Forward request JSON: %s", requestStr);
 	}
 
     /* map it */
@@ -152,12 +153,12 @@ int callback_forward_service(const URequest *request,
 
 	/* Wait for the response back. The cond is set by the websocket thread */
 	pthread_mutex_lock(&map->mutex);
-	log_debug("Waiting for response back from the server ...");
+	usys_log_debug("Waiting for response back from the server ...");
 	pthread_cond_wait(&map->hasResp, &map->mutex);
 	pthread_mutex_unlock(&map->mutex);
 
-    log_debug("Response from System Code: %d len: %d Data: %s",
-              map->code, map->size, map->data);
+    usys_log_debug("Response from System Code: %d len: %d Data: %s",
+                   map->code, map->size, map->data);
 
     ulfius_set_string_body_response(response, map->code, (char *)map->data);
 

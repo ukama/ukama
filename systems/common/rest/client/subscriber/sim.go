@@ -14,8 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const SimEndpoint = "/v1/sims"
@@ -58,7 +59,7 @@ type simClient struct {
 	R *client.Resty
 }
 
-func NewSimClient(h string) *simClient {
+func NewSimClient(h string, options ...client.Option) *simClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -67,7 +68,7 @@ func NewSimClient(h string) *simClient {
 
 	return &simClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

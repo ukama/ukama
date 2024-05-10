@@ -6,17 +6,16 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/* Functions related to node.d */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <jansson.h>
 #include <curl/curl.h>
 
+#include "usys_log.h"
+
 #include "nodeInfo.h"
 #include "jserdes.h"
-#include "log.h"
 
 #define NODED_PATH    "noded/v1"
 #define NODE_INFO_EP  "nodeinfo"
@@ -33,10 +32,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 static long send_request_to_noded(char *nodedURL, struct Response *response);
 static int process_response_from_noded(char *response,	char **uuid);
 
-/*
- * create_noded_url --
- *
- */
 static char *create_noded_url(char *host, int port) {
 
 	char *url=NULL;
@@ -51,10 +46,6 @@ static char *create_noded_url(char *host, int port) {
 	return url;
 }
 
-/*
- * response_callback --
- *
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 								void *userp) {
 
@@ -64,7 +55,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	response->buffer = realloc(response->buffer, response->size + realsize + 1);
   
 	if(response->buffer == NULL) {
-		log_error("Not enough memory to realloc of size: %d",
+		usys_log_error("Not enough memory to realloc of size: %d",
 				  response->size + realsize + 1);
 		return 0;
 	}
@@ -76,10 +67,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * process_response_from_noded --
- *
- */
 static int process_response_from_noded(char *response,	char **uuid) {
 
 	int ret=FALSE;
@@ -91,14 +78,14 @@ static int process_response_from_noded(char *response,	char **uuid) {
 	json = json_loads(response, JSON_DECODE_ANY, NULL);
 
 	if (!json) {
-		log_error("Can not load str into JSON object. Str: %s", response);
+		usys_log_error("Can not load str into JSON object. Str: %s", response);
 		goto done;
 	}
 
 	ret = deserialize_node_info(&nodeInfo, json);
 
 	if (ret==FALSE) {
-		log_error("Deserialization failed for response: %s", response);
+		usys_log_error("Deserialization failed for response: %s", response);
 		goto done;
 	}
 
@@ -111,10 +98,6 @@ static int process_response_from_noded(char *response,	char **uuid) {
 	return ret;
 }
 
-/*
- * send_request_to_noded --
- *
- */
 static long send_request_to_noded(char *nodedURL, struct Response *response) {
 
 	long resCode=0;
@@ -145,7 +128,7 @@ static long send_request_to_noded(char *nodedURL, struct Response *response) {
 	res = curl_easy_perform(curl);
 
 	if (res != CURLE_OK) {
-		log_error("Error sending request to node.d at URL %s: %s", nodedURL,
+		usys_log_error("Error sending request to node.d at URL %s: %s", nodedURL,
 				  curl_easy_strerror(res));
 	} else {
 		/* get status code. */
@@ -159,11 +142,6 @@ static long send_request_to_noded(char *nodedURL, struct Response *response) {
 	return resCode;
 }
 
-/*
- *
- * get_nodeID_from_noded -- get NodeID
- *
- */
 int get_nodeID_from_noded(char **nodeID, char *host, int port) {
 
 	int ret=FALSE;
@@ -177,13 +155,13 @@ int get_nodeID_from_noded(char **nodeID, char *host, int port) {
 
 	if (send_request_to_noded(nodedURL, &response) == 200) {
 		if (process_response_from_noded(response.buffer, nodeID)) {
-			log_debug("Recevied NodeID (UUID) from noded: %s", *nodeID);
+			usys_log_debug("Recevied NodeID (UUID) from noded: %s", *nodeID);
 		} else {
-			log_error("Unable to receive proper NodeID from noded");
+			usys_log_error("Unable to receive proper NodeID from noded");
 			goto done;
 		}
 	} else {
-		log_error("Unable to send request to noded");
+		usys_log_error("Unable to send request to noded");
 		goto done;
 	}
 
@@ -196,10 +174,6 @@ int get_nodeID_from_noded(char **nodeID, char *host, int port) {
 	return ret;
 }
 
-/*
- * free_node_info --
- *
- */
 void free_node_info(NodeInfo *nodeInfo) {
 
 	NodeInfo *ptr;

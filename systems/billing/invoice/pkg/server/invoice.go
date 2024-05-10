@@ -15,6 +15,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/billing/invoice/pkg"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
@@ -23,23 +29,20 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
-
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
-const defaultTemplate = "templates/invoice.html.tmpl"
-const pdfFolder = "/srv/static/"
+const (
+	defaultTemplate = "templates/invoice.html.tmpl"
+	pdfFolder       = "/srv/static/"
+)
 
 type InvoiceServer struct {
+	OrgName          string
+	OrgId            uuid.UUID
 	invoiceRepo      db.InvoiceRepo
 	subscriberClient csub.SubscriberClient
 	msgbus           mb.MsgBusServiceClient
@@ -47,8 +50,15 @@ type InvoiceServer struct {
 	pb.UnimplementedInvoiceServiceServer
 }
 
-func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClient csub.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+func NewInvoiceServer(orgName, org string, invoiceRepo db.InvoiceRepo, subscriberClient csub.SubscriberClient, msgBus mb.MsgBusServiceClient) *InvoiceServer {
+	orgId, err := uuid.FromString(org)
+	if err != nil {
+		panic(fmt.Sprintf("invalid format of org uuid: %s", org))
+	}
+
 	return &InvoiceServer{
+		OrgName:          orgName,
+		OrgId:            orgId,
 		invoiceRepo:      invoiceRepo,
 		subscriberClient: subscriberClient,
 		msgbus:           msgBus,
@@ -58,6 +68,7 @@ func NewInvoiceServer(orgName string, invoiceRepo db.InvoiceRepo, subscriberClie
 
 func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Unmarshalling raw invoice from webhook: %v", req.RawInvoice)
+
 	rwInvoceStruct := &util.RawInvoice{}
 
 	err := json.Unmarshal([]byte(req.RawInvoice), rwInvoceStruct)
@@ -73,23 +84,28 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			"invalid JSON format of RawInvoice. Error %s", req.RawInvoice)
 	}
 
-	subscriberId, err := uuid.FromString(rwInvoceStruct.Customer.ExternalID)
+	invoiceeId, err := uuid.FromString(rwInvoceStruct.Customer.ExternalID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", err.Error())
-	}
-
-	subscriberInfo, err := i.subscriberClient.Get(subscriberId.String())
-	if err != nil {
-		return nil, err
+			"invalid format of invoicee uuid. Error %s", err.Error())
 	}
 
 	invoice := &db.Invoice{
-		SubscriberId: subscriberId,
-		NetworkId:    subscriberInfo.NetworkId,
+		InvoiceeId:   invoiceeId,
+		InvoiceeType: db.InvoiceeTypeOrg,
 	}
 
-	log.Infof("Adding invoice for subscriber: %s", subscriberId)
+	if invoiceeId != i.OrgId {
+		subscriberInfo, err := i.subscriberClient.Get(invoiceeId.String())
+		if err != nil {
+			return nil, err
+		}
+
+		invoice.NetworkId = subscriberInfo.NetworkId
+		invoice.InvoiceeType = db.InvoiceeTypeSubscriber
+	}
+
+	log.Infof("Adding invoice for invoicee: %s", invoiceeId)
 	err = i.invoiceRepo.Add(invoice, func(*db.Invoice, *gorm.DB) error {
 		invoice.Id = uuid.NewV4()
 		rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
@@ -153,44 +169,45 @@ func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	}, nil
 }
 
-func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscriberRequest) (*pb.GetBySubscriberResponse, error) {
-	subscriberId, err := uuid.FromString(req.SubscriberId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", err.Error())
+func (i *InvoiceServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("Getting invoices matching: %v", req)
+
+	if req.InvoiceeId != "" {
+		invoiceeId, err := uuid.FromString(req.GetInvoiceeId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for %s invoicee uuid: %s. Error %v",
+				req.InvoiceeType, req.InvoiceeId, err)
+		}
+
+		req.InvoiceeId = invoiceeId.String()
 	}
 
-	invoices, err := i.invoiceRepo.GetBySubscriber(subscriberId)
+	invoiceeType := db.InvoiceeTypeUnknown
+	if req.InvoiceeType != "" {
+		invoiceeType = db.ParseInvoiceeType(req.InvoiceeType)
+		if invoiceeType == db.InvoiceeTypeUnknown {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid value for invoicee type: %s", req.InvoiceeType)
+		}
+	}
+
+	if req.NetworkId != "" {
+		networkId, err := uuid.FromString(req.GetNetworkId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for network uuid: %s. Error %v", req.NetworkId, err)
+		}
+
+		req.NetworkId = networkId.String()
+	}
+
+	invoices, err := i.invoiceRepo.List(req.InvoiceeId, invoiceeType, req.NetworkId, req.IsPaid, req.Count, req.Sort)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoices")
 	}
 
-	resp := &pb.GetBySubscriberResponse{
-		SubscriberId: req.SubscriberId,
-		Invoices:     dbInvoicesToPbInvoices(invoices),
-	}
-
-	return resp, nil
-}
-
-func (i *InvoiceServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	networkId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
-	}
-
-	invoices, err := i.invoiceRepo.GetByNetwork(networkId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invoices")
-	}
-
-	resp := &pb.GetByNetworkResponse{
-		NetworkId: req.NetworkId,
-		Invoices:  dbInvoicesToPbInvoices(invoices),
-	}
-
-	return resp, nil
+	return &pb.ListResponse{Invoices: dbInvoicesToPbInvoices(invoices)}, nil
 }
 
 func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -246,11 +263,15 @@ func generateInvoicePDF(data any, templatePath, outputPath string) error {
 func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	inv := &pb.Invoice{
 		Id:           invoice.Id.String(),
-		SubscriberId: invoice.SubscriberId.String(),
-		NetworkId:    invoice.NetworkId.String(),
-		Period:       timestamppb.New(invoice.Period),
+		InvoiceeId:   invoice.InvoiceeId.String(),
+		InvoiceeType: invoice.InvoiceeType.String(),
+		Period:       invoice.Period.String(),
 		IsPaid:       invoice.IsPaid,
-		CreatedAt:    timestamppb.New(invoice.CreatedAt),
+		CreatedAt:    invoice.CreatedAt.String(),
+	}
+
+	if invoice.NetworkId != uuid.Nil {
+		inv.NetworkId = invoice.NetworkId.String()
 	}
 
 	val := &pb.RawInvoice{}

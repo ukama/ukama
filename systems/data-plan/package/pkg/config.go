@@ -24,6 +24,7 @@ type Config struct {
 	Service          *uconf.Service   `default:"{}"`
 	Rate             string
 	OrgName          string
+	OrgId			 string
 }
 
 func NewConfig(name string) *Config {

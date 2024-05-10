@@ -17,10 +17,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "usys_log.h"
+
 #include "httpStatus.h"
 #include "jserdes.h"
 #include "server.h"
-#include "log.h"
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {

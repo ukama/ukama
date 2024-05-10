@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "map.h"
+#include "work.h"
 #include "mesh.h"
 
 void init_map_table(MapTable **table) {
@@ -80,7 +81,11 @@ void free_map_item(MapItem *map) {
         free(map->nodeInfo->meshIP);
         free(map->nodeInfo);
     }
-	free(map);
+
+    free_work_list(map->transmit);
+    free_work_list(map->receive);
+
+    free(map);
 }
 
 MapItem *is_existing_item(MapTable *table, char *nodeID) {
@@ -205,6 +210,7 @@ void remove_map_item_from_table(MapTable *table, char *nodeID) {
 
         previous = current;
         current = current->next;
+        free(previous);
     }
 
     pthread_mutex_unlock(&table->mutex);

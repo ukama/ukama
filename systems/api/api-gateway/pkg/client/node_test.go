@@ -50,9 +50,11 @@ func TestCient_GetNode(t *testing.T) {
 
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Get", nodeId).
-			Return(nil,
-				fmt.Errorf("GetNode failure: %w",
-					cclient.ErrorStatus{StatusCode: 404})).Once()
+			Return(nil, fmt.Errorf("GetNode failure: %w",
+				cclient.ErrorStatus{
+					StatusCode: 404,
+					RawError:   crest.ErrorResponse{Err: "not found"},
+				})).Once()
 
 		nodeInfo, err := n.GetNode(nodeId)
 
@@ -179,7 +181,10 @@ func TestCient_DetachNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Detach", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				cclient.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{
+					StatusCode: 404,
+					RawError:   crest.ErrorResponse{Err: "not found"},
+				})).Once()
 
 		err := n.DetachNode(nodeId)
 
@@ -254,7 +259,10 @@ func TestCient_RemoveNodeFromSite(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("RemoveFromSite", nodeId).
 			Return(fmt.Errorf("DetachNode failure: %w",
-				cclient.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{
+					StatusCode: 404,
+					RawError:   crest.ErrorResponse{Err: "not found"},
+				})).Once()
 
 		err := n.RemoveNodeFromSite(nodeId)
 
@@ -293,7 +301,10 @@ func TestCient_DeleteNode(t *testing.T) {
 	t.Run("NodeNotFound", func(t *testing.T) {
 		nodeClient.On("Delete", nodeId).
 			Return(fmt.Errorf("DeleteNode failure: %w",
-				cclient.ErrorStatus{StatusCode: 404})).Once()
+				cclient.ErrorStatus{
+					StatusCode: 404,
+					RawError:   crest.ErrorResponse{Err: "not found"},
+				})).Once()
 
 		err := n.DeleteNode(nodeId)
 

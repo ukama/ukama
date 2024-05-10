@@ -98,7 +98,7 @@ func TestNotificationRepo_Get(t *testing.T) {
 			AddRow(notificationId, node.String())
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
-			WithArgs(notificationId).
+			WithArgs(notificationId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		r := intdb.NewNotificationRepo(&UkamaDbMock{
@@ -121,7 +121,7 @@ func TestNotificationRepo_Get(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
-			WithArgs(notificationId).
+			WithArgs(notificationId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := intdb.NewNotificationRepo(&UkamaDbMock{
@@ -245,7 +245,7 @@ func TestNotificationRepo_List(t *testing.T) {
 				nt.Status, nt.Time, nt.Description, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
-			WithArgs(nt.ServiceName, nt.Type).
+			WithArgs(nt.ServiceName, nt.Type, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		r := intdb.NewNotificationRepo(&UkamaDbMock{
@@ -276,7 +276,7 @@ func TestNotificationRepo_List(t *testing.T) {
 				nt.Status, nt.Time, nt.Description, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
-			WithArgs(nt.NodeId, nt.Type).
+			WithArgs(nt.NodeId, nt.Type, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		r := intdb.NewNotificationRepo(&UkamaDbMock{

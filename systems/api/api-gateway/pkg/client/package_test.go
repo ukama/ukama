@@ -88,9 +88,11 @@ func TestCient_GetPackage(t *testing.T) {
 
 	t.Run("PackageNotFound", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
-			Return(nil,
-				fmt.Errorf("GetNetwork failure: %w",
-					cclient.ErrorStatus{StatusCode: 404})).Once()
+			Return(nil, fmt.Errorf("GetNetwork failure: %w",
+				cclient.ErrorStatus{
+					StatusCode: 404,
+					RawError:   crest.ErrorResponse{Err: "not found"},
+				})).Once()
 
 		pkgInfo, err := p.GetPackage(packageId.String())
 
@@ -125,15 +127,20 @@ func TestCient_AddPackage(t *testing.T) {
 	from := "2023-04-01T00:00:00Z"
 	to := "2023-04-01T00:00:00Z"
 	baserateId := uuid.NewV4().String()
-	voiceVolume := int64(0)
+	voiceVolume := uint64(0)
 	isActive := true
-	dataVolume := int64(1024)
-	smsVolume := int64(0)
+	dataVolume := uint64(1024)
+	smsVolume := uint64(0)
 	dataUnit := "MegaBytes"
 	voiceUnit := "seconds"
 	simType := "test"
 	apn := "ukama.tel"
-	markup := float64(0)
+	markupValue := float64(0)
+	markup := cdplan.PackageMarkup{
+		PackageID:  pkgId.String(),
+		BaseRateId: baserateId,
+		Markup:     markupValue,
+	}
 	pType := "postpaid"
 	duration := uint64(0)
 	flatRate := false
@@ -160,7 +167,7 @@ func TestCient_AddPackage(t *testing.T) {
 			DataUnit:      dataUnit,
 			SimType:       simType,
 			Apn:           apn,
-			Markup:        markup,
+			Markup:        markupValue,
 			Type:          pType,
 			Duration:      duration,
 			Flatrate:      flatRate,
@@ -196,7 +203,7 @@ func TestCient_AddPackage(t *testing.T) {
 
 		pkgInfo, err := p.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks)
+			simType, apn, pType, duration, markupValue, amount, overdraft, trafficPolicy, networks)
 
 		assert.NoError(t, err)
 
@@ -220,7 +227,7 @@ func TestCient_AddPackage(t *testing.T) {
 			DataUnit:      dataUnit,
 			SimType:       simType,
 			Apn:           apn,
-			Markup:        markup,
+			Markup:        markupValue,
 			Type:          pType,
 			Duration:      duration,
 			Flatrate:      flatRate,
@@ -232,7 +239,7 @@ func TestCient_AddPackage(t *testing.T) {
 
 		pkgInfo, err := p.AddPackage(pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks)
+			simType, apn, pType, duration, markupValue, amount, overdraft, trafficPolicy, networks)
 
 		assert.Contains(t, err.Error(), "error")
 		assert.Nil(t, pkgInfo)

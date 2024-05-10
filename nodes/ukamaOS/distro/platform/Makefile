@@ -6,24 +6,29 @@
 
 include ../../config.mk
 
+UKAMAOS_ROOT = ../../
+
 # Targets
 TAR_LIB := usys
 TARGET_LIB := lib$(TAR_LIB).so
 UTEST_BIN := platform
-
 DISTRO_DIR:=../
 
 # Vendor
-VENDOR_DIR:=$(DISTRO_DIR)/vendor
-INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
+
+VENDOR_INC+=$(VENDOR_DIR)/headers/musl/
 
 # Source paths
 UNITY_ROOT := ../tools/unity
 SRC_DIRS := sys/src log/src
-INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(INC_HEADERS)
+INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(VENDOR_INC)
 BUILD_DIR := build
 TEST_DIRS := test $(UNITY_ROOT)/src
-
 
 # Compilers and flags
 ifndef XCC
@@ -33,7 +38,12 @@ XCC:=$(XCC)
 endif
 
 # Libraries
-LIBS:=-lpthread
+CURL_LIB=-lcurl -lssl -lcrypto
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-lpthread
+LIBS+=-ljansson
 LIBS+=-lrt
 LIBS+=-lm
 
@@ -44,9 +54,12 @@ CFLAGS+=-Wall
 CFLAGS+=-Wno-unused-variable
 CFLAGS+=-fPIC
 CFLAGS+=-DHAVE_SYS_TIME_H
+CFLAGS+=-DLOG_USE_COLOR
 
 LDFLAGS+=$(LDPATH)
-LDFLAGS+=-L$(CURDIR)/$(BUILD_DIR) 
+LDFLAGS+=-L$(CURDIR)/$(BUILD_DIR)
+LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-L$(VENDOR_LIB64)
 
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
@@ -156,12 +169,8 @@ $(BUILD_DIR)/%.o: %.c
 # Memory check
 memcheck: $(UTEST_BIN)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
-		
+
 # Clean all build files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
-

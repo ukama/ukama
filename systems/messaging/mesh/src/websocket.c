@@ -24,23 +24,6 @@
 
 extern MapTable *NodesTable;
 
-/*
- * clear_response -- free up memory from MResponse.
- *
- */
-static void clear_response(MResponse **resp) {
-
-	if (*resp==NULL) return;
-
-	free((*resp)->reqType);
-	free((*resp)->serviceInfo);
-	if ((*resp)->data) {
-		free((*resp)->data);
-	}
-
-	free(*resp);
-}
-
 static void free_message(Message *message) {
 
     if (message == NULL) return;
@@ -77,6 +60,7 @@ static int is_websocket_valid(WSManager *manager, MapItem *map) {
                       map->nodeInfo->nodeID);
         }
 
+        remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
         return FALSE;
     }
 
@@ -178,7 +162,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		}
 
 		/* Free up the memory */
-		destroy_work_item(work);
+		free_work_item(work);
 	}
 
 	return;
@@ -193,7 +177,6 @@ void websocket_incoming_message(const URequest *request,
 								void *data) {
     Message *rcvdMessage=NULL;
     char *responseRemote=NULL;
-	MRequest *rcvdData=NULL;
 	int ret;
     MapItem *map=NULL;
     Forward *forward=NULL;

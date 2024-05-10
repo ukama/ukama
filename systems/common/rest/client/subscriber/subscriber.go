@@ -64,7 +64,7 @@ type subscriberClient struct {
 	R *client.Resty
 }
 
-func NewSubscriberClient(h string) *subscriberClient {
+func NewSubscriberClient(h string, options ...client.Option) *subscriberClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -73,7 +73,7 @@ func NewSubscriberClient(h string) *subscriberClient {
 
 	return &subscriberClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

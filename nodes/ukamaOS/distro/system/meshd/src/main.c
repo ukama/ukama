@@ -15,6 +15,9 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "usys_log.h"
+#include "usys_services.h"
+
 #include "mesh.h"
 #include "config.h"
 #include "work.h"
@@ -74,19 +77,19 @@ void close_websocket(struct _websocket_client_handler *handler) {
 
     switch(ret) {
     case U_WEBSOCKET_STATUS_CLOSE:
-        log_debug("Websocket connection with server is closed");
+        usys_log_debug("Websocket connection with server is closed");
         break;
 
     case U_WEBSOCKET_STATUS_OPEN:
     case U_WEBSOCKET_STATUS_ERROR:
-        log_error("Unable to close websocket connection with server");
+        usys_log_error("Unable to close websocket connection with server");
         break;
     }
 }
 
 void signal_term_handler(int signal) {
 
-    log_debug("Received signal: %d (%s)\n", signal, strsignal(signal));
+    usys_log_debug("Received signal: %d (%s)\n", signal, strsignal(signal));
 
     if (state == NULL) exit(1);
 
@@ -136,6 +139,8 @@ int main (int argc, char *argv[]) {
 	struct _u_instance webInst;
     struct _u_instance fwdInst;
 	struct _websocket_client_handler websocketHandler = {NULL, NULL};
+
+    log_set_service(SERVICE_NAME);
 
     state = (State *)calloc(1, sizeof(State));
     if (state == NULL) {
@@ -200,26 +205,26 @@ int main (int argc, char *argv[]) {
 
 	config = (Config *)calloc(1, sizeof(Config));
 	if (!config) {
-		log_error("Memory allocation failure: %d", sizeof(Config));
+		usys_log_error("Memory allocation failure: %d", sizeof(Config));
 		exit(1);
 	}
 
 	/* Step-1: read config file. */
 	if (process_config_file(config, configFile) != TRUE) {
-		fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
-				configFile);
+		usys_log_error("Error parsing config file: %s. Exiting.",
+                       configFile);
 		exit(1);
 	}
 
     config->forwardPort = usys_find_service_port(SERVICE_UKAMA);
     config->servicePort = usys_find_service_port(SERVICE_NAME);
     if (!config->forwardPort) {
-        log_error("Unable to find forward port in /etc/service");
+        usys_log_error("Unable to find forward port in /etc/service");
         exit(1);
     }
 
     if (!config->servicePort) {
-        log_error("Unable to find %s port in /etc/service", SERVICE_NAME);
+        usys_log_error("Unable to find %s port in /etc/service", SERVICE_NAME);
         exit(1);
     }
     state->config = config;
@@ -230,7 +235,7 @@ int main (int argc, char *argv[]) {
 	Receive  = (WorkList *)malloc(sizeof(WorkList));
 
 	if (Transmit == NULL && Receive == NULL) {
-		log_error("Memory allocation failure: %d", sizeof(WorkList));
+		usys_log_error("Memory allocation failure: %d", sizeof(WorkList));
 		exit(1);
 	}
 
@@ -246,23 +251,23 @@ int main (int argc, char *argv[]) {
 	/* Setup ip:port to UUID mapping table, if client. */
 	ClientTable = (MapTable *)malloc(sizeof(MapTable));
 	if (ClientTable == NULL) {
-		log_error("Memory allocation failure: %d", sizeof(MapTable));
+		usys_log_error("Memory allocation failure: %d", sizeof(MapTable));
 		exit(1);
 	}
 	init_map_table(&ClientTable);
 
     while (start_websocket_client(config, &websocketHandler) != TRUE) {
-		log_error("Websocket failed to setup for client. Retrying in 5 seconds ...");
+		usys_log_error("Websocket failed to setup for client. Retrying in 5 seconds ...");
         sleep(5);
 	}
 
 	if (start_forward_services(config, &fwdInst) != TRUE) {
-		log_error("Forward service failed to setup. Exiting.");
+		usys_log_error("Forward service failed to setup. Exiting.");
 		exit(1);
 	}
 
     if (start_web_services(config, &webInst) != TRUE) {
-        log_error("Web service failed to setup. Exiting.");
+        usys_log_error("Web service failed to setup. Exiting.");
 		exit(1);
 	}
 
@@ -271,12 +276,12 @@ int main (int argc, char *argv[]) {
     threadArgs.handler = &websocketHandler;
     if (pthread_create(&thread, NULL, monitor_websocket,
                        (void *)&threadArgs) != 0) {
-        log_error("Unable to create websocket monitoring thread.");
+        usys_log_error("Unable to create websocket monitoring thread.");
     }
 
     pthread_detach(thread);
 
-	log_debug("%s running ...", SERVICE_NAME);
+	usys_log_debug("%s running ...", SERVICE_NAME);
 
     pause();
 

@@ -47,7 +47,7 @@ func Test_systemRepo_Get(t *testing.T) {
 			AddRow(name, uuidStr, certs, dIp, port, health)
 
 		mock.ExpectQuery(`^SELECT.*systems.*`).
-			WithArgs(name, orgId).
+			WithArgs(name, orgId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

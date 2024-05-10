@@ -26,11 +26,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InvoiceService_Add_FullMethodName             = "/ukama.billing.invoice.v1.InvoiceService/Add"
-	InvoiceService_Get_FullMethodName             = "/ukama.billing.invoice.v1.InvoiceService/Get"
-	InvoiceService_GetBySubscriber_FullMethodName = "/ukama.billing.invoice.v1.InvoiceService/GetBySubscriber"
-	InvoiceService_GetByNetwork_FullMethodName    = "/ukama.billing.invoice.v1.InvoiceService/GetByNetwork"
-	InvoiceService_Delete_FullMethodName          = "/ukama.billing.invoice.v1.InvoiceService/Delete"
+	InvoiceService_Add_FullMethodName    = "/ukama.billing.invoice.v1.InvoiceService/Add"
+	InvoiceService_Get_FullMethodName    = "/ukama.billing.invoice.v1.InvoiceService/Get"
+	InvoiceService_List_FullMethodName   = "/ukama.billing.invoice.v1.InvoiceService/List"
+	InvoiceService_Delete_FullMethodName = "/ukama.billing.invoice.v1.InvoiceService/Delete"
 )
 
 // InvoiceServiceClient is the client API for InvoiceService service.
@@ -39,8 +38,7 @@ const (
 type InvoiceServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	GetBySubscriber(ctx context.Context, in *GetBySubscriberRequest, opts ...grpc.CallOption) (*GetBySubscriberResponse, error)
-	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	// Update
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
@@ -71,18 +69,9 @@ func (c *invoiceServiceClient) Get(ctx context.Context, in *GetRequest, opts ...
 	return out, nil
 }
 
-func (c *invoiceServiceClient) GetBySubscriber(ctx context.Context, in *GetBySubscriberRequest, opts ...grpc.CallOption) (*GetBySubscriberResponse, error) {
-	out := new(GetBySubscriberResponse)
-	err := c.cc.Invoke(ctx, InvoiceService_GetBySubscriber_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *invoiceServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
-	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, InvoiceService_GetByNetwork_FullMethodName, in, out, opts...)
+func (c *invoiceServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	out := new(ListResponse)
+	err := c.cc.Invoke(ctx, InvoiceService_List_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +93,7 @@ func (c *invoiceServiceClient) Delete(ctx context.Context, in *DeleteRequest, op
 type InvoiceServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error)
-	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
+	List(context.Context, *ListRequest) (*ListResponse, error)
 	// Update
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedInvoiceServiceServer()
@@ -121,11 +109,8 @@ func (UnimplementedInvoiceServiceServer) Add(context.Context, *AddRequest) (*Add
 func (UnimplementedInvoiceServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedInvoiceServiceServer) GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBySubscriber not implemented")
-}
-func (UnimplementedInvoiceServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
+func (UnimplementedInvoiceServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedInvoiceServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -179,38 +164,20 @@ func _InvoiceService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InvoiceService_GetBySubscriber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBySubscriberRequest)
+func _InvoiceService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InvoiceServiceServer).GetBySubscriber(ctx, in)
+		return srv.(InvoiceServiceServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: InvoiceService_GetBySubscriber_FullMethodName,
+		FullMethod: InvoiceService_List_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvoiceServiceServer).GetBySubscriber(ctx, req.(*GetBySubscriberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _InvoiceService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByNetworkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InvoiceServiceServer).GetByNetwork(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: InvoiceService_GetByNetwork_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvoiceServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
+		return srv.(InvoiceServiceServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -249,12 +216,8 @@ var InvoiceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InvoiceService_Get_Handler,
 		},
 		{
-			MethodName: "GetBySubscriber",
-			Handler:    _InvoiceService_GetBySubscriber_Handler,
-		},
-		{
-			MethodName: "GetByNetwork",
-			Handler:    _InvoiceService_GetByNetwork_Handler,
+			MethodName: "List",
+			Handler:    _InvoiceService_List_Handler,
 		},
 		{
 			MethodName: "Delete",

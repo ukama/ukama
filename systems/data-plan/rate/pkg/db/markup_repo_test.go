@@ -120,7 +120,7 @@ func TestMarkupRepo_Get(t *testing.T) {
 			AddRow(1, time.Now(), time.Now(), nil, userId, markup)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
-			WithArgs(userId).
+			WithArgs(userId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
 		dialector := postgres.New(postgres.Config{

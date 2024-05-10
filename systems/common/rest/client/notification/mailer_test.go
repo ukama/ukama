@@ -55,11 +55,14 @@ func TestMailerClient_Send(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), notification.MailerEndpoint+"/sendEmail")
 
+			// error payload
+			resp := `{"error":"internal server error"}`
+
 			return &http.Response{
 				StatusCode: 500,
 				Status:     "500 INTERNAL SERVER ERROR",
-				Body:       io.NopCloser(bytes.NewBufferString(`INTERNAL SERVER ERROR`)),
-				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
 			}
 		}
 

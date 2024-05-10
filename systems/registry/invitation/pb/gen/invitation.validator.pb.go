@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -19,15 +19,15 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-var _regex_GetInvitationByEmailRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+var _regex_GetByEmailRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 
-func (this *GetInvitationByEmailRequest) Validate() error {
-	if !_regex_GetInvitationByEmailRequest_Email.MatchString(this.Email) {
+func (this *GetByEmailRequest) Validate() error {
+	if !_regex_GetByEmailRequest_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
 	return nil
 }
-func (this *GetInvitationByEmailResponse) Validate() error {
+func (this *GetByEmailResponse) Validate() error {
 	if this.Invitation != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Invitation); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Invitation", err)
@@ -35,18 +35,13 @@ func (this *GetInvitationByEmailResponse) Validate() error {
 	}
 	return nil
 }
-func (this *AddInvitationRequest) Validate() error {
-	if this.ExpireAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ExpireAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ExpireAt", err)
-		}
-	}
+func (this *AddRequest) Validate() error {
 	return nil
 }
-func (this *GetInvitationByOrgRequest) Validate() error {
+func (this *GetAllRequest) Validate() error {
 	return nil
 }
-func (this *GetInvitationByOrgResponse) Validate() error {
+func (this *GetAllResponse) Validate() error {
 	for _, item := range this.Invitations {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -56,7 +51,7 @@ func (this *GetInvitationByOrgResponse) Validate() error {
 	}
 	return nil
 }
-func (this *AddInvitationResponse) Validate() error {
+func (this *AddResponse) Validate() error {
 	if this.Invitation != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Invitation); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Invitation", err)
@@ -65,10 +60,10 @@ func (this *AddInvitationResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetInvitationRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_GetRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *GetInvitationRequest) Validate() error {
-	if !_regex_GetInvitationRequest_Id.MatchString(this.Id) {
+func (this *GetRequest) Validate() error {
+	if !_regex_GetRequest_Id.MatchString(this.Id) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
 	}
 	if this.Id == "" {
@@ -76,7 +71,7 @@ func (this *GetInvitationRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetInvitationResponse) Validate() error {
+func (this *GetResponse) Validate() error {
 	if this.Invitation != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Invitation); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Invitation", err)
@@ -85,10 +80,10 @@ func (this *GetInvitationResponse) Validate() error {
 	return nil
 }
 
-var _regex_DeleteInvitationRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DeleteRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *DeleteInvitationRequest) Validate() error {
-	if !_regex_DeleteInvitationRequest_Id.MatchString(this.Id) {
+func (this *DeleteRequest) Validate() error {
+	if !_regex_DeleteRequest_Id.MatchString(this.Id) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
 	}
 	if this.Id == "" {
@@ -97,10 +92,10 @@ func (this *DeleteInvitationRequest) Validate() error {
 	return nil
 }
 
-var _regex_DeleteInvitationResponse_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DeleteResponse_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *DeleteInvitationResponse) Validate() error {
-	if !_regex_DeleteInvitationResponse_Id.MatchString(this.Id) {
+func (this *DeleteResponse) Validate() error {
+	if !_regex_DeleteResponse_Id.MatchString(this.Id) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
 	}
 	if this.Id == "" {
@@ -109,10 +104,10 @@ func (this *DeleteInvitationResponse) Validate() error {
 	return nil
 }
 
-var _regex_UpdateInvitationStatusRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_UpdateStatusRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *UpdateInvitationStatusRequest) Validate() error {
-	if !_regex_UpdateInvitationStatusRequest_Id.MatchString(this.Id) {
+func (this *UpdateStatusRequest) Validate() error {
+	if !_regex_UpdateStatusRequest_Id.MatchString(this.Id) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
 	}
 	if this.Id == "" {
@@ -120,7 +115,7 @@ func (this *UpdateInvitationStatusRequest) Validate() error {
 	}
 	return nil
 }
-func (this *UpdateInvitationStatusResponse) Validate() error {
+func (this *UpdateStatusResponse) Validate() error {
 	return nil
 }
 
@@ -132,11 +127,6 @@ func (this *Invitation) Validate() error {
 	}
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
-	if this.ExpireAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ExpireAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ExpireAt", err)
-		}
 	}
 	return nil
 }

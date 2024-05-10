@@ -14,10 +14,6 @@
 #include "mesh.h"
 #include "jserdes.h"
 
-/*
- * add_map_to_request --
- *
- */
 static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 
 	json_t *jMap=NULL, *jArray=NULL;
@@ -68,10 +64,6 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 	}
 }
 
-/*
- * serialize_device_info --
- *
- */
 int serialize_device_info(json_t **json, NodeInfo *device) {
 
 	json_t *jDevice=NULL;
@@ -104,10 +96,6 @@ int serialize_device_info(json_t **json, NodeInfo *device) {
 	return TRUE;
 }
 
-/*
- * serialize_local_service_response --
- *
- */
 int serialize_local_service_response(char **response, Message *message,
                                      int code, int len, char *data) {
 
@@ -153,10 +141,6 @@ int serialize_local_service_response(char **response, Message *message,
 	return TRUE;
 }
 
-/*
- * serialize_message_data --
- *
- */
 static void serialize_message_data(URequest *request, char **data) {
 
     json_t *json, *jRaw;
@@ -201,10 +185,6 @@ static void serialize_message_data(URequest *request, char **data) {
     json_decref(json);
 }
 
-/*
- * serialize_websocket_message --
- *
- */
 int serialize_websocket_message(char **str, URequest *request, char *nodeID,
                                 char *port, char *agent, char *sourcePort) {
 
@@ -245,10 +225,6 @@ int serialize_websocket_message(char **str, URequest *request, char *nodeID,
 	return TRUE;
 }
 
-/*
- * deserialize_node_info --
- *
- */
 int deserialize_node_info(NodeInfo **node, json_t *json) {
 
 	json_t *id, *port;
@@ -275,10 +251,6 @@ int deserialize_node_info(NodeInfo **node, json_t *json) {
 	return TRUE;
 }
 
-/* 
- * deserialize_service_info --
- *
- */
 static int deserialize_service_info(ServiceInfo **service, json_t *json) {
 
 	json_t *name, *port;
@@ -299,10 +271,6 @@ static int deserialize_service_info(ServiceInfo **service, json_t *json) {
 	return TRUE;
 }
 
-/* 
- * deserialize_map_array --
- *
- */
 static void deserialize_map_array(UMap **map, json_t *json) {
 
 	json_t *jArray;
@@ -332,10 +300,6 @@ static void deserialize_map_array(UMap **map, json_t *json) {
 	}
 }
 
-/*
- * deserialize_map --
- *
- */
 static void deserialize_map(URequest **request, json_t *json) {
 
 	json_t *obj;
@@ -360,10 +324,6 @@ static void deserialize_map(URequest **request, json_t *json) {
 	}
 }
 
-/*
- * deserialize_request_info --
- *
- */
 int deserialize_request_info(URequest **request, char *str) {
 
 	json_t *json, *obj, *jRaw;

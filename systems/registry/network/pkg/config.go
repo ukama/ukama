@@ -32,6 +32,7 @@ type Config struct {
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 	OrgName          string
+	OrgId            string
 	Country          string `default:"{}"`
 	Language         string `default:"{}"`
 	Currency         string `default:"{}"`

@@ -385,15 +385,18 @@ func TestRouter_AddPackage(t *testing.T) {
 	pkgName := "Monthly Data"
 	from := "2023-04-01T00:00:00Z"
 	to := "2023-04-01T00:00:00Z"
-	voiceVolume := int64(0)
+	voiceVolume := uint64(0)
 	isActive := true
-	dataVolume := int64(1024)
-	smsVolume := int64(0)
+	dataVolume := uint64(1024)
+	smsVolume := uint64(0)
 	dataUnit := "MegaBytes"
 	voiceUnit := "seconds"
 	simType := "test"
 	apn := "ukama.tel"
-	markup := float64(0)
+	markupValue := float64(0)
+	markup := cdplan.PackageMarkup{
+		Markup: markupValue,
+	}
 	pType := "postpaid"
 	duration := uint64(30)
 	flatRate := false
@@ -423,7 +426,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			DataUnit:      dataUnit,
 			SimType:       simType,
 			Apn:           apn,
-			Markup:        markup,
+			Markup:        markupValue,
 			Type:          pType,
 			Duration:      duration,
 			Flatrate:      flatRate,
@@ -466,7 +469,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		packageClient.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
+			simType, apn, pType, duration, markupValue, amount, overdraft, trafficPolicy, networks).
 			Return(pkgInfo, nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
@@ -503,7 +506,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			DataUnit:      dataUnit,
 			SimType:       simType,
 			Apn:           apn,
-			Markup:        markup,
+			Markup:        markupValue,
 			Type:          pType,
 			Duration:      duration,
 			Flatrate:      flatRate,
@@ -520,7 +523,7 @@ func TestRouter_AddPackage(t *testing.T) {
 
 		packageClient.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
-			simType, apn, pType, duration, markup, amount, overdraft, trafficPolicy, networks).
+			simType, apn, pType, duration, markupValue, amount, overdraft, trafficPolicy, networks).
 			Return(nil, errors.New("some unexpected error occured"))
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,

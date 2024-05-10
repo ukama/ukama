@@ -15,22 +15,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ukama/ukama/systems/billing/collector/mocks"
-	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ukama/ukama/systems/billing/collector/mocks"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
-const OrgName = "testOrg"
-const bmId = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
+const (
+	OrgName = "testOrg"
+	OrgId   = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
+
+	bmId   = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
+	custId = "e231a7cd-03f6-470a-9e8c-e02f54f9b415"
+)
 
 func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
@@ -39,7 +44,10 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
@@ -96,10 +104,13 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("PackageCreateEventSent", func(t *testing.T) {
-		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("da337d0e-5678-446f-95c3-e94ac27a93b3", nil).Once()
 
 		pkg := epb.CreatePackageEvent{
@@ -131,7 +142,7 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	})
 
 	t.Run("CreatePackageEventNotSent", func(t *testing.T) {
-		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create package event")).Once()
 
 		pkg := epb.CreatePackageEvent{}
@@ -157,7 +168,10 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("CreateCustomerEventSent", func(t *testing.T) {
 
@@ -212,7 +226,10 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("UpdateCustomerEventSent", func(t *testing.T) {
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
@@ -265,7 +282,10 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("DeleteCustomerEventSent", func(t *testing.T) {
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
@@ -316,7 +336,10 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("AllocateSimEventSent", func(t *testing.T) {
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
@@ -370,7 +393,10 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, billingClient)
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
 
 	t.Run("SetActivePackageEventSent", func(t *testing.T) {
 		billingClient.On("TerminateSubscription", mock.Anything, "b20c61f1-1c5a-4559-bfff-cd00f746697d").

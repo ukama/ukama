@@ -13,15 +13,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	log "github.com/sirupsen/logrus"
-	invoicedb "github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 )
 
 type UkamaDbMock struct {
@@ -59,43 +59,28 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func TestInvoiceRepo_Add(t *testing.T) {
 	t.Run("AddINvoice", func(t *testing.T) {
 		// Arrange
-		var db *sql.DB
-
-		invoice := invoicedb.Invoice{
-			Id:           uuid.NewV4(),
-			SubscriberId: uuid.NewV4(),
+		invoice := db.Invoice{
+			Id:         uuid.NewV4(),
+			InvoiceeId: uuid.NewV4(),
 		}
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepare_db(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(invoice.Id, invoice.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(invoice.Id, invoice.InvoiceeId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Add(&invoice, nil)
+		err := r.Add(&invoice, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -109,35 +94,20 @@ func TestInvoiceRepo_Get(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
 		// Arrange
 		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+		var invoiceeId = uuid.NewV4()
 
-		var db *sql.DB
+		mock, gdb := prepare_db(t)
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "subscriber_id"}).
-			AddRow(invoiceId, subscriberId)
+		rows := sqlmock.NewRows([]string{"id", "invoicee_id"}).
+			AddRow(invoiceId, invoiceeId)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(invoiceId).
+			WithArgs(invoiceId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		inv, err := r.Get(invoiceId)
@@ -154,30 +124,15 @@ func TestInvoiceRepo_Get(t *testing.T) {
 		// Arrange
 		var invoiceId = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepare_db(t)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(invoiceId).
+			WithArgs(invoiceId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		inv, err := r.Get(invoiceId)
@@ -191,187 +146,191 @@ func TestInvoiceRepo_Get(t *testing.T) {
 	})
 }
 
-func TestINvoiceRepo_GetBySubscriber(t *testing.T) {
-	t.Run("SubscriberFound", func(t *testing.T) {
-		// Arrange
-		var invoiceId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
+func TestInvoiceRepo_List(t *testing.T) {
+	t.Run("ListAll", func(t *testing.T) {
+		i := &db.Invoice{
+			Id:           uuid.NewV4(),
+			InvoiceeId:   uuid.NewV4(),
+			InvoiceeType: db.InvoiceeTypeOrg,
+			IsPaid:       false,
+		}
 
-		var db *sql.DB
+		mock, gdb := prepare_db(t)
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "subscriber_id"}).
-			AddRow(invoiceId, subscriberId)
+		rows := sqlmock.NewRows([]string{"invoice_id", "invoicee_id", "invoicee_type", "is_paid"}).
+			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.IsPaid)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(subscriberId).
+			WithArgs().
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		invoices, err := r.GetBySubscriber(subscriberId)
+		list, err := r.List("", db.InvoiceeTypeUnknown, "",
+			false, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, invoices)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("SubscriberNotFound", func(t *testing.T) {
-		// Arrange
-		var subscriberId = uuid.NewV4()
+	t.Run("ListByInvoiceeId", func(t *testing.T) {
+		i := &db.Invoice{
+			Id:           uuid.NewV4(),
+			InvoiceeId:   uuid.NewV4(),
+			InvoiceeType: db.InvoiceeTypeOrg,
+			IsPaid:       false,
+		}
 
-		var db *sql.DB
+		mock, gdb := prepare_db(t)
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		rows := sqlmock.NewRows([]string{"invoice_id", "invoicee_id", "invoicee_type", "is_paid"}).
+			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.IsPaid)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(subscriberId).
-			WillReturnError(sql.ErrNoRows)
+			WithArgs(i.InvoiceeId).
+			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
+		// Act
+		list, err := r.List(i.InvoiceeId.String(), db.InvoiceeTypeUnknown, "",
+			false, 0, false)
+
+		// Assert
 		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ListSubscriberInvoices", func(t *testing.T) {
+		i := &db.Invoice{
+			Id:           uuid.NewV4(),
+			InvoiceeId:   uuid.NewV4(),
+			InvoiceeType: db.InvoiceeTypeSubscriber,
+			NetworkId:    uuid.NewV4(),
+			IsPaid:       false,
+		}
+
+		mock, gdb := prepare_db(t)
+
+		rows := sqlmock.NewRows([]string{"invoice_id", "invoicee_id", "invoicee_type", "network_id", "is_paid"}).
+			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.NetworkId, i.IsPaid)
+
+		mock.ExpectQuery(`^SELECT.*invoices.*`).
+			WithArgs(db.InvoiceeTypeSubscriber).
+			WillReturnRows(rows)
+
+		r := db.NewInvoiceRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
 
 		// Act
-		invoices, err := r.GetBySubscriber(subscriberId)
+		list, err := r.List("", db.InvoiceeTypeSubscriber, "",
+			false, 0, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ListNetworkInvoices", func(t *testing.T) {
+		i := &db.Invoice{
+			Id:           uuid.NewV4(),
+			InvoiceeId:   uuid.NewV4(),
+			InvoiceeType: db.InvoiceeTypeSubscriber,
+			NetworkId:    uuid.NewV4(),
+			IsPaid:       false,
+		}
+
+		mock, gdb := prepare_db(t)
+
+		rows := sqlmock.NewRows([]string{"invoice_id", "invoicee_id", "invoicee_type", "network_id", "is_paid"}).
+			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.NetworkId, i.IsPaid)
+
+		mock.ExpectQuery(`^SELECT.*invoices.*`).
+			WithArgs(i.NetworkId).
+			WillReturnRows(rows)
+
+		r := db.NewInvoiceRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List("", db.InvoiceeTypeUnknown, i.NetworkId.String(),
+			false, 0, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ListPaidInvoices", func(t *testing.T) {
+		i := &db.Invoice{
+			Id:           uuid.NewV4(),
+			InvoiceeId:   uuid.NewV4(),
+			InvoiceeType: db.InvoiceeTypeOrg,
+			IsPaid:       true,
+		}
+
+		mock, gdb := prepare_db(t)
+
+		rows := sqlmock.NewRows([]string{"invoice_id", "invoicee_id", "invoicee_type", "is_paid"}).
+			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.IsPaid)
+
+		mock.ExpectQuery(`^SELECT.*invoices.*`).
+			WithArgs(i.IsPaid).
+			WillReturnRows(rows)
+
+		r := db.NewInvoiceRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List("", db.InvoiceeTypeUnknown, "", true, 0, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ListError", func(t *testing.T) {
+		mock, gdb := prepare_db(t)
+
+		mock.ExpectQuery(`^SELECT.*invoices.*`).
+			WithArgs().
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewInvoiceRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List("", db.InvoiceeTypeUnknown, "",
+			false, 0, false)
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.Nil(t, invoices)
+		assert.Nil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
-func TestINvoiceRepo_GetByNetwork(t *testing.T) {
-	t.Run("NetworkFound", func(t *testing.T) {
-		// Arrange
-		var invoiceId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "network_id"}).
-			AddRow(invoiceId, networkId)
-
-		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(networkId).
-			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		invoices, err := r.GetByNetwork(networkId)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, invoices)
-	})
-
-	t.Run("NetworkNotFound", func(t *testing.T) {
-		// Arrange
-		var networkId = uuid.NewV4()
-
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(networkId).
-			WillReturnError(sql.ErrNoRows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		invoices, err := r.GetByNetwork(networkId)
-
-		// Assert
-		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.Nil(t, invoices)
-	})
-}
-
-func TestINvoiceRepo_Delete(t *testing.T) {
+func TestInvoiceRepo_Delete(t *testing.T) {
 	t.Run("InvoiceFound", func(t *testing.T) {
-		var db *sql.DB
-
 		// Arrange
 		var invoiceId = uuid.NewV4()
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepare_db(t)
 
 		mock.ExpectBegin()
 
@@ -381,24 +340,12 @@ func TestINvoiceRepo_Delete(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Delete(invoiceId, nil)
+		err := r.Delete(invoiceId, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -408,13 +355,10 @@ func TestINvoiceRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("InvoiceNotFound", func(t *testing.T) {
-		var db *sql.DB
-
 		// Arrange
 		var invoiceId = uuid.NewV4()
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepare_db(t)
 
 		mock.ExpectBegin()
 
@@ -424,24 +368,12 @@ func TestINvoiceRepo_Delete(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := invoicedb.NewInvoiceRepo(&UkamaDbMock{
+		r := db.NewInvoiceRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Delete(invoiceId, nil)
+		err := r.Delete(invoiceId, nil)
 
 		// Assert
 		assert.Error(t, err)
@@ -449,4 +381,24 @@ func TestINvoiceRepo_Delete(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.Error(t, err)
 	})
+}
+
+func prepare_db(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
+	var db *sql.DB
+	var err error
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	return mock, gdb
 }

@@ -1,7 +1,6 @@
 version: '3.3'
 
 services:
-
  postgresd-notification:
   image: postgres:13.3
   ports:
@@ -13,7 +12,6 @@ services:
    - ukama-net
   volumes:
    - postgress-data:/var/lib/postgresql
-
 
  mailer:
   build: ./mailer
@@ -37,7 +35,6 @@ services:
   depends_on:
    - postgresd-notification
 
-
  notify:
   build: ./notify
   ports:
@@ -58,7 +55,6 @@ services:
   depends_on:
    - postgresd-notification
 
-
  api-gateway-notification:
   build:
    dockerfile: ./Dockerfile
@@ -75,7 +71,6 @@ services:
    - notify
    - mailer
    - postgresd-notification
-
 
  node-gateway-notification:
   build:
@@ -94,9 +89,10 @@ services:
    - mailer
    - postgresd-notification
 
-
  initclient-notification:
-  image: salman-init
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
@@ -115,7 +111,6 @@ services:
   networks:
    - ukama-net
 
-
  msgclient-notification:
   build: ../services/msgClient
   environment:
@@ -130,7 +125,6 @@ services:
    - ukama-net
   depends_on:
    - postgresd-notification
-
 
 networks:
  ukama-net:

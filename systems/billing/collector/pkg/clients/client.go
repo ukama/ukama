@@ -16,12 +16,19 @@ import (
 type BillingClient interface {
 	GetBillableMetricId(context.Context, string) (string, error)
 	CreateBillableMetric(context.Context, BillableMetric) (string, error)
-	CreatePlan(context.Context, Plan) (string, error)
+
+	GetPlan(context.Context, string) (string, error)
+	CreatePlan(context.Context, Plan, ...PlanCharge) (string, error)
+	TerminatePlan(context.Context, string) (string, error)
+
+	GetCustomer(context.Context, string) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
 	DeleteCustomer(context.Context, string) (string, error)
+
 	CreateSubscription(context.Context, Subscription) (string, error)
 	TerminateSubscription(context.Context, string) (string, error)
+
 	AddUsageEvent(context.Context, Event) error
 }
 
@@ -48,9 +55,11 @@ type Plan struct {
 	PayInAdvance      bool
 	AmountCents       int
 	AmountCurrency    string
-	BillChargeMonthly bool
 	TrialPeriod       float32
+	BillChargeMonthly bool
+}
 
+type PlanCharge struct {
 	BillableMetricID     string
 	ChargeModel          string
 	ChargeAmountCents    string

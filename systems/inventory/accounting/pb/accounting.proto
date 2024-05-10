@@ -1,0 +1,52 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/inventory/accounting/pb/gen";
+
+package ukama.inventory.accounting.v1;
+
+service AccountingService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
+
+    rpc SyncAccounting(SyncAcountingRequest) returns (SyncAcountingResponse);
+}
+
+message GetRequest {
+    string id = 1;
+}
+
+message GetResponse {
+    Accounting accounting = 1;
+}
+
+message GetByUserRequest {
+    string userId = 1 [json_name = "user_id"];
+}
+
+message GetByUserResponse {
+    repeated Accounting accounting = 1;
+}
+
+message SyncAcountingRequest {}
+
+message SyncAcountingResponse {}
+
+message Accounting {
+    string id = 1;
+    string userId = 2 [json_name = "user_id"];
+    string item = 3;
+    string description = 4;
+    string inventory = 5;
+    string opexFee = 6 [json_name = "opex_fee"];
+    string vat = 7;
+    string effectiveDate = 8 [json_name = "effective_date"];
+}
+

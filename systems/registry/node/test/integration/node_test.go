@@ -23,7 +23,6 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -82,7 +81,6 @@ func Test_FullFlow(t *testing.T) {
 
 	// Contact the server and print out its response.
 	node := ukama.NewVirtualHomeNodeId()
-	orgId := uuid.NewV4()
 
 	ndToClean = append(ndToClean, node)
 
@@ -94,7 +92,6 @@ func Test_FullFlow(t *testing.T) {
 		nodeName := "HomeNodeX"
 		addResp, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: node.String(),
-			OrgId:  orgId.String(),
 			Name:   nodeName,
 		})
 
@@ -125,7 +122,6 @@ func Test_FullFlow(t *testing.T) {
 
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: tNodeID.String(),
-			OrgId:  orgId.String(),
 		})
 
 		if err != nil {
@@ -136,7 +132,6 @@ func Test_FullFlow(t *testing.T) {
 
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: aNodeID.String(),
-			OrgId:  orgId.String(),
 		})
 
 		if err != nil {
@@ -196,7 +191,6 @@ func cleanupNodes(tt *testing.T, c pb.NodeServiceClient, nodes []ukama.NodeID) {
 func Test_Listener(t *testing.T) {
 	// Arrange
 	nodeID := "UK-SA2136-HNODE-A1-30DF"
-	orgId := uuid.NewV4()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -211,7 +205,6 @@ func Test_Listener(t *testing.T) {
 
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId: nodeID,
-		OrgId:  orgId.String(),
 	})
 
 	e, ok := status.FromError(err)

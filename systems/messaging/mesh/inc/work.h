@@ -47,6 +47,7 @@ int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 					  void *preArgs, thread_func_t post, void *postArgs);
 WorkItem *get_work_to_transmit(WorkList *list);
 void init_work_list(WorkList **list);
-void destroy_work_item(WorkItem *work);
+void free_work_item(WorkItem *work);
+void free_work_list(WorkList *workList);
 
 #endif /* MESH_WORK_H */

@@ -136,7 +136,7 @@ func TestOrgRepo_Get(t *testing.T) {
 			AddRow(orgId, orgName, orgOwner, orgCert)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+			WithArgs(orgId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
@@ -161,7 +161,7 @@ func TestOrgRepo_Get(t *testing.T) {
 		var orgId = uuid.NewV4()
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+			WithArgs(orgId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
@@ -208,7 +208,7 @@ func TestOrgRepo_GetByName(t *testing.T) {
 			AddRow(orgId, orgName, orgOwner, orgCert)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+			WithArgs(orgName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
@@ -233,7 +233,7 @@ func TestOrgRepo_GetByName(t *testing.T) {
 		var orgName = "lol"
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+			WithArgs(orgName, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act

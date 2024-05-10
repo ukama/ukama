@@ -17,7 +17,6 @@ import (
 
 type Invitation struct {
 	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Org       string
 	Link      string
 	Email     string
 	Name      string

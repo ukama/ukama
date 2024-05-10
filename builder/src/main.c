@@ -78,7 +78,7 @@ void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
-void processArguments(int argc, char *argv[], int *target, int *cmd) {
+void processArguments(int argc, char **argv, int *target, int *cmd) {
 
     bool isTargetSet = USYS_FALSE;
     bool isCmdSet    = USYS_FALSE;
@@ -104,13 +104,13 @@ void processArguments(int argc, char *argv[], int *target, int *cmd) {
                    strcasecmp(argv[i], "down") == 0) {
 
             if (!isCmdSet) {
-                if (strcasecmp(argv[1], "build") == 0) {
+                if (strcasecmp(argv[i], "build") == 0) {
                     *cmd = CMD_BUILD;
-                } else if (strcasecmp(argv[1], "deploy") == 0) {
+                } else if (strcasecmp(argv[i], "deploy") == 0) {
                     *cmd = CMD_DEPLOY;
-                } else if (strcasecmp(argv[1], "status") == 0) {
+                } else if (strcasecmp(argv[i], "status") == 0) {
                     *cmd = CMD_STATUS;
-                } else if (strcasecmp(argv[1], "down") == 0) {
+                } else if (strcasecmp(argv[i], "down") == 0) {
                     *cmd = CMD_DOWN;
                 }
                 isCmdSet = USYS_TRUE;
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 
     Config *config = NULL;
 
-    processArguments(argc, argv, &cmd, &target);
+    processArguments(argc, argv, &target, &cmd);
 
     /* Parsing command line args. */
     while (true) {

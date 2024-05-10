@@ -31,9 +31,10 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
+
 
 type NodeServer struct {
 	orgName        string
@@ -42,7 +43,7 @@ type NodeServer struct {
 	siteRepo       db.SiteRepo
 	nodeStatusRepo db.NodeStatusRepo
 	nameGenerator  namegenerator.Generator
-	networkService providers.NetworkClientProvider
+	siteService providers.SiteClientProvider
 	pushGateway    string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -50,7 +51,7 @@ type NodeServer struct {
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, org uuid.UUID) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
@@ -59,7 +60,7 @@ func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, n
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
 		siteRepo:       siteRepo,
-		networkService: networkService,
+		siteService: siteService,
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
 		msgbus:         msgBus,
@@ -82,7 +83,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 	node := &db.Node{
 		Id:    nId.StringLowercase(),
-		OrgId: n.org,
 		Status: db.NodeStatus{
 			NodeId: nId.StringLowercase(),
 			Conn:   db.Unknown,
@@ -102,7 +102,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	evt := &epb.NodeCreatedEvent{
 		NodeId: nId.StringLowercase(),
 		Name:   node.Name,
-		Org:    node.OrgId.String(),
 		Type:   node.Type,
 	}
 
@@ -136,6 +135,7 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 
 	return resp, nil
 }
+
 
 func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetSiteId())
@@ -183,15 +183,7 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 	return resp, nil
 }
 
-func (n *NodeServer) GetNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	if req.Free {
-		// return only free nodes for org
-		return n.getFreeNodesForOrg(ctx, req)
-	}
 
-	// otherwise return all nodes for org
-	return n.getNodesForOrg(ctx, req)
-}
 
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	if req.Free {
@@ -370,43 +362,47 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 }
 
 func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteRequest) (*pb.AddNodeToSiteResponse, error) {
+	log.Infof("Add node req : %s",req )
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	net, err := uuid.FromString(req.GetNetworkId())
+	
+	netID, err := uuid.FromString(req.GetNetworkId())
+
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid network id %s. Error %s", req.GetNetworkId(), err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
-	// TODO: update RPC handlers for missing site_id (default site for network)
-	site, err := uuid.FromString(req.GetSiteId())
+
+	siteID, err := uuid.FromString(req.GetSiteId())
+
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid site id %s. Error %s", req.GetSiteId(), err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
+
 	}
 
-	svc, err := n.networkService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-
-	remoteSite, err := svc.GetSite(ctx, &netpb.GetSiteRequest{SiteId: site.String()})
+	svc, err := n.siteService.GetClient()
 	if err != nil {
 		return nil, err
 	}
 
-	if remoteSite.Site.NetworkId != net.String() {
+	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: siteID.String()})
+	if err != nil {
+
+		return nil, err
+	}
+
+	if remoteSite.Site.NetworkId != netID.String() {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"provided networkId and site's networkId mismatch")
 	}
 
 	node := &db.Site{
 		NodeId:    nodeId.StringLowercase(),
-		SiteId:    site,
-		NetworkId: net,
+		SiteId:    siteID,
+		NetworkId: netID,
 	}
 
 	err = n.siteRepo.AddNode(node, nil)
@@ -419,8 +415,8 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 	evt := &epb.NodeAssignedEvent{
 		NodeId:  nodeId.StringLowercase(),
 		Type:    nodeId.GetNodeType(),
-		Site:    site.String(),
-		Network: net.String(),
+		Site:    siteID.String(),
+		Network: netID.String(),
 	}
 
 	err = n.msgbus.PublishRequest(route, evt)
@@ -472,52 +468,6 @@ func processNodeDuplErrors(err error, nodeId string) error {
 	}
 
 	return grpc.SqlErrorToGrpc(err, "node")
-}
-
-func (n *NodeServer) getNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	log.Infof("Getting all nodes for org %v", req.GetOrgId())
-
-	org, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of org uuid. Error %s", err.Error())
-	}
-
-	nodes, err := n.nodeRepo.GetForOrg(org)
-	if err != nil {
-		log.Error("error getting all nodes for org" + err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "nodes")
-	}
-
-	resp := &pb.GetByOrgResponse{
-		OrgId: req.GetOrgId(),
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
-}
-
-func (n *NodeServer) getFreeNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	log.Infof("Getting free nodes for org %v", req.GetOrgId())
-
-	org, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of org uuid. Error %s", err.Error())
-	}
-
-	nodes, err := n.siteRepo.GetFreeNodesForOrg(org)
-	if err != nil {
-		log.Errorf("error getting free nodes for org: %s", err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "nodes")
-	}
-
-	resp := &pb.GetByOrgResponse{
-		OrgId: req.GetOrgId(),
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
 }
 
 func (n *NodeServer) getAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
@@ -608,7 +558,6 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 		},
 		Type:      dbn.Type,
 		Name:      dbn.Name,
-		OrgId:     dbn.OrgId.String(),
 		CreatedAt: timestamppb.New(dbn.CreatedAt),
 	}
 

@@ -13,8 +13,9 @@ import (
 	"fmt"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const PackageEndpoint = "/v1/packages"
@@ -70,9 +71,9 @@ type AddPackageRequest struct {
 	OrgId         string   `json:"org_id" validation:"required"`
 	OwnerId       string   `json:"owner_id" validation:"required"`
 	SimType       string   `json:"sim_type" validation:"required"`
-	SmsVolume     int64    `json:"sms_volume" validation:"required"`
-	VoiceVolume   int64    `json:"voice_volume" default:"0"`
-	DataVolume    int64    `json:"data_volume" validation:"required"`
+	SmsVolume     uint64   `json:"sms_volume" validation:"required"`
+	VoiceVolume   uint64   `json:"voice_volume" default:"0"`
+	DataVolume    uint64   `json:"data_volume" validation:"required"`
 	VoiceUnit     string   `json:"voice_unit" validation:"required"`
 	DataUnit      string   `json:"data_unit" validation:"required"`
 	Duration      uint64   `json:"duration" validation:"required"`
@@ -98,7 +99,7 @@ type packageClient struct {
 	R *client.Resty
 }
 
-func NewPackageClient(h string) *packageClient {
+func NewPackageClient(h string, options ...client.Option) *packageClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
@@ -107,7 +108,7 @@ func NewPackageClient(h string) *packageClient {
 
 	return &packageClient{
 		u: u,
-		R: client.NewResty(),
+		R: client.NewResty(options...),
 	}
 }
 

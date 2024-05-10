@@ -6,16 +6,12 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * mesh_config.h
- */
-
 #ifndef MESH_CONFIG_H
 #define MESH_CONFIG_H
 
 #include <uuid/uuid.h>
 
-#define CLIENT_CONFIG "client-config"
+#define LOCAL_CONFIG "local-config"
 
 #define REMOTE_ACCEPT  "remote-accept"
 #define LOCAL_ACCEPT   "local-accept"

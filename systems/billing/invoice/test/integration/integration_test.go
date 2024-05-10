@@ -16,14 +16,15 @@ import (
 	"testing"
 	"time"
 
-	rconf "github.com/num30/config"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 )
 
@@ -142,8 +143,8 @@ func init() {
 }
 
 func Test_FullFlow(t *testing.T) {
-	// we need real subscriberId from subscriber-registry
-	subscriberId := uuid.NewV4().String()
+	// we need real subscriberId from subscriber-registry or a real orgId
+	invoiceeId := uuid.NewV4().String()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -176,9 +177,9 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("GetInvoiceBySubscriber", func(t *testing.T) {
-		_, err := c.GetBySubscriber(ctx, &pb.GetBySubscriberRequest{
-			SubscriberId: subscriberId,
+	t.Run("GetInvoiceByInvoicee", func(t *testing.T) {
+		_, err := c.List(ctx, &pb.ListRequest{
+			InvoiceeId: invoiceeId,
 		})
 
 		assert.NoError(t, err)

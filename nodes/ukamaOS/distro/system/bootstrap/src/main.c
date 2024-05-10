@@ -24,16 +24,16 @@
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_file.h"
+#include "usys_services.h"
 
 #include "nodeInfo.h"
 #include "config.h"
 #include "mesh_config.h"
 #include "server.h"
-#include "log.h"
 
 #define DEF_LOG_LEVEL "TRACE"
-
-#define VERSION "0.0.1"
+#define SERVICE_NAME  SERVICE_BOOTSTRAP
+#define VERSION       "0.0.1"
 
 static void usage() {
 
@@ -52,7 +52,7 @@ void set_log_level(char *slevel) {
 	int ilevel = LOG_TRACE;
 
 	if (!strcmp(slevel, "DEBUG")) {
-		ilevel = LOG_DEBUG;
+		ilevel = USYS_LOG_DEBUG;
 	} else if (!strcmp(slevel, "INFO")) {
 		ilevel = LOG_INFO;
 	} else if (!strcmp(slevel, "ERROR")) {
@@ -71,8 +71,8 @@ static int write_to_file(char *fileName, char *buffer) {
 
     fp = fopen(fileName, "w");
     if(fp == NULL) {
-		log_error("Error opening file for read: %s Error: %s", fileName,
-				  strerror(errno));
+		usys_log_error("Error opening file for read: %s Error: %s", fileName,
+                       strerror(errno));
 		return FALSE;
     }
 
@@ -81,8 +81,6 @@ static int write_to_file(char *fileName, char *buffer) {
 
     return count;
 }
-
-/* bootstrap */
 
 int main (int argc, char **argv) {
 
@@ -95,6 +93,8 @@ int main (int argc, char **argv) {
 	int opt, opdidx;
     char buffer[MAX_BUFFER] = {0};
 
+    log_set_service(SERVICE_NAME);
+    
 	/* Prase command line args. */
 	while (TRUE) {
 
@@ -163,14 +163,14 @@ int main (int argc, char **argv) {
 
 	/* Step-1 read the configuration file */
 	if (process_config_file(configFile, config) != TRUE) {
-		log_error("Error processing the config file: %s", configFile);
+		usys_log_error("Error processing the config file: %s", configFile);
 		exit(1);
 	}
 
     config->nodedPort = usys_find_service_port("node");
     config->bootstrapPort = usys_find_service_port("bootstrap");
     if (config->nodedPort == 0 || config->bootstrapPort == 0) {
-        log_error("Error getting noded/bootstrap port from service db");
+        usys_log_error("Error getting noded/bootstrap port from service db");
         exit(1);
     }
 	print_config(config);
@@ -178,8 +178,8 @@ int main (int argc, char **argv) {
 	/* Step-2: request node.d for NodeID */
 	if (get_nodeID_from_noded(&nodeID, config->nodedHost, config->nodedPort)
 		!= TRUE) {
-	    log_error("Error retreiving NodeID from noded.d at %s:%s",
-				  config->nodedHost, config->nodedPort);
+	    usys_log_error("Error retreiving NodeID from noded.d at %s:%s",
+                       config->nodedHost, config->nodedPort);
 		goto done;
 	}
 
@@ -190,7 +190,7 @@ int main (int argc, char **argv) {
 	
 	/* Step-4: read mesh config file, update server IP and certs */
 	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {
-		log_error("Error reading mesh.d config file: %s", config->meshConfig);
+		usys_log_error("Error reading mesh.d config file: %s", config->meshConfig);
 		goto done;
 	}
 
@@ -198,13 +198,13 @@ int main (int argc, char **argv) {
     sprintf(buffer, "%s;%s", serverInfo->IP, nodeID);
 	if (write_to_file(meshConfig->remoteIPFile, buffer) <= 0 ||
         write_to_file(meshConfig->certFile, serverInfo->cert) <= 0) {
-		log_error("Error updating mesh.d configs. File: %s",
-				  config->meshConfig);
+		usys_log_error("Error updating mesh.d configs. File: %s",
+                       config->meshConfig);
 		goto done;
 	}
 
 	/* Done. */
-	log_debug("Mesh.d configuration update successfully.");
+	usys_log_debug("Mesh.d configuration update successfully.");
 
  done:
 	clear_config(config);

@@ -41,8 +41,15 @@ const char* log_level_string(int level);
 void log_set_lock(log_LockFn fn, void *udata);
 void log_set_level(int level);
 void log_set_quiet(bool enable);
+void log_set_service(char *service);
 int log_add_callback(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
+
+/* routines for rlogd */
+void log_remote_init(char *serviceName);
+int log_rlogd(char *message);
+int is_connect_with_rlogd();
+void log_enable_rlogd(int flag);
 
 void log_log(int level, const char *file, int line, const char *fmt, ...);
 #endif

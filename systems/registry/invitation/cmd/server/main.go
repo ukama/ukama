@@ -94,17 +94,6 @@ func runGrpcServer(gormdb sql.Db) {
 	waitForExit()
 }
 
-// unused?
-// func msgBusListener(m mb.MsgBusServiceClient) {
-// if err := m.Register(); err != nil {
-// log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
-// }
-
-// if err := m.Start(); err != nil {
-// log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
-// }
-// }
-
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)

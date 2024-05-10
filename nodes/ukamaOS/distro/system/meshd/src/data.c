@@ -23,6 +23,7 @@
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_services.h"
+#include "usys_log.h"
 
 typedef struct _response {
 	char *buffer;
@@ -42,7 +43,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	response->buffer = realloc(response->buffer, response->size + realsize + 1);
 
 	if(response->buffer == NULL) {
-		log_error("Not enough memory to realloc of size: %s",
+		usys_log_error("Not enough memory to realloc of size: %s",
 				  response->size + realsize + 1);
 		return 0;
 	}
@@ -54,10 +55,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * clear_request -- free up memory from MRequest.
- *
- */
 void clear_request(MRequest **data) {
 
 	free((*data)->reqType);
@@ -132,7 +129,7 @@ static int send_data_to_local_service(URequest *data,
 
     find_service_name_and_ep(data->http_url, &serviceName, &serviceEP);
     if (serviceName == NULL || serviceEP == NULL) {
-        log_error("Unable to extract service namd and EP. input",
+        usys_log_error("Unable to extract service namd and EP. input",
                   data->http_url);
         *httpStatus = HttpStatus_InternalServerError;
         return FALSE;
@@ -140,7 +137,7 @@ static int send_data_to_local_service(URequest *data,
 
     servicePort = usys_find_service_port(serviceName);
     if (servicePort <= 0) {
-        log_error("Unable to find service name in /etc/services: %s",
+        usys_log_error("Unable to find service name in /etc/services: %s",
                   serviceName);
         *httpStatus = HttpStatus_ServiceUnavailable;
         return FALSE;
@@ -165,7 +162,7 @@ static int send_data_to_local_service(URequest *data,
 	res = curl_easy_perform(curl);
 
 	if (res != CURLE_OK) {
-		log_error("Error sending request to server at %s Error: %s",
+		usys_log_error("Error sending request to server at %s Error: %s",
 				  url, curl_easy_strerror(res));
         *httpStatus = HttpStatus_ServiceUnavailable;
         *retStr     = strdup(HttpStatusStr(*httpStatus));
@@ -173,7 +170,7 @@ static int send_data_to_local_service(URequest *data,
 		/* get status code. */
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, httpStatus);
 		if (response.size) {
-			log_debug("Response recevied from server: %s", response.buffer);
+			usys_log_debug("Response recevied from server: %s", response.buffer);
 			*retStr = strdup(response.buffer);
 		}
 	}
@@ -192,13 +189,13 @@ void process_incoming_websocket_response(Message *message, void *data) {
 
     MapItem *item=NULL;
 
-    log_debug("Response to local service Code: %d Data: %s",
+    usys_log_debug("Response to local service Code: %d Data: %s",
               message->code, message->data);
 
     item = is_existing_item(ClientTable,message->serviceInfo->name,
                             message->serviceInfo->port);
     if (item == NULL) {
-        log_error("Matching client not found. Port: %s. Ignoring",
+        usys_log_error("Matching client not found. Port: %s. Ignoring",
                   message->serviceInfo->port);
         return;
     }
@@ -219,7 +216,7 @@ int process_incoming_websocket_message(Message *message, Config *config) {
     URequest *request=NULL;
 
     if (deserialize_request_info(&request, message->data) == FALSE) {
-        log_error("Unable to deser the request on websocket");
+        usys_log_error("Unable to deser the request on websocket");
         return FALSE;
     }
 
@@ -229,7 +226,7 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                      &responseLocal);
 
     if (ret) {
-        log_debug("Recevied response from local servier Code: %d Response: %s",
+        usys_log_debug("Recevied response from local servier Code: %d Response: %s",
                   httpStatus, responseLocal);
 
         /* Convert the response into proper format and return. */
@@ -239,7 +236,7 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                          strlen(responseLocal),
                                          responseLocal);
     } else {
-        log_error("Error sending message to local service. Error: %d",
+        usys_log_error("Error sending message to local service. Error: %d",
                   httpStatus);
 
         /* Convert the response into proper format and return. */
@@ -250,7 +247,7 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                          HttpStatusStr(httpStatus));
     }
 
-    log_debug("Adding response to the websocket queue: %s", responseRemote);
+    usys_log_debug("Adding response to the websocket queue: %s", responseRemote);
     add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
 
     return TRUE;
