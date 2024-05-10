@@ -136,4 +136,9 @@ docker exec -it cont1 /sbin/iptables -t nat -A POSTROUTING -s 192.168.8.0/22 -o 
 docker exec -it cont1 /sbin/ip route
 
 # remove the default flows
-ovs-ofctl -O OpenFlow15 del-flows ${BRIF}
+# this is commented as the vthakur7f/epc_gateway:v0.0.1 requires this flow. We might need to add in and out flows the docker IP 
+#ovs-ofctl -O OpenFlow15 del-flows ${BRIF}
+
+#in and Out flows for the docker image
+#ovs-ofctl -O OpenFlow15 add-flow ${BRIF} "priority=100,ip,nw_dst=10.10.10.11, actions=normal"
+#ovs-ofctl -O OpenFlow15 add-flow ${BRIF} "priority=100,ip,nw_src=10.10.10.11, actions=normal"
