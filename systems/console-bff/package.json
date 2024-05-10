@@ -20,6 +20,7 @@
     "member-dev": "nodemon --watch \"member/**\" --ext \"ts,json,graphql\" --exec \"ts-node member/index.ts\"",
     "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"ts-node node/index.ts\"",
     "subscriber-dev": "nodemon --watch \"subscriber/**\" --ext \"ts,json,graphql\" --exec \"ts-node subscriber/index.ts\"",
+    "site-dev": "nodemon --watch \"site/**\" --ext \"ts,json,graphql\" --exec \"ts-node site/index.ts\"",
     "sim-dev": "nodemon --watch \"sim/**\" --ext \"ts,json,graphql\" --exec \"ts-node sim/index.ts\"",
     "rate-dev": "nodemon --watch \"rate/**\" --ext \"ts,json,graphql\" --exec \"ts-node rate/index.ts\"",
     "package-dev": "nodemon --watch \"package/**\" --ext \"ts,json,graphql\" --exec \"ts-node package/index.ts\"",

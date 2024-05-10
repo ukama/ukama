@@ -7,14 +7,14 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { AddNetworkResolver } from "./addNetwork";
-import { GetNetworkResolver } from "./getNetwork";
-import { GetNetworksResolver } from "./getNetworks";
+import { AddSiteResolver } from "./addSite";
+import { GetSiteResolver } from "./getSite";
+import { GetSitesResolver } from "./getSites";
 
 const resolvers: NonEmptyArray<any> = [
-  AddNetworkResolver,
-  GetNetworkResolver,
-  GetNetworksResolver,
+  AddSiteResolver,
+  GetSiteResolver,
+  GetSitesResolver,
 ];
 
 export default resolvers;
