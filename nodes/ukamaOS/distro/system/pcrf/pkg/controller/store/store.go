@@ -67,8 +67,8 @@ func (s *Store) createPolicyTable() error {
 			ulbr INTEGER,
 			starttime INTEGER,
 			endtime INTEGER,
-			burst INTEGER
-			createdat INTEGER
+			burst INTEGER,
+			createdat INTEGER,
 			updatedat INTEGER
 		);
 	`)
