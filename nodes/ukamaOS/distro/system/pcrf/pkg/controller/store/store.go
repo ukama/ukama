@@ -478,7 +478,7 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 /* Create a subscriber */
 func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.UsageDetails) (*Subscriber, error) {
 
-	reroute := &ReRoute{}
+	var reouteId *int = nil
 
 	/* create a policy */
 	sp, err := s.CreatePolicy(p)
@@ -488,17 +488,18 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.
 
 	/* Create a reroute if doen't exist */
 	if ip != nil {
-		reroute, err = s.CreateReroute(&api.ReRoute{
+		reroute, err := s.CreateReroute(&api.ReRoute{
 			Ip: *ip,
 		})
 		if err != nil {
 			return nil, err
 		}
+		reouteId = &reroute.ID
 	}
 
 	err = s.CreateOrUpdateSubscriber(&api.CreateSubscriber{
 		Imsi: imsi,
-	}, &(sp.ID), &reroute.ID)
+	}, &(sp.ID), reouteId)
 	if err != nil {
 		log.Errorf("Failed to create subscriber with imsi %s. Error: %s", imsi, err.Error())
 		return nil, err
@@ -542,6 +543,9 @@ func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 			log.Errorf("Failed to update subscriber %s policy %s db. Error %s", imsi, sub.PolicyID.ID, err.Error())
 			return nil, err
 		}
+	} else {
+		log.Debugf("Need to create a new policy %s for subscriber %s", p.Uuid, imsi)
+		return s.CreateSubscriber(imsi, p, nil, nil)
 	}
 
 	/* Rereading sub from db */
