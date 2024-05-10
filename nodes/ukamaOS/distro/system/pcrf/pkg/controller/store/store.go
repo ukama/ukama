@@ -62,6 +62,7 @@ func (s *Store) createPolicyTable() error {
 		CREATE TABLE IF NOT EXISTS policies ( 
 			id BLOB PRIMARY KEY CHECK(length(id) = 16),
 			data INTEGER,
+			consumed INTEGER,
 			dlbr INTEGER,
 			ulbr INTEGER,
 			starttime INTEGER,
@@ -250,6 +251,7 @@ func (s *Store) CreatePolicy(p *api.Policy) (*Policy, error) {
 		ID:        p.Uuid,
 		Burst:     p.Burst,
 		Data:      p.Data,
+		Consumed:  p.Consumed,
 		Dlbr:      p.Dlbr,
 		Ulbr:      p.Ulbr,
 		StartTime: p.StartTime,
@@ -551,7 +553,7 @@ func (s *Store) DeleteSession(sub *Subscriber) error {
 	`, sub.ID)
 
 	if err != nil {
-		log.Errorf("Failed to delete seession for subscriber %d: Error: %v", sub.ID, err.Error())
+		log.Errorf("Failed to delete session for subscriber %d: Error: %v", sub.ID, err.Error())
 		return err
 	}
 	return nil
@@ -816,8 +818,8 @@ func (s *Store) ResetUsageByImsi(imsi string) error {
 func (s *Store) GetPolicyByID(policyID uuid.UUID) (*Policy, error) {
 	var policy Policy
 	var id []byte
-	err := s.db.QueryRow("SELECT id,data,dlbr,ulbr,burst,starttime,endtime FROM policies WHERE id = ?", policyID.Bytes()).
-		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
+	err := s.db.QueryRow("SELECT id,data,consumed,dlbr,ulbr,burst,starttime,endtime FROM policies WHERE id = ?", policyID.Bytes()).
+		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.Burst, &policy.StartTime, &policy.EndTime)
 	if err != nil {
 		return nil, err
 	}
@@ -833,7 +835,7 @@ func (s *Store) GetApplicablePolicyByImsi(imsi string) (*Policy, error) {
 		SELECT * FROM policies
 		WHERE id = (SELECT policy_id FROM subscribers WHERE imsi = ?)
 	`, imsi).
-		Scan(&id, &policy.Data, &policy.Dlbr, &policy.Ulbr, &policy.StartTime, &policy.EndTime, &policy.Burst)
+		Scan(&id, &policy.Data, &policy.Consumed, &policy.Dlbr, &policy.Ulbr, &policy.StartTime, &policy.EndTime, &policy.Burst)
 	if err != nil {
 		return nil, err
 	}
@@ -1130,9 +1132,9 @@ func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
 func (s *Store) UpdatePolicy(policy *Policy) error {
 	_, err := s.db.Exec(`
 		UPDATE policies
-		SET data = ?, dlbr = ?, ulbr = ?
+		SET data = ?, cosumed = ?, dlbr = ?, ulbr = ?
 		WHERE id = ?; 
-		`, policy.Data, policy.Dlbr, policy.Ulbr, policy.ID.Bytes())
+		`, policy.Data, policy.Consumed, policy.Dlbr, policy.Ulbr, policy.ID.Bytes())
 	return err
 }
 
@@ -1158,12 +1160,12 @@ func (s *Store) UpdateFlow(flow *Flow) error {
 func (s *Store) InsertPolicy(policy *Policy) error {
 	/*
 	 This ID will be genrated by ASR for subscriber
-	 Only Data is updated if Policy ID exist
+	 Only Consumed Data is updated if Policy ID exist
 	 Any changes to rates or time means package is changes which means new policy
 	 should be allocated.
 	*/
-	query := fmt.Sprintf("INSERT INTO policies (id, data, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET data = %d;", policy.Data)
-	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst, policy.Data)
+	query := fmt.Sprintf("INSERT INTO policies (id, data, consumed, dlbr, ulbr, starttime, endtime, burst) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET consumed = %d;", policy.Consumed)
+	_, err := s.db.Exec(query, policy.ID.Bytes(), policy.Data, &policy.Consumed, policy.Dlbr, policy.Ulbr, policy.StartTime, policy.EndTime, policy.Burst)
 	return err
 }
 

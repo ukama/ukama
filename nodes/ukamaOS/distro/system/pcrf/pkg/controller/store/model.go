@@ -45,6 +45,7 @@ type Subscriber struct {
 type Policy struct {
 	ID        uuid.UUID
 	Data      uint64
+	Consumed  uint64
 	Dlbr      uint64
 	Ulbr      uint64
 	Burst     uint64

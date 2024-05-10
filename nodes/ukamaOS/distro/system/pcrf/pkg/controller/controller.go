@@ -94,6 +94,7 @@ func policyResponse(p *store.Policy) *api.PolicyResponse {
 		ID:        p.ID,
 		Burst:     p.Burst,
 		Data:      p.Data,
+		Consumed:  p.Consumed,
 		Dlbr:      p.Dlbr,
 		Ulbr:      p.Ulbr,
 		StartTime: p.StartTime,
