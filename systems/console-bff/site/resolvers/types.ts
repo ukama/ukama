@@ -16,7 +16,31 @@ export class SiteAPIDto {
   name: string;
 
   @Field()
-  is_deactivated: string;
+  network_id: string;
+
+  @Field()
+  backhaul_id: string;
+
+  @Field()
+  power_id: string;
+
+  @Field()
+  access_id: string;
+
+  @Field()
+  switch_id: string;
+
+  @Field()
+  is_deactivated: boolean;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+
+  @Field()
+  install_date: string;
 
   @Field()
   created_at: string;
