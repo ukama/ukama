@@ -131,7 +131,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sub.GET("/imsi/:imsi", formatDoc("Get subscriber", "Get a subscriber"), tonic.Handler(r.getSubscriber, http.StatusOK))
 		sub.POST("/imsi/:imsi", formatDoc("Add or update subscriber", "Add or update subscriber"), tonic.Handler(r.updateSubscriber, http.StatusCreated))
 		sub.GET("/imsi/:imsi/flow", formatDoc("Get flows", "Get a subscriber UE data path"), tonic.Handler(r.getSubscriberFlows, http.StatusOK))
-		sub.POST("/imsi/:imsi", formatDoc("Delete subscriber", "Delete subscriber"), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+		sub.DELETE("/imsi/:imsi", formatDoc("Delete subscriber", "Delete subscriber"), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 	}
 }
 
