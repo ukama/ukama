@@ -16,9 +16,6 @@ export class SiteAPIDto {
   name: string;
 
   @Field()
-  network_id: string;
-
-  @Field()
   is_deactivated: string;
 
   @Field()
@@ -37,7 +34,28 @@ export class SiteDto {
   networkId: string;
 
   @Field()
-  isDeactivated: string;
+  backhaulId: string;
+
+  @Field()
+  powerId: string;
+
+  @Field()
+  accessId: string;
+
+  @Field()
+  switchId: string;
+
+  @Field()
+  isDeactivated: boolean;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+
+  @Field()
+  installDate: string;
 
   @Field()
   createdAt: string;
@@ -45,9 +63,6 @@ export class SiteDto {
 
 @ObjectType()
 export class SitesResDto {
-  @Field()
-  networkId: string;
-
   @Field(() => [SiteDto])
   sites: SiteDto[];
 }
@@ -60,9 +75,6 @@ export class SiteAPIResDto {
 
 @ObjectType()
 export class SitesAPIResDto {
-  @Field()
-  network_id: string;
-
   @Field(() => [SiteAPIDto])
   sites: SiteAPIDto[];
 }
