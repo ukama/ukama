@@ -14,22 +14,19 @@ import { dtoToSiteDto, dtoToSitesDto } from "./mapper";
 class SiteApi extends RESTDataSource {
   baseURL = REGISTRY_API_GW;
 
-  getSites = async (networkId: string): Promise<SitesResDto> => {
+  getSites = async (): Promise<SitesResDto> => {
     return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
       dtoToSitesDto(res)
     );
   };
 
-  getSite = async (siteId: string, networkId: string): Promise<SiteDto> => {
+  getSite = async (siteId: string): Promise<SiteDto> => {
     return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
       res => dtoToSiteDto(res)
     );
   };
 
-  addSite = async (
-    networkId: string,
-    req: AddSiteInputDto
-  ): Promise<SiteDto> => {
+  addSite = async (req: AddSiteInputDto): Promise<SiteDto> => {
     return this.post(`/${VERSION}/networks/${networkId}/sites`, {
       body: req,
     }).then(res => dtoToSiteDto(res));

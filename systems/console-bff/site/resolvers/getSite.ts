@@ -14,12 +14,11 @@ import { SiteDto } from "./types";
 export class GetSiteResolver {
   @Query(() => SiteDto)
   async getSite(
-    @Arg("networkId") networkId: string,
     @Arg("siteId") siteId: string,
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
     const { dataSources } = ctx;
 
-    return dataSources.dataSource.getSite(networkId, siteId);
+    return dataSources.dataSource.getSite(siteId);
   }
 }
