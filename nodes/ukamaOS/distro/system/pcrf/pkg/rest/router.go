@@ -129,9 +129,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Subscriber
 		sub := pcrf.Group("/subscriber", "Subscriber", "subscriber")
 		sub.GET("/imsi/:imsi", formatDoc("Get subscriber", "Get a subscriber"), tonic.Handler(r.getSubscriber, http.StatusOK))
-		sub.POST("/imsi/:imsi", formatDoc("Add or update subscriber", "Add or update subscriber"), tonic.Handler(r.updateSubscriber, http.StatusOK))
+		sub.POST("/imsi/:imsi", formatDoc("Add or update subscriber", "Add or update subscriber"), tonic.Handler(r.updateSubscriber, http.StatusCreated))
 		sub.GET("/imsi/:imsi/flow", formatDoc("Get flows", "Get a subscriber UE data path"), tonic.Handler(r.getSubscriberFlows, http.StatusOK))
-
+		sub.POST("/imsi/:imsi", formatDoc("Delete subscriber", "Delete subscriber"), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 	}
 }
 
@@ -182,6 +182,10 @@ func (r *Router) updateReroute(c *gin.Context, req *api.UpdateRerouteById) error
 
 func (r *Router) updateSubscriber(c *gin.Context, req *api.CreateSubscriber) error {
 	return r.controller.AddSubscriber(c, req)
+}
+
+func (r *Router) deleteSubscriber(c *gin.Context, req *api.RequestSubscriber) error {
+	return r.controller.DeleteSubscriber(c, req)
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *api.RequestSubscriber) (*api.SubscriberResponse, error) {
