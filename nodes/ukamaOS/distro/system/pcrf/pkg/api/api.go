@@ -113,7 +113,10 @@ type CreateSubscriber struct {
 	ReRoute string `json:"reroute" validate:"required"`
 }
 
-type UpdateSubscriber CreateSubscriber
+type UpdateSubscriber struct {
+	Imsi   string `json:"imsi" path:"imsi" validate:"required"`
+	Policy Policy `json:"policy" validate:"required"`
+}
 
 type GetFlowsForImsi struct {
 	Imsi string `json:"imsi" path:"imsi" validate:"required"`
