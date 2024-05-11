@@ -394,7 +394,7 @@ void run_space_all_capps(Space *space) {
                 cappList->capp->runtime->status == CAPP_RUNTIME_DONE)
                 continue;
         }
-
+        
         if (create_and_run_capps(cappList->capp, &error) == USYS_FALSE) {
             usys_log_error("Unable to execute capp: %s:%s Error: %d",
                            cappList->capp->name,
@@ -412,9 +412,8 @@ void run_space_all_capps(Space *space) {
 
             /* any capp waiting on this to be done? */
             if (check_for_dependant_capps(space, cappList->capp->name)) {
-                /* wait for program to exit */
-                waitpid(cappList->capp->runtime->pid, &status, 0);
 
+                waitpid(cappList->capp->runtime->pid, &status, 0);
                 if (cappList->capp->runtime->status != CAPP_RUNTIME_DONE) {
                     /* retry */
                     cappList->capp->runtime->status = CAPP_RUNTIME_PEND;
@@ -428,8 +427,8 @@ void run_space_all_capps(Space *space) {
                     continue;
                 }
             }
-
-            /* make sure capp is running - 200 on /v1/ping */
+            
+            /* make sure capp is running - 200 on /v1/ping or its done */
             if (is_capp_running(cappList->capp, WAIT_TIME, MAX_RETRIES)) {
                 usys_log_debug("Executing capp: %s:%s",
                                cappList->capp->name,

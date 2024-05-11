@@ -205,21 +205,25 @@ bool ping_capp(char *name) {
         return USYS_FALSE;
     }
 
-    sprintf(url, "http://localhost:%d/v1/ping", port);
+    if (strcmp(name, "noded") == 0) {
+            sprintf(url, "http://localhost:%d/noded/v1/ping", port);
+    } else {
+        sprintf(url, "http://localhost:%d/v1/ping", port);
+    }
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
-        usys_log_error("Error sending ping. URL: %s Error: %s",
-                       url, curl_easy_strerror(res));
+        usys_log_error("%s: Error sending ping. URL: %s Error: %s",
+                       name, url, curl_easy_strerror(res));
         status = USYS_FALSE;
     } else {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
         if (httpStatus != HttpStatus_OK) {
-            usys_log_error("Recevied wrong status for ping request: %s",
-                           HttpStatusStr(httpStatus));
+            usys_log_error("%s: Recevied wrong status for ping request: %s URL: %s",
+                           name, HttpStatusStr(httpStatus), url);
             status = USYS_FALSE;
         } else {
             status = USYS_TRUE;
