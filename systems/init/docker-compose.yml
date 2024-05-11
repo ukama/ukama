@@ -38,7 +38,7 @@ services:
    context: ./node-gateway
   restart: always
   ports:
-   - '8070:8080'
+   - '17998:8080'
   networks:
    - ukama-net
   environment:
