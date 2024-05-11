@@ -50,7 +50,7 @@ export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
-export const SITE_PORT = parseInt(process.env.NODE_PORT ?? "5055");
+export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5055");
 
 export const SUB_GRAPH_LIST = [
   { name: "org", url: `http://localhost:${ORG_PORT}`, isPingedSuccess: false },
@@ -95,6 +95,7 @@ export const SUB_GRAPH_LIST = [
     url: `http://localhost:${INVITATION_PORT}`,
     isPingedSuccess: false,
   },
+
   {
     name: "member",
     url: `http://localhost:${MEMBER_PORT}`,
