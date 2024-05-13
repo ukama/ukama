@@ -22,8 +22,8 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
-  METRICS_PORT,
   PLAYGROUND_URL,
+  SUBSCRIPTIONS_PORT,
   SUB_GRAPH_LIST,
 } from "../common/configs";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
@@ -115,13 +115,13 @@ const startServer = async () => {
   );
 
   app.get("/ping", (_, res) => {
-    fetch(`localhost:${METRICS_PORT}/ping`)
+    fetch(`localhost:${SUBSCRIPTIONS_PORT}/ping`)
       .then(r => {
         if (r.status === 200) res.send("pong");
-        else res.send(new HTTP500Error("Metrics service ping failed"));
+        else res.send(new HTTP500Error("Subscriptions service ping failed"));
       })
       .catch(err => {
-        res.send(new HTTP500Error("Metrics service ping failed: " + err));
+        res.send(new HTTP500Error("Subscriptions service ping failed: " + err));
       });
   });
 

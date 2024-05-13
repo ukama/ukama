@@ -25,8 +25,8 @@ import { WebSocketServer } from "ws";
 import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
-  METRICS_PORT,
   PLAYGROUND_URL,
+  SUBSCRIPTIONS_PORT,
 } from "../common/configs";
 import { logger } from "../common/logger";
 import { storeInStorage } from "../common/storage";
@@ -34,7 +34,7 @@ import resolvers from "./resolvers";
 
 const app = express();
 const httpServer = createServer(app);
-storeInStorage("UkamaMetrics", "running");
+storeInStorage("UkamaSubscriptions", "running");
 
 const runServer = async () => {
   const ts = await tq.buildSchema({
@@ -87,12 +87,12 @@ const runServer = async () => {
     bodyParser.json(),
     expressMiddleware(server)
   );
-  httpServer.listen(METRICS_PORT, () => {
+  httpServer.listen(SUBSCRIPTIONS_PORT, () => {
     logger.info(
-      `🚀 Ukama Metrics service running at http://localhost:${METRICS_PORT}/graphql`
+      `🚀 Ukama Subscriptions service running at http://localhost:${SUBSCRIPTIONS_PORT}/graphql`
     );
     logger.info(
-      `🚀 Ukama Metrics subscription service running at ws://localhost:${METRICS_PORT}/graphql`
+      `🚀 Ukama Subscription service running at ws://localhost:${SUBSCRIPTIONS_PORT}/graphql`
     );
   });
 };

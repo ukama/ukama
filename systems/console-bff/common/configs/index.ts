@@ -37,7 +37,9 @@ export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8000");
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT ?? "5041"
 );
-export const METRICS_PORT = parseInt(process.env.METRICS_PORT ?? "5042");
+export const SUBSCRIPTIONS_PORT = parseInt(
+  process.env.SUBSCRIPTIONS_PORT ?? "5042"
+);
 export const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5043");
 export const USER_PORT = parseInt(process.env.USER_PORT ?? "5044");
 export const PACKAGE_PORT = parseInt(process.env.PACKAGE_PORT ?? "5045");

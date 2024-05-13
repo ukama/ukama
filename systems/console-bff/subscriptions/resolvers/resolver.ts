@@ -22,21 +22,15 @@ import { METRIC_API_GW_SOCKET, STORAGE_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
 import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
 import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
-import {
-  getLatestMetric,
-  getMetricRange,
-  getNodeRangeMetric,
-} from "../datasource/metrics-api";
+import { getLatestMetric, getNodeRangeMetric } from "../datasource/metrics-api";
 import {
   GetLatestMetricInput,
   GetMetricByTabInput,
-  GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
   MetricsRes,
   StatsMetric,
   SubMetricByTabInput,
-  SubMetricRangeInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.js";
@@ -51,6 +45,7 @@ const getErrorRes = (msg: string) =>
     success: false,
   } as MetricRes);
 
+/*
 interface WorkerData {
   type: string;
   orgId: string;
@@ -107,87 +102,7 @@ const handleWorkerMessage = (
   }
 };
 
-@Resolver(MetricRes)
-class MetricResolvers {
-  @Query(() => StatsMetric)
-  async getStatsMetric() {
-    return {
-      activeSubscriber: Math.floor(crypto.randomInt(1, 30)),
-      averageThroughput: Math.floor(crypto.randomInt(1, 50)),
-      averageSignalStrength: Math.floor(crypto.randomInt(1, 90)),
-    };
-  }
-
-  @Query(() => LatestMetricRes)
-  async getLatestMetric(@Arg("data") data: GetLatestMetricInput) {
-    return await getLatestMetric(data);
-  }
-
-  @Query(() => MetricsRes)
-  async getMetricByTab(
-    @Arg("data") data: GetMetricByTabInput,
-    @PubSub() pubSub: PubSubEngine
-  ) {
-    const { type, orgId, userId, nodeId, withSubscription, from } = data;
-    if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
-    const metrics: MetricsRes = { metrics: [] };
-    if (metricsKey.length > 0) {
-      for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric({ ...data, type: metricsKey[i] });
-        metrics.metrics.push(res);
-      }
-    }
-    if (withSubscription && metrics.metrics.length > 0) {
-      let subKey = "";
-      metrics.metrics.forEach((metric: MetricRes) => {
-        if (metric.values.length > 2) subKey = subKey + metric.type + ",";
-      });
-      subKey = subKey.slice(0, -1);
-      subKey.split(",").forEach((key: string) => {
-        const workerData = {
-          type: key,
-          orgId,
-          userId,
-          url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
-          key: STORAGE_KEY,
-          timestamp: from,
-        };
-        const worker = new Worker(WS_THREAD, {
-          workerData,
-        });
-        worker.on("message", (_data: any) => {
-          if (!_data.isError) {
-            const res = JSON.parse(_data.data);
-            const result = res.data.result[0];
-            if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(key, {
-                success: true,
-                msg: "success",
-                orgId: result.metric.org,
-                nodeId: nodeId,
-                type: key,
-                userId: userId,
-                value: result.value,
-              } as LatestMetricRes);
-            } else {
-              return getErrorRes("No metric data found");
-            }
-          }
-        });
-        worker.on("exit", (code: any) => {
-          removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
-          logger.info(
-            `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
-          );
-        });
-      });
-    }
-
-    return metrics;
-  }
-
-  @Query(() => MetricRes)
+@Query(() => MetricRes)
   async getMetricRange(
     @Arg("data") data: GetMetricRangeInput,
     @PubSub() pubSub: PubSubEngine
@@ -277,21 +192,101 @@ class MetricResolvers {
     return res;
   }
 
-  @Subscription(() => LatestMetricRes, {
-    topics: ({ args }) => `metric-${args.type}`,
-    filter: ({ payload, args }) => {
-      return args.nodeId === payload.nodeId;
-    },
-  })
-  async getMetricRangeSub(
-    @Root() payload: LatestMetricRes,
-    @Args() args: SubMetricRangeInput
-  ): Promise<LatestMetricRes> {
-    await storeInStorage(
-      `${args.orgId}/${args.userId}/${args.type}/${args.from}`,
-      getTimestampCount("0")
-    );
-    return payload;
+@Subscription(() => LatestMetricRes, {
+  topics: ({ args }) => `metric-${args.type}`,
+  filter: ({ payload, args }) => {
+    return args.nodeId === payload.nodeId;
+  },
+})
+async getMetricRangeSub(
+  @Root() payload: LatestMetricRes,
+  @Args() args: SubMetricRangeInput
+): Promise<LatestMetricRes> {
+  await storeInStorage(
+    `${args.orgId}/${args.userId}/${args.type}/${args.from}`,
+    getTimestampCount("0")
+  );
+  return payload;
+}
+*/
+
+@Resolver(MetricRes)
+class MetricResolvers {
+  @Query(() => StatsMetric)
+  async getStatsMetric() {
+    return {
+      activeSubscriber: Math.floor(crypto.randomInt(1, 30)),
+      averageThroughput: Math.floor(crypto.randomInt(1, 50)),
+      averageSignalStrength: Math.floor(crypto.randomInt(1, 90)),
+    };
+  }
+
+  @Query(() => LatestMetricRes)
+  async getLatestMetric(@Arg("data") data: GetLatestMetricInput) {
+    return await getLatestMetric(data);
+  }
+
+  @Query(() => MetricsRes)
+  async getMetricByTab(
+    @Arg("data") data: GetMetricByTabInput,
+    @PubSub() pubSub: PubSubEngine
+  ) {
+    const { type, orgId, userId, nodeId, withSubscription, from } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metrics: MetricsRes = { metrics: [] };
+    if (metricsKey.length > 0) {
+      for (let i = 0; i < metricsKey.length; i++) {
+        const res = await getNodeRangeMetric({ ...data, type: metricsKey[i] });
+        metrics.metrics.push(res);
+      }
+    }
+    if (withSubscription && metrics.metrics.length > 0) {
+      let subKey = "";
+      metrics.metrics.forEach((metric: MetricRes) => {
+        if (metric.values.length > 2) subKey = subKey + metric.type + ",";
+      });
+      subKey = subKey.slice(0, -1);
+      subKey.split(",").forEach((key: string) => {
+        const workerData = {
+          type: key,
+          orgId,
+          userId,
+          url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          key: STORAGE_KEY,
+          timestamp: from,
+        };
+        const worker = new Worker(WS_THREAD, {
+          workerData,
+        });
+        worker.on("message", (_data: any) => {
+          if (!_data.isError) {
+            const res = JSON.parse(_data.data);
+            const result = res.data.result[0];
+            if (result && result.metric && result.value.length > 0) {
+              pubSub.publish(key, {
+                success: true,
+                msg: "success",
+                orgId: result.metric.org,
+                nodeId: nodeId,
+                type: key,
+                userId: userId,
+                value: result.value,
+              } as LatestMetricRes);
+            } else {
+              return getErrorRes("No metric data found");
+            }
+          }
+        });
+        worker.on("exit", (code: any) => {
+          removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+          logger.info(
+            `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+          );
+        });
+      });
+    }
+    return metrics;
   }
 
   @Subscription(() => LatestMetricRes, {
