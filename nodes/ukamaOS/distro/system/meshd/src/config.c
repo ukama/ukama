@@ -69,12 +69,36 @@ static void split_strings(char *input, char **str1, char **str2,
     }
 }
 
-static int read_hostname_and_nodeid(char *fileName, char **hostname,
-                                    char **subnetMask, char **nodeID) {
+static int read_nodeid(char **nodeID) {
+
+    char buffer[MAX_BUFFER] = {0};
+    FILE *fp=NULL;
+
+    fp = fopen("/ukama/nodeid", "r");
+    if (fp == NULL) {
+        usys_log_error("Unable to open /ukama/nodeid file: %s",
+                       strerror(errno));
+        return FALSE;
+    }
+
+    if (read_line(buffer, MAX_BUFFER, fp) <= 0) {
+        usys_log_error("[%s] Error reading file. Error: %s", "/ukama/nodeid",
+                       strerror(errno));
+        return FALSE;
+	} else {
+        *nodeID = strdup(buffer);
+    }
+
+    return TRUE;
+}
+
+static int read_hostname_and_nodeid(char *fileName,
+                                    char **hostname,
+                                    char **subnetMask) {
 
     int ret=TRUE;
 	FILE *fp=NULL;
-	char *buffer=NULL, *CIDR=NULL;
+	char *buffer=NULL, *CIDR=NULL, *nodeID=NULL;
 
 	buffer = (char *)malloc(MAX_BUFFER);
 	if (!buffer) {
@@ -95,13 +119,14 @@ static int read_hostname_and_nodeid(char *fileName, char **hostname,
 				  strerror(errno));
         ret = FALSE;
 	} else {
-        split_strings(buffer, &CIDR, nodeID, ";");
+        split_strings(buffer, &CIDR, &nodeID, ";");
         split_strings(CIDR, hostname, subnetMask, "/");
     }
 
 	fclose(fp);
     free(buffer);
     free(CIDR);
+    free(nodeID);
 
 	return ret;
 }
@@ -110,7 +135,7 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	int ret=TRUE;
     int remote=0;
-	char *hostname=NULL, *nodeID=NULL, *subnetMask=NULL;
+	char *hostname=NULL, *subnetMask=NULL;
 	toml_datum_t cert, key, localHostname, remoteIPFile;
 
 	remoteIPFile  = toml_string_in(configData, REMOTE_IP_FILE);
@@ -124,8 +149,9 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
         goto done;
 	} else {
 		/* Read the content of the IP file. */
-		if (read_hostname_and_nodeid(remoteIPFile.u.s, &hostname,
-                                     &subnetMask, &nodeID) == FALSE) {
+		if (read_hostname_and_nodeid(remoteIPFile.u.s,
+                                     &hostname,
+                                     &subnetMask) == FALSE) {
 			goto done;
 		}
 	}
@@ -146,7 +172,11 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 		usys_log_error("Error allocating memory of size: %d", sizeof(DeviceInfo));
 		goto done;
 	}
-    config->deviceInfo->nodeID = strdup(nodeID);
+
+    if (!read_nodeid(&config->deviceInfo->nodeID)) {
+        usys_log_error("Unable to read nodeID from /ukama/nodeid");
+        goto done;
+    }
 
 	if (!localHostname.ok) {
 		usys_log_debug("[%s] is missing, setting to default: %s", LOCAL_HOSTNAME,
@@ -175,7 +205,6 @@ static int parse_config_entries(Config *config, toml_table_t *configData) {
 	if (remoteIPFile.ok)  free(remoteIPFile.u.s);
     if (hostname)         free(hostname);
     if (subnetMask)       free(subnetMask);
-    if (nodeID)           free(nodeID);
 
 	return ret;
 }

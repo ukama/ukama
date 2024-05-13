@@ -6,8 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/* Functions related to interactions with bootstrap server */
-
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <string.h>
@@ -115,7 +113,7 @@ static int process_response_from_server(char *response, ServerInfo *server) {
 	return ret;
 }
 
-static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
+static int send_request_to_init(char *remoteServer, int remotePort,
                                 char *uuid, ServerInfo *server,
                                 char **responseStr) {
 
@@ -123,11 +121,11 @@ static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
 	Response response = {NULL, 0};
 	char url[MAX_GET_URL_LEN] = {0};
 
-	if (bootstrapServer == NULL || uuid == NULL) return FALSE;
+	if (remoteServer == NULL || uuid == NULL) return FALSE;
 
     /* Create URL + request */
 	sprintf(url, "http://%s:%d/%s/%s/%s",
-            bootstrapServer, bootstrapPort, API_VERSION, EP_NODES, uuid);
+            remoteServer, remotePort, API_VERSION, EP_NODES, uuid);
 
     respCode = send_request_to_server(&url[0], &response, responseStr);
 
@@ -138,13 +136,13 @@ static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
 			log_debug("Recevied server IP: %s", server->IP);
 		} else {
 			log_error("Unable to receive proper server info from bootstrap: %s",
-					  bootstrapServer);
+					  remoteServer);
 			goto done;
 		}
         ret=TRUE;
         break;
     case HttpStatus_NotFound:
-        log_debug("NodeID: %s not found on server: %s", uuid, bootstrapServer);
+        log_debug("NodeID: %s not found on server: %s", uuid, remoteServer);
         ret=-1;
         break;
     default:
@@ -164,12 +162,8 @@ static int send_request_to_init(char *bootstrapServer, int bootstrapPort,
 	return ret;
 }
 
-/*
- * send_reuqest_to_init_with_exponential_backoff --
- *
- */
-void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
-                                                   int bootstrapPort,
+void send_request_to_init_with_exponential_backoff(char *remoteServer,
+                                                   int remotePort,
                                                    char *uuid,
                                                    ServerInfo *server) {
 
@@ -180,8 +174,8 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
     srand(time(NULL));
 
     do {
-        if (send_request_to_init(bootstrapServer,
-                                 bootstrapPort,
+        if (send_request_to_init(remoteServer,
+                                 remotePort,
                                  uuid,
                                  server,
                                  &responseStr) == TRUE) {

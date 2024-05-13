@@ -11,7 +11,7 @@ mock_sysfs_for_noded() {
     repo=$1
     node_id=$2
 
-    mkdir -p /mnt/${node_id}/ukama/mocksysfs/
+    mkdir /mnt/${node_id}/ukama/mocksysfs/
     cp -p ./mocksysfs.sh /mnt/${node_id}/ukama/mocksysfs/
 
     cd ${repo}/nodes/ukamaOS/distro/system/noded; make
@@ -29,7 +29,7 @@ mock_sysfs_for_noded() {
 
         [Service]
         Type=oneshot
-        ExecStart=/ukama/mocksysfs.sh
+        ExecStart=/ukama/mocksysfs/mocksysfs.sh
 
         [Install]
         WantedBy=multi-user.target
@@ -49,13 +49,13 @@ EOL
 EOF
 }
 
-install_starter_capp() {
+install_starter_app() {
 
     path=$1
 
     chroot $path /bin/bash <<EOF
 
-        cd /capps/pkgs/
+        cd /ukama/apps/pkgs/
         tar zxvf starterd_latest.tar.gz starterd_latest/sbin/starter.d .
         mv starterd_latest/sbin/starter.d /sbin/
         rm -rf starterd_latest/
@@ -86,7 +86,7 @@ elif [ "$1" = "node" ]; then
     node_id=$3
 
     if [ -d /mnt/$node_id ]; then
-        umount /mnt/$node_id
+        umount /mnt/${node_id}
         rmdir /mnt/${node_id} || { echo "Unable to remove /mnt/$node_id"; exit 1; }
     fi
 
@@ -94,7 +94,7 @@ elif [ "$1" = "node" ]; then
     echo "Creating bootsable OS image"
     ./mkimage.sh ${node_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
 
-    # build all the capps
+    # build all apps
     echo "Building all apps"
     ./build-capps.sh ${ukama_root} || exit 1
 
@@ -103,7 +103,7 @@ elif [ "$1" = "node" ]; then
     mkdir -p /mnt/${node_id} || exit 1
     mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
 
-    cp -r ./pkgs /mnt/${node_id}/capps/
+    mv ./pkgs /mnt/${node_id}/ukama/apps/
     cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}/
 
     # install the starter.d app
@@ -117,7 +117,6 @@ elif [ "$1" = "node" ]; then
 
     # setup everything needed by node.d
     echo "mocking FS for node.d"
-    mkdir /mnt/${node_id}/ukama/
     mock_sysfs_for_noded $ukama_root $node_id
 
     # update /etc/services to add ports
