@@ -9,18 +9,25 @@ import { GraphQLError } from "graphql";
 import https from "https";
 
 import { asyncRestCall } from "../../common/axiosClient";
-import { METRIC_API_GW, METRIC_PROMETHEUS } from "../../common/configs";
+import {
+  METRIC_API_GW,
+  METRIC_PROMETHEUS,
+  NOTIFICATION_API_GW,
+} from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
+  GetNotificationsInput,
   LatestMetricRes,
   MetricRes,
+  NotificationsRes,
 } from "../resolvers/types";
 import {
   parseLatestMetricRes,
   parseMetricRes,
   parseNodeMetricRes,
+  parseNotificationsRes,
   parsePromethRes,
 } from "./mapper";
 
@@ -77,4 +84,40 @@ const getNodeRangeMetric = async (
     });
 };
 
-export { directCall, getLatestMetric, getMetricRange, getNodeRangeMetric };
+const getNotifications = async (
+  args: GetNotificationsInput
+): Promise<NotificationsRes> => {
+  const { orgId, subscriberId, userId, networkId, forRole } = args;
+  let params = "";
+  if (orgId) {
+    params = params + `orgId=${orgId}`;
+  }
+  if (subscriberId) {
+    params = params + `subscriberId=${subscriberId}`;
+  }
+  if (userId) {
+    params = params + `userId=${userId}`;
+  }
+  if (networkId) {
+    params = params + `networkId=${networkId}`;
+  }
+  if (forRole) {
+    params = params + `forRole=${forRole}`;
+  }
+  return await asyncRestCall({
+    method: API_METHOD_TYPE.GET,
+    url: `${NOTIFICATION_API_GW}/v1/notification/notifications?${params}`,
+  })
+    .then(res => parseNotificationsRes(res))
+    .catch(err => {
+      throw new GraphQLError(err);
+    });
+};
+
+export {
+  directCall,
+  getLatestMetric,
+  getMetricRange,
+  getNodeRangeMetric,
+  getNotifications,
+};

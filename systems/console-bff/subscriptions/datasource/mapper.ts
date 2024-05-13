@@ -10,6 +10,8 @@ import {
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
+  NotificationRes,
+  NotificationsRes,
 } from "../resolvers/types";
 
 const ERROR_RESPONSE = {
@@ -115,4 +117,31 @@ export const parsePromethRes = (
       values: fixTimestampInMetricData(metric.values),
     };
   } else return getEmptyMetric(args);
+};
+
+export const parseNotification = (notification: any) => {
+  return {
+    id: notification.id,
+    title: notification.title,
+    description: notification.description,
+    type: notification.type,
+    scope: notification.scope,
+    orgId: notification.org_id,
+    networkId: notification.network_id,
+    subscriberId: notification.subscriber_id,
+    userId: notification.user_id,
+    role: notification.for_role,
+    isRead: notification.is_read,
+  };
+};
+
+export const parseNotificationsRes = (res: any): NotificationsRes => {
+  const { data } = res.data;
+  const notifications: NotificationRes[] = [];
+  data.map((notification: any) => {
+    notifications.push(parseNotification(notification));
+  });
+  return {
+    notifications: notifications,
+  };
 };

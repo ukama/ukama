@@ -8,7 +8,12 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
-import { GRAPHS_TYPE } from "../../common/enums";
+import {
+  GRAPHS_TYPE,
+  NOTIFICATION_SCOPE,
+  NOTIFICATION_TYPE,
+  ROLE_TYPE,
+} from "../../common/enums";
 
 @ObjectType()
 export class LatestMetricRes {
@@ -170,4 +175,154 @@ export class StatsMetric {
 
   @Field()
   averageThroughput: number;
+}
+
+@ObjectType()
+export class NotificationRes {
+  @Field()
+  id: string;
+
+  @Field()
+  title: string;
+
+  @Field()
+  description: string;
+
+  @Field()
+  orgId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  isRead: boolean;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
+
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+}
+
+@ObjectType()
+export class NotificationsRes {
+  @Field(() => [NotificationRes])
+  notifications: NotificationRes[];
+}
+
+@ArgsType()
+@InputType()
+export class GetNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field(() => ROLE_TYPE)
+  forRole: ROLE_TYPE;
+}
+
+@ArgsType()
+@InputType()
+export class GetOrgNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
+}
+@ArgsType()
+@InputType()
+export class GetNetworkNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
+}
+@ArgsType()
+@InputType()
+export class GetSiteNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  siteId: string;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
+}
+@ArgsType()
+@InputType()
+export class GetNodeNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  siteId: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
+}
+@ArgsType()
+@InputType()
+export class GetSubscriberNotificationsInput {
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  subscriberId: string;
+}
+
+@ArgsType()
+@InputType()
+export class GetUserNotificationsInput {
+  @Field()
+  userId: string;
 }
