@@ -15,6 +15,7 @@
     "site",
     "subscriber",
     "package",
+    "component",
     "invitation",
     "member"
   ],
