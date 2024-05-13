@@ -14,10 +14,13 @@ import { dtoTocomponentDto, dtoTocomponentsDto } from "./mapper";
 class ComponentApi extends RESTDataSource {
   baseURL = INVENTORY_API_GW;
 
-  getComponents = async (userId: string): Promise<ComponentsResDto> => {
-    return this.get(`/${VERSION}/components/user/${userId}`).then(res =>
-      dtoTocomponentsDto(res)
-    );
+  getComponents = async (
+    userId: string,
+    category: string
+  ): Promise<ComponentsResDto> => {
+    return this.get(
+      `/${VERSION}/components/user/${userId}?category=${category}`
+    ).then(res => dtoTocomponentsDto(res));
   };
 
   getComponent = async (componentId: string): Promise<ComponentDto> => {
