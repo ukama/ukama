@@ -68,3 +68,11 @@ type UpdateEventNotificationStatusRequest struct {
 	Id     string `form:"id" json:"id" query:"id" binding:"required"`
 	IsRead bool   `form:"read" json:"read" query:"is_read" binding:"required"`
 }
+
+type GetRealTimeEventNotificationRequest struct {
+	OrgId        string   `json:"org_id" form:"org_id" query:"org_id"`
+	NetworkId    string   `json:"network_id" form:"network_id" query:"network_id"`
+	SubscriberId string   `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
+	UserId       string   `json:"user_id" form:"user_id" query:"user_id"`
+	Scopes       []string `json:"scopes" form:"scopes"`
+}

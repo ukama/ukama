@@ -9,24 +9,26 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
-	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
-	"github.com/wI2L/fizz/openapi"
-
-	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
+	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
+	"github.com/wI2L/fizz/openapi"
 )
 
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
@@ -47,6 +49,13 @@ type Clients struct {
 	m client.Mailer
 	n client.Notify
 	e client.EventNotification
+}
+
+var upgrader = websocket.Upgrader{
+	// Solve cross-domain problems
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -146,6 +155,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		eNotif.GET("", formatDoc("Get Notification By filter", "Get a specific notificationby filter"), tonic.Handler(r.getEventNotifications, http.StatusOK))
 		eNotif.GET("/:id", formatDoc("Get Notification by Id", "Get a notification"), tonic.Handler(r.getEventNotification, http.StatusOK))
 		eNotif.POST("/:id", formatDoc("Update Notifications", "Update matching notification"), tonic.Handler(r.updateEventNotification, http.StatusOK))
+		eNotif.GET("/live", formatDoc("Real-time Notifications", "Get notification as they are reproted"), tonic.Handler(r.liveEventNotificationHandler, http.StatusOK))
 
 	}
 }
@@ -221,4 +231,57 @@ func (r *Router) getEventNotifications(c *gin.Context, req *GetEventNotification
 
 func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotificationStatusRequest) (*epb.UpdateStatusResponse, error) {
 	return r.clients.e.UpdateStatus(req.Id, req.IsRead)
+}
+
+func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEventNotificationRequest) error {
+
+	log.Infof("Requesting real time notifications %s", req)
+
+	//Upgrade get request to webSocket protocol
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Infof("upgrade: %s", err.Error())
+		return err
+	}
+	defer ws.Close()
+
+	stream, err := r.clients.e.GetNotificationStream(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
+	if err != nil {
+		log.Errorf("error getting notification on stream:Error: %s", err.Error())
+		return err
+	}
+
+	for {
+		ok := false
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		} else if err == nil {
+			w, err := ws.NextWriter(1)
+			if err != nil {
+				log.Errorf("Error getting writer: %s", err.Error())
+				ok = false
+				break
+			}
+
+			bytes, err := json.Marshal(resp)
+			if err != nil {
+				log.Errorf("Failed to Marshal notification stream %+v for user %s Error: %v", resp, req.UserId, err)
+				return err
+			}
+
+			_, err = w.Write(bytes)
+			if err != nil {
+				log.Errorf("Failed to  write notification %+v for user %s to ws response. Error: %s", resp, req.UserId, err)
+				return err
+			}
+
+			ok = true
+		}
+		if !ok {
+			break
+		}
+	}
+	return err
+
 }
