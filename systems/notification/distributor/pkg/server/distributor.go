@@ -74,6 +74,12 @@ func (n *DistributorServer) NotificationStream(req *pb.NotificationStreamRequest
 	}
 	defer listener.Close()
 
+	/*TODO: - Close the stream 
+			- May be check where the notofivcatins are getting filtered based on userid/kid or subscriberid 
+			- This will only report notifcation when websocket is connected if we have any old notification(stores 8Gb)  that had to be reterived by
+			anyother API method
+			- Looks like if this is session/user based we might not get trigeer properly beacuse all of the listner will be reading form the same notify queue.    	
+	*/
 	for {
 		select {
 		case notification := <-listener.Notify:
