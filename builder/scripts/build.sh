@@ -62,6 +62,80 @@ install_starter_app() {
 EOF
 }
 
+build_base_image() {
+
+    ukama_root=$1
+    base_id=$2
+
+    if [ -d /mnt/$base_id ]; then
+        umount /mnt/${base_id}
+        rmdir /mnt/${base_id} || { echo "Unable to remove /mnt/$base_id"; exit 1; }
+    fi
+
+    # create bootable os image
+    echo "Creating bootsable OS image"
+    ./mkimage.sh ${base_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
+
+    # build all apps
+    echo "Building all apps"
+    ./build-capps.sh ${ukama_root} || exit 1
+
+    # copy the apps and manifest.json into the os image
+    echo "Copying apps, installing starter.d and manifesto to the OS image"
+    mkdir -p /mnt/${base_id} || exit 1
+    mount -o loop,offset=$((512*2048)) ${base_id}.img /mnt/${base_id} || exit 1
+
+    mv ./pkgs /mnt/${base_id}/ukama/apps/
+    cp ${ukama_root}/nodes/manifest.json /mnt/${base_id}/
+
+    # install the starter.d app
+    install_starter_app /mnt/${base_id}/
+
+    echo "Copy Ukama sys and vendor libs to the OS image"
+    cp ${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so \
+       /mnt/${base_id}/lib/x86_64-linux-gnu/
+    cp -rf ${ukama_root}/nodes/ukamaOS/distro/vendor/build/lib/* \
+       /mnt/${base_id}/lib/x86_64-linux-gnu/
+
+    # setup everything needed by node.d
+    echo "mocking FS for node.d"
+    mock_sysfs_for_noded $ukama_root $base_id
+
+    # update /etc/services to add ports
+    echo "Adding all the apps to /etc/services"
+    cp ${ukama_root}/nodes/ukamaOS/distro/scripts/files/services \
+       /mnt/${base_id}/etc/services
+
+    # umount the image
+    umount /mnt/${base_id}
+    rmdir  /mnt/${base_id}
+    echo "All done"
+}
+
+build_node_from_base_image() {
+
+    ukama_root=$1
+    node_id=$2
+    based_id=$3
+
+    cp ${base_id}.img ${node_id}.img
+
+    mkdir -p /mnt/${node_id} || exit 1
+    mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
+
+    rm /mnt/${node_id}/ukama/nodeid
+    echo $node_id > /mnt/${node_id}/ukama/nodeid
+
+    rm -rf /mnt/${node_id}/ukama/mocksysfs/
+    mock_sysfs_for_noded $ukama_root $node_id
+
+    umount /mnt/${node_id}
+    rmdir  /mnt/${node_id}
+    echo "All done"
+}
+
+# Main entry point for the script
+
 if [ "$1" = "system" ]; then
 
     cd "$2" || exit 1
@@ -80,57 +154,23 @@ if [ "$1" = "system" ]; then
     docker image prune -f  || exit 1
     docker-compose build --no-cache || exit 1
 
-elif [ "$1" = "node" ]; then
+elif [ "$1" = "base-image" ]; then
+
+    ukama_root=$2
+    base_id=$3
+
+    build_base_image $ukama_root $base_id
+
+elif [ "$1" = "new-node" ]; then
 
     ukama_root=$2
     node_id=$3
+    base_id=$4
 
-    if [ -d /mnt/$node_id ]; then
-        umount /mnt/${node_id}
-        rmdir /mnt/${node_id} || { echo "Unable to remove /mnt/$node_id"; exit 1; }
-    fi
-
-    # create bootable os image
-    echo "Creating bootsable OS image"
-    ./mkimage.sh ${node_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
-
-    # build all apps
-    echo "Building all apps"
-    ./build-capps.sh ${ukama_root} || exit 1
-
-    # copy the apps and manifest.json into the os image
-    echo "Copying apps, installing starter.d and manifesto to the OS image"
-    mkdir -p /mnt/${node_id} || exit 1
-    mount -o loop,offset=$((512*2048)) ${node_id}.img /mnt/${node_id} || exit 1
-
-    mv ./pkgs /mnt/${node_id}/ukama/apps/
-    cp ${ukama_root}/nodes/manifest.json /mnt/${node_id}/
-
-    # install the starter.d app
-    install_starter_app /mnt/${node_id}/
-
-    echo "Copy Ukama sys and vendor libs to the OS image"
-    cp ${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so \
-       /mnt/${node_id}/lib/x86_64-linux-gnu/
-    cp -rf ${ukama_root}/nodes/ukamaOS/distro/vendor/build/lib/* \
-       /mnt/${node_id}/lib/x86_64-linux-gnu/
-
-    # setup everything needed by node.d
-    echo "mocking FS for node.d"
-    mock_sysfs_for_noded $ukama_root $node_id
-
-    # update /etc/services to add ports
-    echo "Adding all the apps to /etc/services"
-    cp ${ukama_root}/nodes/ukamaOS/distro/scripts/files/services \
-       /mnt/${node_id}/etc/services
-
-    # umount the image
-    umount /mnt/${node_id}
-    rmdir  /mnt/${node_id}
-    echo "All done"
+    build_node_from_base_image $ukama_root $node_id $base_id
 
 else
-    echo "Invalid argument: $1. Use 'systems' or 'node'."
+    echo "Invalid argument: $1. Use 'systems' or 'base-image' or 'new-node'"
     exit 1
 fi
 
