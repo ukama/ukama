@@ -25,7 +25,6 @@ type EventToNotifyServiceClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetAll(ctx context.Context, in *GetAllRequest, opts ...grpc.CallOption) (*GetAllResponse, error)
 	UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error)
-	GetNotificationStream(ctx context.Context, in *NotificationStreamRequest, opts ...grpc.CallOption) (EventToNotifyService_GetNotificationStreamClient, error)
 }
 
 type eventToNotifyServiceClient struct {
@@ -63,38 +62,6 @@ func (c *eventToNotifyServiceClient) UpdateStatus(ctx context.Context, in *Updat
 	return out, nil
 }
 
-func (c *eventToNotifyServiceClient) GetNotificationStream(ctx context.Context, in *NotificationStreamRequest, opts ...grpc.CallOption) (EventToNotifyService_GetNotificationStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &EventToNotifyService_ServiceDesc.Streams[0], "/ukama.notification.eventToNotify.v1.EventToNotifyService/GetNotificationStream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &eventToNotifyServiceGetNotificationStreamClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type EventToNotifyService_GetNotificationStreamClient interface {
-	Recv() (*Notification, error)
-	grpc.ClientStream
-}
-
-type eventToNotifyServiceGetNotificationStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *eventToNotifyServiceGetNotificationStreamClient) Recv() (*Notification, error) {
-	m := new(Notification)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // EventToNotifyServiceServer is the server API for EventToNotifyService service.
 // All implementations must embed UnimplementedEventToNotifyServiceServer
 // for forward compatibility
@@ -102,7 +69,6 @@ type EventToNotifyServiceServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetAll(context.Context, *GetAllRequest) (*GetAllResponse, error)
 	UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error)
-	GetNotificationStream(*NotificationStreamRequest, EventToNotifyService_GetNotificationStreamServer) error
 	mustEmbedUnimplementedEventToNotifyServiceServer()
 }
 
@@ -118,9 +84,6 @@ func (UnimplementedEventToNotifyServiceServer) GetAll(context.Context, *GetAllRe
 }
 func (UnimplementedEventToNotifyServiceServer) UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatus not implemented")
-}
-func (UnimplementedEventToNotifyServiceServer) GetNotificationStream(*NotificationStreamRequest, EventToNotifyService_GetNotificationStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetNotificationStream not implemented")
 }
 func (UnimplementedEventToNotifyServiceServer) mustEmbedUnimplementedEventToNotifyServiceServer() {}
 
@@ -189,27 +152,6 @@ func _EventToNotifyService_UpdateStatus_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EventToNotifyService_GetNotificationStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(NotificationStreamRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(EventToNotifyServiceServer).GetNotificationStream(m, &eventToNotifyServiceGetNotificationStreamServer{stream})
-}
-
-type EventToNotifyService_GetNotificationStreamServer interface {
-	Send(*Notification) error
-	grpc.ServerStream
-}
-
-type eventToNotifyServiceGetNotificationStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *eventToNotifyServiceGetNotificationStreamServer) Send(m *Notification) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 // EventToNotifyService_ServiceDesc is the grpc.ServiceDesc for EventToNotifyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -230,12 +172,6 @@ var EventToNotifyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EventToNotifyService_UpdateStatus_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "GetNotificationStream",
-			Handler:       _EventToNotifyService_GetNotificationStream_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "notification.proto",
 }

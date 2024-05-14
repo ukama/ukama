@@ -66,20 +66,6 @@ func (_m *EventToNotifyServiceServer) GetAll(_a0 context.Context, _a1 *gen.GetAl
 	return r0, r1
 }
 
-// GetNotificationStream provides a mock function with given fields: _a0, _a1
-func (_m *EventToNotifyServiceServer) GetNotificationStream(_a0 *gen.NotificationStreamRequest, _a1 gen.EventToNotifyService_GetNotificationStreamServer) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*gen.NotificationStreamRequest, gen.EventToNotifyService_GetNotificationStreamServer) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // UpdateStatus provides a mock function with given fields: _a0, _a1
 func (_m *EventToNotifyServiceServer) UpdateStatus(_a0 context.Context, _a1 *gen.UpdateStatusRequest) (*gen.UpdateStatusResponse, error) {
 	ret := _m.Called(_a0, _a1)
