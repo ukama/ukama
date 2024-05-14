@@ -309,18 +309,21 @@ class MetricResolvers {
   }
 
   @Query(() => NotificationsRes)
-  async getNotifications(@Arg("data") data: GetNotificationsInput) {
-    // @PubSub() pubSub: PubSubEngine // ,
-    // const { orgId, userId, subscriberId, networkId, forRole } = data;
+  async getNotifications(
+    @Arg("data") data: GetNotificationsInput,
+    @PubSub() pubSub: PubSubEngine
+  ) {
+    const { orgId, userId, subscriberId, networkId, siteId, forRole, nodeId } =
+      data;
 
     const notifications = getNotifications(data);
     const workerData = {
       url: `${NOTIFICATION_API_GW}/v1/notification/live`,
-      orgId: data.orgId,
-      role: data.forRole,
-      userId: data.userId,
-      networkId: data.networkId,
-      subscriberId: data.subscriberId,
+      orgId: orgId,
+      role: forRole,
+      userId: userId,
+      networkId: networkId,
+      subscriberId: subscriberId,
       key: "UKAMA_NOTIFICATION_STORAGE_KEY",
     };
 
@@ -335,39 +338,112 @@ class MetricResolvers {
         if (result && result.data) {
           switch (result.scope) {
             case NOTIFICATION_SCOPE.ORG:
-              // do something
+              pubSub.publish(`notification-${userId}`, {
+                id: result.data.id,
+                type: result.data.type,
+                title: result.data.title,
+                orgId: result.data.org_id,
+                role: result.data.for_role,
+                userId: result.data.user_id,
+                isRead: result.data.is_read,
+                networkId: result.data.network_id,
+                description: result.data.description,
+                subscriberId: result.data.subscriber_id,
+              } as NotificationRes);
               break;
             case NOTIFICATION_SCOPE.NETWORK:
-              // do something
+              pubSub.publish(
+                `notification-${userId}-${orgId}-${forRole}-${networkId}`,
+                {
+                  id: result.data.id,
+                  type: result.data.type,
+                  title: result.data.title,
+                  orgId: result.data.org_id,
+                  role: result.data.for_role,
+                  userId: result.data.user_id,
+                  isRead: result.data.is_read,
+                  networkId: result.data.network_id,
+                  description: result.data.description,
+                  subscriberId: result.data.subscriber_id,
+                } as NotificationRes
+              );
               break;
             case NOTIFICATION_SCOPE.SITE:
-              // do something
+              pubSub.publish(
+                `notification-${userId}-${orgId}-${forRole}-${networkId}-${siteId}`,
+                {
+                  id: result.data.id,
+                  type: result.data.type,
+                  title: result.data.title,
+                  orgId: result.data.org_id,
+                  role: result.data.for_role,
+                  userId: result.data.user_id,
+                  isRead: result.data.is_read,
+                  networkId: result.data.network_id,
+                  description: result.data.description,
+                  subscriberId: result.data.subscriber_id,
+                } as NotificationRes
+              );
               break;
             case NOTIFICATION_SCOPE.NODE:
-              // do something
+              pubSub.publish(
+                `notification-${userId}-${orgId}-${forRole}-${networkId}-${siteId}-${nodeId}`,
+                {
+                  id: result.data.id,
+                  type: result.data.type,
+                  title: result.data.title,
+                  orgId: result.data.org_id,
+                  role: result.data.for_role,
+                  userId: result.data.user_id,
+                  isRead: result.data.is_read,
+                  networkId: result.data.network_id,
+                  description: result.data.description,
+                  subscriberId: result.data.subscriber_id,
+                } as NotificationRes
+              );
               break;
             case NOTIFICATION_SCOPE.SUBSCRIBER:
-              // do something
+              pubSub.publish(
+                `notification-${userId}-${orgId}-${networkId}-${subscriberId}`,
+                {
+                  id: result.data.id,
+                  type: result.data.type,
+                  title: result.data.title,
+                  orgId: result.data.org_id,
+                  role: result.data.for_role,
+                  userId: result.data.user_id,
+                  isRead: result.data.is_read,
+                  networkId: result.data.network_id,
+                  description: result.data.description,
+                  subscriberId: result.data.subscriber_id,
+                } as NotificationRes
+              );
               break;
             case NOTIFICATION_SCOPE.USER:
-              // do something
-              break;
-            default:
-              // do something
+              pubSub.publish(`notification-${userId}`, {
+                id: result.data.id,
+                type: result.data.type,
+                title: result.data.title,
+                orgId: result.data.org_id,
+                role: result.data.for_role,
+                userId: result.data.user_id,
+                isRead: result.data.is_read,
+                networkId: result.data.network_id,
+                description: result.data.description,
+                subscriberId: result.data.subscriber_id,
+              } as NotificationRes);
               break;
           }
         } else {
-          return getErrorRes("No metric data found");
+          return getErrorRes("No notification data found.");
         }
       }
     });
 
-    // worker.on("exit", (code: any) => {
-    //   removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
-    //   logger.info(
-    //     `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
-    //   );
-    // });
+    worker.on("exit", (code: any) => {
+      // removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+      logger.info(`WS_THREAD exited with code [${code}] for ${userId}`);
+    });
 
     return {
       notifications: notifications,

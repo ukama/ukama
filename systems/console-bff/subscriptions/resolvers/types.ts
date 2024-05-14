@@ -229,6 +229,12 @@ export class GetNotificationsInput {
   networkId: string;
 
   @Field()
+  siteId: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
   userId: string;
 
   @Field()
