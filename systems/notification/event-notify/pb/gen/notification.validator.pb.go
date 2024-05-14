@@ -16,6 +16,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *NotificationStreamRequest) Validate() error {
+	return nil
+}
 func (this *GetRequest) Validate() error {
 	return nil
 }

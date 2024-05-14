@@ -19,6 +19,15 @@ service EventToNotifyService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetAll(GetAllRequest) returns (GetAllResponse);
     rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+    rpc GetNotificationStream(NotificationStreamRequest) returns (stream Notification);
+}
+
+message NotificationStreamRequest {
+    string orgId = 1 [json_name = "org_id"];
+    string networkId = 2 [json_name = "network_id"];
+    string subscriberId = 3 [json_name = "subscriber_id"];
+    string userId = 4 [json_name = "user_id"];
+    repeated string scopes = 5 [json_name = "scopes"];
 }
 
 message GetRequest {
