@@ -15,8 +15,8 @@ import "google/protobuf/wrappers.proto";
 package ukama.notification.distributor.v1;
 
 service DistributorService {
-    rpc NotificationStream(NotificationStreamRequest) returns (stream Notification);
-    rpc GetNotifications(NotificationsRequest) returns (NotificationsResponse);
+    rpc GetNotificationStream(NotificationStreamRequest) returns (stream Notification);
+    //rpc GetNotifications(NotificationsRequest) returns (NotificationsResponse);
 }
 
 message NotificationsRequest {
@@ -33,6 +33,10 @@ message NotificationsResponse {
 
 message NotificationStreamRequest {
     string orgId = 1 [json_name = "org_id"];
+    string networkId = 2 [json_name = "network_id"];
+    string subscriberId = 3 [json_name = "subscriber_id"];
+    string userId = 4 [json_name = "user_id"];
+    repeated string scopes = 5 [json_name = "scopes"];
 }
 
 message Notification {
@@ -50,10 +54,11 @@ message Notification {
 }
 
 enum RoleType {
-    OWNER = 0;
-    ADMIN = 1;
-    VENDOR = 2;
-    USERS = 3;
+    UNKOWN_RO = 0;
+    OWNER = 1;
+    ADMIN = 2;
+    VENDOR = 3;
+    USERS = 4;
 }
 
 enum NotificationType {
@@ -64,10 +69,11 @@ enum NotificationType {
 }
 
 enum NotificationScope {
-    ORG = 0;
-	NETWORK = 1;
-	SITE = 2;
-	SUBSCRIBER = 3;
-	USER = 4;
-	NODE = 5;
+    UNKOWN_SCOPE = 0;
+    ORG = 1;
+	NETWORK = 2;
+	SITE = 3;
+	SUBSCRIBER = 4;
+	USER = 5;
+	NODE = 6;
 }
