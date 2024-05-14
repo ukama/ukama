@@ -35,6 +35,7 @@ type GrpcEndpoints struct {
 	Mailer            string
 	Notify            string
 	EventNotification string
+	Distributor       string
 }
 
 func NewConfig() *Config {
@@ -52,6 +53,7 @@ func NewConfig() *Config {
 			Mailer:            "mailer:9090",
 			Notify:            "notify:9090",
 			EventNotification: "event-notify:9090",
+			Distributor:       "distributor:9090",
 		},
 
 		Server: rest.HttpConfig{

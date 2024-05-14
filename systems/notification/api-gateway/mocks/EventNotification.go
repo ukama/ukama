@@ -64,32 +64,6 @@ func (_m *EventNotification) GetAll(orgId string, networkId string, subscriberId
 	return r0, r1
 }
 
-// GetNotificationStream provides a mock function with given fields: orgId, networkId, subscriberId, userId, scopes
-func (_m *EventNotification) GetNotificationStream(orgId string, networkId string, subscriberId string, userId string, scopes []string) (gen.EventToNotifyService_GetNotificationStreamClient, error) {
-	ret := _m.Called(orgId, networkId, subscriberId, userId, scopes)
-
-	var r0 gen.EventToNotifyService_GetNotificationStreamClient
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, []string) (gen.EventToNotifyService_GetNotificationStreamClient, error)); ok {
-		return rf(orgId, networkId, subscriberId, userId, scopes)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, []string) gen.EventToNotifyService_GetNotificationStreamClient); ok {
-		r0 = rf(orgId, networkId, subscriberId, userId, scopes)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(gen.EventToNotifyService_GetNotificationStreamClient)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, string, []string) error); ok {
-		r1 = rf(orgId, networkId, subscriberId, userId, scopes)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateStatus provides a mock function with given fields: id, isRead
 func (_m *EventNotification) UpdateStatus(id string, isRead bool) (*gen.UpdateStatusResponse, error) {
 	ret := _m.Called(id, isRead)

@@ -22,7 +22,6 @@ import (
 type EventNotification interface {
 	Get(id string) (*pb.GetResponse, error)
 	GetAll(orgId string, networkId string, subscriberId string, userId string, role string) (*pb.GetAllResponse, error)
-	GetNotificationStream(orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.EventToNotifyService_GetNotificationStreamClient, error)
 	UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error)
 }
 
@@ -90,18 +89,4 @@ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId 
 		SubscriberId: subscriberId,
 		UserId:       userId,
 		Role:         pb.RoleType(pb.RoleType_value[role])})
-}
-
-func (n *eventNotification) GetNotificationStream(orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.EventToNotifyService_GetNotificationStreamClient, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.GetNotificationStream(ctx,
-		&pb.NotificationStreamRequest{
-			OrgId:        orgId,
-			NetworkId:    networkId,
-			SubscriberId: subscriberId,
-			UserId:       userId,
-			Scopes:       scopes,
-		})
 }

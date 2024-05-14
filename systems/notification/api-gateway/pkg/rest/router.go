@@ -49,6 +49,7 @@ type Clients struct {
 	m client.Mailer
 	n client.Notify
 	e client.EventNotification
+	d client.Distributor
 }
 
 var upgrader = websocket.Upgrader{
@@ -77,6 +78,12 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	if err != nil {
 		log.Fatalf("failed to create event-notify client: %v", err)
 	}
+
+	c.d, err = client.NewDistributor(endpoints.EventNotification, endpoints.Timeout)
+	if err != nil {
+		log.Fatalf("failed to create event-notify client: %v", err)
+	}
+
 	return c
 }
 
@@ -155,7 +162,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		eNotif.GET("", formatDoc("Get Notification By filter", "Get a specific notificationby filter"), tonic.Handler(r.getEventNotifications, http.StatusOK))
 		eNotif.GET("/:id", formatDoc("Get Notification by Id", "Get a notification"), tonic.Handler(r.getEventNotification, http.StatusOK))
 		eNotif.POST("/:id", formatDoc("Update Notifications", "Update matching notification"), tonic.Handler(r.updateEventNotification, http.StatusOK))
-		eNotif.GET("/live", formatDoc("Real-time Notifications", "Get notification as they are reproted"), tonic.Handler(r.liveEventNotificationHandler, http.StatusOK))
+
+		dist := auth.Group("/distributor", "Event distribution", "real time even distribution")
+		dist.GET("/live", formatDoc("Real-time Notifications", "Get notification as they are reproted"), tonic.Handler(r.liveEventNotificationHandler, http.StatusOK))
 
 	}
 }
@@ -245,7 +254,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 	}
 	defer ws.Close()
 
-	stream, err := r.clients.e.GetNotificationStream(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
+	stream, err := r.clients.d.GetNotificationStream(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
 	if err != nil {
 		log.Errorf("error getting notification on stream:Error: %s", err.Error())
 		return err
