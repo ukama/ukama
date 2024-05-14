@@ -20,7 +20,7 @@ import (
 )
 
 type EventNotification interface {
-	Get(id string) (*pb.GetAllResponse, error)
+	Get(id string) (*pb.GetResponse, error)
 	GetAll(orgId string, networkId string, subscriberId string, userId string, role string) (*pb.GetAllResponse, error)
 	UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error)
 }
