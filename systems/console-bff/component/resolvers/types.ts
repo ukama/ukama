@@ -15,7 +15,7 @@ registerEnumType(ComponentCategory, {
 
 @ObjectType()
 export class ComponentCategoryType {
-  @Field(() => ComponentCategory) // Decorator on the property
+  @Field(() => ComponentCategory)
   id: ComponentCategory;
 
   @Field()
@@ -30,7 +30,7 @@ export class ComponentAPIDto {
   @Field()
   inventory: string;
 
-  @Field(() => ComponentCategory) // Decorator on the property
+  @Field(() => ComponentCategory)
   category: ComponentCategory;
 
   @Field()
@@ -75,16 +75,16 @@ export class ComponentDto {
   @Field()
   type: string;
 
-  @Field() // Removed typo (userId -> userId)
+  @Field()
   userId: string;
 
   @Field()
   description: string;
 
-  @Field() // Renamed for consistency (datasheetURL -> datasheetUrl)
+  @Field()
   datasheetUrl: string;
 
-  @Field() // Renamed for consistency (imagesURL -> imagesUrl)
+  @Field()
   imageUrl: string;
 
   @Field()
@@ -104,18 +104,18 @@ export class ComponentDto {
 }
 @ObjectType()
 export class ComponentsResDto {
-  @Field(() => [ComponentDto]) // Decorator on the property
+  @Field(() => [ComponentDto])
   components: ComponentDto[];
 }
 
 @ObjectType()
 export class ComponentAPIResDto {
-  @Field(() => ComponentAPIDto) // Decorator on the property
+  @Field(() => ComponentAPIDto)
   component: ComponentAPIDto;
 }
 
 @ObjectType()
 export class ComponentsAPIResDto {
-  @Field(() => [ComponentAPIDto]) // Decorator on the property
+  @Field(() => [ComponentAPIDto])
   components: ComponentAPIDto[];
 }
