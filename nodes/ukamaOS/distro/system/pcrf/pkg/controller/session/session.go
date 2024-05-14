@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package session
 
 import (
@@ -100,9 +100,9 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 		} else {
 
-			/* Only do this whem RX or TX value changes */
+			/* Only do this when RX or TX value changes */
 			if totalBytes != sc.s.TotalBytes {
-				sc.idleReportSent = false // Reset teh idleReportSent flag on change in stats
+				sc.idleReportSent = false // Reset the idleReportSent flag on change in stats
 				sc.s.UpdatedAt = uint64(tNow)
 				sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
 				err = s.store.UpdateSessionUsage(sc.s)
@@ -117,9 +117,10 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 				}
 
 				totalUsage := sc.InitUsage + sc.s.TotalBytes
-				if totalUsage >= p.Data {
+				availableData := p.Data - p.Consumed
+				if totalUsage >= availableData {
 					/* this means we need to terminates session */
-					log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d current usage %d.", sc.s.ID, imsi, p.Data, totalUsage)
+					log.Errorf("[SessionId %d ] Subscriber %s hit the max data CapLimits of %d with previusly used data %d current used data %d.", sc.s.ID, imsi, p.Consumed, p.Data, totalUsage)
 					_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
 					return fmt.Errorf("max data cap limit exceeded")
 				}
