@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
@@ -93,7 +101,7 @@ func TestGutiRepo_GetImsi(t *testing.T) {
 			AddRow(now, now, Guti.Imsi, Guti.PlmnId, Guti.Mmegi, Guti.Mmec, Guti.MTmsi)
 
 		mock.ExpectQuery(`^SELECT.*gutis.*`).
-			WithArgs(Imsi).
+			WithArgs(Imsi, 1).
 			WillReturnRows(rows)
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package db_test
 
 import (
@@ -6,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
@@ -50,25 +59,42 @@ var sub = int_db.Asr{
 	},
 }
 
-// var sim = client.SimCardInfo{
-// 	Iccid:          Iccid,
-// 	Imsi:           Imsi,
-// 	Op:             []byte("0123456789012345"),
-// 	Key:            []byte("0123456789012345"),
-// 	Amf:            []byte("800"),
-// 	AlgoType:       1,
-// 	UeDlAmbrBps:    2000000,
-// 	UeUlAmbrBps:    2000000,
-// 	Sqn:            1,
-// 	CsgIdPrsent:    false,
-// 	CsgId:          0,
-// 	DefaultApnName: "ukama",
-// }
-
 var tai = int_db.Tai{
 	PlmnId:          "00101",
 	Tac:             101,
 	DeviceUpdatedAt: time.Now(),
+}
+
+type UkamaDbMock struct {
+	GormDb *gorm.DB
+}
+
+func (u UkamaDbMock) Init(model ...interface{}) error {
+	panic("implement me: Init()")
+}
+
+func (u UkamaDbMock) Connect() error {
+	panic("implement me: Connect()")
+}
+
+func (u UkamaDbMock) GetGormDb() *gorm.DB {
+	return u.GormDb
+}
+
+func (u UkamaDbMock) InitDB() error {
+	return nil
+}
+
+func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func() error) error {
+	log.Fatal("implement me: ExecuteInTransaction()")
+	return nil
+}
+
+func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func(tx *gorm.DB) error) error {
+	log.Fatal("implement me: ExecuteInTransaction2()")
+	return nil
 }
 
 func TestAsrRecordRepo_Add(t *testing.T) {
@@ -80,8 +106,6 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
-
-		//row := sqlmock.NewRows(12[]string{"iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id"}).
 
 		mock.ExpectBegin()
 
@@ -253,13 +277,14 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 		hrow := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id"}).
 			AddRow(sub.ID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeDlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId)
 
-		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"})
+		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"}).
+			AddRow(sub.ID, tai.PlmnId, tai.Tac, tai.DeviceUpdatedAt)
 
 		prow := sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "id", "burst", "total_data", "consumed_data", "dlbr", "ulbr", "start_time", "end_time", "asr_id"}).
 			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID)
 
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(sub.ID).
+			WithArgs(sub.ID, 1).
 			WillReturnRows(hrow)
 
 		mock.ExpectQuery(`^SELECT.*policies.*`).
@@ -309,23 +334,24 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		hrow := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id"}).
-			AddRow(sub.ID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeDlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId)
+			AddRow(subID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeDlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId)
 
-		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"})
+		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"}).
+			AddRow(subID, tai.PlmnId, tai.Tac, tai.DeviceUpdatedAt)
 
 		prow := sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "id", "burst", "total_data", "consumed_data", "dlbr", "ulbr", "start_time", "end_time", "asr_id"}).
-			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID)
+			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID)
 
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(sub.Iccid).
+			WithArgs(sub.Iccid, 1).
 			WillReturnRows(hrow)
 
 		mock.ExpectQuery(`^SELECT.*policies.*`).
-			WithArgs(sub.ID).
+			WithArgs(subID).
 			WillReturnRows(prow)
 
 		mock.ExpectQuery(`^SELECT.*tais.*`).
-			WithArgs(sub.ID).
+			WithArgs(subID).
 			WillReturnRows(trow)
 
 		dialector := postgres.New(postgres.Config{
@@ -367,22 +393,24 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		hrow := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id"}).
-			AddRow(sub.ID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeDlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId)
+			AddRow(subID, sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeDlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId)
 
-		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"})
+		trow := sqlmock.NewRows([]string{"asr_id", "plmn_id", "tac", "device_updated_at"}).
+			AddRow(subID, tai.PlmnId, tai.Tac, tai.DeviceUpdatedAt)
 
 		prow := sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "id", "burst", "total_data", "consumed_data", "dlbr", "ulbr", "start_time", "end_time", "asr_id"}).
-			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID)
+			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID)
 
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(Imsi).
+			WithArgs(Imsi, 1).
 			WillReturnRows(hrow)
+
 		mock.ExpectQuery(`^SELECT.*policies.*`).
-			WithArgs(sub.ID).
+			WithArgs(subID).
 			WillReturnRows(prow)
 
 		mock.ExpectQuery(`^SELECT.*tais.*`).
-			WithArgs(sub.ID).
+			WithArgs(subID).
 			WillReturnRows(trow)
 
 		dialector := postgres.New(postgres.Config{
@@ -436,7 +464,7 @@ func TestAsrRecordRepo_UpdateTai(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(Imsi).
+			WithArgs(Imsi, 1).
 			WillReturnRows(hrow)
 
 		mock.ExpectQuery(`^SELECT.*tais.*`).

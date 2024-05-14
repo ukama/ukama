@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package policy
 
 import (
@@ -17,12 +25,11 @@ import (
 )
 
 type policyController struct {
-	dp      dataplan.PackageClient
-	Rules   []Rule
-	asrRepo db.AsrRecordRepo
-	period  time.Duration
-	pR      chan bool
-	//policyRepo           db.PolicyRepo
+	dp                   dataplan.PackageClient
+	Rules                []Rule
+	asrRepo              db.AsrRecordRepo
+	period               time.Duration
+	pR                   chan bool
 	msgbus               mb.MsgBusServiceClient
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	MsgBusRoutingKey     msgbus.RoutingKeyBuilder
@@ -215,7 +222,7 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 
 /*
 For now all the policies are by default applicable for the profiles.
-There might be more policies which are applicablee for certain profiles
+There might be more policies which are applicable for certain profiles
 that can be easily managed by adding policy db and adding applicable policy id for each susbcriber.
 */
 func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
@@ -252,50 +259,6 @@ func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
 	}
 	return nil, removed
 }
-
-/* This will send a policy to the pcrf on node */
-// func (p *policyController) syncProfile(method string, pf db.Profile) error {
-
-// 	route := "request.cloud.local" + "." + p.OrgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-
-// 	/* Msg can only be :
-// 		{
-// 		"policy": {
-// 			"burst": 1500,
-// 			"data": 102400000, // Only data allowed for user not the total data limit of package
-// 			"dlbr": 15000,
-// 			"end_time": 1908747808,
-// 			"start_time": 1608747808,
-// 			"ulbr": 1000,
-// 			"uuid": "04693e2853b7496781e235d826b56703"
-// 			"ats": "",
-// 		},
-// 		"reroute": "192.168.0.14"
-// 	}
-// 	*/
-// 	body, err := json.Marshal(pf)
-// 	if err != nil {
-// 		log.Errorf("error marshaling profile: %s", err.Error())
-// 		return err
-// 	}
-
-// 	path := "/v1/pcrf/subscriber/imsi/" + pf.Imsi
-// 	msg := &pb.NodeFeederMessage{
-// 		Target:     p.OrgName + "." + pf.NetworkId.String() + "." + "*" + "." + "*",
-// 		HTTPMethod: method,
-// 		Path:       path,
-// 		Msg:        body,
-// 	}
-
-// 	err = p.msgbus.PublishRequest(route, msg)
-// 	if err != nil {
-// 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
-// 		return err
-// 	}
-// 	log.Infof("Published policy %v on route %s with target nodes %s", msg, route, msg.Target)
-
-// 	return nil
-// }
 
 func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
 
