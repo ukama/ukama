@@ -21,9 +21,10 @@ type AgentAdapter interface {
 	BindSim(context.Context, string) (any, error)
 	GetSim(context.Context, string) (any, error)
 	GetUsages(context.Context, string, string, string, string, string) (any, any, error)
-	ActivateSim(context.Context, string) error
-	DeactivateSim(context.Context, string) error
+	ActivateSim(context.Context, ReqData) error
+	DeactivateSim(context.Context, ReqData) error
 	TerminateSim(context.Context, string) error
+	UpdatePackage(context.Context, ReqData) error
 	Close()
 }
 
@@ -34,6 +35,14 @@ type AgentFactory interface {
 type agentFactory struct {
 	timeout time.Duration
 	factory map[ukama.SimType]AgentAdapter
+}
+
+type ReqData struct {
+	Iccid     string `json:"iccid"`
+	Imsi      string `json:"imsi,omitempty"`
+	SimId     string `json:"sim_id,omitempty"`
+	PackageId string `json:"package_id,omitempty"`
+	NetworkId string `json:"netwrok_id,omitempty"`
 }
 
 func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Duration, debug bool) *agentFactory {

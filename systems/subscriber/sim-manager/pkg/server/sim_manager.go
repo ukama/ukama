@@ -372,7 +372,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"failure to get agent for sim type: %q", simType)
+			"failure to get agentDeactivateSim for sim type: %q", simType)
 	}
 
 	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To, req.Region)
@@ -723,6 +723,26 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
+	/* Update package for opertaor */
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
+	}
+
+	opReq := adapters.ReqData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.Id.String(),
+		SimId:     sim.Id.String(),
+	}
+
+	err = simAgent.UpdatePackage(ctx, opReq)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.SetActivePackageResponse{}, nil
 }
 
@@ -779,7 +799,14 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimID)
 	}
 
-	err = simAgent.ActivateSim(ctx, sim.Iccid)
+	req := adapters.ReqData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.Id.String(),
+		SimId:     sim.Id.String(),
+	}
+	err = simAgent.ActivateSim(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -844,7 +871,13 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimID)
 	}
 
-	err = simAgent.DeactivateSim(ctx, sim.Iccid)
+	req := adapters.ReqData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		SimId:     sim.Id.String(),
+	}
+	err = simAgent.DeactivateSim(ctx, req)
 	if err != nil {
 		return nil, err
 	}
