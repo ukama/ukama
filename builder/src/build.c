@@ -64,7 +64,7 @@ bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo) {
     return USYS_TRUE;
 }
 
-bool build_nodes(int count, char *repo, char *list) {
+bool build_nodes(char *repo, int count, char **list) {
 
     char *nodeID = NULL;
     char runMe[MAX_BUFFER] = {0};
