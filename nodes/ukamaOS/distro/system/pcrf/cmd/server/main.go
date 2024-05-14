@@ -84,6 +84,6 @@ func initConfig() {
 func sigHandler(sigs chan os.Signal, done chan bool, ctr *controller.Controller) {
 	sig := <-sigs
 	log.Infof("Starting signal handler routine for %v", sig)
-	ctr.ExitController()
+	_ = ctr.ExitController()
 	done <- true
 }
