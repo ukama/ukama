@@ -171,7 +171,7 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 
 func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error {
 
-	httpMethod := "POST"
+	var httpMethod string
 	subscriber := &epb.Subscriber{
 		Imsi:    as.Imsi,
 		Iccid:   as.Iccid,
