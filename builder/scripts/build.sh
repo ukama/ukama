@@ -159,14 +159,16 @@ elif [ "$1" = "base-image" ]; then
     ukama_root=$2
     base_id=$3
 
+    echo "Building base image with base_id: $base_id"
     build_base_image $ukama_root $base_id
 
-elif [ "$1" = "new-node" ]; then
+elif [ "$1" = "create-node" ]; then
 
     ukama_root=$2
     node_id=$3
     base_id=$4
 
+    echo "Building node image with base: $base_id and node: $node_id"
     build_node_from_base_image $ukama_root $node_id $base_id
 
 else
