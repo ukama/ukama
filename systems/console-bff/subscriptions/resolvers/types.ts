@@ -232,103 +232,11 @@ export class GetNotificationsInput {
   siteId: string;
 
   @Field()
-  nodeId: string;
-
-  @Field()
   userId: string;
 
   @Field()
   subscriberId: string;
 
-  @Field(() => ROLE_TYPE)
-  forRole: ROLE_TYPE;
-}
-
-@ArgsType()
-@InputType()
-export class GetOrgNotificationsInput {
-  @Field()
-  orgId: string;
-
-  @Field()
-  userId: string;
-
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
-}
-@ArgsType()
-@InputType()
-export class GetNetworkNotificationsInput {
-  @Field()
-  orgId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
-}
-@ArgsType()
-@InputType()
-export class GetSiteNotificationsInput {
-  @Field()
-  orgId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  siteId: string;
-
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
-}
-@ArgsType()
-@InputType()
-export class GetNodeNotificationsInput {
-  @Field()
-  orgId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  siteId: string;
-
-  @Field()
-  nodeId: string;
-
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
-}
-@ArgsType()
-@InputType()
-export class GetSubscriberNotificationsInput {
-  @Field()
-  orgId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  subscriberId: string;
-}
-
-@ArgsType()
-@InputType()
-export class GetUserNotificationsInput {
-  @Field()
-  userId: string;
+  @Field(() => [String])
+  scopes: string[];
 }
