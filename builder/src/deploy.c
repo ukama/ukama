@@ -185,19 +185,18 @@ bool deploy_all_systems(char *configFilename,
     return USYS_TRUE;
 }
 
-bool deploy_node(char *id) {
+bool deploy_nodes(int count, char **nodesIDList) {
 
-    char *nodeID = NULL;
+    int i;
     char runMe[MAX_BUFFER] = {0};
 
-    if (strcmp(id, "random") == 0) {
-        nodeID = DEF_NODE_ID;
-    } else {
-        nodeID = id;
+    for (i=0; i<count; i++) {
+        sprintf(runMe, "%s node %s", DEPLOY_SCRIPT, nodesIDList[i]);
+        if (system(runMe) < 0) {
+            usys_log_error("Unable to deploy node: %s", nodesIDList[i]);
+            continue;
+        }
     }
-
-    sprintf(runMe, "%s node %s", DEPLOY_SCRIPT, nodeID);
-    if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
 }

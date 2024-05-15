@@ -62,18 +62,18 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
 }
 
 static bool deserialize_nodes_id_file(char *fileName,
-                                      char **IDsList,
+                                      char ***IDsList,
                                       int  *IDsCount) {
 
     FILE   *fp = NULL;
     char   *buffer = NULL;
     long   size = 0;
     int    index = 0;
-    json_t *json = NULL, *jID = NULL;
+    json_t *json = NULL, *jID = NULL, *jArray = NULL;
     json_error_t jerror;
 
     *IDsCount = 0;
-    IDsList   = NULL;
+    *IDsList  = NULL;
 
     if ((fp = fopen(fileName, "r")) == NULL) {
         usys_log_error("Error opening config file: %s Error: %s",
@@ -92,13 +92,13 @@ static bool deserialize_nodes_id_file(char *fileName,
         return USYS_FALSE;
     }
 
-    buffer = (char *)malloc(size);
+    buffer = (char *)malloc(size + 1);
     if (buffer == NULL) {
         usys_log_error("Error allocating memory of size: %ld", size);
         fclose(fp);
         return USYS_FALSE;
     }
-    memset(buffer, 0, size+1);
+    memset(buffer, 0, size + 1);
     fread(buffer, 1, size, fp);
 
     /* load as JSON */
@@ -107,49 +107,58 @@ static bool deserialize_nodes_id_file(char *fileName,
         usys_log_error("Error loading manifest into JSON format."
                        "File: %s Size: %ld", fileName, size);
         usys_log_error("JSON error on line: %d: %s", jerror.line, jerror.text);
-        free(buffer);
+        usys_free(buffer);
         return USYS_FALSE;
     }
 
-    if (!json_is_array(json)) {
-        usys_log_error("Error: no json array found in %s", fileName);
-        free(buffer);
+    if (!json_is_object(json)) {
+        usys_log_error("Root is not an object");
+        usys_free(buffer);
         json_decref(json);
         return USYS_FALSE;
     }
 
-    *IDsCount = json_array_size(json);
-    IDsList = (char **)calloc(*IDsCount, sizeof(char *));
+    jArray = json_object_get(json, JTAG_NODES_ID);
+    if (!json_is_array(jArray)) {
+        usys_log_error("No json array found in %s", fileName);
+        usys_free(buffer);
+        json_decref(json);
+        return USYS_FALSE;
+    }
+
+    *IDsCount = json_array_size(jArray);
+    *IDsList = (char **)calloc(*IDsCount, sizeof(char *));
 
     for (index=0; index < *IDsCount; index++) {
-        jID = json_array_get(json, index);
+        jID = json_array_get(jArray, index);
         if (json_is_string(jID)) {
-            IDsList[index] = strdup(json_string_value(jID));
+            (*IDsList)[index] = strdup(json_string_value(jID));
         }
     }
 
+    usys_free(buffer);
     json_decref(json);
+
     return USYS_TRUE;
 }
 
 static bool deserialize_config_file(Config **config, json_t *json) {
 
-    int ret = USYS_TRUE;
-
-    json_t *jSetup  = NULL;
-    json_t *jBuild  = NULL;
-    json_t *jDeploy = NULL;
-    json_t *jNodes  = NULL;
-    json_t *jSystems     = NULL;
-    json_t *jInterfaces  = NULL;
-    json_t *jDeployEnv   = NULL;
-
-    int count = 0;
     const char *key = NULL;
-    json_t *value = NULL;
+    int ret   = USYS_TRUE;
+    int count = 0;
 
-    jSetup = json_object_get(json, JTAG_SETUP);
-    jBuild = json_object_get(json, JTAG_BUILD);
+    json_t *jSetup      = NULL;
+    json_t *jBuild      = NULL;
+    json_t *jDeploy     = NULL;
+    json_t *jNodes      = NULL;
+    json_t *jSystems    = NULL;
+    json_t *jInterfaces = NULL;
+    json_t *jDeployEnv  = NULL;
+    json_t *value       = NULL;
+
+    jSetup  = json_object_get(json, JTAG_SETUP);
+    jBuild  = json_object_get(json, JTAG_BUILD);
     jDeploy = json_object_get(json, JTAG_DEPLOY);
 
     if (jSetup == NULL || jBuild == NULL || jDeploy == NULL) {
@@ -164,7 +173,7 @@ static bool deserialize_config_file(Config **config, json_t *json) {
         usys_log_error("Missing entries in build");
         return USYS_FALSE;
     }
-    
+
     jDeployEnv = json_object_get(jDeploy, JTAG_ENV);
     if (jDeployEnv == NULL) {
         usys_log_debug("No env variable define in <deploy>");
@@ -184,11 +193,11 @@ static bool deserialize_config_file(Config **config, json_t *json) {
     if ((*config)->setup == NULL ||
         (*config)->build == NULL ||
         (*config)->deploy == NULL) {
+
         usys_log_error("Error allocating memory");
         usys_free(*config);
-
         return USYS_FALSE;
-    } 
+    }
 
     jDeployEnv = json_object_get(jDeploy, JTAG_ENV);
     if (jDeployEnv == NULL) {
@@ -200,15 +209,15 @@ static bool deserialize_config_file(Config **config, json_t *json) {
     }
 
     /* setup */
-    ret |= get_json_entry(jSetup, JTAG_NETWORK_INTERFACE, JSON_STRING,
+    ret &= get_json_entry(jSetup, JTAG_NETWORK_INTERFACE, JSON_STRING,
                           &(*config)->setup->networkInterface, NULL);
-    ret |= get_json_entry(jSetup, JTAG_BUILD_OS, JSON_STRING,
+    ret &= get_json_entry(jSetup, JTAG_BUILD_OS, JSON_STRING,
                           &(*config)->setup->buildOS, NULL);
-    ret |= get_json_entry(jSetup, JTAG_UKAMA_REPO, JSON_STRING,
+    ret &= get_json_entry(jSetup, JTAG_UKAMA_REPO, JSON_STRING,
                           &(*config)->setup->ukamaRepo, NULL);
-    ret |= get_json_entry(jSetup, JTAG_AUTH_REPO, JSON_STRING,
+    ret &= get_json_entry(jSetup, JTAG_AUTH_REPO, JSON_STRING,
                           &(*config)->setup->authRepo, NULL);
-    ret |= get_json_entry(jSetup, JTAG_STATUS_INTERVAL, JSON_INTEGER,
+    ret &= get_json_entry(jSetup, JTAG_STATUS_INTERVAL, JSON_INTEGER,
                           NULL, &(*config)->setup->statusInterval);
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing <setup>");
@@ -218,14 +227,14 @@ static bool deserialize_config_file(Config **config, json_t *json) {
     }
 
     /* build */
-    ret |= get_json_entry(jNodes, JTAG_NODES_ID_FILENAME, JSON_STRING,
+    ret &= get_json_entry(jNodes, JTAG_NODES_ID_FILENAME, JSON_STRING,
                           &(*config)->build->nodesIDFilename, NULL);
-    ret |= get_json_entry(jSystems, JTAG_LIST, JSON_STRING,
+    ret &= get_json_entry(jSystems, JTAG_LIST, JSON_STRING,
                           &(*config)->build->systemsList, NULL);
-    ret |= get_json_entry(jInterfaces, JTAG_LIST, JSON_STRING,
+    ret &= get_json_entry(jInterfaces, JTAG_LIST, JSON_STRING,
                           &(*config)->build->interfacesList, NULL);
-    ret |= deserialize_nodes_id_file((*config)->build->nodesIDFilename,
-                                     (*config)->build->nodesIDList,
+    ret &= deserialize_nodes_id_file((*config)->build->nodesIDFilename,
+                                     &(*config)->build->nodesIDList,
                                      &(*config)->build->nodesCount);
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing <build>");
@@ -250,12 +259,12 @@ static bool deserialize_config_file(Config **config, json_t *json) {
             count++;
         }
     }
-    ret |= get_json_entry(jDeploy, JTAG_SYSTEMS, JSON_STRING,
+    ret &= get_json_entry(jDeploy, JTAG_SYSTEMS, JSON_STRING,
                           &(*config)->deploy->systemsList, NULL);
-    ret |= get_json_entry(jDeploy, JTAG_NODES_ID_FILENAME, JSON_STRING,
+    ret &= get_json_entry(jDeploy, JTAG_NODES_ID_FILENAME, JSON_STRING,
                           &(*config)->deploy->nodesIDFilename, NULL);
-    ret |= deserialize_nodes_id_file((*config)->deploy->nodesIDFilename,
-                                     (*config)->deploy->nodesIDList,
+    ret &= deserialize_nodes_id_file((*config)->deploy->nodesIDFilename,
+                                     &(*config)->deploy->nodesIDList,
                                      &(*config)->deploy->nodesCount);
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing <deploy>");
@@ -310,6 +319,8 @@ bool read_config_file(Config **config, char *fileName) {
         usys_log_error("Error loading manifest into JSON format."
                        "File: %s Size: %ld", fileName, size);
         usys_log_error("JSON error on line: %d: %s", jerror.line, jerror.text);
+        free(buffer);
+        return USYS_FALSE;
     } else {
         ret = deserialize_config_file(config, json);
     }
@@ -346,6 +357,7 @@ void free_config(Config *config) {
         usys_free(config->build->kernelImage);
         usys_free(config->build->initRAMImage);
         usys_free(config->build->diskImage);
+        usys_free(config->build->nodesIDFilename);
     }
 
     if (config->deploy) {
@@ -358,10 +370,11 @@ void free_config(Config *config) {
         usys_free(config->deploy->systemsList);
 
         for (count =0; count < config->deploy->nodesCount; count++) {
-            usys_free(config->build->nodesIDList[count]);
+            usys_free(config->deploy->nodesIDList[count]);
         }
 
         usys_free(config->deploy->nodesIDList);
+        usys_free(config->deploy->nodesIDFilename);
     }
 
     usys_free(config->fileName);

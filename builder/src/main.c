@@ -27,11 +27,11 @@ extern bool build_nodes(char *repo, int count, char **list);
 /* deploy.c */
 extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
 extern bool display_all_systems_status(char *systems, int interval);
-extern bool deploy_node(char *id);
+extern bool deploy_nodes(int count, char **nodesIDList);
 
 /* shutdown.c */
 extern bool shutdown_all_systems(char *systems, char *ukamaRepo, char *authRepo);
-extern bool shutdown_node(char *id);
+extern bool shutdown_nodes(int count, char **nodesIDList);
 
 #define CMD_BUILD  1
 #define CMD_DEPLOY 2
@@ -189,6 +189,8 @@ int main(int argc, char **argv) {
 
     Config *config = NULL;
 
+    usys_log_set_service("builder");
+
     processArguments(argc, argv, &target, &cmd);
 
     /* Parsing command line args. */
@@ -284,7 +286,8 @@ int main(int argc, char **argv) {
         usys_log_debug("Deploying the node(s) and system(s) ...");
 
         if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!deploy_node(config->build->nodesIDList)) {
+            if (!deploy_nodes(config->build->nodesCount,
+                              config->build->nodesIDList)) {
                 usys_log_error("Unable to deploy the node. Existing ...");
                 goto done;
             }
@@ -314,7 +317,8 @@ int main(int argc, char **argv) {
     if (cmd == CMD_ALL || cmd == CMD_DOWN) {
 
         if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!shutdown_node(config->deploy->nodesIDList)) {
+            if (!shutdown_nodes(config->deploy->nodesCount,
+                                config->deploy->nodesIDList)) {
                 usys_log_error("Node Shutdown FAILED: %s Try manually",
                                config->deploy->nodesIDList);
             }

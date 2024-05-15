@@ -20,6 +20,7 @@
 #define JTAG_NETWORK_INTERFACE  "network-interface"
 #define JTAG_NODES_ID_FILENAME  "nodes-id-filename"
 #define JTAG_STATUS_INTERVAL    "status-interval"
+#define JTAG_NODES_ID           "nodes-id"
 #define JTAG_BUILD_OS           "build-os"
 #define JTAG_KERNEL_IMAGE       "kernel-image"
 #define JTAG_INITRAM_IMAGE      "initram-image"
