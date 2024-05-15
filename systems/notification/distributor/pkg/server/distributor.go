@@ -11,35 +11,86 @@ package server
 import (
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
+	"google.golang.org/grpc/status"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 )
 
+type Clients struct {
+	Nucleus    providers.NucleusProvider
+	Registry   providers.RegistryProvider
+	Subscriber providers.SubscriberProvider
+}
+
 type DistributorServer struct {
 	pb.UnimplementedDistributorServiceServer
 	notify             db.NotifyHandler
 	eventNotifyService providers.EventNotifyClientProvider
+	clients            Clients
 	orgName            string
 	orgId              string
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
+func NewEventToNotifyServer(clients Clients, orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
 	return &DistributorServer{
 		notify:             db.NewNotifyHandler(dbConfig, eventNotifyService),
 		orgId:              orgId,
 		orgName:            orgName,
 		eventNotifyService: eventNotifyService,
+		clients:            clients,
 	}
+}
+
+func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) error {
+	//role := memberpb.RoleType_USERS
+	if req.GetOrgId() != "" {
+		if req.GetOrgId() != n.orgId {
+			log.Errorf("Invalid org id %s in request", req.OrgId)
+			return status.Errorf(codes.InvalidArgument, "invalid org id")
+		}
+	}
+
+	/* validate member of org or member role */
+	if req.GetUserId() != "" {
+		_, err := n.clients.Registry.GetMember(n.orgName, req.GetUserId())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument,
+				"invalid user id. Error %s", err.Error())
+		}
+		//role = resp.Member.Role
+	}
+
+	if req.GetNetworkId() != "" {
+		_, err := n.clients.Registry.GetNetwork(n.orgName, req.GetNetworkId())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument,
+				"invalid network id. Error %s", err.Error())
+		}
+	}
+
+	if req.GetSubscriberId() != "" {
+		_, err := n.clients.Subscriber.GetSubscriber(n.orgName, req.GetSubscriberId())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument,
+				"invalid subscriber id. Error %s", err.Error())
+		}
+	}
+
+	return nil
 }
 
 func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequest, srv pb.DistributorService_GetNotificationStreamServer) error {
 	log.Info("Notification stream started for +v.", req)
 
-	//validaterequest(req)
+	err := n.validateRequest(req)
+	if err != nil {
+		return err
+	}
 
 	/* register */
 	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)

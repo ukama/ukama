@@ -12,6 +12,20 @@ type NotifyHandler struct {
 	mock.Mock
 }
 
+// Deregister provides a mock function with given fields: id
+func (_m *NotifyHandler) Deregister(id string) error {
+	ret := _m.Called(id)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Register provides a mock function with given fields: orgId, networkId, subscriberId, userId, scopes
 func (_m *NotifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, scopes []string) (string, *db.Sub) {
 	ret := _m.Called(orgId, networkId, subscriberId, userId, scopes)
@@ -46,20 +60,6 @@ func (_m *NotifyHandler) Start() {
 // Stop provides a mock function with given fields:
 func (_m *NotifyHandler) Stop() {
 	_m.Called()
-}
-
-// UnRegister provides a mock function with given fields: id
-func (_m *NotifyHandler) UnRegister(id string) error {
-	ret := _m.Called(id)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(id)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 type mockConstructorTestingTNewNotifyHandler interface {

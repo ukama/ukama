@@ -126,8 +126,13 @@ func (h *notifyHandler) processNotification(n *pb.Notification) {
 	for k, s := range h.subs {
 		log.Infof("Processing notification %+v for sub %s with %+v", n, k, s)
 
-		/* Send over channel */
-		s.DataChan <- n
+		for _, scope := range s.Scopes {
+			if n.Scope == scope {
+				/* Send over channel */
+				s.DataChan <- n
+			}
+		}
+
 	}
 }
 
@@ -155,7 +160,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 	defer listener.Close()
 
 	/*TODO: - Close the stream
-	- May be check where the notofivcatins are getting filtered based on userid/kid or subscriberid
+	- May be check where the notifivcatins are getting filtered based on userid/kid or subscriberid
 	- This will only report notifcation when websocket is connected if we have any old notification(stores 8Gb)  that had to be reterived by
 	anyother API method
 	- Looks like if this is session/user based we might not get trigeer properly beacuse all of the listner will be reading form the same notify queue.
