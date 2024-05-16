@@ -285,20 +285,20 @@ int main(int argc, char **argv) {
 
         usys_log_debug("Deploying the node(s) and system(s) ...");
 
-        if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!deploy_nodes(config->build->nodesCount,
-                              config->build->nodesIDList)) {
-                usys_log_error("Unable to deploy the node. Existing ...");
-                goto done;
-            }
-        }
-
         if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
             if (!deploy_all_systems(config->fileName,
                                     config->deploy,
                                     config->setup->ukamaRepo,
                                     config->setup->authRepo)) {
                 usys_log_error("Unable to deploy the system. Exiting ...");
+                goto done;
+            }
+        }
+
+        if (target == TARGET_ALL || target == TARGET_NODES) {
+            if (!deploy_nodes(config->build->nodesCount,
+                              config->build->nodesIDList)) {
+                usys_log_error("Unable to deploy the node. Existing ...");
                 goto done;
             }
         }

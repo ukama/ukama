@@ -12,6 +12,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[38;5;39m'
 NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
+ORG_NAME=ukamaorg
+INIT_SYSTEM_PORT=0
 
 set_env() {
 
@@ -53,6 +55,25 @@ register_user() {
     echo  "$TAG Please verify your email address by visiting ${GREEN}http://localhost:4436${NC}"
 }
 
+get_init_system_port() {
+
+    local repo=$1
+    local service_name="api-gateway-init"
+
+    compose_file="${repo}/systems/init/docker-compose.yml"
+
+    # Extract the port
+    local port=$(grep -A 10 "${service_name}:" "${compose_file}" | \
+                     grep -A 2 ports | awk -F"'" '{print $2}' | cut -d ':' -f 1)
+
+    if [ -z "$port" ]; then
+        echo "Error: Port not found for service ${service_name}"
+        exit 1
+    else
+        INIT_SYSTEM_PORT=$port
+    fi
+}
+
 if [ "$1" = "system" ]; then
 
     system=$2
@@ -78,6 +99,11 @@ if [ "$1" = "system" ]; then
             DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
             QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
             psql $DB_URI -c "$QUERY" || exit 1
+
+            # add org
+            curl -X 'PATCH' 'http://192.168.0.100:8071/v1/orgs/ukamaorg' \
+                 -H 'accept: application/json' -H 'Content-Type: application/json' \
+                 -d '{ "certificate": "this-is-a-certificate",  "ip": "192.168.0.100"}'
             ;;
     esac
 
@@ -90,9 +116,33 @@ elif [ "$1" = "node" ]; then
     # so we can shutdown QEMU gracefully
     sudo apt-get install qemu-guest-agent
 
-    sudo qemu-system-x86_64 -hda ${image_file} -m 1024 -kernel ./vmlinuz-5.4.0-26-generic \
+    sudo qemu-system-x86_64 -hda ${image_file} -m 1024 -kernel \
+         ./vmlinuz-5.4.0-26-generic \
          -initrd ./initrd.img-5.4.0-26-generic -append "root=/dev/sda1" \
          -qmp tcp:0:3333,server,nowait &
+
+elif [ "$1" = "add-org-to-init-system" ]; then
+
+    repo=$2
+
+    get_init_system_port $repo
+    export INIT_SYSTEM_PORT
+
+    curl -X 'PATCH' 'http://${LOCAL_HOST_IP}:${INIT_SYSTEM_PORT}/v1/orgs/${ORG_NAME}' \
+                 -H 'accept: application/json' -H 'Content-Type: application/json' \
+                 -d '{ "certificate": "this-is-a-certificate",  "ip": "${LOCAL_HOST_IP}"}'
+
+elif [ "$1" = "add-node-to-init-system" ]; then
+
+    repo=$2
+    node_id=$3
+
+    get_init_system_port $repo
+    export INIT_SYSTEM_PORT
+
+    curl -X 'PUT' 'http://${LOCAL_HOST_IP}:${INIT_SYSTEM_PORT}/v1/orgs/${ORG_NAME}/nodes/${node_id}' \
+         -H 'accept: application/json'
+
 fi
 
 exit 0
