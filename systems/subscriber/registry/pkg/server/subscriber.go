@@ -15,18 +15,18 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -37,17 +37,21 @@ type SubcriberServer struct {
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRegistryServiceServer
 	simManagerService client.SimManagerClientProvider
+	orgId             string
+	orgClient         cnucl.OrgClient
 	networkClient     creg.NetworkClient
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, networkClient creg.NetworkClient) *SubcriberServer {
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient,networkClient creg.NetworkClient) *SubcriberServer {
 	return &SubcriberServer{
 		orgName:              orgName,
 		subscriberRepo:       subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,
-		networkClient:        networkClient,
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgId:                orgId,
+		orgClient:            orgService,
+		networkClient:        networkClient,
 	}
 }
 
@@ -55,17 +59,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	log.Infof("Adding subscriber: %v", req)
 
 	var dob string
-
+	subscriberId := uuid.NewV4()
 	networkId, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of network uuid. Error %s", err.Error())
-	}
-
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
 	}
 
 	if req.GetDob() != "" {
@@ -74,22 +72,27 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
 	}
-
-	subscriberId := uuid.NewV4()
-
+	remoteOrg, err := s.orgClient.Get(s.orgName)
+	if err != nil {
+		return nil, err
+	}
 	networkInfo, err := s.networkClient.Get(networkId.String())
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
 	}
 
-	if orgId.String() != networkInfo.OrgId {
+	if s.orgId != networkInfo.OrgId {
 		log.Error("Missing network.")
 
 		return nil, fmt.Errorf("Network mismatch")
 	}
 
+	if remoteOrg.IsDeactivated {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"org is deactivated: cannot add network to it")
+	}
+
 	subscriber := &db.Subscriber{
-		OrgId:                 orgId,
 		SubscriberId:          subscriberId,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
@@ -124,14 +127,14 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+	log.Infof("Getting subscriber with ID: %v", req)
+
 	subscriberIdReq := req.GetSubscriberId()
 
 	subscriberId, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid subscriberId format: %v", err.Error())
 	}
-
-	log.Infof("Getting subscriber with ID: %v", subscriberId)
 
 	subscriber, err := s.subscriberRepo.Get(subscriberId)
 	if err != nil {
@@ -195,7 +198,6 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 			Id:           sim.Id,
 			SubscriberId: sim.SubscriberId,
 			NetworkId:    sim.NetworkId,
-			OrgId:        sim.OrgId,
 			Iccid:        sim.Iccid,
 			Msisdn:       sim.Msisdn,
 			Package: &pb.Package{
@@ -350,7 +352,6 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*pb.Sim {
 			Id:                 u.Id,
 			SubscriberId:       u.SubscriberId,
 			NetworkId:          u.NetworkId,
-			OrgId:              u.OrgId,
 			Iccid:              u.Iccid,
 			Msisdn:             u.Msisdn,
 			Type:               u.Type,
@@ -380,7 +381,6 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
 		NetworkId:             s.NetworkId.String(),
-		OrgId:                 s.OrgId.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),

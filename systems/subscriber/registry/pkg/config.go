@@ -25,6 +25,7 @@ type Config struct {
 	SimManagerHost   string `default:"simmanager:9090"`
 	RegistryHost     string `default:"http://registry-api-gw:8080"`
 	OrgName          string
+	OrgId            string
 }
 
 func NewConfig(name string) *Config {

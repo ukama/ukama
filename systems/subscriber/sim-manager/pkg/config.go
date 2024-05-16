@@ -38,7 +38,7 @@ type Config struct {
 	SimPool           string `default:"simpool:9090"`
 	TestAgent         string `default:"testagent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
-	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
+	OrgId             string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	RegistryHost      string `default:"http://registry-api-gw:8080"`
 	DataPlanHost      string `default:"http://data-plan:8080"`
 	NotificationHost  string `default:"http://192.168.1.81:8089"`

@@ -119,7 +119,7 @@ func runGrpcServer(gormDB sql.Db) {
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
 		serviceConfig.Key,
 		mbClient,
-		serviceConfig.Org,
+		serviceConfig.OrgId,
 		serviceConfig.PushMetricHost,
 		notificationClient,
 		netClient,
