@@ -15,7 +15,6 @@ package ukama.inventory.component.v1;
 service ComponentService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
-
     rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
 }
 
@@ -62,4 +61,5 @@ enum ComponentCategory {
     BACKHAUL = 2;
     POWER = 3;
     SWITCH = 4;
+    SPECTRUM = 5;
 }

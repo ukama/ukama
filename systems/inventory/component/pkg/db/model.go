@@ -51,7 +51,7 @@ func (c ComponentCategory) Value() (uint8, error) {
 }
 
 func (c ComponentCategory) String() string {
-	t := map[ComponentCategory]string{0: "all", 1: "access", 2: "backhaul", 3: "power", 4: "switch"}
+	t := map[ComponentCategory]string{0: "all", 1: "access", 2: "backhaul", 3: "power", 4: "switch",5: "spectrum"}
 
 	v, ok := t[c]
 	if !ok {
@@ -67,7 +67,7 @@ func ParseType(value string) ComponentCategory {
 		return ComponentCategory(i)
 	}
 
-	t := map[string]ComponentCategory{"all": 0, "access": 1, "backhaul": 2, "power": 3, "switch": 4}
+	t := map[string]ComponentCategory{"all": 0, "access": 1, "backhaul": 2, "power": 3, "switch": 4, "spectrum":5}
 
 	v, ok := t[value]
 	if !ok {
