@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
@@ -55,12 +54,7 @@ func initConfig() {
 
 func runGrpcServer() {
 
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		/* used on local machines */
-		inst := uuid.NewV4()
-		instanceId = inst.String()
-	}
+	log.Debugf("Distributor config %+v", serviceConfig)
 
 	c := server.Clients{}
 
@@ -69,6 +63,8 @@ func runGrpcServer() {
 	c.Registry = providers.NewRegistryProvider(serviceConfig.Http.Nucleus, serviceConfig.DebugMode)
 
 	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.Nucleus, serviceConfig.DebugMode)
+
+	log.Debugf("Distributor db config %+v", serviceConfig.DB)
 
 	distributorServer := server.NewEventToNotifyServer(c, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.DB, providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost))
 
