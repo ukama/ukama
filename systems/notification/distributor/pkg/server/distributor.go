@@ -37,13 +37,18 @@ type DistributorServer struct {
 
 func NewEventToNotifyServer(clients Clients, orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
-	return &DistributorServer{
+	d := &DistributorServer{
 		notify:             db.NewNotifyHandler(dbConfig, eventNotifyService),
 		orgId:              orgId,
 		orgName:            orgName,
 		eventNotifyService: eventNotifyService,
 		clients:            clients,
 	}
+
+	/* start notification handler routine */
+	d.notify.Start()
+
+	return d
 }
 
 func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) error {
