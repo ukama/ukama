@@ -101,6 +101,13 @@ type Event struct {
 	PB          proto.Message
 }
 
+var RoleToScopeMap = map[db.RoleType][]db.NotificationScope{
+	db.OWNER:  {db.ORG, db.NETWORK, db.SITE, db.SUBSCRIBER, db.USER, db.NODE},
+	db.ADMIN:  {db.ORG, db.NETWORK, db.SITE, db.SUBSCRIBER, db.USER, db.NODE},
+	db.VENDOR: {db.NETWORK},
+	db.USERS:  {db.USER},
+}
+
 var EventsSTMapping = map[string]Event{
 	"EventOrgAdd": {
 		Key:         EventOrgAdd,
@@ -109,6 +116,7 @@ var EventsSTMapping = map[string]Event{
 		Scope:       ScopeDefault,
 		Type:        TypeDefault,
 	},
+
 	"EventUserAdd": {
 		Key:         EventUserAdd,
 		Title:       "User Added",
