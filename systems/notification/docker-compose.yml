@@ -132,7 +132,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  image: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
