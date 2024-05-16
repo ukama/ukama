@@ -16,7 +16,7 @@ import (
 
 type UserRepo interface {
 	Add(user *Users) error
-	GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*Users, error)
+	GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*Users, error)
 }
 
 type userRepo struct {
@@ -34,7 +34,7 @@ func (r *userRepo) Add(user *Users) (err error) {
 	return d.Error
 }
 
-func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role RoleType) ([]*Users, error) {
+func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*Users, error) {
 	var users []*Users
 
 	const emptyUUID = "00000000-0000-0000-0000-000000000000"
@@ -56,8 +56,6 @@ func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string,
 	if userId != "" && userId != emptyUUID {
 		tx = tx.Where("user_id = ?", userId)
 	}
-
-	tx = tx.Where("role = ?", 0)
 
 	result := tx.Find(&users)
 	if result.Error != nil {

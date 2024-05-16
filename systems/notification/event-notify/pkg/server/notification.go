@@ -121,7 +121,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		}
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), db.RoleType(*req.GetRole().Enum()))
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -171,14 +171,14 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 	}
 }
 
-func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.Users, error) {
+func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string) ([]*db.Users, error) {
 	var users []*db.Users
 	var err error
 
 	done := make(chan bool)
 
 	go func() {
-		users, err = n.userRepo.GetUsers(orgId, networkId, subscriberId, userId, role)
+		users, err = n.userRepo.GetUsers(orgId, networkId, subscriberId, userId)
 		done <- true
 	}()
 
@@ -187,12 +187,12 @@ func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, network
 	return users, err
 }
 
-func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notification) error {
-	err := n.notificationRepo.Add(notification)
+func (n *EventToNotifyServer) eventPbToDBNotification(dn *db.Notification) error {
+	err := n.notificationRepo.Add(dn)
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
 	}
-	users, err := n.getUsersMatchingNotification(notification.OrgId, notification.NetworkId, notification.SubscriberId, notification.UserId, db.OWNER)
+	users, err := n.getUsersMatchingNotification(dn.OrgId, dn.NetworkId, dn.SubscriberId, dn.UserId)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)
@@ -203,12 +203,15 @@ func (n *EventToNotifyServer) eventPbToDBNotification(notification *db.Notificat
 
 	for _, u := range users {
 
-		un = append(un, &db.UserNotification{
-			Id:             uuid.NewV4(),
-			NotificationId: notification.Id,
-			UserId:         u.Id,
-			IsRead:         false,
-		})
+		/* Only add vaild notifcation scope  for the User */
+		if IsValidNotificationScopeForRole(u.Role, dn.Scope) {
+			un = append(un, &db.UserNotification{
+				Id:             uuid.NewV4(),
+				NotificationId: dn.Id,
+				UserId:         u.Id,
+				IsRead:         false,
+			})
+		}
 	}
 
 	err = n.userNotificationRepo.Add(un)
@@ -221,4 +224,14 @@ func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 		log.Errorf("Error adding user to db %v", err)
 	}
 	return nil
+}
+
+func IsValidNotificationScopeForRole(r db.RoleType, s db.NotificationScope) bool {
+	valid := false
+	for _, v := range pkg.RoleToScopeMap[r] {
+		if v == s {
+			valid = true
+		}
+	}
+	return valid
 }
