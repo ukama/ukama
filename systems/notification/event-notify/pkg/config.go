@@ -27,8 +27,6 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgHost          string           `default:"org:9090"`
-	UserHost         string           `default:"user:9090"`
 	Service          *uconf.Service
 	OrgName          string
 	OrgId            string

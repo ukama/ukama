@@ -20,7 +20,7 @@ type Config struct {
 	Service          *uconf.Service
 	OrgName          string
 	OrgId            string
-	EventNotifyHost  string `default:"localhost:9069"`
+	EventNotifyHost  string `default:"localhost:9090"`
 	Http             HttpServices
 }
 

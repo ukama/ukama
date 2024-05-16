@@ -84,8 +84,13 @@ services:
    - DEBUGMODE=true
    - DISTRIBUTOR_SERVICE_HOST=distributor
    - DISTRIBUTOR_SERVICE_PORT=9090
+   - EVENTNOTIFYHOST=eventnotify:9090
+   - HTTP_NUCLEUS = http://{LOCAL_HOST_IP}:8060
+   - HTTP_REGISTRY = http://{LOCAL_HOST_IP}:8075
+   - HTTP_SUBSCRIBER = http://{LOCAL_HOST_IP}:8078
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+
   restart: always
   networks:
    - ukama-net
