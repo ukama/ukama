@@ -137,7 +137,7 @@ func (h *notifyHandler) processNotification(n *pb.Notification) {
 }
 
 func (h *notifyHandler) notifyHandlerRoutine() {
-	log.Info("DB notify handler routine")
+	log.Info("DB notify handler routine for %+v", h.Db)
 
 	db, err := sql.Open(DbDriverName, "postgresql://"+h.Db.Username+":"+h.Db.Password+"@"+h.Db.Host+":"+strconv.Itoa(h.Db.Port)+"/"+h.Db.DbName+"?sslmode=disable")
 	if err != nil {
@@ -145,7 +145,9 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 	}
 	defer db.Close()
 
-	dbCS := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=disable", h.Db.DbName, h.Db.Username, h.Db.Password)
+	dbCS := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable", h.Db.Host, h.Db.Port, h.Db.DbName, h.Db.Username, h.Db.Password)
+
+	log.Infof("Listening to user_notifications_channel from %s", dbCS)
 
 	listener := pq.NewListener(dbCS, h.minReconnectionInterval, h.maxReconnectionInterval, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
