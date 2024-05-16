@@ -22,16 +22,16 @@
 
 /* build.c */
 extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
-extern bool build_nodes(int count, char *list, char *repo);
+extern bool build_nodes(char *repo, int count, char **list);
 
 /* deploy.c */
 extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
 extern bool display_all_systems_status(char *systems, int interval);
-extern bool deploy_node(char *id);
+extern bool deploy_nodes(int count, char **nodesIDList);
 
 /* shutdown.c */
 extern bool shutdown_all_systems(char *systems, char *ukamaRepo, char *authRepo);
-extern bool shutdown_node(char *id);
+extern bool shutdown_nodes(int count, char **nodesIDList);
 
 #define CMD_BUILD  1
 #define CMD_DEPLOY 2
@@ -189,6 +189,8 @@ int main(int argc, char **argv) {
 
     Config *config = NULL;
 
+    usys_log_set_service("builder");
+
     processArguments(argc, argv, &target, &cmd);
 
     /* Parsing command line args. */
@@ -264,9 +266,9 @@ int main(int argc, char **argv) {
                 }
 
             } else {
-                if (!build_nodes(config->build->nodeCount,
-                                 config->setup->ukamaRepo,
-                                 config->build->nodeIDsList)) {
+                if (!build_nodes(config->setup->ukamaRepo,
+                                 config->build->nodesCount,
+                                 config->build->nodesIDList)) {
                     usys_log_error("Build (node) error. Exiting ...");
                     goto done;
                 }
@@ -283,19 +285,20 @@ int main(int argc, char **argv) {
 
         usys_log_debug("Deploying the node(s) and system(s) ...");
 
-        if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!deploy_node(config->build->nodeIDsList)) {
-                usys_log_error("Unable to deploy the node. Existing ...");
-                goto done;
-            }
-        }
-
         if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
             if (!deploy_all_systems(config->fileName,
                                     config->deploy,
                                     config->setup->ukamaRepo,
                                     config->setup->authRepo)) {
                 usys_log_error("Unable to deploy the system. Exiting ...");
+                goto done;
+            }
+        }
+
+        if (target == TARGET_ALL || target == TARGET_NODES) {
+            if (!deploy_nodes(config->build->nodesCount,
+                              config->build->nodesIDList)) {
+                usys_log_error("Unable to deploy the node. Existing ...");
                 goto done;
             }
         }
@@ -314,9 +317,10 @@ int main(int argc, char **argv) {
     if (cmd == CMD_ALL || cmd == CMD_DOWN) {
 
         if (target == TARGET_ALL || target == TARGET_NODES) {
-            if (!shutdown_node(config->deploy->nodeIDsList)) {
+            if (!shutdown_nodes(config->deploy->nodesCount,
+                                config->deploy->nodesIDList)) {
                 usys_log_error("Node Shutdown FAILED: %s Try manually",
-                               config->deploy->nodeIDsList);
+                               config->deploy->nodesIDList);
             }
         }
 
