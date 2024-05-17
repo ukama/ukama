@@ -53,7 +53,7 @@ type DelNodeNotificationsReq struct {
 }
 
 type GetEventNotificationByIdRequest struct {
-	Id string `form:"id" json:"id" query:"id" binding:"required"`
+	Id string `path:"id" binding:"required"`
 }
 
 type GetEventNotificationRequest struct {
@@ -65,7 +65,7 @@ type GetEventNotificationRequest struct {
 }
 
 type UpdateEventNotificationStatusRequest struct {
-	Id     string `form:"id" json:"id" query:"id" binding:"required"`
+	Id     string `path:"id" binding:"required"`
 	IsRead bool   `form:"read" json:"read" query:"is_read" binding:"required"`
 }
 
