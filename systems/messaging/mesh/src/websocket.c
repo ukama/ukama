@@ -43,33 +43,12 @@ static int is_websocket_valid(WSManager *manager, MapItem *map) {
 
     if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
         log_debug("Websocket is closed with node: %s", map->nodeInfo->nodeID);
-
-        config = (Config *)map->configData;
-
-        /* publish event on AMQP */
-        if (publish_event(CONN_CLOSE,
-                          config->orgName,
-                          map->nodeInfo->nodeID,
-                          map->nodeInfo->nodeIP,
-                          map->nodeInfo->nodePort,
-                          map->nodeInfo->meshIP,
-                          map->nodeInfo->meshPort) == FALSE) {
-            log_error("Error publishing device connect msg on AMQP exchange");
-        } else {
-            log_debug("Send AMQP offline msg for NodeID: %s",
-                      map->nodeInfo->nodeID);
-        }
-
-        remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
         return FALSE;
     }
 
     return TRUE;
 }
 
-/*
- * websocket related callback functions.
- */
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
@@ -168,10 +147,6 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	return;
 }
 
-/*
- * websocket_incoming_message -- handle incoming message over websocket.
- *
- */
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager, WSMessage *message,
 								void *data) {
@@ -235,10 +210,6 @@ done:
 	return;
 }
 
-/*
- * websocket_onclose -- is called when the websocket is closed.
- *
- */
 void websocket_onclose(const URequest *request,
                        WSManager *manager,
                        void *data) {
