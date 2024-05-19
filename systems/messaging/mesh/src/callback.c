@@ -103,9 +103,11 @@ int callback_websocket(const URequest *request, UResponse *response,
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
         return U_CALLBACK_ERROR;
-	} else {
-		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
+
+    log_debug("Forward service started on port: %d for NodeID: %s",
+              forwardPort, nodeID);
+    log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 											 &websocket_manager,
@@ -229,7 +231,6 @@ done:
                                     responseStr);
 
     remove_item_from_list(map->forwardList, uuidStr);
-    free(forward->data);
     free(host);
     free(port);
 
