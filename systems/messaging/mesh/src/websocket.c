@@ -66,10 +66,12 @@ void websocket_manager(const URequest *request, WSManager *manager,
         return;
     }
 
+    /* Keep track of WS manager for connection management */
+    map->wsManager = manager;
+
     /* Setup transmit and receiving queues for the websocket */
     map->transmit = (WorkList *)calloc(1, sizeof(WorkList));
     map->receive  = (WorkList *)calloc(1, sizeof(WorkList));
-
     if (map->transmit == NULL || map->receive == NULL) {
         log_error("Memory allocation failure: %d", sizeof(WorkList));
         return;

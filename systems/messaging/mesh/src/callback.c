@@ -70,6 +70,27 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
+    map = is_existing_item(NodesTable, nodeID);
+    if (map != NULL) {
+        ulfius_stop_framework(map->forwardInst);
+        ulfius_clean_instance(map->forwardInst);
+        ulfius_websocket_send_close_signal(map->wsManager);
+
+        if (map->nodeInfo) {
+            if (publish_event(CONN_CLOSE,
+                              config->orgName,
+                              map->nodeInfo->nodeID,
+                              map->nodeInfo->nodeIP,
+                              map->nodeInfo->nodePort,
+                              map->nodeInfo->meshIP,
+                              map->nodeInfo->meshPort) == FALSE) {
+                log_error("Error publish device close msg on AMQP exchange: %s",
+                          map->nodeInfo->nodeID);
+            }
+		}
+        remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
+    }
+
     /* Open up forwarding web instance for services */
     forwardPort = start_forward_service(config, &forwardInst);
     if (forwardPort <= 0 ) {
