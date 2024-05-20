@@ -141,6 +141,25 @@ var defaultPrometheusMetric = map[string]Metric{
 
 	//Power Level
 	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
+
+	// Network Metrics
+	"network_latency":         Metric{false, "network_latency_ms", ""},
+	"network_packet_loss":     Metric{false, "network_packet_loss", ""},
+	"network_throughput_up":   Metric{false, "network_throughput_upload", ""},
+	"network_throughput_down": Metric{false, "network_throughput_download", ""},
+
+	// Solar Power Metrics
+	"solar_power_generation": Metric{false, "solar_power_generation_watts", ""},
+	"solar_energy_total":     Metric{false, "solar_energy_total_kwh", ""},
+	"battery_charge":         Metric{false, "battery_charge_percent", ""},
+	"battery_voltage":        Metric{false, "battery_voltage_volts", ""},
+	"battery_health":         Metric{false, "battery_health_percent", ""},
+	"battery_current":        Metric{false, "battery_current_amperes", ""},
+
+	// Internet Switch Metrics
+	"switch_port_status":     Metric{false, "switch_port_status", ""},
+	"switch_port_bandwidth":  Metric{false, "switch_port_bandwidth_usage", ""},
+	"switch_port_error_rate": Metric{false, "switch_port_error_rate", ""},
 }
 
 type GrpcEndpoints struct {
