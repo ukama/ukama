@@ -22,7 +22,7 @@ import (
 
 type Network struct {
 	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name             string    `gorm:"uniqueIndex:network_name"` 
+	Name             string    `gorm:"uniqueIndex:network_name"`
 	Deactivated      bool
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
 	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`
@@ -30,6 +30,7 @@ type Network struct {
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
+	IsDefault        bool
 	Country          string `json:"country"`
 	Language         LanguageType
 	Currency         string `json:"currency"`

@@ -20,6 +20,7 @@ import (
 type NetRepo interface {
 	Add(network *Network, nestedFunc func(*Network, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Network, error)
+	SetDefault(id uuid.UUID, isDefault bool) (*Network, error)
 	GetByName(network string) (*Network, error)
 	GetAll() ([]Network, error)
 	Delete(id uuid.UUID) error
@@ -47,6 +48,20 @@ func (n netRepo) Get(id uuid.UUID) (*Network, error) {
 	return &ntwk, nil
 }
 
+func (n netRepo) SetDefault(id uuid.UUID, isDefault bool) (*Network, error) {
+	var ntwk Network
+	// Set all networks is_default to false
+	n.Db.GetGormDb().Model(&Network{}).Where("is_default = ?", true).Update("is_default", false)
+
+	// Set the network with the id to is_default true
+	result := n.Db.GetGormDb().First(&ntwk, id).Update("is_default", true)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &ntwk, nil
+}
+
 func (n netRepo) GetAll() ([]Network, error) {
 	var ntwk []Network
 
@@ -58,23 +73,20 @@ func (n netRepo) GetAll() ([]Network, error) {
 	return ntwk, nil
 }
 
-
 func (n netRepo) GetByName(networkName string) (*Network, error) {
-    var network Network
+	var network Network
 
-    result := n.Db.GetGormDb().Where("name = ?", networkName).First(&network)
-    if result.Error != nil {
-        return nil, result.Error
-    }
+	result := n.Db.GetGormDb().Where("name = ?", networkName).First(&network)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-    if result.RowsAffected == 0 {
-        return nil, gorm.ErrRecordNotFound
-    }
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 
-    return &network, nil
+	return &network, nil
 }
-
-
 
 // func (n netRepo) GetByOrgName(orgID uint) ([]Network, error) {
 
@@ -110,8 +122,6 @@ func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gor
 	return err
 }
 
-
-
 func (s netRepo) Delete(networkId uuid.UUID) error {
 	result := s.Db.GetGormDb().Where("id = ?", networkId).Delete(&Network{})
 	if result.Error != nil {
@@ -124,13 +134,11 @@ func (s netRepo) Delete(networkId uuid.UUID) error {
 	return nil
 }
 
-
 func (n netRepo) GetNetworkCount() (int64, error) {
-    var count int64
-    result := n.Db.GetGormDb().Model(&Network{}).Count(&count)
-    if result.Error != nil {
-        return 0, result.Error
-    }
-    return count, nil
+	var count int64
+	result := n.Db.GetGormDb().Model(&Network{}).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }
-

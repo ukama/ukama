@@ -57,6 +57,7 @@ type network interface {
 	AddNetwork(netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks() (*netpb.GetNetworksResponse, error)
+	SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error)
 }
 
 type site interface {
@@ -189,6 +190,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
 		networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
 		networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
+		networks.PATCH("/:net_id", formatDoc("Set Network Default", "Set a specific network default"), tonic.Handler(r.setNetworkDefaultHandler, http.StatusOK))
 		// update network
 		// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
 		// Admins
@@ -295,6 +297,10 @@ func (r *Router) removeMemberHandler(c *gin.Context, req *RemoveMemberRequest) e
 }
 
 // Network handlers
+
+func (r *Router) setNetworkDefaultHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.SetDefaultResponse, error) {
+	return r.clients.Network.SetNetworkDefault(req.NetworkId)
+}
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
 	return r.clients.Network.GetNetwork(req.NetworkId)

@@ -170,6 +170,36 @@ func (_m *NetRepo) GetNetworkCount() (int64, error) {
 	return r0, r1
 }
 
+// SetDefault provides a mock function with given fields: id, isDefault
+func (_m *NetRepo) SetDefault(id uuid.UUID, isDefault bool) (*db.Network, error) {
+	ret := _m.Called(id, isDefault)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDefault")
+	}
+
+	var r0 *db.Network
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) (*db.Network, error)); ok {
+		return rf(id, isDefault)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) *db.Network); ok {
+		r0 = rf(id, isDefault)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Network)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID, bool) error); ok {
+		r1 = rf(id, isDefault)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewNetRepo creates a new instance of NetRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewNetRepo(t interface {

@@ -24,6 +24,7 @@ service NetworkService {
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
     rpc GetAll(GetNetworksRequest) returns (GetNetworksResponse);
+    rpc SetDefault(SetDefaultRequest) returns (SetDefaultResponse);
 }
 
 
@@ -69,6 +70,13 @@ message DeleteRequest{
 message DeleteResponse{
 }
 
+message SetDefaultRequest{
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+}
+
+message SetDefaultResponse{
+}
+
 message Network {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2;
@@ -79,6 +87,7 @@ message Network {
     uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
     bool isDeactivated = 9 [json_name = "is_deactivated"];
     bool paymentLinks = 10 [json_name = "payment_links"];
-    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
-    string syncStatus = 12 [json_name = "sync_status"];
+    bool isDefault = 11 [json_name = "is_default"];
+    google.protobuf.Timestamp createdAt = 12 [json_name = "created_at"];
+    string syncStatus = 13 [json_name = "sync_status"];
 }

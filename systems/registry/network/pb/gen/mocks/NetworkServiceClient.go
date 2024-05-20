@@ -201,6 +201,43 @@ func (_m *NetworkServiceClient) GetByName(ctx context.Context, in *gen.GetByName
 	return r0, r1
 }
 
+// SetDefault provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) SetDefault(ctx context.Context, in *gen.SetDefaultRequest, opts ...grpc.CallOption) (*gen.SetDefaultResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDefault")
+	}
+
+	var r0 *gen.SetDefaultResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetDefaultRequest, ...grpc.CallOption) (*gen.SetDefaultResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetDefaultRequest, ...grpc.CallOption) *gen.SetDefaultResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SetDefaultResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetDefaultRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewNetworkServiceClient creates a new instance of NetworkServiceClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewNetworkServiceClient(t interface {

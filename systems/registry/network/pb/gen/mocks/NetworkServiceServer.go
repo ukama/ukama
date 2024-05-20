@@ -164,6 +164,36 @@ func (_m *NetworkServiceServer) GetByName(_a0 context.Context, _a1 *gen.GetByNam
 	return r0, r1
 }
 
+// SetDefault provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) SetDefault(_a0 context.Context, _a1 *gen.SetDefaultRequest) (*gen.SetDefaultResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDefault")
+	}
+
+	var r0 *gen.SetDefaultResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetDefaultRequest) (*gen.SetDefaultResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetDefaultRequest) *gen.SetDefaultResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SetDefaultResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetDefaultRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedNetworkServiceServer provides a mock function with given fields:
 func (_m *NetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {
 	_m.Called()
