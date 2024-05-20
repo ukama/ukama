@@ -95,12 +95,12 @@ void signal_term_handler(int signal) {
 
     close_websocket(state->handler);
 
-    if (state->webInst) {
+    if (state->webInst && state->webInst->port) {
         ulfius_stop_framework(state->webInst);
         ulfius_clean_instance(state->webInst);
     }
 
-    if (state->fwdInst) {
+    if (state->fwdInst && state->fwdInst->port) {
         ulfius_stop_framework(state->fwdInst);
         ulfius_stop_framework(state->fwdInst);
     }
