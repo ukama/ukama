@@ -23,6 +23,7 @@ type NetRepo interface {
 	SetDefault(id uuid.UUID, isDefault bool) (*Network, error)
 	GetByName(network string) (*Network, error)
 	GetAll() ([]Network, error)
+	GetDefault() (*Network, error)
 	Delete(id uuid.UUID) error
 	GetNetworkCount() (int64, error)
 }
@@ -41,6 +42,17 @@ func (n netRepo) Get(id uuid.UUID) (*Network, error) {
 	var ntwk Network
 
 	result := n.Db.GetGormDb().First(&ntwk, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &ntwk, nil
+}
+
+func (n netRepo) GetDefault() (*Network, error) {
+	var ntwk Network
+
+	result := n.Db.GetGormDb().Where("is_default = ?", true).First(&ntwk)
 	if result.Error != nil {
 		return nil, result.Error
 	}

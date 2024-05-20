@@ -25,6 +25,17 @@ func (this *AddRequest) Validate() error {
 	}
 	return nil
 }
+func (this *GetDefaultRequest) Validate() error {
+	return nil
+}
+func (this *GetDefaultResponse) Validate() error {
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+		}
+	}
+	return nil
+}
 func (this *GetNetworksRequest) Validate() error {
 	return nil
 }

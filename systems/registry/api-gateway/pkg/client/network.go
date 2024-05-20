@@ -107,6 +107,18 @@ func (r *NetworkRegistry) SetNetworkDefault(netID string) (*netpb.SetDefaultResp
 	return res, nil
 }
 
+func (r *NetworkRegistry) GetDefault() (*netpb.GetDefaultResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.GetDefault(ctx, &netpb.GetDefaultRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

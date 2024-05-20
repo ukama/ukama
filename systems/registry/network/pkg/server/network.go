@@ -173,6 +173,17 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 	}, nil
 }
 
+func (n *NetworkServer) GetDefault(ctx context.Context, req *pb.GetDefaultRequest) (*pb.GetDefaultResponse, error) {
+	nt, err := n.netRepo.GetDefault()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	return &pb.GetDefaultResponse{
+		Network: dbNtwkToPbNtwk(nt),
+	}, nil
+}
+
 func (n *NetworkServer) GetAll(ctx context.Context, req *pb.GetNetworksRequest) (*pb.GetNetworksResponse, error) {
 
 	ntwks, err := n.netRepo.GetAll()
