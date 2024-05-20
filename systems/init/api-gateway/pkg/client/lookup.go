@@ -10,12 +10,12 @@ package client
 
 import (
 	"context"
-	"net"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Lookup struct {
@@ -26,17 +26,12 @@ type Lookup struct {
 }
 
 func Newlookup(host string, timeout time.Duration) *Lookup {
-	// ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-	conn, err := grpc.NewClient(
-		"passthrough:whatever",
-		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "tcp", host)
-		}),
-	)
+	// conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(d))
 
-	// grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
