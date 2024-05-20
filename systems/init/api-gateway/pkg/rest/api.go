@@ -21,6 +21,7 @@ type UpdateOrgRequest struct {
 	Certificate string `json:"certificate"`
 }
 
+type GetOrgsRequest struct{}
 type GetOrgRequest struct {
 	OrgName string `path:"org" validate:"required"`
 }

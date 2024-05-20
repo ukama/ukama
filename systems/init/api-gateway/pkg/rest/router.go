@@ -50,6 +50,7 @@ type lookup interface {
 	AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error)
 	UpdateOrg(req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error)
 	GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error)
+	GetOrgs(req *pb.GetOrgsRequest) (*pb.GetOrgsResponse, error)
 	AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error)
 	GetNodeForOrg(req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error)
 	DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error)
@@ -117,10 +118,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+		o := auth.Group("/orgs", "Orgs", "looking for orgs credentials")
+		o.GET("", formatDoc("Get Orgs name", ""), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 
+		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 		orgs := auth.Group(org, "Orgs", "looking for orgs credentials")
-		orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
+		orgs.GET("", formatDoc("Get Org by name", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
 		orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
 		orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
 
@@ -142,6 +145,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*pb.GetOrgsResponse, error) {
+	return r.clients.l.GetOrgs(&pb.GetOrgsRequest{})
 }
 
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pb.GetOrgResponse, error) {

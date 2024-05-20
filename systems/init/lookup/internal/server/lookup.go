@@ -72,10 +72,12 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 	}
 
 	org := &db.Org{
-		Name:        req.GetOrgName(),
-		Certificate: req.GetCertificate(),
-		OrgId:       id,
-		Ip:          orgIp,
+		Name:             req.GetOrgName(),
+		Certificate:      req.GetCertificate(),
+		OrgId:            id,
+		Ip:               orgIp,
+		AuthURL:          req.GetAuthUrl(),
+		SubscriberBffURL: req.GetSubscriberBffUrl(),
 	}
 
 	err = l.orgRepo.Add(org)
@@ -95,19 +97,23 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 	}
 
 	return &pb.AddOrgResponse{
-		OrgName:     dbOrg.Name,
-		Certificate: dbOrg.Certificate,
-		Ip:          dbOrg.Ip.IPNet.String(),
-		OrgId:       dbOrg.OrgId.String(),
+		OrgName:          dbOrg.Name,
+		Certificate:      dbOrg.Certificate,
+		Ip:               dbOrg.Ip.IPNet.String(),
+		OrgId:            dbOrg.OrgId.String(),
+		AuthUrl:          dbOrg.AuthURL,
+		SubscriberBffUrl: dbOrg.SubscriberBffURL,
 	}, nil
 }
 
 func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
 	logrus.Infof("Updating Organization %s", req.OrgName)
-
+	req.GetIp()
 	org := &db.Org{
-		Name:        req.GetOrgName(),
-		Certificate: req.GetCertificate(),
+		Name:             req.GetOrgName(),
+		Certificate:      req.GetCertificate(),
+		AuthURL:          req.GetAuthUrl(),
+		SubscriberBffURL: req.GetSubscriberBffUrl(),
 	}
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
@@ -139,9 +145,11 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 	}
 
 	return &pb.UpdateOrgResponse{
-		OrgName:     dbOrg.Name,
-		Certificate: dbOrg.Certificate,
-		Ip:          dbOrg.Ip.IPNet.String(),
+		OrgName:          dbOrg.Name,
+		Certificate:      dbOrg.Certificate,
+		Ip:               dbOrg.Ip.IPNet.String(),
+		AuthUrl:          dbOrg.AuthURL,
+		SubscriberBffUrl: dbOrg.SubscriberBffURL,
 	}, nil
 
 }
@@ -155,9 +163,32 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 	}
 
 	return &pb.GetOrgResponse{
-		OrgName:     dbOrg.Name,
-		Certificate: dbOrg.Certificate,
-		Ip:          dbOrg.Ip.IPNet.String(),
+		OrgName:          dbOrg.Name,
+		Certificate:      dbOrg.Certificate,
+		Ip:               dbOrg.Ip.IPNet.String(),
+		AuthUrl:          dbOrg.AuthURL,
+		SubscriberBffUrl: dbOrg.SubscriberBffURL,
+	}, nil
+}
+
+func (l *LookupServer) GetOrgs(ctx context.Context, req *pb.GetOrgsRequest) (*pb.GetOrgsResponse, error) {
+	logrus.Info("Get Organizations")
+
+	dbOrgs, err := l.orgRepo.GetAll()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+	orgs := []*pb.OrgName{}
+
+	for _, org := range dbOrgs {
+		orgs = append(orgs, &pb.OrgName{
+			Name: org.Name,
+		})
+
+	}
+
+	return &pb.GetOrgsResponse{
+		Orgs: orgs,
 	}, nil
 }
 

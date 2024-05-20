@@ -19,6 +19,7 @@ export const REGISTRY_API_GW = process.env.REGISTRY_API_GW ?? "";
 export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW ?? "";
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const DATA_API_GW = process.env.DATA_API_GW ?? "";
+export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 export const BILLING_API_GW = process.env.BILLING_API_GW ?? "";
 export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 

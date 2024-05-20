@@ -32,6 +32,36 @@ func (_m *OrgRepo) Add(org *db.Org) error {
 	return r0
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *OrgRepo) GetAll() ([]db.Org, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []db.Org
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]db.Org, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []db.Org); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Org)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetById provides a mock function with given fields: id
 func (_m *OrgRepo) GetById(id uuid.UUID) (*db.Org, error) {
 	ret := _m.Called(id)
