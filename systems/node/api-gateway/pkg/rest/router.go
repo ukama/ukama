@@ -56,6 +56,7 @@ type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
+	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
 }
 
 type configurator interface {
@@ -133,6 +134,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.postPingNodeHandler, http.StatusAccepted))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -144,6 +146,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 	}
+}
+
+func (r *Router) postPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
+	return r.clients.Controller.PingNode(&contPb.PingNodeRequest{
+		NodeId:    req.NodeId,
+		RequestId: req.RequestId,
+		Message:   req.Message,
+		Timestamp: req.TimeStamp,
+	})
 }
 
 func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest) (*contPb.RestartNodeResponse, error) {

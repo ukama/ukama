@@ -22,10 +22,37 @@ void init_forward_list(ForwardList **list) {
 
 void free_forward_item(Forward *item) {
 
-	if (!item) return;
+	if (item == NULL) return;
 
-    free(item->uuid);
+    if (item->uuid) free(item->uuid);
+    if (item->data) free(item->data);
+
+    pthread_mutex_destroy(&item->mutex);
+    pthread_cond_destroy(&item->hasData);
+
 	free(item);
+}
+
+void free_forward_list(ForwardList *forwardList) {
+
+    Forward *current, *temp;
+
+    if (forwardList == NULL) return;
+
+    pthread_mutex_lock(&forwardList->mutex);
+
+    current = forwardList->first;
+    while (current != NULL) {
+        temp = current->next;
+        free_forward_item(current);
+        current = temp;
+    }
+
+    forwardList->first = NULL;
+    forwardList->last  = NULL;
+    pthread_mutex_unlock(&forwardList->mutex);
+
+    free(forwardList);
 }
 
 Forward *is_existing_item_in_list(ForwardList *list, char *uuid) {
@@ -64,9 +91,12 @@ Forward *add_client_to_list(ForwardList **list,
         return NULL;
     }
     item->uuid = strdup(uuid);
+    item->data = NULL;
+    pthread_mutex_init(&item->mutex, NULL);
+	pthread_cond_init(&item->hasData, NULL);
 
+    /* adjust the pointers */
 	pthread_mutex_lock(&(*list)->mutex);
-
 	if ((*list)->first == NULL) {
 		(*list)->first = item;
 		(*list)->last  = item;

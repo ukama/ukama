@@ -84,6 +84,7 @@ void free_map_item(MapItem *map) {
 
     free_work_list(map->transmit);
     free_work_list(map->receive);
+    free_forward_list(map->forwardList);
 
     free(map);
 }

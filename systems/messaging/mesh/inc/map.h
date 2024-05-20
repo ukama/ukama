@@ -21,11 +21,12 @@
  */
 typedef struct map_item_t {
 
-    NodeInfo *nodeInfo;
-    WorkList *transmit;
-    WorkList *receive;
-    void     *configData;
-    UInst    *forwardInst;
+    NodeInfo  *nodeInfo;
+    WorkList  *transmit;
+    WorkList  *receive;
+    WSManager *wsManager;
+    void      *configData;
+    UInst     *forwardInst;
 
     ForwardList *forwardList;  /* services list */
 

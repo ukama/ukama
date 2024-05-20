@@ -6,58 +6,100 @@ import (
 
 	"github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-
+	rc "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 )
 
 type requestMultiplier struct {
-	registryClient RegistryProvider
-	queue          QueuePublisher
+	nodeClient rc.NodeClient
+	queue      QueuePublisher
 }
 
-func NewRequestMultiplier(registryClient RegistryProvider, queue QueuePublisher) pkg.RequestMultiplier {
+func NewRequestMultiplier(registryClient string, queue QueuePublisher) pkg.RequestMultiplier {
 	return &requestMultiplier{
-		registryClient: registryClient,
-		queue:          queue,
+		nodeClient: rc.NewNodeClient(registryClient),
+		queue:      queue,
 	}
 }
 
 func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 	// "org.nodeId"
+	counter := 0
+	//target = orgId.networkId.siteId.nodeId
 	segments := strings.Split(req.Target, ".")
-	if len(segments) != 2 {
-		return fmt.Errorf("Invalid format of target: %s", req.Target)
+	if len(segments) != 4 {
+		return fmt.Errorf("invalid format of target: %s", req.Target)
 	}
 
 	orgName := segments[0]
-	nodeId := segments[1]
+	networkName := segments[1]
+	siteName := segments[2]
+	nodeId := segments[3]
 
-	if nodeId != "*" {
-		return fmt.Errorf("device id in target is not supported")
-	}
-
-	nodeResp, err := r.registryClient.GetAllNodes(orgName)
+	nodeResp, err := r.nodeClient.GetAll()
 	if err != nil {
 		return err
 	}
 
-	logrus.Infof("Creating requests for %d nodes", len(nodeResp.Nodes))
-	counter := 0
-	for _, n := range nodeResp.Nodes {
-		err = r.queue.Publish(&cpb.NodeFeederMessage{
-			Target:     orgName + "." + n.Id,
-			HTTPMethod: req.HTTPMethod,
-			Path:       req.Path,
-			Msg:        req.Msg,
-		})
-
+	if nodeId != "*" {
+		err := r.PublishToFilteredNodes(req, nodeResp, orgName, networkName, siteName, nodeId)
+		if err != nil {
+			logrus.Errorf("Failed to publish message to queue: %s", err)
+		}
+	} else {
+		err := r.PublishToNode(req, orgName, nodeId)
 		if err != nil {
 			logrus.Errorf("Failed to publish message to queue: %s", err)
 			return fmt.Errorf("failed to publish message to queue")
 		} else {
-			counter++
+			logrus.Infof("Created %d requests for node id %s", counter, nodeId)
 		}
 	}
+
+	logrus.Infof("Pulished requests %+v.", req)
+	return nil
+}
+
+func (r *requestMultiplier) PublishToNode(req *cpb.NodeFeederMessage, orgName string, node string) error {
+	err := r.queue.Publish(&cpb.NodeFeederMessage{
+		Target:     orgName + "." + node,
+		HTTPMethod: req.HTTPMethod,
+		Path:       req.Path,
+		Msg:        req.Msg,
+	})
+
+	if err != nil {
+		logrus.Errorf("Failed to publish message to queue: %s", err)
+		return fmt.Errorf("failed to publish message to queue")
+	}
+	return nil
+}
+
+func (r *requestMultiplier) PublishToFilteredNodes(req *cpb.NodeFeederMessage, nodeResp []*rc.NodeInfo, orgName string, networkId string, siteId string, nodeId string) error {
+	counter := 0
+
+	for _, n := range nodeResp {
+		/* Figure a better way : This is generating a multiple nested request */
+		nResp, err := r.nodeClient.Get(n.Id)
+		if err != nil {
+			return err
+		}
+
+		if networkId == "*" || nResp.Site.NetworkId == networkId {
+			if siteId == "*" || nResp.Site.SiteId == siteId {
+				if nodeId == "*" {
+					err := r.PublishToNode(req, orgName, n.Id)
+					if err != nil {
+						logrus.Errorf("Failed to publish message to queue: %s", err)
+						return fmt.Errorf("failed to publish message to queue")
+					} else {
+						counter++
+					}
+				}
+			}
+		}
+	}
+
 	logrus.Infof("Created %d requests", counter)
 	return nil
 }

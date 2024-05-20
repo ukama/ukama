@@ -8,6 +8,13 @@
 
 package rest
 
+type PingNodeRequest struct {
+	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	RequestId string `json:"request_id" validate:"required"`
+	Message   string `json:"message"`
+	TimeStamp uint64 `json:"time_stamp"`
+}
+
 type RestartNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
@@ -31,8 +38,8 @@ type GetConfigVersionRequest struct {
 }
 
 type UpdateSoftwareRequest struct {
-	Space string `json:"space" validate:"required" path:"space"`
-	Name  string `json:"name" validate:"required" path:"name"`
-	Tag   string `json:"tag" validate:"required" path:"tag"`
+	Space  string `json:"space" validate:"required" path:"space"`
+	Name   string `json:"name" validate:"required" path:"name"`
+	Tag    string `json:"tag" validate:"required" path:"tag"`
 	NodeId string `json:"node_id" validate:"required" path:"node_id"`
 }
