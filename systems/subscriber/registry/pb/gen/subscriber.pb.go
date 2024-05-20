@@ -420,8 +420,8 @@ type AddSubscriberRequest struct {
 	Address string `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
 	// idSerial of the subscriber
 	IdSerial string `protobuf:"bytes,6,opt,name=idSerial,proto3" json:"idSerial,omitempty"`
-	// network ID of the subscriber, must be a UUID and not empty
-	NetworkId string `protobuf:"bytes,7,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
+	// network ID of the subscriber, if not provided, it will pick up the default network
+	NetworkId string `protobuf:"bytes,7,opt,name=networkId,proto3" json:"networkId,omitempty"`
 	// proof of identification of the subscriber, must not be empty and have a length greater than 1
 	ProofOfIdentification string `protobuf:"bytes,8,opt,name=proofOfIdentification,proto3" json:"proofOfIdentification,omitempty"`
 	// date of birth of the subscriber

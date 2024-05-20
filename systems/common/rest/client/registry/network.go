@@ -32,6 +32,7 @@ type NetworkInfo struct {
 	Overdraft        float64   `json:"overdraft"`
 	TrafficPolicy    uint32    `json:"traffic_policy"`
 	PaymentLinks     bool      `json:"payment_links"`
+	IsDefault        bool      `json:"is_default"`
 	SyncStatus       string    `json:"sync_status,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
 }
@@ -53,6 +54,7 @@ type AddNetworkRequest struct {
 
 type NetworkClient interface {
 	Get(Id string) (*NetworkInfo, error)
+	GetDefault() (*NetworkInfo, error)
 	Add(req AddNetworkRequest) (*NetworkInfo, error)
 }
 
@@ -114,6 +116,30 @@ func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 		log.Errorf("GetNetwork failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("GetNetwork failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &ntwk)
+	if err != nil {
+		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("network info deserailization failure: %w", err)
+	}
+
+	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
+
+	return ntwk.NetworkInfo, nil
+}
+
+func (n *networkClient) GetDefault() (*NetworkInfo, error) {
+	log.Debugf("Get default network")
+
+	ntwk := Network{}
+
+	resp, err := n.R.Get(n.u.String() + NetworkEndpoint)
+	if err != nil {
+		log.Errorf("GetDefaultNetwork failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("GetDefaultNetwork failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)

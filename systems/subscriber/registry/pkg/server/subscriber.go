@@ -79,9 +79,18 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	networkInfo, err := s.networkClient.Get(networkId.String())
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
+
+	var networkInfo *creg.NetworkInfo
+	if req.GetNetworkId() != "" {
+		networkInfo, err = s.networkClient.Get(networkId.String())
+		if err != nil {
+			return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
+		}
+	} else {
+		networkInfo, err = s.networkClient.GetDefault()
+		if err != nil {
+			return nil, status.Errorf(codes.NotFound, "default network not found: %s", err.Error())
+		}
 	}
 
 	if networkId.String() != networkInfo.Id {

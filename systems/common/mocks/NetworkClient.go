@@ -72,6 +72,36 @@ func (_m *NetworkClient) Get(Id string) (*registry.NetworkInfo, error) {
 	return r0, r1
 }
 
+// GetDefault provides a mock function with given fields:
+func (_m *NetworkClient) GetDefault() (*registry.NetworkInfo, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefault")
+	}
+
+	var r0 *registry.NetworkInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*registry.NetworkInfo, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *registry.NetworkInfo); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*registry.NetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewNetworkClient creates a new instance of NetworkClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewNetworkClient(t interface {
