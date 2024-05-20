@@ -142,7 +142,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	//Power Level
 	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
 
-	// Network Metrics
+	// backhaul Metrics
 	"network_latency":         Metric{false, "network_latency_ms", ""},
 	"network_packet_loss":     Metric{false, "network_packet_loss", ""},
 	"network_throughput_up":   Metric{false, "network_throughput_upload", ""},

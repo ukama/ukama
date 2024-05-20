@@ -60,8 +60,9 @@ func (f *Filter) WithOrg(org string) *Filter {
 	return f
 }
 
-func (f *Filter) WithSite(site string) *Filter {
+func (f *Filter) WithSite(org string,site string) *Filter {
 	f.site = site
+	f.org = org
 	return f
 }
 

@@ -38,6 +38,14 @@ type GetSubscriberMetricsInput struct {
 	Subscriber string `path:"subscriber" validate:"required"`
 }
 
+
+type GetSiteMetricsInput struct {
+	FilterBase
+	SiteID   string `path:"site" validate:"required"`
+	Org      string `path:"org" validate:"required"`
+	Metric   string `path:"metric" validate:"required"`
+}
+
 type GetMetricsRangeInput struct {
 	FilterBase
 	Org        string `query:"org"`
