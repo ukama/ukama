@@ -30,7 +30,7 @@ type Network struct {
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
-	IsDefault        bool
+	IsDefault        bool   `gorm:"default:false"`
 	Country          string `json:"country"`
 	Language         LanguageType
 	Currency         string `json:"currency"`
