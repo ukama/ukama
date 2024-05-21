@@ -137,7 +137,7 @@ func (h *notifyHandler) processNotification(n *pb.Notification) {
 }
 
 func (h *notifyHandler) notifyHandlerRoutine() {
-	log.Info("DB notify handler routine for %+v", h.Db)
+	log.Infof("DB notify handler routine for %+v", h.Db)
 
 	db, err := sql.Open(DbDriverName, "postgresql://"+h.Db.Username+":"+h.Db.Password+"@"+h.Db.Host+":"+strconv.Itoa(h.Db.Port)+"/"+h.Db.DbName+"?sslmode=disable")
 	if err != nil {
