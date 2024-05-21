@@ -111,6 +111,29 @@ func TestLookupServer_GetOrg(t *testing.T) {
 	orgRepo.AssertExpectations(t)
 }
 
+func TestLookupServer_GetOrgsName(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	var orgIp pgtype.Inet
+	const ip = "0.0.0.0"
+	err := orgIp.Set(ip)
+	assert.NoError(t, err)
+
+	org := []db.Org{{
+		Name: "ukama",
+	}}
+
+	orgRepo.On("GetAll").Return(org, nil).Once()
+
+	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
+	resp, err := s.GetOrgs(context.TODO(), &pb.GetOrgsRequest{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, org[0].Name, resp.Orgs[0].Name)
+	orgRepo.AssertExpectations(t)
+}
+
 func TestLookupServer_AddNodeForOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	nodeRepo := &mocks.NodeRepo{}

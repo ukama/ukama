@@ -91,7 +91,7 @@ type SubscriberAddReq struct {
 	FirstName             string `example:"John" json:"first_name" validate:"required"`
 	LastName              string `example:"Doe" json:"last_name" validate:"required"`
 	Email                 string `example:"john@example.com" json:"email" validate:"required"`
-	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id"`
 	Gender                string `example:"male" json:"gender"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	IdSerial              string `example:"123456789" json:"id_serial"`

@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -62,12 +61,8 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	log.Infof("Adding subscriber: %v", req)
 
 	var dob string
+	var err error
 	subscriberId := uuid.NewV4()
-	networkId, err := uuid.FromString(req.GetNetworkId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
-	}
 
 	if req.GetDob() != "" {
 		dob, err = validate.ValidateDate(req.GetDob())
@@ -82,21 +77,16 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	var networkInfo *creg.NetworkInfo
 	if req.GetNetworkId() != "" {
-		networkInfo, err = s.networkClient.Get(networkId.String())
+		networkInfo, err = s.networkClient.Get(req.GetNetworkId())
 		if err != nil {
 			return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
 		}
 	} else {
 		networkInfo, err = s.networkClient.GetDefault()
+		log.Infof("Default network %+v", networkInfo)
 		if err != nil {
 			return nil, status.Errorf(codes.NotFound, "default network not found: %s", err.Error())
 		}
-	}
-
-	if networkId.String() != networkInfo.Id {
-		log.Error("Missing network.")
-
-		return nil, fmt.Errorf("network mismatch")
 	}
 
 	// if s.orgId != networkInfo.OrgId {
@@ -110,11 +100,17 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	// 		"org is deactivated: cannot add network to it")
 	// }
 
+	nid, err := uuid.FromString(networkInfo.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
+	}
+
 	subscriber := &db.Subscriber{
 		SubscriberId:          subscriberId,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
-		NetworkId:             networkId,
+		NetworkId:             nid,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),

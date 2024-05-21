@@ -24,7 +24,6 @@ const NetworkEndpoint = "/v1/networks"
 type NetworkInfo struct {
 	Id               string    `json:"id,omitempty"`
 	Name             string    `json:"name,omitempty"`
-	OrgId            string    `json:"org_id,omitempty"`
 	IsDeactivated    bool      `json:"is_deactivated,omitempty"`
 	AllowedCountries []string  `json:"allowed_countries"`
 	AllowedNetworks  []string  `json:"allowed_networks"`
@@ -134,14 +133,14 @@ func (n *networkClient) GetDefault() (*NetworkInfo, error) {
 	log.Debugf("Get default network")
 
 	ntwk := Network{}
-
-	resp, err := n.R.Get(n.u.String() + NetworkEndpoint)
+	log.Infof("URL: %s", n.u.String()+NetworkEndpoint+"/default")
+	resp, err := n.R.Get(n.u.String() + NetworkEndpoint + "/default")
 	if err != nil {
 		log.Errorf("GetDefaultNetwork failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("GetDefaultNetwork failure: %w", err)
 	}
-
+	log.Infof("Network Response: %v", resp)
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
 		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())

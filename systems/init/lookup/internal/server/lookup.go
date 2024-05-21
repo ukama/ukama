@@ -163,6 +163,7 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 	}
 
 	return &pb.GetOrgResponse{
+		
 		OrgName:          dbOrg.Name,
 		Certificate:      dbOrg.Certificate,
 		Ip:               dbOrg.Ip.IPNet.String(),

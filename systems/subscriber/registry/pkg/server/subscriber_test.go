@@ -14,17 +14,17 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
+	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
-
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
@@ -87,7 +87,50 @@ func TestAdd(t *testing.T) {
 		networkClient.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
 	})
+
+	t.Run("Add subscriber with default network", func(t *testing.T) {
+		subscriberRepo := &mocks.SubscriberRepo{}
+		msgBus := &cmocks.MsgBusServiceClient{}
+		simManagerService := &mocks.SimManagerClientProvider{}
+		orgClient := &cmocks.OrgClient{}
+		networkClient := &cmocks.NetworkClient{}
+		orgId := "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+
+		firstName := "John"
+		lastName := "Doe"
+		email := "johndoe@example.com"
+		phoneNumber := "1234567890"
+		gender := "Male"
+		address := "1 Main St"
+		proofOfIdentification := "Passport"
+		idSerial := "123456789"
+
+		orgClient.On("Get", OrgName).Return(
+			&cnucl.OrgInfo{
+				Id:            orgId,
+				Name:          OrgName,
+				IsDeactivated: false,
+			}, nil).Once()
+		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, orgClient, networkClient)
+		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
+			FirstName:             firstName,
+			NetworkId:             "",
+			LastName:              lastName,
+			Email:                 email,
+			PhoneNumber:           phoneNumber,
+			Gender:                gender,
+			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
+			Address:               address,
+			ProofOfIdentification: proofOfIdentification,
+			IdSerial:              idSerial,
+		})
+		assert.NoError(t, err)
+	})
 }
+
 func TestSubscriberServer_Get(t *testing.T) {
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {

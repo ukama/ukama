@@ -343,7 +343,7 @@ func Test_NetRepo_Add(t *testing.T) {
 			WithArgs(network.Id, network.Name, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

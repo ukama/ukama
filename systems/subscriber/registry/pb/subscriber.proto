@@ -135,6 +135,5 @@ message AddSubscriberResponse{
     ukama.common.v1.Subscriber Subscriber = 1;
 
 }
-
 // Package message defines the structure for a package object
 

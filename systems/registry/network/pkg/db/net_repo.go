@@ -62,13 +62,31 @@ func (n netRepo) GetDefault() (*Network, error) {
 
 func (n netRepo) SetDefault(id uuid.UUID, isDefault bool) (*Network, error) {
 	var ntwk Network
-	// Set all networks is_default to false
-	n.Db.GetGormDb().Model(&Network{}).Where("is_default = ?", true).Update("is_default", false)
 
-	// Set the network with the id to is_default true
-	result := n.Db.GetGormDb().First(&ntwk, id).Update("is_default", true)
-	if result.Error != nil {
-		return nil, result.Error
+	// Start a database transaction
+	tx := n.Db.GetGormDb().Begin()
+
+	// Set all networks to is_default false
+	if err := tx.Model(&Network{}).Where("1 = 1").Update("is_default", false).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to set all networks to not default: %w", err)
+	}
+
+	// Find the network with the id
+	if err := tx.First(&ntwk, id).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to find network %v: %w", id, err)
+	}
+
+	// Set the network to is_default true
+	if err := tx.Model(&ntwk).Update("is_default", true).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to set network %v to default: %w", id, err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return &ntwk, nil
@@ -101,12 +119,10 @@ func (n netRepo) GetByName(networkName string) (*Network, error) {
 }
 
 // func (n netRepo) GetByOrgName(orgID uint) ([]Network, error) {
-
-//This gives the result in a single sql query, but fail to distingush between
-//	when org does not exist vs when org has no networks, can improve later.
+// This gives the result in a single sql query, but fail to distingush between
+// when org does not exist vs when org has no networks, can improve later.
 // result := db.Joins("JOIN orgs on orgs.id=networks.org_id").
 // Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
-
 // }
 
 func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gorm.DB) error) error {
