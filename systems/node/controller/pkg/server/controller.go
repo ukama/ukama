@@ -110,7 +110,6 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	}
 
 	return &pb.RestartSiteResponse{
-		Status: pb.RestartStatus_RESTARTED,
 	}, nil
 }
 
@@ -145,7 +144,6 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 
 	}
 	return &pb.RestartNodeResponse{
-		Status: pb.RestartStatus_RESTARTED,
 	}, nil
 }
 
@@ -183,9 +181,37 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	}
 
 	return &pb.RestartNodesResponse{
-		Status: pb.RestartStatus_RESTARTED,
 	}, nil
 
+}
+func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
+	log.Infof("Toggling internet switch for site %v to %v", req.SiteId, req.Status)
+
+	if req.SiteId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
+	}
+	siteId, err := uuid.FromString(req.GetSiteId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
+	}
+
+	if err := c.registrySystem.ValidateSite(req.SiteId, "", c.orgName); err != nil {
+		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
+	}
+
+	action := "off"
+	if req.Status {
+		action = "on"
+	}
+
+	fmt.Println(siteId)
+	// Here you would implement the actual logic to toggle the internet switch.
+	// This is a placeholder implementation.
+
+	log.Infof("Successfully toggled internet switch for site %s to %s", req.SiteId, action)
+
+	return &pb.ToggleInternetSwitchResponse{
+	},nil
 }
 
 func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId string) error {
