@@ -90,14 +90,14 @@ func runGrpcServer(gormdb sql.Db) {
 		db.NewUserRepo(gormdb), db.NewUserNotificationRepo(gormdb), mbClient)
 
 	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, serviceConfig.OrgId, eventToNotifyServer)
-	log.Debugf("MessageBus Client is %+v", nil)
+	log.Debugf("MessageBus Client is %+v and config %+v", mbClient, serviceConfig.MsgClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterEventToNotifyServiceServer(s, eventToNotifyServer)
 		egenerated.RegisterEventNotificationServiceServer(s, eventToNotifyEventServer)
 	})
 
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	go grpcServer.StartServer()
 
