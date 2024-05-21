@@ -68,7 +68,8 @@ func initDb() sql.Db {
 
 func initTrigger(db sql.Db) {
 	db.GetGormDb().Exec("CREATE OR REPLACE FUNCTION public.user_notifications_trigger() RETURNS TRIGGER AS $$ DECLARE notification_data text; BEGIN notification_data := NEW.id::text || ',' || NEW.notification_id::text || ',' || NEW.user_id::text || ',' || NEW.is_read::text; PERFORM pg_notify('user_notifications_channel', notification_data); RETURN NEW; END; $$ LANGUAGE plpgsql;")
-	db.GetGormDb().Exec("CREATE OR REPLACE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON user_notifications FOR EACH ROW EXECUTE FUNCTION public.user_notifications_trigger();")
+	db.GetGormDb().Exec("DROP TRIGGER notify_trigger ON user_notifications;")
+	db.GetGormDb().Exec("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON user_notifications FOR EACH ROW EXECUTE FUNCTION public.user_notifications_trigger();")
 }
 
 func runGrpcServer(gormdb sql.Db) {
