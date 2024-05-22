@@ -13,6 +13,7 @@ import { GetNetworkResolver } from "./getNetwork";
 import { GetNetworksResolver } from "./getNetworks";
 import { GetSiteResolver } from "./getSite";
 import { GetSitesResolver } from "./getSites";
+import { SetDefaultNetworkResolver } from "./setDefaultNetwork";
 
 const resolvers: NonEmptyArray<any> = [
   AddNetworkResolver,
@@ -21,6 +22,7 @@ const resolvers: NonEmptyArray<any> = [
   GetNetworksResolver,
   GetSiteResolver,
   GetSitesResolver,
+  SetDefaultNetworkResolver,
 ];
 
 export default resolvers;

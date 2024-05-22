@@ -38,6 +38,8 @@ const getIconByStatus = (status: string, info: string) => {
 };
 
 type NetworkStatusProps = {
+  title: string;
+  subtitle: string;
   loading?: boolean;
   tooltipInfo: string;
   availableNodes: number | undefined;
@@ -45,6 +47,8 @@ type NetworkStatusProps = {
 };
 
 const NetworkStatus = ({
+  title,
+  subtitle,
   loading,
   tooltipInfo,
   availableNodes = undefined,
@@ -56,13 +60,13 @@ const NetworkStatus = ({
       height={loading ? '30px' : 'fit-content'}
       width={loading ? '40%' : 'fit-content'}
     >
-      <Stack direction={'row'} alignItems="center" spacing={1}>
+      <Stack direction={'row'} alignItems="center" spacing={1} mt={1.5}>
         {getIconByStatus(statusType, tooltipInfo)}
         <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
-          Joe’s network requires
+          {title}
         </Typography>
         <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
-          <u>node installation</u>.
+          {subtitle}
         </Typography>
         {availableNodes && (
           <Typography

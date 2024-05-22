@@ -85,9 +85,13 @@ const Sidebar = ({
     <UkamaDrawer
       open={isOpen}
       variant="permanent"
-      style={{ marginTop: 46, height: '100%' }}
+      style={{ marginTop: 46, height: '100%', backgroundColor: 'white' }}
     >
-      <LoadingWrapper isLoading={isLoading} radius="none">
+      <LoadingWrapper
+        isLoading={isLoading}
+        radius="none"
+        cstyle={{ backgroundColor: 'white' }}
+      >
         <Stack direction={'column'}>
           <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown

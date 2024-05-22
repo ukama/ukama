@@ -563,9 +563,12 @@ query GetUser($userId: String!) {
 fragment UNetwork on NetworkDto {
   id
   name
-  orgId
+  isDefault
   budget
+  overdraft
+  trafficPolicy
   isDeactivated
+  paymentLinks
   createdAt
   countries
   networks
@@ -573,7 +576,6 @@ fragment UNetwork on NetworkDto {
 
 query getNetworks {
   getNetworks {
-    orgId
     networks {
       ...UNetwork
     }
@@ -596,6 +598,12 @@ query getSites($networkId: String!) {
 mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
     ...UNetwork
+  }
+}
+
+mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
+  setDefaultNetwork(data: $data) {
+    success
   }
 }
 

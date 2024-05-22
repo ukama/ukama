@@ -334,6 +334,7 @@ export type Mutation = {
   removePackageForSim: RemovePackageFromSimResDto;
   sendInvitation: SendInvitationResDto;
   setActivePackageForSim: SetActivePackageForSimResDto;
+  setDefaultNetwork: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
   updateDraftName: Draft;
   updateEvent: Event;
@@ -495,6 +496,11 @@ export type MutationSetActivePackageForSimArgs = {
 };
 
 
+export type MutationSetDefaultNetworkArgs = {
+  data: SetDefaultNetworkInputDto;
+};
+
+
 export type MutationToggleSimStatusArgs = {
   data: ToggleSimStatusInputDto;
 };
@@ -575,16 +581,18 @@ export type NetworkDto = {
   countries: Array<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  isDeactivated: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  isDefault: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   networks: Array<Scalars['String']['output']>;
-  orgId: Scalars['String']['output'];
+  overdraft: Scalars['Float']['output'];
+  paymentLinks: Scalars['Boolean']['output'];
+  trafficPolicy: Scalars['Float']['output'];
 };
 
 export type NetworksResDto = {
   __typename?: 'NetworksResDto';
   networks: Array<NetworkDto>;
-  orgId: Scalars['String']['output'];
 };
 
 export type Node = {
@@ -947,6 +955,10 @@ export type SetActivePackageForSimInputDto = {
 export type SetActivePackageForSimResDto = {
   __typename?: 'SetActivePackageForSimResDto';
   packageId?: Maybe<Scalars['String']['output']>;
+};
+
+export type SetDefaultNetworkInputDto = {
+  id: Scalars['String']['input'];
 };
 
 export type SimAllocatePackageDto = {
@@ -1554,12 +1566,12 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> };
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
 export type GetSitesQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -1573,7 +1585,14 @@ export type AddNetworkMutationVariables = Exact<{
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, budget: number, isDeactivated: string, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+
+export type SetDefaultNetworkMutationVariables = Exact<{
+  data: SetDefaultNetworkInputDto;
+}>;
+
+
+export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -1894,9 +1913,12 @@ export const UNetworkFragmentDoc = gql`
     fragment UNetwork on NetworkDto {
   id
   name
-  orgId
+  isDefault
   budget
+  overdraft
+  trafficPolicy
   isDeactivated
+  paymentLinks
   createdAt
   countries
   networks
@@ -3586,7 +3608,6 @@ export type GetUserQueryResult = Apollo.QueryResult<GetUserQuery, GetUserQueryVa
 export const GetNetworksDocument = gql`
     query getNetworks {
   getNetworks {
-    orgId
     networks {
       ...UNetwork
     }
@@ -3695,6 +3716,39 @@ export function useAddNetworkMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddNetworkMutationHookResult = ReturnType<typeof useAddNetworkMutation>;
 export type AddNetworkMutationResult = Apollo.MutationResult<AddNetworkMutation>;
 export type AddNetworkMutationOptions = Apollo.BaseMutationOptions<AddNetworkMutation, AddNetworkMutationVariables>;
+export const SetDefaultNetworkDocument = gql`
+    mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
+  setDefaultNetwork(data: $data) {
+    success
+  }
+}
+    `;
+export type SetDefaultNetworkMutationFn = Apollo.MutationFunction<SetDefaultNetworkMutation, SetDefaultNetworkMutationVariables>;
+
+/**
+ * __useSetDefaultNetworkMutation__
+ *
+ * To run a mutation, you first call `useSetDefaultNetworkMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetDefaultNetworkMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setDefaultNetworkMutation, { data, loading, error }] = useSetDefaultNetworkMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useSetDefaultNetworkMutation(baseOptions?: Apollo.MutationHookOptions<SetDefaultNetworkMutation, SetDefaultNetworkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetDefaultNetworkMutation, SetDefaultNetworkMutationVariables>(SetDefaultNetworkDocument, options);
+      }
+export type SetDefaultNetworkMutationHookResult = ReturnType<typeof useSetDefaultNetworkMutation>;
+export type SetDefaultNetworkMutationResult = Apollo.MutationResult<SetDefaultNetworkMutation>;
+export type SetDefaultNetworkMutationOptions = Apollo.BaseMutationOptions<SetDefaultNetworkMutation, SetDefaultNetworkMutationVariables>;
 export const AddDraftDocument = gql`
     mutation AddDraft($data: AddDraftInput!) {
   addDraft(data: $data) {

@@ -7,15 +7,12 @@
  */
 
 import { commonData, snackbarMessage } from '@/app-recoil';
-import { metricsClient } from '@/client/ApolloClient';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import {
   NodeStatusEnum,
   useGetNodesByNetworkQuery,
-  useGetNodesLocationQuery,
   useGetSitesQuery,
 } from '@/generated';
-import { useGetStatsMetricQuery } from '@/generated/metrics';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
@@ -48,7 +45,7 @@ export default function Page() {
   );
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'no-cache',
     variables: {
       networkId: _commonData?.networkId,
     },
@@ -62,10 +59,21 @@ export default function Page() {
     },
   });
 
-  const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
-    client: metricsClient,
-    fetchPolicy: 'cache-and-network',
-  });
+  // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
+  //   client: metricsClient,
+  //   fetchPolicy: 'cache-and-network',
+  // });
+
+  // const { data: nodesLocationData, loading: nodesLocationLoading } =
+  //   useGetNodesLocationQuery({
+  //     fetchPolicy: 'cache-first',
+  //     variables: {
+  //       data: {
+  //         nodeFilterState: filterState,
+  //         networkId: _commonData?.networkId,
+  //       },
+  //     },
+  //   });
 
   const { data: networkNodes, loading: networkNodesLoading } =
     useGetNodesByNetworkQuery({
@@ -83,24 +91,21 @@ export default function Page() {
       },
     });
 
-  const { data: nodesLocationData, loading: nodesLocationLoading } =
-    useGetNodesLocationQuery({
-      fetchPolicy: 'cache-first',
-      variables: {
-        data: {
-          nodeFilterState: filterState,
-          networkId: _commonData?.networkId,
-        },
-      },
-    });
-
   return (
     <>
       <Grid container spacing={2}>
         <Grid xs={12}>
           <NetworkStatus
+            title={
+              _commonData.networkName
+                ? `${_commonData.networkName} is created.`
+                : `No network selected.`
+            }
+            subtitle={
+              _commonData.networkName ? 'No node attached to this network.' : ''
+            }
             loading={false}
-            availableNodes={4}
+            availableNodes={undefined}
             statusType="ONLINE"
             tooltipInfo="Network is online"
           />
@@ -110,35 +115,33 @@ export default function Page() {
             Icon={UsersWithBG}
             title={'Active subscribers'}
             options={TIME_FILTER}
-            subtitle1={`${statsRes?.getStatsMetric.activeSubscriber}` || '0'}
+            subtitle1={`${0}`}
             subtitle2={''}
             option={''}
-            loading={statsLoading}
+            loading={networkLoading}
             handleSelect={(value: string) => {}}
           />
         </Grid>
         <Grid xs={12} md={6} lg={4}>
           <StatusCard
             title={'Average signal strength'}
-            subtitle1={
-              `${statsRes?.getStatsMetric.averageSignalStrength}` || '0'
-            }
+            subtitle1={`${0}`}
             subtitle2={`dBM`}
             Icon={DataUsage}
             options={TIME_FILTER}
             option={'usage'}
-            loading={statsLoading}
+            loading={networkLoading}
             handleSelect={(value: string) => {}}
           />
         </Grid>
         <Grid xs={12} md={6} lg={4}>
           <StatusCard
             title={'Average throughput'}
-            subtitle1={`${statsRes?.getStatsMetric.averageThroughput}` || '0'}
+            subtitle1={`${0}`}
             subtitle2={`bps`}
             Icon={DataBilling}
             options={MONTH_FILTER}
-            loading={statsLoading}
+            loading={networkLoading}
             option={'bill'}
             handleSelect={(value: string) => {}}
           />
@@ -154,13 +157,13 @@ export default function Page() {
               <LoadingWrapper
                 radius="small"
                 width={'100%'}
-                isLoading={nodesLocationLoading || networkNodesLoading}
+                isLoading={networkNodesLoading}
               >
                 <DynamicMap
                   id="network-map"
                   zoom={10}
                   className="network-map"
-                  markersData={nodesLocationData?.getNodesLocation}
+                  markersData={{ nodes: [], networkId: '' }}
                 >
                   {() => (
                     <>

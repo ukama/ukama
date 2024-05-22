@@ -21,10 +21,11 @@ import {
   useGetNetworksQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
+  useSetDefaultNetworkMutation,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
-import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
+import { getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -59,7 +60,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     },
   });
 
-  const [getUser, { data: userData, loading: userLoading, error: userError }] =
+  const [getUser, { data: userData, loading: userLoading }] =
     useGetUserLazyQuery({
       fetchPolicy: 'cache-and-network',
       onCompleted: (data) => {
@@ -87,7 +88,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   const {
     data: networksData,
-    error: networksError,
     loading: networksLoading,
     refetch: refetchNetworks,
   } = useGetNetworksQuery({
@@ -140,6 +140,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       onCompleted: (data) => {},
     });
 
+  const [setDefaultNetwork] = useSetDefaultNetworkMutation({
+    fetchPolicy: 'network-only',
+  });
+
   useEffect(() => {
     const orgId = route.query['org-id'] as string;
     const orgName = route.query['org-name'] as string;
@@ -180,10 +184,13 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [route]);
 
   useEffect(() => {
-    if (!_commonData.userId || (!_commonData.orgId && !_commonData.orgName)) {
-      route.push('/unauthorized');
-    }
-
+    // if (
+    //   !_commonData.userId ||
+    //   (!_commonData.orgId && !_commonData.orgName) ||
+    //   doesHttpOnlyCookieExist('ukama_session')
+    // ) {
+    //   route.push('/onboarding');
+    // }
     if (_commonData.userId) {
       getUser({
         variables: {
@@ -192,17 +199,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       });
     }
   }, [_commonData]);
-
-  useEffect(() => {
-    if (!userLoading && userData && userData.getUser && _user.id) {
-      const { id, name, email } = _user;
-      if (id && name && email) {
-        if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
-      }
-    } else if (userError) {
-      handleGoToLogin();
-    }
-  }, [_user]);
 
   useEffect(() => {
     if (networksLoading && orgsLoading && userLoading && !skeltonLoading)
@@ -240,10 +236,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const handleAddNetworkAction = () => setShowAddNetwork(true);
 
   const handleAddNetwork = (values: any) => {
-    // const countriesName =
-    //   values.countries.length > 0
-    //     ? values.countries.map((item: any) => item.name)
-    //     : [];
     addNetwork({
       variables: {
         data: {
@@ -254,9 +246,21 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
           countries: values.countries,
         },
       },
-    }).finally(() => {
-      setShowAddNetwork(false);
-    });
+    })
+      .then((res) => {
+        if (values.isDefault && res.data?.addNetwork.id) {
+          setDefaultNetwork({
+            variables: {
+              data: {
+                id: res.data?.addNetwork.id,
+              },
+            },
+          });
+        }
+      })
+      .finally(() => {
+        setShowAddNetwork(false);
+      });
   };
 
   return (
@@ -282,7 +286,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         loading={addNetworkLoading}
         handleSuccessAction={handleAddNetwork}
         description={'Add network in organization'}
-        // networks={networksData?.getNetworks.networks || []}
         handleCloseAction={() => setShowAddNetwork(false)}
       />
     </Layout>

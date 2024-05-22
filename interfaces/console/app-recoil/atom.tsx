@@ -33,6 +33,7 @@ const pageName = atom({
   default: 'Home',
   effects_UNSTABLE: [persistAtom],
 });
+
 const commonData = atom({
   key: 'commonData',
   default: {
@@ -45,6 +46,7 @@ const commonData = atom({
   },
   effects_UNSTABLE: [persistAtom],
 });
+
 const snackbarMessage = atom({
   key: 'snackbarMessage',
   default: { id: 'message-id', message: '', type: 'info', show: false },

@@ -1,7 +1,8 @@
 import { pageName, user } from '@/app-recoil';
+import { TUser } from '@/types';
 import { doesHttpOnlyCookieExist } from '@/utils';
 import { useEffect } from 'react';
-import { useResetRecoilState } from 'recoil';
+import { useRecoilState, useResetRecoilState } from 'recoil';
 
 interface IAuthWrapper {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface IAuthWrapper {
 const AuthWrapper = ({ children }: IAuthWrapper) => {
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
+  const [_user, _setUser] = useRecoilState<TUser>(user);
 
   useEffect(() => {
     const interval = setInterval(() => {

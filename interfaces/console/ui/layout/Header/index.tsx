@@ -83,17 +83,13 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
       open={isOpen}
       isloading={`${isLoading}`}
       sx={{
-        py: 1,
+        py: isLoading ? 0 : 1,
         height: 'fit-content',
         justifyContent: 'center',
         boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
       }}
     >
-      <LoadingWrapper
-        radius="none"
-        isLoading={isLoading}
-        height={isOpen ? '46px' : '44px'}
-      >
+      <LoadingWrapper radius="none" isLoading={isLoading} height={48}>
         <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>
           <HorizontalContainerJustify>
             <IconButton onClick={() => onNavigate('Home', '/home')}>

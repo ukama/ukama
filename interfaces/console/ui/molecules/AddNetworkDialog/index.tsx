@@ -4,8 +4,10 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -17,7 +19,6 @@ type AddNetworkDialogProps = {
   title: string;
   isOpen: boolean;
   loading: boolean;
-  // networks: NetworkDto[];
   description: string;
   isClosable?: boolean;
   handleCloseAction: any;
@@ -28,13 +29,15 @@ type AddNetworkDialogProps = {
 
 interface AddNetworkForm {
   name: string;
+  isDefault: boolean;
   budget: number;
   countries: { name: string; code: string }[];
-  networks: { id: string; name: string }[];
+  networks: { id: string; name: string; isDefault: boolean }[];
 }
 
 const validationSchema = Yup.object({
   networks: Yup.array().optional().default([]),
+  isDefault: Yup.boolean().default(false),
   countries: Yup.array().optional().default([]),
   name: Yup.string()
     .required('Network name is required')
@@ -48,6 +51,7 @@ const validationSchema = Yup.object({
 const initialValues: AddNetworkForm = {
   name: '',
   budget: 0,
+  isDefault: false,
   countries: [],
   networks: [],
 };
@@ -56,7 +60,6 @@ const AddNetworkDialog = ({
   title,
   isOpen,
   loading,
-  // networks,
   description,
   labelSuccessBtn,
   labelNegativeBtn,
@@ -120,6 +123,19 @@ const AddNetworkDialog = ({
                   error={touched.name && Boolean(errors.name)}
                   id={'name'}
                 />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      defaultChecked={false}
+                      value={values.isDefault}
+                      checked={values.isDefault}
+                      onChange={() =>
+                        setFieldValue('isDefault', !values.isDefault)
+                      }
+                    />
+                  }
+                  label="Make this network default"
+                />
                 <Stack
                   width="100%"
                   spacing={2}
@@ -149,97 +165,3 @@ const AddNetworkDialog = ({
 };
 
 export default AddNetworkDialog;
-
-{
-  /* <Stack direction={'row'} width={'100%'} spacing={2} mt={1}>
-      <TextField
-        fullWidth
-        name={'name'}
-        size="medium"
-        placeholder="Mesh"
-        label={'Network name'}
-        InputLabelProps={{
-          shrink: true,
-        }}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        value={values.name}
-        helperText={touched.name && errors.name}
-        error={touched.name && Boolean(errors.name)}
-        id={'name'}
-      />
-      <TextField
-        sx={{ width: '50%' }}
-        name={'budget'}
-        id={'budget'}
-        size="medium"
-        type="number"
-        placeholder="100"
-        label={'Network budget'}
-        InputLabelProps={{
-          shrink: true,
-        }}
-        onBlur={handleBlur}
-        value={values.budget}
-        onChange={handleChange}
-        helperText={touched.budget && Boolean(errors.budget)}
-        error={touched.budget && Boolean(errors.budget)}
-      />
-    </Stack>
-    <Autocomplete
-      multiple
-      options={COUNTRIES}
-      getOptionLabel={(option) => option.name}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Allowed Countries"
-          placeholder="Country"
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      )}
-      sx={{
-        width: '100%',
-        mt: 1,
-        p: 0,
-        '.MuiOutlinedInput-root': {
-          p: '4px',
-        },
-      }}
-      id={'countries'}
-      onBlur={handleBlur}
-      onChange={(_, value: any) =>
-        setFieldValue('countries', value)
-      }
-    /> 
-    <Autocomplete
-      multiple
-      options={networks.length > 0 ? networks : []}
-      getOptionLabel={(option: NetworkDto) =>
-        option ? option.name : 'No network available'
-      }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Allowed Networks"
-          placeholder="Network"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          value={values.networks}
-        />
-      )}
-      sx={{
-        width: '100%',
-        mt: 1,
-        '.MuiOutlinedInput-root': {
-          p: '4px',
-        },
-      }}
-      id={'networks'}
-      onBlur={handleBlur}
-      onChange={(_, value: any) => setFieldValue('networks', value)}
-    /> */
-}
