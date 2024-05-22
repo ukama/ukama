@@ -1,9 +1,8 @@
-import { Badge, Box, IconButton, Popover } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import { colors } from '@/styles/theme';
-import React, { useState } from 'react';
 import AlertBox from '@/ui/molecules/AlertBox';
-import { title } from 'process';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Badge, IconButton, Popover } from '@mui/material';
+import React, { useState } from 'react';
 
 const IconStyle = {
   '.MuiSvgIcon-root': {
