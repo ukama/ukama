@@ -19,6 +19,7 @@ import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
 import { useRecoilValue } from 'recoil';
+import Alert from './Alert';
 
 const Logo = dynamic(() =>
   import('../../../public/svg/Logo').then((module) => ({
@@ -121,11 +122,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
               >
                 <SettingsIcon />
               </IconButton>
-              <IconButton sx={{ ...IconStyle }}>
-                <Badge badgeContent={4} color="secondary">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
+              <Alert/>
               <IconButton
                 sx={{
                   ...IconStyle,
