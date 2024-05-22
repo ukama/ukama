@@ -20,7 +20,7 @@ message NetworkCreatedEvent {
     repeated string allowedNetworks = 5;
     double budget = 6;
     double overdraft = 7;
-    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
+    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];
     bool isDeactivated = 9;
     bool paymentLinks = 10;
 }

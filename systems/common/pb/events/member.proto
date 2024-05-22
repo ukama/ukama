@@ -8,7 +8,7 @@
 
  syntax = "proto3";
 
- import "events/invitation.proto";
+ import "events/roles.proto";
  option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
  import "validator.proto";
  package ukama.events.v1;

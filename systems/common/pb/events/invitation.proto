@@ -10,6 +10,8 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
+import "events/roles.proto";
+
 package ukama.events.v1;
 
 message EventInvitationCreated {
@@ -21,11 +23,4 @@ message EventInvitationCreated {
     string status = 6;
     string userId = 7 [json_name = "user_id"];
     string expiresAt = 8 [json_name = "expires_at"];
-}
-
-enum RoleType {
-    OWNER = 0;
-    ADMIN = 1;
-    VENDOR = 2;
-    USER = 3;
 }

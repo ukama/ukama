@@ -1,0 +1,43 @@
+package notification
+
+import "database/sql/driver"
+
+type NotificationScope uint8
+
+const (
+	SCOPE_INVALID    NotificationScope = 0
+	SCOPE_ORG        NotificationScope = 1
+	SCOPE_NETWORK    NotificationScope = 2
+	SCOPE_SITE       NotificationScope = 3
+	SCOPE_SUBSCRIBER NotificationScope = 4
+	SCOPE_USER       NotificationScope = 5
+	SCOPE_NODE       NotificationScope = 6
+)
+
+func (l *NotificationScope) Scan(value interface{}) error {
+	*l = NotificationScope(uint8(value.(int64)))
+	return nil
+}
+
+func (l NotificationScope) Value() (driver.Value, error) {
+	return uint8(l), nil
+}
+
+type NotificationType uint8
+
+const (
+	TYPE_INAVLID  NotificationType = 0
+	TYPE_INFO     NotificationType = 1
+	TYPE_WARNING  NotificationType = 2
+	TYPE_ERROR    NotificationType = 3
+	TYPE_CRITICAL NotificationType = 4
+)
+
+func (l *NotificationType) Scan(value interface{}) error {
+	*l = NotificationType(uint8(value.(int64)))
+	return nil
+}
+
+func (l NotificationType) Value() (driver.Value, error) {
+	return uint8(l), nil
+}
