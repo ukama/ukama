@@ -1,16 +1,12 @@
-import { Circle, CloudOff, MoreHoriz } from '@mui/icons-material';
+import { Circle, MoreHoriz } from '@mui/icons-material';
 import {
   Box,
-  Button,
   Divider,
-  Icon,
   IconButton,
   List,
   ListItem,
-  ListItemIcon,
-  ListItemText,
   Popover,
-  Typography,
+  Typography
 } from '@mui/material';
 import { useState } from 'react';
 import DeleteNotification from '../DeleteNotification';
