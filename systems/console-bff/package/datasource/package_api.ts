@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 
 import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
@@ -28,8 +29,8 @@ class PackageApi extends RESTDataSource {
     );
   };
 
-  getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`).then(res =>
+  getPackages = async (): Promise<PackagesResDto> => {
+    return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
       dtoToPackagesDto(res)
     );
   };
@@ -38,25 +39,32 @@ class PackageApi extends RESTDataSource {
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
+    this.logger.info(`Add pacakge request`);
+    const baserate = await this.get(`/${VERSION}/baserates/history`);
+
     return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
-        duration: req.duration,
-        active: true,
+        name: req.name,
         amount: req.amount,
         data_unit: req.dataUnit,
         data_volume: req.dataVolume,
+        duration: req.duration,
+        active: true,
         flat_rate: true,
-        from: "2023-04-01T00:00:00Z",
         markup: 0,
-        name: req.name,
-        org_id: headers.orgId,
-        owner_id: headers.userId,
-        sim_type: "ukama_data",
+        overdraft: 0,
         sms_volume: 0,
-        to: "",
-        type: "prepaid",
-        voice_unit: "seconds",
         voice_volume: 0,
+        traffic_policy: 0,
+        networks: [],
+        type: "prepaid",
+        apn: "ukama.tel",
+        owner_id: headers.userId,
+        sim_type: "operator_data",
+        to: dayjs().add(5, "year").format(),
+        from: dayjs().add(7, "day").format(),
+        voice_unit: "seconds",
+        baserate_id: baserate.rates[0].uuid,
       },
     }).then(res => dtoToPackageDto(res));
   };

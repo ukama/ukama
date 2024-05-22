@@ -39,9 +39,6 @@ export class PackageAPIDto {
   name: string;
 
   @Field()
-  org_id: string;
-
-  @Field()
   active: boolean;
 
   @Field()
@@ -161,9 +158,6 @@ export class PackageDto {
 
   @Field()
   name: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   active: boolean;

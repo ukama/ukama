@@ -240,7 +240,6 @@ fragment SimPackages on SimToPackagesDto {
 fragment Package on PackageDto {
   uuid
   name
-  orgId
   active
   duration
   simType
