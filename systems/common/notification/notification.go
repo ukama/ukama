@@ -1,6 +1,10 @@
 package notification
 
-import "database/sql/driver"
+import (
+	"database/sql/driver"
+
+	"github.com/ukama/ukama/systems/common/roles"
+)
 
 type NotificationScope uint8
 
@@ -40,4 +44,11 @@ func (l *NotificationType) Scan(value interface{}) error {
 
 func (l NotificationType) Value() (driver.Value, error) {
 	return uint8(l), nil
+}
+
+var RoleToNotificationScopes = map[roles.RoleType][]NotificationScope{
+	roles.TYPE_OWNER:  {SCOPE_ORG, SCOPE_NETWORK, SCOPE_SITE, SCOPE_SUBSCRIBER, SCOPE_USER, SCOPE_NODE},
+	roles.TYPE_ADMIN:  {SCOPE_ORG, SCOPE_NETWORK, SCOPE_SITE, SCOPE_SUBSCRIBER, SCOPE_USER, SCOPE_NODE},
+	roles.TYPE_VENDOR: {SCOPE_NETWORK},
+	roles.TYPE_USERS:  {SCOPE_USER},
 }
