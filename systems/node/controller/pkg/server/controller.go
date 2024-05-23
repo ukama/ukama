@@ -185,7 +185,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 
 }
 func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
-	log.Infof("Toggling internet switch for site %v to %v", req.SiteId, req.Status)
+    log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
 
 	if req.SiteId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
@@ -204,11 +204,9 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		action = "on"
 	}
 
-	fmt.Println(siteId)
+	fmt.Println(siteId, action)
 	// Here you would implement the actual logic to toggle the internet switch.
 	// This is a placeholder implementation.
-
-	log.Infof("Successfully toggled internet switch for site %s to %s", req.SiteId, action)
 
 	return &pb.ToggleInternetSwitchResponse{
 	},nil
