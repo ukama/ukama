@@ -9,7 +9,7 @@ import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @InputType()
-export class SendInvitationInputDto {
+export class CreateInvitationInputDto {
   @Field()
   name: string;
 
@@ -19,15 +19,6 @@ export class SendInvitationInputDto {
 
   @Field()
   role: string;
-}
-
-@ObjectType()
-export class SendInvitationResDto {
-  @Field()
-  id: string;
-
-  @Field()
-  message: string;
 }
 
 @ObjectType()
@@ -54,14 +45,17 @@ export class InvitationDto {
   userId: string;
 
   @Field()
-  org: string;
-
-  @Field()
   status: string;
 }
 
 @ObjectType()
-export class InvitationAPIResDto {
+export class InvitationsDto {
+  @Field(() => [InvitationDto])
+  invitations: InvitationDto[];
+}
+
+@ObjectType()
+export class InvitationAPIDto {
   @Field()
   email: string;
 
@@ -69,10 +63,10 @@ export class InvitationAPIResDto {
   name: string;
 
   @Field()
-  expires_at: string;
+  expiresAt: string;
 
   @Field()
-  user_id: string;
+  userId: string;
 
   @Field()
   role: string;
@@ -84,14 +78,22 @@ export class InvitationAPIResDto {
   link: string;
 
   @Field()
-  org: string;
-
-  @Field()
   status: string;
 }
 
 @ObjectType()
-export class GetInvitationByOrgResDto {
+export class InvitationAPIResDto {
+  @Field(() => InvitationAPIDto)
+  invitation: InvitationAPIDto;
+}
+@ObjectType()
+export class InvitationsAPIResDto {
+  @Field(() => [InvitationAPIDto])
+  invitations: InvitationAPIDto[];
+}
+
+@ObjectType()
+export class InvitationsResDto {
   @Field(() => [InvitationDto])
   invitations: InvitationDto[];
 }
@@ -103,10 +105,7 @@ export class GetInvitationInputDto {
 }
 
 @InputType()
-export class GetInvitationByOrgInputDto {
-  @Field()
-  orgName: string;
-}
+export class GetInvitationByOrgInputDto {}
 
 @ObjectType()
 export class UpdateInvitationResDto {

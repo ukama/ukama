@@ -59,6 +59,7 @@ class PackageApi extends RESTDataSource {
         networks: [],
         type: "prepaid",
         apn: "ukama.tel",
+        country: "CD",
         owner_id: headers.userId,
         sim_type: "operator_data",
         to: dayjs().add(5, "year").format(),

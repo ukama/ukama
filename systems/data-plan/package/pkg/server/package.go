@@ -39,7 +39,7 @@ type PackageServer struct {
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
-	orgId 		   string
+	orgId string
 }
 
 func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient, orgId string) *PackageServer {
@@ -49,7 +49,7 @@ func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.Ra
 		msgbus:         msgBus,
 		rate:           rate,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId: orgId,
+		orgId:          orgId,
 	}
 
 }
@@ -168,6 +168,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Active:       req.Active,
 		From:         from,
 		To:           to,
+		Duration:     uint64(req.GetDuration()),
 		SmsVolume:    uint64(req.GetSmsVolume()),
 		DataVolume:   uint64(req.GetDataVolume()),
 		VoiceVolume:  uint64(req.GetVoiceVolume()),
@@ -361,6 +362,8 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 			Markup:   p.PackageMarkup.Markup,
 		},
 		Provider:      p.Provider,
+		Duration:      p.Duration,
+		Amount:        p.PackageRate.Amount,
 		Type:          p.Type.String(),
 		MessageUnit:   p.MessageUnits.String(),
 		VoiceUnit:     p.VoiceUnits.String(),

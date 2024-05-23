@@ -143,6 +143,12 @@ export type CoverageInput = {
   mode: Scalars['String']['input'];
 };
 
+export type CreateInvitationInputDto = {
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
 export type DefaultMarkupHistoryDto = {
   __typename?: 'DefaultMarkupHistoryDto';
   Markup: Scalars['Float']['output'];
@@ -217,11 +223,6 @@ export type Event = {
   value: Scalars['String']['output'];
 };
 
-export type GetInvitationByOrgResDto = {
-  __typename?: 'GetInvitationByOrgResDto';
-  invitations: Array<InvitationDto>;
-};
-
 export type GetNodesInput = {
   isFree: Scalars['Boolean']['input'];
 };
@@ -256,10 +257,14 @@ export type InvitationDto = {
   id: Scalars['String']['output'];
   link: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  org: Scalars['String']['output'];
   role: Scalars['String']['output'];
   status: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type InvitationsResDto = {
+  __typename?: 'InvitationsResDto';
+  invitations: Array<InvitationDto>;
 };
 
 export type Link = {
@@ -319,6 +324,7 @@ export type Mutation = {
   allocateSim: AllocateSimApiDto;
   attachNode: CBooleanResponse;
   coverage: Site;
+  createInvitation: InvitationDto;
   defaultMarkup: CBooleanResponse;
   deleteDraft: DeleteDraftRes;
   deleteInvitation: DeleteInvitationResDto;
@@ -332,7 +338,6 @@ export type Mutation = {
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
-  sendInvitation: SendInvitationResDto;
   setActivePackageForSim: SetActivePackageForSimResDto;
   setDefaultNetwork: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
@@ -419,6 +424,11 @@ export type MutationCoverageArgs = {
 };
 
 
+export type MutationCreateInvitationArgs = {
+  data: CreateInvitationInputDto;
+};
+
+
 export type MutationDefaultMarkupArgs = {
   data: DefaultMarkupInputDto;
 };
@@ -483,11 +493,6 @@ export type MutationRemoveMemberArgs = {
 
 export type MutationRemovePackageForSimArgs = {
   data: RemovePackageFormSimInputDto;
-};
-
-
-export type MutationSendInvitationArgs = {
-  data: SendInvitationInputDto;
 };
 
 
@@ -711,28 +716,27 @@ export type PackageDto = {
   createdAt: Scalars['String']['output'];
   currency: Scalars['String']['output'];
   dataUnit: Scalars['String']['output'];
-  dataVolume: Scalars['String']['output'];
+  dataVolume: Scalars['Float']['output'];
   deletedAt: Scalars['String']['output'];
   dlbr: Scalars['String']['output'];
-  duration: Scalars['String']['output'];
+  duration: Scalars['Float']['output'];
   flatrate: Scalars['Boolean']['output'];
   from: Scalars['String']['output'];
   markup: PackageMarkupApiDto;
   messageUnit: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   ownerId: Scalars['String']['output'];
   provider: Scalars['String']['output'];
   rate: PackageRateApiDto;
   simType: Scalars['String']['output'];
-  smsVolume: Scalars['String']['output'];
+  smsVolume: Scalars['Float']['output'];
   to: Scalars['String']['output'];
   type: Scalars['String']['output'];
   ulbr: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   uuid: Scalars['String']['output'];
   voiceUnit: Scalars['String']['output'];
-  voiceVolume: Scalars['String']['output'];
+  voiceVolume: Scalars['Float']['output'];
 };
 
 export type PackageMarkupApiDto = {
@@ -764,7 +768,8 @@ export type Query = {
   getDraft: Draft;
   getDrafts: Array<Draft>;
   getInvitation: InvitationDto;
-  getInvitationsByOrg: GetInvitationByOrgResDto;
+  getInvitations: InvitationDto;
+  getInvitationsByOrg: InvitationsResDto;
   getMember: MemberDto;
   getMembers: MembersResDto;
   getNetwork: NetworkDto;
@@ -822,6 +827,11 @@ export type QueryGetDraftsArgs = {
 
 export type QueryGetInvitationArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetInvitationsArgs = {
+  email: Scalars['String']['input'];
 };
 
 
@@ -933,18 +943,6 @@ export type RemovePackageFormSimInputDto = {
 export type RemovePackageFromSimResDto = {
   __typename?: 'RemovePackageFromSimResDto';
   packageId?: Maybe<Scalars['String']['output']>;
-};
-
-export type SendInvitationInputDto = {
-  email: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
-export type SendInvitationResDto = {
-  __typename?: 'SendInvitationResDto';
-  id: Scalars['String']['output'];
-  message: Scalars['String']['output'];
 };
 
 export type SetActivePackageForSimInputDto = {
@@ -1379,19 +1377,19 @@ export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typ
 
 export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
 
-export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
 export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
 
 export type GetPackageQueryVariables = Exact<{
   packageId: Scalars['String']['input'];
 }>;
 
 
-export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type GetSimsBySubscriberQueryVariables = Exact<{
   data: GetSimBySubscriberInputDto;
@@ -1405,7 +1403,7 @@ export type AddPackageMutationVariables = Exact<{
 }>;
 
 
-export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type RemovePackageForSimMutationVariables = Exact<{
   data: RemovePackageFormSimInputDto;
@@ -1455,7 +1453,7 @@ export type UpdatePacakgeMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -1697,6 +1695,25 @@ export type CoverageMutationVariables = Exact<{
 
 
 export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } } };
+
+export type CreateInvitationMutationVariables = Exact<{
+  data: CreateInvitationInputDto;
+}>;
+
+
+export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+
+export type GetInvitationsQueryVariables = Exact<{
+  email: Scalars['String']['input'];
+}>;
+
+
+export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+
+export type InvitationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string }> } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -4158,3 +4175,128 @@ export function useCoverageMutation(baseOptions?: Apollo.MutationHookOptions<Cov
 export type CoverageMutationHookResult = ReturnType<typeof useCoverageMutation>;
 export type CoverageMutationResult = Apollo.MutationResult<CoverageMutation>;
 export type CoverageMutationOptions = Apollo.BaseMutationOptions<CoverageMutation, CoverageMutationVariables>;
+export const CreateInvitationDocument = gql`
+    mutation CreateInvitation($data: CreateInvitationInputDto!) {
+  createInvitation(data: $data) {
+    email
+    expiresAt
+    id
+    name
+    role
+    link
+    userId
+    status
+  }
+}
+    `;
+export type CreateInvitationMutationFn = Apollo.MutationFunction<CreateInvitationMutation, CreateInvitationMutationVariables>;
+
+/**
+ * __useCreateInvitationMutation__
+ *
+ * To run a mutation, you first call `useCreateInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createInvitationMutation, { data, loading, error }] = useCreateInvitationMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useCreateInvitationMutation(baseOptions?: Apollo.MutationHookOptions<CreateInvitationMutation, CreateInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateInvitationMutation, CreateInvitationMutationVariables>(CreateInvitationDocument, options);
+      }
+export type CreateInvitationMutationHookResult = ReturnType<typeof useCreateInvitationMutation>;
+export type CreateInvitationMutationResult = Apollo.MutationResult<CreateInvitationMutation>;
+export type CreateInvitationMutationOptions = Apollo.BaseMutationOptions<CreateInvitationMutation, CreateInvitationMutationVariables>;
+export const GetInvitationsDocument = gql`
+    query GetInvitations($email: String!) {
+  getInvitations(email: $email) {
+    email
+    expiresAt
+    id
+    name
+    role
+    link
+    userId
+    status
+  }
+}
+    `;
+
+/**
+ * __useGetInvitationsQuery__
+ *
+ * To run a query within a React component, call `useGetInvitationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvitationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvitationsQuery({
+ *   variables: {
+ *      email: // value for 'email'
+ *   },
+ * });
+ */
+export function useGetInvitationsQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
+      }
+export function useGetInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
+        }
+export type GetInvitationsQueryHookResult = ReturnType<typeof useGetInvitationsQuery>;
+export type GetInvitationsLazyQueryHookResult = ReturnType<typeof useGetInvitationsLazyQuery>;
+export type GetInvitationsQueryResult = Apollo.QueryResult<GetInvitationsQuery, GetInvitationsQueryVariables>;
+export const InvitationsDocument = gql`
+    query Invitations {
+  getInvitationsByOrg {
+    invitations {
+      email
+      expiresAt
+      id
+      name
+      role
+      link
+      userId
+      status
+    }
+  }
+}
+    `;
+
+/**
+ * __useInvitationsQuery__
+ *
+ * To run a query within a React component, call `useInvitationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInvitationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInvitationsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useInvitationsQuery(baseOptions?: Apollo.QueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
+      }
+export function useInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
+        }
+export type InvitationsQueryHookResult = ReturnType<typeof useInvitationsQuery>;
+export type InvitationsLazyQueryHookResult = ReturnType<typeof useInvitationsLazyQuery>;
+export type InvitationsQueryResult = Apollo.QueryResult<InvitationsQuery, InvitationsQueryVariables>;

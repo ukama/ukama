@@ -5,20 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
-import { SendInvitationInputDto, SendInvitationResDto } from "./types";
+import { CreateInvitationInputDto, InvitationDto } from "./types";
 
 @Resolver()
-export class SendInvitationResolver {
-  @Mutation(() => SendInvitationResDto)
-  @UseMiddleware(Authentication)
-  async sendInvitation(
-    @Arg("data") data: SendInvitationInputDto,
+export class CreateInvitationResolver {
+  @Mutation(() => InvitationDto)
+  async createInvitation(
+    @Arg("data") data: CreateInvitationInputDto,
     @Ctx() ctx: Context
-  ): Promise<SendInvitationResDto> {
+  ): Promise<InvitationDto> {
     const { dataSources } = ctx;
     return dataSources.dataSource.sendInvitation(data);
   }

@@ -127,13 +127,17 @@ func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateStat
 	return res, nil
 }
 
-func (r *InvitationRegistry) GetInvitationByEmail(email string) error {
+func (r *InvitationRegistry) GetInvitationsByEmail(email string) (*pb.GetByEmailResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	_, err := r.client.GetByEmail(ctx, &pb.GetByEmailRequest{
+	res, err := r.client.GetByEmail(ctx, &pb.GetByEmailRequest{
 		Email: email,
-	},
-	)
-	return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

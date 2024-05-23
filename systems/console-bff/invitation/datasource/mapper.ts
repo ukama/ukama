@@ -5,19 +5,42 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { InvitationAPIResDto, InvitationDto } from "../resolver/types";
+import {
+  InvitationAPIDto,
+  InvitationAPIResDto,
+  InvitationDto,
+  InvitationsAPIResDto,
+  InvitationsResDto,
+} from "../resolver/types";
 
-export const dtoToInvitationResDto = (
+export const dtoToInvitationsResDto = (
+  res: InvitationsAPIResDto
+): InvitationsResDto => {
+  const invites = [];
+  if (res && res.invitations.length > 0) {
+    for (let i = 0; i < res.invitations.length; i++) {
+      invites.push(dtoToInvitationDto(res.invitations[i]));
+    }
+  }
+  return {
+    invitations: invites,
+  };
+};
+
+export const inviteResToInvitationDto = (
   res: InvitationAPIResDto
 ): InvitationDto => {
+  return dtoToInvitationDto(res.invitation);
+};
+
+export const dtoToInvitationDto = (res: InvitationAPIDto): InvitationDto => {
   return {
     email: res.email,
-    expiresAt: res.expires_at,
+    expiresAt: res.expiresAt,
     id: res.id,
     link: res.link,
-    userId: res.user_id,
+    userId: res.userId,
     name: res.name,
-    org: res.org,
     role: res.role,
     status: res.status,
   };

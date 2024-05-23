@@ -33,7 +33,6 @@ type UpdateMemberRequest struct {
 	Role          string `example:"member" json:"role,omitempty"`
 }
 
-
 type GetNetworkRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
 }
@@ -56,16 +55,16 @@ type GetSitesRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" form:"org" json:"network" query:"network" binding:"required" validate:"required"`
 }
 type UpdateSiteRequest struct {
-	SiteId        string    `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
-	Name          string    `json:"name" validate:"required"`
-	BackhaulId    string    `json:"backhaul_id" validate:"required"`
-	PowerId       string    `json:"power_id" validate:"required"`
-	AccessId      string    `json:"access_id" validate:"required"`
-	SwitchId      string    `json:"switch_id" validate:"required"`
-	IsDeactivated bool      `json:"is_deactivated"`
-	Latitude      float64   `json:"latitude"`
-	Longitude     float64   `json:"longitude"`
-	InstallDate   string `json:"install_date" validate:"required"`
+	SiteId        string  `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
+	Name          string  `json:"name" validate:"required"`
+	BackhaulId    string  `json:"backhaul_id" validate:"required"`
+	PowerId       string  `json:"power_id" validate:"required"`
+	AccessId      string  `json:"access_id" validate:"required"`
+	SwitchId      string  `json:"switch_id" validate:"required"`
+	IsDeactivated bool    `json:"is_deactivated"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	InstallDate   string  `json:"install_date" validate:"required"`
 }
 
 type AddSiteRequest struct {
@@ -110,7 +109,7 @@ type GetNodesRequest struct {
 }
 
 type GetOrgNodesRequest struct {
-	Free  bool   `form:"free" json:"free" query:"free" binding:"required"`
+	Free bool `form:"free" json:"free" query:"free" binding:"required"`
 }
 
 type GetSiteNodesRequest struct {
@@ -160,4 +159,8 @@ type UpdateInvitationRequest struct {
 
 type RemoveInvitationRequest struct {
 	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
+}
+
+type GetInvitationsByEmailReq struct {
+	Email string `json:"email" path:"email" validate:"required"`
 }

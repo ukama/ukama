@@ -474,14 +474,8 @@ const getUnixTime = (): number => {
   return Math.floor(Date.now() / 1000);
 };
 
-const convertToWeeksOrMonths = (number: number): string => {
-  if (number >= 4) {
-    const months = Math.floor(number / 4);
-    return `${months <= 1 ? 'Month' : 'Months'} `;
-  } else {
-    const weeks = Math.floor(number);
-    return ` ${weeks <= 1 ? 'Week' : 'Weeks'} `;
-  }
+const getDuration = (number: number): string => {
+  return number > 1 ? `${number} Days` : `${number} Day`;
 };
 
 const structureNodeSiteDate = (data: any) => {
@@ -516,7 +510,6 @@ export const isMetricValue = (key: string, metrics: MetricsRes) => {
 export {
   COUNTRIES,
   calculateCenterLatLng,
-  convertToWeeksOrMonths,
   doesHttpOnlyCookieExist,
   fileToBase64,
   formatBytes,
@@ -525,6 +518,7 @@ export {
   getColorByType,
   getDataPlanUsage,
   getDefaultMetricList,
+  getDuration,
   getGraphFilterByType,
   getMetricObjectByKey,
   getMetricPayload,

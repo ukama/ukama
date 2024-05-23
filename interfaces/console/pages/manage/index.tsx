@@ -11,12 +11,14 @@ import { MANAGE_MENU_LIST } from '@/constants';
 import {
   PackageDto,
   useAddPackageMutation,
+  useCreateInvitationMutation,
   useDeletePackageMutation,
   // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
+  useInvitationsQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
 } from '@/generated';
@@ -44,7 +46,14 @@ const NodePool = dynamic(() => import('./_nodepool'));
 const Member = dynamic(() => import('./_member'));
 const DataPlan = dynamic(() => import('./_dataplan'));
 
-const structureData = (data: any) => [];
+const INIT_DATAPLAN = {
+  id: '',
+  name: '',
+  dataVolume: 0,
+  dataUnit: '',
+  amount: 0,
+  duration: 0,
+};
 
 interface IManageMenu {
   selectedId: string;
@@ -108,14 +117,7 @@ const Manage = () => {
     networkList: [],
     invitations: [],
   });
-  const [dataplan, setDataplan] = useState({
-    id: '',
-    name: '',
-    dataVolume: 0,
-    dataUnit: '',
-    amount: 0,
-    duration: 0,
-  });
+  const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
 
   // const {
   //   data: members,
@@ -220,27 +222,25 @@ const Manage = () => {
       },
     });
 
-  // const [
-  //   getInvitationsByOrg,
-  //   { loading: invitationsLoading, refetch: getInvitations },
-  // ] = useGetInvitationsByOrgLazyQuery({
-  //   fetchPolicy: 'cache-and-network',
-  //   onCompleted: (data) => {
-  //     setData((prev: any) => ({
-  //       ...prev,
-  //       invitations: data?.getInvitationsByOrg ?? [],
-  //     }));
-  //   },
+  const { loading: invitationsLoading, refetch: refetchInvitations } =
+    useInvitationsQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          invitations: data?.getInvitationsByOrg ?? [],
+        }));
+      },
 
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'invitations',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'invitations',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   // const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
   //   onCompleted: () => {
@@ -262,28 +262,28 @@ const Manage = () => {
   //     });
   //   },
   // });
-  // const [sendInvitation, { loading: sendInvitationLoading }] =
-  //   useAddInvitationMutation({
-  //     onCompleted: () => {
-  //       refetchMembers();
-  //       getInvitations();
-  //       setSnackbarMessage({
-  //         id: 'add-member',
-  //         message: 'Invitation sent successfully',
-  //         type: 'success' as AlertColor,
-  //         show: true,
-  //       });
-  //       setIsInviteMember(false);
-  //     },
-  //     onError: (error) => {
-  //       setSnackbarMessage({
-  //         id: 'add-member-error',
-  //         message: error.message,
-  //         type: 'error' as AlertColor,
-  //         show: true,
-  //       });
-  //     },
-  //   });
+  const [sendInvitation, { loading: sendInvitationLoading }] =
+    useCreateInvitationMutation({
+      onCompleted: () => {
+        // refetchMembers();
+        refetchInvitations();
+        setSnackbarMessage({
+          id: 'invitation-success',
+          message: 'Invitation sent successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsInviteMember(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'add-member-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
@@ -310,7 +310,7 @@ const Manage = () => {
 
   const [addDataPlan, { loading: dataPlanLoading }] = useAddPackageMutation({
     onCompleted: () => {
-      refetchSims();
+      // refetchSims();
       setSnackbarMessage({
         id: 'add-data-plan',
         message: 'Data plan added successfully',
@@ -318,6 +318,7 @@ const Manage = () => {
         show: true,
       });
       setIsDataPlan(false);
+      setDataplan(INIT_DATAPLAN);
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -421,34 +422,16 @@ const Manage = () => {
   };
 
   const handleAddMemberAction = (member: TObject) => {
-    // addMember({
-    //   variables: {
-    //     data: {
-    //       email: member.email as string,
-    //       role: member.role as string,
-    //       // name: member.name as string,
-    //     },
-    //   },
-    // });
-    // sendInvitation({
-    //   variables: {
-    //     data: {
-    //       email: member.email as string,
-    //       role: member.role as string,
-    //       name: member.name as string,
-    //     },
-    //   },
-    // });
+    sendInvitation({
+      variables: {
+        data: {
+          email: member.email as string,
+          role: member.role as string,
+          name: member.name as string,
+        },
+      },
+    });
   };
-
-  useEffect(() => {
-    // getInvitationsByOrg({
-    //   variables: {
-    //     orgName: _commonData?.orgName,
-    //   },
-    // });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_commonData?.orgName]);
 
   const handleUploadSimsAction = (
     action: string,
@@ -515,8 +498,8 @@ const Manage = () => {
         id: id,
         amount: typeof d.rate.amount === 'number' ? d.rate.amount : 0,
         dataUnit: d.dataUnit,
-        dataVolume: parseInt(parseInt(d.dataVolume).toFixed(2)),
-        duration: parseInt(d.duration),
+        dataVolume: d.dataVolume,
+        duration: d.duration,
         name: d.name,
       });
       setIsDataPlan(true);
@@ -603,7 +586,6 @@ const Manage = () => {
       {isDataPlan && (
         <DataPlanDialog
           data={dataplan}
-          // organizationName={_commonData.orgName}
           action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
           setData={setDataplan}

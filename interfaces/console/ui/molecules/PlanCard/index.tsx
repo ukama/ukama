@@ -7,7 +7,7 @@
  */
 
 import colors from '@/styles/theme/colors';
-import { convertToWeeksOrMonths, getDataPlanUsage } from '@/utils';
+import { getDuration, getDataPlanUsage } from '@/utils';
 import { PeopleAlt } from '@mui/icons-material';
 import { Card, Grid, Stack, Typography } from '@mui/material';
 import OptionsPopover from '../OptionsPopover';
@@ -81,7 +81,7 @@ const PlanCard = ({
         </Grid>
         <Typography variant="body2" fontWeight={400}>
           {getDataPlanUsage(
-            convertToWeeksOrMonths(duration),
+            getDuration(duration),
             currency,
             amount,
             dataVolume,

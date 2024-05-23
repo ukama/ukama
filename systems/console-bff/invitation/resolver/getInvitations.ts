@@ -11,13 +11,13 @@ import { Context } from "../context";
 import { InvitationDto } from "./types";
 
 @Resolver()
-export class GetInvitationResolver {
+export class GetInvitationsResolver {
   @Query(() => InvitationDto)
-  async getInvitation(
-    @Arg("id") id: string,
+  async getInvitations(
+    @Arg("email") email: string,
     @Ctx() ctx: Context
   ): Promise<InvitationDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.getInvitation(id);
+    return await dataSources.dataSource.getInvitationsByEmail(email);
   }
 }

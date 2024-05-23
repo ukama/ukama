@@ -185,7 +185,7 @@ for SYSTEM in "${SYSTEMS[@]}"; do
 
         echo  "$TAG Set default markup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
-        QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1) RETURNING "id""
+        QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
         psql $DB_URI -c "$QUERY2"
     esac
     cd ../

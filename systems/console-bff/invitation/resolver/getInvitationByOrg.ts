@@ -5,20 +5,16 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
-import { GetInvitationByOrgResDto } from "./types";
+import { InvitationsResDto } from "./types";
 
 @Resolver()
 export class GetInVitationsByOrgResolver {
-  @Query(() => GetInvitationByOrgResDto)
-  @UseMiddleware(Authentication)
-  async getInvitationsByOrg(
-    @Ctx() ctx: Context
-  ): Promise<GetInvitationByOrgResDto> {
-    const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getInvitationsByOrg(headers.orgName);
+  @Query(() => InvitationsResDto)
+  async getInvitationsByOrg(@Ctx() ctx: Context): Promise<InvitationsResDto> {
+    const { dataSources } = ctx;
+    return dataSources.dataSource.getInvitationsByOrg();
   }
 }

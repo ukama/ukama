@@ -63,7 +63,7 @@ type site interface {
 	AddSite(networkId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
-	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse,error)
+	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse, error)
 }
 
 type invitation interface {
@@ -72,6 +72,7 @@ type invitation interface {
 	UpdateInvitation(invitationId string, status string) (*invpb.UpdateStatusResponse, error)
 	RemoveInvitation(invitationId string) (*invpb.DeleteResponse, error)
 	GetAllInvitations() (*invpb.GetAllResponse, error)
+	GetInvitationsByEmail(email string) (*invpb.GetByEmailResponse, error)
 }
 
 type member interface {
@@ -178,7 +179,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("", formatDoc("Get Invitations", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
+		invitations.GET("/", formatDoc("Get Invitations", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
+		invitations.GET("/user/:email", formatDoc("Get Invitations by email", "Get invitations by email"), tonic.Handler(r.getInvitationsByEmailHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -193,7 +195,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Vendors
 
 		// Sites
-		
+
 		const site = "/sites"
 		sites := auth.Group(site, "Sites", "Operations on sites")
 		sites.GET("", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
@@ -339,7 +341,7 @@ func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sit
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {
-	
+
 	return r.clients.Site.AddSite(
 		req.NetworkId,
 		req.Name,
@@ -372,6 +374,10 @@ func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRe
 
 func (r *Router) getAllInvitationsHandler(c *gin.Context) (*invpb.GetAllResponse, error) {
 	return r.clients.Invitation.GetAllInvitations()
+}
+
+func (r *Router) getInvitationsByEmailHandler(c *gin.Context, req *GetInvitationsByEmailReq) (*invpb.GetByEmailResponse, error) {
+	return r.clients.Invitation.GetInvitationsByEmail(req.Email)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
