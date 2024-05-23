@@ -56,6 +56,7 @@ type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
+	ToggleInternetSwitch(status bool, port int32, siteId string )(*contPb.ToggleInternetSwitchResponse,error)
 }
 
 type configurator interface {
@@ -211,6 +212,9 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 
 func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
 	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
+}
+func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
+	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port , req.SiteId)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

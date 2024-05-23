@@ -92,3 +92,15 @@ func (r *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.Resta
 
     return res, nil
 }
+
+func (r *Controller) ToggleInternetSwitch(status bool, port int32 , siteId string) (*pb.ToggleInternetSwitchResponse, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+    defer cancel()
+
+    res, err := r.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port:port})
+    if err != nil {
+        return nil, err
+    }
+
+    return res, nil
+}

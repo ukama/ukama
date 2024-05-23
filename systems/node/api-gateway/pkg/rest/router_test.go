@@ -82,8 +82,7 @@ func Test_RestarteNode(t *testing.T) {
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
 
-	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{
-		Status: cpb.RestartStatus_RESTARTED},
+	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{},
 		nil)
 
 	r := NewRouter(&Clients{
@@ -115,7 +114,6 @@ func Test_RestarteNodes(t *testing.T) {
 	}
 
 	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
-		Status: cpb.RestartStatus_RESTARTED,
 	}, nil)
 
 	r := NewRouter(&Clients{
@@ -162,8 +160,7 @@ func Test_RestarteSite(t *testing.T) {
 		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
 	}
 
-	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{
-		Status: cpb.RestartStatus_RESTARTED},
+	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{},
 		nil)
 
 	r := NewRouter(&Clients{
