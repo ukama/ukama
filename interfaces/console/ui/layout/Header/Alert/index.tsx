@@ -21,25 +21,30 @@ const IconStyle = {
 
 const Alerts = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const alerts = [
+  const [alerts, setAlerts] = useState([
     {
-      title: "Alert 1",
-      message: 'Item affected + severity + type of alert',
+      id:1,
+      title: 'Alert 1',
+      description: 'Item affected + severity + type of alert',
       time: '8/30 1PM',
-      severity: 'mild',
+      isRead: false,
     },
     {
-      title: "Alert 2",
-      message: 'Item affected + severity + type of alert',
+
+      id:2,
+      title: 'Alert 2',
+      description: 'Item affected + severity + type of alert',
       time: '8/16 1PM',
-      severity: 'critical',
+      isRead: false,
     },
     {
-      title: "Alert 3",
-      message: 'Item affected + severity + type of alert',
+      id:3,
+      title: 'Alert 3',
+      description: 'Item affected + severity + type of alert',
       time: '8/20 1PM',
+      isRead: false,
     },
-  ];
+  ]);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -48,14 +53,22 @@ const Alerts = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const handleAlertRead=(index: number)=>{
+    setAlerts((prev)=>{
+      const newAlerts = [...prev]
+      newAlerts[index] = {...newAlerts[index], isRead:true}
+      return newAlerts
+    })
+  }
 
+  const unreadCount = alerts.filter(alert=>!alert.isRead).length
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
 
   return (
     <>
       <IconButton sx={{ ...IconStyle }} onClick={handleClick}>
-        <Badge badgeContent={alerts.length} color="secondary">
+        <Badge badgeContent={unreadCount} color="secondary">
           <NotificationsIcon />
         </Badge>
       </IconButton>
@@ -74,7 +87,7 @@ const Alerts = () => {
           horizontal: 'center',
         }}
       >
-        <AlertBox alerts={alerts} />
+        <AlertBox alerts={alerts} onAlertRead={handleAlertRead}/>
       </Popover>
     </>
   );
