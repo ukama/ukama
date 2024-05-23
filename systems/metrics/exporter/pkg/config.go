@@ -19,6 +19,7 @@ const (
 	LABEL_NETWROK    = "network"
 	LABEL_NODE       = "node"
 	LABEL_SUBSCRIBER = "susbscriber"
+	LABEL_SITE	     = "site"
 )
 
 type Config struct {
@@ -29,7 +30,7 @@ type Config struct {
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	ExporterHost      string            `default:"localhost"`
-	Org               string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
+	Org               string            `default:"8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"`
 	IsMsgBus          bool              `default:"true"`
 	MetricConfig      []MetricConfig    `default:"{}"`
 	Metrics           *config.Metrics   `default:"{}"`
