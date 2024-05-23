@@ -109,8 +109,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		}
 	}
 
-	return &pb.RestartSiteResponse{
-	}, nil
+	return &pb.RestartSiteResponse{}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
@@ -143,8 +142,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 
 	}
-	return &pb.RestartNodeResponse{
-	}, nil
+	return &pb.RestartNodeResponse{}, nil
 }
 
 func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
@@ -180,12 +178,11 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 		}
 	}
 
-	return &pb.RestartNodesResponse{
-	}, nil
+	return &pb.RestartNodesResponse{}, nil
 
 }
 func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
-    log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
+	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
 
 	if req.SiteId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
@@ -199,17 +196,12 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
 	}
 
-	action := "off"
-	if req.Status {
-		action = "on"
+	err = toggleSwitch(siteId, req.Port, req.Status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to toggle internet switch: %v", err)
 	}
 
-	fmt.Println(siteId, action)
-	// Here you would implement the actual logic to toggle the internet switch.
-	// This is a placeholder implementation.
-
-	return &pb.ToggleInternetSwitchResponse{
-	},nil
+	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
 func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId string) error {
@@ -225,4 +217,10 @@ func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId s
 
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
+}
+
+func toggleSwitch(siteId uuid.UUID, port int32, status bool) error {
+
+	fmt.Println("Placeholder implementation for toggling switch. Needs actual logic based on your system.")
+	return nil
 }
