@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
+
 import { SIM_TYPES } from "../../common/enums";
 import { Context } from "../context";
 import { SimsResDto } from "./types";

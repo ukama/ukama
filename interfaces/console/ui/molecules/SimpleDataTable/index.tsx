@@ -10,6 +10,7 @@ import { isDarkmode } from '@/app-recoil';
 import { colors } from '@/styles/theme';
 import { ColumnsWithOptions } from '@/types';
 import ChipDropdown from '@/ui/molecules/ChipDropDown';
+import { getSimValuefromSimType } from '@/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -148,6 +149,12 @@ const SimpleTableCell = ({
           label={row[column.id]}
           sx={{ color: 'white' }}
           color={provideStatusColor(row[column.id])}
+        />
+      ) : column.id === 'simType' ? (
+        <Chip
+          label={getSimValuefromSimType(row[column.id])}
+          sx={{ color: 'white' }}
+          color={'info'}
         />
       ) : (
         <Typography

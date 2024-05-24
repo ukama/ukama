@@ -52,7 +52,7 @@ class SimApi extends RESTDataSource {
   baseURL = SUBSCRIBER_API_GW;
 
   uploadSims = async (req: UploadSimsInputDto): Promise<UploadSimsResDto> => {
-    return this.put(`/upload`, {
+    return this.put(`/${VERSION}/${SIMPOOL}/upload`, {
       body: {
         data: req.data,
         sim_type: req.simType,

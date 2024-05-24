@@ -11,7 +11,6 @@ import colors from '@/styles/theme/colors';
 import { TNodeSiteTree, TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
-import { COUNTRIES } from './countries';
 const getTitleFromPath = (path: string, id: string) => {
   switch (path) {
     case '/home':
@@ -507,8 +506,20 @@ export const isMetricValue = (key: string, metrics: MetricsRes) => {
   return (metric && metric.values.length > 1) || false;
 };
 
+const getSimValuefromSimType = (simType: string) => {
+  switch (simType) {
+    case 'operator_data':
+      return 'Operator Data';
+    case 'ukama_data':
+      return 'Ukama Data';
+    case 'test':
+      return 'Test';
+    default:
+      return 'Unknown';
+  }
+};
+
 export {
-  COUNTRIES,
   calculateCenterLatLng,
   doesHttpOnlyCookieExist,
   fileToBase64,
@@ -524,6 +535,7 @@ export {
   getMetricPayload,
   getMetricsInitObj,
   getRandomData,
+  getSimValuefromSimType,
   getStatusByType,
   getTitleFromPath,
   getTowerNodeFromNodes,
