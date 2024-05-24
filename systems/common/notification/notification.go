@@ -67,7 +67,7 @@ var NotificationScopeToRoles = map[NotificationScope][]roles.RoleType{
 	SCOPE_NETWORK:     {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_SITES:       {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_SITE:        {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
-	SCOPE_SUBSCRIBERS: {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_USERS, roles.TYPE_NETWORK_OWNER},
+	SCOPE_SUBSCRIBERS: {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_SUBSCRIBER:  {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_USERS:       {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_USERS, roles.TYPE_NETWORK_OWNER},
 	SCOPE_USER:        {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
