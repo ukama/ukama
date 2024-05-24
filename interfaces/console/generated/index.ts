@@ -85,7 +85,6 @@ export type AllocateSimApiDto = {
   lastActivatedOn?: Maybe<Scalars['String']['output']>;
   msisdn: Scalars['String']['output'];
   network_id: Scalars['String']['output'];
-  org_id: Scalars['String']['output'];
   package: SimAllocatePackageDto;
   status: Scalars['String']['output'];
   subscriber_id: Scalars['String']['output'];
@@ -773,6 +772,7 @@ export type Query = {
   getInvitations: InvitationDto;
   getInvitationsByOrg: InvitationsResDto;
   getMember: MemberDto;
+  getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
@@ -839,6 +839,11 @@ export type QueryGetInvitationsArgs = {
 
 export type QueryGetMemberArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetMemberByUserIdArgs = {
+  userId: Scalars['String']['input'];
 };
 
 
@@ -1353,6 +1358,13 @@ export type UpdateMemberMutationVariables = Exact<{
 
 export type UpdateMemberMutation = { __typename?: 'Mutation', updateMember: { __typename?: 'CBooleanResponse', success: boolean } };
 
+export type GetMemberByUserIdQueryVariables = Exact<{
+  userId: Scalars['String']['input'];
+}>;
+
+
+export type GetMemberByUserIdQuery = { __typename?: 'Query', getMemberByUserId: { __typename?: 'MemberDto', userId: string, name: string, email: string, memberId: string, isDeactivated: boolean, role: string, memberSince?: string | null } };
+
 export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
 
 export type GetOrgsQueryVariables = Exact<{ [key: string]: never; }>;
@@ -1467,14 +1479,14 @@ export type SimPoolFragment = { __typename?: 'SimDto', activationCode?: string |
 
 export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null };
 
-export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, org_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
+export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
 
 export type AllocateSimMutationVariables = Exact<{
   data: AllocateSimInputDto;
 }>;
 
 
-export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, org_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
+export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
 
 export type ToggleSimStatusMutationVariables = Exact<{
   data: ToggleSimStatusInputDto;
@@ -1859,7 +1871,6 @@ export const SimAllocationFragmentDoc = gql`
   id
   subscriber_id
   network_id
-  org_id
   package {
     ...SimAllocationPackage
   }
@@ -2685,6 +2696,47 @@ export function useUpdateMemberMutation(baseOptions?: Apollo.MutationHookOptions
 export type UpdateMemberMutationHookResult = ReturnType<typeof useUpdateMemberMutation>;
 export type UpdateMemberMutationResult = Apollo.MutationResult<UpdateMemberMutation>;
 export type UpdateMemberMutationOptions = Apollo.BaseMutationOptions<UpdateMemberMutation, UpdateMemberMutationVariables>;
+export const GetMemberByUserIdDocument = gql`
+    query GetMemberByUserId($userId: String!) {
+  getMemberByUserId(userId: $userId) {
+    userId
+    name
+    email
+    memberId
+    isDeactivated
+    role
+    memberSince
+  }
+}
+    `;
+
+/**
+ * __useGetMemberByUserIdQuery__
+ *
+ * To run a query within a React component, call `useGetMemberByUserIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemberByUserIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemberByUserIdQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useGetMemberByUserIdQuery(baseOptions: Apollo.QueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
+      }
+export function useGetMemberByUserIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
+        }
+export type GetMemberByUserIdQueryHookResult = ReturnType<typeof useGetMemberByUserIdQuery>;
+export type GetMemberByUserIdLazyQueryHookResult = ReturnType<typeof useGetMemberByUserIdLazyQuery>;
+export type GetMemberByUserIdQueryResult = Apollo.QueryResult<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>;
 export const GetOrgsDocument = gql`
     query getOrgs {
   getOrgs {

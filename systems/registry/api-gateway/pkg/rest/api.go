@@ -20,6 +20,10 @@ type GetMemberRequest struct {
 	MemberId string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 }
 
+type GetMemberByUserRequest struct {
+	UserId string `example:"{{UserId}}" path:"user_id" validate:"required"`
+}
+
 type RemoveMemberRequest struct {
 	MemberId string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 }

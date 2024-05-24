@@ -22,12 +22,19 @@ service MemberService {
     rpc AddMember(AddMemberRequest) returns (MemberResponse);
     rpc AddOtherMember(AddMemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
+    rpc GetMemberByUserId(GetMemberByUserIdRequest) returns (GetMemberByUserIdResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
     rpc RemoveMember(MemberRequest) returns (MemberResponse);
 }
 
+message GetMemberByUserIdRequest {
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
+}
 
+message GetMemberByUserIdResponse {
+    Member member = 1;
+}
 
 message AddMemberRequest{
     string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
@@ -59,12 +66,11 @@ message MemberAttributes {
 }
 
 message Member {
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
-    string userId = 2 [json_name = "user_id", (validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    RoleType role = 3 ;
-    bool isDeactivated = 4 [json_name = "is_deactivated"];
-    google.protobuf.Timestamp created_at = 5 [json_name = "member_since"];
-    string memberId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
+    string userId = 1 [json_name = "user_id", (validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    RoleType role = 2 ;
+    bool isDeactivated = 3 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 4 [json_name = "member_since"];
+    string memberId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
 }
 
 enum RoleType {

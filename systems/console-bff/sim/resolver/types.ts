@@ -270,9 +270,6 @@ export class AllocateSimAPIDto {
   @Field()
   network_id: string;
 
-  @Field()
-  org_id: string;
-
   @Field(() => SimAllocatePackageDto)
   package: SimAllocatePackageDto;
 

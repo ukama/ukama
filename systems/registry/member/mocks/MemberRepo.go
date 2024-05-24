@@ -62,6 +62,36 @@ func (_m *MemberRepo) GetMember(memberId uuid.UUID) (*db.Member, error) {
 	return r0, r1
 }
 
+// GetMemberByUserId provides a mock function with given fields: userId
+func (_m *MemberRepo) GetMemberByUserId(userId uuid.UUID) (*db.Member, error) {
+	ret := _m.Called(userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMemberByUserId")
+	}
+
+	var r0 *db.Member
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Member, error)); ok {
+		return rf(userId)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Member); ok {
+		r0 = rf(userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Member)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMemberCount provides a mock function with given fields:
 func (_m *MemberRepo) GetMemberCount() (int64, int64, error) {
 	ret := _m.Called()

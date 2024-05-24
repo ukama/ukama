@@ -71,6 +71,18 @@ func (r *MemberRegistry) GetMember(memberId string) (*pb.MemberResponse, error) 
 	return res, nil
 }
 
+func (r *MemberRegistry) GetMemberByUserId(userId string) (*pb.GetMemberByUserIdResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.GetMemberByUserId(ctx, &pb.GetMemberByUserIdRequest{UserId: userId})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *MemberRegistry) GetMembers() (*pb.GetMembersResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

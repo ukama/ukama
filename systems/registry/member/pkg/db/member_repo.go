@@ -21,6 +21,7 @@ type MemberRepo interface {
 	/* Members */
 	AddMember(member *Member, orgId string, nestedFunc func(string, string) error) error
 	GetMember(memberId uuid.UUID) (*Member, error)
+	GetMemberByUserId(userId uuid.UUID) (*Member, error)
 	GetMembers() ([]Member, error)
 	UpdateMember(member *Member) error
 	RemoveMember(memberId uuid.UUID, orgId string, nestedFunc func(string, string) error) error
@@ -62,6 +63,19 @@ func (r *memberRepo) GetMember(memberId uuid.UUID) (*Member, error) {
 
 	result := r.Db.GetGormDb().
 		Where("member_id = ?", memberId).First(&member)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &member, nil
+}
+
+func (r *memberRepo) GetMemberByUserId(userId uuid.UUID) (*Member, error) {
+	var member Member
+
+	result := r.Db.GetGormDb().
+		Where("user_id = ?", userId).First(&member)
 
 	if result.Error != nil {
 		return nil, result.Error

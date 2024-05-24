@@ -77,6 +77,7 @@ type invitation interface {
 
 type member interface {
 	GetMember(userUUID string) (*mpb.MemberResponse, error)
+	GetMemberByUserId(userUUID string) (*mpb.GetMemberByUserIdResponse, error)
 	GetMembers() (*mpb.GetMembersResponse, error)
 	AddMember(userUUID string, role string) (*mpb.MemberResponse, error)
 	AddOtherMember(userUUID string, role string) (*mpb.MemberResponse, error)
@@ -166,6 +167,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const mem = "/members"
 		member := auth.Group(mem, "Members", "Operations on Members")
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
+		member.GET("/user/:user_id", formatDoc("Get Member", "Get member by user id"), tonic.Handler(r.getMemberByUserIdHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
 		member.POST("/others", formatDoc("Add a member of other org", "Add a member to an organization who's already existing member of other org"), tonic.Handler(r.postOtherMemberHandler, http.StatusCreated))
 		member.GET("/:member_id", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
@@ -272,6 +274,10 @@ func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*nod
 /* Member */
 func (r *Router) getMembersHandler(c *gin.Context, req *GetMembersRequest) (*mpb.GetMembersResponse, error) {
 	return r.clients.Member.GetMembers()
+}
+
+func (r *Router) getMemberByUserIdHandler(c *gin.Context, req *GetMemberByUserRequest) (*mpb.GetMemberByUserIdResponse, error) {
+	return r.clients.Member.GetMemberByUserId(req.UserId)
 }
 
 func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.MemberResponse, error) {

@@ -183,6 +183,18 @@ mutation updateMember($memberId: String!, $data: UpdateMemberInputDto!) {
   }
 }
 
+query GetMemberByUserId($userId: String!) {
+  getMemberByUserId(userId: $userId) {
+    userId
+    name
+    email
+    memberId
+    isDeactivated
+    role
+    memberSince
+  }
+}
+
 ### End Member ###
 
 ### Org Start ###
@@ -394,7 +406,6 @@ fragment SimAllocation on AllocateSimAPIDto {
   id
   subscriber_id
   network_id
-  org_id
   package {
     ...SimAllocationPackage
   }

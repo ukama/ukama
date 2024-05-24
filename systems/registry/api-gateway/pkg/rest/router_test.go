@@ -91,12 +91,10 @@ func TestGetMembers(t *testing.T) {
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
-	OrgId := uuid.NewV4()
 	UserId := uuid.NewV4()
 
 	mem.On("GetMembers", mock.Anything, mock.Anything).Return(&mpb.GetMembersResponse{
 		Members: []*mpb.Member{{
-			OrgId:         OrgId.String(),
 			UserId:        UserId.String(),
 			IsDeactivated: false,
 		}},
@@ -213,7 +211,7 @@ func TestGetAllInvitations(t *testing.T) {
 		Member:     client.NewRegistryFromClient(mem),
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Invitation: client.NewInvitationRegistryFromClient(inv),
-		Site: client.NewSiteRegistryFromClient(siteM),
+		Site:       client.NewSiteRegistryFromClient(siteM),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act

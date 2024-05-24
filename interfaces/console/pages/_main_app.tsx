@@ -17,7 +17,7 @@ import {
 } from '@/app-recoil';
 import {
   useAddNetworkMutation,
-  useGetMemberLazyQuery,
+  useGetMemberByUserIdLazyQuery,
   useGetNetworksQuery,
   useGetOrgsLazyQuery,
   useGetUserLazyQuery,
@@ -50,12 +50,12 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
 
-  const [getMember] = useGetMemberLazyQuery({
+  const [getMember] = useGetMemberByUserIdLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       _setUser({
         ..._user,
-        role: data.getMember.role,
+        role: data.getMemberByUserId.role,
       });
     },
   });
@@ -80,7 +80,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         );
         getMember({
           variables: {
-            memberId: data.getUser.uuid,
+            userId: data.getUser.uuid,
           },
         });
       },
@@ -221,6 +221,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   };
 
   const handlePageChange = (page: string) => setPage(page);
+
   const handleNetworkChange = (id: string) => {
     if (id) {
       setCommonData({

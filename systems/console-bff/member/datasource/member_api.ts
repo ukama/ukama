@@ -29,6 +29,12 @@ class MemberApi extends RESTDataSource {
     );
   };
 
+  getMemberByUserId = async (userId: string): Promise<MemberDto> => {
+    return this.get(`/${VERSION}/members/user/${userId}`).then(res =>
+      dtoToMemberResDto(res)
+    );
+  };
+
   removeMember = async (id: string): Promise<CBooleanResponse> => {
     return this.delete(`/${VERSION}/members/${id}`).then(() => {
       return {

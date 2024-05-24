@@ -93,7 +93,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
 
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
 /* This is called when user already exists as a member of another org */
@@ -137,14 +137,14 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
 
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
 func (m *MemberServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	uuid, err := uuid.FromString(req.GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
+			"invalid format of member uuid. Error %s", err.Error())
 	}
 
 	member, err := m.mRepo.GetMember(uuid)
@@ -152,7 +152,22 @@ func (m *MemberServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*p
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
+func (m *MemberServer) GetMemberByUserId(ctx context.Context, req *pb.GetMemberByUserIdRequest) (*pb.GetMemberByUserIdResponse, error) {
+	uuid, err := uuid.FromString(req.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+
+	member, err := m.mRepo.GetMemberByUserId(uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	return &pb.GetMemberByUserIdResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
 func (m *MemberServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest) (*pb.GetMembersResponse, error) {
@@ -163,7 +178,7 @@ func (m *MemberServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest
 	}
 
 	resp := &pb.GetMembersResponse{
-		Members: dbMembersToPbMembers(members, m.OrgId.String()),
+		Members: dbMembersToPbMembers(members),
 	}
 
 	return resp, nil
@@ -188,7 +203,7 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
 
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
 func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
@@ -255,10 +270,9 @@ func (m *MemberServer) PushOrgMemberCountMetric(orgId uuid.UUID) error {
 	return nil
 }
 
-func dbMemberToPbMember(member *db.Member, orgId string) *pb.Member {
+func dbMemberToPbMember(member *db.Member) *pb.Member {
 	return &pb.Member{
 		MemberId:      member.MemberId.String(),
-		OrgId:         orgId,
 		UserId:        member.UserId.String(),
 		IsDeactivated: member.Deactivated,
 		Role:          pb.RoleType(member.Role),
@@ -266,11 +280,11 @@ func dbMemberToPbMember(member *db.Member, orgId string) *pb.Member {
 	}
 }
 
-func dbMembersToPbMembers(members []db.Member, orgId string) []*pb.Member {
+func dbMembersToPbMembers(members []db.Member) []*pb.Member {
 	res := []*pb.Member{}
 
 	for _, m := range members {
-		res = append(res, dbMemberToPbMember(&m, orgId))
+		res = append(res, dbMemberToPbMember(&m))
 	}
 
 	return res

@@ -26,6 +26,7 @@ type MemberServiceClient interface {
 	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	AddOtherMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetMemberByUserId(ctx context.Context, in *GetMemberByUserIdRequest, opts ...grpc.CallOption) (*GetMemberByUserIdResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
@@ -60,6 +61,15 @@ func (c *memberServiceClient) AddOtherMember(ctx context.Context, in *AddMemberR
 func (c *memberServiceClient) GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
 	err := c.cc.Invoke(ctx, "/ukama.registry.member.v1.MemberService/GetMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *memberServiceClient) GetMemberByUserId(ctx context.Context, in *GetMemberByUserIdRequest, opts ...grpc.CallOption) (*GetMemberByUserIdResponse, error) {
+	out := new(GetMemberByUserIdResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.member.v1.MemberService/GetMemberByUserId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +111,7 @@ type MemberServiceServer interface {
 	AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
 	AddOtherMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	GetMemberByUserId(context.Context, *GetMemberByUserIdRequest) (*GetMemberByUserIdResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
 	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
@@ -119,6 +130,9 @@ func (UnimplementedMemberServiceServer) AddOtherMember(context.Context, *AddMemb
 }
 func (UnimplementedMemberServiceServer) GetMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMember not implemented")
+}
+func (UnimplementedMemberServiceServer) GetMemberByUserId(context.Context, *GetMemberByUserIdRequest) (*GetMemberByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMemberByUserId not implemented")
 }
 func (UnimplementedMemberServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
@@ -196,6 +210,24 @@ func _MemberService_GetMember_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MemberService_GetMemberByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMemberByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemberServiceServer).GetMemberByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.member.v1.MemberService/GetMemberByUserId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemberServiceServer).GetMemberByUserId(ctx, req.(*GetMemberByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MemberService_GetMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMembersRequest)
 	if err := dec(in); err != nil {
@@ -268,6 +300,10 @@ var MemberService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMember",
 			Handler:    _MemberService_GetMember_Handler,
+		},
+		{
+			MethodName: "GetMemberByUserId",
+			Handler:    _MemberService_GetMemberByUserId_Handler,
 		},
 		{
 			MethodName: "GetMembers",

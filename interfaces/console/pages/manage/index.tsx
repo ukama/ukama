@@ -209,7 +209,7 @@ const Manage = () => {
 
   const [getPackages, { loading: packagesLoading, refetch: getDataPlans }] =
     useGetPackagesLazyQuery({
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: 'network-only',
       onCompleted: (data) => {
         setData((prev: any) => ({
           ...prev,
@@ -320,7 +320,12 @@ const Manage = () => {
   const [deletePackage, { loading: deletePkgLoading }] =
     useDeletePackageMutation({
       onCompleted: () => {
-        getDataPlans();
+        getDataPlans().then((res) => {
+          setData((prev: any) => ({
+            ...prev,
+            dataPlan: res?.data?.getPackages.packages ?? [],
+          }));
+        });
         setSnackbarMessage({
           id: 'delete-data-plan',
           message: 'Data plan deleted successfully',

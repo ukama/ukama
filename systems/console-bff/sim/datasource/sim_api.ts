@@ -8,7 +8,7 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 import { GraphQLError } from "graphql";
 
-import { SUBSCRIBER_API_GW } from "../../common/configs";
+import { ENCRYPTION_KEY, SUBSCRIBER_API_GW } from "../../common/configs";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
@@ -78,10 +78,7 @@ class SimApi extends RESTDataSource {
   ): Promise<AllocateSimAPIDto> => {
     const getToken = (): string | null => {
       if (req.iccid) {
-        const token = generateTokenFromIccid(
-          req.iccid,
-          process.env.ENCRYPTION_KEY ?? ""
-        );
+        const token = generateTokenFromIccid(req.iccid, ENCRYPTION_KEY ?? "");
         return token;
       }
 
@@ -107,12 +104,14 @@ class SimApi extends RESTDataSource {
             });
           })
           .catch((error: any) => {
+            console.log("SIM ALLOCATION 1 ERROR: ", error);
             throw new GraphQLError(error);
           });
 
         return dtoToAllocateSimResDto(res);
       })
       .catch(err => {
+        console.log("SIM ALLOCATION 2 ERROR: ", err);
         throw new GraphQLError(err);
       });
   };

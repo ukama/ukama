@@ -89,7 +89,7 @@ const Page = () => {
 
   const { loading: packagesLoading, data: packagesResData } =
     useGetPackagesQuery({
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
       onError: (error) => {
         setSnackbarMessage({
           id: 'packages-msg',
@@ -234,8 +234,8 @@ const Page = () => {
       },
     });
   const {
-    loading: getSubscriberByNetworkLoading,
     data,
+    loading: getSubscriberByNetworkLoading,
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
     variables: {
@@ -341,6 +341,7 @@ const Page = () => {
         });
       },
     });
+    
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
@@ -628,6 +629,7 @@ const Page = () => {
           email: values.email,
           phone: values.phone,
           first_name: values.name,
+          last_name: 'name',
           network_id: _commonData.networkId,
         },
       },
