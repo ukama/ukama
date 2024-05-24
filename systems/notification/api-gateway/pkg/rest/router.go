@@ -79,9 +79,9 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 		log.Fatalf("failed to create event-notify client: %v", err)
 	}
 
-	c.d, err = client.NewDistributor(endpoints.EventNotification, endpoints.Timeout)
+	c.d, err = client.NewDistributor(endpoints.Distributor, endpoints.Timeout)
 	if err != nil {
-		log.Fatalf("failed to create event-notify client: %v", err)
+		log.Fatalf("failed to create distributor client: %v", err)
 	}
 
 	return c

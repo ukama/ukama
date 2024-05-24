@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
@@ -88,5 +89,5 @@ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId 
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		Role:         pb.RoleType(pb.RoleType_value[role])})
+		RoleType:     upb.RoleType(upb.RoleType_value[role])})
 }
