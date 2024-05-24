@@ -206,13 +206,6 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 				userList = append(userList, user)
 			}
 
-			nr := make([]roles.RoleType, 0, len(roleTypes))
-			/* don't want to get all user removing user role */
-			for _, r := range roleTypes {
-				if r != roles.TYPE_USERS {
-					nr = append(nr, r)
-				}
-			}
 		}
 
 		/* subscriber specifc notification */
