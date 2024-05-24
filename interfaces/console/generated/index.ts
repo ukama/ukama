@@ -253,7 +253,7 @@ export type IdResponse = {
 export type InvitationDto = {
   __typename?: 'InvitationDto';
   email: Scalars['String']['output'];
-  expiresAt: Scalars['String']['output'];
+  expireAt: Scalars['String']['output'];
   id: Scalars['String']['output'];
   link: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -297,9 +297,11 @@ export type LocationInput = {
 
 export type MemberDto = {
   __typename?: 'MemberDto';
+  email: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
+  memberId: Scalars['String']['output'];
   memberSince?: Maybe<Scalars['String']['output']>;
-  orgId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
   role: Scalars['String']['output'];
   userId: Scalars['String']['output'];
 };
@@ -1323,26 +1325,26 @@ export type GetNodeLocationQueryVariables = Exact<{
 
 export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum } };
 
-export type MemberFragment = { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null };
+export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
 export type GetMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMembersQuery = { __typename?: 'Query', getMembers: { __typename?: 'MembersResDto', members: Array<{ __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null }> } };
+export type GetMembersQuery = { __typename?: 'Query', getMembers: { __typename?: 'MembersResDto', members: Array<{ __typename?: 'MemberDto', name: string, email: string, role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string }> } };
 
 export type GetMemberQueryVariables = Exact<{
   memberId: Scalars['String']['input'];
 }>;
 
 
-export type GetMemberQuery = { __typename?: 'Query', getMember: { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null } };
+export type GetMemberQuery = { __typename?: 'Query', getMember: { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string } };
 
 export type AddMemberMutationVariables = Exact<{
   data: AddMemberInputDto;
 }>;
 
 
-export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberDto', role: string, orgId: string, userId: string, isDeactivated: boolean, memberSince?: string | null } };
+export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string } };
 
 export type RemoveMemberMutationVariables = Exact<{
   memberId: Scalars['String']['input'];
@@ -1696,24 +1698,33 @@ export type CoverageMutationVariables = Exact<{
 
 export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } } };
 
+export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string };
+
 export type CreateInvitationMutationVariables = Exact<{
   data: CreateInvitationInputDto;
 }>;
 
 
-export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
 
 export type GetInvitationsQueryVariables = Exact<{
   email: Scalars['String']['input'];
 }>;
 
 
-export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
 
 export type InvitationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expiresAt: string, id: string, name: string, role: string, link: string, userId: string, status: string }> } };
+export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string }> } };
+
+export type DeleteInvitationMutationVariables = Exact<{
+  deleteInvitationId: Scalars['String']['input'];
+}>;
+
+
+export type DeleteInvitationMutation = { __typename?: 'Mutation', deleteInvitation: { __typename?: 'DeleteInvitationResDto', id: string } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -1752,8 +1763,8 @@ export const NodeFragmentDoc = gql`
 export const MemberFragmentDoc = gql`
     fragment member on MemberDto {
   role
-  orgId
   userId
+  id: memberId
   isDeactivated
   memberSince
 }
@@ -2004,6 +2015,18 @@ export const DraftFragmentDoc = gql`
     ${LinkFragmentDoc}
 ${SiteFragmentDoc}
 ${EventFragmentDoc}`;
+export const InvitationFragmentDoc = gql`
+    fragment Invitation on InvitationDto {
+  email
+  expireAt
+  id
+  name
+  role
+  link
+  userId
+  status
+}
+    `;
 export const GetNodeDocument = gql`
     query getNode($data: NodeInput!) {
   getNode(data: $data) {
@@ -2504,6 +2527,8 @@ export const GetMembersDocument = gql`
   getMembers {
     members {
       ...member
+      name
+      email
     }
   }
 }
@@ -4178,17 +4203,10 @@ export type CoverageMutationOptions = Apollo.BaseMutationOptions<CoverageMutatio
 export const CreateInvitationDocument = gql`
     mutation CreateInvitation($data: CreateInvitationInputDto!) {
   createInvitation(data: $data) {
-    email
-    expiresAt
-    id
-    name
-    role
-    link
-    userId
-    status
+    ...Invitation
   }
 }
-    `;
+    ${InvitationFragmentDoc}`;
 export type CreateInvitationMutationFn = Apollo.MutationFunction<CreateInvitationMutation, CreateInvitationMutationVariables>;
 
 /**
@@ -4218,17 +4236,10 @@ export type CreateInvitationMutationOptions = Apollo.BaseMutationOptions<CreateI
 export const GetInvitationsDocument = gql`
     query GetInvitations($email: String!) {
   getInvitations(email: $email) {
-    email
-    expiresAt
-    id
-    name
-    role
-    link
-    userId
-    status
+    ...Invitation
   }
 }
-    `;
+    ${InvitationFragmentDoc}`;
 
 /**
  * __useGetInvitationsQuery__
@@ -4261,18 +4272,11 @@ export const InvitationsDocument = gql`
     query Invitations {
   getInvitationsByOrg {
     invitations {
-      email
-      expiresAt
-      id
-      name
-      role
-      link
-      userId
-      status
+      ...Invitation
     }
   }
 }
-    `;
+    ${InvitationFragmentDoc}`;
 
 /**
  * __useInvitationsQuery__
@@ -4300,3 +4304,36 @@ export function useInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type InvitationsQueryHookResult = ReturnType<typeof useInvitationsQuery>;
 export type InvitationsLazyQueryHookResult = ReturnType<typeof useInvitationsLazyQuery>;
 export type InvitationsQueryResult = Apollo.QueryResult<InvitationsQuery, InvitationsQueryVariables>;
+export const DeleteInvitationDocument = gql`
+    mutation DeleteInvitation($deleteInvitationId: String!) {
+  deleteInvitation(id: $deleteInvitationId) {
+    id
+  }
+}
+    `;
+export type DeleteInvitationMutationFn = Apollo.MutationFunction<DeleteInvitationMutation, DeleteInvitationMutationVariables>;
+
+/**
+ * __useDeleteInvitationMutation__
+ *
+ * To run a mutation, you first call `useDeleteInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteInvitationMutation, { data, loading, error }] = useDeleteInvitationMutation({
+ *   variables: {
+ *      deleteInvitationId: // value for 'deleteInvitationId'
+ *   },
+ * });
+ */
+export function useDeleteInvitationMutation(baseOptions?: Apollo.MutationHookOptions<DeleteInvitationMutation, DeleteInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteInvitationMutation, DeleteInvitationMutationVariables>(DeleteInvitationDocument, options);
+      }
+export type DeleteInvitationMutationHookResult = ReturnType<typeof useDeleteInvitationMutation>;
+export type DeleteInvitationMutationResult = Apollo.MutationResult<DeleteInvitationMutation>;
+export type DeleteInvitationMutationOptions = Apollo.BaseMutationOptions<DeleteInvitationMutation, DeleteInvitationMutationVariables>;

@@ -202,10 +202,27 @@ export const MANAGE_MENU_LIST = [
     icon: PermDataSettingIcon,
   },
 ];
-export const MANAGE_TABLE_COLUMN: ColumnsWithOptions[] = [
+export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'role', minWidth: 180 },
+  { id: 'role', label: 'Role', minWidth: 180 },
+  { id: 'status', label: 'Status', minWidth: 180 },
   { id: 'email', label: 'Email', minWidth: 140 },
+  { id: 'delete', label: 'Action', minWidth: 140 },
+];
+export const MEMBER_TABLE_COLUMN: ColumnsWithOptions[] = [
+  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'role', label: 'Role', minWidth: 180 },
+  { id: 'email', label: 'Email', minWidth: 140 },
+  { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
+];
+export const MEMBER_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'Deactivate/Activate member',
+    route: 'member-status-update',
+  },
+  { id: 2, Icon: null, title: 'Remove member', route: 'remove-member' },
 ];
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },

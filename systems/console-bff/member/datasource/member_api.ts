@@ -47,7 +47,7 @@ class MemberApi extends RESTDataSource {
     memberId: string,
     req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${VERSION}/members/${memberId}`, {
+    return this.patch(`/${VERSION}/members/${memberId}`, {
       body: {
         isDeactivated: req.isDeactivated,
         role: req.role,

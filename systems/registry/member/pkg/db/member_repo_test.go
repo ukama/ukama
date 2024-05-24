@@ -62,8 +62,9 @@ func Test_AddMember(t *testing.T) {
 		var db *extsql.DB
 
 		member := Member{
-			UserId: uuid.NewV4(),
-			Role:   Users,
+			MemberId: uuid.NewV4(),
+			UserId:   uuid.NewV4(),
+			Role:     Users,
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -72,7 +73,7 @@ func Test_AddMember(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), member.UserId, false, member.Role).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), member.MemberId, member.UserId, false, member.Role).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

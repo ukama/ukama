@@ -12,13 +12,17 @@ import {
   PackageDto,
   useAddPackageMutation,
   useCreateInvitationMutation,
+  useDeleteInvitationMutation,
   useDeletePackageMutation,
+  useGetMembersQuery,
   // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
   useInvitationsQuery,
+  useRemoveMemberMutation,
+  useUpdateMemberMutation,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
 } from '@/generated';
@@ -114,32 +118,32 @@ const Manage = () => {
     simPool: [],
     dataPlan: [],
     node: [],
-    networkList: [],
     invitations: [],
+    networkList: [],
   });
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
 
-  // const {
-  //   data: members,
-  //   loading: membersLoading,
-  //   refetch: refetchMembers,
-  // } = useGetOrgMemberQuery({
-  //   fetchPolicy: 'cache-and-network',
-  //   onCompleted: (data) => {
-  //     setData((prev: any) => ({
-  //       ...prev,
-  //       members: members?.getOrgMembers.members,
-  //     }));
-  //   },
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'org-members',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
+  const {
+    data: membersData,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useGetMembersQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        members: data?.getMembers.members ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'org-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
@@ -222,51 +226,34 @@ const Manage = () => {
       },
     });
 
-  const { loading: invitationsLoading, refetch: refetchInvitations } =
-    useInvitationsQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          invitations: data?.getInvitationsByOrg ?? [],
-        }));
-      },
+  const {
+    data: invitationsData,
+    loading: invitationsLoading,
+    refetch: refetchInvitations,
+  } = useInvitationsQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        invitations: data?.getInvitationsByOrg.invitations ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'invitations',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'invitations',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-
-  // const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
-  //   onCompleted: () => {
-  //     refetchMembers();
-  //     setSnackbarMessage({
-  //       id: 'add-member',
-  //       message: 'Invitation sent successfully',
-  //       type: 'success' as AlertColor,
-  //       show: true,
-  //     });
-  //     setIsInviteMember(false);
-  //   },
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'add-member-error',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
   const [sendInvitation, { loading: sendInvitationLoading }] =
     useCreateInvitationMutation({
       onCompleted: () => {
-        // refetchMembers();
+        refetchMembers();
         refetchInvitations();
+
         setSnackbarMessage({
           id: 'invitation-success',
           message: 'Invitation sent successfully',
@@ -372,27 +359,78 @@ const Manage = () => {
       },
     });
 
-  // useEffect(() => {
-  //   if (memberSearch.length > 2) {
-  //     const _members = members?.getOrgMembers.members.filter((member) => {
-  //       const s = memberSearch.toLowerCase();
-  //       if (member.user.name.toLowerCase().includes(s)) return member;
-  //     });
-  //     setData((prev: any) => ({
-  //       ...prev,
-  //       members: structureData(_members),
-  //     }));
-  //   } else if (
-  //     memberSearch.length === 0 &&
-  //     data.members.length !== members?.getOrgMembers.members.length
-  //   ) {
-  //     setData((prev: any) => ({
-  //       ...prev,
-  //       members: structureData(members?.getOrgMembers.members),
-  //     }));
-  //   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [memberSearch]);
+  const [deleteInvite] = useDeleteInvitationMutation({
+    onCompleted: () => {
+      refetchInvitations();
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'delete-invitation',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [deleteMember] = useRemoveMemberMutation({
+    onCompleted: () => {
+      refetchMembers();
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'delete-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [updateMember] = useUpdateMemberMutation({
+    onCompleted: () => {
+      refetchMembers();
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'update-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (memberSearch.length > 2) {
+      const _members = membersData?.getMembers.members.filter((member) => {
+        const s = memberSearch.toLowerCase();
+        if (member.name.toLowerCase().includes(s)) return member;
+      });
+      const _invitations =
+        invitationsData?.getInvitationsByOrg.invitations.filter((invite) => {
+          const s = memberSearch.toLowerCase();
+          if (invite.name.toLowerCase().includes(s)) return invite;
+        });
+      setData((prev: any) => ({
+        ...prev,
+        members: _members,
+        invitations: _invitations,
+      }));
+    } else if (
+      memberSearch.length === 0 &&
+      data.members.length !== membersData?.getMembers.members.length &&
+      data.invitations.length !==
+        invitationsData?.getInvitationsByOrg.invitations.length
+    ) {
+      setData((prev: any) => ({
+        ...prev,
+        members: membersData?.getMembers.members ?? [],
+        invitations: invitationsData?.getInvitationsByOrg.invitations ?? [],
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberSearch]);
 
   useEffect(() => {
     if (nodeSearch.length > 3) {
@@ -510,6 +548,48 @@ const Manage = () => {
     console.log('adding node to network');
   };
 
+  const handleMemberAction = (id: string, type: string) => {
+    const m = membersData?.getMembers.members.find((mem) => mem.id === id);
+    if (!m?.isDeactivated && type === 'remove-member') {
+      setSnackbarMessage({
+        id: 'deactivate-first-error',
+        message: 'Please deactivate member first.',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
+    if (type === 'member-status-update') {
+      if (m)
+        updateMember({
+          variables: {
+            memberId: id,
+            data: {
+              isDeactivated: !m.isDeactivated,
+              role: m.role,
+            },
+          },
+        });
+    }
+    if (type === 'remove-member') {
+      deleteMember({
+        variables: {
+          memberId: id,
+        },
+      });
+    }
+  };
+
+  const handleDeleteInviteAction = (uuid: string) => {
+    if (uuid)
+      deleteInvite({
+        variables: {
+          deleteInvitationId: uuid,
+        },
+      });
+  };
+
   const isLoading =
     packagesLoading ||
     simsLoading ||
@@ -531,11 +611,13 @@ const Manage = () => {
           {menu === 'manage-members' && (
             <Member
               search={memberSearch}
-              setSearch={setMemberSearch}
-              invitationTitle=" There is one pending invitation."
               memberData={data.members}
+              setSearch={setMemberSearch}
               invitationsData={data.invitations}
+              handleMemberAction={handleMemberAction}
+              invitationTitle=" There is one pending invitation."
               handleButtonAction={() => setIsInviteMember(true)}
+              handleDeleteInviteAction={handleDeleteInviteAction}
             />
           )}
           {menu === 'manage-sim' && (

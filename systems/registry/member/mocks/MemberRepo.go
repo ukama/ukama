@@ -32,9 +32,9 @@ func (_m *MemberRepo) AddMember(member *db.Member, orgId string, nestedFunc func
 	return r0
 }
 
-// GetMember provides a mock function with given fields: userUUID
-func (_m *MemberRepo) GetMember(userUUID uuid.UUID) (*db.Member, error) {
-	ret := _m.Called(userUUID)
+// GetMember provides a mock function with given fields: memberId
+func (_m *MemberRepo) GetMember(memberId uuid.UUID) (*db.Member, error) {
+	ret := _m.Called(memberId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMember")
@@ -43,10 +43,10 @@ func (_m *MemberRepo) GetMember(userUUID uuid.UUID) (*db.Member, error) {
 	var r0 *db.Member
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Member, error)); ok {
-		return rf(userUUID)
+		return rf(memberId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Member); ok {
-		r0 = rf(userUUID)
+		r0 = rf(memberId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Member)
@@ -54,7 +54,7 @@ func (_m *MemberRepo) GetMember(userUUID uuid.UUID) (*db.Member, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(userUUID)
+		r1 = rf(memberId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -127,9 +127,9 @@ func (_m *MemberRepo) GetMembers() ([]db.Member, error) {
 	return r0, r1
 }
 
-// RemoveMember provides a mock function with given fields: userUUID, orgId, nestedFunc
-func (_m *MemberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
-	ret := _m.Called(userUUID, orgId, nestedFunc)
+// RemoveMember provides a mock function with given fields: memberId, orgId, nestedFunc
+func (_m *MemberRepo) RemoveMember(memberId uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
+	ret := _m.Called(memberId, orgId, nestedFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveMember")
@@ -137,7 +137,7 @@ func (_m *MemberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc 
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID, string, func(string, string) error) error); ok {
-		r0 = rf(userUUID, orgId, nestedFunc)
+		r0 = rf(memberId, orgId, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -41,6 +41,19 @@ interface SimpleDataTableInterface {
   showActionButton?: boolean;
 }
 
+const provideStatusColor = (status: string) => {
+  switch (status) {
+    case 'Pending':
+      return 'info';
+    case 'Accepted':
+      return 'success';
+    case 'Declined':
+      return 'warning';
+    default:
+      return 'info';
+  }
+};
+
 const MemoizedTableHeader = React.memo(
   ({ columns }: { columns: ColumnsWithOptions[] }) => {
     return (
@@ -83,70 +96,75 @@ const MemoizedChip = React.memo(({ label }: { label: string }) => {
 });
 MemoizedChip.displayName = 'MemoizedChip';
 
-const MemoizedTableCell = React.memo(
-  ({
-    column,
-    row,
-    handleCreateNetwork,
-    handleDeleteElement,
-    networkList,
-  }: {
-    column: ColumnsWithOptions;
-    row: any;
-    handleCreateNetwork: any;
-    handleDeleteElement: any;
-    networkList: string[] | [] | undefined;
-  }) => {
-    return (
-      <TableCell
-        sx={{
-          padding: 1,
-          fontSize: '0.875rem',
-        }}
-      >
-        {column.id === 'role' ? (
-          <div>
-            <MemoizedChip label={row[column.id]} />
-          </div>
-        ) : column.id === 'pdf' ? (
-          <Link target="_blank" underline="hover" href={row[column.id]}>
-            View as PDF
-          </Link>
-        ) : column.id === 'network' ? (
-          <ChipDropdown
-            onCreateNetwork={handleCreateNetwork}
-            menu={
-              (networkList &&
-                networkList.map((network: any) => network.name)) ||
-              []
-            }
-          />
-        ) : column.id === 'edit' ? (
-          <IconButton onClick={() => console.log(row)}>
-            <EditIcon />
-          </IconButton>
-        ) : column.id === 'delete' ? (
-          <IconButton onClick={() => handleDeleteElement(row.id)}>
-            <DeleteIcon />
-          </IconButton>
-        ) : (
-          <Typography
-            variant={'body2'}
-            sx={{ padding: '8px' }}
-            color={row[column.id] === 'false' ? 'primary' : ''}
-          >
-            {row[column.id] === 'true'
-              ? 'Assigned'
-              : row[column.id] === 'false'
-              ? 'Unassigned'
-              : row[column.id]}
-          </Typography>
-        )}
-      </TableCell>
-    );
-  },
-);
-MemoizedTableCell.displayName = 'MemoizedTableCell';
+const SimpleTableCell = ({
+  column,
+  row,
+  handleCreateNetwork,
+  handleDeleteElement,
+  networkList,
+}: {
+  column: ColumnsWithOptions;
+  row: any;
+  handleCreateNetwork: any;
+  handleDeleteElement: (id: string) => void;
+  networkList: string[] | [] | undefined;
+}) => {
+  const handleDeleteRow = () => {
+    handleDeleteElement(row.id);
+  };
+  return (
+    <TableCell
+      sx={{
+        padding: 1,
+        fontSize: '0.875rem',
+      }}
+    >
+      {column.id === 'role' ? (
+        <div>
+          <MemoizedChip label={row[column.id]} />
+        </div>
+      ) : column.id === 'pdf' ? (
+        <Link target="_blank" underline="hover" href={row[column.id]}>
+          View as PDF
+        </Link>
+      ) : column.id === 'network' ? (
+        <ChipDropdown
+          onCreateNetwork={handleCreateNetwork}
+          menu={
+            (networkList && networkList.map((network: any) => network.name)) ||
+            []
+          }
+        />
+      ) : column.id === 'edit' ? (
+        <IconButton onClick={() => console.log(row)}>
+          <EditIcon />
+        </IconButton>
+      ) : column.id === 'delete' ? (
+        <IconButton onClick={handleDeleteRow}>
+          <DeleteIcon />
+        </IconButton>
+      ) : column.id === 'status' ? (
+        <Chip
+          label={row[column.id]}
+          sx={{ color: 'white' }}
+          color={provideStatusColor(row[column.id])}
+        />
+      ) : (
+        <Typography
+          variant={'body2'}
+          sx={{ padding: '8px' }}
+          color={row[column.id] === 'false' ? 'primary' : ''}
+        >
+          {row[column.id] === 'true'
+            ? 'Assigned'
+            : row[column.id] === 'false'
+            ? 'Unassigned'
+            : row[column.id]}
+        </Typography>
+      )}
+    </TableCell>
+  );
+};
 
 const SimpleDataTable = React.memo(
   ({
@@ -184,7 +202,7 @@ const SimpleDataTable = React.memo(
             {dataset?.map((row: any) => (
               <TableRow key={row[dataKey]} sx={{}}>
                 {columns?.map((column: ColumnsWithOptions, index: number) => (
-                  <MemoizedTableCell
+                  <SimpleTableCell
                     key={`$cell-${index}-${column.id}`}
                     column={column}
                     row={row}

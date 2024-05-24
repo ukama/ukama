@@ -15,6 +15,7 @@ import (
 
 type Member struct {
 	gorm.Model
+	MemberId    uuid.UUID `gorm:"primaryKey;type:uuid"`
 	UserId      uuid.UUID `gorm:"uniqueIndex:user_id_idx,where:deleted_at is null;not null;type:uuid"`
 	Deactivated bool      `gorm:"default:false"`
 	Role        RoleType  `gorm:"type:uint;not null"` // Set the default value to Member

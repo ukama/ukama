@@ -87,7 +87,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("GetMember", func(tt *testing.T) {
-		r, err = c.GetMember(ctx, &pb.MemberRequest{UserUuid: member.UserId.String()})
+		r, err = c.GetMember(ctx, &pb.MemberRequest{MemberId: member.MemberId.String()})
 		assert.NoError(t, err)
 	})
 
@@ -98,17 +98,17 @@ func Test_FullFlow(t *testing.T) {
 
 }
 
-func removeMember(t *testing.T, c pb.MemberServiceClient, userId uuid.UUID) {
+func removeMember(t *testing.T, c pb.MemberServiceClient, memberId uuid.UUID) {
 	t.Helper()
 
-	log.Infoln("Deleting member ", userId.String())
+	log.Infoln("Deleting member ", memberId.String())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	_, err := c.RemoveMember(ctx, &pb.MemberRequest{UserUuid: userId.String()})
+	_, err := c.RemoveMember(ctx, &pb.MemberRequest{MemberId: memberId.String()})
 	if err != nil {
-		assert.FailNowf(t, "Delete member %s failed: %v\n", userId.String(), err)
+		assert.FailNowf(t, "Delete member %s failed: %v\n", memberId.String(), err)
 	}
 }
 

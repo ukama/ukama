@@ -59,11 +59,11 @@ func (r *MemberRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *MemberRegistry) GetMember(userUUID string) (*pb.MemberResponse, error) {
+func (r *MemberRegistry) GetMember(memberId string) (*pb.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetMember(ctx, &pb.MemberRequest{UserUuid: userUUID})
+	res, err := r.client.GetMember(ctx, &pb.MemberRequest{MemberId: memberId})
 	if err != nil {
 		return nil, err
 	}
@@ -111,22 +111,22 @@ func (r *MemberRegistry) AddOtherMember(userUUID string, role string) (*pb.Membe
 	return res, nil
 }
 
-func (r *MemberRegistry) UpdateMember(userUUID string, isDeactivated bool, role string) error {
+func (r *MemberRegistry) UpdateMember(memberId string, isDeactivated bool, role string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	_, err := r.client.UpdateMember(ctx, &pb.UpdateMemberRequest{
-		Member:     &pb.MemberRequest{UserUuid: userUUID},
+		Member:     &pb.MemberRequest{MemberId: memberId},
 		Attributes: &pb.MemberAttributes{IsDeactivated: isDeactivated}})
 
 	return err
 }
 
-func (r *MemberRegistry) RemoveMember(userUUID string) error {
+func (r *MemberRegistry) RemoveMember(memberId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	_, err := r.client.RemoveMember(ctx, &pb.MemberRequest{UserUuid: userUUID})
+	_, err := r.client.RemoveMember(ctx, &pb.MemberRequest{MemberId: memberId})
 
 	return err
 }

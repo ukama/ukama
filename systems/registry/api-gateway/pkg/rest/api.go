@@ -17,18 +17,18 @@ type GetMembersRequest struct {
 }
 
 type GetMemberRequest struct {
-	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	MemberId string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 }
 
 type RemoveMemberRequest struct {
-	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	MemberId string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 }
 
 type GetMemberRoleRequest struct {
-	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	MemberId string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 }
 type UpdateMemberRequest struct {
-	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	MemberId      string `example:"{{MemberId}}" path:"member_id" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
 	Role          string `example:"member" json:"role,omitempty"`
 }

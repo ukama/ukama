@@ -75,8 +75,9 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	log.Infof("Adding member")
 	member := &db.Member{
-		UserId: userUUID,
-		Role:   db.RoleType(req.Role),
+		MemberId: uuid.NewV4(),
+		UserId:   userUUID,
+		Role:     db.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
@@ -140,7 +141,7 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 }
 
 func (m *MemberServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.FromString(req.GetUserUuid())
+	uuid, err := uuid.FromString(req.GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of user uuid. Error %s", err.Error())
@@ -169,15 +170,15 @@ func (m *MemberServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest
 }
 
 func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.FromString(req.GetMember().GetUserUuid())
+	uuid, err := uuid.FromString(req.GetMember().GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	member := &db.Member{
-		UserId:      uuid,
-		Deactivated: req.GetAttributes().IsDeactivated,
+		MemberId:    uuid,
+		Deactivated: req.Attributes.GetIsDeactivated(),
 	}
 
 	err = m.mRepo.UpdateMember(member)
@@ -191,10 +192,10 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 }
 
 func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.FromString(req.GetUserUuid())
+	uuid, err := uuid.FromString(req.GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
+			"invalid format of member uuid. Error %s", err.Error())
 	}
 
 	member, err := m.mRepo.GetMember(uuid)
@@ -256,6 +257,7 @@ func (m *MemberServer) PushOrgMemberCountMetric(orgId uuid.UUID) error {
 
 func dbMemberToPbMember(member *db.Member, orgId string) *pb.Member {
 	return &pb.Member{
+		MemberId:      member.MemberId.String(),
 		OrgId:         orgId,
 		UserId:        member.UserId.String(),
 		IsDeactivated: member.Deactivated,

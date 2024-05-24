@@ -168,9 +168,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
 		member.POST("/others", formatDoc("Add a member of other org", "Add a member to an organization who's already existing member of other org"), tonic.Handler(r.postOtherMemberHandler, http.StatusCreated))
-		member.GET("/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
-		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
-		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
+		member.GET("/:member_id", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+		member.PATCH("/:member_id", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
+		member.DELETE("/:member_id", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
 		// Invitation routes
 		const inv = "/invitations"
@@ -275,7 +275,7 @@ func (r *Router) getMembersHandler(c *gin.Context, req *GetMembersRequest) (*mpb
 }
 
 func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.GetMember(req.UserUuid)
+	return r.clients.Member.GetMember(req.MemberId)
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
@@ -287,11 +287,11 @@ func (r *Router) postOtherMemberHandler(c *gin.Context, req *MemberRequest) (*mp
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Member.UpdateMember(req.UserUuid, req.IsDeactivated, req.Role)
+	return r.clients.Member.UpdateMember(req.MemberId, req.IsDeactivated, req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *RemoveMemberRequest) error {
-	return r.clients.Member.RemoveMember(req.UserUuid)
+	return r.clients.Member.RemoveMember(req.MemberId)
 }
 
 // Network handlers

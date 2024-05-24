@@ -36,7 +36,7 @@ export const inviteResToInvitationDto = (
 export const dtoToInvitationDto = (res: InvitationAPIDto): InvitationDto => {
   return {
     email: res.email,
-    expiresAt: res.expiresAt,
+    expireAt: res.expireAt,
     id: res.id,
     link: res.link,
     userId: res.userId,

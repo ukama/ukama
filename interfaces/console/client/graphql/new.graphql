@@ -143,8 +143,8 @@ query GetNodeLocation($data: NodeInput!) {
 
 fragment member on MemberDto {
   role
-  orgId
   userId
+  id: memberId
   isDeactivated
   memberSince
 }
@@ -153,6 +153,8 @@ query GetMembers {
   getMembers {
     members {
       ...member
+      name
+      email
     }
   }
 }
@@ -742,43 +744,39 @@ mutation Coverage($siteId: String!, $data: CoverageInput!) {
 
 ### Start Invitation ###
 
+fragment Invitation on InvitationDto {
+  email
+  expireAt
+  id
+  name
+  role
+  link
+  userId
+  status
+}
+
 mutation CreateInvitation($data: CreateInvitationInputDto!) {
   createInvitation(data: $data) {
-    email
-    expiresAt
-    id
-    name
-    role
-    link
-    userId
-    status
+    ...Invitation
   }
 }
 
 query GetInvitations($email: String!) {
   getInvitations(email: $email) {
-    email
-    expiresAt
-    id
-    name
-    role
-    link
-    userId
-    status
+    ...Invitation
   }
 }
 
 query Invitations {
   getInvitationsByOrg {
     invitations {
-      email
-      expiresAt
-      id
-      name
-      role
-      link
-      userId
-      status
+      ...Invitation
     }
+  }
+}
+
+mutation DeleteInvitation($deleteInvitationId: String!) {
+  deleteInvitation(id: $deleteInvitationId) {
+    id
   }
 }

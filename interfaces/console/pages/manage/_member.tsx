@@ -6,9 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { MANAGE_TABLE_COLUMN } from '@/constants';
+import {
+  INVITATION_TABLE_COLUMN,
+  MEMBER_TABLE_COLUMN,
+  MEMBER_TABLE_MENU,
+} from '@/constants';
 import { colors } from '@/styles/theme';
-import EmptyView from '@/ui/molecules/EmptyView';
+import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import { Search } from '@mui/icons-material';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -17,6 +21,7 @@ import {
   Button,
   Grid,
   Paper,
+  Stack,
   Tab,
   Tabs,
   TextField,
@@ -25,22 +30,24 @@ import {
 import React, { useState } from 'react';
 
 interface IMember {
-  memberData: any[];
-  invitationsData: any;
   search: string;
-  setSearch: (value: string) => void;
-  handleButtonAction: () => void;
+  memberData: any;
+  invitationsData: any;
   invitationTitle: string;
-  onSearchChange?: (value: string) => void;
+  handleButtonAction: () => void;
+  setSearch: (value: string) => void;
+  handleMemberAction: (id: string, type: string) => void;
+  handleDeleteInviteAction: (uuid: string) => void;
 }
 
 const Member: React.FC<IMember> = ({
-  memberData,
-  invitationsData,
   search,
   setSearch,
+  memberData,
+  invitationsData,
   handleButtonAction,
-  onSearchChange,
+  handleMemberAction,
+  handleDeleteInviteAction,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -48,33 +55,22 @@ const Member: React.FC<IMember> = ({
     setTabIndex(newValue);
   };
 
-  const renderMemberDataTable = () => {
-    if (memberData && memberData.length > 0) {
-      return (
-        <>
-          <SimpleDataTable
-            dataKey="uuid"
-            dataset={memberData}
-            columns={MANAGE_TABLE_COLUMN}
-          />
-        </>
-      );
-    } else {
-      return (
-        <Box
-          sx={{
-            width: '100%',
-            mt: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <EmptyView icon={PeopleAltIcon} title="No members yet!" />
-        </Box>
-      );
-    }
-  };
+  const renderMemberDataTable = () => (
+    <Stack direction={'column'}>
+      <Typography variant="h6" fontWeight={500}>
+        Members
+      </Typography>
+      <DataTableWithOptions
+        dataset={memberData || []}
+        icon={PeopleAltIcon}
+        isRowClickable={false}
+        columns={MEMBER_TABLE_COLUMN}
+        menuOptions={MEMBER_TABLE_MENU}
+        emptyViewLabel={'No members yet!'}
+        onMenuItemClick={handleMemberAction}
+      />
+    </Stack>
+  );
 
   return (
     <Paper
@@ -82,7 +78,7 @@ const Member: React.FC<IMember> = ({
         py: 3,
         px: 4,
         width: '100%',
-        overflow: 'hidden',
+        overflow: 'scroll',
         borderRadius: '10px',
         height: 'calc(100vh - 200px)',
       }}
@@ -125,15 +121,22 @@ const Member: React.FC<IMember> = ({
 
           <br />
           {renderMemberDataTable()}
-          {invitationsData && invitationsData.invitations && (
-            <>
-              <Typography variant="body1">Pending invitations</Typography>
+          <br />
+          <br />
+          {invitationsData.length > 0 && (
+            <Stack direction={'column'}>
+              <Typography variant="h6" fontWeight={500}>
+                Pending/Declined Invitations
+              </Typography>
               <SimpleDataTable
-                dataKey="uuid"
-                dataset={invitationsData.invitations}
-                columns={MANAGE_TABLE_COLUMN}
+                dataKey="id"
+                dataset={invitationsData}
+                columns={INVITATION_TABLE_COLUMN}
+                handleDeleteElement={(id: string) =>
+                  handleDeleteInviteAction(id)
+                }
               />
-            </>
+            </Stack>
           )}
         </Box>
       )}

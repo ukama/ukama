@@ -6,26 +6,27 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NetworkDto } from '@/generated';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import {
   Box,
+  Button,
+  Chip,
+  ListItem,
+  ListItemText,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Button,
-  ListItem,
-  ListItemText,
-  Menu,
-  MenuItem,
   Typography,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
-import { NetworkDto } from '@/generated';
+import { useEffect, useState } from 'react';
 
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
@@ -67,6 +68,8 @@ const CellValueByType = ({
       ) : (
         <Typography variant="body2">{row[type]}</Typography>
       );
+    case 'role':
+      return <Chip label={row[type]} sx={{ color: 'white' }} color={'info'} />;
     case 'actions':
       return (
         <OptionsPopover

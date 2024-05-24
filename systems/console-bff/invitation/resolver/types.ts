@@ -27,7 +27,7 @@ export class InvitationDto {
   email: string;
 
   @Field()
-  expiresAt: string;
+  expireAt: string;
 
   @Field()
   id: string;
@@ -63,7 +63,7 @@ export class InvitationAPIDto {
   name: string;
 
   @Field()
-  expiresAt: string;
+  expireAt: string;
 
   @Field()
   userId: string;

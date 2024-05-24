@@ -8,13 +8,22 @@
 import { Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { InvitationsResDto } from "./types";
+import { InvitationDto, InvitationsResDto } from "./types";
 
 @Resolver()
 export class GetInVitationsByOrgResolver {
   @Query(() => InvitationsResDto)
   async getInvitationsByOrg(@Ctx() ctx: Context): Promise<InvitationsResDto> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.getInvitationsByOrg();
+    const res = await dataSources.dataSource.getInvitationsByOrg();
+    const Invitations: InvitationDto[] = [];
+    for (const invitation of res.invitations) {
+      if (invitation.status !== "Accepted") {
+        Invitations.push(invitation);
+      }
+    }
+    return {
+      invitations: Invitations,
+    };
   }
 }

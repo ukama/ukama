@@ -35,7 +35,7 @@ message AddMemberRequest{
 }
 
 message MemberRequest{
-    string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    string memberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
 }
 
 message MemberResponse{
@@ -64,6 +64,7 @@ message Member {
     RoleType role = 3 ;
     bool isDeactivated = 4 [json_name = "is_deactivated"];
     google.protobuf.Timestamp created_at = 5 [json_name = "member_since"];
+    string memberId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
 }
 
 enum RoleType {
