@@ -1,22 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import { PackageDto, SimDto } from '@/generated';
+import { TAddSubscriberData } from '@/types';
+import CloseIcon from '@mui/icons-material/Close';
 import {
-  Dialog,
-  Box,
-  DialogTitle,
-  CircularProgress,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Button,
   Backdrop,
-  Typography,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   Stack,
+  Typography,
 } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import Step1 from './Step1';
 import Step2 from './Step2';
 import Step4 from './Step4';
-import CloseIcon from '@mui/icons-material/Close';
-import { PackageDto, SimDto } from '@/generated';
 
 interface SubscriberDialogProps {
   open: boolean;
@@ -27,50 +28,57 @@ interface SubscriberDialogProps {
   sims: SimDto[];
   pSimCount: number | undefined;
   eSimCount: number | undefined;
-  handleRoamingInstallation: Function;
+  onSubmit: Function;
   onSuccess: boolean;
   qrCode: string;
 }
 
+const INIT_ADD_SUBSCRIBER = {
+  name: '',
+  email: '',
+  phone: '',
+  simType: 'eSim',
+  roamingStatus: false,
+  iccid: '',
+  plan: '',
+};
+
 const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
   open,
   onClose,
-  submitButtonState,
+  onSubmit,
   qrCode,
   pkgList,
   loading = false,
-  handleRoamingInstallation,
   sims,
   pSimCount,
   eSimCount,
   onSuccess = false,
 }) => {
   const [activeStep, setActiveStep] = useState(1);
-  const [selectedSimType, setSelectedSimType] = useState<string>('eSim');
-  const [name, setName] = useState<string>('');
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] =
+    useState<TAddSubscriberData>(INIT_ADD_SUBSCRIBER);
 
-  const handleSimInstallation = async (values: any) => {
+  const handleStep1Submit = async (values: TAddSubscriberData) => {
     setActiveStep((prevStep) => prevStep + 1);
-    setSelectedSimType(values.selectedSimType);
-    setName(values.name);
     setFormData(values);
   };
 
   const handleDialogClose = () => {
     setActiveStep(1);
-    setName('');
-    onClose();
+    setFormData(INIT_ADD_SUBSCRIBER);
     onSuccess = false;
+    onClose();
   };
   const getSubscriberForm = (step: number) => {
     const commonProps = {
       onClose: () => {
-        setActiveStep(1);
+        handleDialogClose();
       },
-      handleSimInstallation,
+      handleStep1Submit,
       pSimCount,
       eSimCount,
+      formData,
     };
     switch (step) {
       case 1:
@@ -78,19 +86,24 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       case 2:
         return (
           <Step2
-            goBack={() => setActiveStep((prevStep) => prevStep - 1)}
+            sims={
+              formData.simType === 'eSim'
+                ? sims.filter((sim) => sim.isPhysical === 'false')
+                : sims.filter((sim) => sim.isPhysical === 'true')
+            }
             {...commonProps}
-            handlePlanInstallation={(plan: string, simIccid: string) => {
-              handleRoamingInstallation({ ...formData, plan, simIccid });
-            }}
-            submitButtonState={submitButtonState}
             packages={pkgList}
-            sims={sims}
-            selectedSimType={selectedSimType}
+            formData={formData}
+            setFormData={setFormData}
+            handleSubmitButton={() => {
+              onSubmit(formData);
+              handleDialogClose();
+            }}
+            goBack={() => setActiveStep((prevStep) => prevStep - 1)}
           />
         );
       case 3:
-        return <Step4 qrCode={qrCode} simType={selectedSimType} />;
+        return <Step4 qrCode={qrCode} simType={formData.simType} />;
       default:
         return <Step1 {...commonProps} />;
     }
@@ -108,9 +121,9 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       case 2:
         return 'Enter the ICCID for the SIM you have assigned to the subscriber, and select their data plan. Please ensure the ICCID is correct, because it cannot be undone once assigned.';
       case 3:
-        return selectedSimType == 'eSim '
-          ? `You have successfully added ${name} as a subscriber to your network, and an ${selectedSimType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`
-          : `You have successfully added ${name} as a subscriber to your network, and ${selectedSimType} installation instructions have been sent out to them. `;
+        return formData.simType == 'eSim '
+          ? `You have successfully added ${name} as a subscriber to your network, and an ${formData.simType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`
+          : `You have successfully added ${name} as a subscriber to your network, and ${formData.simType} installation instructions have been sent out to them. `;
       default:
         return 'Add subscribers to your network.';
     }
@@ -119,7 +132,11 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
   return (
     <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {onSuccess ? `Successfully added ${name}` : `Add subscriber ${name}`}
+        {onSuccess
+          ? `Successfully added ${name}`
+          : activeStep > 1
+          ? `Add subscriber ${name}`
+          : 'Add Subscriber'}
       </DialogTitle>
       <IconButton
         aria-label="close"

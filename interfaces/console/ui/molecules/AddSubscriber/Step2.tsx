@@ -1,20 +1,18 @@
-import React, { useCallback } from 'react';
+import { PackageDto, SimDto } from '@/generated';
+import { TAddSubscriberData } from '@/types';
 import {
   Button,
-  Typography,
-  InputLabel,
   FormControl,
-  OutlinedInput,
+  Grid,
+  InputLabel,
   MenuItem,
+  OutlinedInput,
   Select,
   Stack,
-  Grid,
-  SelectChangeEvent,
+  Typography,
 } from '@mui/material';
-import { PackageDto, SimDto } from '@/generated';
-import colors from '@/styles/theme/colors';
-import { useState } from 'react';
 import { makeStyles } from '@mui/styles';
+import React from 'react';
 
 const useStyles = makeStyles(() => ({
   selectStyle: () => ({
@@ -28,51 +26,27 @@ const useStyles = makeStyles(() => ({
 }));
 
 interface SubscriberDialogProps {
-  onClose: () => void;
-  handlePlanInstallation: Function;
-  goBack: () => void;
-  submitButtonState: boolean;
-  packages: PackageDto[];
   sims: SimDto[];
-
-  selectedSimType: string;
+  onClose: () => void;
+  goBack: () => void;
+  packages: PackageDto[];
+  setFormData: Function;
+  formData: TAddSubscriberData;
+  handleSubmitButton: () => void;
 }
 
 const Step2: React.FC<SubscriberDialogProps> = React.memo(
   ({
-    onClose,
-    handlePlanInstallation,
-    goBack,
-    submitButtonState = false,
-    packages,
     sims,
-    selectedSimType,
+    goBack,
+    onClose,
+    packages,
+    formData,
+    setFormData,
+    handleSubmitButton,
   }) => {
     const classes = useStyles();
-    const [plan, setPlan] = useState<string>('');
-    const [simIccid, setSimIccid] = useState<string>('');
 
-    const handleselectPLan = useCallback((e: SelectChangeEvent) => {
-      setPlan(e.target.value);
-    }, []);
-    const handleselectSim = useCallback((e: SelectChangeEvent) => {
-      setSimIccid(e.target.value);
-    }, []);
-
-    const handleButtonClick = useCallback(() => {
-      handlePlanInstallation(plan, simIccid);
-    }, [handlePlanInstallation, plan, simIccid]);
-
-    const getButtonState = () => {
-      let isButtonDisabled;
-      if (selectedSimType == 'eSim') {
-        isButtonDisabled = !plan;
-        return isButtonDisabled;
-      }
-      isButtonDisabled = !plan || !simIccid;
-      return isButtonDisabled;
-    };
-    const isButtonDisabled = getButtonState();
     return (
       <>
         <Grid container spacing={2}>
@@ -84,27 +58,28 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                 required
                 htmlFor="outlined-age-always-notched"
               >
-                {selectedSimType == 'pSim' ? `pSIM ICCID` : `eSIM ICCID`}
+                {formData.simType == 'pSim' ? `pSIM ICCID` : `eSIM ICCID`}
               </InputLabel>
 
               <Select
-                variant="outlined"
-                onChange={handleselectSim}
-                value={simIccid}
                 required
+                variant="outlined"
+                value={formData.iccid}
+                onChange={(e) =>
+                  setFormData({ ...formData, iccid: e.target.value })
+                }
                 sx={{
                   '& legend': { width: '93px' },
                 }}
                 input={
                   <OutlinedInput
                     notched
+                    fullWidth
                     label="ICCID"
                     name={'iccid'}
                     id="outlined-age-always-notched"
-                    fullWidth
                   />
                 }
-                disabled={selectedSimType == 'eSim' ? true : false}
                 MenuProps={{
                   disablePortal: false,
                   PaperProps: {
@@ -117,18 +92,35 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                 }}
                 className={classes.selectStyle}
               >
-                {sims.map((sim) => (
+                {sims.length === 0 ? (
                   <MenuItem
-                    key={sim.id}
-                    value={sim.iccid}
+                    disabled
+                    value={''}
                     sx={{
                       m: 0,
                       p: '6px 16px',
                     }}
                   >
-                    <Typography variant="body1">{sim.iccid}</Typography>
+                    <Typography variant="body1">
+                      {
+                        'Sim pool is empty available. Please upload sims to simpool first.'
+                      }
+                    </Typography>
                   </MenuItem>
-                ))}
+                ) : (
+                  sims.map((sim) => (
+                    <MenuItem
+                      key={sim.id}
+                      value={sim.iccid}
+                      sx={{
+                        m: 0,
+                        p: '6px 16px',
+                      }}
+                    >
+                      <Typography variant="body1">{sim.iccid}</Typography>
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
           </Grid>
@@ -144,10 +136,12 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
               </InputLabel>
 
               <Select
-                variant="outlined"
-                onChange={handleselectPLan}
-                value={plan}
                 required
+                variant="outlined"
+                value={formData.plan}
+                onChange={(e) => {
+                  setFormData({ ...formData, plan: e.target.value });
+                }}
                 sx={{
                   '& legend': { width: '93px' },
                 }}
@@ -172,22 +166,37 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                 }}
                 className={classes.selectStyle}
               >
-                {packages.map((pkg) => (
+                {packages.length === 0 ? (
                   <MenuItem
-                    key={pkg.uuid}
-                    value={pkg.uuid}
+                    disabled
+                    value={''}
                     sx={{
                       m: 0,
                       p: '6px 16px',
                     }}
                   >
                     <Typography variant="body1">
-                      {`${pkg.name} - $${pkg.amount}/${
-                        Number(pkg.dataVolume) / 1024
-                      } GB`}
+                      {'No packages available. Please add packages first.'}
                     </Typography>
                   </MenuItem>
-                ))}
+                ) : (
+                  packages.map((pkg) => (
+                    <MenuItem
+                      key={pkg.uuid}
+                      value={pkg.uuid}
+                      sx={{
+                        m: 0,
+                        p: '6px 16px',
+                      }}
+                    >
+                      <Typography variant="body1">
+                        {`${pkg.name} - $${pkg.amount}/${
+                          Number(pkg.dataVolume) / 1024
+                        } GB`}
+                      </Typography>
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
           </Grid>
@@ -205,7 +214,7 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                   goBack();
                 }}
               >
-                {' Go Back'}
+                {'Go Back'}
               </Button>
 
               <Stack direction="row" spacing={3}>
@@ -215,17 +224,14 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                     onClose();
                   }}
                 >
-                  {' CANCEL'}
+                  {'CANCEL'}
                 </Button>
 
                 <Button
-                  variant="contained"
                   type="submit"
-                  onClick={handleButtonClick}
-                  disabled={submitButtonState || isButtonDisabled}
-                  sx={{
-                    color: submitButtonState ? colors.primaryLight : undefined,
-                  }}
+                  variant="contained"
+                  onClick={handleSubmitButton}
+                  disabled={!formData.iccid || !formData.plan}
                 >
                   <Typography variant="body1"> ADD SUBSCRIBER</Typography>
                 </Button>

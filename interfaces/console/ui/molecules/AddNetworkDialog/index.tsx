@@ -124,6 +124,7 @@ const AddNetworkDialog = ({
                   id={'name'}
                 />
                 <FormControlLabel
+                  sx={{ display: 'none' }}
                   control={
                     <Switch
                       defaultChecked={false}

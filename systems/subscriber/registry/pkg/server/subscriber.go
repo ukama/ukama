@@ -42,7 +42,7 @@ type SubcriberServer struct {
 	networkClient     creg.NetworkClient
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient,networkClient creg.NetworkClient) *SubcriberServer {
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubcriberServer {
 	return &SubcriberServer{
 		orgName:              orgName,
 		subscriberRepo:       subscriberRepo,
@@ -72,25 +72,31 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
 	}
-	remoteOrg, err := s.orgClient.Get(s.orgName)
-	if err != nil {
-		return nil, err
-	}
+	// remoteOrg, err := s.orgClient.Get(s.orgName)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	networkInfo, err := s.networkClient.Get(networkId.String())
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
 	}
 
-	if s.orgId != networkInfo.OrgId {
+	if networkId.String() != networkInfo.Id {
 		log.Error("Missing network.")
 
 		return nil, fmt.Errorf("Network mismatch")
 	}
 
-	if remoteOrg.IsDeactivated {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"org is deactivated: cannot add network to it")
-	}
+	// if s.orgId != networkInfo.OrgId {
+	// 	log.Error("Missing network.")
+
+	// 	return nil, fmt.Errorf("Network mismatch")
+	// }
+
+	// if remoteOrg.IsDeactivated {
+	// 	return nil, status.Errorf(codes.FailedPrecondition,
+	// 		"org is deactivated: cannot add network to it")
+	// }
 
 	subscriber := &db.Subscriber{
 		SubscriberId:          subscriberId,

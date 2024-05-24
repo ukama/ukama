@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { SIM_TYPE_OPERATOR } from '@/constants';
 import { NodeTypeEnum } from '@/generated';
 import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
@@ -508,7 +509,7 @@ export const isMetricValue = (key: string, metrics: MetricsRes) => {
 
 const getSimValuefromSimType = (simType: string) => {
   switch (simType) {
-    case 'operator_data':
+    case SIM_TYPE_OPERATOR:
       return 'Operator Data';
     case 'ukama_data':
       return 'Ukama Data';

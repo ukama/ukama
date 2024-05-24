@@ -6,9 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { Field, GraphQLISODateTime, InputType, ObjectType } from "type-graphql";
-import { SIM_TYPES } from "../../common/enums";
 
-// You might need to install this package
+import { SIM_TYPES } from "../../common/enums";
 
 @InputType()
 export class AllocateSimInputDto {

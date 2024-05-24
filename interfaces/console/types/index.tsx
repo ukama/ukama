@@ -162,3 +162,13 @@ export type TNodeSiteTree = {
   nodeType: string;
   nodeName: string;
 };
+
+export type TAddSubscriberData = {
+  name: string;
+  email: string;
+  phone: string;
+  simType: string;
+  roamingStatus: boolean;
+  iccid: string;
+  plan: string;
+};

@@ -15,6 +15,7 @@ import SimCardIcon from '@mui/icons-material/SimCard';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
+export const SIM_TYPE_OPERATOR = 'operator_data';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
@@ -73,7 +74,7 @@ export const DATA_DURATION = [
 export const SIM_TYPES = [
   { id: 1, label: 'Unknown', value: 'unknown' },
   { id: 2, label: 'Test', value: 'test' },
-  { id: 3, label: 'Operator Data', value: 'operator_data' },
+  { id: 3, label: 'Operator Data', value: SIM_TYPE_OPERATOR },
   { id: 4, label: 'Ukama Data', value: 'ukama_data' },
 ];
 const NODE_TYPE = [
@@ -228,6 +229,7 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
   { id: 'simType', label: 'Type', minWidth: 180 },
   { id: 'qrCode', label: 'QR Code', minWidth: 140 },
+  { id: 'isPhysical', label: 'Physical', minWidth: 140 },
   { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [

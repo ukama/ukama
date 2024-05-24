@@ -8,11 +8,7 @@
 
 import { commonData, snackbarMessage } from '@/app-recoil';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
-import {
-  NodeStatusEnum,
-  useGetNodesByNetworkQuery,
-  useGetSitesQuery,
-} from '@/generated';
+import { NodeStatusEnum } from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData, TSnackMessage } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
@@ -24,9 +20,8 @@ import {
   SitesTree,
 } from '@/ui/molecules/NetworkMap/OverlayUI';
 import NetworkStatus from '@/ui/molecules/NetworkStatus';
-import { structureNodeSiteDate } from '@/utils';
 import NetworkIcon from '@mui/icons-material/Hub';
-import { AlertColor, Paper } from '@mui/material';
+import { Paper } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -38,26 +33,28 @@ const DynamicMap = dynamic(
   },
 );
 
+const networkLoading = false;
+const networkNodesLoading = false;
 export default function Page() {
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const [filterState, setFilterState] = useState<NodeStatusEnum>(
     NodeStatusEnum.Undefined,
   );
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
-    fetchPolicy: 'no-cache',
-    variables: {
-      networkId: _commonData?.networkId,
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'home-sites-err-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  // const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
+  //   fetchPolicy: 'no-cache',
+  //   variables: {
+  //     networkId: _commonData?.networkId,
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'home-sites-err-msg',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
   // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
   //   client: metricsClient,
@@ -75,21 +72,21 @@ export default function Page() {
   //     },
   //   });
 
-  const { data: networkNodes, loading: networkNodesLoading } =
-    useGetNodesByNetworkQuery({
-      fetchPolicy: 'cache-and-network',
-      variables: {
-        networkId: _commonData?.networkId,
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'home-network-nodes-err-msg',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  // const { data: networkNodes, loading: networkNodesLoading } =
+  //   useGetNodesByNetworkQuery({
+  //     fetchPolicy: 'cache-and-network',
+  //     variables: {
+  //       networkId: _commonData?.networkId,
+  //     },
+  //     onError: (error) => {
+  //       setSnackbarMessage({
+  //         id: 'home-network-nodes-err-msg',
+  //         message: error.message,
+  //         type: 'error' as AlertColor,
+  //         show: true,
+  //       });
+  //     },
+  //   });
 
   return (
     <>
@@ -169,9 +166,10 @@ export default function Page() {
                     <>
                       <LabelOverlayUI name={_commonData.networkName} />
                       <SitesTree
-                        sites={structureNodeSiteDate(
-                          networkNodes?.getNodesByNetwork.nodes || [],
-                        )}
+                        sites={[]}
+                        // sites={structureNodeSiteDate(
+                        //   networkNodes?.getNodesByNetwork.nodes || [],
+                        // )}
                       />
                       <SitesSelection
                         filterState={filterState}

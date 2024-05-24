@@ -447,7 +447,6 @@ fragment SubscriberSim on SubscriberDto {
     id
     subscriberId
     networkId
-    orgId
     iccid
     msisdn
     imsi
@@ -473,7 +472,6 @@ fragment Subscriber on SubscriberDto {
   gender
   idSerial
   networkId
-  orgId
   phone
   proofOfIdentification
   ...SubscriberSim

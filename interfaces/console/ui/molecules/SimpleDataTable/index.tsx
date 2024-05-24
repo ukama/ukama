@@ -156,6 +156,10 @@ const SimpleTableCell = ({
           sx={{ color: 'white' }}
           color={'info'}
         />
+      ) : column.id === 'isPhysical' ? (
+        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+          {row[column.id] === 'true' ? 'Yes' : 'No'}
+        </Typography>
       ) : (
         <Typography
           variant={'body2'}

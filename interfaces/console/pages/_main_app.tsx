@@ -247,17 +247,17 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         },
       },
     })
-      .then((res) => {
-        if (values.isDefault && res.data?.addNetwork.id) {
-          setDefaultNetwork({
-            variables: {
-              data: {
-                id: res.data?.addNetwork.id,
-              },
-            },
-          });
-        }
-      })
+      // .then((res) => {
+      //   if (values.isDefault && res.data?.addNetwork.id) {
+      //     setDefaultNetwork({
+      //       variables: {
+      //         data: {
+      //           id: res.data?.addNetwork.id,
+      //         },
+      //       },
+      //     });
+      //   }
+      // })
       .finally(() => {
         setShowAddNetwork(false);
       });

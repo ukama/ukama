@@ -129,7 +129,7 @@ message UpdateSubscriberResponse{
     //Return nothing when subscriber has been updated 
 }
 message AddSubscriberResponse{
-    Subscriber Subscriber = 1;
+    Subscriber subscriber = 1;
 
 }
 message Subscriber{

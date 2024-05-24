@@ -199,7 +199,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`).then(res => res);
+    return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (
