@@ -13,15 +13,17 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
 type EventToNotifyServer struct {
@@ -31,17 +33,19 @@ type EventToNotifyServer struct {
 	notificationRepo     db.NotificationRepo
 	userRepo             db.UserRepo
 	userNotificationRepo db.UserNotificationRepo
+	eventMsgRepo         db.EventMsgRepo
 	msgbus               mb.MsgBusServiceClient
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.NotificationRepo, userRepo db.UserRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
 	return &EventToNotifyServer{
 		orgName:              orgName,
 		orgId:                orgId,
 		notificationRepo:     notificationRepo,
 		userNotificationRepo: userNotificationRepo,
 		userRepo:             userRepo,
+		eventMsgRepo:         eventMsgRepo,
 		msgbus:               msgBus,
 		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
@@ -148,8 +152,8 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Id:          i.Id.String(),
 			Title:       i.Title,
 			Description: i.Description,
-			Type:        pb.NotificationType_name[int32(i.Type)],
-			Scope:       pb.NotificationScope_name[int32(i.Scope)],
+			Type:        upb.NotificationType_name[int32(i.Type)],
+			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
 		}
 		res = append(res, n)
@@ -162,8 +166,8 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		Id:           notification.Id.String(),
 		Title:        notification.Title,
 		Description:  notification.Description,
-		Type:         pb.NotificationType(notification.Type),
-		Scope:        pb.NotificationScope(notification.Scope),
+		Type:         upb.NotificationType(notification.Type),
+		Scope:        upb.NotificationScope(notification.Scope),
 		OrgId:        notification.OrgId,
 		NetworkId:    notification.NetworkId,
 		SubscriberId: notification.SubscriberId,
@@ -187,7 +191,7 @@ func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, network
 	return users, err
 }
 
-func (n *EventToNotifyServer) eventPbToDBNotification(dn *db.Notification) error {
+func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 	err := n.notificationRepo.Add(dn)
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
@@ -203,7 +207,7 @@ func (n *EventToNotifyServer) eventPbToDBNotification(dn *db.Notification) error
 
 	for _, u := range users {
 
-		/* Only add vaild notifcation scope  for the User */
+		/* Only add vaild notifcation scope for the User */
 		if IsValidNotificationScopeForRole(u.Role, dn.Scope) {
 			un = append(un, &db.UserNotification{
 				Id:             uuid.NewV4(),
@@ -226,9 +230,18 @@ func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 	return nil
 }
 
-func IsValidNotificationScopeForRole(r db.RoleType, s db.NotificationScope) bool {
+func (n *EventToNotifyServer) storeEvent(event *db.EventMsg) (uint, error) {
+	id, err := n.eventMsgRepo.Add(event)
+	if err != nil {
+		 log.Errorf("Error adding event to db %v", err)
+		 return 0, err
+	}
+	return id, nil
+}
+
+func IsValidNotificationScopeForRole(r roles.RoleType, s notif.NotificationScope) bool {
 	valid := false
-	for _, v := range pkg.RoleToScopeMap[r] {
+	for _, v := range notif.RoleToNotificationScopes[r] {
 		if v == s {
 			valid = true
 		}

@@ -10,8 +10,8 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb/gen";
 
-import "google/protobuf/wrappers.proto";
-
+import "ukama/roles.proto";
+import "ukama/notification.proto";
 
 package ukama.notification.eventToNotify.v1;
 
@@ -34,7 +34,7 @@ message GetAllRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
-    RoleType role = 5 [json_name = "role"];
+    ukama.common.v1.RoleType RoleType = 5 [json_name = "role"];
 }
 
 message GetAllResponse {
@@ -54,13 +54,13 @@ message Notification {
     string id = 1;
     string title = 2;
     string description = 3;
-    NotificationType type = 4;
-    NotificationScope scope = 5;
+    ukama.common.v1.NotificationType type = 4;
+    ukama.common.v1.NotificationScope scope = 5;
     string orgId = 6 [json_name = "org_id"];
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    RoleType forRole = 10 [json_name = "for_role"];
+    ukama.common.v1.RoleType forRole = 10 [json_name = "for_role"];
 }
 
 message Notifications {
@@ -72,27 +72,4 @@ message Notifications {
     bool isRead = 6 [json_name = "is_read"];
 }
 
-enum RoleType {
-    UNKOWN_ROLE = 0;
-    OWNER = 1;
-    ADMIN = 2;
-    VENDOR = 3;
-    USERS = 4;
-}
 
-enum NotificationType {
-    INFO = 0;
-    WARNING = 1;
-    ERROR = 2;
-    CRITICAL = 3;
-}
-
-enum NotificationScope {
-    UNKOWN_SCOPE = 0;
-    ORG = 1;
-	NETWORK = 2;
-	SITE = 3;
-	SUBSCRIBER = 4;
-	USER = 5;
-	NODE = 6;
-}

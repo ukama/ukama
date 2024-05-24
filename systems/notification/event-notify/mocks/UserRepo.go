@@ -26,25 +26,25 @@ func (_m *UserRepo) Add(user *db.Users) error {
 	return r0
 }
 
-// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, userId, role
-func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role db.RoleType) ([]*db.Users, error) {
-	ret := _m.Called(orgId, networkId, subscriberId, userId, role)
+// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, userId
+func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*db.Users, error) {
+	ret := _m.Called(orgId, networkId, subscriberId, userId)
 
 	var r0 []*db.Users
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, db.RoleType) ([]*db.Users, error)); ok {
-		return rf(orgId, networkId, subscriberId, userId, role)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) ([]*db.Users, error)); ok {
+		return rf(orgId, networkId, subscriberId, userId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, db.RoleType) []*db.Users); ok {
-		r0 = rf(orgId, networkId, subscriberId, userId, role)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) []*db.Users); ok {
+		r0 = rf(orgId, networkId, subscriberId, userId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Users)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, db.RoleType) error); ok {
-		r1 = rf(orgId, networkId, subscriberId, userId, role)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(orgId, networkId, subscriberId, userId)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -27,7 +27,7 @@ def find_message_names(directory):
     return message_names
 
 def generate_go_code(name):
-    print(f"func unmarshal{name}(msg *anypb.Any, emsg string) (*{name}, error) {{")
+    print(f"func Unmarshal{name}(msg *anypb.Any, emsg string) (*{name}, error) {{")
     print(f"  p := &{name}" + "{}")
     print("  err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})")
     print("  if err != nil {")

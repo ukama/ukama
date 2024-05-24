@@ -40,25 +40,25 @@ func (_m *NucleusProvider) GetOrg(orgName string) (*gen.GetByNameResponse, error
 	return r0, r1
 }
 
-// Whoami provides a mock function with given fields: uuid
-func (_m *NucleusProvider) Whoami(uuid string) (*pbgen.WhoamiResponse, error) {
-	ret := _m.Called(uuid)
+// Whoami provides a mock function with given fields: orgName, uuid
+func (_m *NucleusProvider) Whoami(orgName string, uuid string) (*pbgen.WhoamiResponse, error) {
+	ret := _m.Called(orgName, uuid)
 
 	var r0 *pbgen.WhoamiResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*pbgen.WhoamiResponse, error)); ok {
-		return rf(uuid)
+	if rf, ok := ret.Get(0).(func(string, string) (*pbgen.WhoamiResponse, error)); ok {
+		return rf(orgName, uuid)
 	}
-	if rf, ok := ret.Get(0).(func(string) *pbgen.WhoamiResponse); ok {
-		r0 = rf(uuid)
+	if rf, ok := ret.Get(0).(func(string, string) *pbgen.WhoamiResponse); ok {
+		r0 = rf(orgName, uuid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pbgen.WhoamiResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(uuid)
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(orgName, uuid)
 	} else {
 		r1 = ret.Error(1)
 	}

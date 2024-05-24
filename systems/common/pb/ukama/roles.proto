@@ -8,14 +8,14 @@
 
  syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
  
- package ukama.events.v1;
+ package ukama.common.v1;
 
  enum RoleType {
-    TYPE_INVALID = 0;
-    TYPE_OWNER = 1;
-    TYPE_ADMIN = 2;
-    TYPE_VENDOR = 3;
-    TYPE_USER = 4;
+    ROLE_INVALID = 0;
+    ROLE_OWNER = 1;
+    ROLE_ADMIN = 2;
+    ROLE_VENDOR = 3;
+    ROLE_USER = 4;
 }

@@ -10,12 +10,13 @@ type NotificationScope uint8
 
 const (
 	SCOPE_INVALID    NotificationScope = 0
-	SCOPE_ORG        NotificationScope = 1
-	SCOPE_NETWORK    NotificationScope = 2
-	SCOPE_SITE       NotificationScope = 3
-	SCOPE_SUBSCRIBER NotificationScope = 4
-	SCOPE_USER       NotificationScope = 5
-	SCOPE_NODE       NotificationScope = 6
+	SCOPE_OWNER      NotificationScope = 1
+	SCOPE_ORG        NotificationScope = 2
+	SCOPE_NETWORK    NotificationScope = 3
+	SCOPE_SITE       NotificationScope = 4
+	SCOPE_SUBSCRIBER NotificationScope = 5
+	SCOPE_USER       NotificationScope = 6
+	SCOPE_NODE       NotificationScope = 7
 )
 
 func (l *NotificationScope) Scan(value interface{}) error {

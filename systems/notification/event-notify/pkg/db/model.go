@@ -9,25 +9,32 @@
 package db
 
 import (
-	"database/sql/driver"
 	"time"
 
 	"gorm.io/gorm"
 
+	"github.com/jackc/pgtype"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
+
+type JSONB map[string]interface{}
 
 type Notification struct {
 	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Title        string
 	Description  string
-	Type         NotificationType  `gorm:"type:uint;not null;default:0"`
-	Scope        NotificationScope `gorm:"type:uint;not null;default:0"`
+	Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
+	Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	ResourceId   uuid.UUID
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
 	UserId       string
+	NodeId       string
+	EventMsgID    uint
+	EventMsg     EventMsg 
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -39,7 +46,7 @@ type Users struct {
 	NetworkId    string
 	SubscriberId string
 	UserId       string
-	Role         RoleType `gorm:"type:uint;not null;default:0"`
+	Role         roles.RoleType `gorm:"type:uint;not null;default:0"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -59,66 +66,28 @@ type Notifications struct {
 	Id          uuid.UUID `gorm:"type:uuid"`
 	Title       string
 	Description string
-	Type        NotificationType  `gorm:"type:uint;not null;default:0"`
-	Scope       NotificationScope `gorm:"type:uint;not null;default:0"`
-	IsRead      bool              `gorm:"type:bool;default:false;"`
+	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
+	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
+	IsRead      bool                    `gorm:"type:bool;default:false;"`
 	CreatedAt   string
 	UpdatedAt   string
 }
 
-type RoleType uint8
-
-const (
-	OWNER  RoleType = 0
-	ADMIN  RoleType = 1
-	VENDOR RoleType = 2
-	USERS  RoleType = 3
-)
-
-func (e *RoleType) Scan(value interface{}) error {
-	*e = RoleType(uint8(value.(int64)))
-
-	return nil
+type EventMsg struct {
+	gorm.Model
+	Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
 }
 
-func (e RoleType) Value() (uint8, error) {
-	return uint8(e), nil
-}
+// // Value Marshal
+// func (j JSONB) Value() (driver.Value, error) {
+// 	return json.Marshal(j)
+// }
 
-type NotificationType uint8
-
-const (
-	INFO     NotificationType = 0
-	WARNING  NotificationType = 1
-	ERROR    NotificationType = 2
-	CRITICAL NotificationType = 3
-)
-
-func (l *NotificationType) Scan(value interface{}) error {
-	*l = NotificationType(uint8(value.(int64)))
-	return nil
-}
-
-func (l NotificationType) Value() (driver.Value, error) {
-	return uint8(l), nil
-}
-
-type NotificationScope uint8
-
-const (
-	ORG        NotificationScope = 0
-	NETWORK    NotificationScope = 1
-	SITE       NotificationScope = 2
-	SUBSCRIBER NotificationScope = 3
-	USER       NotificationScope = 4
-	NODE       NotificationScope = 5
-)
-
-func (l *NotificationScope) Scan(value interface{}) error {
-	*l = NotificationScope(uint8(value.(int64)))
-	return nil
-}
-
-func (l NotificationScope) Value() (driver.Value, error) {
-	return uint8(l), nil
-}
+// // Scan Unmarshal
+// func (j *JSONB) Scan(value interface{}) error {
+// 	data, ok := value.([]byte)
+// 	if !ok {
+// 		return errors.New("type assertion to []byte failed")
+// 	}
+// 	return json.Unmarshal(data, &j)
+// }
