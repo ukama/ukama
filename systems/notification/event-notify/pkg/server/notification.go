@@ -175,20 +175,71 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 	}
 }
 
-func (n *EventToNotifyServer) getUsersMatchingNotification(orgId string, networkId string, subscriberId string, userId string) ([]*db.Users, error) {
-	var users []*db.Users
-	var err error
+func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
+	m := map[db.Users]struct{}{}
+	usersList := []*db.Users{}
 
+	for _, u := range users {
+		if _, ok := m[*u]; !ok {
+			usersList = append(usersList, u)
+			m[*u] = struct{}{}
+		}
+	}
+
+	return usersList
+}
+
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
+	var userList []*db.Users
+	var err error
+	roleTypes := notif.NotificationScopeToRoles[scope]
 	done := make(chan bool)
 
 	go func() {
-		users, err = n.userRepo.GetUsers(orgId, networkId, subscriberId, userId)
+
+		/* user specific notification */
+		if userId != "" && userId != db.EmptyUUID {
+			user, err := n.userRepo.GetUser(userId)
+			if err != nil {
+				log.Errorf("Failed to get user with userID %s.Error: %+v", userId, err)
+			} else {
+				userList = append(userList, user)
+			}
+
+			nr := make([]roles.RoleType, 0, len(roleTypes))
+			/* don't want to get all user removing user role */
+			for _, r := range roleTypes {
+				if r != roles.TYPE_USERS {
+					nr = append(nr, r)
+				}
+			}
+		}
+
+		/* subscriber specifc notification */
+		if subscriberId != "" && subscriberId != db.EmptyUUID {
+			user, err := n.userRepo.GetSubscriber(subscriberId)
+			if err != nil {
+				log.Errorf("Failed to get user with subscriberID %s and roles %+v.Error: %+v", subscriberId, err)
+			} else {
+				userList = append(userList, user)
+			}
+		}
+
+		/* Get user based on notification scope
+		this would work for OWNER, ADMIN and VENDOR */
+		users, err := n.userRepo.GetUserWithRoles(orgId, roleTypes)
+		if err != nil {
+			log.Errorf("Failed to get user with roles %+v.Error: %+v", roleTypes, err)
+		} else {
+			userList = append(userList, users...)
+		}
+
 		done <- true
 	}()
 
 	<-done
 
-	return users, err
+	return removeDuplicatesIfAny(userList), err
 }
 
 func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
@@ -196,7 +247,8 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
 	}
-	users, err := n.getUsersMatchingNotification(dn.OrgId, dn.NetworkId, dn.SubscriberId, dn.UserId)
+
+	users, err := n.filterUsersForNotification(dn.OrgId, dn.NetworkId, dn.SubscriberId, dn.UserId, dn.Scope)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)
@@ -233,8 +285,8 @@ func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 func (n *EventToNotifyServer) storeEvent(event *db.EventMsg) (uint, error) {
 	id, err := n.eventMsgRepo.Add(event)
 	if err != nil {
-		 log.Errorf("Error adding event to db %v", err)
-		 return 0, err
+		log.Errorf("Error adding event to db %v", err)
+		return 0, err
 	}
 	return id, nil
 }

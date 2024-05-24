@@ -10,6 +10,7 @@ package db
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -38,7 +39,7 @@ func (r *notificationRepo) Add(notification *Notification) (err error) {
 
 func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
 	var notification Notification
-	result := r.Db.GetGormDb().First(&notification, id)
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&notification, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
