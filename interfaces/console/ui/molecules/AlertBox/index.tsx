@@ -12,7 +12,7 @@ import { useState } from 'react';
 import DeleteNotification from '../DeleteNotification';
 
 interface Alert {
-  id:number
+  id: number;
   isRead: boolean;
   title: string;
   description: string;
@@ -21,10 +21,10 @@ interface Alert {
 
 interface AlertBoxProps {
   alerts: Alert[];
-  onAlertRead: (index: number)=>void
+  onAlertRead: (index: number) => void;
 }
 
-const AlertBox = ({ alerts, onAlertRead}: AlertBoxProps) => {
+const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // const [readAlerts, setReadAlerts] = useState<Set<String>>(new Set());
 
@@ -59,7 +59,7 @@ const AlertBox = ({ alerts, onAlertRead}: AlertBoxProps) => {
           fontFamily="Work Sans"
           paddingLeft={1}
         >
-          ({alerts.length})
+          ({alerts.filter((alert) => !alert.isRead).length})
         </Typography>
       </Box>
       <Divider sx={{ margin: 0 }} />
@@ -107,7 +107,7 @@ const AlertBox = ({ alerts, onAlertRead}: AlertBoxProps) => {
                   fontWeight="400"
                   fontFamily="Work Sans"
                 >
-                  {alert.description} 
+                  {alert.description}
                 </Typography>
                 <IconButton onClick={handleMenuClick}>
                   <MoreHoriz />
