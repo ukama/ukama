@@ -219,7 +219,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 		if subscriberId != "" && subscriberId != db.EmptyUUID {
 			user, err := n.userRepo.GetSubscriber(subscriberId)
 			if err != nil {
-				log.Errorf("Failed to get user with subscriberID %s and roles %+v.Error: %+v", subscriberId, err)
+				log.Errorf("Failed to get user with subscriberID %s.Error: %+v", subscriberId, err)
 			} else {
 				userList = append(userList, user)
 			}
