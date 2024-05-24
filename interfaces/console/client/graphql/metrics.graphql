@@ -11,28 +11,6 @@ query GetLatestMetric($data: GetLatestMetricInput!) {
   }
 }
 
-query GetMetricRange($data: GetMetricRangeInput!) {
-  getMetricRange(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
-}
-
-query GetNodeRangeMetric($data: GetMetricRangeInput!) {
-  getNodeRangeMetric(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
-}
-
 query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
@@ -43,29 +21,6 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
       type
       values
     }
-  }
-}
-
-subscription MetricRange(
-  $nodeId: String!
-  $orgId: String!
-  $type: String!
-  $userId: String!
-  $from: Float!
-) {
-  getMetricRangeSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
   }
 }
 

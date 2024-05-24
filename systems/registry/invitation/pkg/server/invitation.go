@@ -19,11 +19,13 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -38,10 +40,10 @@ type InvitationServer struct {
 	invitationExpiryTime uint
 	authLoginbaseURL     string
 	// unused?
-	// baseRoutingKey       msgbus.RoutingKeyBuilder
-	msgbus       mb.MsgBusServiceClient
-	orgName      string
-	TemplateName string
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus         mb.MsgBusServiceClient
+	orgName        string
+	TemplateName   string
 }
 
 func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
@@ -133,6 +135,24 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
+	if i.msgbus != nil {
+		route := i.baseRoutingKey.SetActionCreate().SetObject("invitation").MustBuild()
+		evt := &epb.EventInvitationCreated{
+			Id:        invite.Id.String(),
+			Link:      invite.Link,
+			Email:     invite.Email,
+			Name:      invite.Name,
+			Role:      epb.RoleType(invite.Role),
+			Status:    pb.StatusType_name[int32(invite.Status)],
+			UserId:    invite.UserId,
+			ExpiresAt: invite.ExpiresAt.String(),
+		}
+		err = i.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
 	return &pb.AddResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
@@ -173,6 +193,29 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 	err = i.iRepo.UpdateStatus(iuuid, uint8(req.GetStatus().Number()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
+
+	invite, err := i.iRepo.Get(iuuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
+
+	if i.msgbus != nil {
+		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
+		evt := &epb.EventInvitationCreated{
+			Id:        invite.Id.String(),
+			Link:      invite.Link,
+			Email:     invite.Email,
+			Name:      invite.Name,
+			Role:      epb.RoleType(invite.Role),
+			Status:    pb.StatusType_name[int32(invite.Status)],
+			UserId:    invite.UserId,
+			ExpiresAt: invite.ExpiresAt.String(),
+		}
+		err = i.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return &pb.UpdateStatusResponse{

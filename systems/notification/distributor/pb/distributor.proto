@@ -1,0 +1,73 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
+
+import "google/protobuf/wrappers.proto";
+
+package ukama.notification.distributor.v1;
+
+service DistributorService {
+    rpc NotificationStream(NotificationStreamRequest) returns (stream Notification);
+    rpc GetNotifications(NotificationsRequest) returns (NotificationsResponse);
+}
+
+message NotificationsRequest {
+    string orgId = 1 [json_name = "org_id"];
+    string networkId = 2 [json_name = "network_id"];
+    string subscriberId = 3 [json_name = "subscriber_id"];
+    string userId = 4 [json_name = "user_id"];
+    RoleType forRole = 5 [json_name = "for_role"];
+}
+
+message NotificationsResponse {
+    repeated Notification notifications = 1;
+}
+
+message NotificationStreamRequest {
+    string orgId = 1 [json_name = "org_id"];
+}
+
+message Notification {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    NotificationType type = 4;
+    NotificationScope scope = 5;
+    string orgId = 6 [json_name = "org_id"];
+    string networkId = 7 [json_name = "network_id"];
+    string subscriberId = 8 [json_name = "subscriber_id"];
+    string userId = 9 [json_name = "user_id"];
+    RoleType forRole = 10 [json_name = "for_role"];
+    bool isRead = 11 [json_name = "is_read"];
+}
+
+enum RoleType {
+    OWNER = 0;
+    ADMIN = 1;
+    VENDOR = 2;
+    USERS = 3;
+}
+
+enum NotificationType {
+    UNKNOWN = 0;
+    INFO = 1;
+    WARNING = 2;
+    ERROR = 3;
+}
+
+enum NotificationScope {
+    ORG = 0;
+	NETWORK = 1;
+	SITE = 2;
+	SUBSCRIBER = 3;
+	USER = 4;
+	NODE = 5;
+}

@@ -13,10 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
@@ -55,7 +56,7 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 	rate, err := b.baseRateRepo.GetBaseRateById(uuid)
 
 	if err != nil {
-		logrus.Error("error while getting rate" + err.Error())
+		log.Error("error while getting rate" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 	resp := &pb.GetBaseRatesByIdResponse{
@@ -66,12 +67,12 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 }
 
 func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
+	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
 	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		logrus.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -82,12 +83,12 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 }
 
 func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
+	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
 	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		logrus.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -98,7 +99,7 @@ func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *
 }
 
 func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
+	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
@@ -113,7 +114,7 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		logrus.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -124,7 +125,7 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 }
 
 func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
+	log.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
@@ -139,7 +140,7 @@ func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.Get
 	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		logrus.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -155,7 +156,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	endAt := req.GetEndAt()
 	strType := strings.ToLower(req.GetSimType())
 	simType := db.ParseType(strType)
-	logrus.Infof("Upload base rate fileURL: %s, effectiveAt: %s endAt: %s and simType: %s.",
+	log.Infof("Upload base rate fileURL: %s, effectiveAt: %s endAt: %s and simType: %s.",
 		fileUrl, effectiveAt, endAt, simType)
 
 	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType.String()) {
@@ -193,7 +194,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	}
 	data, err := utils.FetchData(fileUrl)
 	if err != nil {
-		logrus.Infof("Error fetching data: %v", err.Error())
+		log.Infof("Error fetching data: %v", err.Error())
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -204,14 +205,23 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
-		logrus.Error("error inserting rates " + err.Error())
+		log.Error("error inserting rates " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
-	route := b.baseRoutingKey.SetActionUpdate().SetObject("rate").MustBuild()
-	err = b.msgBus.PublishRequest(route, req)
-	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if b.msgBus != nil {
+		route := b.baseRoutingKey.SetAction("upload").SetObject("rates").MustBuild()
+		evt := &epb.EventBaserateUploaded{
+			EffectiveAt: formattedEffectiveAt,
+			SimType:     strType,
+			Country:     rates[0].Country,
+			Provider:    rates[0].Provider,
+		}
+		err = b.msgBus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+
 	}
 
 	rateList := &pb.UploadBaseRatesResponse{

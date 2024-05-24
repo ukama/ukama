@@ -4,7 +4,7 @@ services:
  postgresd-notification:
   image: postgres:13.3
   ports:
-   - '5406:5432'
+   - '5432:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -49,6 +49,43 @@ services:
    - NOTIFY_SERVICE_HOST=notify
    - NOTIFY_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-notification
+
+ eventnotify:
+  build: ./event-notify
+  ports:
+   - '9069:9090'
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-notification
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-notification:9095
+   - EVENTNOTIFY_SERVICE_HOST=eventnotify
+   - EVENTNOTIFY_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-notification
+
+ distributor:
+  build: ./distributor
+  ports:
+   - '9070:9090'
+  environment:
+   - DEBUGMODE=true
+   - DISTRIBUTOR_SERVICE_HOST=distributor
+   - DISTRIBUTOR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
   restart: always
   networks:
    - ukama-net

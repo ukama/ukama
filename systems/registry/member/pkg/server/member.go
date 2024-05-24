@@ -24,6 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -84,10 +85,19 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
+		evt := &epb.AddMemberEventRequest{
+			OrgId:         m.OrgId.String(),
+			UserId:        userUUID.String(),
+			Role:          epb.RoleType(member.Role),
+			IsDeactivated: member.Deactivated,
+			CreatedAt:     member.CreatedAt.String(),
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
