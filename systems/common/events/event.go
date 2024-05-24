@@ -253,7 +253,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventMeshNodeOnline",
 		Title:       "Mesh Node Online",
 		Description: "Mesh Node Online",
-		Scope:       notif.SCOPE_NETWORK,
+		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
 	EventMeshNodeOffline: {
@@ -261,7 +261,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventMeshNodeOffline",
 		Title:       "Mesh Node Offline",
 		Description: "Mesh Node Offline",
-		Scope:       notif.SCOPE_NETWORK,
+		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
 	EventSimActivate: {
@@ -269,7 +269,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventSimActivate",
 		Title:       "Sim Activated",
 		Description: "Sim Activated",
-		Scope:       notif.SCOPE_NETWORK,
+		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
 	},
 	EventSimAllocate: {
@@ -277,7 +277,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventSimAllocate",
 		Title:       "Sim Allocated",
 		Description: "Sim Allocated",
-		Scope:       notif.SCOPE_NETWORK,
+		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
 	},
 	EventSimDelete: {
@@ -285,7 +285,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventSimDelete",
 		Title:       "Sim Deleted",
 		Description: "Sim Deleted",
-		Scope:       notif.SCOPE_NETWORK,
+		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
 	},
 	EventSimAddPackage: {
