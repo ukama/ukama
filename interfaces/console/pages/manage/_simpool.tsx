@@ -11,7 +11,7 @@ import EmptyView from '@/ui/molecules/EmptyView';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import SimCardIcon from '@mui/icons-material/SimCard';
-import { Paper } from '@mui/material';
+import { Box } from '@mui/material';
 
 interface ISimPool {
   data: any;
@@ -20,16 +20,7 @@ interface ISimPool {
 
 const SimPool = ({ data, handleActionButon }: ISimPool) => {
   return (
-    <Paper
-      sx={{
-        py: 3,
-        px: 4,
-        width: '100%',
-        overflow: 'hidden',
-        borderRadius: '10px',
-        height: 'calc(100vh - 200px)',
-      }}
-    >
+    <Box sx={{ width: '100%', height: '100%' }}>
       <PageContainerHeader
         subtitle={data.length || '0'}
         showSearch={false}
@@ -43,7 +34,7 @@ const SimPool = ({ data, handleActionButon }: ISimPool) => {
       ) : (
         <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
       )}
-    </Paper>
+    </Box>
   );
 };
 

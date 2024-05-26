@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData, snackbarMessage } from '@/app-recoil';
+import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
   PackageDto,
@@ -17,7 +17,6 @@ import {
   useGetMembersQuery,
   // useGetInvitationsByOrgLazyQuery,
   useGetNetworksLazyQuery,
-  useGetNodesLazyQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
   useInvitationsQuery,
@@ -27,7 +26,7 @@ import {
   useUploadSimsMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
-import { TCommonData, TObject, TSnackMessage } from '@/types';
+import { TObject, TSnackMessage } from '@/types';
 import DataPlanDialog from '@/ui/molecules/DataPlanDialog';
 import FileDropBoxDialog from '@/ui/molecules/FileDropBoxDialog';
 import InviteMemberDialog from '@/ui/molecules/InviteMemberDialog';
@@ -43,7 +42,7 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 
 const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
@@ -109,14 +108,12 @@ const Manage = () => {
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
-  const _commonData = useRecoilValue<TCommonData>(commonData);
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
 
   const [data, setData] = useState<any>({
     members: [],
     simPool: [],
-    dataPlan: [],
     node: [],
     invitations: [],
     networkList: [],
@@ -163,30 +160,30 @@ const Manage = () => {
     },
   });
 
-  const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      const filteredNodes = data?.getNodes.nodes;
-      // .filter((node) => node.created_at)
-      // .map((node) => ({
-      //   ...node,
-      //   created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
-      // }));
+  // const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
+  //   fetchPolicy: 'cache-and-network',
+  //   onCompleted: (data) => {
+  //     const filteredNodes = data?.getNodes.nodes;
+  // .filter((node) => node.created_at)
+  // .map((node) => ({
+  //   ...node,
+  //   created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
+  // }));
 
-      setData((prev: any) => ({
-        ...prev,
-        node: filteredNodes ?? [],
-      }));
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'node',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  //     setData((prev: any) => ({
+  //       ...prev,
+  //       node: filteredNodes ?? [],
+  //     }));
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'node',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
   const [getSims, { loading: simsLoading, refetch: refetchSims }] =
     useGetSimsLazyQuery({
@@ -207,24 +204,26 @@ const Manage = () => {
       },
     });
 
-  const [getPackages, { loading: packagesLoading, refetch: getDataPlans }] =
-    useGetPackagesLazyQuery({
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          dataPlan: data?.getPackages.packages ?? [],
-        }));
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'packages',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [
+    getPackages,
+    { data: packagesData, loading: packagesLoading, refetch: getDataPlans },
+  ] = useGetPackagesLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        dataPlan: data?.getPackages.packages ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'packages',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const {
     data: invitationsData,
@@ -297,7 +296,7 @@ const Manage = () => {
 
   const [addDataPlan, { loading: dataPlanLoading }] = useAddPackageMutation({
     onCompleted: () => {
-      // refetchSims();
+      getDataPlans();
       setSnackbarMessage({
         id: 'add-data-plan',
         message: 'Data plan added successfully',
@@ -437,16 +436,16 @@ const Manage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberSearch]);
 
-  useEffect(() => {
-    if (nodeSearch.length > 3) {
-      const nodes = data.node.filter((node: any) => {
-        if (node.id.includes(nodeSearch)) return node;
-      });
-      setData((prev: any) => ({ ...prev, node: nodes || [] }));
-    } else if (nodeSearch.length === 0) {
-      setData((prev: any) => ({ ...prev, node: data.node }));
-    }
-  }, [nodeSearch]);
+  // useEffect(() => {
+  //   if (nodeSearch.length > 3) {
+  //     const nodes = data.node.filter((node: any) => {
+  //       if (node.id.includes(nodeSearch)) return node;
+  //     });
+  //     setData((prev: any) => ({ ...prev, node: nodes || [] }));
+  //   } else if (nodeSearch.length === 0) {
+  //     setData((prev: any) => ({ ...prev, node: data.node }));
+  //   }
+  // }, [nodeSearch]);
 
   const onMenuItemClick = (id: string) => {
     if (id === 'manage-sim')
@@ -458,7 +457,7 @@ const Manage = () => {
     else if (id === 'manage-data-plan') getPackages();
     else if (id === 'manage-node') {
       getNetworks();
-      getNodes();
+      // getNodes();
     }
 
     setMenu(id);
@@ -523,6 +522,7 @@ const Manage = () => {
           },
         },
       });
+      setIsDataPlan(false);
     }
   };
 
@@ -534,16 +534,16 @@ const Manage = () => {
         },
       });
     } else if (action === 'edit') {
-      const d: PackageDto = data.dataPlan.find(
+      const d: PackageDto | undefined = packagesData?.getPackages.packages.find(
         (pkg: PackageDto) => pkg.uuid === id,
       );
       setDataplan({
         id: id,
-        amount: typeof d.rate.amount === 'number' ? d.rate.amount : 0,
-        dataUnit: d.dataUnit,
-        dataVolume: d.dataVolume,
-        duration: d.duration,
-        name: d.name,
+        name: d?.name ?? '',
+        duration: d?.duration ?? 0,
+        dataUnit: d?.dataUnit ?? '',
+        dataVolume: d?.dataVolume ?? 0,
+        amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
       });
       setIsDataPlan(true);
     }
@@ -605,14 +605,31 @@ const Manage = () => {
     dataPlanLoading ||
     deletePkgLoading ||
     updatePkgLoading ||
-    networkLoading ||
-    // invitationsLoading ||
-    getNodesLoading;
+    networkLoading;
+  // invitationsLoading ||
+  // getNodesLoading;
+
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
-      <LoadingWrapper width="100%" radius="medium" isLoading={isLoading}>
-        <>
+      <LoadingWrapper
+        width="100%"
+        radius="medium"
+        isLoading={isLoading}
+        cstyle={{
+          overflow: 'scroll',
+          height: isLoading ? '50vh' : '100%',
+        }}
+      >
+        <Paper
+          sx={{
+            py: 3,
+            px: 4,
+            width: '100%',
+            borderRadius: '10px',
+            height: 'calc(100vh - 200px)',
+          }}
+        >
           {menu === 'manage-members' && (
             <Member
               search={memberSearch}
@@ -642,12 +659,15 @@ const Manage = () => {
           )}
           {menu === 'manage-data-plan' && (
             <DataPlan
-              data={data.dataPlan}
-              handleActionButon={() => setIsDataPlan(true)}
+              data={packagesData?.getPackages.packages ?? []}
+              handleActionButon={() => {
+                setDataplan(INIT_DATAPLAN);
+                setIsDataPlan(true);
+              }}
               handleOptionMenuItemAction={handleOptionMenuItemAction}
             />
           )}
-        </>
+        </Paper>
       </LoadingWrapper>
       {isInviteMember && (
         <InviteMemberDialog
@@ -662,10 +682,10 @@ const Manage = () => {
       )}
       {isUploadSims && (
         <FileDropBoxDialog
-          title={'Upload Sims in Sim Pool'}
           isOpen={isUploadSims}
-          labelNegativeBtn={'Cancel'}
           labelSuccessBtn={'Upload'}
+          labelNegativeBtn={'Cancel'}
+          title={'Upload Sims in Sim Pool'}
           handleSuccessAction={handleUploadSimsAction}
           handleCloseAction={() => setIsUploadSims(false)}
         />
@@ -673,14 +693,14 @@ const Manage = () => {
       {isDataPlan && (
         <DataPlanDialog
           data={dataplan}
-          action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
           setData={setDataplan}
           title={'Create data plan'}
           labelNegativeBtn={'Cancel'}
-          labelSuccessBtn={dataplan.id ? 'Update Data Plan' : 'Save Data Plan'}
+          action={dataplan.id ? 'update' : 'add'}
           handleSuccessAction={handleDataPlanAction}
           handleCloseAction={() => setIsDataPlan(false)}
+          labelSuccessBtn={dataplan.id ? 'Update Data Plan' : 'Save Data Plan'}
         />
       )}
     </Stack>

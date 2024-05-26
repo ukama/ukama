@@ -83,7 +83,10 @@ class PackageApi extends RESTDataSource {
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
     return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
-      body: req,
+      body: {
+        name: req.name,
+        active: req.active,
+      },
     }).then(res => dtoToPackageDto(res));
   };
 }

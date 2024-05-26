@@ -341,7 +341,7 @@ const Page = () => {
         });
       },
     });
-    
+
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
@@ -372,6 +372,7 @@ const Page = () => {
     {
       onCompleted: (res) => {
         setSimId(res.allocateSim.id);
+        refetchSubscribers();
         setSnackbarMessage({
           id: 'sim-allocated-success',
           message: 'Sim allocated successfully!',
@@ -407,7 +408,6 @@ const Page = () => {
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
-        refetchSubscribers();
         setSnackbarMessage({
           id: 'add-subscriber-success',
           message: 'Subscriber added successfully!',

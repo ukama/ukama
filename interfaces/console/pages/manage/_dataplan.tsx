@@ -10,7 +10,7 @@ import EmptyView from '@/ui/molecules/EmptyView';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import PlanCard from '@/ui/molecules/PlanCard';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import { Grid, Paper } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 
 interface IDataPlan {
   data: any;
@@ -24,21 +24,12 @@ const DataPlan = ({
   handleOptionMenuItemAction,
 }: IDataPlan) => {
   return (
-    <Paper
-      sx={{
-        py: 3,
-        px: 4,
-        width: '100%',
-        borderRadius: '10px',
-        height: 'calc(100vh - 200px)',
-      }}
-    >
+    <Box sx={{ width: '100%', height: '100%' }}>
       <PageContainerHeader
         showSearch={false}
         title={'Data plans'}
         buttonTitle={'CREATE DATA PLAN'}
         handleButtonAction={handleActionButon}
-        // warningIcon={true}
       />
       <br />
       {data.length === 0 ? (
@@ -73,7 +64,7 @@ const DataPlan = ({
           )}
         </Grid>
       )}
-    </Paper>
+    </Box>
   );
 };
 

@@ -84,6 +84,7 @@ class SimApi extends RESTDataSource {
 
       return null;
     };
+    console.log("Allocae SIM response: ", getToken());
     const requestBody = {
       ...req,
       ...(req.iccid ? { sim_token: getToken() } : {}),
@@ -93,27 +94,22 @@ class SimApi extends RESTDataSource {
       body: {
         ...requestBody,
       },
-    })
-      .then(res => {
-        this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
-        this.getPackagesForSim({ sim_id: res.sim.id })
-          .then((response: any) => {
-            this.setActivePackageForSim({
-              sim_id: res.sim.id,
-              package_id: response.packages[0].id,
-            });
-          })
-          .catch((error: any) => {
-            console.log("SIM ALLOCATION 1 ERROR: ", error);
-            throw new GraphQLError(error);
+    }).then(res => {
+      this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+      this.getPackagesForSim({ sim_id: res.sim.id })
+        .then((response: any) => {
+          this.setActivePackageForSim({
+            sim_id: res.sim.id,
+            package_id: response.packages[0].id,
           });
+        })
+        .catch((error: any) => {
+          console.log("SIM ALLOCATION 1 ERROR: ", error);
+          throw new GraphQLError(error);
+        });
 
-        return dtoToAllocateSimResDto(res);
-      })
-      .catch(err => {
-        console.log("SIM ALLOCATION 2 ERROR: ", err);
-        throw new GraphQLError(err);
-      });
+      return dtoToAllocateSimResDto(res);
+    });
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {

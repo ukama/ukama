@@ -11,7 +11,7 @@ import EmptyView from '@/ui/molecules/EmptyView';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import RouterIcon from '@mui/icons-material/Router';
-import { Paper } from '@mui/material';
+import { Box } from '@mui/material';
 
 interface INodePool {
   data: any;
@@ -29,15 +29,7 @@ const NodePool = ({
   handleCreateNetwork,
 }: INodePool) => {
   return (
-    <Paper
-      sx={{
-        py: 3,
-        px: 4,
-        width: '100%',
-        borderRadius: '10px',
-        height: 'calc(100vh - 200px)',
-      }}
-    >
+    <Box sx={{ width: '100%', height: '100%' }}>
       <PageContainerHeader
         subtitle={data.length || '0'}
         search={search}
@@ -57,7 +49,7 @@ const NodePool = ({
           handleCreateNetwork={handleCreateNetwork}
         />
       )}
-    </Paper>
+    </Box>
   );
 };
 

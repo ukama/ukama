@@ -20,7 +20,6 @@ import {
   Box,
   Button,
   Grid,
-  Paper,
   Stack,
   Tab,
   Tabs,
@@ -73,16 +72,7 @@ const Member: React.FC<IMember> = ({
   );
 
   return (
-    <Paper
-      sx={{
-        py: 3,
-        px: 4,
-        width: '100%',
-        overflow: 'scroll',
-        borderRadius: '10px',
-        height: 'calc(100vh - 200px)',
-      }}
-    >
+    <Box sx={{ width: '100%', height: '100%' }}>
       <Tabs value={tabIndex} onChange={handleTabChange}>
         <Tab label="team members" />
       </Tabs>
@@ -140,7 +130,7 @@ const Member: React.FC<IMember> = ({
           )}
         </Box>
       )}
-    </Paper>
+    </Box>
   );
 };
 
