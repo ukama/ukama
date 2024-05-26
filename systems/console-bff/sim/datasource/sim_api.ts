@@ -84,7 +84,6 @@ class SimApi extends RESTDataSource {
 
       return null;
     };
-    console.log("Allocae SIM response: ", getToken());
     const requestBody = {
       ...req,
       ...(req.iccid ? { sim_token: getToken() } : {}),
@@ -104,7 +103,6 @@ class SimApi extends RESTDataSource {
           });
         })
         .catch((error: any) => {
-          console.log("SIM ALLOCATION 1 ERROR: ", error);
           throw new GraphQLError(error);
         });
 

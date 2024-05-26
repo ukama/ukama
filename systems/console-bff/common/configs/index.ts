@@ -25,6 +25,7 @@ export const PLAYGROUND_URL = process.env.PLAYGROUND_URL ?? "";
 export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL ?? "";
 
 // UTILS
+export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";

@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { COMMUNITY_ORG_NAME } from "../../common/configs";
 import { OrgDto } from "../../org/resolver/types";
 import {
   UserAPIResDto,
@@ -28,24 +29,28 @@ export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
   const ownerOfOrgs: OrgDto[] = [];
   const memberOfOrgs: OrgDto[] = [];
   res.ownerOf.forEach(org => {
-    ownerOfOrgs.push({
-      id: org.id,
-      name: org.name,
-      owner: org.owner,
-      certificate: org.certificate,
-      isDeactivated: org.is_deactivated,
-      createdAt: org.created_at,
-    });
+    if (org.name !== COMMUNITY_ORG_NAME) {
+      ownerOfOrgs.push({
+        id: org.id,
+        name: org.name,
+        owner: org.owner,
+        certificate: org.certificate,
+        isDeactivated: org.is_deactivated,
+        createdAt: org.created_at,
+      });
+    }
   });
   res.memberOf.forEach(org => {
-    memberOfOrgs.push({
-      id: org.id,
-      name: org.name,
-      owner: org.owner,
-      certificate: org.certificate,
-      isDeactivated: org.is_deactivated,
-      createdAt: org.created_at,
-    });
+    if (org.name !== COMMUNITY_ORG_NAME) {
+      memberOfOrgs.push({
+        id: org.id,
+        name: org.name,
+        owner: org.owner,
+        certificate: org.certificate,
+        isDeactivated: org.is_deactivated,
+        createdAt: org.created_at,
+      });
+    }
   });
 
   return {

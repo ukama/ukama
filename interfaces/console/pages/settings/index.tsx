@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData } from '@/app-recoil';
+import { commonData, pageName, user } from '@/app-recoil';
 import { SETTING_MENU } from '@/constants';
 import colors from '@/styles/theme/colors';
 import { TCommonData } from '@/types';
@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useResetRecoilState } from 'recoil';
 
 const PersonalSetting = dynamic(() => import('./_personalSetting'));
 const Billing = dynamic(() => import('./_billing'));
@@ -87,6 +87,8 @@ const ManageMenu = ({
 );
 
 export default function Page() {
+  const resetData = useResetRecoilState(user);
+  const resetPageName = useResetRecoilState(pageName);
   const [menu, setMenu] = useState('personal-settings');
   const [isLoading, setIsLoading] = useState(false);
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
@@ -96,10 +98,17 @@ export default function Page() {
 
   const handleUpdateNetwork = (name: string) => {};
 
+  const handleLogoutACtion = () => {
+    resetData();
+    resetPageName();
+    typeof window !== 'undefined' &&
+      window.location.replace(`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/logout`);
+  };
+
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu
-        onLogoutClick={() => {}}
+        onLogoutClick={handleLogoutACtion}
         selectedId={menu}
         onMenuItemClick={onMenuItemClick}
       />

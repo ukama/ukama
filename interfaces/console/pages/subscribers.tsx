@@ -37,7 +37,6 @@ import {
   PageContainer,
   VerticalContainer,
 } from '@/styles/global';
-import { colors } from '@/styles/theme';
 import { TAddSubscriberData, TCommonData, TSnackMessage } from '@/types';
 import AddSubscriberDialog from '@/ui/molecules/AddSubscriber';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
@@ -643,14 +642,10 @@ const Page = () => {
         width={'100%'}
         isLoading={getSubscriberByNetworkLoading}
         cstyle={{
-          backgroundColor: getSubscriberByNetworkLoading
-            ? colors.white
-            : 'transparent',
+          minHeight: 'calc(100vh - 200px)',
         }}
       >
-        <PageContainer
-          sx={{ height: 'fit-content', maxHeight: 'calc(100vh - 400px)' }}
-        >
+        <PageContainer sx={{}}>
           <PageContainerHeader
             title={'My subscribers'}
             subtitle={`${subscriber.subscribers.length}`}

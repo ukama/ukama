@@ -6,10 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { LANGUAGE_OPTIONS, TimeZones } from '@/constants';
+import { LANGUAGE_OPTIONS } from '@/constants';
 import { colors } from '@/styles/theme';
 import { ExportOptionsType } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+import { TimeZones } from '@/utils/timezones';
 import SettingsArrowIcon from '@mui/icons-material/CallMade';
 import {
   Button,
