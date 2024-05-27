@@ -19,7 +19,6 @@ import {
   useAddNetworkMutation,
   useGetMemberByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetOrgsLazyQuery,
   useGetUserLazyQuery,
   useSetDefaultNetworkMutation,
 } from '@/generated';
@@ -135,33 +134,33 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     },
   });
 
-  const [getOrgs, { data: orgsData, error: orgsError, loading: orgsLoading }] =
-    useGetOrgsLazyQuery({
-      onCompleted: (data) => {},
-    });
-
   const [setDefaultNetwork] = useSetDefaultNetworkMutation({
     fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
+    const userId = route.query['uid'] as string;
     const orgId = route.query['org-id'] as string;
     const orgName = route.query['org-name'] as string;
-    const userId = route.query['uid'] as string;
-
-    if (orgId && orgName) {
-      setCommonData({
-        metaData: {},
-        orgId,
-        orgName,
-        userId,
-        networkId: '',
-        networkName: '',
+    if (userId) {
+      getUser({
+        variables: {
+          userId: userId,
+        },
       });
-      route.replace(route.pathname, undefined, { shallow: true });
+    }
+    setCommonData({
+      metaData: {},
+      orgId,
+      orgName,
+      userId,
+      networkId: '',
+      networkName: '',
+    });
+    if (!orgId && !orgName) {
+      route.replace('/onboarding', undefined, { shallow: true });
     } else {
-      getOrgs();
-      // TODO: NO ORG FOUND AGAINST USER, Navigate to Org selection screen/ Invitation screen
+      route.replace(route.pathname, undefined, { shallow: true });
     }
 
     if (route.pathname) {
@@ -184,34 +183,11 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [route]);
 
   useEffect(() => {
-    // if (
-    //   !_commonData.userId ||
-    //   (!_commonData.orgId && !_commonData.orgName) ||
-    //   doesHttpOnlyCookieExist('ukama_session')
-    // ) {
-    //   route.push('/onboarding');
-    // }
-    if (_commonData.userId) {
-      getUser({
-        variables: {
-          userId: _commonData.userId,
-        },
-      });
-    }
-  }, [_commonData]);
-
-  useEffect(() => {
-    if (networksLoading && orgsLoading && userLoading && !skeltonLoading)
+    if (networksLoading && userLoading && !skeltonLoading)
       setSkeltonLoading(true);
-    else if (!networksLoading && !orgsLoading && !userLoading && skeltonLoading)
+    else if (!networksLoading && !userLoading && skeltonLoading)
       setSkeltonLoading(false);
-  }, [
-    networksLoading,
-    orgsLoading,
-    userLoading,
-    skeltonLoading,
-    setSkeltonLoading,
-  ]);
+  }, [networksLoading, userLoading, skeltonLoading, setSkeltonLoading]);
 
   const handleGoToLogin = () => {
     resetData();
@@ -267,16 +243,14 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   return (
     <Layout
       page={page}
-      isFullScreen={isFullScreen}
       isDarkMode={_isDarkMod}
-      isLoading={
-        networksLoading || orgsLoading || userLoading || skeltonLoading
-      }
+      isFullScreen={isFullScreen}
       placeholder={'Select Network'}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
-      networks={networksData?.getNetworks.networks || []}
       handleAddNetwork={handleAddNetworkAction}
+      networks={networksData?.getNetworks.networks || []}
+      isLoading={networksLoading || userLoading || skeltonLoading}
     >
       <Component {...pageProps} />
       <AddNetworkDialog

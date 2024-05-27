@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { SIM_TYPE_OPERATOR } from '@/constants';
-import { NodeTypeEnum } from '@/generated';
+import { Invitation_Status, NodeTypeEnum } from '@/generated';
 import { Graphs_Type, MetricRes, MetricsRes } from '@/generated/metrics';
 import colors from '@/styles/theme/colors';
 import { TNodeSiteTree, TObject } from '@/types';
@@ -520,6 +520,29 @@ const getSimValuefromSimType = (simType: string) => {
   }
 };
 
+const getInvitationStatusColor = (status: string) => {
+  switch (status) {
+    case Invitation_Status.Accepted:
+      return (
+        <Typography variant="body2" color={colors.green}>
+          Accepted
+        </Typography>
+      );
+    case Invitation_Status.Declined:
+      return (
+        <Typography variant="body2" color={colors.red}>
+          Declined
+        </Typography>
+      );
+    case Invitation_Status.Pending:
+      return (
+        <Typography variant="body2" color={colors.yellow}>
+          Pending
+        </Typography>
+      );
+  }
+};
+
 export {
   calculateCenterLatLng,
   doesHttpOnlyCookieExist,
@@ -532,6 +555,7 @@ export {
   getDefaultMetricList,
   getDuration,
   getGraphFilterByType,
+  getInvitationStatusColor,
   getMetricObjectByKey,
   getMetricPayload,
   getMetricsInitObj,

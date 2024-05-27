@@ -208,7 +208,16 @@ export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'role', label: 'Role', minWidth: 180 },
   { id: 'status', label: 'Status', minWidth: 180 },
   { id: 'email', label: 'Email', minWidth: 140 },
-  { id: 'delete', label: 'Action', minWidth: 140 },
+  { id: 'actions', label: 'Action', minWidth: 140 },
+];
+export const INVITATION_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'Accept invite',
+    route: 'accept-invite',
+  },
+  { id: 2, Icon: null, title: 'Reject invite', route: 'reject-invite' },
 ];
 export const MEMBER_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },

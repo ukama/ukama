@@ -7,6 +7,7 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
+import { INVITATION_STATUS } from "../../common/enums";
 import { Context } from "../context";
 import { InvitationDto, InvitationsResDto } from "./types";
 
@@ -18,7 +19,7 @@ export class GetInVitationsByOrgResolver {
     const res = await dataSources.dataSource.getInvitationsByOrg();
     const Invitations: InvitationDto[] = [];
     for (const invitation of res.invitations) {
-      if (invitation.status !== "Accepted") {
+      if (invitation.status !== INVITATION_STATUS.ACCEPTED) {
         Invitations.push(invitation);
       }
     }

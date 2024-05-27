@@ -38,10 +38,9 @@ class InvitationApi extends RESTDataSource {
   };
 
   updateInvitation = async (
-    id: string,
     req: UpateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
-    return this.put(`/${VERSION}/invitations/${id}`, {
+    return this.patch(`/${VERSION}/invitations/${req.id}`, {
       body: { status: req.status },
     }).then(res => res);
   };
@@ -57,7 +56,7 @@ class InvitationApi extends RESTDataSource {
   };
 
   getInvitationsByEmail = async (email: string): Promise<InvitationDto> => {
-    return this.get(`/${VERSION}/invitations/${email}`).then(res =>
+    return this.get(`/${VERSION}/invitations/user/${email}`).then(res =>
       inviteResToInvitationDto(res)
     );
   };

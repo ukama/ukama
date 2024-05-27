@@ -29,16 +29,14 @@ export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
   const ownerOfOrgs: OrgDto[] = [];
   const memberOfOrgs: OrgDto[] = [];
   res.ownerOf.forEach(org => {
-    if (org.name !== COMMUNITY_ORG_NAME) {
-      ownerOfOrgs.push({
-        id: org.id,
-        name: org.name,
-        owner: org.owner,
-        certificate: org.certificate,
-        isDeactivated: org.is_deactivated,
-        createdAt: org.created_at,
-      });
-    }
+    ownerOfOrgs.push({
+      id: org.id,
+      name: org.name,
+      owner: org.owner,
+      certificate: org.certificate,
+      isDeactivated: org.is_deactivated,
+      createdAt: org.created_at,
+    });
   });
   res.memberOf.forEach(org => {
     if (org.name !== COMMUNITY_ORG_NAME) {

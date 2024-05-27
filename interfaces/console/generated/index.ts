@@ -244,6 +244,12 @@ export type GetSimPackagesDtoApi = {
   sim_id: Scalars['String']['output'];
 };
 
+export enum Invitation_Status {
+  Accepted = 'ACCEPTED',
+  Declined = 'DECLINED',
+  Pending = 'PENDING'
+}
+
 export type IdResponse = {
   __typename?: 'IdResponse';
   uuid: Scalars['String']['output'];
@@ -257,7 +263,7 @@ export type InvitationDto = {
   link: Scalars['String']['output'];
   name: Scalars['String']['output'];
   role: Scalars['String']['output'];
-  status: Scalars['String']['output'];
+  status: Invitation_Status;
   userId: Scalars['String']['output'];
 };
 
@@ -531,7 +537,6 @@ export type MutationUpdateFirstVisitArgs = {
 
 export type MutationUpdateInvitationArgs = {
   data: UpateInvitationInputDto;
-  id: Scalars['String']['input'];
 };
 
 
@@ -1140,7 +1145,8 @@ export type ToggleSimStatusInputDto = {
 };
 
 export type UpateInvitationInputDto = {
-  status: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  status: Invitation_Status;
 };
 
 export type UpdateEventInput = {
@@ -1702,26 +1708,26 @@ export type CoverageMutationVariables = Exact<{
 
 export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } } };
 
-export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string };
+export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
 export type CreateInvitationMutationVariables = Exact<{
   data: CreateInvitationInputDto;
 }>;
 
 
-export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
 
 export type GetInvitationsQueryVariables = Exact<{
   email: Scalars['String']['input'];
 }>;
 
 
-export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string } };
+export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
 
 export type InvitationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: string }> } };
+export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type DeleteInvitationMutationVariables = Exact<{
   deleteInvitationId: Scalars['String']['input'];
@@ -1729,6 +1735,13 @@ export type DeleteInvitationMutationVariables = Exact<{
 
 
 export type DeleteInvitationMutation = { __typename?: 'Mutation', deleteInvitation: { __typename?: 'DeleteInvitationResDto', id: string } };
+
+export type UpdateInvitationMutationVariables = Exact<{
+  data: UpateInvitationInputDto;
+}>;
+
+
+export type UpdateInvitationMutation = { __typename?: 'Mutation', updateInvitation: { __typename?: 'UpdateInvitationResDto', id: string } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -4379,3 +4392,36 @@ export function useDeleteInvitationMutation(baseOptions?: Apollo.MutationHookOpt
 export type DeleteInvitationMutationHookResult = ReturnType<typeof useDeleteInvitationMutation>;
 export type DeleteInvitationMutationResult = Apollo.MutationResult<DeleteInvitationMutation>;
 export type DeleteInvitationMutationOptions = Apollo.BaseMutationOptions<DeleteInvitationMutation, DeleteInvitationMutationVariables>;
+export const UpdateInvitationDocument = gql`
+    mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+  updateInvitation(data: $data) {
+    id
+  }
+}
+    `;
+export type UpdateInvitationMutationFn = Apollo.MutationFunction<UpdateInvitationMutation, UpdateInvitationMutationVariables>;
+
+/**
+ * __useUpdateInvitationMutation__
+ *
+ * To run a mutation, you first call `useUpdateInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateInvitationMutation, { data, loading, error }] = useUpdateInvitationMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateInvitationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateInvitationMutation, UpdateInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateInvitationMutation, UpdateInvitationMutationVariables>(UpdateInvitationDocument, options);
+      }
+export type UpdateInvitationMutationHookResult = ReturnType<typeof useUpdateInvitationMutation>;
+export type UpdateInvitationMutationResult = Apollo.MutationResult<UpdateInvitationMutation>;
+export type UpdateInvitationMutationOptions = Apollo.BaseMutationOptions<UpdateInvitationMutation, UpdateInvitationMutationVariables>;

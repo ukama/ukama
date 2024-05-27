@@ -8,6 +8,8 @@
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
+import { INVITATION_STATUS } from "../../common/enums";
+
 @InputType()
 export class CreateInvitationInputDto {
   @Field()
@@ -44,8 +46,8 @@ export class InvitationDto {
   @Field()
   userId: string;
 
-  @Field()
-  status: string;
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }
 
 @ObjectType()
@@ -77,8 +79,8 @@ export class InvitationAPIDto {
   @Field()
   link: string;
 
-  @Field()
-  status: string;
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }
 
 @ObjectType()
@@ -122,5 +124,8 @@ export class DeleteInvitationResDto {
 @InputType()
 export class UpateInvitationInputDto {
   @Field()
-  status: string;
+  id: string;
+
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }

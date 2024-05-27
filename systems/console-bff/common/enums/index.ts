@@ -97,3 +97,12 @@ export enum GRAPHS_TYPE {
 registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
 });
+
+export enum INVITATION_STATUS {
+  ACCEPTED = "Accepted",
+  DECLINED = "Declined",
+  PENDING = "Pending",
+}
+registerEnumType(INVITATION_STATUS, {
+  name: "INVITATION_STATUS",
+});

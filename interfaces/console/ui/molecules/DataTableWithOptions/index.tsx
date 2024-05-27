@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NetworkDto } from '@/generated';
+import { Invitation_Status, NetworkDto } from '@/generated';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import {
@@ -28,12 +28,14 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { getInvitationStatusColor } from '@/utils';
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
 
 interface DataTableWithOptionsInterface {
   icon?: any;
   dataset: any;
+  withStatusColumn?: boolean;
   isRowClickable?: boolean;
   emptyViewLabel?: string;
   onMenuItemClick: Function;
@@ -47,6 +49,7 @@ type CellValueByTypeProps = {
   row: any;
   type: string;
   isRowClickable: boolean;
+  withStatusColumn: boolean;
   menuOptions: MenuItemType[];
   onMenuItemClick: Function;
 };
@@ -57,6 +60,7 @@ const CellValueByType = ({
   menuOptions,
   isRowClickable,
   onMenuItemClick,
+  withStatusColumn,
 }: CellValueByTypeProps) => {
   switch (type) {
     case 'name':
@@ -70,14 +74,22 @@ const CellValueByType = ({
       );
     case 'role':
       return <Chip label={row[type]} sx={{ color: 'white' }} color={'info'} />;
+    case 'status':
+      return getInvitationStatusColor(row[type]);
     case 'actions':
-      return (
-        <OptionsPopover
-          cid={'data-table-action-popover'}
-          menuOptions={menuOptions}
-          handleItemClick={onMenuItemClick}
-        />
-      );
+      if (
+        (withStatusColumn && row['status'] === Invitation_Status.Accepted) ||
+        row['status'] === Invitation_Status.Declined
+      ) {
+        return <div>none</div>;
+      } else
+        return (
+          <OptionsPopover
+            cid={'data-table-action-popover'}
+            menuOptions={menuOptions}
+            handleItemClick={onMenuItemClick}
+          />
+        );
     default:
       return <Typography variant="body2">{row[type]}</Typography>;
   }
@@ -90,6 +102,7 @@ const DataTableWithOptions = ({
   menuOptions,
   networkList,
   onMenuItemClick,
+  withStatusColumn = false,
   getSelectedNetwork,
   emptyViewLabel = '',
   isRowClickable = true,
@@ -205,6 +218,7 @@ const DataTableWithOptions = ({
                         type={column.id}
                         menuOptions={menuOptions}
                         isRowClickable={isRowClickable}
+                        withStatusColumn={withStatusColumn}
                         onMenuItemClick={(type: string) =>
                           onMenuItemClick(row.id, type)
                         }

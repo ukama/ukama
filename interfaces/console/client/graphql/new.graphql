@@ -789,3 +789,9 @@ mutation DeleteInvitation($deleteInvitationId: String!) {
     id
   }
 }
+
+mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+  updateInvitation(data: $data) {
+    id
+  }
+}
