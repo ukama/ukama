@@ -54,3 +54,51 @@ query GetStatsMetric {
     averageThroughput
   }
 }
+
+query getNotifications($data: GetNotificationsInput!) {
+  getNotifications(data: $data) {
+    notifications {
+      description
+      id
+      isRead
+      networkId
+      orgId
+      role
+      scope
+      subscriberId
+      title
+      type
+      userId
+      timeStamp
+    }
+  }
+}
+subscription GetNotificationsSub(
+  $orgId: String!
+  $networkId: String!
+  $siteId: String!
+  $userId: String!
+  $subscriberId: String!
+  $scopes: [String!]!
+) {
+  getNotificationsSub(
+    orgId: $orgId
+    networkId: $networkId
+    siteId: $siteId
+    userId: $userId
+    subscriberId: $subscriberId
+    scopes: $scopes
+  ) {
+    description
+    id
+    isRead
+    networkId
+    orgId
+    scope
+    subscriberId
+    timeStamp
+    title
+    type
+    userId
+  }
+}
