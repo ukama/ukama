@@ -26,7 +26,7 @@
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
 #define DEF_WIMC_HOST          "localhost"
-#define DEF_NODED_EP           "/noded/v1/nodeinfo"
+#define DEF_NODED_EP           "/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_NODE_TYPE          "tower"

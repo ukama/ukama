@@ -34,8 +34,7 @@ extern "C" {
 #define ENABLE                          "enable"
 #define DISABLE                         "disable"
 
-#define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
-    REST_API_VERSION EP_BS RES
+#define API_RES_EP(RES)                  EP_BS REST_API_VERSION EP_BS RES
 
 /* RESPONSE CODE */
 #define RESP_CODE_SUCCESS               200
