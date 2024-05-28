@@ -140,7 +140,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeUpdate]
@@ -154,7 +154,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeStateUpdate]
@@ -168,7 +168,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
 		c := evt.EventToEventConfig[evt.EventNodeDelete]
@@ -182,7 +182,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
 		c := evt.EventToEventConfig[evt.EventNodeAssign]
@@ -196,7 +196,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
 		c := evt.EventToEventConfig[evt.EventNodeRelease]
@@ -210,7 +210,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteCreate]):
 		c := evt.EventToEventConfig[evt.EventInviteCreate]
@@ -255,7 +255,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
 		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
@@ -269,7 +269,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.NodeId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivate]):
 		// c := evt.EventToEventConfig[evt.EventSimActivate]
@@ -495,6 +495,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 }
 
 func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte) *db.Notification {
+	log.Debugf("Processing event OrgId %s NetworkId %s nodeId %s subscriberId %s userId %s", orgId, networkId, nodeId, subscriberId, userId)
+
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
