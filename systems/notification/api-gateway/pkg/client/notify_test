@@ -28,7 +28,7 @@ var nc = &mocks.NotifyServiceClient{}
 var notificationId = uuid.NewV4().String()
 var nodeID = ukama.NewVirtualHomeNodeId().String()
 
-var req = &rest.AddNotificationReq{
+var req = &rest.AddNodeNotificationReq{
 	NodeId:      nodeID,
 	Severity:    "high",
 	Type:        "alert",
@@ -97,7 +97,7 @@ func TestNotifyClient_List(t *testing.T) {
 		Sort:        true}
 
 	listResp := &pb.ListResponse{Notifications: []*pb.Notification{
-		&pb.Notification{
+		{
 			Id:          notificationId,
 			NodeId:      req.NodeId,
 			Severity:    req.Severity,
@@ -141,7 +141,7 @@ func TestNotifyClient_Purge(t *testing.T) {
 	}
 
 	delResp := &pb.ListResponse{Notifications: []*pb.Notification{
-		&pb.Notification{
+		{
 			Id:          notificationId,
 			NodeId:      req.NodeId,
 			Severity:    req.Severity,

@@ -28,6 +28,7 @@ require (
 	github.com/ukama/ukama/systems/notification/notify v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.63.2
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
 
 require (
