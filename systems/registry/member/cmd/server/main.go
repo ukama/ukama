@@ -29,6 +29,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -87,13 +88,15 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
+	log.Debugf("MessageBus Client is %+v", mbClient)
 	memberServer := server.NewMemberServer(serviceConfig.OrgName, db.NewMemberRepo(gormdb),
 		orgClient, userClient, mbClient, serviceConfig.PushGateway, id)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	memberEventServer := server.NewPackageEventServer(serviceConfig.OrgName, memberServer, serviceConfig.MasterOrgName)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterMemberServiceServer(s, memberServer)
+		egenerated.RegisterEventNotificationServiceServer(s, memberEventServer)
 	})
 
 	go grpcServer.StartServer()

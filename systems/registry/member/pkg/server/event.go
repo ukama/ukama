@@ -21,15 +21,17 @@ import (
 )
 
 type MemberEventServer struct {
-	orgName string
-	m       *MemberServer
+	orgName       string
+	masterOrgName string
+	m             *MemberServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewPackageEventServer(orgName string, ms *MemberServer) *MemberEventServer {
+func NewPackageEventServer(orgName string, ms *MemberServer, morg string) *MemberEventServer {
 	return &MemberEventServer{
-		m:       ms,
-		orgName: orgName,
+		m:             ms,
+		orgName:       orgName,
+		masterOrgName: morg,
 	}
 }
 
@@ -42,7 +44,7 @@ func (p *MemberEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			log.Errorf("Failed to unmarshal InvitationCreatedEvent message with error %s", err.Error())
 			return &epb.EventResponse{}, err
 		}
-		if msg.Status == epb.StatusType_Accepted {
+		if msg.Status == epb.StatusType_Accepted && p.orgName != p.masterOrgName {
 			p.m.AddMember(ctx, &pb.AddMemberRequest{
 				UserUuid: msg.UserId,
 				Role:     pb.RoleType(msg.Role),
