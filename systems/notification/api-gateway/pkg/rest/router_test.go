@@ -27,11 +27,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
+	dmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
+	emocks "github.com/ukama/ukama/systems/notification/event-notify/pb/gen/mocks"
 	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	mmocks "github.com/ukama/ukama/systems/notification/mailer/pb/gen/mocks"
 	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
@@ -57,28 +58,34 @@ var routerConfig = &RouterConfig{
 
 var testClientSet *Clients
 
-func init() {
+func Inti() {
 	gin.SetMode(gin.TestMode)
-	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout: 1 * time.Second,
-		Mailer:  "0.0.0.0:9092",
-		Notify:  "0.0.0.0:9093",
-	})
+}
+
+func ClientInit(m *mmocks.MailerServiceClient, n *nmocks.NotifyServiceClient, e *emocks.EventToNotifyServiceClient, d *dmocks.DistributorServiceClient) {
+	testClientSet = &Clients{
+		m: client.NewMailerFromClient(m),
+		n: client.NewNotifyFromClient(n),
+		e: client.NewEventToNotifyFromClient(e),
+		d: client.NewDistributorFromClient(d),
+	}
+
 }
 
 func TestRouter_PingRoute(t *testing.T) {
-	var m = &mmocks.MailerServiceClient{}
-	var n = &nmocks.NotifyServiceClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
 	var arc = &providers.AuthRestClient{}
+
+	ClientInit(m, n, e, d)
 
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(&Clients{
-		m: client.NewMailerFromClient(m),
-		n: client.NewNotifyFromClient(n),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -87,7 +94,7 @@ func TestRouter_PingRoute(t *testing.T) {
 }
 
 var nodeId = ukama.NewVirtualHomeNodeId().String()
-var nt = AddNotificationReq{
+var nt = AddNodeNotificationReq{
 	NodeId:      nodeId,
 	Severity:    "high",
 	Type:        "event",
@@ -99,8 +106,14 @@ var nt = AddNotificationReq{
 }
 
 func TestRouter_Add(t *testing.T) {
-	var m = &nmocks.NotifyServiceClient{}
+
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
 	var arc = &providers.AuthRestClient{}
+
+	ClientInit(m, n, e, d)
 
 	t.Run("NotificationIsValid", func(t *testing.T) {
 		body, err := json.Marshal(nt)
@@ -122,11 +135,9 @@ func TestRouter_Add(t *testing.T) {
 			Details:     nt.Details,
 		}
 
-		m.On("Add", mock.Anything, notifyReq).Return(&npb.AddResponse{}, nil)
+		n.On("Add", mock.Anything, notifyReq).Return(&npb.AddResponse{}, nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -159,12 +170,10 @@ func TestRouter_Add(t *testing.T) {
 			Details:     nt.Details,
 		}
 
-		m.On("Add", mock.Anything, notifyReq).Return(nil,
+		n.On("Add", mock.Anything, notifyReq).Return(nil,
 			status.Errorf(codes.InvalidArgument, "invalid nodeId"))
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -172,7 +181,7 @@ func TestRouter_Add(t *testing.T) {
 		// assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Contains(t, w.Body.String(), "invalid nodeId")
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("NotificationTypeNotValid", func(t *testing.T) {
@@ -187,13 +196,7 @@ func TestRouter_Add(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", notifyApiEndpoint, bytes.NewReader(body))
 
-		m := &nmocks.NotifyServiceClient{}
-
-		arc := &providers.AuthRestClient{}
-
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -201,14 +204,18 @@ func TestRouter_Add(t *testing.T) {
 		// assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Contains(t, w.Body.String(), "Error:Field validation")
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 }
 
 func TestRouter_Get(t *testing.T) {
-	m := &nmocks.NotifyServiceClient{}
-	arc := &providers.AuthRestClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
+	var arc = &providers.AuthRestClient{}
 
+	ClientInit(m, n, e, d)
 	t.Run("NotificationFound", func(t *testing.T) {
 		id := uuid.NewV4().String()
 		notifyReq := &npb.GetRequest{NotificationId: id}
@@ -225,141 +232,139 @@ func TestRouter_Get(t *testing.T) {
 			Details:     nt.Details,
 		}}
 
-		m.On("Get", mock.Anything, notifyReq).Return(notifyResp, nil)
+		n.On("Get", mock.Anything, notifyReq).Return(notifyResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("NotificationNotFound", func(t *testing.T) {
 		id := uuid.NewV4().String()
 		notifyReq := &npb.GetRequest{NotificationId: id}
 
-		m.On("Get", mock.Anything, notifyReq).Return(nil,
+		n.On("Get", mock.Anything, notifyReq).Return(nil,
 			status.Errorf(codes.NotFound, "notification not found"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("NotificationInvalid", func(t *testing.T) {
 		id := "lol"
 		notifyReq := &npb.GetRequest{NotificationId: id}
 
-		m.On("Get", mock.Anything, notifyReq).Return(nil,
+		n.On("Get", mock.Anything, notifyReq).Return(nil,
 			status.Errorf(codes.InvalidArgument, "invalid argument"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 }
 
 func TestRouter_Delete(t *testing.T) {
-	m := &nmocks.NotifyServiceClient{}
-	arc := &providers.AuthRestClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
+	ClientInit(m, n, e, d)
 
 	t.Run("NotificationFound", func(t *testing.T) {
 		notificationId := uuid.NewV4().String()
 		notifyReq := &npb.GetRequest{NotificationId: notificationId}
 
-		m.On("Delete", mock.Anything, notifyReq).Return(&npb.DeleteResponse{}, nil)
+		n.On("Delete", mock.Anything, notifyReq).Return(&npb.DeleteResponse{}, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("NotificationNotFound", func(t *testing.T) {
 		notificationId := uuid.NewV4().String()
 		notifyReq := &npb.GetRequest{NotificationId: notificationId}
 
-		m.On("Delete", mock.Anything, notifyReq).Return(nil,
+		n.On("Delete", mock.Anything, notifyReq).Return(nil,
 			status.Errorf(codes.NotFound, "notification not found"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("NotificationInvalid", func(t *testing.T) {
 		notificationId := "lol"
 		notifyReq := &npb.GetRequest{NotificationId: notificationId}
 
-		m.On("Delete", mock.Anything, notifyReq).Return(nil,
+		n.On("Delete", mock.Anything, notifyReq).Return(nil,
 			status.Errorf(codes.InvalidArgument, "invalid argument"))
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 }
 
 func TestRouter_List(t *testing.T) {
-	m := &nmocks.NotifyServiceClient{}
-	arc := &providers.AuthRestClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
+	ClientInit(m, n, e, d)
 
 	t.Run("ListAll", func(t *testing.T) {
 		nt := nt
@@ -369,7 +374,7 @@ func TestRouter_List(t *testing.T) {
 		listReq := &npb.ListRequest{}
 
 		listResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -381,21 +386,19 @@ func TestRouter_List(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("List", mock.Anything, listReq).Return(listResp, nil)
+		n.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", notifyApiEndpoint, nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("ListAlertsForNode", func(t *testing.T) {
@@ -409,7 +412,7 @@ func TestRouter_List(t *testing.T) {
 			Type:   nt.Type}
 
 		listResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -421,23 +424,21 @@ func TestRouter_List(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("List", mock.Anything, listReq).Return(listResp, nil)
+		n.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
 			fmt.Sprintf("%s?node_id=%s&notification_type=%s",
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("ListSortedEventsForNodeWithCount", func(t *testing.T) {
@@ -454,7 +455,7 @@ func TestRouter_List(t *testing.T) {
 		}
 
 		listResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -466,23 +467,21 @@ func TestRouter_List(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("List", mock.Anything, listReq).Return(listResp, nil)
+		n.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
 			fmt.Sprintf("%s?node_id=%s&notification_type=%s&count=%d&sort=%t",
 				notifyApiEndpoint, nt.NodeId, nt.Type, uint32(1), true), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("ListEventsForService", func(t *testing.T) {
@@ -497,7 +496,7 @@ func TestRouter_List(t *testing.T) {
 			Type:        nt.Type}
 
 		listResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -509,16 +508,14 @@ func TestRouter_List(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("List", mock.Anything, listReq).Return(listResp, nil)
+		n.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
 			fmt.Sprintf("%s?service_name=%s&notification_type=%s",
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -526,7 +523,7 @@ func TestRouter_List(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
 		assert.Contains(t, w.Body.String(), nt.ServiceName)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("ListSortedAlertsForServiceWithCount", func(t *testing.T) {
@@ -544,7 +541,7 @@ func TestRouter_List(t *testing.T) {
 		}
 
 		listResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -556,16 +553,14 @@ func TestRouter_List(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("List", mock.Anything, listReq).Return(listResp, nil)
+		n.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
 			fmt.Sprintf("%s?service_name=%s&notification_type=%s&count=%d&sort=%t",
 				notifyApiEndpoint, nt.ServiceName, nt.Type, uint32(1), true), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -573,13 +568,18 @@ func TestRouter_List(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
 		assert.Contains(t, w.Body.String(), nt.ServiceName)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 }
 
 func TestRouter_Purge(t *testing.T) {
-	m := &nmocks.NotifyServiceClient{}
-	arc := &providers.AuthRestClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
+	ClientInit(m, n, e, d)
 
 	t.Run("DeleteAll", func(t *testing.T) {
 		nt := nt
@@ -589,7 +589,7 @@ func TestRouter_Purge(t *testing.T) {
 		delReq := &npb.PurgeRequest{}
 
 		delResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -601,22 +601,20 @@ func TestRouter_Purge(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("Purge", mock.Anything, delReq).Return(delResp, nil)
+		n.On("Purge", mock.Anything, delReq).Return(delResp, nil)
 
 		w := httptest.NewRecorder()
 
 		req, _ := http.NewRequest("DELETE", notifyApiEndpoint, nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("DeleteAlertsForNode", func(t *testing.T) {
@@ -630,7 +628,7 @@ func TestRouter_Purge(t *testing.T) {
 			Type:   nt.Type}
 
 		delResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -642,7 +640,7 @@ func TestRouter_Purge(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("Purge", mock.Anything, delReq).Return(delResp, nil)
+		n.On("Purge", mock.Anything, delReq).Return(delResp, nil)
 
 		w := httptest.NewRecorder()
 
@@ -650,16 +648,14 @@ func TestRouter_Purge(t *testing.T) {
 			fmt.Sprintf("%s?node_id=%s&notification_type=%s",
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 
 	t.Run("DeleteEventsForService", func(t *testing.T) {
@@ -674,7 +670,7 @@ func TestRouter_Purge(t *testing.T) {
 			Type:        nt.Type}
 
 		delResp := &npb.ListResponse{Notifications: []*npb.Notification{
-			&npb.Notification{
+			{
 				Id:          id,
 				NodeId:      nt.NodeId,
 				Severity:    nt.Severity,
@@ -686,7 +682,7 @@ func TestRouter_Purge(t *testing.T) {
 				Details:     nt.Details,
 			}}}
 
-		m.On("Purge", mock.Anything, delReq).Return(delResp, nil)
+		n.On("Purge", mock.Anything, delReq).Return(delResp, nil)
 
 		w := httptest.NewRecorder()
 
@@ -694,9 +690,7 @@ func TestRouter_Purge(t *testing.T) {
 			fmt.Sprintf("%s?service_name=%s&notification_type=%s",
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
-		r := NewRouter(&Clients{
-			n: client.NewNotifyFromClient(m),
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -704,18 +698,21 @@ func TestRouter_Purge(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), nt.NodeId)
 		assert.Contains(t, w.Body.String(), nt.ServiceName)
-		m.AssertExpectations(t)
+		n.AssertExpectations(t)
 	})
 }
+
 func TestRouter_mailer(t *testing.T) {
-	cmailer := &mmocks.MailerServiceClient{}
-	arc := &providers.AuthRestClient{}
+	m := &mmocks.MailerServiceClient{}
+	n := &nmocks.NotifyServiceClient{}
+	e := &emocks.EventToNotifyServiceClient{}
+	d := &dmocks.DistributorServiceClient{}
+	var arc = &providers.AuthRestClient{}
 
-	r := NewRouter(&Clients{
-		m: client.NewMailerFromClient(cmailer),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	ClientInit(m, n, e, d)
+	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	m := &mailerpb.GetEmailByIdResponse{
+	mailer := &mailerpb.GetEmailByIdResponse{
 		MailId:       "65d969f7-d63e-44eb-b526-fd200e62a2b0",
 		To:           "test@ukama.com",
 		TemplateName: "test-template",
@@ -744,7 +741,7 @@ func TestRouter_mailer(t *testing.T) {
 			Values:       newValues,
 		}
 
-		cmailer.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
+		m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
 			Message: "email sent successfully",
 			MailId:  "65d969f7-d63e-44eb-b526-fd200e62a2b0",
 		}, nil)
@@ -753,18 +750,18 @@ func TestRouter_mailer(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		cmailer.AssertExpectations(t)
+		m.AssertExpectations(t)
 	})
 
 	t.Run("getEmailById", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/mailer/"+m.MailId, nil)
+		req, _ := http.NewRequest("GET", "/v1/mailer/"+mailer.MailId, nil)
 
 		preq := &mailerpb.GetEmailByIdRequest{
-			MailId: m.MailId,
+			MailId: mailer.MailId,
 		}
-		cmailer.On("GetEmailById", mock.Anything, preq).Return(&mailerpb.GetEmailByIdResponse{
-			MailId:       m.MailId,
+		m.On("GetEmailById", mock.Anything, preq).Return(&mailerpb.GetEmailByIdResponse{
+			MailId:       mailer.MailId,
 			To:           "test@ukama.com",
 			TemplateName: "test-template",
 			Values:       map[string]string{"Name": "test", "Message": "welcome to ukama"},
@@ -775,7 +772,6 @@ func TestRouter_mailer(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		cmailer.AssertExpectations(t)
+		m.AssertExpectations(t)
 	})
-
 }
