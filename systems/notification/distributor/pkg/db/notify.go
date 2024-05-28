@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
@@ -30,7 +31,7 @@ type Sub struct {
 	NetworkId    string
 	UserId       string
 	SubscriberId string
-	Scopes       []pb.NotificationScope
+	Scopes       []upb.NotificationScope
 	DataChan     chan *pb.Notification
 	QuitChan     chan bool
 }
@@ -74,14 +75,14 @@ func (h *notifyHandler) Register(orgId string, networkId string, subscriberId st
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		Scopes:       make([]pb.NotificationScope, len(scopes)),
+		Scopes:       make([]upb.NotificationScope, len(scopes)),
 		DataChan:     make(chan *pb.Notification, BufferCapacity),
 		QuitChan:     make(chan bool),
 	}
 
 	for _, s := range scopes {
-		sid := pb.NotificationScope(pb.NotificationScope_value[s])
-		if sid != pb.NotificationScope_UNKOWN_SCOPE {
+		sid := upb.NotificationScope(upb.NotificationScope_value[s])
+		if sid != upb.NotificationScope_SCOPE_INVALID {
 			sub.Scopes = append(sub.Scopes, sid)
 		}
 	}
@@ -176,7 +177,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 			params := strings.Split(notification.Extra, ",")
 			isRead, _ := strconv.ParseBool(params[2])
 
-			/* Get notifcation detaild fron event-notify service */
+			/* Get notifcation detaild from event-notify service */
 			res, err := h.c.Get(context.Background(), &enpb.GetRequest{Id: params[1]})
 			if err != nil {
 				log.Errorf("Error getting notification: %v", err)
@@ -192,9 +193,9 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				NetworkId:    res.Notification.NetworkId,
 				Description:  res.Notification.Description,
 				SubscriberId: res.Notification.SubscriberId,
-				ForRole:      pb.RoleType(res.Notification.ForRole),
-				Type:         pb.NotificationType(res.Notification.Type),
-				Scope:        pb.NotificationScope(res.Notification.Scope),
+				ForRole:      upb.RoleType(res.Notification.ForRole),
+				Type:         upb.NotificationType(res.Notification.Type),
+				Scope:        upb.NotificationScope(res.Notification.Scope),
 			}
 			log.Infof("Notification is %+v", un)
 
