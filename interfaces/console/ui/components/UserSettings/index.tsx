@@ -7,9 +7,10 @@
  */
 
 import { isDarkmode } from '@/app-recoil';
-import { LANGUAGE_OPTIONS, TimeZones } from '@/constants';
+import { LANGUAGE_OPTIONS } from '@/constants';
 import { SettingsArrowIcon } from '@/public/svg';
 import { ExportOptionsType } from '@/types';
+import { TimeZones } from '@/utils/timezones';
 import {
   Button,
   Divider,
