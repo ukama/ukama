@@ -211,6 +211,9 @@ export class NotificationRes {
 
   @Field(() => NOTIFICATION_SCOPE)
   scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  timeStamp: string;
 }
 
 @ObjectType()

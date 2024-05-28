@@ -23,6 +23,7 @@ import {
   NOTIFICATION_API_GW,
   STORAGE_KEY,
 } from "../../common/configs";
+import { NOTIFICATION_SCOPE, NOTIFICATION_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
 import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
@@ -308,7 +309,7 @@ class MetricResolvers {
   ) {
     const { orgId, userId, subscriberId, networkId, siteId, scopes } = data;
     const scopesStr = scopes.join(",");
-    const notifications = getNotifications(data);
+    // const notifications = getNotifications(data);
     const workerData = {
       url: `${NOTIFICATION_API_GW}/v1/notification/live`,
       orgId: orgId,
@@ -332,15 +333,17 @@ class MetricResolvers {
             `notification-${userId}-${orgId}-${networkId}-${siteId}-${subscriberId}-${scopesStr}`,
             {
               id: result.data.id,
-              type: result.data.type,
               title: result.data.title,
               orgId: result.data.org_id,
-              role: result.data.for_role,
               userId: result.data.user_id,
               isRead: result.data.is_read,
               networkId: result.data.network_id,
               description: result.data.description,
               subscriberId: result.data.subscriber_id,
+              timeStamp: result.data.timestamp,
+              role: result.data.role,
+              scope: result.data.scope,
+              type: result.data.type,
             } as NotificationRes
           );
         } else {
@@ -355,7 +358,7 @@ class MetricResolvers {
     });
 
     return {
-      notifications: notifications,
+      notifications: [],
     };
   }
 

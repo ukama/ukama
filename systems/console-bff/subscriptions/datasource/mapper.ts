@@ -132,6 +132,7 @@ export const parseNotification = (notification: any) => {
     userId: notification.user_id,
     role: notification.for_role,
     isRead: notification.is_read,
+    timeStamp: notification.timestamp,
   };
 };
 
