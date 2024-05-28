@@ -164,8 +164,8 @@ int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
     
-    ulfius_set_string_body_response(response, HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+    ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
     return U_CALLBACK_CONTINUE;
 }
@@ -365,7 +365,7 @@ int web_service_cb_post_terminate(const URequest *request,
 
     /* Only if the capp is running */
     status = killpg(capp->runtime->pid, SIGTERM);
-    if ( status == 0 ){
+    if (status == 0){
         usys_log_debug("SIGTERM send to capp: %s:%s", capp->name, capp->tag);
         ulfius_set_string_body_response(response, HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));

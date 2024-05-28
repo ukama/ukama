@@ -64,8 +64,8 @@ int web_service_cb_get_output(const URequest *request, UResponse *response,
 int web_service_cb_default(const URequest *request, UResponse *response,
                            void *data) {
 
-    ulfius_set_string_body_response(response, HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+    ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
     return U_CALLBACK_CONTINUE;
 }

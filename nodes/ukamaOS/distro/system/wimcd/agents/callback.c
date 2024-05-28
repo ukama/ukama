@@ -144,8 +144,8 @@ int agent_web_service_cb_default(const URequest *request,
                                  void *data) {
 
     ulfius_set_string_body_response(response,
-                                    HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+                                    HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
     return U_CALLBACK_CONTINUE;
 }
