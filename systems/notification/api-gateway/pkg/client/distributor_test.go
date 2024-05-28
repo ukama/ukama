@@ -77,5 +77,4 @@ func TestDIstributor_GetNotificationStream(t *testing.T) {
 	}
 
 	nc.AssertExpectations(t)
-	nc.M
 }
