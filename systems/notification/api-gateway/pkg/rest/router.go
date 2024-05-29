@@ -261,36 +261,31 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 	}
 
 	for {
-		ok := false
 		resp, err := stream.Recv()
 		if err == io.EOF {
+			log.Infof("EOF received from stream")
 			return nil
 		} else if err == nil {
 			w, err := ws.NextWriter(1)
 			if err != nil {
 				log.Errorf("Error getting writer: %s", err.Error())
-				ok = false
 				break
 			}
 
 			bytes, err := json.Marshal(resp)
 			if err != nil {
 				log.Errorf("Failed to Marshal notification stream %+v for user %s Error: %v", resp, req.UserId, err)
-				return err
+				break
 			}
 
 			_, err = w.Write(bytes)
 			if err != nil {
 				log.Errorf("Failed to  write notification %+v for user %s to ws response. Error: %s", resp, req.UserId, err)
-				return err
+				break
 			}
-
-			ok = true
-		}
-		if !ok {
-			break
 		}
 	}
+	log.Infof("Closing real time notifications %+v", req)
 	return err
 
 }
