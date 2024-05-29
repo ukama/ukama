@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/notification"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
@@ -48,7 +49,7 @@ type notifyHandler struct {
 }
 
 type NotifyHandler interface {
-	Register(orgId string, networkId string, subscriberId string, userId string, scopes []string) (string, *Sub)
+	Register(orgId string, networkId string, subscriberId string, userId string, scopes []notification.NotificationScope) (string, *Sub)
 	Deregister(id string) error
 	Start()
 	Stop()
@@ -68,24 +69,20 @@ func NewNotifyHandler(db *uconf.Database, c providers.EventNotifyClientProvider)
 	}
 }
 
-func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, scopes []string) (string, *Sub) {
-	id := uuid.NewV4().String()
+func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, scopes []notification.NotificationScope) (string, *Sub) {
+
 	sub := Sub{
+		Id:           uuid.NewV4(),
 		OrgId:        orgId,
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		Scopes:       make([]upb.NotificationScope, len(scopes)),
+		Scopes:       scopes,
 		DataChan:     make(chan *pb.Notification, BufferCapacity),
 		QuitChan:     make(chan bool),
 	}
 
-	for _, s := range scopes {
-		sid := upb.NotificationScope(upb.NotificationScope_value[s])
-		if sid != upb.NotificationScope_SCOPE_INVALID {
-			sub.Scopes = append(sub.Scopes, sid)
-		}
-	}
+	id := sub.Id.String()
 
 	h.subs[id] = sub
 
@@ -212,3 +209,4 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 		}
 	}
 }
+[]notification.NotificationScope
