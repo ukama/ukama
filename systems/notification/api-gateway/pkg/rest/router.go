@@ -244,7 +244,7 @@ func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotific
 
 func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEventNotificationRequest) error {
 
-	log.Infof("Requesting real time notifications %s", req)
+	log.Infof("Requesting real time notifications %+v", req)
 
 	//Upgrade get request to webSocket protocol
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
