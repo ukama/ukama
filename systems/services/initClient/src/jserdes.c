@@ -25,11 +25,12 @@ int serialize_request(Request *request, json_t **json) {
 	int ret=FALSE;
 	Register *reg;
 	char *str=NULL;
-
+	log_info("serialize_request for %d", request->reqType);
 	if (request->reqType == (ReqType)REQ_REGISTER) {
 
 		*json = json_object();
 		if (*json == NULL) {
+			log_error("JSON object null");
 			return FALSE;
 		}
 
