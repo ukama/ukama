@@ -32,7 +32,7 @@ type Sub struct {
 	NetworkId    string
 	UserId       string
 	SubscriberId string
-	Scopes       []upb.NotificationScope
+	Scopes       []notification.NotificationScope
 	DataChan     chan *pb.Notification
 	QuitChan     chan bool
 }
@@ -125,7 +125,7 @@ func (h *notifyHandler) processNotification(n *pb.Notification) {
 		log.Infof("Processing notification %+v for sub %s with %+v", n, k, s)
 
 		for _, scope := range s.Scopes {
-			if n.Scope == scope {
+			if n.Scope == upb.NotificationScope(scope) {
 				/* Send over channel */
 				s.DataChan <- n
 			}
