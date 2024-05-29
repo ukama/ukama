@@ -209,4 +209,3 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 		}
 	}
 }
-[]notification.NotificationScope
