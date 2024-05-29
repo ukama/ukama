@@ -128,7 +128,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 	for {
 		select {
 		case <-srv.Context().Done():
-			log.Infof("Client closed connection for request %+v", req)
+			log.Infof("Client closed connection for request %+v.Error %+v", req, srv.Context().Err())
 			goto EXIT
 
 		case data := <-sub.DataChan:
