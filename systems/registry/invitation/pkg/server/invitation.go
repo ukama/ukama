@@ -21,12 +21,14 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -126,7 +128,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		Name:      req.GetName(),
 		Link:      link,
 		Email:     req.GetEmail(),
-		Role:      db.RoleType(req.Role),
+		Role:      roles.RoleType(req.Role),
 		ExpiresAt: expiry,
 		Status:    db.Pending,
 		UserId:    userId,
@@ -150,7 +152,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 			Link:      invite.Link,
 			Email:     invite.Email,
 			Name:      invite.Name,
-			Role:      epb.RoleType(invite.Role),
+			Role:      upb.RoleType(invite.Role),
 			Status:    pb.StatusType_name[int32(invite.Status)],
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
@@ -215,7 +217,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvit
 			Link:      invite.Link,
 			Email:     invite.Email,
 			Name:      invite.Name,
-			Role:      epb.RoleType(invite.Role),
+			Role:      upb.RoleType(invite.Role),
 			Status:    pb.StatusType_name[int32(invite.Status)],
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
