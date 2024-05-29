@@ -199,6 +199,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 
 		/* user specific notification */
 		if userId != "" && userId != db.EmptyUUID {
+			log.Debugf("Getting user with id: %s", userId)
 			user, err := n.userRepo.GetUser(userId)
 			if err != nil {
 				log.Errorf("Failed to get user with userID %s.Error: %+v", userId, err)
@@ -210,6 +211,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 
 		/* subscriber specifc notification */
 		if subscriberId != "" && subscriberId != db.EmptyUUID {
+			log.Debugf("Getting subscriber with id: %s", userId)
 			user, err := n.userRepo.GetSubscriber(subscriberId)
 			if err != nil {
 				log.Errorf("Failed to get user with subscriberID %s.Error: %+v", subscriberId, err)
@@ -220,6 +222,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 
 		/* Get user based on notification scope
 		this would work for OWNER, ADMIN and VENDOR */
+		log.Debugf("Getting user with roles: %+v", roleTypes)
 		users, err := n.userRepo.GetUserWithRoles(orgId, roleTypes)
 		if err != nil {
 			log.Errorf("Failed to get user with roles %+v.Error: %+v", roleTypes, err)

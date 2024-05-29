@@ -50,6 +50,7 @@ func initConfig() {
 		if err != nil {
 			log.Infof("Config:\n%s", string(b))
 		}
+		log.SetLevel(log.DebugLevel)
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }

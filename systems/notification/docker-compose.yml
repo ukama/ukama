@@ -86,9 +86,10 @@ services:
    - DISTRIBUTOR_SERVICE_HOST=distributor
    - DISTRIBUTOR_SERVICE_PORT=9090
    - EVENTNOTIFYHOST=eventnotify:9090
-   - HTTP_NUCLEUS = http://{LOCAL_HOST_IP}:8060
-   - HTTP_REGISTRY = http://{LOCAL_HOST_IP}:8075
-   - HTTP_SUBSCRIBER = http://{LOCAL_HOST_IP}:8078
+   - HTTP_NUCLEUS=http://{LOCAL_HOST_IP}:8060
+   - HTTP_REGISTRY=http://{LOCAL_HOST_IP}:8075
+   - HTTP_SUBSCRIBER=http://{LOCAL_HOST_IP}:8078
+   - EVENTNOTIFYHOST=eventnotify:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
 
@@ -110,6 +111,9 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
+   - SERVICES_NOTIFY=notify:9090
+   - SERVICES_EVENTNOTIFICATION=eventnotify:9090
+   - SERVICES_DISTRIBUTOR=distributor:9090
   depends_on:
    - notify
    - mailer
@@ -127,6 +131,7 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
+
   depends_on:
    - notify
    - mailer
@@ -154,6 +159,8 @@ services:
 
  msgclient-notification:
   build: ../services/msgClient
+  ports:
+   - '9095:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification
@@ -170,7 +177,7 @@ services:
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
  postgress-data:

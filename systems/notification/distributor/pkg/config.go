@@ -28,6 +28,7 @@ type HttpServices struct {
 	Nucleus    string `defaut:"localhost:8080"`
 	Registry   string `defaut:"localhost:8080"`
 	Subscriber string `defaut:"localhost:8080"`
+	InitClient string `defaut:"initclient:8080"`
 }
 
 func NewConfig(name string) *Config {

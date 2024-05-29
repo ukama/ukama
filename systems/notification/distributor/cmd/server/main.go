@@ -58,15 +58,15 @@ func runGrpcServer() {
 
 	c := server.Clients{}
 
-	c.Nucleus = providers.NewNucleusProvider(serviceConfig.Http.Nucleus, serviceConfig.DebugMode)
+	c.Nucleus = providers.NewNucleusProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
 
-	c.Registry = providers.NewRegistryProvider(serviceConfig.Http.Nucleus, serviceConfig.DebugMode)
+	c.Registry = providers.NewRegistryProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
 
-	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.Nucleus, serviceConfig.DebugMode)
+	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
 
 	log.Debugf("Distributor db config %+v", serviceConfig.DB)
 
-	distributorServer := server.NewEventToNotifyServer(c, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.DB, providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost))
+	distributorServer := server.NewDistributorServer(c, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.DB, providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost))
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

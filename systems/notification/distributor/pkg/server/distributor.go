@@ -35,7 +35,7 @@ type DistributorServer struct {
 	orgId              string
 }
 
-func NewEventToNotifyServer(clients Clients, orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
+func NewDistributorServer(clients Clients, orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
 	d := &DistributorServer{
 		notify:             db.NewNotifyHandler(dbConfig, eventNotifyService),
