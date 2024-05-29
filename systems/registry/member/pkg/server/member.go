@@ -18,6 +18,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/registry/member/pkg"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 
@@ -25,6 +26,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -77,7 +79,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 	log.Infof("Adding member")
 	member := &db.Member{
 		UserId: userUUID,
-		Role:   db.RoleType(req.Role),
+		Role:   roles.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
@@ -90,7 +92,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		evt := &epb.AddMemberEventRequest{
 			OrgId:         m.OrgId.String(),
 			UserId:        userUUID.String(),
-			Role:          epb.RoleType(member.Role),
+			Role:          upb.RoleType(member.Role),
 			IsDeactivated: member.Deactivated,
 			CreatedAt:     member.CreatedAt.String(),
 		}
@@ -124,7 +126,7 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 	log.Infof("Adding member")
 	member := &db.Member{
 		UserId: userUUID,
-		Role:   db.RoleType(req.Role),
+		Role:   roles.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
@@ -269,7 +271,7 @@ func dbMemberToPbMember(member *db.Member, orgId string) *pb.Member {
 		OrgId:         orgId,
 		UserId:        member.UserId.String(),
 		IsDeactivated: member.Deactivated,
-		Role:          pb.RoleType(member.Role),
+		Role:          upb.RoleType(member.Role),
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }
