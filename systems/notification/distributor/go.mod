@@ -33,7 +33,6 @@ require (
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.34.0
 	gopkg.in/yaml.v2 v2.4.0
-	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
 
 require (

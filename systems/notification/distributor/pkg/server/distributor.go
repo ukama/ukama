@@ -100,7 +100,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 	/* register */
 	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
 
-	defer n.notify.Deregister(req.OrgId)
+	defer n.notify.Deregister(id)
 
 	for {
 		select {

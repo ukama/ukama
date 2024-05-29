@@ -9,7 +9,6 @@
 package providers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -17,6 +16,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const registryVersion = "/v1/"
@@ -82,7 +82,7 @@ func (r *registryProvider) GetMember(orgName string, userId string) (*mpb.Member
 	}
 
 	memResp := &mpb.MemberResponse{}
-	err = json.Unmarshal(resp.Body(), memResp)
+	err = protojson.Unmarshal(resp.Body(), memResp)
 	if err != nil {
 		log.Errorf("Failed to deserialize member response. Error message is %s", err.Error())
 
@@ -119,7 +119,7 @@ func (r *registryProvider) GetNetwork(orgName string, networkId string) (*netpb.
 	}
 
 	netResp := &netpb.GetResponse{}
-	err = json.Unmarshal(resp.Body(), netResp)
+	err = protojson.Unmarshal(resp.Body(), netResp)
 	if err != nil {
 		log.Errorf("Failed to deserialize network response. Error message is %s", err.Error())
 
