@@ -26,7 +26,7 @@ int serialize_request(Request *request, json_t **json) {
 	Register *reg;
 	char *str=NULL;
 	log_info("serialize_request for %d", request->reqType);
-	if (request->reqType == (ReqType)REQ_REGISTER) {
+	if ((request->reqType == (ReqType)REQ_REGISTER) || (request->reqType == (ReqType)REQ_UPDATE)) {
 
 		*json = json_object();
 		if (*json == NULL) {
