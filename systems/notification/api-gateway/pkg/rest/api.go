@@ -74,5 +74,5 @@ type GetRealTimeEventNotificationRequest struct {
 	NetworkId    string   `json:"network_id" form:"network_id" query:"network_id"`
 	SubscriberId string   `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
 	UserId       string   `json:"user_id" form:"user_id" query:"user_id"`
-	Scopes       []string `json:"scopes" form:"scopes"`
+	Scopes       []string `json:"scopes" form:"scopes" query:"scope"`
 }

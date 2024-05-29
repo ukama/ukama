@@ -95,17 +95,16 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 }
 
 func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequest, srv pb.DistributorService_GetNotificationStreamServer) error {
-	log.Info("Notification stream started for +v.", req)
+	log.Infof("Notification stream started for %+v.", req)
 	roleType, err := n.validateRequest(req)
 	if err != nil {
 		return err
 	}
 
 	/* Get valid scopes for request */
-	roleScopes := []notification.NotificationScope{}
 	commonScopes := []notification.NotificationScope{}
 	if roleType != nil || *roleType != roles.TYPE_INVALID {
-		roleScopes = notification.RoleToNotificationScopes[*roleType]
+		roleScopes := notification.RoleToNotificationScopes[*roleType]
 		for _, rs := range req.Scopes {
 			rsId := notification.NotificationScope(upb.NotificationScope_value[rs])
 			if rsId != notification.NotificationScope(upb.NotificationScope_SCOPE_INVALID) {

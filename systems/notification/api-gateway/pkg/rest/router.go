@@ -249,7 +249,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 	//Upgrade get request to webSocket protocol
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Infof("upgrade: %s", err.Error())
+		log.Errorf("upgrade: %s", err.Error())
 		return err
 	}
 	defer ws.Close()
