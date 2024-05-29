@@ -17,9 +17,7 @@ import {
 } from '@/app-recoil';
 import {
   useAddNetworkMutation,
-  useGetMemberByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetUserLazyQuery,
   useSetDefaultNetworkMutation,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
@@ -48,42 +46,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
-
-  const [getMember] = useGetMemberByUserIdLazyQuery({
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      _setUser({
-        ..._user,
-        role: data.getMemberByUserId.role,
-      });
-    },
-  });
-
-  const [getUser, { data: userData, loading: userLoading }] =
-    useGetUserLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        _setUser({
-          role: '',
-          isFirstVisit: false,
-          id: data.getUser.uuid,
-          name: data.getUser.name,
-          email: data.getUser.email,
-        });
-        const pathname =
-          typeof window !== 'undefined' && window.location.pathname
-            ? window.location.pathname
-            : '';
-        setPage(
-          getTitleFromPath(pathname, (route.query['id'] as string) || ''),
-        );
-        getMember({
-          variables: {
-            userId: data.getUser.uuid,
-          },
-        });
-      },
-    });
 
   const {
     data: networksData,
@@ -139,30 +101,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   });
 
   useEffect(() => {
-    const userId = route.query['uid'] as string;
-    const orgId = route.query['org-id'] as string;
-    const orgName = route.query['org-name'] as string;
-    if (userId) {
-      getUser({
-        variables: {
-          userId: userId,
-        },
-      });
-    }
-    setCommonData({
-      metaData: {},
-      orgId,
-      orgName,
-      userId,
-      networkId: '',
-      networkName: '',
-    });
-    if (!orgId && !orgName) {
-      route.replace('/onboarding', undefined, { shallow: true });
-    } else {
-      route.replace(route.pathname, undefined, { shallow: true });
-    }
-
     if (route.pathname) {
       setIsFullScreen(
         route.pathname === '/manage' ||
@@ -183,11 +121,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   }, [route]);
 
   useEffect(() => {
-    if (networksLoading && userLoading && !skeltonLoading)
-      setSkeltonLoading(true);
-    else if (!networksLoading && !userLoading && skeltonLoading)
-      setSkeltonLoading(false);
-  }, [networksLoading, userLoading, skeltonLoading, setSkeltonLoading]);
+    if (networksLoading && !skeltonLoading) setSkeltonLoading(true);
+    else if (!networksLoading && skeltonLoading) setSkeltonLoading(false);
+  }, [networksLoading, skeltonLoading, setSkeltonLoading]);
 
   const handleGoToLogin = () => {
     resetData();
@@ -250,7 +186,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handleNetworkChange={handleNetworkChange}
       handleAddNetwork={handleAddNetworkAction}
       networks={networksData?.getNetworks.networks || []}
-      isLoading={networksLoading || userLoading || skeltonLoading}
+      isLoading={networksLoading || skeltonLoading}
     >
       <Component {...pageProps} />
       <AddNetworkDialog

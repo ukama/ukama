@@ -1,20 +1,23 @@
-import { user } from '@/app-recoil';
+import { commonData, user } from '@/app-recoil';
 import { INVITATION_TABLE_COLUMN, INVITATION_TABLE_MENU } from '@/constants';
 import {
   Invitation_Status,
   useGetInvitationsQuery,
-  useGetOrgLazyQuery,
   useUpdateInvitationMutation,
+  useWhoamiLazyQuery,
 } from '@/generated';
 import colors from '@/styles/theme/colors';
-import { TUser } from '@/types';
+import { TCommonData, TUser } from '@/types';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Box, Button, Stack, Typography } from '@mui/material';
-import { useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 
 const OnBoarding = () => {
-  const _user = useRecoilValue<TUser>(user);
+  const [_commonData, _setCommonData] = useRecoilState<TCommonData>(commonData);
+
+  const [_user, _setUser] = useRecoilState<TUser>(user);
+
   const {
     data: invitationsData,
     loading: invitationsLoading,
@@ -24,12 +27,34 @@ const OnBoarding = () => {
     variables: {
       email: _user.email,
     },
+    onCompleted: (data) => {
+      if (data.getInvitations.status === Invitation_Status.Accepted) {
+        _setUser({
+          ..._user,
+          role: data.getInvitations.role,
+        });
+        // _setCommonData({
+        //   ..._commonData,
+        //   userId: _user.id,
+        // });
+
+        whoami();
+      }
+    },
   });
 
-  const [getOrg, {data: orgData, loading: orgLoading}] = useGetOrgLazyQuery({
+  const [whoami] = useWhoamiLazyQuery({
     fetchPolicy: 'network-only',
-    variables: {
-      
+    onCompleted: (data) => {
+      if (data.whoami) {
+        if (data.whoami.memberOf.length > 0) {
+          // _setCommonData({
+          //   ..._commonData,
+          //   orgId: data.whoami.memberOf[0].id,
+          //   orgName: data.whoami.memberOf[0].name,
+          // });
+        }
+      }
     },
   });
 
@@ -49,6 +74,8 @@ const OnBoarding = () => {
             status: Invitation_Status.Accepted,
           },
         },
+      }).then(() => {
+        whoami();
       });
     } else if (type === 'reject-invite') {
       updateInvitation({
@@ -113,7 +140,7 @@ const OnBoarding = () => {
         <DataTableWithOptions
           icon={PeopleAltIcon}
           isRowClickable={false}
-          withStatusColumn={true}
+          withStatusColumn={true} 
           columns={INVITATION_TABLE_COLUMN}
           menuOptions={INVITATION_TABLE_MENU}
           emptyViewLabel={'No invitation yet!'}

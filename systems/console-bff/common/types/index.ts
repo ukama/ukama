@@ -82,6 +82,9 @@ export class THeaders {
   auth: AuthType;
 
   @Field()
+  token: string;
+
+  @Field()
   orgId: string;
 
   @Field()

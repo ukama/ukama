@@ -18,8 +18,10 @@ import { json } from "body-parser";
 import cors from "cors";
 import { createServer } from "http";
 
+import { whoami } from "../common/auth/authCalls";
 import {
   AUTH_APP_URL,
+  BASE_DOMAIN,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
   METRICS_PORT,
@@ -31,7 +33,7 @@ import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
 import UserApi from "../user/datasource/user_api";
-import { UserResDto, WhoamiDto } from "./../user/resolver/types";
+import { UserResDto, WhoamiDto } from "../user/resolver/types";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
@@ -42,6 +44,7 @@ let headers: THeaders = {
     Authorization: "",
     Cookie: "",
   },
+  token: "",
   orgId: "",
   userId: "",
   orgName: "",
@@ -72,6 +75,7 @@ const loadServers = async () => {
               headers.auth.Authorization
             );
             request.http.headers.set("cookie", headers.auth.Cookie);
+            request.http.headers.set("token", headers.token);
             request.http.headers.set("orgId", headers.orgId);
             request.http.headers.set("userId", headers.userId);
             request.http.headers.set("orgName", headers.orgName);
@@ -88,6 +92,7 @@ const startServer = async () => {
   const gateway = await loadServers();
   const server = new ApolloServer({
     gateway,
+    csrfPrevention: true,
     plugins: [
       ApolloServerPluginInlineTrace({}),
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -125,8 +130,17 @@ const startServer = async () => {
       });
   });
 
-  app.get("/get-user", (req, res) => {
-    const kId = req.query["kid"] as string;
+  app.get("/get-user", async (req, res) => {
+    const cookies = req.headers["cookie"];
+    let kId = "";
+    if (cookies) {
+      const whoamiRes = await whoami(cookies);
+      if (whoamiRes?.data) {
+        kId = whoamiRes.data.identity.id;
+      }
+    } else {
+      res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
+    }
     if (kId) {
       const userApi = new UserApi();
       userApi
@@ -136,7 +150,32 @@ const startServer = async () => {
             userApi
               .whoami(user.uuid)
               .then((whoamiRes: WhoamiDto) => {
-                res.setHeader("Access-Control-Allow-Origin", AUTH_APP_URL);
+                const orgId =
+                  whoamiRes.ownerOf.length > 0
+                    ? whoamiRes.ownerOf[0].id
+                    : whoamiRes.memberOf.length > 0
+                    ? whoamiRes.memberOf[0].id
+                    : "";
+
+                const orgName =
+                  whoamiRes.ownerOf.length > 0
+                    ? whoamiRes.ownerOf[0].name
+                    : whoamiRes.memberOf.length > 0
+                    ? whoamiRes.memberOf[0].name
+                    : "";
+
+                const cookie = `uid=${user.uuid}&org-id=${orgId}&org-name=${orgName}`;
+
+                const base64Cookie = Buffer.from(cookie).toString("base64");
+                res.cookie("user_session", base64Cookie, {
+                  domain: BASE_DOMAIN,
+                  secure: true,
+                  sameSite: "lax",
+                  maxAge: 86400,
+                  httpOnly: true,
+                  path: "/",
+                });
+                res.setHeader("Access-Control-Allow-Origin", CONSOLE_APP_URL);
                 res.setHeader("Access-Control-Allow-Credentials", "true");
                 res.send(whoamiRes);
               })

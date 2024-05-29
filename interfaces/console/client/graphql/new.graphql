@@ -566,6 +566,15 @@ query GetUser($userId: String!) {
   }
 }
 
+query GetToken {
+  getToken {
+    token
+    userId
+    email
+    name
+  }
+}
+
 ### User End ###
 
 ### Networks Start ###

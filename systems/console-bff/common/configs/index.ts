@@ -18,6 +18,7 @@ export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW ?? "";
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const DATA_API_GW = process.env.DATA_API_GW ?? "";
 export const BILLING_API_GW = process.env.BILLING_API_GW ?? "";
+export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 
 // FRONTEND URLS
 export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "";
@@ -25,6 +26,7 @@ export const PLAYGROUND_URL = process.env.PLAYGROUND_URL ?? "";
 export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL ?? "";
 
 // UTILS
+export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";
 export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
@@ -52,6 +54,7 @@ export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
+export const INIT_PORT = parseInt(process.env.INIT_API ?? "5055");
 
 export const SUB_GRAPH_LIST = [
   { name: "org", url: `http://localhost:${ORG_PORT}`, isPingedSuccess: false },
@@ -99,6 +102,11 @@ export const SUB_GRAPH_LIST = [
   {
     name: "planning",
     url: `http://localhost:${PLANNING_SERVICE_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "init",
+    url: `http://localhost:${INIT_PORT}`,
     isPingedSuccess: false,
   },
 ];
