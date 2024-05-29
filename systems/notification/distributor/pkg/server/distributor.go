@@ -56,12 +56,12 @@ func NewDistributorServer(clients Clients, orgName string, orgId string, dbConfi
 	return d
 }
 
-func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (*roles.RoleType, error) {
+func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (roles.RoleType, error) {
 	roleType := roles.TYPE_INVALID
 	if req.GetOrgId() != "" {
 		if req.GetOrgId() != n.orgId {
 			log.Errorf("Invalid org id %s in request", req.OrgId)
-			return nil, status.Errorf(codes.InvalidArgument, "invalid org id")
+			return roleType, status.Errorf(codes.InvalidArgument, "invalid org id")
 		}
 	}
 
@@ -69,7 +69,7 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	if req.GetUserId() != "" {
 		resp, err := n.clients.Registry.GetMember(n.orgName, req.GetUserId())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
 		}
 		roleType = roles.RoleType(resp.Member.Role)
@@ -78,7 +78,7 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	if req.GetNetworkId() != "" {
 		_, err := n.clients.Registry.GetNetwork(n.orgName, req.GetNetworkId())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid network id. Error %s", err.Error())
 		}
 	}
@@ -86,16 +86,16 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	if req.GetSubscriberId() != "" {
 		_, err := n.clients.Subscriber.GetSubscriber(n.orgName, req.GetSubscriberId())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid subscriber id. Error %s", err.Error())
 		}
 	}
 
-	return &roleType, nil
+	return roleType, nil
 }
 
 func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequest, srv pb.DistributorService_GetNotificationStreamServer) error {
-	log.Infof("Notification stream started for %+v.", req)
+	log.Infof("Notification stream requested for %+v.", req)
 	roleType, err := n.validateRequest(req)
 	if err != nil {
 		return err
@@ -103,8 +103,8 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 
 	/* Get valid scopes for request */
 	commonScopes := []notification.NotificationScope{}
-	if roleType != nil || *roleType != roles.TYPE_INVALID {
-		roleScopes := notification.RoleToNotificationScopes[*roleType]
+	if roleType != roles.TYPE_INVALID {
+		roleScopes := notification.RoleToNotificationScopes[roleType]
 		for _, rs := range req.Scopes {
 			rsId := notification.NotificationScope(upb.NotificationScope_value[rs])
 			if rsId != notification.NotificationScope(upb.NotificationScope_SCOPE_INVALID) {
@@ -116,7 +116,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 			}
 		}
 	} else {
-		log.Errorf("Invalide roles %+v for user %s", *roleType, req.UserId)
+		log.Errorf("Invalid roles %+v for user %s", roleType, req.UserId)
 		return fmt.Errorf("invalid role for user")
 	}
 
@@ -127,10 +127,14 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 
 	for {
 		select {
+		case <-srv.Context().Done():
+			log.Infof("Client closed connection for request %+v", req)
+			goto EXIT
+
 		case data := <-sub.DataChan:
 			log.Infof("Sending notification: %+v", data)
 
-			err := srv.Send(data)
+			err = srv.Send(data)
 			if err != nil {
 				log.Errorf("Error sending notification: %v", err)
 				continue
