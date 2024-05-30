@@ -277,24 +277,6 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 				break
 			}
 
-			// w, err := ws.NextWriter(1)
-			// if err != nil {
-			// 	log.Errorf("Error getting writer: %s", err.Error())
-			// 	break
-			// }
-
-			// bytes, err := json.Marshal(resp)
-			// if err != nil {
-			// 	log.Errorf("Failed to Marshal notification stream %+v for user %s Error: %v", resp, req.UserId, err)
-			// 	break
-			// }
-
-			// _, err = w.Write(bytes)
-			// if err != nil {
-			// 	log.Errorf("Failed to  write notification %+v for user %s to ws response. Error: %s", resp, req.UserId, err)
-			// 	break
-			// }
-
 		} else {
 			log.Errorf("Error while fetching the notification. %+v", err)
 			break
