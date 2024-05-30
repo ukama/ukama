@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { isDarkmode } from '@/app-recoil';
+import { useAppContext } from '@/context';
 import { colors } from '@/styles/theme';
 import { ColumnsWithOptions } from '@/types';
 import ChipDropdown from '@/ui/molecules/ChipDropDown';
@@ -29,7 +29,6 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import { useRecoilValue } from 'recoil';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
@@ -137,7 +136,7 @@ const SimpleTableCell = ({
           }
         />
       ) : column.id === 'edit' ? (
-        <IconButton onClick={() => console.log(row)}>
+        <IconButton onClick={() => {}}>
           <EditIcon />
         </IconButton>
       ) : column.id === 'delete' ? (
@@ -188,15 +187,11 @@ const SimpleDataTable = React.memo(
     handleCreateNetwork,
     handleDeleteElement,
   }: SimpleDataTableInterface) => {
-    const _isDarkMode = useRecoilValue(isDarkmode);
+    const { isDarkMode } = useAppContext();
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
       setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-      setMenuAnchorEl(null);
     };
 
     return (
@@ -241,7 +236,7 @@ const SimpleDataTable = React.memo(
                     anchorEl={menuAnchorEl}
                     keepMounted
                     open={Boolean(menuAnchorEl)}
-                    onClose={handleMenuClose}
+                    onClose={() => setMenuAnchorEl(null)}
                   >
                     <MenuItem onClick={() => alert('Resend email')}>
                       Resend Email

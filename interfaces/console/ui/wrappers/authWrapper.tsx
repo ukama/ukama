@@ -1,106 +1,64 @@
 import { useAppContext } from '@/context';
-import {
-  useGetMemberByUserIdLazyQuery,
-  useGetUserLazyQuery,
-} from '@/generated';
+import { useGetTokenLazyQuery } from '@/generated';
+import { colors } from '@/styles/theme';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { doesHttpOnlyCookieExist } from '@/utils';
+import { Box } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-const whoami = async () => {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_GW}/get-user`, {
-    method: 'GET',
-    // cache: 'reload',
-    
-    credentials: 'include',
-  })
-    .then((response) => response.text())
-    .then((data) => JSON.parse(data))
-    .catch((err) => err);
-};
+// const whoami = async () => {
+//   return await fetch(`${process.env.NEXT_PUBLIC_API_GW}/get-user`, {
+//     method: 'GET',
+//     // cache: 'reload',
+
+//     credentials: 'include',
+//   })
+//     .then((response) => response.text())
+//     .then((data) => JSON.parse(data))
+//     .catch((err) => err);
+// };
 interface IAuthWrapper {
   children: React.ReactNode;
 }
 
 const AuthWrapper = ({ children }: IAuthWrapper) => {
   const route = useRouter();
-  const {
-    user,
-    setUser,
-    skeltonLoading,
-    setSkeltonLoading,
-    isValidSession,
-    setIsValidSession,
-  } = useAppContext();
+  const { token, setToken, user, setUser, isValidSession, setIsValidSession } =
+    useAppContext();
 
-  const [getMember] = useGetMemberByUserIdLazyQuery({
-    fetchPolicy: 'network-only',
+  const [getToken, { loading: getTokenLoading }] = useGetTokenLazyQuery({
+    fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setUser({
         ...user,
-        role: data.getMemberByUserId.role,
+        id: data.getToken.userId,
+        email: data.getToken.email,
+        name: data.getToken.name,
+        role: data.getToken.role,
+        orgId: data.getToken.orgId,
+        orgName: data.getToken.orgName,
       });
+      setToken(data.getToken.token);
+      setIsValidSession(true);
+      // if (!data.getToken.token) {
+      //   route.push('/unauthorized');
+      // } else if (data.getToken.role === Role_Type.None) {
+      //   route.push('/onboarding');
+      // } else {
+      //   route.push(`${route.pathname ? route.pathname : '/home'}`);
+      // }
+    },
+    onError: (err) => {
+      // handleLogoutAction();
     },
   });
 
-  const [getUser, { data: userData, loading: userLoading }] =
-    useGetUserLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setUser({
-          role: '',
-          id: data.getUser.uuid,
-          name: data.getUser.name,
-          email: data.getUser.email,
-        });
-
-        getMember({
-          variables: {
-            userId: data.getUser.uuid,
-          },
-        });
-      },
-    });
-
   useEffect(() => {
-    if (!isValidSession && doesHttpOnlyCookieExist('ukama_session')) {
-      whoami()
-        .then((res) => {
-          console.log(res);
-          // setUser({
-          //   ...user,
-          //   id: res.uuid,
-          // });
-          setIsValidSession(true);
-        })
-        .catch(() => handleLogoutAction());
-    } else route.push('/unauthorized');
-  }, []);
-
-  useEffect(() => {
-    if (isValidSession && route.pathname === '/home' && user.id === '') {
-      if (userData) {
-        // if (
-        //   doesHttpOnlyCookieExist('ukama_session') &&
-        //   doesHttpOnlyCookieExist('user_session')
-        // )
-        //   getUser({
-        //     variables: {
-        //       userId: userId,
-        //     },
-        //   });
-        // if (!orgId && !orgName) {
-        //   route.replace('/onboarding', undefined, { shallow: true });
-        // } else {
-        //   route.replace(route.pathname, undefined, { shallow: true });
-        // }
-      } else {
-        //failed to get userId
-        // handleLogoutAction();
-        console.log('GO to login');
-      }
+    if (doesHttpOnlyCookieExist('ukama_session')) {
+      getToken();
     }
-  }, [isValidSession]);
+  }, []);
 
   const handleGoToLogin = () => {
     typeof window !== 'undefined' &&
@@ -108,9 +66,27 @@ const AuthWrapper = ({ children }: IAuthWrapper) => {
   };
 
   const handleLogoutAction = () => {
+    setIsValidSession(false);
     typeof window !== 'undefined' &&
       window.location.replace(`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/logout`);
   };
+
+  if (getTokenLoading)
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', margin: 12 }}>
+        <LoadingWrapper
+          radius="small"
+          isLoading={true}
+          cstyle={{
+            overflow: 'hidden',
+            height: 'calc(100vh - 200px)',
+            backgroundColor: colors.silver,
+          }}
+        >
+          <p></p>
+        </LoadingWrapper>
+      </Box>
+    );
 
   return <div>{children}</div>;
 };

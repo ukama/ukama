@@ -25,6 +25,7 @@ const parseHeaders = (reqHeader: any): THeaders => {
   };
   if (reqHeader.get("introspection") === "true") return headers;
   const token = reqHeader.get("token");
+  console.log("TOKEN:::", token);
   if (token) {
     const decoded = Buffer.from(token, "base64").toString("utf-8");
     const headersStr = decoded.split(";");
@@ -32,35 +33,59 @@ const parseHeaders = (reqHeader: any): THeaders => {
     headers.orgId = headersStr[0];
     headers.orgName = headersStr[1];
     headers.userId = headersStr[2];
-    if (reqHeader.get("introspection") === "true") return headers;
-    if (!headers.orgId) {
-      throw new HTTP401Error(Messages.HEADER_ERR_ORG);
-    }
-    if (!headers.userId) {
-      throw new HTTP401Error(Messages.HEADER_ERR_USER);
-    }
-    if (!headers.orgName) {
-      throw new HTTP401Error(Messages.HEADER_ERR_ORG_NAME);
-    }
+    headers.token = token;
+  }
+  // if (!headers.orgId) {
+  //   throw new HTTP401Error(Messages.HEADER_ERR_ORG);
+  // }
+  // if (!headers.userId) {
+  //   throw new HTTP401Error(Messages.HEADER_ERR_USER);
+  // }
+  // if (!headers.orgName) {
+  //   throw new HTTP401Error(Messages.HEADER_ERR_ORG_NAME);
+  // }
 
-    if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
-      if (reqHeader.get("x-session-token")) {
-        headers.auth.Authorization = reqHeader["x-session-token"] as string;
-      } else {
-        const cookie: string = reqHeader.get("cookie");
-        const cookies = cookie.split(";");
-        const session: string =
-          cookies.find(item => (item.includes("ukama_session") ? item : "")) ??
-          "";
-        headers.auth.Cookie = session;
-      }
+  if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
+    if (reqHeader.get("x-session-token")) {
+      headers.auth.Authorization = reqHeader["x-session-token"] as string;
     } else {
-      throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+      const cookie: string = reqHeader.get("cookie");
+      const cookies = cookie.split(";");
+      const session: string =
+        cookies.find(item => (item.includes("ukama_session") ? item : "")) ??
+        "";
+      headers.auth.Cookie = session;
     }
-
-    return headers;
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+  }
+
+  return headers;
+  // } else {
+  //   throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+  // }
+};
+
+const parseToken = (token: string, get: "orgId" | "orgName" | "userId") => {
+  const headers: THeaders = {
+    auth: {
+      Authorization: "",
+      Cookie: "",
+    },
+    token: "",
+    orgId: "",
+    userId: "",
+    orgName: "",
+  };
+  if (token) {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    const headersStr = decoded.split(";");
+    if (headersStr.length < 3) throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+    headers.orgId = headersStr[0];
+    headers.orgName = headersStr[1];
+    headers.userId = headersStr[2];
+    headers.token = token;
+    return headers[get];
   }
 };
 
@@ -70,10 +95,10 @@ const parseGatewayHeaders = (reqHeader: any): THeaders => {
       Authorization: reqHeader["x-session-token"] ?? "",
       Cookie: reqHeader["cookie"] ?? "",
     },
-    orgId: reqHeader["orgId"] ?? "",
     token: reqHeader["token"] ?? "",
-    userId: reqHeader["userid"] ?? "",
-    orgName: reqHeader["orgname"] ?? "",
+    orgId: parseToken(reqHeader["token"], "orgId") ?? "",
+    userId: parseToken(reqHeader["token"], "userId") ?? "",
+    orgName: parseToken(reqHeader["token"], "orgName") ?? "",
   };
 };
 
@@ -145,4 +170,5 @@ export {
   getTimestampCount,
   parseGatewayHeaders,
   parseHeaders,
+  parseToken,
 };

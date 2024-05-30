@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { useAppContext } from '@/context';
 import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
@@ -35,20 +36,16 @@ const wsLink = new GraphQLWsLink(
 );
 
 export const MetricLink = () => {
-  const _commonData = {
-    orgId: '',
-    userId: '',
-    orgName: '',
-  };
+  // const { user } = useAppContext();
 
   if (typeof window !== 'undefined' && window.localStorage) {
     let data = localStorage.getItem('recoil-persist');
     if (data) {
       let parsedData = JSON.parse(data);
       if (parsedData['commonData']) {
-        _commonData.orgId = parsedData['commonData']['orgId'];
-        _commonData.userId = parsedData['commonData']['userId'];
-        _commonData.orgName = parsedData['commonData']['orgName'];
+        user.orgId = parsedData['commonData']['orgId'];
+        user.id = parsedData['commonData']['userId'];
+        user.orgName = parsedData['commonData']['orgName'];
       }
     }
   }
@@ -63,9 +60,9 @@ export const MetricLink = () => {
 
     wsLink,
     httpLink({
-      'org-id': _commonData.orgId,
-      'user-id': _commonData.userId,
-      'org-name': _commonData.orgName,
+      'user-id': "user.id",
+      'org-id': "user.orgId",
+      'org-name': "user.orgName",
     }),
   );
 };

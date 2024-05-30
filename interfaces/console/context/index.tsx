@@ -12,6 +12,8 @@ type TUser = {
   name: string;
   email: string;
   role: string;
+  orgId: string;
+  orgName: string;
 };
 
 type TSnackbarMessage = {
@@ -39,6 +41,10 @@ const INIT_CONTEXT = {
 const AppContext = createContext({
   pageName: 'Home',
   setPageName: (pageName: string) => {},
+  token: '',
+  setToken: (token: string) => {},
+  isDarkMode: false,
+  setIsDarkMode: (isDarkMode: boolean) => {},
   skeltonLoading: false,
   setSkeltonLoading: (loading: boolean) => {},
   isValidSession: false,
@@ -60,12 +66,16 @@ const AppContext = createContext({
     name: '',
     email: '',
     role: '',
+    orgId: '',
+    orgName: '',
   },
   setUser: (u: TUser) => {},
 });
 
 const AppContextWrapper = ({ children }: { children: React.ReactNode }) => {
   const [pageName, setPageName] = useState('Home');
+  const [token, setToken] = useState('Home');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<TSnackbarMessage>({
@@ -81,13 +91,19 @@ const AppContextWrapper = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<TUser>({
     id: '',
     name: '',
-    email: '',
     role: '',
+    email: '',
+    orgId: '',
+    orgName: '',
   });
 
   const value = {
+    isDarkMode,
+    setIsDarkMode,
     user,
     setUser,
+    token,
+    setToken,
     network,
     setNetwork,
     pageName,

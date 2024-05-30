@@ -6,11 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { snackbarMessage } from '@/app-recoil';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
+import { useAppContext } from '@/context';
 import { Node, useGetNodesLazyQuery, useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
-import { TSnackMessage } from '@/types';
 import AddNodeDialog from '@/ui/molecules/AddNode';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -18,7 +17,6 @@ import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
@@ -26,7 +24,7 @@ export default function Page() {
   const [availableNodes, setAvailableNodes] = useState<
     Record<string, string | boolean>[] | undefined
   >(undefined);
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const { setSnackbarMessage } = useAppContext();
   const [isShowAddNodeDialog, setIsShowAddNodeDialog] =
     useState<boolean>(false);
 

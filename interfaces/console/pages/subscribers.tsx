@@ -6,12 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   SIM_TYPE_OPERATOR,
   SUBSCRIBER_TABLE_COLUMNS,
   SUBSCRIBER_TABLE_MENU,
 } from '@/constants';
+import { useAppContext } from '@/context';
 import {
   SubscribersResDto,
   useAddPackageToSimMutation,
@@ -37,7 +37,7 @@ import {
   PageContainer,
   VerticalContainer,
 } from '@/styles/global';
-import { TAddSubscriberData, TCommonData, TSnackMessage } from '@/types';
+import { TAddSubscriberData } from '@/types';
 import AddSubscriberDialog from '@/ui/molecules/AddSubscriber';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import DeleteConfirmation from '@/ui/molecules/DeleteDialog';
@@ -48,12 +48,10 @@ import TopUpData from '@/ui/molecules/TopUpData';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import { AlertColor, Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
-  const _commonData = useRecoilValue<TCommonData>(commonData);
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const { setSnackbarMessage, network } = useAppContext();
   const [addSubscriberData, setAddSubscriberData] =
     useState<TAddSubscriberData>({
       email: '',
@@ -238,7 +236,7 @@ const Page = () => {
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
     variables: {
-      networkId: selectedNetwork || _commonData.networkId,
+      networkId: selectedNetwork || network.id,
     },
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
@@ -260,7 +258,7 @@ const Page = () => {
 
   // const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
   //   variables: {
-  //     networkId: _commonData.networkId,
+  //     networkId: network.id,
   //   },
   //   fetchPolicy: 'cache-and-network',
 
@@ -629,7 +627,7 @@ const Page = () => {
           phone: values.phone,
           first_name: values.name,
           last_name: 'name',
-          network_id: _commonData.networkId,
+          network_id: network.id,
         },
       },
     });

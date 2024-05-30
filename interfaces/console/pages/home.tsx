@@ -5,13 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
-import { commonData, snackbarMessage } from '@/app-recoil';
+'use client';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
+import { useAppContext } from '@/context';
 import { NodeStatusEnum } from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
-import { TCommonData, TSnackMessage } from '@/types';
-import StatusCard from '@/ui/components/StatusCard';
 import EmptyView from '@/ui/molecules/EmptyView';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
@@ -20,12 +18,12 @@ import {
   SitesTree,
 } from '@/ui/molecules/NetworkMap/OverlayUI';
 import NetworkStatus from '@/ui/molecules/NetworkStatus';
+import StatusCard from '@/ui/molecules/StatusCard';
 import NetworkIcon from '@mui/icons-material/Hub';
 import { Paper } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
 const DynamicMap = dynamic(
   () => import('../ui/molecules/NetworkMap/DynamicMap'),
   {
@@ -36,15 +34,14 @@ const DynamicMap = dynamic(
 const networkLoading = false;
 const networkNodesLoading = false;
 export default function Page() {
-  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const { network, setSnackbarMessage } = useAppContext();
   const [filterState, setFilterState] = useState<NodeStatusEnum>(
     NodeStatusEnum.Undefined,
   );
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   // const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
   //   fetchPolicy: 'no-cache',
   //   variables: {
-  //     networkId: _commonData?.networkId,
+  //     networkId: network.id,
   //   },
   //   onError: (error) => {
   //     setSnackbarMessage({
@@ -67,7 +64,7 @@ export default function Page() {
   //     variables: {
   //       data: {
   //         nodeFilterState: filterState,
-  //         networkId: _commonData?.networkId,
+  //         networkId: network.id,
   //       },
   //     },
   //   });
@@ -76,7 +73,7 @@ export default function Page() {
   //   useGetNodesByNetworkQuery({
   //     fetchPolicy: 'cache-and-network',
   //     variables: {
-  //       networkId: _commonData?.networkId,
+  //       networkId: network.id,
   //     },
   //     onError: (error) => {
   //       setSnackbarMessage({
@@ -94,13 +91,11 @@ export default function Page() {
         <Grid xs={12}>
           <NetworkStatus
             title={
-              _commonData.networkName
-                ? `${_commonData.networkName} is created.`
+              network.name
+                ? `${network.name} is created.`
                 : `No network selected.`
             }
-            subtitle={
-              _commonData.networkName ? 'No node attached to this network.' : ''
-            }
+            subtitle={network.name ? 'No node attached to this network.' : ''}
             loading={false}
             availableNodes={undefined}
             statusType="ONLINE"
@@ -150,7 +145,7 @@ export default function Page() {
               height: 'calc(100vh - 310px)',
             }}
           >
-            {_commonData.networkId ? (
+            {network.id ? (
               <LoadingWrapper
                 radius="small"
                 width={'100%'}
@@ -164,7 +159,7 @@ export default function Page() {
                 >
                   {() => (
                     <>
-                      <LabelOverlayUI name={_commonData.networkName} />
+                      <LabelOverlayUI name={network.name} />
                       <SitesTree
                         sites={[]}
                         // sites={structureNodeSiteDate(

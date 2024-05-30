@@ -948,6 +948,14 @@ export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
 
+export enum Role_Type {
+  Admin = 'ADMIN',
+  None = 'NONE',
+  Owner = 'OWNER',
+  Users = 'USERS',
+  Vendor = 'VENDOR'
+}
+
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
   simId: Scalars['String']['input'];
@@ -1226,6 +1234,9 @@ export type ValidateSessionRes = {
   __typename?: 'ValidateSessionRes';
   email: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  orgName: Scalars['String']['output'];
+  role: Role_Type;
   token: Scalars['String']['output'];
   userId: Scalars['String']['output'];
 };
@@ -1588,7 +1599,7 @@ export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'User
 export type GetTokenQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetTokenQuery = { __typename?: 'Query', getToken: { __typename?: 'ValidateSessionRes', token: string, userId: string, email: string, name: string } };
+export type GetTokenQuery = { __typename?: 'Query', getToken: { __typename?: 'ValidateSessionRes', token: string, userId: string, email: string, name: string, orgId: string, orgName: string, role: Role_Type } };
 
 export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
 
@@ -3722,6 +3733,9 @@ export const GetTokenDocument = gql`
     userId
     email
     name
+    orgId
+    orgName
+    role
   }
 }
     `;

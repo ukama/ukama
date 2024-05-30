@@ -106,3 +106,14 @@ export enum INVITATION_STATUS {
 registerEnumType(INVITATION_STATUS, {
   name: "INVITATION_STATUS",
 });
+
+export enum ROLE_TYPE {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  VENDOR = "VENDOR",
+  USERS = "USERS",
+  NONE = "NONE",
+}
+registerEnumType(ROLE_TYPE, {
+  name: "ROLE_TYPE",
+});

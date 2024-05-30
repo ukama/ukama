@@ -41,7 +41,6 @@ class PackageApi extends RESTDataSource {
   ): Promise<PackageDto> => {
     this.logger.info(`Add pacakge request`);
     const baserate = await this.get(`/${VERSION}/baserates/history`);
-
     return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
         name: req.name,

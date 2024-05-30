@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
 import { ENCRYPTION_KEY, SUBSCRIBER_API_GW } from "../../common/configs";
@@ -94,10 +95,14 @@ class SimApi extends RESTDataSource {
         ...requestBody,
       },
     }).then(res => {
-      this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
-      this.getPackagesForSim({ sim_id: res.sim.id })
-        .then((response: any) => {
-          this.setActivePackageForSim({
+      this.addPackageToSim({
+        package_id: req.package_id,
+        sim_id: res.sim.id,
+        start_date: dayjs().format(),
+      })
+        .then(async (response: any) => {
+          await this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+          await this.setActivePackageForSim({
             sim_id: res.sim.id,
             package_id: response.packages[0].id,
           });

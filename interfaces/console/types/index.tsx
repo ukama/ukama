@@ -140,14 +140,6 @@ export type TSnackMessage = {
   type: string;
   show: boolean;
 };
-export type TCommonData = {
-  networkId: string;
-  networkName: string;
-  orgId: string;
-  userId: string;
-  orgName: string;
-  metaData: any;
-};
 
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;

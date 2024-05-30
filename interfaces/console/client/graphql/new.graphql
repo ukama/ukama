@@ -572,6 +572,9 @@ query GetToken {
     userId
     email
     name
+    orgId
+    orgName
+    role
   }
 }
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData, snackbarMessage } from '@/app-recoil';
+import { useAppContext } from '@/context';
 import {
   Draft,
   Site,
@@ -25,7 +25,6 @@ import {
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { TCommonData, TSnackMessage } from '@/types';
 import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
@@ -49,7 +48,6 @@ import {
 } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
 import { useEffect, useState } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const POWER_SUMMARY = {
   sites: [
@@ -128,13 +126,12 @@ const Page = () => {
   const [layer, setLayer] = useState<string>('satellite');
   const [zoom, setZoom] = useState<number>(ZOOM);
   const [linkSites, setLinkSites] = useState(INIT_LINK);
-  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const { user, setSnackbarMessage } = useAppContext();
   const [isLinkSelected, setIsLinkSelected] = useState<string | undefined>(
     undefined,
   );
   const [selectedSites, setSelectedSites] = useState<Site[]>([]);
   const [center, setCenter] = useState<LatLngLiteral>(defaultLatLng);
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
     undefined,
   );
@@ -166,7 +163,7 @@ const Page = () => {
   } = useGetDraftsQuery({
     fetchPolicy: 'network-only',
     variables: {
-      userId: _commonData.userId,
+      userId: user.id,
     },
     onCompleted: (data) => {
       if (data.getDrafts.length > 0) {
@@ -449,7 +446,7 @@ const Page = () => {
       variables: {
         data: {
           name: 'New Draft',
-          userId: _commonData.userId,
+          userId: user.id,
           lastSaved: getLastSavedInt(),
         },
       },

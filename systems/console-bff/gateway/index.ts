@@ -76,9 +76,9 @@ const loadServers = async () => {
             );
             request.http.headers.set("cookie", headers.auth.Cookie);
             request.http.headers.set("token", headers.token);
-            request.http.headers.set("orgId", headers.orgId);
-            request.http.headers.set("userId", headers.userId);
-            request.http.headers.set("orgName", headers.orgName);
+            // request.http.headers.set("orgId", headers.orgId);
+            // request.http.headers.set("userId", headers.userId);
+            // request.http.headers.set("orgName", headers.orgName);
           }
         },
       });

@@ -6,8 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { user } from '@/app-recoil';
 import { BillingTabs } from '@/constants';
+import { useAppContext } from '@/context';
+import { Role_Type } from '@/generated';
 import { colors } from '@/styles/theme';
 import BillHistoryTab from '@/ui/molecules/BillHistoryTab';
 import CurrentBillTab from '@/ui/molecules/CurrentBillTab';
@@ -25,7 +26,6 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useRecoilValue } from 'recoil';
 
 const HistoryData = [
   {
@@ -52,7 +52,7 @@ const NETWORKS = ['Network 1', 'Network 2', 'Star'];
 export default function Billing() {
   const [tab, setTab] = useState(0);
   const [value, setValue] = useState('');
-  const userInfo = useRecoilValue(user);
+  const { user } = useAppContext();
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) =>
     setTab(newValue);
 
@@ -60,7 +60,7 @@ export default function Billing() {
     <Stack spacing={2}>
       <FormControl variant="standard" sx={{ width: 94 }}>
         <InputLabel id="bill-for-dropdown-label">
-          {userInfo?.role === 'admin' ? 'Organization' : 'Networks'}
+          {user?.role === Role_Type.Admin ? 'Organization' : 'Networks'}
         </InputLabel>
         <Select
           value={'Ukama'}
@@ -69,11 +69,17 @@ export default function Billing() {
           id="bill-for-dropdown"
           labelId="bill-for-dropdown-label"
         >
-          {(userInfo?.role === 'admin' ? ORGS : NETWORKS).map((label, i) => (
-            <MenuItem key={`${label}-${i}`} value={label} sx={{ fontSize: 14 }}>
-              <Typography variant="body2">{label}</Typography>
-            </MenuItem>
-          ))}
+          {(user?.role === Role_Type.Admin ? ORGS : NETWORKS).map(
+            (label, i) => (
+              <MenuItem
+                key={`${label}-${i}`}
+                value={label}
+                sx={{ fontSize: 14 }}
+              >
+                <Typography variant="body2">{label}</Typography>
+              </MenuItem>
+            ),
+          )}
         </Select>
       </FormControl>
       <LoadingWrapper

@@ -8,7 +8,9 @@
 import { Ctx, Query, Resolver } from "type-graphql";
 
 import { HTTP401Error, Messages } from "../../common/errors";
+import MemberApi from "../../member/datasource/member_api";
 import { Context } from "../context";
+import { ROLE_TYPE } from "./../../common/enums/index";
 import { ValidateSessionRes } from "./types";
 
 @Resolver()
@@ -25,6 +27,7 @@ export class GetTokenResolver {
     let orgId = "";
     let orgName = "";
     let base64Cookie = "";
+    let role = ROLE_TYPE.NONE;
     if (whoamiRes?.user?.uuid) {
       orgId =
         whoamiRes.ownerOf.length > 0
@@ -40,6 +43,13 @@ export class GetTokenResolver {
           ? whoamiRes.memberOf[0].name
           : "";
 
+      if (orgId && orgName) {
+        const member_api = new MemberApi();
+        const member = await member_api.getMemberByUserId(whoamiRes.user.uuid);
+        if (member.role) {
+          role = member.role as ROLE_TYPE;
+        }
+      }
       const cookie = `${orgId};${orgName};${whoamiRes.user.uuid}`;
       base64Cookie = Buffer.from(cookie).toString("base64");
 
@@ -53,6 +63,9 @@ export class GetTokenResolver {
       // });
     }
     return {
+      orgId,
+      orgName,
+      role,
       userId: whoamiRes.user.uuid,
       email: whoamiRes.user.email,
       name: whoamiRes.user.name,

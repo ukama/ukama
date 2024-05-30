@@ -6,10 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { user } from '@/app-recoil';
+import { useAppContext } from '@/context';
 import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { TUser } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
@@ -18,7 +17,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
-import { useRecoilValue } from 'recoil';
 
 const Logo = dynamic(() =>
   import('../../../public/svg/Logo').then((module) => ({
@@ -75,9 +73,9 @@ const IconStyle = {
 };
 
 const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
-  const _user = useRecoilValue<TUser>(user);
+  const { user, setUser } = useAppContext();
   const isManager =
-    _user.role === 'ADMIN' || _user.role === 'OWNER' ? true : false;
+    user.role === 'ADMIN' || user.role === 'OWNER' ? true : false;
   return (
     <AppBar
       open={isOpen}

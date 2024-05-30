@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { isDarkmode } from '@/app-recoil';
+import { useAppContext } from '@/context';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
@@ -19,17 +19,16 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import { useRecoilState } from 'recoil';
 
 export default function ConsoleSettings() {
-  const [_isDarkMod, _setIsDarkMod] = useRecoilState(isDarkmode);
+  const { isDarkMode, setIsDarkMode } = useAppContext();
   const [apperanceMode, setAppearanceMode] = useState<string>(
-    _isDarkMod ? 'dark' : 'light',
+    isDarkMode ? 'dark' : 'light',
   );
 
   const handleToggle = (e: any) => {
     setAppearanceMode(e.target.value);
-    _setIsDarkMod(e.target.value === 'dark');
+    setIsDarkMode(e.target.value === 'dark');
   };
   return (
     <LoadingWrapper

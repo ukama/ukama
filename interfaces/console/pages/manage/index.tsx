@@ -6,8 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
+import { useAppContext } from '@/context';
 import {
   PackageDto,
   useAddPackageMutation,
@@ -26,7 +26,7 @@ import {
   useUploadSimsMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
-import { TObject, TSnackMessage } from '@/types';
+import { TObject } from '@/types';
 import DataPlanDialog from '@/ui/molecules/DataPlanDialog';
 import FileDropBoxDialog from '@/ui/molecules/FileDropBoxDialog';
 import InviteMemberDialog from '@/ui/molecules/InviteMemberDialog';
@@ -42,7 +42,6 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
 
 const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
@@ -109,7 +108,7 @@ const Manage = () => {
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const { setSnackbarMessage } = useAppContext();
 
   const [data, setData] = useState<any>({
     members: [],
@@ -549,9 +548,7 @@ const Manage = () => {
     }
   };
 
-  const handleCreateNetwork = () => {
-    console.log('adding node to network');
-  };
+  const handleCreateNetwork = () => {};
 
   const handleMemberAction = (id: string, type: string) => {
     const m = membersData?.getMembers.members.find((mem) => mem.id === id);

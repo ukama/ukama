@@ -7,6 +7,8 @@
  */
 import { Field, ObjectType } from "type-graphql";
 
+import { ROLE_TYPE } from "../../common/enums";
+
 @ObjectType()
 export class InitSystemAPIResDto {
   @Field()
@@ -41,6 +43,15 @@ export class ValidateSessionRes {
 
   @Field()
   name: string;
+
+  @Field()
+  orgId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
 
   @Field()
   token: string;

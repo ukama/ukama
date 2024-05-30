@@ -9,13 +9,17 @@
 'use client';
 import client from '@/client/ApolloClient';
 import { IPFY_URL, IP_API_BASE_URL } from '@/constants';
-import AppContextWrapper from '@/context';
+import AppContextWrapper, { useAppContext } from '@/context';
+import { theme } from '@/styles/theme';
 import { MyAppProps } from '@/types';
 import AuthWrapper from '@/ui/wrappers/authWrapper';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, HttpLink } from '@apollo/client';
+import { CacheProvider, ThemeProvider } from '@emotion/react';
+import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
 import '../styles/global.css';
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 const clientSideEmotionCache = createEmotionCache();
@@ -35,72 +39,59 @@ const getMetaInfo = async () => {
     .then((response) => response.text())
     .then((data) => JSON.parse(data))
     .catch((err) => {
-      console.log(err);
       return {};
     });
 };
 
 const ClientWrapper = (appProps: MyAppProps) => {
-  // const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
-  // const [_commonData, _setCommonData] = useRecoilState<TCommonData>(commonData);
-  // const [_snackbarMessage, setSnackbarMessage] =
-  //   useRecoilState<TSnackMessage>(snackbarMessage);
-  // const httpLink = new HttpLink({
-  //   uri: process.env.NEXT_PUBLIC_API_GW,
-  //   credentials: 'include',
-  //   headers: {
-  //     'org-id': _commonData.orgId,
-  //     'user-id': _commonData.userId,
-  //     'org-name': _commonData.orgName,
-  //     'x-session-token': 'abc',
-  //   },
-  // });
+  const {
+    token,
+    isDarkMode,
+    snackbarMessage,
+    setSnackbarMessage,
+    skeltonLoading,
+    setSkeltonLoading,
+    isValidSession,
+  } = useAppContext();
 
-  // useEffect(() => {
-  //   const call = async () => {
-  //     const metaData = await getMetaInfo();
-  //     // _setCommonData(
-  //     //   (prev) =>
-  //     //     ({
-  //     //       ...prev,
-  //     //       metaData,
-  //     //     } as TCommonData),
-  //     // );
-  //   };
-  //   if (!_commonData.metaData) call();
-  // }, []);
+  useEffect(() => {
+    if (isValidSession) {
+      const httpLink = new HttpLink({
+        uri: `${process.env.NEXT_PUBLIC_API_GW}/graphql`,
+        credentials: 'include',
+        headers: {
+          token: token,
+        },
+      });
+      client.setLink(httpLink);
+    }
+  }, [isValidSession]);
 
-  // const getClient = (): any => {
-  //   client.setLink(httpLink);
-  //   return client;
-  // };
-
-  // const handleSnackbarClose = () =>
-  //   setSnackbarMessage({ ..._snackbarMessage, show: false });
+  const handleSnackbarClose = () =>
+    setSnackbarMessage({ ...snackbarMessage, show: false });
 
   return (
     <ApolloProvider client={client}>
       <AuthWrapper>
-        <h1>hello</h1>
-        {/* <CacheProvider value={clientSideEmotionCache}>
-          <ThemeProvider theme={theme(_isDarkMod)}>
+        <CacheProvider value={clientSideEmotionCache}>
+          <ThemeProvider theme={theme(isDarkMode)}>
             <CssBaseline />
             <MainApp {...appProps} />
             <Snackbar
-              open={_snackbarMessage.show}
+              open={snackbarMessage.show}
               autoHideDuration={SNACKBAR_TIMEOUT}
               onClose={handleSnackbarClose}
             >
               <Alert
-                id={_snackbarMessage.id}
-                severity={_snackbarMessage.type as AlertColor}
+                id={snackbarMessage.id}
+                severity={snackbarMessage.type as AlertColor}
                 onClose={handleSnackbarClose}
               >
-                {_snackbarMessage.message}
+                {snackbarMessage.message}
               </Alert>
             </Snackbar>
           </ThemeProvider>
-        </CacheProvider> */}
+        </CacheProvider>
       </AuthWrapper>
     </ApolloProvider>
   );

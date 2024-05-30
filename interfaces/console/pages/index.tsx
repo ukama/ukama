@@ -142,9 +142,7 @@ const OnBoarding = () => {
     error: orgsError,
     loading: orgsLoading,
   } = useGetOrgsQuery({
-    onCompleted: (data) => {
-      console.log(data);
-    },
+    onCompleted: (data) => {},
   });
 
   return (

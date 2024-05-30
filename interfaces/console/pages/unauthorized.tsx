@@ -6,16 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { pageName, user } from '@/app-recoil';
 import { Box, Button, Card, Stack, Typography } from '@mui/material';
-import { useResetRecoilState } from 'recoil';
 
 const Page = () => {
-  const resetData = useResetRecoilState(user);
-  const resetPageName = useResetRecoilState(pageName);
-
   const handleGoToLogin = () => {
-    resetData();
     typeof window !== 'undefined' &&
       window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
   };

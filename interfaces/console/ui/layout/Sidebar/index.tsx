@@ -6,11 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData } from '@/app-recoil';
+import { useAppContext } from '@/context';
 import { NetworkDto } from '@/generated';
 import { NavList } from '@/router/config';
 import colors from '@/styles/theme/colors';
-import { TCommonData } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   Box,
@@ -24,7 +23,6 @@ import {
   styled,
 } from '@mui/material';
 import dynamic from 'next/dynamic';
-import { useRecoilValue } from 'recoil';
 
 const BasicDropdown = dynamic(() => import('@/ui/molecules/BasicDropdown'), {
   ssr: false,
@@ -73,7 +71,7 @@ const Sidebar = ({
   handleAddNetwork,
   handleNetworkChange,
 }: ISidebarProps) => {
-  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const { user, network } = useAppContext();
   const getDropDownData = () =>
     networks?.map((network) => ({
       id: network.id,
@@ -95,7 +93,7 @@ const Sidebar = ({
         <Stack direction={'column'}>
           <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown
-              value={_commonData.networkId}
+              value={network.id}
               isLoading={isLoading}
               list={getDropDownData()}
               placeholder={placeholder}

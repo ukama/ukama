@@ -6,10 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { commonData, pageName, user } from '@/app-recoil';
 import { SETTING_MENU } from '@/constants';
+import { useAppContext } from '@/context';
 import colors from '@/styles/theme/colors';
-import { TCommonData } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   Divider,
@@ -21,7 +20,6 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { useRecoilState, useResetRecoilState } from 'recoil';
 
 const PersonalSetting = dynamic(() => import('./_personalSetting'));
 const Billing = dynamic(() => import('./_billing'));
@@ -87,20 +85,16 @@ const ManageMenu = ({
 );
 
 export default function Page() {
-  const resetData = useResetRecoilState(user);
-  const resetPageName = useResetRecoilState(pageName);
   const [menu, setMenu] = useState('personal-settings');
   const [isLoading, setIsLoading] = useState(false);
-  const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const onMenuItemClick = (id: string) => setMenu(id);
+  const { network } = useAppContext();
 
   const handleDeleteNetwork = () => {};
 
   const handleUpdateNetwork = (name: string) => {};
 
   const handleLogoutACtion = () => {
-    resetData();
-    resetPageName();
     typeof window !== 'undefined' &&
       window.location.replace(`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/logout`);
   };
@@ -121,7 +115,7 @@ export default function Page() {
         <>
           {menu === 'network-settings' && (
             <NetworkSetting
-              name={_commonData.networkName}
+              name={network.name}
               handleSubmit={handleUpdateNetwork}
               handleDeleteNetwork={handleDeleteNetwork}
             />

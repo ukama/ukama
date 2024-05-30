@@ -7,26 +7,18 @@
  */
 
 'use client';
-import {
-  commonData,
-  isDarkmode,
-  isSkeltonLoading,
-  pageName,
-  snackbarMessage,
-  user,
-} from '@/app-recoil';
+import { useAppContext } from '@/context';
 import {
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
 } from '@/generated';
-import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
+import { MyAppProps } from '@/types';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil';
 
 const Layout = dynamic(() => import('@/ui/layout'), {
   ssr: false,
@@ -35,34 +27,34 @@ const Layout = dynamic(() => import('@/ui/layout'), {
 const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
-  const [_user, _setUser] = useRecoilState<TUser>(user);
-  const [page, setPage] = useRecoilState(pageName);
-  const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
-  const [_snackbarMessage, setSnackbarMessage] =
-    useRecoilState<TSnackMessage>(snackbarMessage);
-  const [skeltonLoading, setSkeltonLoading] =
-    useRecoilState<boolean>(isSkeltonLoading);
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
-  const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
-  const resetData = useResetRecoilState(user);
-  const resetPageName = useResetRecoilState(pageName);
+  const {
+    token,
+    user,
+    network,
+    setNetwork,
+    pageName,
+    isDarkMode,
+    setPageName,
+    skeltonLoading,
+    isValidSession,
+    snackbarMessage,
+    setSnackbarMessage,
+    setSkeltonLoading,
+  } = useAppContext();
 
   const {
     data: networksData,
     loading: networksLoading,
     refetch: refetchNetworks,
   } = useGetNetworksQuery({
-    skip: _commonData?.orgId === '',
+    skip: user?.orgId === '',
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      if (
-        data.getNetworks.networks.length >= 1 &&
-        _commonData.networkId === ''
-      ) {
-        setCommonData({
-          ..._commonData,
-          networkId: data.getNetworks.networks[0].id,
-          networkName: data.getNetworks.networks[0].name,
+      if (data.getNetworks.networks.length >= 1 && network.id === '') {
+        setNetwork({
+          id: data.getNetworks.networks[0].id,
+          name: data.getNetworks.networks[0].name,
         });
       }
     },
@@ -110,7 +102,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
           getTitleFromPath(route.pathname, route.query['id'] as string) ===
             '404',
       );
-      setPage(getTitleFromPath(route.pathname, route.query['id'] as string));
+      setPageName(
+        getTitleFromPath(route.pathname, route.query['id'] as string),
+      );
       if (
         getTitleFromPath(route.pathname, '') === '404' &&
         route.pathname !== '/404'
@@ -125,21 +119,13 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     else if (!networksLoading && skeltonLoading) setSkeltonLoading(false);
   }, [networksLoading, skeltonLoading, setSkeltonLoading]);
 
-  const handleGoToLogin = () => {
-    resetData();
-    resetPageName();
-    typeof window !== 'undefined' &&
-      window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
-  };
-
-  const handlePageChange = (page: string) => setPage(page);
+  const handlePageChange = (page: string) => setPageName(page);
 
   const handleNetworkChange = (id: string) => {
     if (id) {
-      setCommonData({
-        ..._commonData,
-        networkId: id,
-        networkName:
+      setNetwork({
+        id: id,
+        name:
           networksData?.getNetworks.networks.filter((n) => n.id === id)[0]
             .name ?? '',
       });
@@ -155,7 +141,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
           name: values.name,
           budget: values.budget,
           networks: values.networks,
-          org: _commonData.orgName,
+          org: user.orgName,
           countries: values.countries,
         },
       },
@@ -178,8 +164,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   return (
     <Layout
-      page={page}
-      isDarkMode={_isDarkMod}
+      page={pageName}
+      isDarkMode={isDarkMode}
       isFullScreen={isFullScreen}
       placeholder={'Select Network'}
       handlePageChange={handlePageChange}

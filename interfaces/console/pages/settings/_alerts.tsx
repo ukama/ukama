@@ -7,7 +7,7 @@
  */
 
 import { colors } from '@/styles/theme';
-import FormControlCheckboxes from '@/ui/components/FormControlCheckboxes';
+import FormControlCheckboxes from '@/ui/molecules/FormControlCheckboxes';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { Divider, Grid, Paper, Typography } from '@mui/material';
 import { useCallback, useState } from 'react';

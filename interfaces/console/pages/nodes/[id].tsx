@@ -6,9 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { snackbarMessage } from '@/app-recoil';
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
+import { useAppContext } from '@/context';
 import {
   Node,
   NodeTypeEnum,
@@ -23,7 +23,6 @@ import {
   useGetMetricByTabLazyQuery,
 } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
-import { TSnackMessage } from '@/types';
 import EditNode from '@/ui/molecules/EditNode';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
@@ -38,7 +37,6 @@ import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
 
 const SPEC_DATA = [
   { id: 'pdf-1', title: 'PDF with Technical Specs', readingTime: '2mint' },
@@ -57,7 +55,7 @@ export default function Page() {
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const { setSnackbarMessage } = useAppContext();
 
   const [
     getNodes,

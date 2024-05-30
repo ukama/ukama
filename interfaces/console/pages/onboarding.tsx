@@ -1,5 +1,5 @@
-import { commonData, user } from '@/app-recoil';
 import { INVITATION_TABLE_COLUMN, INVITATION_TABLE_MENU } from '@/constants';
+import { useAppContext } from '@/context';
 import {
   Invitation_Status,
   useGetInvitationsQuery,
@@ -7,16 +7,12 @@ import {
   useWhoamiLazyQuery,
 } from '@/generated';
 import colors from '@/styles/theme/colors';
-import { TCommonData, TUser } from '@/types';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Box, Button, Stack, Typography } from '@mui/material';
-import { useRecoilState } from 'recoil';
 
 const OnBoarding = () => {
-  const [_commonData, _setCommonData] = useRecoilState<TCommonData>(commonData);
-
-  const [_user, _setUser] = useRecoilState<TUser>(user);
+  const { user, setUser } = useAppContext();
 
   const {
     data: invitationsData,
@@ -25,17 +21,17 @@ const OnBoarding = () => {
   } = useGetInvitationsQuery({
     fetchPolicy: 'network-only',
     variables: {
-      email: _user.email,
+      email: user.email,
     },
     onCompleted: (data) => {
       if (data.getInvitations.status === Invitation_Status.Accepted) {
-        _setUser({
-          ..._user,
+        setUser({
+          ...user,
           role: data.getInvitations.role,
         });
-        // _setCommonData({
-        //   ..._commonData,
-        //   userId: _user.id,
+        // setUser({
+        //   ...user,
+        //   id: _user.id,
         // });
 
         whoami();
@@ -48,8 +44,8 @@ const OnBoarding = () => {
     onCompleted: (data) => {
       if (data.whoami) {
         if (data.whoami.memberOf.length > 0) {
-          // _setCommonData({
-          //   ..._commonData,
+          // setUser({
+          //   ...user,
           //   orgId: data.whoami.memberOf[0].id,
           //   orgName: data.whoami.memberOf[0].name,
           // });
@@ -115,11 +111,11 @@ const OnBoarding = () => {
         >
           <Typography variant="body1" fontWeight={500}>
             <b>Name: </b>
-            {_user.name}
+            {user.name}
           </Typography>
           <Typography variant="body1" fontWeight={500}>
             <b>Email: </b>
-            {_user.email}
+            {user.email}
           </Typography>
           <br />
           <Button
@@ -127,7 +123,7 @@ const OnBoarding = () => {
             sx={{ mb: 3 }}
             onClick={() =>
               navigator.clipboard.writeText(
-                `Name: ${_user.name}, Email: ${_user.email}`,
+                `Name: ${user.name}, Email: ${user.email}`,
               )
             }
           >
@@ -140,7 +136,7 @@ const OnBoarding = () => {
         <DataTableWithOptions
           icon={PeopleAltIcon}
           isRowClickable={false}
-          withStatusColumn={true} 
+          withStatusColumn={true}
           columns={INVITATION_TABLE_COLUMN}
           menuOptions={INVITATION_TABLE_MENU}
           emptyViewLabel={'No invitation yet!'}
