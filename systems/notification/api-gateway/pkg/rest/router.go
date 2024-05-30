@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -254,7 +255,10 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 	}
 	defer ws.Close()
 
-	stream, err := r.clients.d.GetNotificationStream(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := r.clients.d.GetNotificationStream(ctx, req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
 	if err != nil {
 		log.Errorf("error getting notification on stream:Error: %s", err.Error())
 		return err
