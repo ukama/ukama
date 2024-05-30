@@ -28,7 +28,7 @@ const Page = () => {
             <Typography variant="h6">
               The page you’re looking for doesn’t exist.
             </Typography>
-            <Button variant="contained" onClick={()=> route.push("/home")}>
+            <Button variant="contained" onClick={() => route.push('/home')}>
               Back Home
             </Button>
           </Grid>

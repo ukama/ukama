@@ -13,8 +13,6 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-
-
 interface DeleteConfirmationProps {
   onDelete: () => void;
   onCancel: () => void;
@@ -44,7 +42,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   };
 
   return (
-  <Dialog
+    <Dialog
       open={open}
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
@@ -52,27 +50,26 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
     >
       <DialogTitle id="alert-dialog-title">Delete Confirmation</DialogTitle>
       <IconButton
-          aria-label="close"
-          onClick={handleClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+        aria-label="close"
+        onClick={handleClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-        <Typography variant="body1" sx={{color:colors.black}}>
-        Are you certain you wish to delete the following subscriber -
-          <span style={{ color: "black" }}>{itemName}</span> ? 
-        This action will also remove all SIMs associated with them from your network.
-        </Typography>
-
-          
-      </DialogContentText>
-    </DialogContent><DialogActions>
+          <Typography variant="body1" sx={{ color: colors.black }}>
+            Are you certain you wish to delete the following subscriber -
+            <span style={{ color: 'black' }}>{itemName}</span> ? This action
+            will also remove all SIMs associated with them from your network.
+          </Typography>
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
         <Button onClick={handleClose} color="primary" autoFocus size="medium">
           Cancel
         </Button>

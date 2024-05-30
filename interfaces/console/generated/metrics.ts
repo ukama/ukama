@@ -2,21 +2,34 @@ import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  _Any: { input: any; output: any; }
-  _FieldSet: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  _Any: { input: any; output: any };
+  _FieldSet: { input: any; output: any };
 };
 
 export enum Graphs_Type {
@@ -24,7 +37,7 @@ export enum Graphs_Type {
   NodeHealth = 'NODE_HEALTH',
   Radio = 'RADIO',
   Resources = 'RESOURCES',
-  Subscribers = 'SUBSCRIBERS'
+  Subscribers = 'SUBSCRIBERS',
 }
 
 export type GetLatestMetricInput = {
@@ -89,21 +102,17 @@ export type Query = {
   getStatsMetric: StatsMetric;
 };
 
-
 export type QueryGetLatestMetricArgs = {
   data: GetLatestMetricInput;
 };
-
 
 export type QueryGetMetricByTabArgs = {
   data: GetMetricByTabInput;
 };
 
-
 export type QueryGetMetricRangeArgs = {
   data: GetMetricRangeInput;
 };
-
 
 export type QueryGetNodeRangeMetricArgs = {
   data: GetMetricRangeInput;
@@ -122,7 +131,6 @@ export type Subscription = {
   getMetricRangeSub: LatestMetricRes;
 };
 
-
 export type SubscriptionGetMetricByTabSubArgs = {
   from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
@@ -130,7 +138,6 @@ export type SubscriptionGetMetricByTabSubArgs = {
   type: Graphs_Type;
   userId: Scalars['String']['input'];
 };
-
 
 export type SubscriptionGetMetricRangeSubArgs = {
   from: Scalars['Float']['input'];
@@ -149,29 +156,72 @@ export type GetLatestMetricQueryVariables = Exact<{
   data: GetLatestMetricInput;
 }>;
 
-
-export type GetLatestMetricQuery = { __typename?: 'Query', getLatestMetric: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+export type GetLatestMetricQuery = {
+  __typename?: 'Query';
+  getLatestMetric: {
+    __typename?: 'LatestMetricRes';
+    success: boolean;
+    msg: string;
+    orgId: string;
+    nodeId: string;
+    type: string;
+    value: Array<number>;
+  };
+};
 
 export type GetMetricRangeQueryVariables = Exact<{
   data: GetMetricRangeInput;
 }>;
 
-
-export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
+export type GetMetricRangeQuery = {
+  __typename?: 'Query';
+  getMetricRange: {
+    __typename?: 'MetricRes';
+    success: boolean;
+    msg: string;
+    orgId: string;
+    nodeId: string;
+    type: string;
+    values: Array<Array<number>>;
+  };
+};
 
 export type GetNodeRangeMetricQueryVariables = Exact<{
   data: GetMetricRangeInput;
 }>;
 
-
-export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
+export type GetNodeRangeMetricQuery = {
+  __typename?: 'Query';
+  getNodeRangeMetric: {
+    __typename?: 'MetricRes';
+    success: boolean;
+    msg: string;
+    orgId: string;
+    nodeId: string;
+    type: string;
+    values: Array<Array<number>>;
+  };
+};
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
 }>;
 
-
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
+export type GetMetricByTabQuery = {
+  __typename?: 'Query';
+  getMetricByTab: {
+    __typename?: 'MetricsRes';
+    metrics: Array<{
+      __typename?: 'MetricRes';
+      success: boolean;
+      msg: string;
+      orgId: string;
+      nodeId: string;
+      type: string;
+      values: Array<Array<number>>;
+    }>;
+  };
+};
 
 export type MetricRangeSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -181,8 +231,18 @@ export type MetricRangeSubscriptionVariables = Exact<{
   from: Scalars['Float']['input'];
 }>;
 
-
-export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+export type MetricRangeSubscription = {
+  __typename?: 'Subscription';
+  getMetricRangeSub: {
+    __typename?: 'LatestMetricRes';
+    success: boolean;
+    msg: string;
+    orgId: string;
+    nodeId: string;
+    type: string;
+    value: Array<number>;
+  };
+};
 
 export type GetMetricByTabSubSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -192,27 +252,43 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
   from: Scalars['Float']['input'];
 }>;
 
+export type GetMetricByTabSubSubscription = {
+  __typename?: 'Subscription';
+  getMetricByTabSub: {
+    __typename?: 'LatestMetricRes';
+    success: boolean;
+    msg: string;
+    orgId: string;
+    nodeId: string;
+    type: string;
+    value: Array<number>;
+  };
+};
 
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+export type GetStatsMetricQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetStatsMetricQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetStatsMetricQuery = { __typename?: 'Query', getStatsMetric: { __typename?: 'StatsMetric', activeSubscriber: number, averageSignalStrength: number, averageThroughput: number } };
-
+export type GetStatsMetricQuery = {
+  __typename?: 'Query';
+  getStatsMetric: {
+    __typename?: 'StatsMetric';
+    activeSubscriber: number;
+    averageSignalStrength: number;
+    averageThroughput: number;
+  };
+};
 
 export const GetLatestMetricDocument = gql`
-    query GetLatestMetric($data: GetLatestMetricInput!) {
-  getLatestMetric(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
+  query GetLatestMetric($data: GetLatestMetricInput!) {
+    getLatestMetric(data: $data) {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      value
+    }
   }
-}
-    `;
+`;
 
 /**
  * __useGetLatestMetricQuery__
@@ -230,29 +306,52 @@ export const GetLatestMetricDocument = gql`
  *   },
  * });
  */
-export function useGetLatestMetricQuery(baseOptions: Apollo.QueryHookOptions<GetLatestMetricQuery, GetLatestMetricQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetLatestMetricQuery, GetLatestMetricQueryVariables>(GetLatestMetricDocument, options);
-      }
-export function useGetLatestMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLatestMetricQuery, GetLatestMetricQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetLatestMetricQuery, GetLatestMetricQueryVariables>(GetLatestMetricDocument, options);
-        }
-export type GetLatestMetricQueryHookResult = ReturnType<typeof useGetLatestMetricQuery>;
-export type GetLatestMetricLazyQueryHookResult = ReturnType<typeof useGetLatestMetricLazyQuery>;
-export type GetLatestMetricQueryResult = Apollo.QueryResult<GetLatestMetricQuery, GetLatestMetricQueryVariables>;
-export const GetMetricRangeDocument = gql`
-    query GetMetricRange($data: GetMetricRangeInput!) {
-  getMetricRange(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
+export function useGetLatestMetricQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetLatestMetricQuery,
+    GetLatestMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetLatestMetricQuery, GetLatestMetricQueryVariables>(
+    GetLatestMetricDocument,
+    options,
+  );
 }
-    `;
+export function useGetLatestMetricLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetLatestMetricQuery,
+    GetLatestMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetLatestMetricQuery,
+    GetLatestMetricQueryVariables
+  >(GetLatestMetricDocument, options);
+}
+export type GetLatestMetricQueryHookResult = ReturnType<
+  typeof useGetLatestMetricQuery
+>;
+export type GetLatestMetricLazyQueryHookResult = ReturnType<
+  typeof useGetLatestMetricLazyQuery
+>;
+export type GetLatestMetricQueryResult = Apollo.QueryResult<
+  GetLatestMetricQuery,
+  GetLatestMetricQueryVariables
+>;
+export const GetMetricRangeDocument = gql`
+  query GetMetricRange($data: GetMetricRangeInput!) {
+    getMetricRange(data: $data) {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+`;
 
 /**
  * __useGetMetricRangeQuery__
@@ -270,29 +369,52 @@ export const GetMetricRangeDocument = gql`
  *   },
  * });
  */
-export function useGetMetricRangeQuery(baseOptions: Apollo.QueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
-      }
-export function useGetMetricRangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
-        }
-export type GetMetricRangeQueryHookResult = ReturnType<typeof useGetMetricRangeQuery>;
-export type GetMetricRangeLazyQueryHookResult = ReturnType<typeof useGetMetricRangeLazyQuery>;
-export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, GetMetricRangeQueryVariables>;
-export const GetNodeRangeMetricDocument = gql`
-    query GetNodeRangeMetric($data: GetMetricRangeInput!) {
-  getNodeRangeMetric(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
+export function useGetMetricRangeQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetMetricRangeQuery,
+    GetMetricRangeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(
+    GetMetricRangeDocument,
+    options,
+  );
 }
-    `;
+export function useGetMetricRangeLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetMetricRangeQuery,
+    GetMetricRangeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(
+    GetMetricRangeDocument,
+    options,
+  );
+}
+export type GetMetricRangeQueryHookResult = ReturnType<
+  typeof useGetMetricRangeQuery
+>;
+export type GetMetricRangeLazyQueryHookResult = ReturnType<
+  typeof useGetMetricRangeLazyQuery
+>;
+export type GetMetricRangeQueryResult = Apollo.QueryResult<
+  GetMetricRangeQuery,
+  GetMetricRangeQueryVariables
+>;
+export const GetNodeRangeMetricDocument = gql`
+  query GetNodeRangeMetric($data: GetMetricRangeInput!) {
+    getNodeRangeMetric(data: $data) {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+`;
 
 /**
  * __useGetNodeRangeMetricQuery__
@@ -310,31 +432,54 @@ export const GetNodeRangeMetricDocument = gql`
  *   },
  * });
  */
-export function useGetNodeRangeMetricQuery(baseOptions: Apollo.QueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
-      }
-export function useGetNodeRangeMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
-        }
-export type GetNodeRangeMetricQueryHookResult = ReturnType<typeof useGetNodeRangeMetricQuery>;
-export type GetNodeRangeMetricLazyQueryHookResult = ReturnType<typeof useGetNodeRangeMetricLazyQuery>;
-export type GetNodeRangeMetricQueryResult = Apollo.QueryResult<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>;
+export function useGetNodeRangeMetricQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetNodeRangeMetricQuery,
+    GetNodeRangeMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetNodeRangeMetricQuery,
+    GetNodeRangeMetricQueryVariables
+  >(GetNodeRangeMetricDocument, options);
+}
+export function useGetNodeRangeMetricLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetNodeRangeMetricQuery,
+    GetNodeRangeMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetNodeRangeMetricQuery,
+    GetNodeRangeMetricQueryVariables
+  >(GetNodeRangeMetricDocument, options);
+}
+export type GetNodeRangeMetricQueryHookResult = ReturnType<
+  typeof useGetNodeRangeMetricQuery
+>;
+export type GetNodeRangeMetricLazyQueryHookResult = ReturnType<
+  typeof useGetNodeRangeMetricLazyQuery
+>;
+export type GetNodeRangeMetricQueryResult = Apollo.QueryResult<
+  GetNodeRangeMetricQuery,
+  GetNodeRangeMetricQueryVariables
+>;
 export const GetMetricByTabDocument = gql`
-    query GetMetricByTab($data: GetMetricByTabInput!) {
-  getMetricByTab(data: $data) {
-    metrics {
-      success
-      msg
-      orgId
-      nodeId
-      type
-      values
+  query GetMetricByTab($data: GetMetricByTabInput!) {
+    getMetricByTab(data: $data) {
+      metrics {
+        success
+        msg
+        orgId
+        nodeId
+        type
+        values
+      }
     }
   }
-}
-    `;
+`;
 
 /**
  * __useGetMetricByTabQuery__
@@ -352,35 +497,64 @@ export const GetMetricByTabDocument = gql`
  *   },
  * });
  */
-export function useGetMetricByTabQuery(baseOptions: Apollo.QueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
-      }
-export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
-        }
-export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
-export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
-export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
-export const MetricRangeDocument = gql`
-    subscription MetricRange($nodeId: String!, $orgId: String!, $type: String!, $userId: String!, $from: Float!) {
-  getMetricRangeSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
-  }
+export function useGetMetricByTabQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetMetricByTabQuery,
+    GetMetricByTabQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(
+    GetMetricByTabDocument,
+    options,
+  );
 }
-    `;
+export function useGetMetricByTabLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetMetricByTabQuery,
+    GetMetricByTabQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(
+    GetMetricByTabDocument,
+    options,
+  );
+}
+export type GetMetricByTabQueryHookResult = ReturnType<
+  typeof useGetMetricByTabQuery
+>;
+export type GetMetricByTabLazyQueryHookResult = ReturnType<
+  typeof useGetMetricByTabLazyQuery
+>;
+export type GetMetricByTabQueryResult = Apollo.QueryResult<
+  GetMetricByTabQuery,
+  GetMetricByTabQueryVariables
+>;
+export const MetricRangeDocument = gql`
+  subscription MetricRange(
+    $nodeId: String!
+    $orgId: String!
+    $type: String!
+    $userId: String!
+    $from: Float!
+  ) {
+    getMetricRangeSub(
+      nodeId: $nodeId
+      orgId: $orgId
+      type: $type
+      userId: $userId
+      from: $from
+    ) {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      value
+    }
+  }
+`;
 
 /**
  * __useMetricRangeSubscription__
@@ -402,30 +576,47 @@ export const MetricRangeDocument = gql`
  *   },
  * });
  */
-export function useMetricRangeSubscription(baseOptions: Apollo.SubscriptionHookOptions<MetricRangeSubscription, MetricRangeSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<MetricRangeSubscription, MetricRangeSubscriptionVariables>(MetricRangeDocument, options);
-      }
-export type MetricRangeSubscriptionHookResult = ReturnType<typeof useMetricRangeSubscription>;
-export type MetricRangeSubscriptionResult = Apollo.SubscriptionResult<MetricRangeSubscription>;
-export const GetMetricByTabSubDocument = gql`
-    subscription GetMetricByTabSub($nodeId: String!, $orgId: String!, $type: GRAPHS_TYPE!, $userId: String!, $from: Float!) {
-  getMetricByTabSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
-  }
+export function useMetricRangeSubscription(
+  baseOptions: Apollo.SubscriptionHookOptions<
+    MetricRangeSubscription,
+    MetricRangeSubscriptionVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSubscription<
+    MetricRangeSubscription,
+    MetricRangeSubscriptionVariables
+  >(MetricRangeDocument, options);
 }
-    `;
+export type MetricRangeSubscriptionHookResult = ReturnType<
+  typeof useMetricRangeSubscription
+>;
+export type MetricRangeSubscriptionResult =
+  Apollo.SubscriptionResult<MetricRangeSubscription>;
+export const GetMetricByTabSubDocument = gql`
+  subscription GetMetricByTabSub(
+    $nodeId: String!
+    $orgId: String!
+    $type: GRAPHS_TYPE!
+    $userId: String!
+    $from: Float!
+  ) {
+    getMetricByTabSub(
+      nodeId: $nodeId
+      orgId: $orgId
+      type: $type
+      userId: $userId
+      from: $from
+    ) {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      value
+    }
+  }
+`;
 
 /**
  * __useGetMetricByTabSubSubscription__
@@ -447,21 +638,32 @@ export const GetMetricByTabSubDocument = gql`
  *   },
  * });
  */
-export function useGetMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>(GetMetricByTabSubDocument, options);
-      }
-export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
-export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
-export const GetStatsMetricDocument = gql`
-    query GetStatsMetric {
-  getStatsMetric {
-    activeSubscriber
-    averageSignalStrength
-    averageThroughput
-  }
+export function useGetMetricByTabSubSubscription(
+  baseOptions: Apollo.SubscriptionHookOptions<
+    GetMetricByTabSubSubscription,
+    GetMetricByTabSubSubscriptionVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSubscription<
+    GetMetricByTabSubSubscription,
+    GetMetricByTabSubSubscriptionVariables
+  >(GetMetricByTabSubDocument, options);
 }
-    `;
+export type GetMetricByTabSubSubscriptionHookResult = ReturnType<
+  typeof useGetMetricByTabSubSubscription
+>;
+export type GetMetricByTabSubSubscriptionResult =
+  Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
+export const GetStatsMetricDocument = gql`
+  query GetStatsMetric {
+    getStatsMetric {
+      activeSubscriber
+      averageSignalStrength
+      averageThroughput
+    }
+  }
+`;
 
 /**
  * __useGetStatsMetricQuery__
@@ -478,14 +680,37 @@ export const GetStatsMetricDocument = gql`
  *   },
  * });
  */
-export function useGetStatsMetricQuery(baseOptions?: Apollo.QueryHookOptions<GetStatsMetricQuery, GetStatsMetricQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(GetStatsMetricDocument, options);
-      }
-export function useGetStatsMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStatsMetricQuery, GetStatsMetricQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(GetStatsMetricDocument, options);
-        }
-export type GetStatsMetricQueryHookResult = ReturnType<typeof useGetStatsMetricQuery>;
-export type GetStatsMetricLazyQueryHookResult = ReturnType<typeof useGetStatsMetricLazyQuery>;
-export type GetStatsMetricQueryResult = Apollo.QueryResult<GetStatsMetricQuery, GetStatsMetricQueryVariables>;
+export function useGetStatsMetricQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    GetStatsMetricQuery,
+    GetStatsMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(
+    GetStatsMetricDocument,
+    options,
+  );
+}
+export function useGetStatsMetricLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetStatsMetricQuery,
+    GetStatsMetricQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetStatsMetricQuery, GetStatsMetricQueryVariables>(
+    GetStatsMetricDocument,
+    options,
+  );
+}
+export type GetStatsMetricQueryHookResult = ReturnType<
+  typeof useGetStatsMetricQuery
+>;
+export type GetStatsMetricLazyQueryHookResult = ReturnType<
+  typeof useGetStatsMetricLazyQuery
+>;
+export type GetStatsMetricQueryResult = Apollo.QueryResult<
+  GetStatsMetricQuery,
+  GetStatsMetricQueryVariables
+>;

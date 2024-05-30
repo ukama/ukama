@@ -60,9 +60,9 @@ export const MetricLink = () => {
 
     wsLink,
     httpLink({
-      'user-id': "user.id",
-      'org-id': "user.orgId",
-      'org-name': "user.orgName",
+      'user-id': 'user.id',
+      'org-id': 'user.orgId',
+      'org-name': 'user.orgName',
     }),
   );
 };
