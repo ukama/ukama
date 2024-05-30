@@ -283,7 +283,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 				log.Errorf("Failed to  write notification %+v for user %s to ws response. Error: %s", resp, req.UserId, err)
 				break
 			}
-		} else if err != nil {
+		} else {
 			log.Errorf("Error while fetching the notification. %+v", err)
 			break
 		}

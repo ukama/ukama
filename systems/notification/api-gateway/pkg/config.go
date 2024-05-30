@@ -49,7 +49,7 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:           5 * time.Second,
+			Timeout:           10 * time.Second,
 			Mailer:            "mailer:9090",
 			Notify:            "notify:9090",
 			EventNotification: "event-notify:9090",
@@ -62,7 +62,7 @@ func NewConfig() *Config {
 		},
 
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout:     10 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
 
