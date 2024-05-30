@@ -2,14 +2,12 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+Create `.env` file in root of Console app and past content from `.env.example`
+
+Then make sure that auth app and console bff is running (Check there readme's to run those apps). then run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+yarn & yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
