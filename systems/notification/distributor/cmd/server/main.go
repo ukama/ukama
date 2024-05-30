@@ -17,6 +17,7 @@ import (
 
 	"github.com/ukama/ukama/systems/notification/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg"
+	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/server"
 
@@ -64,9 +65,11 @@ func runGrpcServer() {
 
 	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
 
-	log.Debugf("Distributor db config %+v", serviceConfig.DB)
+	eventNotifyService := providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost)
 
-	distributorServer := server.NewDistributorServer(c, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.DB, providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost))
+	nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
+
+	distributorServer := server.NewDistributorServer(c, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

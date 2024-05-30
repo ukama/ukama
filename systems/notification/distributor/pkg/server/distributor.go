@@ -18,7 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/notification"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/roles"
@@ -40,10 +39,10 @@ type DistributorServer struct {
 	orgId              string
 }
 
-func NewDistributorServer(clients Clients, orgName string, orgId string, dbConfig *uconf.Database, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
+func NewDistributorServer(clients Clients, n db.NotifyHandler, orgName string, orgId string, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
 	d := &DistributorServer{
-		notify:             db.NewNotifyHandler(dbConfig, eventNotifyService),
+		notify:             n,
 		orgId:              orgId,
 		orgName:            orgName,
 		eventNotifyService: eventNotifyService,
