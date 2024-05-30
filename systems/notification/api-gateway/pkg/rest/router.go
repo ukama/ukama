@@ -270,6 +270,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 			log.Infof("EOF received from stream")
 			return nil
 		} else if err == nil {
+			log.Infof("received data %+v for request %+v", resp, req)
 			w, err := ws.NextWriter(1)
 			if err != nil {
 				log.Errorf("Error getting writer: %s", err.Error())
@@ -287,6 +288,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 				log.Errorf("Failed to  write notification %+v for user %s to ws response. Error: %s", resp, req.UserId, err)
 				break
 			}
+
 		} else {
 			log.Errorf("Error while fetching the notification. %+v", err)
 			break
