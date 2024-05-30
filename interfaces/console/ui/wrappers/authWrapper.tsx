@@ -1,5 +1,5 @@
 import { useAppContext } from '@/context';
-import { useGetTokenLazyQuery } from '@/generated';
+import { Role_Type, useGetTokenLazyQuery } from '@/generated';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { doesHttpOnlyCookieExist } from '@/utils';
@@ -41,16 +41,16 @@ const AuthWrapper = ({ children }: IAuthWrapper) => {
       });
       setToken(data.getToken.token);
       setIsValidSession(true);
-      // if (!data.getToken.token) {
-      //   route.push('/unauthorized');
-      // } else if (data.getToken.role === Role_Type.None) {
-      //   route.push('/onboarding');
-      // } else {
-      //   route.push(`${route.pathname ? route.pathname : '/home'}`);
-      // }
+      if (!data.getToken.token) {
+        route.push('/unauthorized');
+      } else if (data.getToken.role === Role_Type.None) {
+        route.push('/onboarding');
+      } else {
+        route.push(`${route.pathname ? route.pathname : '/home'}`);
+      }
     },
     onError: (err) => {
-      // handleLogoutAction();
+      handleLogoutAction();
     },
   });
 

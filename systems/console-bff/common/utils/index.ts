@@ -25,7 +25,6 @@ const parseHeaders = (reqHeader: any): THeaders => {
   };
   if (reqHeader.get("introspection") === "true") return headers;
   const token = reqHeader.get("token");
-  console.log("TOKEN:::", token);
   if (token) {
     const decoded = Buffer.from(token, "base64").toString("utf-8");
     const headersStr = decoded.split(";");

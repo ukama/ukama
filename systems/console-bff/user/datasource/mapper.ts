@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { COMMUNITY_ORG_NAME } from "../../common/configs";
 import { OrgDto } from "../../org/resolver/types";
 import {
   UserAPIResDto,
@@ -38,16 +39,16 @@ export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
     });
   });
   res.memberOf.forEach(org => {
-    // if (org.name !== COMMUNITY_ORG_NAME) {
-    memberOfOrgs.push({
-      id: org.id,
-      name: org.name,
-      owner: org.owner,
-      certificate: org.certificate,
-      isDeactivated: org.is_deactivated,
-      createdAt: org.created_at,
-    });
-    // }
+    if (org.name !== COMMUNITY_ORG_NAME) {
+      memberOfOrgs.push({
+        id: org.id,
+        name: org.name,
+        owner: org.owner,
+        certificate: org.certificate,
+        isDeactivated: org.is_deactivated,
+        createdAt: org.created_at,
+      });
+    }
   });
 
   return {
