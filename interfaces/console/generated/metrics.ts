@@ -43,15 +43,13 @@ export type GetMetricByTabInput = {
   withSubscription: Scalars['Boolean']['input'];
 };
 
-export type GetMetricRangeInput = {
-  from?: InputMaybe<Scalars['Float']['input']>;
-  nodeId: Scalars['String']['input'];
+export type GetNotificationsInput = {
+  networkId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
-  step?: InputMaybe<Scalars['Float']['input']>;
-  to?: InputMaybe<Scalars['Float']['input']>;
-  type: Scalars['String']['input'];
+  scopes: Array<Scalars['String']['input']>;
+  siteId: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
-  withSubscription?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type LatestMetricRes = {
@@ -79,13 +77,49 @@ export type MetricsRes = {
   metrics: Array<MetricRes>;
 };
 
+export enum Notification_Scope {
+  Network = 'NETWORK',
+  Node = 'NODE',
+  Org = 'ORG',
+  Site = 'SITE',
+  Subscriber = 'SUBSCRIBER',
+  User = 'USER'
+}
+
+export enum Notification_Type {
+  Error = 'ERROR',
+  Info = 'INFO',
+  Unknown = 'UNKNOWN',
+  Warning = 'WARNING'
+}
+
+export type NotificationRes = {
+  __typename?: 'NotificationRes';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isRead: Scalars['Boolean']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  role: Role_Type;
+  scope: Notification_Scope;
+  subscriberId: Scalars['String']['output'];
+  timeStamp: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  type: Notification_Type;
+  userId: Scalars['String']['output'];
+};
+
+export type NotificationsRes = {
+  __typename?: 'NotificationsRes';
+  notifications: Array<NotificationRes>;
+};
+
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
   getLatestMetric: LatestMetricRes;
   getMetricByTab: MetricsRes;
-  getMetricRange: MetricRes;
-  getNodeRangeMetric: MetricRes;
+  getNotifications: NotificationsRes;
   getStatsMetric: StatsMetric;
 };
 
@@ -100,14 +134,16 @@ export type QueryGetMetricByTabArgs = {
 };
 
 
-export type QueryGetMetricRangeArgs = {
-  data: GetMetricRangeInput;
+export type QueryGetNotificationsArgs = {
+  data: GetNotificationsInput;
 };
 
-
-export type QueryGetNodeRangeMetricArgs = {
-  data: GetMetricRangeInput;
-};
+export enum Role_Type {
+  Admin = 'ADMIN',
+  Owner = 'OWNER',
+  Users = 'USERS',
+  Vendor = 'VENDOR'
+}
 
 export type StatsMetric = {
   __typename?: 'StatsMetric';
@@ -119,7 +155,7 @@ export type StatsMetric = {
 export type Subscription = {
   __typename?: 'Subscription';
   getMetricByTabSub: LatestMetricRes;
-  getMetricRangeSub: LatestMetricRes;
+  getNotificationsSub: NotificationRes;
 };
 
 
@@ -132,11 +168,12 @@ export type SubscriptionGetMetricByTabSubArgs = {
 };
 
 
-export type SubscriptionGetMetricRangeSubArgs = {
-  from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
+export type SubscriptionGetNotificationsSubArgs = {
+  networkId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
-  type: Scalars['String']['input'];
+  scopes: Array<Scalars['String']['input']>;
+  siteId: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
 
@@ -152,37 +189,12 @@ export type GetLatestMetricQueryVariables = Exact<{
 
 export type GetLatestMetricQuery = { __typename?: 'Query', getLatestMetric: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
 
-export type GetMetricRangeQueryVariables = Exact<{
-  data: GetMetricRangeInput;
-}>;
-
-
-export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
-
-export type GetNodeRangeMetricQueryVariables = Exact<{
-  data: GetMetricRangeInput;
-}>;
-
-
-export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> } };
-
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
 }>;
 
 
 export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
-
-export type MetricRangeSubscriptionVariables = Exact<{
-  nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  type: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  from: Scalars['Float']['input'];
-}>;
-
-
-export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
 
 export type GetMetricByTabSubSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -199,6 +211,25 @@ export type GetStatsMetricQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetStatsMetricQuery = { __typename?: 'Query', getStatsMetric: { __typename?: 'StatsMetric', activeSubscriber: number, averageSignalStrength: number, averageThroughput: number } };
+
+export type GetNotificationsQueryVariables = Exact<{
+  data: GetNotificationsInput;
+}>;
+
+
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationRes', description: string, id: string, isRead: boolean, networkId: string, orgId: string, role: Role_Type, scope: Notification_Scope, subscriberId: string, title: string, type: Notification_Type, userId: string, timeStamp: string }> } };
+
+export type GetNotificationsSubSubscriptionVariables = Exact<{
+  orgId: Scalars['String']['input'];
+  networkId: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+  scopes: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type GetNotificationsSubSubscription = { __typename?: 'Subscription', getNotificationsSub: { __typename?: 'NotificationRes', description: string, id: string, isRead: boolean, networkId: string, orgId: string, role: Role_Type, scope: Notification_Scope, subscriberId: string, timeStamp: string, title: string, type: Notification_Type, userId: string } };
 
 
 export const GetLatestMetricDocument = gql`
@@ -241,86 +272,6 @@ export function useGetLatestMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
 export type GetLatestMetricQueryHookResult = ReturnType<typeof useGetLatestMetricQuery>;
 export type GetLatestMetricLazyQueryHookResult = ReturnType<typeof useGetLatestMetricLazyQuery>;
 export type GetLatestMetricQueryResult = Apollo.QueryResult<GetLatestMetricQuery, GetLatestMetricQueryVariables>;
-export const GetMetricRangeDocument = gql`
-    query GetMetricRange($data: GetMetricRangeInput!) {
-  getMetricRange(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
-}
-    `;
-
-/**
- * __useGetMetricRangeQuery__
- *
- * To run a query within a React component, call `useGetMetricRangeQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricRangeQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetMetricRangeQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetMetricRangeQuery(baseOptions: Apollo.QueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
-      }
-export function useGetMetricRangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
-        }
-export type GetMetricRangeQueryHookResult = ReturnType<typeof useGetMetricRangeQuery>;
-export type GetMetricRangeLazyQueryHookResult = ReturnType<typeof useGetMetricRangeLazyQuery>;
-export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, GetMetricRangeQueryVariables>;
-export const GetNodeRangeMetricDocument = gql`
-    query GetNodeRangeMetric($data: GetMetricRangeInput!) {
-  getNodeRangeMetric(data: $data) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    values
-  }
-}
-    `;
-
-/**
- * __useGetNodeRangeMetricQuery__
- *
- * To run a query within a React component, call `useGetNodeRangeMetricQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeRangeMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodeRangeMetricQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetNodeRangeMetricQuery(baseOptions: Apollo.QueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
-      }
-export function useGetNodeRangeMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
-        }
-export type GetNodeRangeMetricQueryHookResult = ReturnType<typeof useGetNodeRangeMetricQuery>;
-export type GetNodeRangeMetricLazyQueryHookResult = ReturnType<typeof useGetNodeRangeMetricLazyQuery>;
-export type GetNodeRangeMetricQueryResult = Apollo.QueryResult<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>;
 export const GetMetricByTabDocument = gql`
     query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
@@ -363,51 +314,6 @@ export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
 export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
 export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
-export const MetricRangeDocument = gql`
-    subscription MetricRange($nodeId: String!, $orgId: String!, $type: String!, $userId: String!, $from: Float!) {
-  getMetricRangeSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
-  }
-}
-    `;
-
-/**
- * __useMetricRangeSubscription__
- *
- * To run a query within a React component, call `useMetricRangeSubscription` and pass it any options that fit your needs.
- * When your component renders, `useMetricRangeSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMetricRangeSubscription({
- *   variables: {
- *      nodeId: // value for 'nodeId'
- *      orgId: // value for 'orgId'
- *      type: // value for 'type'
- *      userId: // value for 'userId'
- *      from: // value for 'from'
- *   },
- * });
- */
-export function useMetricRangeSubscription(baseOptions: Apollo.SubscriptionHookOptions<MetricRangeSubscription, MetricRangeSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<MetricRangeSubscription, MetricRangeSubscriptionVariables>(MetricRangeDocument, options);
-      }
-export type MetricRangeSubscriptionHookResult = ReturnType<typeof useMetricRangeSubscription>;
-export type MetricRangeSubscriptionResult = Apollo.SubscriptionResult<MetricRangeSubscription>;
 export const GetMetricByTabSubDocument = gql`
     subscription GetMetricByTabSub($nodeId: String!, $orgId: String!, $type: GRAPHS_TYPE!, $userId: String!, $from: Float!) {
   getMetricByTabSub(
@@ -489,3 +395,104 @@ export function useGetStatsMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetStatsMetricQueryHookResult = ReturnType<typeof useGetStatsMetricQuery>;
 export type GetStatsMetricLazyQueryHookResult = ReturnType<typeof useGetStatsMetricLazyQuery>;
 export type GetStatsMetricQueryResult = Apollo.QueryResult<GetStatsMetricQuery, GetStatsMetricQueryVariables>;
+export const GetNotificationsDocument = gql`
+    query getNotifications($data: GetNotificationsInput!) {
+  getNotifications(data: $data) {
+    notifications {
+      description
+      id
+      isRead
+      networkId
+      orgId
+      role
+      scope
+      subscriberId
+      title
+      type
+      userId
+      timeStamp
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetNotificationsQuery__
+ *
+ * To run a query within a React component, call `useGetNotificationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNotificationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNotificationsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNotificationsQuery(baseOptions: Apollo.QueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
+      }
+export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
+        }
+export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
+export type GetNotificationsLazyQueryHookResult = ReturnType<typeof useGetNotificationsLazyQuery>;
+export type GetNotificationsQueryResult = Apollo.QueryResult<GetNotificationsQuery, GetNotificationsQueryVariables>;
+export const GetNotificationsSubDocument = gql`
+    subscription GetNotificationsSub($orgId: String!, $networkId: String!, $siteId: String!, $userId: String!, $subscriberId: String!, $scopes: [String!]!) {
+  getNotificationsSub(
+    orgId: $orgId
+    networkId: $networkId
+    siteId: $siteId
+    userId: $userId
+    subscriberId: $subscriberId
+    scopes: $scopes
+  ) {
+    description
+    id
+    isRead
+    networkId
+    orgId
+    role
+    scope
+    subscriberId
+    timeStamp
+    title
+    type
+    userId
+  }
+}
+    `;
+
+/**
+ * __useGetNotificationsSubSubscription__
+ *
+ * To run a query within a React component, call `useGetNotificationsSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetNotificationsSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNotificationsSubSubscription({
+ *   variables: {
+ *      orgId: // value for 'orgId'
+ *      networkId: // value for 'networkId'
+ *      siteId: // value for 'siteId'
+ *      userId: // value for 'userId'
+ *      subscriberId: // value for 'subscriberId'
+ *      scopes: // value for 'scopes'
+ *   },
+ * });
+ */
+export function useGetNotificationsSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetNotificationsSubSubscription, GetNotificationsSubSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GetNotificationsSubSubscription, GetNotificationsSubSubscriptionVariables>(GetNotificationsSubDocument, options);
+      }
+export type GetNotificationsSubSubscriptionHookResult = ReturnType<typeof useGetNotificationsSubSubscription>;
+export type GetNotificationsSubSubscriptionResult = Apollo.SubscriptionResult<GetNotificationsSubSubscription>;

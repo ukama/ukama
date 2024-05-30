@@ -94,6 +94,7 @@ subscription GetNotificationsSub(
     isRead
     networkId
     orgId
+    role
     scope
     subscriberId
     timeStamp

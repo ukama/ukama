@@ -87,7 +87,7 @@ const getNodeRangeMetric = async (
 const getNotifications = async (
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, subscriberId, userId, networkId, forRole } = args;
+  const { orgId, subscriberId, userId, networkId } = args;
   let params = "";
   if (orgId) {
     params = params + `orgId=${orgId}`;
@@ -100,9 +100,6 @@ const getNotifications = async (
   }
   if (networkId) {
     params = params + `networkId=${networkId}`;
-  }
-  if (forRole) {
-    params = params + `forRole=${forRole}`;
   }
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,

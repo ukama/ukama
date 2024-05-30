@@ -10,17 +10,10 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import DeleteNotification from '../DeleteNotification';
-
-interface Alert {
-  id: number;
-  isRead: boolean;
-  title: string;
-  description: string;
-  time: string;
-}
+import { NotificationRes } from '@/generated/metrics';
 
 interface AlertBoxProps {
-  alerts: Alert[];
+  alerts: NotificationRes[] | undefined;
   onAlertRead: (index: number) => void;
 }
 
@@ -59,12 +52,12 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
           fontFamily="Work Sans"
           paddingLeft={1}
         >
-          ({alerts.filter((alert) => !alert.isRead).length})
+          ({alerts?.filter((alert) => !alert.isRead).length})
         </Typography>
       </Box>
       <Divider sx={{ margin: 0 }} />
       <List sx={{ padding: 0, margin: 0 }}>
-        {alerts.map((alert: Alert, index: number) => (
+        {alerts?.map((alert: NotificationRes, index: number) => (
           <Box key={alert.id} sx={{ margin: 0 }}>
             <ListItem
               alignItems="flex-start"
@@ -96,7 +89,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                   fontWeight="400"
                   fontFamily="Work Sans"
                 >
-                  {alert.time}
+                  {alert.timeStamp}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" width="100%">

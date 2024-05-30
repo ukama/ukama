@@ -23,8 +23,8 @@ const AuthWrapper = ({ children }: IAuthWrapper) => {
   const handleGoToLogin = () => {
     resetData();
     resetPageName();
-    typeof window !== 'undefined' &&
-      window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
+    // typeof window !== 'undefined' &&
+    //   window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
   };
 
   return <div>{children}</div>;

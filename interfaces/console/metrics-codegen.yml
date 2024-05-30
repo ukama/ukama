@@ -1,5 +1,5 @@
 overwrite: true
-schema: http://localhost:3042/graphql
+schema: http://localhost:5042/graphql
 documents: './client/graphql/metrics.graphql'
 generates:
   ./generated/metrics.ts:

@@ -1,3 +1,8 @@
+import {
+  NotificationRes,
+  useGetNotificationsQuery,
+  useGetNotificationsSubSubscription,
+} from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import AlertBox from '@/ui/molecules/AlertBox';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -21,47 +26,69 @@ const IconStyle = {
 
 const Alerts = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [alerts, setAlerts] = useState([
-    {
-      id:1,
-      title: 'Alert 1',
-      description: 'Item affected + severity + type of alert',
-      time: '8/30 1PM',
-      isRead: false,
-    },
-    {
+  const [alerts, setAlerts] = useState<NotificationRes[] | undefined>(
+    undefined,
+  );
 
-      id:2,
-      title: 'Alert 2',
-      description: 'Item affected + severity + type of alert',
-      time: '8/16 1PM',
-      isRead: false,
+  // Fetch initial notifications
+  const { data: queryData } = useGetNotificationsQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        orgId: 'fbc2a80d-339e-4d3c-acaa-329dd3d1b221',
+        userId: 'da421ed5-0fba-4638-9661-a9204f49006a',
+        networkId: 'da421ed5-0fba-4638-9661-a9204f490069',
+        scopes: ['notifications'],
+        siteId: 'da421ed5-0fba-4638-9661-a9204f490062',
+        subscriberId: 'da421ed5-0fba-4638-9661-a9204f490065',
+      },
     },
-    {
-      id:3,
-      title: 'Alert 3',
-      description: 'Item affected + severity + type of alert',
-      time: '8/20 1PM',
-      isRead: false,
+    onCompleted: (data) => {
+      console.log('Query completed:', data);
+      setAlerts(data.getNotifications.notifications);
     },
-  ]);
+  });
 
+  // Subscribe to notifications
+  console.log(useGetNotificationsSubSubscription({
+    variables: {
+      orgId: 'fbc2a80d-339e-4d3c-acaa-329dd3d1b221',
+      userId: 'da421ed5-0fba-4638-9661-a9204f49006a',
+      networkId: 'da421ed5-0fba-4638-9661-a9204f490069',
+      scopes: ['notifications'],
+      siteId: 'da421ed5-0fba-4638-9661-a9204f490062',
+      subscriberId: 'da421ed5-0fba-4638-9661-a9204f490065',
+    },
+    onData: ({ data: subscriptionData }) => {
+      const newAlerts = subscriptionData.data?.getNotificationsSub;
+      console.log('Subscription data:', newAlerts);
+      if (newAlerts) {
+        setAlerts((prev) => (prev ? [newAlerts, ...prev] : [newAlerts]));
+      }
+    },
+  }))
+
+  // Handle popover open
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
+  // Handle popover close
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const handleAlertRead=(index: number)=>{
-    setAlerts((prev)=>{
-      const newAlerts = [...prev]
-      newAlerts[index] = {...newAlerts[index], isRead:true}
-      return newAlerts
-    })
-  }
 
-  const unreadCount = alerts.filter(alert=>!alert.isRead).length
+  // Mark alert as read
+  const handleAlertRead = (index: number) => {
+    setAlerts((prev) => {
+      if (!prev) return prev;
+      const newAlerts = [...prev];
+      newAlerts[index] = { ...newAlerts[index], isRead: true };
+      return newAlerts;
+    });
+  };
+
+  const unreadCount = alerts?.filter((alert) => !alert.isRead).length;
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
 
@@ -87,7 +114,7 @@ const Alerts = () => {
           horizontal: 'center',
         }}
       >
-        <AlertBox alerts={alerts} onAlertRead={handleAlertRead}/>
+        <AlertBox alerts={alerts} onAlertRead={handleAlertRead} />
       </Popover>
     </>
   );
