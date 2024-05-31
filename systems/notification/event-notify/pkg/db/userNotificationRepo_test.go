@@ -19,7 +19,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	notif "github.com/ukama/ukama/systems/common/notification"
 	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -64,16 +63,6 @@ var un = int_db.UserNotification{
 	IsRead:         false,
 	CreatedAt:      time.Now(),
 	UpdatedAt:      time.Now(),
-}
-
-var n = int_db.Notification{
-	Id:          uuid.NewV4(),
-	Title:       "Title1",
-	Description: "Description1",
-	Type:        notif.TYPE_INFO,
-	Scope:       notif.SCOPE_ORG,
-	CreatedAt:   time.Now(),
-	UpdatedAt:   time.Now(),
 }
 
 func Test_Add(t *testing.T) {
