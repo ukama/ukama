@@ -19,11 +19,13 @@ replace github.com/ukama/ukama/systems/nucleus/api-gateway => ../../nucleus/api-
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
+	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
@@ -119,6 +121,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.7 // indirect
+	gorm.io/driver/postgres v1.5.7
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
