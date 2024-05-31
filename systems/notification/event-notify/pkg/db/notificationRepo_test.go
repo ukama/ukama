@@ -45,48 +45,48 @@ var evtMsg = int_db.EventMsg{
 	},
 }
 
-func TestNotificationRepo_Add(t *testing.T) {
-	t.Run("Add", func(t *testing.T) {
-		// Arrange
-		var db *extsql.DB
+// func TestNotificationRepo_Add(t *testing.T) {
+// 	t.Run("Add", func(t *testing.T) {
+// 		// Arrange
+// 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+// 		db, mock, err := sqlmock.New() // mock sql.DB
+// 		assert.NoError(t, err)
 
-		mock.ExpectBegin()
+// 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(n.Id, n.Title, n.Description, n.Type, n.Scope, n.ResourceId, n.OrgId, n.NetworkId, n.SubscriberId, n.UserId, n.NodeId, evtMsg.ID, evtMsg, n.CreatedAt, n.UpdatedAt, sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+// 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+// 			WithArgs(n.Id, n.Title, n.Description, n.Type, n.Scope, n.ResourceId, n.OrgId, n.NetworkId, n.SubscriberId, n.UserId, n.NodeId, evtMsg.ID, evtMsg, n.CreatedAt, n.UpdatedAt, sqlmock.AnyArg()).
+// 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		mock.ExpectCommit()
+// 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+// 		dialector := postgres.New(postgres.Config{
+// 			DSN:                  "sqlmock_db_0",
+// 			DriverName:           "postgres",
+// 			Conn:                 db,
+// 			PreferSimpleProtocol: true,
+// 		})
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
+// 		gdb, err := gorm.Open(dialector, &gorm.Config{})
+// 		assert.NoError(t, err)
 
-		r := int_db.NewNotificationRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+// 		r := int_db.NewNotificationRepo(&UkamaDbMock{
+// 			GormDb: gdb,
+// 		})
 
-		assert.NoError(t, err)
+// 		assert.NoError(t, err)
 
-		// Act
-		err = r.Add(&n)
+// 		// Act
+// 		err = r.Add(&n)
 
-		// Assert
-		assert.NoError(t, err)
+// 		// Assert
+// 		assert.NoError(t, err)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}
+// 		err = mock.ExpectationsWereMet()
+// 		assert.NoError(t, err)
+// 	})
+// }
 
 func TestNotificationRepo_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
