@@ -1,0 +1,94 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rlog-admin API",
+    "version": "1.0.0",
+    "description": "API documentation for the rlog-admin application",
+    "contact": {
+      "name": "Ukama Inc.",
+      "url": "http://www.ukama.com",
+      "email": "hello@ukama.com"
+    },
+    "license": {
+      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "host": "localhost:18011",
+  "schemes": ["http"],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "summary": "Ping the server",
+        "description": "Returns OK if the server is running",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/level": {
+      "get": {
+        "summary": "Get log level",
+        "description": "Returns the current log level",
+        "responses": {
+          "200": {
+            "description": "Current log level"
+          }
+        }
+      },
+      "post": {
+        "summary": "Set log level",
+        "description": "Sets the log level",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": ["debug", "info", "error"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log level set"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/output/{output}": {
+      "post": {
+        "summary": "Set output",
+        "description": "Sets the output",
+        "parameters": [
+          {
+            "name": "output",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": ["file", "stdout", "stderr", "ukama"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Output set"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  }
+}
+
