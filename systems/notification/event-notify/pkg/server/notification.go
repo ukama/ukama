@@ -132,10 +132,10 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 
 	if len(user) > 1 {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"Invalid arguments. Error %s", err.Error())
+			"Invalid arguments: no user found")
 	}
 
-	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].Id.String())
+	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].UserId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -189,7 +189,7 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	return usersList
 }
 
-func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
 	var userList []*db.Users
 	var err error
 	roleTypes := notif.NotificationScopeToRoles[scope]
@@ -209,7 +209,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, networkId
 
 		}
 
-		/* subscriber specifc notification */
+		/* subscriber specific notification */
 		if subscriberId != "" && subscriberId != db.EmptyUUID {
 			log.Debugf("Getting subscriber with id: %s", userId)
 			user, err := n.userRepo.GetSubscriber(subscriberId)
@@ -244,7 +244,7 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 		log.Errorf("Error adding notification to db %v", err)
 	}
 
-	users, err := n.filterUsersForNotification(dn.OrgId, dn.NetworkId, dn.SubscriberId, dn.UserId, dn.Scope)
+	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.Scope)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)
