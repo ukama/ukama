@@ -34,7 +34,24 @@
         }
       }
     },
-    "/v1/level": {
+  "/v1/version": {
+    "get": {
+      "summary": "Get API version",
+      "description": "Returns the API version",
+      "responses": {
+        "200": {
+          "description": "Version",
+          "schema": {
+          "type": "string"
+           }
+        },
+        "404": {
+          "description": "Not Found"
+        }
+      }
+    }
+  },
+  "/v1/level": {
       "get": {
         "summary": "Get log level",
         "description": "Returns the current log level",

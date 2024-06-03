@@ -34,7 +34,24 @@
         }
       }
     },
-    "/v1/status": {
+  "/v1/version": {
+    "get": {
+      "summary": "Get API version",
+      "description": "Returns the API version",
+      "responses": {
+        "200": {
+          "description": "Version",
+          "schema": {
+          "type": "string"
+           }
+        },
+        "404": {
+          "description": "Not Found"
+        }
+      }
+    }
+  },
+   "/v1/status": {
       "get": {
         "summary": "Get status of all apps managed by starter.d",
         "description": "Return json string of all apps (name, tag, status, pid) managed by starter.d",

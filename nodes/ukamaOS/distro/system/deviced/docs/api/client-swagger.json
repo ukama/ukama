@@ -34,6 +34,23 @@
         }
       }
     },
+  "/v1/version": {
+    "get": {
+      "summary": "Get API version",
+      "description": "Returns the API version",
+      "responses": {
+        "200": {
+          "description": "Version",
+          "schema": {
+          "type": "string"
+           }
+        },
+        "404": {
+          "description": "Not Found"
+        }
+      }
+    }
+  },
     "/v1/reboot": {
       "post": {
         "summary": "Reboot the node with id",
