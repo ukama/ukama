@@ -25,6 +25,8 @@
 #include "map.h"
 #include "httpStatus.h"
 
+#include "version.h"
+
 extern WorkList *Transmit;
 extern MapTable *ClientTable;
 extern pthread_mutex_t mutex;
@@ -172,6 +174,17 @@ int web_service_cb_ping(const URequest *request,
     ulfius_set_string_body_response(response,
                                     HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }

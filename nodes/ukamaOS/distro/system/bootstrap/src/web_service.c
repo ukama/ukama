@@ -20,6 +20,8 @@
 #include "usys_string.h"
 #include "usys_services.h"
 
+#include "version.h"
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
@@ -30,6 +32,15 @@ static int callback_web_service_ping(const URequest *request,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+static int callback_web_service_version(const URequest *request,
+                                        UResponse *response,
+                                        void *data) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -62,6 +73,8 @@ int start_web_services(UInst *inst) {
 
     ulfius_add_endpoint_by_val(inst, "GET", "/v1/", "ping", 0,
                                &callback_web_service_ping, NULL);
+    ulfius_add_endpoint_by_val(inst, "GET", "/v1/", "version", 0,
+                               &callback_web_service_version, NULL);
     ulfius_set_default_endpoint(inst, &callback_web_service_default, NULL);
 
     if (ulfius_start_framework(inst) != U_OK) {

@@ -36,6 +36,10 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
 
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+
     if (config->clientMode == USYS_TRUE) {
         /* Node ID is not requried in client-mode */
         ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,

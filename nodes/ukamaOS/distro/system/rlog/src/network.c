@@ -58,7 +58,7 @@ static void setup_websocket_endpoints(char *nodeID, UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_socket_cb_ping, NULL);
-
+    
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("logit/"), 0,
                                &web_socket_cb_post_log, nodeID);
@@ -71,6 +71,10 @@ static void setup_webservice_endpoints(UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, NULL);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, NULL);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("level"), 0,

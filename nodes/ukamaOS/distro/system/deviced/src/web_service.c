@@ -16,6 +16,8 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
+#include "version.h"
+
 extern void process_reboot(Config *config);
 
 int web_service_cb_ping(const URequest *request,
@@ -24,6 +26,17 @@ int web_service_cb_ping(const URequest *request,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
