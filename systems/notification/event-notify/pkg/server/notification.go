@@ -123,6 +123,9 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid format of user uuid. Error %s", err.Error())
 		}
+	} else {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"no user uuid. Error %s", err.Error())
 	}
 
 	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
