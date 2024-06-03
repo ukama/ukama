@@ -40,9 +40,10 @@ const formatTime = date => {
 const generateNotification = workerData => {
   const { orgId, userId, subscriberId, networkId, siteId, scopes } = workerData;
   const timeStamp = formatTime(new Date(Date.now()));
+  let randomId = (Math.floor(Math.random() * 20) + 1).toString();
   const dummyData = {
-    id: "1",
-    title: "Test Alert",
+    id: randomId,
+    title: `Alert ${randomId}`,
     description: "This is a test alert",
     org_id: orgId,
     network_id: networkId,
@@ -75,7 +76,7 @@ const runWorker = () => {
           data: null,
         });
       }
-    }, 5000);
+    }, 20000);
   }
 };
 
