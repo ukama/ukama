@@ -16,6 +16,8 @@
 #include "starter.h"
 #include "usys_log.h"
 
+#include "version.h"
+
 extern SpaceList *gSpaceList;
 extern void json_free(JsonObj** json);
 extern bool json_serialize_add_capp_to_array(JsonObj **json,
@@ -156,6 +158,15 @@ int web_service_cb_ping(const URequest *request,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *data) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
