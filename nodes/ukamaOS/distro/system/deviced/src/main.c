@@ -18,6 +18,8 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
+#include "version.h"
+
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
     usys_exit(0);
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'v':
-            usys_puts(DEVICED_VERSION);
+            usys_puts(VERSION);
             usys_exit(0);
             break;
 

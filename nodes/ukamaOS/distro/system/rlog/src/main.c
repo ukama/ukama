@@ -24,6 +24,8 @@
 #include "nodeInfo.h"
 #include "rlogd.h"
 
+#include "version.h"
+
 /* network.c */
 extern int start_websocket_server(char *nodeID, int port, UInst *websocketInst);
 extern int start_web_services(int port, UInst *serviceInst);
@@ -128,7 +130,7 @@ int main (int argc, char **argv) {
             break;
 
         case 'v':
-            fprintf(stdout, "rlog.d - Version: %s\n", RLOGD_VERSION);
+            fprintf(stdout, "rlog.d - Version: %s\n", VERSION);
             exit(0);
 
         default:

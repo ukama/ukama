@@ -25,10 +25,10 @@
 #include "config.h"
 #include "mesh_config.h"
 #include "server.h"
+#include "version.h"
 
 #define DEF_LOG_LEVEL "TRACE"
 #define SERVICE_NAME  SERVICE_BOOTSTRAP
-#define VERSION       "0.0.1"
 
 static void usage() {
 

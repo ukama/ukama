@@ -28,7 +28,6 @@
 
 #define DEF_LOG_LEVEL           "TRACE"
 #define DEF_SERVICE_CLIENT_HOST "localhost"
-#define RLOGD_VERSION           "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NODED_EP           "/v1/nodeinfo"

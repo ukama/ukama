@@ -21,7 +21,6 @@
 #define NOTIFICATION_EVENT     "event"
 
 #define DEF_LOG_LEVEL          "TRACE"
-#define NOTIFY_VERSION         "0.0.0"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NODED_EP           "/v1/nodeinfo"

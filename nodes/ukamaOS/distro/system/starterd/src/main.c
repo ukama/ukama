@@ -20,6 +20,8 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
+#include "version.h"
+
 SpaceList *gSpaceList = NULL;
 
 void handle_sigint(int signum) {
@@ -120,7 +122,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'v':
-            usys_puts(STARTER_VERSION);
+            usys_puts(VERSION);
             usys_exit(0);
             break;
 

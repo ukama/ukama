@@ -24,7 +24,6 @@
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define LOOKOUT_VERSION         "0.0.1"
 #define DEF_REPORT_INTERVAL     30
 
 #define DEF_NODED_HOST         "localhost"

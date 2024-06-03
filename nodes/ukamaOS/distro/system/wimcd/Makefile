@@ -32,6 +32,7 @@ CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
+CFLAGS+=-I.
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
@@ -73,6 +74,8 @@ XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
+all: version.h wimc agent
+
 wimc: $(TARGET_EXEC)
 
 agent: $(AGENT_EXEC)
@@ -95,8 +98,9 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: wimc agent
+version.h:
+	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
 
 clean:
-	rm -f $(TARGET_EXEC) $(AGENT_EXEC) $(OBJFILES) $(COMM_OBJFILES)
+	rm -f $(TARGET_EXEC) $(AGENT_EXEC) $(OBJFILES) $(COMM_OBJFILES) version.h
 	rm -f $(AGENT_OBJFILES)

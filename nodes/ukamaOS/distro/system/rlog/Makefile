@@ -31,6 +31,7 @@ CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
+CFLAGS+=-I.
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I./inc
 CFLAGS+=-I./inc/common/
@@ -62,6 +63,9 @@ XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
+all: version.h rlog.d
+	cd test; make all; cd -
+
 rlog.d: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
@@ -77,9 +81,9 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: rlog.d
-	cd test; make all; cd -
+version.h:
+	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
 	cd test; make clean; cd -

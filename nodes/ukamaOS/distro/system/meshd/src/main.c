@@ -24,7 +24,7 @@
 #include "map.h"
 #include "websocket.h"
 
-#define VERSION "0.0.1"
+#include "version.h"
 
 /* Global */
 State *state=NULL;
