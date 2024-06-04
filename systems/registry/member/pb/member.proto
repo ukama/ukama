@@ -31,7 +31,7 @@ service MemberService {
 }
 
 message GetMemberByUserIdRequest {
-    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
+    string memberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
 }
 
 message GetMemberByUserIdResponse {
@@ -39,12 +39,13 @@ message GetMemberByUserIdResponse {
 }
 
 message AddMemberRequest{
+    string memberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
     string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
     ukama.common.v1.RoleType role = 3;
 }
 
 message MemberRequest{
-    string memberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
+    string memberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
 }
 
 message MemberResponse{
@@ -59,16 +60,12 @@ message GetMembersResponse{
 }
 
 message UpdateMemberRequest {
-  MemberRequest member = 1;
-  MemberAttributes attributes = 2;
-}
-
-message MemberAttributes {
-    bool isDeactivated = 1 [json_name = "is_deactivated"];
+    string memberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
+    bool isDeactivated = 4 [json_name = "is_deactivated"];
 }
 
 message Member {
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string memberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "member_id"];
     string userId = 2 [json_name = "user_id", (validator.field) = {uuid_ver: 4, string_not_empty: true}];
     ukama.common.v1.RoleType role = 3 ;
     bool isDeactivated = 4 [json_name = "is_deactivated"];

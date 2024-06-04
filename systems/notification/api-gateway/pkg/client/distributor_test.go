@@ -9,6 +9,7 @@
 package client_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -66,7 +67,7 @@ func TestDIstributor_GetNotificationStream(t *testing.T) {
 
 	c := client.NewDistributorFromClient(nc)
 
-	resp, err := c.GetNotificationStream(orgId, "", "", uId, scopes)
+	resp, err := c.GetNotificationStream(context.Background(), orgId, "", "", uId, scopes)
 	assert.NoError(t, err)
 
 	rdata, err := resp.Recv()

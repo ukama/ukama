@@ -167,7 +167,7 @@ func (m *MemberServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*p
 }
 
 func (m *MemberServer) GetMemberByUserId(ctx context.Context, req *pb.GetMemberByUserIdRequest) (*pb.GetMemberByUserIdResponse, error) {
-	uuid, err := uuid.FromString(req.GetUserId())
+	uuid, err := uuid.FromString(req.GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of user uuid. Error %s", err.Error())
@@ -196,7 +196,7 @@ func (m *MemberServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest
 }
 
 func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.FromString(req.GetMember().GetMemberId())
+	uuid, err := uuid.FromString(req.GetMemberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of user uuid. Error %s", err.Error())
@@ -204,7 +204,7 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 
 	member := &db.Member{
 		MemberId:    uuid,
-		Deactivated: req.Attributes.GetIsDeactivated(),
+		Deactivated: req.GetIsDeactivated(),
 	}
 
 	err = m.mRepo.UpdateMember(member)

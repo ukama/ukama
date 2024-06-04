@@ -76,7 +76,7 @@ func (r *MemberRegistry) GetMemberByUserId(userId string) (*pb.GetMemberByUserId
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetMemberByUserId(ctx, &pb.GetMemberByUserIdRequest{UserId: userId})
+	res, err := r.client.GetMemberByUserId(ctx, &pb.GetMemberByUserIdRequest{MemberId: userId})
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +129,9 @@ func (r *MemberRegistry) UpdateMember(memberId string, isDeactivated bool, role 
 	defer cancel()
 
 	_, err := r.client.UpdateMember(ctx, &pb.UpdateMemberRequest{
-		Member:     &pb.MemberRequest{MemberId: memberId},
-		Attributes: &pb.MemberAttributes{IsDeactivated: isDeactivated}})
+		MemberId:      memberId,
+		IsDeactivated: isDeactivated,
+	})
 
 	return err
 }

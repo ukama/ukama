@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/sirupsen/logrus"
+	uType "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -88,7 +89,7 @@ func (r *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddRes
 	res, err := r.client.Add(ctx, &pb.AddRequest{
 		Name:  name,
 		Email: email,
-		Role:  pb.RoleType(pb.RoleType_value[role]),
+		Role:  uType.RoleType(uType.RoleType_value[role]),
 	})
 	if err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateStat
 
 	res, err := r.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{
 		Id:     id,
-		Status: pb.StatusType(pb.StatusType_value[status]),
+		Status: uType.InvitationStatus(uType.InvitationStatus_value[status]),
 	})
 
 	if err != nil {

@@ -13,6 +13,8 @@ option go_package = "github.com/ukama/ukama/systems/registry/invitation/pb/gen";
 package ukama.registry.invitation.v1;
 
 import "validator.proto";
+import "ukama/roles.proto";
+import "ukama/invitation-status.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -39,7 +41,7 @@ message GetByEmailResponse {
 message AddRequest {
     string name = 3;
     string email = 4;
-    RoleType role = 5;
+    ukama.common.v1.RoleType role = 5;
 }
 
 message GetAllRequest {
@@ -71,12 +73,12 @@ message DeleteResponse {
 
 message UpdateStatusRequest {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
-    StatusType status = 2 [(validator.field) = {string_not_empty: true}];
+    ukama.common.v1.InvitationStatus status = 2 [(validator.field) = {string_not_empty: true}];
 }
 
 message UpdateStatusResponse {
    string  id = 1;
-   StatusType status = 2;
+   ukama.common.v1.InvitationStatus status = 2;
 }
 
 message Invitation {
@@ -84,22 +86,8 @@ message Invitation {
     string link = 3;
     string name = 4;
     string email = 5;
-    RoleType role = 6;
-    StatusType status = 7;
+    ukama.common.v1.RoleType role = 6;
+    ukama.common.v1.InvitationStatus status = 7;
     string userId = 8;
     string expire_at = 9;
-  }
-  
-  enum StatusType {
-    Pending   = 0;
-	Accepted  = 1;
-	Declined  = 2;
-    Unknown   = 3;
-  }
-  enum RoleType {
-    OWNER = 0;
-    ADMIN = 1;
-    EMPLOYEE = 2;
-    VENDOR = 3;
-    USERS = 4;
 }

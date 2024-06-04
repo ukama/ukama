@@ -28,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uTypes "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -146,8 +147,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 			Link:      invite.Link,
 			Email:     invite.Email,
 			Name:      invite.Name,
-			Role:      upb.RoleType(invite.Role),
-			Status:    pb.StatusType_name[int32(invite.Status)],
+			Role:      uTypes.RoleType(invite.Role),
+			Status:    uTypes.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -157,7 +158,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		}
 	}
 
-	return &pb.AddInvitationResponse{
+	return &pb.AddResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
@@ -190,10 +191,6 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			"invalid format of invitation uuid. Error %s", err.Error())
 	}
 
-	if req.GetStatus() == pb.StatusType_Unknown {
-		return nil, status.Errorf(codes.InvalidArgument, "Status is required")
-	}
-
 	err = i.iRepo.UpdateStatus(iuuid, uint8(req.GetStatus().Number()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
@@ -212,7 +209,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			Email:     invite.Email,
 			Name:      invite.Name,
 			Role:      upb.RoleType(invite.Role),
-			Status:    pb.StatusType_name[int32(invite.Status)],
+			Status:    uTypes.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -222,7 +219,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 		}
 	}
 
-	return &pb.UpdateInvitationStatusResponse{
+	return &pb.UpdateStatusResponse{
 		Id:     req.GetId(),
 		Status: *req.GetStatus().Enum(),
 	}, nil
@@ -281,9 +278,9 @@ func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 		Id:       invitation.Id.String(),
 		Link:     invitation.Link,
 		Email:    invitation.Email,
-		Role:     pb.RoleType(invitation.Role),
+		Role:     uTypes.RoleType(invitation.Role),
 		Name:     invitation.Name,
-		Status:   pb.StatusType(invitation.Status),
+		Status:   uTypes.InvitationStatus(invitation.Status),
 		UserId:   invitation.UserId,
 		ExpireAt: invitation.ExpiresAt.String(),
 	}

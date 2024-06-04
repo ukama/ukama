@@ -28,6 +28,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	uType "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	imocks "github.com/ukama/ukama/systems/registry/invitation/pb/gen/mocks"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -201,8 +202,8 @@ func TestGetAllInvitations(t *testing.T) {
 			Id:     invId.String(),
 			Name:   "ukama",
 			Email:  "test@ukama.com",
-			Role:   invpb.RoleType_USERS,
-			Status: invpb.StatusType_Pending,
+			Role:   uType.RoleType_ROLE_USER,
+			Status: uType.InvitationStatus_INVITE_PENDING,
 		}},
 	}, nil)
 

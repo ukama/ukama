@@ -12,12 +12,13 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uType "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 type MemberEventServer struct {
@@ -44,10 +45,10 @@ func (p *MemberEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			log.Errorf("Failed to unmarshal InvitationCreatedEvent message with error %s", err.Error())
 			return &epb.EventResponse{}, err
 		}
-		if msg.Status == epb.StatusType_Accepted && p.orgName != p.masterOrgName {
+		if msg.Status == uType.InvitationStatus_INVITE_ACCEPTED && p.orgName != p.masterOrgName {
 			p.m.AddMember(ctx, &pb.AddMemberRequest{
 				UserUuid: msg.UserId,
-				Role:     pb.RoleType(msg.Role),
+				Role:     uType.RoleType(msg.Role),
 			})
 		}
 	default:
