@@ -14,15 +14,16 @@
  
  import "validator.proto";
  import "google/protobuf/timestamp.proto";
+ import "ukama/subscriber.proto";
  
  message AddSubscriber {
-
+    ukama.common.v1.Subscriber subscriber =1;
  }
  
  message RemoveSubscriber {
-    
+    ukama.common.v1.Subscriber subscriber =1;
  }
  
  message UpdateSubscriber {
-    
+    ukama.common.v1.Subscriber subscriber =1;
  }

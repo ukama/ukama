@@ -9,6 +9,8 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -17,11 +19,26 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *AddSubscriber) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+		}
+	}
 	return nil
 }
 func (this *RemoveSubscriber) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+		}
+	}
 	return nil
 }
 func (this *UpdateSubscriber) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+		}
+	}
 	return nil
 }

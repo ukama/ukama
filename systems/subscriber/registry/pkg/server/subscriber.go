@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -117,11 +118,9 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, subscriberPb)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
-	}
+	_ = s.PublishEventMessage(route, &epb.AddSubscriber{
+		Subscriber: subscriberPb,
+	})
 
 	return &pb.AddSubscriberResponse{
 		Subscriber: subscriberPb,
@@ -296,24 +295,27 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 
 	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, subscriberPb)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
-	}
+	_ = s.PublishEventMessage(route, &epb.UpdateSubscriber{
+		Subscriber: subscriberPb,
+	})
 
 	return &pb.UpdateSubscriberResponse{}, nil
 }
 
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberId()
-	subscriberId, err := uuid.FromString(subscriberIdReq)
 
+	subscriberId, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 
+	subscriber, err := s.subscriberRepo.Get(subscriberId)
+	if err != nil {
+		log.Errorf("Error while getting subscriber: %s", err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
 	log.Infof("Delete Subscriber : %v ", subscriberId)
 
 	err = s.subscriberRepo.Delete(subscriberId)
@@ -323,12 +325,12 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
+	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
+	_ = s.PublishEventMessage(route, &epb.RemoveSubscriber{
+		Subscriber: subscriberPb,
+	})
 
 	return &pb.DeleteSubscriberResponse{}, nil
 }
