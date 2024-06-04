@@ -42,8 +42,8 @@ message GetAllResponse {
 }
 
 message UpdateStatusRequest {
-    string id = 1;
-    bool isRead = 2 [json_name = "is_read"];
+    string userNotificationId = 1 [json_name = "user_notification_id"];
+    bool isRead = 2 [json_name = "is_read"] ;
 }
 
 message UpdateStatusResponse {

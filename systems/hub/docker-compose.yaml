@@ -1,121 +1,116 @@
-version: "3.7"
+version: '3.7'
 
 services:
+ minio:
+  image: quay.io/minio/minio
+  command: server /tmp/data --console-address ":9001"
+  ports:
+   - 9000:9000
+   - 9001:9001
+  networks:
+   - ukama-net
+     # Don't copy those addresses in your application. Use the local docker socket to get them.
+  environment:
+   # Same for the environment variables, use the local docker socket to read it.
+   - MINIO_ROOT_USER=minioadmin
+   - MINIO_ROOT_PASSWORD=minioadmin
 
-  minio:
-    image: quay.io/minio/minio
-    command: server /tmp/data --console-address ":9001"
-    ports:
-        - 9000:9000
-        - 9001:9001
-    networks:
-      - ukama-net
-        # Don't copy those addresses in your application. Use the local docker socket to get them.
-    environment:
-      # Same for the environment variables, use the local docker socket to read it.
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+ postgresd-hub:
+  image: postgres:13.3
+  ports:
+   - '5408:5432'
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
 
+ hub: # Here, this is where you can configure your gateway.
+  build:
+   context: ./hub
+   dockerfile: ./Dockerfile
+  ports: ['8088:8088']
+  environment:
+   - DEBUGMODE=TRUE
+   - BYPASS_AUTH_MODE=true
+   - STORAGE_ENDPOINT=minio:9000
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-hub:9095
+   - HUB_SERVICE_HOST=hub
+   - HUB_SERVICE_PORT=8088
+   - CHUNKER_HOST=http://distr:8098
+   - ORGNAME=ukama-test-org
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-hub
 
-  postgresd-hub:
-    image: postgres:13.3
-    ports:
-      - "5408:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
-    networks:
-      - ukama-net
-    volumes:
-      - postgress-data:/var/lib/postgresql
+ distr: # Here, this is where you can configure your gateway.
+  build:
+   context: ./distributor
+   dockerfile: ./Dockerfile
+  ports: ['8098:8098', '8099:8099']
+  environment:
+   - DEBUGMODE=TRUE
+   - STORE_ENDPOINT=minio:9000
+   - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
+   - DISTRIBUTION_ADDRESS=distr:8099
+   - DISTRIBUTION_LOGFILE=-
+   - STORAGE_ENDPOINT=minio:9000
+   - STORAGE_ACCESSKEY=minioadmin
+   - STORAGE_SECRETKEY=minioadmin
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-hub:9095
+   - DISTRIBUTOR_SERVICE_HOST=distr
+   - DISTRIBUTOR_SERVICE_PORT=9090
+   - ORGNAME=ukama-test-org
+  networks:
+   - ukama-net
+  restart: always
 
+ msgclient-hub:
+  build:
+   context: ../services/msgClient
+   dockerfile: ./Dockerfile
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-hub
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=hub
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-hub
 
-  hub: # Here, this is where you can configure your gateway.
-    build:
-      context: ./hub
-      dockerfile: ./Dockerfile
-    ports: [ "8088:8088" ]
-    environment:
-      - DEBUGMODE=TRUE
-      - BYPASS_AUTH_MODE=true
-      - STORAGE_ENDPOINT=minio:9000
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-hub:9095
-      - HUB_SERVICE_HOST=hub
-      - HUB_SERVICE_PORT=8088
-      - CHUNKER_HOST=http://distr:8098
-      - ORGNAME=ukama-test-org
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - msgclient-hub
-
-
-  distr: # Here, this is where you can configure your gateway.
-    build:
-      context: ./distributor
-      dockerfile: ./Dockerfile
-    ports: [ "8098:8098", "8099:8099" ]
-    environment:
-      - DEBUGMODE=TRUE
-      - STORE_ENDPOINT=minio:9000
-      - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
-      - DISTRIBUTION_ADDRESS=distr:8099
-      - DISTRIBUTION_LOGFILE=-
-      - STORAGE_ENDPOINT=minio:9000
-      - STORAGE_ACCESSKEY=minioadmin
-      - STORAGE_SECRETKEY=minioadmin
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-hub:9095
-      - DISTRIBUTOR_SERVICE_HOST=distr
-      - DISTRIBUTOR_SERVICE_PORT=9090
-      - ORGNAME=ukama-test-org
-    networks:
-      - ukama-net
-    restart: always
-
-  msgclient-hub:
-    build:
-      context: ../services/msgClient
-      dockerfile: ./Dockerfile
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-hub
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - SYSTEM=hub
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - postgresd-hub
-
-
-  initclient-hub:
-    build:
-      dockerfile: ./Dockerfile
-      context: ../services/initClient
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_SYSTEM_NAME=hub
-      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_SYSTEM_PORT=8889
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_CLIENT_PORT=9091
-      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
-    restart: always
-    networks:
-      - ukama-net
+ initclient-hub:
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=hub
+   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_SYSTEM_PORT=8889
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_CLIENT_PORT=9091
+   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
-  postgress-data:
+ postgress-data:

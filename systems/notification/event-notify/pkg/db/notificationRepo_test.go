@@ -156,7 +156,7 @@ func TestNotificationRepo_Update(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewNotificationRepo(&UkamaDbMock{
+		r := int_db.NewUserNotificationRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 

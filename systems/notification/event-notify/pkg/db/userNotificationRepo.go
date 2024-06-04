@@ -12,10 +12,13 @@ import (
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"gorm.io/gorm"
 )
 
 type UserNotificationRepo interface {
 	Add(un []*UserNotification) error
+	Update(id uuid.UUID, isRead bool) error
 	GetNotificationsByUserID(id string) ([]*Notifications, error)
 }
 
@@ -42,4 +45,16 @@ func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notificat
 		return nil, d.Error
 	}
 	return notifications, nil
+}
+
+func (r *userNotificationRepo) Update(id uuid.UUID, isRead bool) error {
+	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&UserNotification{}).Where("id = ?", id).Update("is_read", isRead).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }

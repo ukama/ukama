@@ -58,6 +58,9 @@ export const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
 export const INIT_PORT = parseInt(process.env.INIT_API ?? "5055");
+export const NOTIFICATION_PORT = parseInt(
+  process.env.NOTIFICATION_PORT ?? "5056"
+);
 
 export const SUB_GRAPH_LIST = [
   { name: "org", url: `http://localhost:${ORG_PORT}`, isPingedSuccess: false },
@@ -110,6 +113,11 @@ export const SUB_GRAPH_LIST = [
   {
     name: "init",
     url: `http://localhost:${INIT_PORT}`,
+    isPingedSuccess: false,
+  },
+  {
+    name: "notification",
+    url: `http://localhost:${NOTIFICATION_PORT}`,
     isPingedSuccess: false,
   },
 ];

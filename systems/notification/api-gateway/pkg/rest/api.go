@@ -65,8 +65,8 @@ type GetEventNotificationRequest struct {
 }
 
 type UpdateEventNotificationStatusRequest struct {
-	Id     string `path:"id" binding:"required"`
-	IsRead bool   `form:"read" json:"read" query:"is_read" binding:"required"`
+	UserNotificationId string `path:"id" binding:"required"`
+	IsRead             bool   `form:"read" json:"read" query:"is_read" binding:"required"`
 }
 
 type GetRealTimeEventNotificationRequest struct {

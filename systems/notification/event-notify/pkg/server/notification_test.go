@@ -135,11 +135,11 @@ func TestServer_UpdateStatus(t *testing.T) {
 	msgclient := &cmocks.MsgBusServiceClient{}
 
 	req := pb.UpdateStatusRequest{
-		Id:     notification.Id.String(),
-		IsRead: true,
+		UserNotificationId: notification.Id.String(),
+		IsRead:             true,
 	}
 
-	nRepo.On("Update", notification.Id, req.IsRead).Return(nil).Once()
+	unRepo.On("Update", notification.Id, req.IsRead).Return(nil).Once()
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, nRepo, uRepo, emRepo, unRepo, msgclient)
 
