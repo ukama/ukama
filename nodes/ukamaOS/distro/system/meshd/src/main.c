@@ -95,12 +95,12 @@ void signal_term_handler(int signal) {
 
     close_websocket(state->handler);
 
-    if (state->webInst) {
+    if (state->webInst && state->webInst->port) {
         ulfius_stop_framework(state->webInst);
         ulfius_clean_instance(state->webInst);
     }
 
-    if (state->fwdInst) {
+    if (state->fwdInst && state->fwdInst->port) {
         ulfius_stop_framework(state->fwdInst);
         ulfius_stop_framework(state->fwdInst);
     }
@@ -256,6 +256,11 @@ int main (int argc, char *argv[]) {
 	}
 	init_map_table(&ClientTable);
 
+    if (start_web_services(config, &webInst) != TRUE) {
+        usys_log_error("Web service failed to setup. Exiting.");
+		exit(1);
+	}
+
     while (start_websocket_client(config, &websocketHandler) != TRUE) {
 		usys_log_error("Websocket failed to setup for client. Retrying in 5 seconds ...");
         sleep(5);
@@ -263,11 +268,6 @@ int main (int argc, char *argv[]) {
 
 	if (start_forward_services(config, &fwdInst) != TRUE) {
 		usys_log_error("Forward service failed to setup. Exiting.");
-		exit(1);
-	}
-
-    if (start_web_services(config, &webInst) != TRUE) {
-        usys_log_error("Web service failed to setup. Exiting.");
 		exit(1);
 	}
 

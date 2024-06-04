@@ -11,11 +11,11 @@
 	bin_to="/sbin/"
 
 [build-rootfs]
-	mkdir="/ukama/conf/bootstrap"
+	mkdir="/conf"
 
 [build-conf]
     from="/nodes/configs/capps/bootstrap/config.toml"
-    to="/ukama/conf/bootstrap/config.toml"
+    to="/conf/config.toml"
 
 # Following are use to create config.json file which is used by lxce.d to start 
 # the capp within ukamaOS and pkg everything
@@ -24,10 +24,8 @@
 	version="latest"
 	bin="bootstrap"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="--config /ukama/conf/bootstrap/config.toml"
-	
+	args="--config /ukama/configs/bootstrap/config.toml"
+
 # Final output format for capp
 [capp-output]
 	format="tar.gz"
-
-# Nothing to see here. Move on.

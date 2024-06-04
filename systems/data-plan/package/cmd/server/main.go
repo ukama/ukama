@@ -87,7 +87,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("failed to connect to rate service. Error: %s", err)
 	}
 
-	srv := server.NewPackageServer(serviceConfig.OrgName, db.NewPackageRepo(gormdb), rate, mbClient)
+	srv := server.NewPackageServer(serviceConfig.OrgName, db.NewPackageRepo(gormdb), rate, mbClient,serviceConfig.OrgId)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)

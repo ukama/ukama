@@ -28,6 +28,7 @@ extern "C" {
 #define SERVICE_RLOG          "rlog"
 #define SERVICE_RLOG_ADMIN    "rlog-admin"	
 #define SERVICE_REMOTE        "remote"
+#define SERVICE_BOOTSTRAP_REMOTE "bootstrap-remote"
 
 #ifdef __cplusplus
 }

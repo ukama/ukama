@@ -40,6 +40,7 @@ type BrdigeConfig struct {
 type HttpEndpoints struct {
 	Timeout time.Duration
 	Policy  string
+	Noded   string `default:"localhost:9090"`
 }
 
 func NewConfig(name string) *Config {
@@ -59,13 +60,14 @@ func NewConfig(name string) *Config {
 		},
 		DB: name,
 		Server: rest.HttpConfig{
-			Port: 8090,
+			Port: 18090,
 			Cors: defaultCors,
 		},
 
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
 			Policy:  "http://localhost:8087",
+			Noded:   "http://localhost:18000",
 		},
 		Metrics: *config.DefaultMetrics(),
 		//Auth:    config.LoadAuthHostConfig("auth"),

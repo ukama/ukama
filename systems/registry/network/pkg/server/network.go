@@ -37,7 +37,6 @@ type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
 	orgName        string
 	netRepo        db.NetRepo
-	orgRepo        db.OrgRepo
 	orgClient      cnucl.OrgClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -45,13 +44,13 @@ type NetworkServer struct {
 	country        string
 	language       string
 	currency       string
+	orgId          string
 }
 
-func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo,orgService cnucl.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway, country, language, currency string) *NetworkServer {
+func NewNetworkServer(orgName string, netRepo db.NetRepo, orgService cnucl.OrgClient, msgBus mb.MsgBusServiceClient, pushGateway, country, language, currency, orgId string) *NetworkServer {
 	return &NetworkServer{
 		orgName:        orgName,
 		netRepo:        netRepo,
-		orgRepo:        orgRepo,
 		orgClient:      orgService,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -59,50 +58,29 @@ func NewNetworkServer(orgName string, netRepo db.NetRepo, orgRepo db.OrgRepo,org
 		country:        country,
 		language:       language,
 		currency:       currency,
+		orgId:          orgId,
 	}
 }
 
 func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	// Get the Org locally
-	orgName := req.GetOrgName()
+	orgName := n.orgName
 	networkName := req.GetName()
 
-	org, err := n.orgRepo.GetByName(orgName)
+	log.Infof("lookup for org %s remotely", orgName)
+	remoteOrg, err := n.orgClient.Get(orgName)
 	if err != nil {
-		log.Infof("lookup for org %s remotely", orgName)
-
-		remoteOrg, err := n.orgClient.Get(orgName)
-		if err != nil {
-			return nil, err
-		}
-
-		// What should we do if the remote org exists but is deactivated?
-		// For now we simply abort.
-		if remoteOrg.IsDeactivated {
-			return nil, status.Errorf(codes.FailedPrecondition,
-				"org is deactivated: cannot add network to it")
-		}
-
-		remoteOrgId, err := uuid.FromString(remoteOrg.Id)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid remote org id: %v", err)
-		}
-
-		log.Infof("Adding remote org %s to local org repo", orgName)
-		org = &db.Org{
-			Id:          remoteOrgId,
-			Name:        remoteOrg.Name,
-			Deactivated: remoteOrg.IsDeactivated}
-
-		err = n.orgRepo.Add(org)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "org")
-		}
+		return nil, err
+	}
+	// What should we do if the remote org exists but is deactivated?
+	// For now we simply abort.
+	if remoteOrg.IsDeactivated {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"org is deactivated: cannot add network to it")
 	}
 
 	network := &db.Network{
 		Name:             networkName,
-		OrgId:            org.Id,
 		AllowedCountries: req.AllowedCountries,
 		AllowedNetworks:  req.AllowedNetworks,
 		Budget:           req.Budget,
@@ -131,7 +109,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	evt := &epb.NetworkCreatedEvent{
 		Id:               network.Id.String(),
 		Name:             network.Name,
-		OrgId:            network.OrgId.String(),
+		OrgId:            n.orgId,
 		AllowedCountries: network.AllowedCountries,
 		AllowedNetworks:  network.AllowedNetworks,
 		Budget:           network.Budget,
@@ -147,11 +125,10 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			evt, route, err.Error())
 	}
 
-	n.pushNetworkCount(org.Id)
+	n.pushNetworkCount()
 
 	return &pb.AddResponse{
 		Network: dbNtwkToPbNtwk(network),
-		Org:     req.GetOrgName(),
 	}, nil
 }
 
@@ -172,30 +149,24 @@ func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 }
 
 func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
-	nt, err := n.netRepo.GetByName(req.GetOrgName(), req.GetName())
+	nt, err := n.netRepo.GetByName(req.GetName())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "mapping org/network")
+		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
 	return &pb.GetByNameResponse{
 		Network: dbNtwkToPbNtwk(nt),
-		Org:     req.GetOrgName(),
 	}, nil
 }
 
-func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	orgId, err := uuid.FromString(req.OrgId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
+func (n *NetworkServer) GetAll(ctx context.Context, req *pb.GetNetworksRequest) (*pb.GetNetworksResponse, error) {
 
-	ntwks, err := n.netRepo.GetByOrg(orgId)
+	ntwks, err := n.netRepo.GetAll()
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
 
-	resp := &pb.GetByOrgResponse{
-		OrgId:    req.OrgId,
+	resp := &pb.GetNetworksResponse{
 		Networks: dbNtwksToPbNtwks(ntwks),
 	}
 
@@ -203,15 +174,13 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 }
 
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	log.Infof("Deleting network %s", req.Name)
-
-	org, err := n.orgRepo.GetByName(req.OrgName)
+	log.Infof("Deleting network %s", req.NetworkId)
+	netId, err := uuid.FromString(req.NetworkId)
 	if err != nil {
-		log.Errorf("Failed to find org %s. Errors %s", req.OrgName, err.Error())
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	err = n.netRepo.Delete(req.OrgName, req.Name)
+	err = n.netRepo.Delete(netId)
 	if err != nil {
 		log.Error(err)
 
@@ -225,7 +194,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	n.pushNetworkCount(org.Id)
+	n.pushNetworkCount()
 
 	return &pb.DeleteResponse{}, nil
 }
@@ -234,7 +203,6 @@ func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
 		Id:               ntwk.Id.String(),
 		Name:             ntwk.Name,
-		OrgId:            ntwk.OrgId.String(),
 		AllowedCountries: ntwk.AllowedCountries,
 		AllowedNetworks:  ntwk.AllowedNetworks,
 		Budget:           ntwk.Budget,
@@ -257,34 +225,19 @@ func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
 	return res
 }
 
-
-
-func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
-	networkCount, err := n.netRepo.GetNetworkCount(orgId)
+func (n *NetworkServer) pushNetworkCount() {
+	networkCount, err := n.netRepo.GetNetworkCount()
 	if err != nil {
 		log.Errorf("failed to get network counts: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": n.orgId}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
 }
 
-
-
 func (n *NetworkServer) PushMetrics() error {
-
-	// Push Network count metric per org to pushgateway
-	orgs, err := n.orgRepo.GetAll()
-	if err != nil {
-		log.Errorf("Failed to get all networks. Error %s", err.Error())
-		return err
-	}
-
-	for _, org := range orgs {
-		n.pushNetworkCount(org.Id)
-	}
-
+	n.pushNetworkCount()
 	return nil
 }

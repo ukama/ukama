@@ -29,8 +29,8 @@ const (
 	NetworkService_Add_FullMethodName       = "/ukama.registry.network.v1.NetworkService/Add"
 	NetworkService_Get_FullMethodName       = "/ukama.registry.network.v1.NetworkService/Get"
 	NetworkService_GetByName_FullMethodName = "/ukama.registry.network.v1.NetworkService/GetByName"
-	NetworkService_GetByOrg_FullMethodName  = "/ukama.registry.network.v1.NetworkService/GetByOrg"
 	NetworkService_Delete_FullMethodName    = "/ukama.registry.network.v1.NetworkService/Delete"
+	NetworkService_GetAll_FullMethodName    = "/ukama.registry.network.v1.NetworkService/GetAll"
 )
 
 // NetworkServiceClient is the client API for NetworkService service.
@@ -41,8 +41,8 @@ type NetworkServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
-	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	GetAll(ctx context.Context, in *GetNetworksRequest, opts ...grpc.CallOption) (*GetNetworksResponse, error)
 }
 
 type networkServiceClient struct {
@@ -80,18 +80,18 @@ func (c *networkServiceClient) GetByName(ctx context.Context, in *GetByNameReque
 	return out, nil
 }
 
-func (c *networkServiceClient) GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error) {
-	out := new(GetByOrgResponse)
-	err := c.cc.Invoke(ctx, NetworkService_GetByOrg_FullMethodName, in, out, opts...)
+func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, NetworkService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, NetworkService_Delete_FullMethodName, in, out, opts...)
+func (c *networkServiceClient) GetAll(ctx context.Context, in *GetNetworksRequest, opts ...grpc.CallOption) (*GetNetworksResponse, error) {
+	out := new(GetNetworksResponse)
+	err := c.cc.Invoke(ctx, NetworkService_GetAll_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +106,8 @@ type NetworkServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
-	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	GetAll(context.Context, *GetNetworksRequest) (*GetNetworksResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -124,11 +124,11 @@ func (UnimplementedNetworkServiceServer) Get(context.Context, *GetRequest) (*Get
 func (UnimplementedNetworkServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
 }
-func (UnimplementedNetworkServiceServer) GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByOrg not implemented")
-}
 func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetAll(context.Context, *GetNetworksRequest) (*GetNetworksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -197,24 +197,6 @@ func _NetworkService_GetByName_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByOrgRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NetworkServiceServer).GetByOrg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NetworkService_GetByOrg_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).GetByOrg(ctx, req.(*GetByOrgRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _NetworkService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -229,6 +211,24 @@ func _NetworkService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NetworkServiceServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkService_GetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNetworksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NetworkService_GetAll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetAll(ctx, req.(*GetNetworksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -253,12 +253,12 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NetworkService_GetByName_Handler,
 		},
 		{
-			MethodName: "GetByOrg",
-			Handler:    _NetworkService_GetByOrg_Handler,
-		},
-		{
 			MethodName: "Delete",
 			Handler:    _NetworkService_Delete_Handler,
+		},
+		{
+			MethodName: "GetAll",
+			Handler:    _NetworkService_GetAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,7 +12,6 @@ type AddPackageRequest struct {
 	Name          string   `example:"Monthly-Data" json:"name" validation:"required"`
 	From          string   `example:"2023-04-01T00:00:00Z" json:"from" validation:"required"`
 	To            string   `example:"2023-05-01T00:00:00Z" json:"to" validation:"required"`
-	OrgId         string   `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
 	OwnerId       string   `example:"{{OwnerUUID}}" json:"owner_id" validation:"required"`
 	SimType       string   `example:"test" json:"sim_type" validation:"required"`
 	SmsVolume     int64    `example:"0" json:"sms_volume" validation:"required"`
@@ -62,9 +61,7 @@ type GetBaseRateRequest struct {
 	RateId string `path:"base_rate" validate:"required"`
 }
 
-type GetPackageByOrgRequest struct {
-	OrgId string `example:"{{OrgUUID}}" form:"org_id" json:"org_id" path:"org_id" binding:"required" validate:"required"`
-}
+
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required" validate:"required"`
 	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`

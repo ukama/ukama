@@ -16,7 +16,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -65,21 +64,22 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, aut
 	}
 }
 
-func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
+func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding invitation %v", req)
 	invitationId := uuid.NewV4()
 
-	if req.GetOrg() == "" || req.GetEmail() == "" || req.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
+	if i.orgName == "" || req.GetEmail() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgName, Email, and Name are required")
 	}
 
 	expiry := time.Now().Add(time.Hour * time.Duration(i.invitationExpiryTime))
+
 	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(), expiry)
 	if err != nil {
 		return nil, err
 	}
 
-	orgInfo, err := i.orgClient.Get(req.GetOrg())
+	orgInfo, err := i.orgClient.Get(i.orgName)
 	if err != nil {
 		return nil, err
 	}
@@ -110,13 +110,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		log.Errorf("Failed to get invited user info. Error %s", err.Error())
 	}
 
-	// userId := ""
-	// if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo.User, reflect.Zero(reflect.TypeOf(invitedUserInfo.User)).Interface()) {
-	// userId = invitedUserInfo.User.Id
-	// } else {
-	// userId = "00000000-0000-0000-0000-000000000000"
-	// }
-
 	userId := "00000000-0000-0000-0000-000000000000"
 	if invitedUserInfo != nil && !reflect.DeepEqual(invitedUserInfo, reflect.Zero(reflect.TypeOf(invitedUserInfo)).Interface()) {
 		userId = invitedUserInfo.Id
@@ -124,7 +117,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 
 	invite := &db.Invitation{
 		Id:        invitationId,
-		Org:       req.GetOrg(),
 		Name:      req.GetName(),
 		Link:      link,
 		Email:     req.GetEmail(),
@@ -163,12 +155,12 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 		}
 	}
 
-	return &pb.AddInvitationResponse{
+	return &pb.AddResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
 
-func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
+func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -182,12 +174,12 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationR
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.DeleteInvitationResponse{
+	return &pb.DeleteResponse{
 		Id: req.GetId(),
 	}, nil
 }
 
-func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvitationStatusRequest) (*pb.UpdateInvitationStatusResponse, error) {
+func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
 	log.Infof("Updating invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -228,13 +220,13 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateInvit
 		}
 	}
 
-	return &pb.UpdateInvitationStatusResponse{
+	return &pb.UpdateStatusResponse{
 		Id:     req.GetId(),
 		Status: *req.GetStatus().Enum(),
 	}, nil
 }
 
-func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
+func (i *InvitationServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
 	iuuid, err := uuid.FromString(req.GetId())
@@ -247,74 +239,51 @@ func (i *InvitationServer) Get(ctx context.Context, req *pb.GetInvitationRequest
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.GetInvitationResponse{
+	return &pb.GetResponse{
 		Invitation: dbInvitationToPbInvitation(invitation),
 	}, nil
 }
 
-func (u *InvitationServer) GetInvitationByEmail(ctx context.Context, req *pb.GetInvitationByEmailRequest) (*pb.GetInvitationByEmailResponse, error) {
+func (u *InvitationServer) GetByEmail(ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetByEmailResponse, error) {
 	log.Infof("Getting invitation %v", req)
 
 	if req.GetEmail() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
 	}
 
-	invitation, err := u.iRepo.GetInvitationByEmail(req.GetEmail())
+	invitation, err := u.iRepo.GetByEmail(req.GetEmail())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.GetInvitationByEmailResponse{
+	return &pb.GetByEmailResponse{
 		Invitation: dbInvitationToPbInvitation(invitation),
 	}, nil
 }
 
-func (i *InvitationServer) GetByOrg(ctx context.Context, req *pb.GetInvitationByOrgRequest) (*pb.GetInvitationByOrgResponse, error) {
-	log.Infof("Getting invitation %v", req)
+func (i *InvitationServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+	log.Infof("Getting invitations")
 
-	if req.GetOrg() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
-	}
-
-	invitations, err := i.iRepo.GetByOrg(req.GetOrg())
+	invitations, err := i.iRepo.GetAll()
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+		return nil, grpc.SqlErrorToGrpc(err, "invitations")
 	}
 
-	return &pb.GetInvitationByOrgResponse{
+	return &pb.GetAllResponse{
 		Invitations: dbInvitationsToPbInvitations(invitations),
 	}, nil
 }
 
-// unused?
-// func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-// switch role {
-// case pb.RoleType_ADMIN:
-// return db.Admin
-// case pb.RoleType_VENDOR:
-// return db.Vendor
-// case pb.RoleType_USERS:
-// return db.Users
-// case pb.RoleType_OWNER:
-// return db.Owner
-// case pb.RoleType_EMPLOYEE:
-// return db.Employee
-// default:
-// return db.Users
-// }
-// }
-
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{
 		Id:       invitation.Id.String(),
-		Org:      invitation.Org,
 		Link:     invitation.Link,
 		Email:    invitation.Email,
 		Role:     pb.RoleType(invitation.Role),
 		Name:     invitation.Name,
 		Status:   pb.StatusType(invitation.Status),
 		UserId:   invitation.UserId,
-		ExpireAt: timestamppb.New(invitation.ExpiresAt),
+		ExpireAt: invitation.ExpiresAt.String(),
 	}
 }
 

@@ -24,23 +24,6 @@
 
 extern MapTable *NodesTable;
 
-/*
- * clear_response -- free up memory from MResponse.
- *
- */
-static void clear_response(MResponse **resp) {
-
-	if (*resp==NULL) return;
-
-	free((*resp)->reqType);
-	free((*resp)->serviceInfo);
-	if ((*resp)->data) {
-		free((*resp)->data);
-	}
-
-	free(*resp);
-}
-
 static void free_message(Message *message) {
 
     if (message == NULL) return;
@@ -60,32 +43,12 @@ static int is_websocket_valid(WSManager *manager, MapItem *map) {
 
     if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
         log_debug("Websocket is closed with node: %s", map->nodeInfo->nodeID);
-
-        config = (Config *)map->configData;
-
-        /* publish event on AMQP */
-        if (publish_event(CONN_CLOSE,
-                          config->orgName,
-                          map->nodeInfo->nodeID,
-                          map->nodeInfo->nodeIP,
-                          map->nodeInfo->nodePort,
-                          map->nodeInfo->meshIP,
-                          map->nodeInfo->meshPort) == FALSE) {
-            log_error("Error publishing device connect msg on AMQP exchange");
-        } else {
-            log_debug("Send AMQP offline msg for NodeID: %s",
-                      map->nodeInfo->nodeID);
-        }
-
         return FALSE;
     }
 
     return TRUE;
 }
 
-/*
- * websocket related callback functions.
- */
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
@@ -103,10 +66,12 @@ void websocket_manager(const URequest *request, WSManager *manager,
         return;
     }
 
+    /* Keep track of WS manager for connection management */
+    map->wsManager = manager;
+
     /* Setup transmit and receiving queues for the websocket */
     map->transmit = (WorkList *)calloc(1, sizeof(WorkList));
     map->receive  = (WorkList *)calloc(1, sizeof(WorkList));
-
     if (map->transmit == NULL || map->receive == NULL) {
         log_error("Memory allocation failure: %d", sizeof(WorkList));
         return;
@@ -178,22 +143,17 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		}
 
 		/* Free up the memory */
-		destroy_work_item(work);
+		free_work_item(work);
 	}
 
 	return;
 }
 
-/*
- * websocket_incoming_message -- handle incoming message over websocket.
- *
- */
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager, WSMessage *message,
 								void *data) {
     Message *rcvdMessage=NULL;
     char *responseRemote=NULL;
-	MRequest *rcvdData=NULL;
 	int ret;
     MapItem *map=NULL;
     Forward *forward=NULL;
@@ -252,10 +212,6 @@ done:
 	return;
 }
 
-/*
- * websocket_onclose -- is called when the websocket is closed.
- *
- */
 void websocket_onclose(const URequest *request,
                        WSManager *manager,
                        void *data) {

@@ -6,10 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * config.h
- */
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -41,8 +37,8 @@ typedef struct {
 	int   nodedPort;       /* Port where node.d is listening */
 	char *meshConfig;      /* Mesh.d configuration file */
 	char *remoteIPFile;    /* file storing the remote server IP */
-	char *bootstrapServer; /* Bootstrap server */
-    int   bootstrapPort;   /* Bootstrap listening port */
+	char *bootstrapRemoteServer; /* Bootstrap server */
+    int   bootstrapRemotePort;   /* Bootstrap listening port */
 } Config;
 
 int process_config_file(char *fileName, Config *config);

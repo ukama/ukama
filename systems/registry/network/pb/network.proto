@@ -22,14 +22,13 @@ service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
-    rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc GetAll(GetNetworksRequest) returns (GetNetworksResponse);
 }
 
 
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
     repeated string allowedCountries = 3 [json_name = "allowed_countries"];
     repeated string allowedNetworks = 4 [json_name = "allowed_networks"];
     double budget = 5;
@@ -37,9 +36,12 @@ message AddRequest{
     uint32 trafficPolicy = 7 [json_name = "traffic_policy"];;
     bool paymentLinks = 8 [json_name = "payment_links"];
 }
-
+message GetNetworksRequest{
+}
+message GetNetworksResponse{
+    repeated Network networks = 2;
+}
 message AddResponse{
-    string org = 1;
     Network network = 2;
 }
 
@@ -53,26 +55,15 @@ message GetResponse{
 
 message GetByNameRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
 
 message GetByNameResponse{
     Network network = 1;
-    string org = 2;
 }
 
-message GetByOrgRequest{
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
-}
-
-message GetByOrgResponse{
-    string orgId = 1 [json_name = "org_id"];
-    repeated Network networks = 2;
-}
 
 message DeleteRequest{
-    string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true} , json_name = "org"];
+    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
 }
 
 message DeleteResponse{
@@ -81,7 +72,6 @@ message DeleteResponse{
 message Network {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2;
-    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     repeated string allowedCountries = 4 [json_name = "allowed_countries"];
     repeated string allowedNetworks = 5 [json_name = "allowed_networks"];
     double budget = 6;

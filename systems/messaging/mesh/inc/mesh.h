@@ -66,7 +66,7 @@
 #define ENV_SYSTEM_ORG_ID    "ENV_SYSTEM_ORG_ID"
 #define ENV_BINDING_IP       "ENV_BINDING_IP"
 
-#define DEFAULT_MESH_AMQP_EXCHANGE "amqp.direct"
+#define DEFAULT_MESH_AMQP_EXCHANGE "amq.topic"
 #define DEFAULT_MESH_CERT_FILE     "certs/test.cert"
 #define DEFAULT_MESH_KEY_FILE      "certs/server.key"
 

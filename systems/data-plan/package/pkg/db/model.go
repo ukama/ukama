@@ -25,7 +25,6 @@ type Package struct {
 	OwnerId        uuid.UUID
 	Name           string
 	SimType        ukama.SimType
-	OrgId          uuid.UUID      `gorm:"not null;type:uuid;index"`
 	Active         bool           `gorm:"not null; default:false"`
 	Duration       uint64         `gorm:"not null; default:0"`
 	SmsVolume      uint64         `gorm:"not null; default:0"`

@@ -18,7 +18,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -65,7 +64,6 @@ func TestNodeRepo_Add(t *testing.T) {
 	node := nodedb.Node{
 		Id:    nodeId.String(),
 		Name:  "node-1",
-		OrgId: uuid.NewV4(),
 		Type:  "hnode",
 	}
 
@@ -91,8 +89,8 @@ func TestNodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(node.Id, node.Name, node.Type, node.OrgId, node.ParentNodeId,
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(node.Id, node.Name, node.Type, node.ParentNodeId,
+				sqlmock.AnyArg(), sqlmock.AnyArg(),sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 

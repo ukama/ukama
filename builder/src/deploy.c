@@ -154,8 +154,10 @@ bool deploy_all_systems(char *configFilename,
                         char *ukamaRepo,
                         char *authRepo) {
 
-    char list[MAX_BUFFER] = {0};
+    int index;
+    char list[MAX_BUFFER]       = {0};
     char systemPath[MAX_BUFFER] = {0};
+    char runMe[MAX_BUFFER]      = {0};
     char *systemName = NULL;
 
     strncpy(list, deployConfig->systemsList, strlen(deployConfig->systemsList));
@@ -182,22 +184,40 @@ bool deploy_all_systems(char *configFilename,
         systemName = strtok(NULL, DELIMINATOR);
     }
 
+    /* add org and nodes to init system */
+    sprintf(runMe, "%s add-org-to-init-system %s", DEPLOY_SCRIPT, ukamaRepo);
+    if (system(runMe) < 0) {
+        usys_log_error("Unable to add default org to init system");
+        return USYS_FALSE;
+    }
+
+    for (index=0; index < deployConfig->nodesCount; index++) {
+        sprintf(runMe, "%s add-node-to-init-system %s %s",
+                DEPLOY_SCRIPT,
+                ukamaRepo,
+                deployConfig->nodesIDList[index]);
+        if  (system(runMe) < 0) {
+            usys_log_error("Unable to add node id %s to init system",
+                           deployConfig->nodesIDList[index]);
+            continue;
+        }
+    }
+
     return USYS_TRUE;
 }
 
-bool deploy_node(char *id) {
+bool deploy_nodes(int count, char **nodesIDList) {
 
-    char *nodeID = NULL;
+    int i;
     char runMe[MAX_BUFFER] = {0};
 
-    if (strcmp(id, "random") == 0) {
-        nodeID = DEF_NODE_ID;
-    } else {
-        nodeID = id;
+    for (i=0; i<count; i++) {
+        sprintf(runMe, "%s node %s", DEPLOY_SCRIPT, nodesIDList[i]);
+        if (system(runMe) < 0) {
+            usys_log_error("Unable to deploy node: %s", nodesIDList[i]);
+            continue;
+        }
     }
-
-    sprintf(runMe, "%s node %s", DEPLOY_SCRIPT, nodeID);
-    if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
 }

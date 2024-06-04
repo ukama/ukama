@@ -34,8 +34,8 @@
 #define ENV_STARTER_DEBUG_MODE "STARTER_DEBUG_MODE"
 
 /* for spaces and capps */
-#define DEF_CAPP_PATH          "/capps/pkgs"
-#define DEF_SPACE_ROOTFS_PATH  "/capps/rootfs"
+#define DEF_CAPP_PATH          "/ukama/apps/pkgs"
+#define DEF_SPACE_ROOTFS_PATH  "/ukama/apps/rootfs"
 #define DEF_CAPP_CONFIG_FILE   "config.json"
 
 /* runtime status */

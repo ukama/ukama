@@ -75,11 +75,9 @@ static void find_service_name_and_ep(char *input,
     if (separator != NULL) {
         size_t length = separator - input;
 
-        *name = (char *)malloc(length);
+        *name = (char *)calloc(length, sizeof(char));
         strncpy(*name, &input[1], length-1);
-        (*name)[length] = '\0';
-
-        *ep = strdup(separator + 1);
+        *ep = strdup(separator);
     } else {
         *name = strdup(input);
         *ep   = strdup("");

@@ -11,7 +11,7 @@
 	bin_to="/sbin"
 
 [build-rootfs]
-	mkdir="/ukama/conf"
+	mkdir="/conf"
 
 [build-conf]
     from="/nodes/manifest.json"
@@ -29,5 +29,3 @@
 # Final output format for capp
 [capp-output]
 	format="tar.gz"
-
-# Nothing to see here. Move on.

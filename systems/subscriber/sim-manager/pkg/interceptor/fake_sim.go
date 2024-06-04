@@ -113,9 +113,13 @@ func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simID, 
 
 	switch simStatus {
 	case statusActive:
-		return nil, f.testAgentAdapter.ActivateSim(ctx, fakeIccid)
+		return nil, f.testAgentAdapter.ActivateSim(ctx, adapters.ReqData{
+			Iccid: fakeIccid,
+		})
 	case statusInactive:
-		return nil, f.testAgentAdapter.DeactivateSim(ctx, fakeIccid)
+		return nil, f.testAgentAdapter.DeactivateSim(ctx, adapters.ReqData{
+			Iccid: fakeIccid,
+		})
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "status %q not supported for operation ", simStatus)
 	}

@@ -33,17 +33,12 @@ type UpdateMemberRequest struct {
 	Role          string `example:"member" json:"role,omitempty"`
 }
 
-// Network group
-type GetNetworksRequest struct {
-	OrgUuid string `example:"{{OrgUUID}}" form:"org" json:"org" query:"org" binding:"required" validate:"required"`
-}
 
 type GetNetworkRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
 }
 
 type AddNetworkRequest struct {
-	OrgName          string   `example:"milky-way"  json:"org" validate:"required"`
 	NetName          string   `example:"mesh-network" json:"network_name" validate:"required"`
 	AllowedCountries []string `json:"allowed_countries"`
 	AllowedNetworks  []string `json:"allowed_networks"`
@@ -115,7 +110,6 @@ type GetNodesRequest struct {
 }
 
 type GetOrgNodesRequest struct {
-	OrgId string `example:"{{OrgId}}" path:"org" validate:"required"`
 	Free  bool   `form:"free" json:"free" query:"free" binding:"required"`
 }
 
@@ -130,7 +124,6 @@ type GetNetworkNodesRequest struct {
 type AddNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required"`
 	Name   string `json:"name"`
-	OrgId  string `json:"org_id" validate:"required"`
 	State  string `json:"state" validate:"required"`
 }
 
@@ -151,14 +144,9 @@ type ReleaseNodeFromSiteRequest struct {
 }
 
 type AddInvitationRequest struct {
-	Org   string `json:"org" path:"org" validate:"required"`
 	Name  string `json:"name" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role  string `json:"role" validate:"required"`
-}
-
-type GetInvitationByOrgRequest struct {
-	Org string `json:"org" path:"org" validate:"required"`
 }
 
 type GetInvitationRequest struct {

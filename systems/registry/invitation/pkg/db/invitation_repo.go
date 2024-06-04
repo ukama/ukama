@@ -17,10 +17,10 @@ import (
 type InvitationRepo interface {
 	Add(invitation *Invitation, nestedFunc func(*Invitation, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Invitation, error)
-	GetByOrg(org string) ([]*Invitation, error)
+	GetAll() ([]*Invitation, error)
 	UpdateStatus(id uuid.UUID, status uint8) error
 	Delete(id uuid.UUID, nestedFunc func(string, string) error) error
-	GetInvitationByEmail(email string) (*Invitation, error)
+	GetByEmail(email string) (*Invitation, error)
 }
 
 type invitationRepo struct {
@@ -33,7 +33,7 @@ func NewInvitationRepo(db sql.Db) InvitationRepo {
 	}
 }
 
-func (r *invitationRepo) GetInvitationByEmail(email string) (*Invitation, error) {
+func (r *invitationRepo) GetByEmail(email string) (*Invitation, error) {
 	var invitation Invitation
 	err := r.Db.GetGormDb().Where("email = ?", email).First(&invitation).Error
 	if err != nil {
@@ -70,9 +70,9 @@ func (r *invitationRepo) Get(id uuid.UUID) (*Invitation, error) {
 	return &invitation, nil
 }
 
-func (r *invitationRepo) GetByOrg(org string) ([]*Invitation, error) {
+func (r *invitationRepo) GetAll() ([]*Invitation, error) {
 	var invitations []*Invitation
-	err := r.Db.GetGormDb().Where("org = ?", org).Find(&invitations).Error
+	err := r.Db.GetGormDb().Find(&invitations).Error
 	if err != nil {
 		return nil, err
 	}

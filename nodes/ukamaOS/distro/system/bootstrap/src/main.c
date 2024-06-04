@@ -6,11 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Ukama Node bootstrap --
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,9 +87,10 @@ int main (int argc, char **argv) {
 	char *nodeID=NULL;
 	int opt, opdidx;
     char buffer[MAX_BUFFER] = {0};
+    struct _u_instance webInst;
 
-    log_set_service(SERVICE_NAME);
-    
+    usys_log_set_service(SERVICE_NAME);
+
 	/* Prase command line args. */
 	while (TRUE) {
 
@@ -167,10 +163,10 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
-    config->nodedPort = usys_find_service_port("node");
-    config->bootstrapPort = usys_find_service_port("bootstrap");
-    if (config->nodedPort == 0 || config->bootstrapPort == 0) {
-        usys_log_error("Error getting noded/bootstrap port from service db");
+    config->nodedPort           = usys_find_service_port(SERVICE_NODE);
+    config->bootstrapRemotePort = usys_find_service_port(SERVICE_BOOTSTRAP_REMOTE);
+    if (config->nodedPort == 0 || config->bootstrapRemotePort == 0) {
+        usys_log_error("Error getting noded/bootstrap remote port from service db");
         exit(1);
     }
 	print_config(config);
@@ -178,16 +174,16 @@ int main (int argc, char **argv) {
 	/* Step-2: request node.d for NodeID */
 	if (get_nodeID_from_noded(&nodeID, config->nodedHost, config->nodedPort)
 		!= TRUE) {
-	    usys_log_error("Error retreiving NodeID from noded.d at %s:%s",
+	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
                        config->nodedHost, config->nodedPort);
 		goto done;
 	}
 
 	/* Step-3: connect with the ukama bootstrap server */
-    send_request_to_init_with_exponential_backoff(config->bootstrapServer,
-                                                  config->bootstrapPort,
+    send_request_to_init_with_exponential_backoff(config->bootstrapRemoteServer,
+                                                  config->bootstrapRemotePort,
                                                   nodeID, serverInfo);
-	
+
 	/* Step-4: read mesh config file, update server IP and certs */
 	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {
 		usys_log_error("Error reading mesh.d config file: %s", config->meshConfig);
@@ -206,7 +202,17 @@ int main (int argc, char **argv) {
 	/* Done. */
 	usys_log_debug("Mesh.d configuration update successfully.");
 
+    if (start_web_services(&webInst) != TRUE) {
+        usys_log_error("Web service failed to setup. Exiting.");
+        exit(1);
+    }
+
+    pause();
+
  done:
+    ulfius_stop_framework(&webInst);
+    ulfius_clean_instance(&webInst);
+
 	clear_config(config);
 	clear_mesh_config(meshConfig);
 	free_server_info(serverInfo);

@@ -152,7 +152,6 @@ services:
    - msgclient-messaging
   networks:
    - ukama-net
-   #request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 
 networks:
  ukama-net:

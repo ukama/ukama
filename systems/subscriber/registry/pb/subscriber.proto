@@ -108,8 +108,6 @@ message AddSubscriberRequest {
     string dob = 9;
     // gender of the subscriber, must not be empty and have a length greater than 1
     string gender =10;
-    // org ID of the subscriber, must be a UUID and not empty
-    string orgId = 11 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     }
 // UpdateSubscriberRequest defines the request to update a subscriber
 message UpdateSubscriberRequest{
@@ -135,7 +133,6 @@ message AddSubscriberResponse{
 
 }
 message Subscriber{
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string firstName  = 2 [json_name = "first_name"];
     string lastName = 3 [json_name = "last_name"];
     string subscriberId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
@@ -164,7 +161,6 @@ message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string orgId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     Package package = 5;
     string iccid = 6;
     string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];

@@ -37,7 +37,6 @@ extern int start_websocket_server(Config *config, UInst *websocketInst);
 MapTable *NodesTable=NULL;
 ProcessState *processState=NULL;
 
-/* usage -- Usage options for the Mesh */
 void usage(void) {
 
 	printf("Usage: mesh [options] \n");
@@ -60,7 +59,6 @@ void usage(void) {
            ENV_BINDING_IP);
 }
 
-/* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
@@ -102,8 +100,6 @@ void signal_term_handler(void) {
 	exit(1);
 }
 
-/* setup SIGTERM catch
- */
 void catch_sigterm(void) {
 
 	static struct sigaction saction;
@@ -164,13 +160,14 @@ int main (int argc, char *argv[]) {
             usage();
             goto exit_program;
         }
-    } /* while */
+    }
 
 	config = (Config *)calloc(1, sizeof(Config));
 	if (!config) {
 		log_error("Memory allocation failure: %d", sizeof(Config));
 		exit(1);
 	}
+    processState->config = config;
 
 	/* Step-1: read config file. */
     if (!read_config_from_env(&config)) {
@@ -199,7 +196,7 @@ int main (int argc, char *argv[]) {
 	}
 
     /* Step-3: publish AMQP event with org name, org id and binding port */
-    if (publish_boot_event()) {
+    if (publish_boot_event(DEFAULT_MESH_AMQP_EXCHANGE)) {
         log_debug("Mesh running for Ukama Org: %s", config->orgName);
         pause();
     } else {

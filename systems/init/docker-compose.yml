@@ -24,6 +24,7 @@ services:
    - LOOKUP_SERVICE_HOST=lookup
    - LOOKUP_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
   restart: always
   networks:
    - ukama-net
@@ -37,7 +38,7 @@ services:
    context: ./node-gateway
   restart: always
   ports:
-   - '8070:8080'
+   - '17998:8080'
   networks:
    - ukama-net
   environment:

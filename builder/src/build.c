@@ -17,7 +17,8 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-#define SCRIPT      "./build.sh"
+#define SCRIPT        "./build.sh"
+#define BASE_IMAGE_ID "uk-ma0000-tnode-a1-1234"
 
 static bool build_system(char *name, char *path) {
 
@@ -64,24 +65,27 @@ bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo) {
     return USYS_TRUE;
 }
 
-bool build_nodes(int count, char *repo, char *list) {
+bool build_nodes(char *repo, int count, char **list) {
 
-    char *nodeID = NULL;
+    int i;
     char runMe[MAX_BUFFER] = {0};
 
-    if (count != 1 ) {
-        usys_log_error("Currently supporting single node creation");
+    sprintf(runMe, "cd scripts; sudo %s base-image %s %s; cd -",
+            SCRIPT, repo, BASE_IMAGE_ID);
+    if (system(runMe) < 0) {
+        usys_log_error("Unable to create base image via repo: %s", repo);
         return USYS_FALSE;
     }
 
-    if (strcmp(list, "random") == 0) {
-        nodeID = DEF_NODE_ID;
-    } else {
-        nodeID = list;
-    }
+    for (i=0; i<count; i++) {
 
-    sprintf(runMe, "cd scripts; sudo %s node %s %s; cd -", SCRIPT, repo, nodeID);
-    if (system(runMe) < 0) return USYS_FALSE;
+        sprintf(runMe, "cd scripts; sudo %s create-node %s %s %s; cd -",
+                SCRIPT, repo, list[i], BASE_IMAGE_ID);
+        if (system(runMe) < 0) {
+            usys_log_error("Unable to create node with ID: %s", list[i]);
+            continue;
+        }
+    }
 
     return USYS_TRUE;
 }

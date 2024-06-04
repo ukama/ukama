@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package datapath
 
 import (
@@ -32,20 +32,15 @@ const (
 type OfActor struct {
 	Switch            *ofctrl.OFSwitch
 	isSwitchConnected bool
-
-	inputTable     *ofctrl.Table
-	nextTable      *ofctrl.Table
-	connectedCount int
-
-	pktInCount     int
-	tlvTableStatus *ofctrl.TLVTableStatus
-	tlvMapCh       chan struct{}
+	inputTable        *ofctrl.Table
+	connectedCount    int
+	tlvTableStatus    *ofctrl.TLVTableStatus
+	tlvMapCh          chan struct{}
 }
 
 type OvsSwitch struct {
 	bridgeName string
 	Ip         string
-	netType    string
 	ofActor    *OfActor
 	ctrler     *ofctrl.Controller
 }
@@ -88,6 +83,10 @@ func (o *OfActor) TLVMapEnabledOnSwitch() bool {
 	return true
 }
 
+func TryConnect(c *ofctrl.Controller, sock string) {
+	_ = c.Connect(sock)
+}
+
 // NewOvsSwitch Creates a new OVS switch instance
 func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, error) {
 
@@ -99,12 +98,13 @@ func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, er
 	sw.bridgeName = bridgeName
 
 	mgmt := fmt.Sprintf("%s/%s.mgmt", mgmtPath, bridgeName)
-	go sw.ctrler.Connect(mgmt)
+
+	go TryConnect(sw.ctrler, mgmt)
 
 	//wait for 8sec and see if switch connects
-	time.Sleep(8 * time.Second)
+	time.Sleep(10 * time.Second)
 	if !sw.ofActor.isSwitchConnected {
-		log.Fatalf("%s switch did not connect within 20sec", bridgeName)
+		log.Fatalf("%s switch did not connect within 10 sec", bridgeName)
 	}
 
 	// Create initial tables
@@ -159,7 +159,7 @@ func (o *OvsSwitch) CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSiz
 	err = o.AddMeter(txMeter, txRate, burstSize)
 	if err != nil {
 		log.Errorf("Failed to create TX meter.Error: %v", err)
-		o.DeleteMeter(rxMeter)
+		_ = o.DeleteMeter(rxMeter)
 		return err
 	}
 	return nil
@@ -410,7 +410,7 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 	err = o.AddFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie)
 	if err != nil {
 		log.Errorf("Failed to create flows for UE %s. Error: %v", ipString, err)
-		o.DeleteMetersForUE(rxMeter, txMeter)
+		_ = o.DeleteMetersForUE(rxMeter, txMeter)
 		return err
 	}
 
@@ -423,7 +423,7 @@ func (o *OvsSwitch) DeleteUEDataPath(ipString string, rxMeter, txMeter uint32) e
 	err := o.DeleteFlowForUE(ipString)
 	if err != nil {
 		log.Errorf("Failed to delete flows for UE %s. Error: %v", ipString, err)
-		o.DeleteMetersForUE(rxMeter, txMeter)
+		_ = o.DeleteMetersForUE(rxMeter, txMeter)
 		return err
 	}
 
@@ -453,7 +453,7 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 	//log.Infof("Stats Length %d", s.Length)
 	for n < int(s.Length) {
 		var f util.Message
-		var size uint16 = 0
+		var size uint16
 		//log.Infof("Stats Field value %v", data[n+2]>>1)
 		switch data[n+2] >> 1 {
 		case openflow15.XST_OFB_DURATION:

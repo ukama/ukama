@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -101,7 +102,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/reboot/"+nId.String(), data)
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -138,7 +139,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/reboot/"+nId.String(), data)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -146,6 +147,42 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	}
 	return &pb.RestartNodeResponse{
 		Status: pb.RestartStatus_RESTARTED,
+	}, nil
+}
+
+func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
+	if req.NodeId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
+	}
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	msg := &pb.PingNodeRequest{
+		NodeId:    nId.String(),
+		Message:   req.Message,
+		Timestamp: req.Timestamp,
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	timestamp := uint64(time.Now().Unix())
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/node/"+nId.String()+"/ping", data)
+	if err != nil {
+		log.Errorf("Failed to publish message. Errors %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+
+	}
+
+	return &pb.PingNodeResponse{
+		NodeId:    nId.String(),
+		RequestId: req.RequestId,
+		Timestamp: timestamp,
 	}, nil
 }
 
@@ -173,7 +210,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, data, nodeId)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "/v1/reboot/"+nId.String(), data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -188,13 +225,13 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 
 }
 
-func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId string) error {
+func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/" + nodeId,
+		Path:       path,
 		Msg:        anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)

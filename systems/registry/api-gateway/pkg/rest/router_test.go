@@ -161,10 +161,9 @@ func TestGetInvitation_Found(t *testing.T) {
 	mem := &mmocks.MemberServiceClient{}
 	site := &sitmocks.SiteServiceClient{}
 
-	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetInvitationResponse{
+	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetResponse{
 		Invitation: &invpb.Invitation{
 			Id:    invId,
-			Org:   "ukama",
 			Link:  "http://dev.ukama.com",
 			Name:  "ukama",
 			Email: "test@ukama.com",
@@ -186,23 +185,22 @@ func TestGetInvitation_Found(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "\"id\":\"f24bf990-9f69-460d-938c-68ce3c8d40b3\"")
 }
 
-func TestGetInvitationByOrg(t *testing.T) {
-	const orgName = "ukama"
+func TestGetAllInvitations(t *testing.T) {
 
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/invitations/org/"+orgName, nil)
+	req, _ := http.NewRequest("GET", "/v1/invitations", nil)
 	arc := &providers.AuthRestClient{}
 	inv := &imocks.InvitationServiceClient{}
 	invId := uuid.NewV4()
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
+	siteM := &sitmocks.SiteServiceClient{}
 
-	inv.On("GetByOrg", mock.Anything, mock.Anything).Return(&invpb.GetInvitationByOrgResponse{
+	inv.On("GetAll", mock.Anything, mock.Anything).Return(&invpb.GetAllResponse{
 		Invitations: []*invpb.Invitation{{
 			Id:     invId.String(),
-			Org:    "ukama",
 			Name:   "ukama",
 			Email:  "test@ukama.com",
 			Role:   invpb.RoleType_USERS,
@@ -215,11 +213,11 @@ func TestGetInvitationByOrg(t *testing.T) {
 		Member:     client.NewRegistryFromClient(mem),
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Invitation: client.NewInvitationRegistryFromClient(inv),
+		Site: client.NewSiteRegistryFromClient(siteM),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
 	inv.AssertExpectations(t)
-	assert.Equal(t, 200, w.Code)
-
+	assert.Equal(t, http.StatusOK, w.Code)
 }

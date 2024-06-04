@@ -10,9 +10,10 @@ package client
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -59,14 +60,13 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, state string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId: nodeId,
 		Name:   name,
-		OrgId:  orgId,
 	})
 	if err != nil {
 		return nil, err
@@ -89,12 +89,11 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetOrgNodes(orgId string, free bool) (*pb.GetByOrgResponse, error) {
+func (n *Node) GetAll(free bool) (*pb.GetAllResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.GetNodesForOrg(ctx, &pb.GetByOrgRequest{
-		OrgId: orgId,
+	res, err := n.client.GetAll(ctx, &pb.GetAllRequest{
 		Free:  free,
 	})
 	if err != nil {
