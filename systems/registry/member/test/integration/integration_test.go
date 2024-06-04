@@ -17,9 +17,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/common/config"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 
@@ -70,7 +72,7 @@ func Test_FullFlow(t *testing.T) {
 
 	member := db.Member{
 		UserId: uuid.NewV4(),
-		Role:   db.Users,
+		Role:   roles.TYPE_USERS,
 	}
 
 	defer removeMember(t, c, member.UserId)
@@ -80,7 +82,7 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("AddMember", func(tt *testing.T) {
 		r, err = c.AddMember(ctx, &pb.AddMemberRequest{
 			UserUuid: member.UserId.String(),
-			Role:     pb.RoleType(db.Users),
+			Role:     upb.RoleType(roles.TYPE_USERS),
 		})
 
 		handleResponse(tt, err, r)

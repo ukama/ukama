@@ -18,12 +18,15 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/registry/member/pkg"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -75,9 +78,8 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	log.Infof("Adding member")
 	member := &db.Member{
-		MemberId: uuid.NewV4(),
-		UserId:   userUUID,
-		Role:     db.RoleType(req.Role),
+		UserId: userUUID,
+		Role:   roles.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
@@ -85,10 +87,19 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
+		evt := &epb.AddMemberEventRequest{
+			OrgId:         m.OrgId.String(),
+			UserId:        userUUID.String(),
+			Role:          upb.RoleType(member.Role),
+			IsDeactivated: member.Deactivated,
+			CreatedAt:     member.CreatedAt.String(),
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
@@ -115,7 +126,7 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 	log.Infof("Adding member")
 	member := &db.Member{
 		UserId: userUUID,
-		Role:   db.RoleType(req.Role),
+		Role:   roles.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
@@ -275,7 +286,7 @@ func dbMemberToPbMember(member *db.Member) *pb.Member {
 		MemberId:      member.MemberId.String(),
 		UserId:        member.UserId.String(),
 		IsDeactivated: member.Deactivated,
-		Role:          pb.RoleType(member.Role),
+		Role:          upb.RoleType(member.Role),
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }

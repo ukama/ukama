@@ -98,22 +98,36 @@ registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
 });
 
-export enum INVITATION_STATUS {
-  ACCEPTED = "Accepted",
-  DECLINED = "Declined",
-  PENDING = "Pending",
-}
-registerEnumType(INVITATION_STATUS, {
-  name: "INVITATION_STATUS",
-});
-
 export enum ROLE_TYPE {
+  INVALID = "INVALID",
   OWNER = "OWNER",
   ADMIN = "ADMIN",
   VENDOR = "VENDOR",
+  NETWORK_OWNER = "NETWORK_OWNER",
   USERS = "USERS",
-  NONE = "NONE",
 }
 registerEnumType(ROLE_TYPE, {
   name: "ROLE_TYPE",
+});
+
+export enum NOTIFICATION_TYPE {
+  UNKNOWN = "UNKNOWN",
+  INFO = "INFO",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
+}
+registerEnumType(NOTIFICATION_TYPE, {
+  name: "NOTIFICATION_TYPE",
+});
+
+export enum NOTIFICATION_SCOPE {
+  ORG = "ORG",
+  NETWORK = "NETWORK",
+  SITE = "SITE",
+  SUBSCRIBER = "SUBSCRIBER",
+  USER = "USER",
+  NODE = "NODE",
+}
+registerEnumType(NOTIFICATION_SCOPE, {
+  name: "NOTIFICATION_SCOPE",
 });

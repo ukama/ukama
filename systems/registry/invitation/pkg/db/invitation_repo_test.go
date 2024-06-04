@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	db_inv "github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
@@ -60,7 +61,8 @@ func TestInvitationRepo_AddInvitation(t *testing.T) {
 		Id:        uuid.NewV4(),
 		Name:      "test",
 		Email:     "test@ukama.com",
-		Role:      db_inv.Employee,
+		Org:       "ukama",
+		Role:      roles.TYPE_ADMIN,
 		Status:    db_inv.Pending,
 		UserId:    uuid.NewV4().String(),
 		ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -92,7 +94,7 @@ func TestInvitationRepo_AddInvitation(t *testing.T) {
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(invitation.Id, invitation.Link, invitation.Email, invitation.Name, invitation.ExpiresAt, invitation.Role, invitation.Status,
-				invitation.UserId, sqlmock.AnyArg(),sqlmock.AnyArg(), sqlmock.AnyArg()).
+				invitation.UserId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -115,7 +117,8 @@ func TestInvitationRepo_Getinvitation(t *testing.T) {
 			Id:        invId,
 			Name:      "test",
 			Email:     "test@ukama.com",
-			Role:      db_inv.Employee,
+			Org:       "ukama",
+			Role:      roles.TYPE_ADMIN,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -172,7 +175,8 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama.com",
-			Role:      db_inv.Employee,
+			Org:       "ukama",
+			Role:      roles.TYPE_ADMIN,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -229,7 +233,8 @@ func TestInvitationRepo_Delete(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama",
-			Role:      db_inv.Employee,
+			Org:       "ukama",
+			Role:      roles.TYPE_ADMIN,
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),

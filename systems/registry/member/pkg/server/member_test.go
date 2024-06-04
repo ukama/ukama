@@ -16,6 +16,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/member/mocks"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
@@ -37,27 +40,32 @@ func TestMemberServer_AddMember(t *testing.T) {
 	userClient := &cmocks.UserClient{}
 
 	member := db.Member{
-		MemberId: uuid.NewV4(),
-		UserId:   uuid.NewV4(),
-		Role:     db.Users,
+		UserId: uuid.NewV4(),
+		Role:   roles.TYPE_USERS,
 	}
+
+	req := &pb.AddMemberRequest{
+		UserUuid: member.UserId.String(),
+		Role:     upb.RoleType(roles.TYPE_USERS),
+	}
+
+	// eReq := &epb.AddMemberEventRequest{
+	// 	UserId: member.UserId.String(),
+	// }
 
 	mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
 	// mOrg.On("GetUserById", member.UserId.String()).Return(&providers.UserInfo{
 	// 	Id: member.UserId.String(),
 	// }, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddMemberRequest{
-		UserUuid: member.UserId.String(),
-		Role:     pb.RoleType(db.Users),
-	}).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.create", mock.MatchedBy(func(r *epb.AddMemberEventRequest) bool {
+		return r.UserId == req.UserUuid
+	})).Return(nil).Once()
+
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
 	s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 	// Act
-	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-		UserUuid: member.UserId.String(),
-		Role:     pb.RoleType(db.Users),
-	})
+	_, err := s.AddMember(context.TODO(), req)
 
 	// Assert
 	msgclientRepo.AssertExpectations(t)
@@ -75,9 +83,10 @@ func TestMemberServer_GetMember(t *testing.T) {
 	userClient := &cmocks.UserClient{}
 
 	member := db.Member{
-		MemberId: uuid.NewV4(),
-		UserId:   uuid.NewV4(),
-		Role:     db.Users,
+		Model: gorm.Model{
+			ID: 1},
+		UserId: uuid.NewV4(),
+		Role:   roles.TYPE_USERS,
 	}
 
 	mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
@@ -112,13 +121,13 @@ func TestMemberServer_GetMembers(t *testing.T) {
 			Model: gorm.Model{
 				ID: 1},
 			UserId: uuid.NewV4(),
-			Role:   db.Users,
+			Role:   roles.TYPE_USERS,
 		},
 		{
 			Model: gorm.Model{
 				ID: 2},
 			UserId: uuid.NewV4(),
-			Role:   db.Users,
+			Role:   roles.TYPE_USERS,
 		},
 	}
 
@@ -152,7 +161,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: true,
-			Role:        db.Users,
+			Role:        roles.TYPE_USERS,
 		}
 
 		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
@@ -186,7 +195,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: false,
-			Role:        db.Users,
+			Role:        roles.TYPE_USERS,
 		}
 
 		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()

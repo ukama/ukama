@@ -75,7 +75,7 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 		health.Capps = append(health.Capps, db.Capp{
 			Id:       cappID,
 			HealthID: healthID,
-			Space :   capp.GetSpace(),
+			Space:    capp.GetSpace(),
 			Name:     capp.GetName(),
 			Tag:      capp.GetTag(),
 			Status:   db.Status(capp.GetStatus()),
@@ -95,8 +95,8 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	if err != nil {
 		return nil, err
 	}
-	
-msg :=&pb.StoreRunningAppsInfoRequest{
+
+	msg := &pb.StoreRunningAppsInfoRequest{
 		NodeId:    req.NodeId,
 		Timestamp: req.Timestamp,
 		System:    req.System,
@@ -174,6 +174,6 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 	}
 
 	return &pb.GetRunningAppsResponse{
-		RunningApps: app, 
+		RunningApps: app,
 	}, nil
 }

@@ -128,15 +128,15 @@ sort_systems_by_dependency() {
           echo "2 $key"
       elif [ "$key" == "init" ]; then
           echo "3 $key"
-      elif [ "$key" == "nucleus" ]; then
-          echo "4 $key"
-      elif [ "$key" == "registry" ]; then
-          echo "5 $key"
-      elif [ "$key" == "dataplan" ]; then
-          echo "6 $key"
-      elif [ "$key" == "subscriber" ]; then
-          echo "7 $key"
       elif [ "$key" == "notification" ]; then
+          echo "4 $key"
+      elif [ "$key" == "nucleus" ]; then
+          echo "5 $key"
+      elif [ "$key" == "registry" ]; then
+          echo "6 $key"
+      elif [ "$key" == "dataplan" ]; then
+          echo "7 $key"
+      elif [ "$key" == "subscriber" ]; then
           echo "8 $key"
       else
           echo "9 $key"

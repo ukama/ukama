@@ -1,0 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
+ 
+ package ukama.common.v1;
+
+ enum RoleType {
+    ROLE_INVALID = 0;
+    ROLE_OWNER = 1;
+    ROLE_ADMIN = 2;
+    ROLE_NETWORK_OWNER = 3;
+    ROLE_VENDOR = 4;
+    ROLE_USER = 5;
+}

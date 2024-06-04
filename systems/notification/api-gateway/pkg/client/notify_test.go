@@ -23,12 +23,12 @@ import (
 	pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
-var nc = &mocks.NotifyServiceClient{}
+var c = &mocks.NotifyServiceClient{}
 
 var notificationId = uuid.NewV4().String()
 var nodeID = ukama.NewVirtualHomeNodeId().String()
 
-var req = &rest.AddNotificationReq{
+var req = &rest.AddNodeNotificationReq{
 	NodeId:      nodeID,
 	Severity:    "high",
 	Type:        "alert",
@@ -51,9 +51,9 @@ func TestNotifyClient_Add(t *testing.T) {
 		Details:     req.Details,
 	}
 
-	nc.On("Add", mock.Anything, notifReq).Return(&pb.AddResponse{}, nil)
+	c.On("Add", mock.Anything, notifReq).Return(&pb.AddResponse{}, nil)
 
-	c := client.NewNotifyFromClient(nc)
+	c := client.NewNotifyFromClient(c)
 
 	_, err := c.Add(req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
@@ -77,15 +77,15 @@ func TestNotifyClient_Get(t *testing.T) {
 		Details:     req.Details,
 	}}
 
-	nc.On("Get", mock.Anything, notifReq).Return(notifResp, nil)
+	c.On("Get", mock.Anything, notifReq).Return(notifResp, nil)
 
-	n := client.NewNotifyFromClient(nc)
+	n := client.NewNotifyFromClient(c)
 
 	resp, err := n.Get(notificationId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, resp.Notification.Id, notificationId)
-	nc.AssertExpectations(t)
+	c.AssertExpectations(t)
 }
 
 func TestNotifyClient_List(t *testing.T) {
@@ -97,7 +97,7 @@ func TestNotifyClient_List(t *testing.T) {
 		Sort:        true}
 
 	listResp := &pb.ListResponse{Notifications: []*pb.Notification{
-		&pb.Notification{
+		{
 			Id:          notificationId,
 			NodeId:      req.NodeId,
 			Severity:    req.Severity,
@@ -109,9 +109,9 @@ func TestNotifyClient_List(t *testing.T) {
 			Details:     req.Details,
 		}}}
 
-	nc.On("List", mock.Anything, listReq).Return(listResp, nil)
+	c.On("List", mock.Anything, listReq).Return(listResp, nil)
 
-	n := client.NewNotifyFromClient(nc)
+	n := client.NewNotifyFromClient(c)
 
 	resp, err := n.List(req.NodeId, req.ServiceName, req.Type, uint32(1), true)
 
@@ -123,9 +123,9 @@ func TestNotifyClient_List(t *testing.T) {
 func TestNotifyClient_Delete(t *testing.T) {
 	notifReq := &pb.GetRequest{NotificationId: notificationId}
 
-	nc.On("Delete", mock.Anything, notifReq).Return(&pb.DeleteResponse{}, nil)
+	c.On("Delete", mock.Anything, notifReq).Return(&pb.DeleteResponse{}, nil)
 
-	n := client.NewNotifyFromClient(nc)
+	n := client.NewNotifyFromClient(c)
 
 	_, err := n.Delete(notificationId)
 
@@ -141,7 +141,7 @@ func TestNotifyClient_Purge(t *testing.T) {
 	}
 
 	delResp := &pb.ListResponse{Notifications: []*pb.Notification{
-		&pb.Notification{
+		{
 			Id:          notificationId,
 			NodeId:      req.NodeId,
 			Severity:    req.Severity,
@@ -152,9 +152,9 @@ func TestNotifyClient_Purge(t *testing.T) {
 			Details:     req.Details,
 		}}}
 
-	nc.On("Purge", mock.Anything, delReq).Return(delResp, nil)
+	c.On("Purge", mock.Anything, delReq).Return(delResp, nil)
 
-	n := client.NewNotifyFromClient(nc)
+	n := client.NewNotifyFromClient(c)
 
 	deletedItems, err := n.Purge(req.NodeId, req.ServiceName, req.Type)
 

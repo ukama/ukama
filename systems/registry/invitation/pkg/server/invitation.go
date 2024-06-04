@@ -20,13 +20,15 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -40,10 +42,11 @@ type InvitationServer struct {
 	mailerClient         cnotif.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	msgbus               mb.MsgBusServiceClient
-	baseRoutingKey       msgbus.RoutingKeyBuilder
-	orgName              string
-	TemplateName         string
+	// unused?
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus         mb.MsgBusServiceClient
+	orgName        string
+	TemplateName   string
 }
 
 func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
@@ -119,7 +122,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		Name:      req.GetName(),
 		Link:      link,
 		Email:     req.GetEmail(),
-		Role:      db.RoleType(req.Role),
+		Role:      roles.RoleType(req.Role),
 		ExpiresAt: expiry,
 		Status:    db.Pending,
 		UserId:    userId,
@@ -136,7 +139,25 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	return &pb.AddResponse{
+	if i.msgbus != nil {
+		route := i.baseRoutingKey.SetActionCreate().SetObject("invitation").MustBuild()
+		evt := &epb.EventInvitationCreated{
+			Id:        invite.Id.String(),
+			Link:      invite.Link,
+			Email:     invite.Email,
+			Name:      invite.Name,
+			Role:      upb.RoleType(invite.Role),
+			Status:    pb.StatusType_name[int32(invite.Status)],
+			UserId:    invite.UserId,
+			ExpiresAt: invite.ExpiresAt.String(),
+		}
+		err = i.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
+	return &pb.AddInvitationResponse{
 		Invitation: dbInvitationToPbInvitation(invite),
 	}, nil
 }
@@ -178,22 +199,22 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
-	invitation, err := i.iRepo.Get(iuuid)
+	invite, err := i.iRepo.Get(iuuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
 
 	if i.msgbus != nil {
-		route := i.baseRoutingKey.SetActionCreate().SetObject("invitation").MustBuild()
+		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
 		evt := &epb.EventInvitationCreated{
-			Id:        invitation.Id.String(),
-			Link:      invitation.Link,
-			Email:     invitation.Email,
-			Name:      invitation.Name,
-			Role:      epb.RoleType(invitation.Role),
-			Status:    epb.StatusType(invitation.Status),
-			UserId:    invitation.UserId,
-			ExpiresAt: invitation.ExpiresAt.String(),
+			Id:        invite.Id.String(),
+			Link:      invite.Link,
+			Email:     invite.Email,
+			Name:      invite.Name,
+			Role:      upb.RoleType(invite.Role),
+			Status:    pb.StatusType_name[int32(invite.Status)],
+			UserId:    invite.UserId,
+			ExpiresAt: invite.ExpiresAt.String(),
 		}
 		err = i.msgbus.PublishRequest(route, evt)
 		if err != nil {
@@ -201,7 +222,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 		}
 	}
 
-	return &pb.UpdateStatusResponse{
+	return &pb.UpdateInvitationStatusResponse{
 		Id:     req.GetId(),
 		Status: *req.GetStatus().Enum(),
 	}, nil
