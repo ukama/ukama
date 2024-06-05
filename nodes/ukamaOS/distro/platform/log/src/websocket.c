@@ -71,7 +71,6 @@ static void* monitor_websocket(void *args) {
             if (!is_websocket_valid(handler.websocket)) {
                 while (start_websocket_client(gThreadArgs.serviceName,
                                               gThreadArgs.port) == USYS_FALSE) {
-                    printf("Retrying again ...");
                     sleep(WEBSOCKET_MONITOR_TIMEOUT);
                 }
             } else {
@@ -88,16 +87,19 @@ static void websocket_manager(const URequest *request,
                               void *data) {
     int ret;
 
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&hasData, NULL);
-
     while (USYS_TRUE) {
 
-        if (pthread_cond_wait(&hasData, &mutex) != 0) return;
+        pthread_mutex_lock(&mutex);
+
+        if (pthread_cond_wait(&hasData, &mutex) != 0) {
+            pthread_mutex_unlock(&mutex);
+            return;
+        }
 
         if (ulfius_websocket_status(manager) != U_WEBSOCKET_STATUS_OPEN) {
             handler.websocket = NULL;
             pthread_cond_broadcast(&websocketFail);
+            pthread_mutex_unlock(&mutex);
             return;
         }
 
@@ -183,11 +185,14 @@ void log_remote_init(char *serviceName) {
     int rlogdPort = 0;
 
     rlogdPort = usys_find_service_port(SERVICE_RLOG);
-    
+
     if (handler.websocket) return;
     if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
-    
+
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&hasData, NULL);
+
     if (start_websocket_client(serviceName, rlogdPort) == USYS_FALSE) {
         handler.websocket = NULL;
     }
@@ -213,8 +218,8 @@ int log_rlogd(char *message) {
 
     pthread_mutex_lock(&mutex);
     strncpy(&dataToSend[0], message, strlen(message));
-    pthread_mutex_unlock(&mutex);
     pthread_cond_broadcast(&hasData);
+    pthread_mutex_unlock(&mutex);
 
     return USYS_TRUE;
 }
