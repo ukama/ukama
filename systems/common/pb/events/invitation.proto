@@ -24,3 +24,22 @@ message EventInvitationCreated {
     string userId = 7 [json_name = "user_id"];
     string expiresAt = 8 [json_name = "expires_at"];
 }
+
+message EventInvitationDeleted {
+    string id = 1;
+    string email=2;
+    string name = 3;
+    ukama.common.v1.RoleType role = 4;
+    string userId = 5 [json_name = "user_id"];
+}
+
+message EventInvitationUpdated {
+    string id = 1;
+    string link=2;
+    string email=3;
+    string name = 4;
+    ukama.common.v1.RoleType role = 5;
+    string status = 6;
+    string userId = 7 [json_name = "user_id"];
+    string expiresAt = 8 [json_name = "expires_at"];
+}

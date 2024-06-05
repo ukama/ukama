@@ -131,6 +131,188 @@ func (x *EventInvitationCreated) GetExpiresAt() string {
 	return ""
 }
 
+type EventInvitationDeleted struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id     string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email  string         `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Name   string         `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Role   ukama.RoleType `protobuf:"varint,4,opt,name=role,proto3,enum=ukama.common.v1.RoleType" json:"role,omitempty"`
+	UserId string         `protobuf:"bytes,5,opt,name=userId,json=user_id,proto3" json:"userId,omitempty"`
+}
+
+func (x *EventInvitationDeleted) Reset() {
+	*x = EventInvitationDeleted{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_invitation_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventInvitationDeleted) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventInvitationDeleted) ProtoMessage() {}
+
+func (x *EventInvitationDeleted) ProtoReflect() protoreflect.Message {
+	mi := &file_events_invitation_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventInvitationDeleted.ProtoReflect.Descriptor instead.
+func (*EventInvitationDeleted) Descriptor() ([]byte, []int) {
+	return file_events_invitation_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *EventInvitationDeleted) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *EventInvitationDeleted) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *EventInvitationDeleted) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *EventInvitationDeleted) GetRole() ukama.RoleType {
+	if x != nil {
+		return x.Role
+	}
+	return ukama.RoleType(0)
+}
+
+func (x *EventInvitationDeleted) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type EventInvitationUpdated struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id        string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Link      string         `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
+	Email     string         `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Name      string         `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Role      ukama.RoleType `protobuf:"varint,5,opt,name=role,proto3,enum=ukama.common.v1.RoleType" json:"role,omitempty"`
+	Status    string         `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	UserId    string         `protobuf:"bytes,7,opt,name=userId,json=user_id,proto3" json:"userId,omitempty"`
+	ExpiresAt string         `protobuf:"bytes,8,opt,name=expiresAt,json=expires_at,proto3" json:"expiresAt,omitempty"`
+}
+
+func (x *EventInvitationUpdated) Reset() {
+	*x = EventInvitationUpdated{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_invitation_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventInvitationUpdated) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventInvitationUpdated) ProtoMessage() {}
+
+func (x *EventInvitationUpdated) ProtoReflect() protoreflect.Message {
+	mi := &file_events_invitation_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventInvitationUpdated.ProtoReflect.Descriptor instead.
+func (*EventInvitationUpdated) Descriptor() ([]byte, []int) {
+	return file_events_invitation_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EventInvitationUpdated) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetLink() string {
+	if x != nil {
+		return x.Link
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetRole() ukama.RoleType {
+	if x != nil {
+		return x.Role
+	}
+	return ukama.RoleType(0)
+}
+
+func (x *EventInvitationUpdated) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EventInvitationUpdated) GetExpiresAt() string {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return ""
+}
+
 var File_events_invitation_proto protoreflect.FileDescriptor
 
 var file_events_invitation_proto_rawDesc = []byte{
@@ -152,11 +334,35 @@ var file_events_invitation_proto_rawDesc = []byte{
 	0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75,
 	0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x12, 0x1d, 0x0a, 0x09, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65,
 	0x73, 0x41, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78, 0x70, 0x69, 0x72,
-	0x65, 0x73, 0x5f, 0x61, 0x74, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f,
-	0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x70,
-	0x62, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x5f, 0x61, 0x74, 0x22, 0x9a, 0x01, 0x0a, 0x16, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x49,
+	0x6e, 0x76, 0x69, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64,
+	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64,
+	0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x2d, 0x0a, 0x04, 0x72, 0x6f,
+	0x6c, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61,
+	0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x17, 0x0a, 0x06, 0x75, 0x73, 0x65,
+	0x72, 0x49, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f,
+	0x69, 0x64, 0x22, 0xe5, 0x01, 0x0a, 0x16, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x49, 0x6e, 0x76, 0x69,
+	0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a,
+	0x04, 0x6c, 0x69, 0x6e, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6c, 0x69, 0x6e,
+	0x6b, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x2d, 0x0a, 0x04, 0x72,
+	0x6f, 0x6c, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
+	0x61, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65,
+	0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x12, 0x17, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x07, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x12, 0x1d, 0x0a, 0x09, 0x65,
+	0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a,
+	0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75,
+	0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d,
+	0x6d, 0x6f, 0x6e, 0x2f, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74,
+	0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -171,18 +377,22 @@ func file_events_invitation_proto_rawDescGZIP() []byte {
 	return file_events_invitation_proto_rawDescData
 }
 
-var file_events_invitation_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_events_invitation_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_events_invitation_proto_goTypes = []interface{}{
 	(*EventInvitationCreated)(nil), // 0: ukama.events.v1.EventInvitationCreated
-	(ukama.RoleType)(0),            // 1: ukama.common.v1.RoleType
+	(*EventInvitationDeleted)(nil), // 1: ukama.events.v1.EventInvitationDeleted
+	(*EventInvitationUpdated)(nil), // 2: ukama.events.v1.EventInvitationUpdated
+	(ukama.RoleType)(0),            // 3: ukama.common.v1.RoleType
 }
 var file_events_invitation_proto_depIdxs = []int32{
-	1, // 0: ukama.events.v1.EventInvitationCreated.role:type_name -> ukama.common.v1.RoleType
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3, // 0: ukama.events.v1.EventInvitationCreated.role:type_name -> ukama.common.v1.RoleType
+	3, // 1: ukama.events.v1.EventInvitationDeleted.role:type_name -> ukama.common.v1.RoleType
+	3, // 2: ukama.events.v1.EventInvitationUpdated.role:type_name -> ukama.common.v1.RoleType
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_events_invitation_proto_init() }
@@ -203,6 +413,30 @@ func file_events_invitation_proto_init() {
 				return nil
 			}
 		}
+		file_events_invitation_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventInvitationDeleted); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_invitation_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventInvitationUpdated); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -210,7 +444,7 @@ func file_events_invitation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_events_invitation_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
