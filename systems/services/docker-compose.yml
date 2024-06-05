@@ -8,7 +8,7 @@ services:
    - 5672:5672
    - 15672:15672
   networks:
-   - dev-net
+   - ukama-net
   volumes:
    - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
    #  - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
@@ -22,10 +22,10 @@ services:
   ports:
    - '8090:80'
   networks:
-   - dev-net
+   - ukama-net
 
 networks:
- dev-net:
+ ukama-net:
   ipam:
    driver: default
    config:

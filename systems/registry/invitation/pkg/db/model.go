@@ -11,6 +11,7 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/roles"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -21,7 +22,7 @@ type Invitation struct {
 	Email     string
 	Name      string
 	ExpiresAt time.Time
-	Role      RoleType         `gorm:"type:uint;not null;default:4"`
+	Role      roles.RoleType   `gorm:"type:uint;not null;default:4"`
 	Status    InvitationStatus `gorm:"type:uint;not null;default:0"`
 	UserId    string           `gorm:"type:uuid"`
 	CreatedAt time.Time
@@ -43,25 +44,5 @@ func (e *InvitationStatus) Scan(value interface{}) error {
 }
 
 func (e InvitationStatus) Value() (uint8, error) {
-	return uint8(e), nil
-}
-
-type RoleType uint8
-
-const (
-	Owner    RoleType = 0
-	Admin    RoleType = 1
-	Employee RoleType = 2
-	Vendor   RoleType = 3
-	Users    RoleType = 4
-)
-
-func (e *RoleType) Scan(value interface{}) error {
-	*e = RoleType(uint8(value.(int64)))
-
-	return nil
-}
-
-func (e RoleType) Value() (uint8, error) {
 	return uint8(e), nil
 }
