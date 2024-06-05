@@ -105,9 +105,9 @@ func TestServer_GetAll(t *testing.T) {
 	msgclient := &cmocks.MsgBusServiceClient{}
 
 	req := pb.GetAllRequest{
-		OrgId:    testOrgId,
-		UserId:   testUserId.String(),
-		RoleType: upb.RoleType_ROLE_OWNER,
+		OrgId:  testOrgId,
+		UserId: testUserId.String(),
+		Role:   upb.RoleType_ROLE_OWNER,
 	}
 
 	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId).Return([]*db.Users{&user}, nil).Once()

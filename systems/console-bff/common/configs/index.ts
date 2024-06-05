@@ -13,6 +13,7 @@ export const VERSION = process.env.VERSION ?? "v1";
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const METRIC_API_GW = process.env.METRIC_API_GW ?? "";
 export const NOTIFICATION_API_GW = process.env.NOTIFICATION_API_GW ?? "";
+export const NOTIFICATION_API_GW_WS = process.env.NOTIFICATION_API_GW_WS ?? "";
 export const METRIC_API_GW_SOCKET = process.env.METRIC_API_GW_SOCKET ?? "";
 export const REGISTRY_API_GW = process.env.REGISTRY_API_GW ?? "";
 export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW ?? "";

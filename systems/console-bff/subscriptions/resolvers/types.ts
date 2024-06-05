@@ -178,7 +178,37 @@ export class StatsMetric {
 }
 
 @ObjectType()
-export class NotificationRes {
+export class NotificationsAPIResDto {
+  @Field()
+  id: string;
+
+  @Field()
+  title: string;
+
+  @Field()
+  description: string;
+
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  is_read: boolean;
+
+  @Field()
+  created_at: string;
+}
+
+@ObjectType()
+export class NotificationsAPIRes {
+  @Field(() => [NotificationsAPIResDto])
+  notifications: NotificationsAPIResDto[];
+}
+
+@ObjectType()
+export class NotificationsResDto {
   @Field()
   id: string;
 
@@ -189,34 +219,22 @@ export class NotificationRes {
   description: string;
 
   @Field()
-  orgId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  subscriberId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  isRead: boolean;
-
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
+  createdAt: string;
 
   @Field(() => NOTIFICATION_TYPE)
   type: NOTIFICATION_TYPE;
 
   @Field(() => NOTIFICATION_SCOPE)
   scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  isRead: boolean;
 }
 
 @ObjectType()
 export class NotificationsRes {
-  @Field(() => [NotificationRes])
-  notifications: NotificationRes[];
+  @Field(() => [NotificationsResDto])
+  notifications: NotificationsResDto[];
 }
 
 @ArgsType()
@@ -236,6 +254,9 @@ export class GetNotificationsInput {
 
   @Field(() => ROLE_TYPE)
   forRole: ROLE_TYPE;
+
+  @Field(() => [NOTIFICATION_SCOPE])
+  scopes: NOTIFICATION_SCOPE[];
 }
 
 @ArgsType()

@@ -8,7 +8,11 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { GetNotificationResolver } from "./getNotification";
+import { UpdateNotificationResolver } from "./updateNotification";
 
-const resolvers: NonEmptyArray<any> = [GetNotificationResolver];
+const resolvers: NonEmptyArray<any> = [
+  GetNotificationResolver,
+  UpdateNotificationResolver,
+];
 
 export default resolvers;

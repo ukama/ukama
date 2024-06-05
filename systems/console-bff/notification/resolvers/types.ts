@@ -7,6 +7,12 @@
  */
 import { Field, ObjectType } from "type-graphql";
 
+import {
+  NOTIFICATION_SCOPE,
+  NOTIFICATION_TYPE,
+  ROLE_TYPE,
+} from "../../common/enums";
+
 @ObjectType()
 export class NotificationAPIDto {
   @Field()
@@ -18,26 +24,17 @@ export class NotificationAPIDto {
   @Field()
   description: string;
 
-  @Field()
-  type: string;
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+
+  @Field(() => ROLE_TYPE)
+  for_role: ROLE_TYPE;
 
   @Field()
-  scope: string;
-
-  @Field()
-  org_id: string;
-
-  @Field()
-  network_id: string;
-
-  @Field()
-  subscriber_id: string;
-
-  @Field()
-  user_id: string;
-
-  @Field()
-  for_role: string;
+  created_at: string;
 }
 
 @ObjectType()
@@ -57,26 +54,17 @@ export class NotificationResDto {
   @Field()
   description: string;
 
-  @Field()
-  type: string;
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+
+  @Field(() => ROLE_TYPE)
+  forRole: ROLE_TYPE;
 
   @Field()
-  scope: string;
-
-  @Field()
-  orgId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  subscriberId: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  forRole: string;
+  createdAt: string;
 }
 
 @ObjectType()

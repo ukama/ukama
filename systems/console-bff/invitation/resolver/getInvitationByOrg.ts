@@ -19,7 +19,7 @@ export class GetInVitationsByOrgResolver {
     const res = await dataSources.dataSource.getInvitationsByOrg();
     const Invitations: InvitationDto[] = [];
     for (const invitation of res.invitations) {
-      if (invitation.status !== INVITATION_STATUS.ACCEPTED) {
+      if (invitation.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
         Invitations.push(invitation);
       }
     }

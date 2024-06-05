@@ -106,6 +106,28 @@ services:
   depends_on:
    - postgresd-dataplan
 
+ initclient-dataplan:
+  # build:
+  #  dockerfile: ./Dockerfile
+  #  context: ../services/initClient
+  image: salman-init
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=dataplan
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=api-gateway
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-dataplan
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
+
 networks:
  ukama-net:
   external: true

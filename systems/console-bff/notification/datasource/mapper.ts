@@ -20,11 +20,8 @@ export const dtoToNotificationDto = (
     description: res.notification.description,
     type: res.notification.type,
     scope: res.notification.scope,
-    orgId: res.notification.org_id,
-    networkId: res.notification.network_id,
-    subscriberId: res.notification.subscriber_id,
-    userId: res.notification.user_id,
     forRole: res.notification.for_role,
+    createdAt: res.notification.created_at,
   };
 };
 

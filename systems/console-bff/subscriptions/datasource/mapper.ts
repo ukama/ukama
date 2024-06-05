@@ -10,8 +10,10 @@ import {
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
-  NotificationRes,
+  NotificationsAPIRes,
+  NotificationsAPIResDto,
   NotificationsRes,
+  NotificationsResDto,
 } from "../resolvers/types";
 
 const ERROR_RESPONSE = {
@@ -119,26 +121,26 @@ export const parsePromethRes = (
   } else return getEmptyMetric(args);
 };
 
-export const parseNotification = (notification: any) => {
+export const parseNotification = (
+  notification: NotificationsAPIResDto
+): NotificationsResDto => {
   return {
     id: notification.id,
-    title: notification.title,
-    description: notification.description,
     type: notification.type,
     scope: notification.scope,
-    orgId: notification.org_id,
-    networkId: notification.network_id,
-    subscriberId: notification.subscriber_id,
-    userId: notification.user_id,
-    role: notification.for_role,
+    title: notification.title,
     isRead: notification.is_read,
+    createdAt: notification.created_at,
+    description: notification.description,
   };
 };
 
-export const parseNotificationsRes = (res: any): NotificationsRes => {
-  const { data } = res.data;
-  const notifications: NotificationRes[] = [];
-  data.map((notification: any) => {
+export const parseNotificationsRes = (
+  res: NotificationsAPIRes
+): NotificationsRes => {
+  const data = res.notifications;
+  const notifications: NotificationsResDto[] = [];
+  data.map((notification: NotificationsAPIResDto) => {
     notifications.push(parseNotification(notification));
   });
   return {

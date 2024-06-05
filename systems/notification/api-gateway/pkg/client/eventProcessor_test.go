@@ -62,7 +62,7 @@ func TestEventProcessor_GetAll(t *testing.T) {
 		NetworkId:    nwId,
 		SubscriberId: subId,
 		UserId:       uId,
-		RoleType:     upb.RoleType_ROLE_OWNER,
+		Role:         upb.RoleType_ROLE_OWNER,
 	}
 
 	data := &pb.GetAllResponse{

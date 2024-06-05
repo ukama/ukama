@@ -227,7 +227,7 @@ func TestUserRepo_GetUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId)
+		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, uint8(roles.TYPE_OWNER))
 
 		// Assert
 		assert.NoError(t, err)

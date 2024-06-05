@@ -20,10 +20,9 @@ import { Worker } from "worker_threads";
 
 import {
   METRIC_API_GW_SOCKET,
-  NOTIFICATION_API_GW,
+  NOTIFICATION_API_GW_WS,
   STORAGE_KEY,
 } from "../../common/configs";
-import { NOTIFICATION_SCOPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
 import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
@@ -35,17 +34,10 @@ import {
 import {
   GetLatestMetricInput,
   GetMetricByTabInput,
-  GetNetworkNotificationsInput,
-  GetNodeNotificationsInput,
   GetNotificationsInput,
-  GetOrgNotificationsInput,
-  GetSiteNotificationsInput,
-  GetSubscriberNotificationsInput,
-  GetUserNotificationsInput,
   LatestMetricRes,
   MetricRes,
   MetricsRes,
-  NotificationRes,
   NotificationsRes,
   StatsMetric,
   SubMetricByTabInput,
@@ -310,14 +302,11 @@ class MetricResolvers {
 
   @Query(() => NotificationsRes)
   async getNotifications(@Arg("data") data: GetNotificationsInput) {
-    // @PubSub() pubSub: PubSubEngine // ,
-    // const { orgId, userId, subscriberId, networkId, forRole } = data;
-
     const notifications = getNotifications(data);
     const workerData = {
-      url: `${NOTIFICATION_API_GW}/v1/notification/live`,
+      url: `${NOTIFICATION_API_GW_WS}/v1/distributor/live`,
       orgId: data.orgId,
-      role: data.forRole,
+      scope: data.scopes,
       userId: data.userId,
       networkId: data.networkId,
       subscriberId: data.subscriberId,
@@ -332,33 +321,34 @@ class MetricResolvers {
       if (!_data.isError) {
         const res = JSON.parse(_data.data);
         const result = res.data;
-        if (result && result.data) {
-          switch (result.scope) {
-            case NOTIFICATION_SCOPE.ORG:
-              // do something
-              break;
-            case NOTIFICATION_SCOPE.NETWORK:
-              // do something
-              break;
-            case NOTIFICATION_SCOPE.SITE:
-              // do something
-              break;
-            case NOTIFICATION_SCOPE.NODE:
-              // do something
-              break;
-            case NOTIFICATION_SCOPE.SUBSCRIBER:
-              // do something
-              break;
-            case NOTIFICATION_SCOPE.USER:
-              // do something
-              break;
-            default:
-              // do something
-              break;
-          }
-        } else {
-          return getErrorRes("No metric data found");
-        }
+        console.log(result);
+        // if (result && result.data) {
+        //       switch (result.scope) {
+        // case NOTIFICATION_SCOPE.ORG:
+        //   // do something
+        //   break;
+        // case NOTIFICATION_SCOPE.NETWORK:
+        //   // do something
+        //   break;
+        // case NOTIFICATION_SCOPE.SITE:
+        //   // do something
+        //   break;
+        // case NOTIFICATION_SCOPE.NODE:
+        //   // do something
+        //   break;
+        // case NOTIFICATION_SCOPE.SUBSCRIBER:
+        //   // do something
+        //   break;
+        // case NOTIFICATION_SCOPE.USER:
+        //   // do something
+        //   break;
+        //         default:
+        //           // do something
+        //           break;
+        //       }
+        //     } else {
+        //       return getErrorRes("No metric data found");
+        //     }
       }
     });
 
@@ -368,10 +358,7 @@ class MetricResolvers {
     //     `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
     //   );
     // });
-
-    return {
-      notifications: notifications,
-    };
+    return notifications;
   }
 
   @Subscription(() => LatestMetricRes, {
@@ -393,82 +380,82 @@ class MetricResolvers {
     return payload;
   }
 
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}`;
-    },
-  })
-  async getUserNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetUserNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.userId);
-    return payload;
-  }
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}`;
-    },
-  })
-  async getOrgNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetOrgNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}`;
+  //   },
+  // })
+  // async getUserNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetUserNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.userId);
+  //   return payload;
+  // }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}-${args.orgId}-${args.role}`;
+  //   },
+  // })
+  // async getOrgNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetOrgNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.orgId);
+  //   return payload;
+  // }
 
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}`;
-    },
-  })
-  async getNetworkNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetNetworkNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}`;
+  //   },
+  // })
+  // async getNetworkNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetNetworkNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.orgId);
+  //   return payload;
+  // }
 
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}`;
-    },
-  })
-  async getSiteNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetSiteNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}`;
+  //   },
+  // })
+  // async getSiteNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetSiteNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.orgId);
+  //   return payload;
+  // }
 
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}-${args.nodeId}`;
-    },
-  })
-  async getNodeNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetNodeNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}-${args.nodeId}`;
+  //   },
+  // })
+  // async getNodeNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetNodeNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.orgId);
+  //   return payload;
+  // }
 
-  @Subscription(() => NotificationRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.networkId}-${args.subscriberId}`;
-    },
-  })
-  async getSubscriberNotifications(
-    @Root() payload: NotificationRes,
-    @Args() args: GetSubscriberNotificationsInput
-  ): Promise<NotificationRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
+  // @Subscription(() => NotificationRes, {
+  //   topics: ({ args }) => {
+  //     return `notification-${args.userId}-${args.orgId}-${args.networkId}-${args.subscriberId}`;
+  //   },
+  // })
+  // async getSubscriberNotifications(
+  //   @Root() payload: NotificationRes,
+  //   @Args() args: GetSubscriberNotificationsInput
+  // ): Promise<NotificationRes> {
+  //   logger.info(args.orgId);
+  //   return payload;
+  // }
 }
 
 export default MetricResolvers;

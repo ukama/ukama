@@ -89,5 +89,5 @@ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId 
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		RoleType:     upb.RoleType(upb.RoleType_value[role])})
+		Role:         upb.RoleType(upb.RoleType_value[role])})
 }

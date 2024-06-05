@@ -145,7 +145,6 @@ services:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
    - ENV_DNS_REFRESH_TIME_PERIOD=30
-   # - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_SYSTEM_DNS=api-gateway-notification
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080

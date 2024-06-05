@@ -152,9 +152,9 @@ func (_m *UserRepo) GetUserWithRoles(orgId string, _a1 []roles.RoleType) ([]*db.
 	return r0, r1
 }
 
-// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, userId
-func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*db.Users, error) {
-	ret := _m.Called(orgId, networkId, subscriberId, userId)
+// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, userId, role
+func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*db.Users, error) {
+	ret := _m.Called(orgId, networkId, subscriberId, userId, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsers")
@@ -162,19 +162,19 @@ func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string
 
 	var r0 []*db.Users
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) ([]*db.Users, error)); ok {
-		return rf(orgId, networkId, subscriberId, userId)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint8) ([]*db.Users, error)); ok {
+		return rf(orgId, networkId, subscriberId, userId, role)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) []*db.Users); ok {
-		r0 = rf(orgId, networkId, subscriberId, userId)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint8) []*db.Users); ok {
+		r0 = rf(orgId, networkId, subscriberId, userId, role)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Users)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(orgId, networkId, subscriberId, userId)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, uint8) error); ok {
+		r1 = rf(orgId, networkId, subscriberId, userId, role)
 	} else {
 		r1 = ret.Error(1)
 	}

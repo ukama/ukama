@@ -27,7 +27,7 @@ export class GetTokenResolver {
     let orgId = "";
     let orgName = "";
     let base64Cookie = "";
-    let role = ROLE_TYPE.NONE;
+    let role = ROLE_TYPE.ROLE_INVALID;
     if (whoamiRes?.user?.uuid) {
       orgId =
         whoamiRes.ownerOf.length > 0
