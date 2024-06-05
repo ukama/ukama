@@ -35,6 +35,7 @@
     "@apollo/gateway": "^2.5.3",
     "@apollo/server": "^4.9.2",
     "@apollo/subgraph": "^2.5.3",
+    "@faker-js/faker": "^8.4.1",
     "@graphql-tools/schema": "^10.0.0",
     "@kvs/node-localstorage": "^2.1.5",
     "@prisma/client": "^5.4.2",
