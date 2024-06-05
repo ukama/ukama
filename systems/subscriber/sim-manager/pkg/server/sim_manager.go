@@ -754,11 +754,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
 
-	sim, err := s.getSim(req.SimId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
 	packageId, err := uuid.FromString(req.GetPackageId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -773,6 +768,11 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	if pckg.SimId.String() != req.GetSimId() {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
+	}
+
+	sim, err := s.getSim(req.SimId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	err = s.packageRepo.Delete(packageId, nil)
