@@ -40,6 +40,10 @@ static void setup_webservice_endpoints(Config *config,
                                &web_service_cb_ping, config);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("capps/:name/:tag"), 0,
                                &web_service_cb_get_capp, config);
 
@@ -85,7 +89,7 @@ int start_web_service(Config *config, UInst *serviceInst) {
         return USYS_FALSE;
     }
 
-    usys_log_debug("Webservice started on port: %s", config->servicePort);
+    usys_log_debug("Webservice started on port: %d", config->servicePort);
 
     return USYS_TRUE;
 }

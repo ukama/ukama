@@ -18,6 +18,8 @@
 #include "usys_mem.h"
 #include "usys_types.h"
 
+#include "version.h"
+
 static void free_agent_request_update(AgentReq *req) {
 
     usys_free(req->update->voidStr);
@@ -353,6 +355,15 @@ int web_service_cb_ping(const URequest *request,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
