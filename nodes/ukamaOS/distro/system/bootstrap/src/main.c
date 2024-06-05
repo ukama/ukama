@@ -204,15 +204,15 @@ int main (int argc, char **argv) {
 
     if (start_web_services(&webInst) != TRUE) {
         usys_log_error("Web service failed to setup. Exiting.");
-        exit(1);
+        goto done;
     }
 
     pause();
 
- done:
     ulfius_stop_framework(&webInst);
     ulfius_clean_instance(&webInst);
 
+done:
 	clear_config(config);
 	clear_mesh_config(meshConfig);
 	free_server_info(serverInfo);
