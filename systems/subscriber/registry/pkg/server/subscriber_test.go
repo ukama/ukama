@@ -40,7 +40,7 @@ func TestAdd(t *testing.T) {
 		regClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 		netId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
-		orgId:="7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+		orgId := "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
 
 		firstName := "John"
 		lastName := "Doe"
@@ -81,6 +81,11 @@ func TestAdd(t *testing.T) {
 			IdSerial:              idSerial,
 		})
 		assert.NoError(t, err)
+
+		regClient.AssertExpectations(t)
+		subscriberRepo.AssertExpectations(t)
+		networkClient.AssertExpectations(t)
+		msgBus.AssertExpectations(t)
 	})
 }
 func TestSubscriberServer_Get(t *testing.T) {
