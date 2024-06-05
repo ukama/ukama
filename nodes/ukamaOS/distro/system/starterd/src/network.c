@@ -41,6 +41,10 @@ static void setup_webservice_endpoints(Config *config,
                                &web_service_cb_ping, config);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("status/:space/:name"), 0,
                                &web_service_cb_get_status, config);
 

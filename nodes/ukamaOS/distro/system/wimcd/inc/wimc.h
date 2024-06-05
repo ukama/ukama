@@ -20,7 +20,6 @@
 #include "agent.h"
 
 #define SERVICE_NAME       SERVICE_WIMC
-#define WIMC_VERSION       "0.0.1"
 
 #define EP_BS              "/"
 #define REST_API_VERSION   "v1"

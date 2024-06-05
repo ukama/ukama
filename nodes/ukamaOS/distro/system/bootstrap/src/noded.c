@@ -17,8 +17,7 @@
 #include "nodeInfo.h"
 #include "jserdes.h"
 
-#define NODED_PATH    "noded/v1"
-#define NODE_INFO_EP  "nodeinfo"
+#define NODE_INFO_EP  "/v1/nodeinfo"
 
 struct Response {
 	char *buffer;
@@ -40,7 +39,7 @@ static char *create_noded_url(char *host, int port) {
 
 	url = (char *)malloc(MAX_URL_LEN);
 	if (url) {
-		sprintf(url, "%s:%d/%s/%s", host, port, NODED_PATH, NODE_INFO_EP);
+		sprintf(url, "%s:%d/%s", host, port, NODE_INFO_EP);
 	}
 
 	return url;

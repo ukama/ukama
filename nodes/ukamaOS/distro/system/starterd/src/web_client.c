@@ -205,12 +205,7 @@ bool ping_capp(char *name) {
         return USYS_FALSE;
     }
 
-    if (strcmp(name, "noded") == 0) {
-            sprintf(url, "http://localhost:%d/noded/v1/ping", port);
-    } else {
-        sprintf(url, "http://localhost:%d/v1/ping", port);
-    }
-
+    sprintf(url, "http://localhost:%d/v1/ping", port);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 

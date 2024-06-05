@@ -31,6 +31,7 @@ CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
+CFLAGS+=-I.
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
@@ -62,6 +63,8 @@ XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC)
 
+all: version.h deviced
+
 deviced: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
@@ -71,12 +74,13 @@ $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@ 
+	$(MAKE) -C $(VENDOR_DIR) $@
+
+version.h:
+	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: deviced
-
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

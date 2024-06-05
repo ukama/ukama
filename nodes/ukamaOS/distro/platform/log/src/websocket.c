@@ -36,11 +36,13 @@ typedef struct {
 static struct _websocket_client_handler handler = {NULL, NULL};
 static pthread_mutex_t mutex          = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t websocketMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t initMutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  hasData        = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  websocketFail  = PTHREAD_COND_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
 static ThreadArgs gThreadArgs;
+static int logRemoteInitialized = 0;
 
 static int is_websocket_valid(WSManager *manager) {
 
@@ -71,7 +73,6 @@ static void* monitor_websocket(void *args) {
             if (!is_websocket_valid(handler.websocket)) {
                 while (start_websocket_client(gThreadArgs.serviceName,
                                               gThreadArgs.port) == USYS_FALSE) {
-                    printf("Retrying again ...");
                     sleep(WEBSOCKET_MONITOR_TIMEOUT);
                 }
             } else {
@@ -88,16 +89,19 @@ static void websocket_manager(const URequest *request,
                               void *data) {
     int ret;
 
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&hasData, NULL);
-
     while (USYS_TRUE) {
 
-        if (pthread_cond_wait(&hasData, &mutex) != 0) return;
+        pthread_mutex_lock(&mutex);
+
+        if (pthread_cond_wait(&hasData, &mutex) != 0) {
+            pthread_mutex_unlock(&mutex);
+            return;
+        }
 
         if (ulfius_websocket_status(manager) != U_WEBSOCKET_STATUS_OPEN) {
             handler.websocket = NULL;
             pthread_cond_broadcast(&websocketFail);
+            pthread_mutex_unlock(&mutex);
             return;
         }
 
@@ -182,12 +186,22 @@ void log_remote_init(char *serviceName) {
 
     int rlogdPort = 0;
 
+    pthread_mutex_lock(&initMutex);
+
+    if (logRemoteInitialized) {
+        pthread_mutex_unlock(&initMutex);
+        return;
+    }
+
     rlogdPort = usys_find_service_port(SERVICE_RLOG);
-    
+
     if (handler.websocket) return;
     if (rlogdPort == 0) return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
-    
+
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&hasData, NULL);
+
     if (start_websocket_client(serviceName, rlogdPort) == USYS_FALSE) {
         handler.websocket = NULL;
     }
@@ -203,6 +217,8 @@ void log_remote_init(char *serviceName) {
 
     pthread_detach(monitorThread);
     log_enable_rlogd(USYS_TRUE);
+    logRemoteInitialized = USYS_TRUE;
+    pthread_mutex_unlock(&initMutex);
 }
 
 int log_rlogd(char *message) {
@@ -213,8 +229,8 @@ int log_rlogd(char *message) {
 
     pthread_mutex_lock(&mutex);
     strncpy(&dataToSend[0], message, strlen(message));
-    pthread_mutex_unlock(&mutex);
     pthread_cond_broadcast(&hasData);
+    pthread_mutex_unlock(&mutex);
 
     return USYS_TRUE;
 }

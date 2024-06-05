@@ -31,6 +31,7 @@ CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
+CFLAGS+=-I.
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I./inc
 CFLAGS+=-I./inc/common/
@@ -59,9 +60,9 @@ OBJFILES = $(CFILES:.c=.o)
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
+.PHONY: $(TARGET_EXEC)
 
-bootstrap: $(TARGET_EXEC)
+all: version.h bootstrap
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
@@ -73,10 +74,11 @@ $(VENDOR_PKG):
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
+version.h:
+	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: bootstrap
-
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

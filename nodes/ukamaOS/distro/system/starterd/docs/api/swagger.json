@@ -1,0 +1,254 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "starter.d API",
+    "version": "1.0.0",
+    "description": "API documentation for the starter.d application",
+    "contact": {
+      "name": "Ukama Inc.",
+      "url": "http://www.ukama.com",
+      "email": "hello@ukama.com"
+    },
+    "license": {
+      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "host": "localhost:18001",
+  "schemes": ["http"],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "summary": "Ping the server",
+        "description": "Returns OK if the server is running",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+  "/v1/version": {
+    "get": {
+      "summary": "Get API version",
+      "description": "Returns the API version",
+      "responses": {
+        "200": {
+          "description": "Version",
+          "schema": {
+          "type": "string"
+           }
+        },
+        "404": {
+          "description": "Not Found"
+        }
+      }
+    }
+  },
+   "/v1/status": {
+      "get": {
+        "summary": "Get status of all apps managed by starter.d",
+        "description": "Return json string of all apps (name, tag, status, pid) managed by starter.d",
+        "responses": {
+          "200": {
+            "description": "{\"capps\":[{\"space\":\"services\",\"name\":\"notifyd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"configd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"deviced\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"lookoutd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"metricsd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"configd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0},{\"space\":\"services\",\"name\":\"wimcd\",\"tag\":\"latest\",\"status\":\"Pending\",\"pid\":0}]}",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/status/{space}/{name}": {
+      "get": {
+        "summary": "Get status of the app 'name' running in space 'space'",
+        "description": "Return the running status of the app within the space.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return one of the following: Pending, Active, Done, Failure, Unknown",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/terminate/{space}/{name}": {
+      "post": {
+        "summary": "Terminate already running app 'name' in a given 'space'",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden - this is only when space is boot or reboot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request - this is when the app 'name' is not running. So the app could be in pending, done, failure or unknown state.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/exec/{space}/{name}/{tag}": {
+      "post": {
+        "summary": "Run an app 'name' with 'tag' in 'space'. You cannot run an app in boot or reboot space.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden - this is only when space is boot or reboot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Forbidden - this is when the app is already running.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/update/{space}/{name}/{tag}": {
+      "post": {
+        "summary": "Update an app 'name' with 'tag' in 'space'. You cannot run an app in boot or reboot space.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden - this is only when space is boot or reboot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found - when the app 'name' with 'tag' is not managed by starter.d",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
