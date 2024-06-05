@@ -19,6 +19,7 @@ import BackButton from '../molecules/BackButton';
 import LoadingWrapper from '../molecules/LoadingWrapper';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { NotificationRes } from '@/generated/metrics';
 
 interface ILayoutProps {
   page: string;
@@ -31,6 +32,8 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
+  alerts: NotificationRes[] | undefined,
+  setAlerts: Function;
 }
 
 const Layout = ({
@@ -44,6 +47,8 @@ const Layout = ({
   handlePageChange,
   handleAddNetwork,
   handleNetworkChange,
+  alerts,
+  setAlerts,
 }: ILayoutProps) => {
   const theme = useTheme();
   const router = useRouter();
@@ -71,6 +76,8 @@ const Layout = ({
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
+          alerts={alerts}
+          setAlerts={setAlerts}
         />
       )}
       <HorizontalContainer>

@@ -19,6 +19,7 @@ import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
 import { useRecoilValue } from 'recoil';
 import Alert from './Alert';
+import { NotificationRes } from '@/generated/metrics';
 
 const Logo = dynamic(() =>
   import('../../../public/svg/Logo').then((module) => ({
@@ -31,6 +32,8 @@ interface IHeaderProps {
   isLoading: boolean;
   isDarkMode: boolean;
   onNavigate: Function;
+  alerts: NotificationRes[] | undefined;
+  setAlerts: Function;
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -74,7 +77,7 @@ const IconStyle = {
   },
 };
 
-const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
+const Header = ({ onNavigate, isLoading, isOpen, alerts, setAlerts }: IHeaderProps) => {
   const _user = useRecoilValue<TUser>(user);
   const isManager =
     _user.role === 'ADMIN' || _user.role === 'OWNER' ? true : false;
@@ -121,7 +124,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
               >
                 <SettingsIcon />
               </IconButton>
-              <Alert/>
+              <Alert alerts={alerts} setAlerts={setAlerts}/>
               <IconButton
                 sx={{
                   ...IconStyle,

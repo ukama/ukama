@@ -23,6 +23,7 @@ import {
   useGetUserLazyQuery,
 } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
+import useNotifications from '@/ui/layout/Header/Alert/useNotifications';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
@@ -259,6 +260,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     });
   };
 
+   const { alerts, setAlerts } = useNotifications();
+
   return (
     <Layout
       page={page}
@@ -272,6 +275,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handleNetworkChange={handleNetworkChange}
       networks={networksData?.getNetworks.networks || []}
       handleAddNetwork={handleAddNetworkAction}
+      alerts={alerts}
+      setAlerts={setAlerts}
     >
       <Component {...pageProps} />
       <AddNetworkDialog

@@ -1,8 +1,5 @@
-import {
-  NotificationRes,
-  useGetNotificationsQuery,
-  useGetNotificationsSubSubscription,
-} from '@/generated/metrics';
+import { metricsClient } from '@/client/ApolloClient';
+import { NotificationRes } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import AlertBox from '@/ui/molecules/AlertBox';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -24,49 +21,13 @@ const IconStyle = {
   },
 };
 
-const Alerts = () => {
+interface IAlertsProps {
+  alerts: NotificationRes[] | undefined;
+  setAlerts: Function;
+}
+
+const Alerts = ({alerts, setAlerts}:IAlertsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [alerts, setAlerts] = useState<NotificationRes[] | undefined>(
-    undefined,
-  );
-
-  // Fetch initial notifications
-  const { data: queryData } = useGetNotificationsQuery({
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      data: {
-        orgId: 'fbc2a80d-339e-4d3c-acaa-329dd3d1b221',
-        userId: 'da421ed5-0fba-4638-9661-a9204f49006a',
-        networkId: 'da421ed5-0fba-4638-9661-a9204f490069',
-        scopes: ['notifications'],
-        siteId: 'da421ed5-0fba-4638-9661-a9204f490062',
-        subscriberId: 'da421ed5-0fba-4638-9661-a9204f490065',
-      },
-    },
-    onCompleted: (data) => {
-      console.log('Query completed:', data);
-      setAlerts(data.getNotifications.notifications);
-    },
-  });
-
-  // Subscribe to notifications
-  console.log(useGetNotificationsSubSubscription({
-    variables: {
-      orgId: 'fbc2a80d-339e-4d3c-acaa-329dd3d1b221',
-      userId: 'da421ed5-0fba-4638-9661-a9204f49006a',
-      networkId: 'da421ed5-0fba-4638-9661-a9204f490069',
-      scopes: ['notifications'],
-      siteId: 'da421ed5-0fba-4638-9661-a9204f490062',
-      subscriberId: 'da421ed5-0fba-4638-9661-a9204f490065',
-    },
-    onData: ({ data: subscriptionData }) => {
-      const newAlerts = subscriptionData.data?.getNotificationsSub;
-      console.log('Subscription data:', newAlerts);
-      if (newAlerts) {
-        setAlerts((prev) => (prev ? [newAlerts, ...prev] : [newAlerts]));
-      }
-    },
-  }))
 
   // Handle popover open
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {

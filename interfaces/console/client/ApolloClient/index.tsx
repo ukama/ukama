@@ -21,7 +21,7 @@ export default client;
 
 const httpLink = (headers: any) =>
   new HttpLink({
-    uri: process.env.NEXT_PUBLIC_METRICS_URL,
+    uri: "http://localhost:5042/graphql",
     credentials: 'include',
     headers: {
       ...headers,
@@ -30,7 +30,7 @@ const httpLink = (headers: any) =>
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: process.env.NEXT_PUBLIC_METRICS_WEBSOCKET_URL || '',
+    url: "ws://localhost:5042/graphql" || '',
   }),
 );
 
