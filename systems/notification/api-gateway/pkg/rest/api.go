@@ -23,7 +23,7 @@ type GetEmailByIdReq struct {
 	MailerId string `json:"mailer_id" validate:"required" path:"mailer_id" binding:"required"`
 }
 
-type AddNotificationReq struct {
+type AddNodeNotificationReq struct {
 	NodeId      string `json:"node_id"`
 	Severity    string `json:"severity,omitempty" type:"string"`
 	Type        string `json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
@@ -34,11 +34,11 @@ type AddNotificationReq struct {
 	Details     string `json:"details,omitempty"`
 }
 
-type GetNotificationReq struct {
+type GetNodeNotificationReq struct {
 	NotificationId string `json:"notification_id" path:"notification_id" validate:"required"`
 }
 
-type GetNotificationsReq struct {
+type GetNodeNotificationsReq struct {
 	NodeId      string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	ServiceName string `form:"service_name" json:"service_name" query:"service_name" binding:"required"`
 	Type        string `form:"notification_type" json:"notification_type" query:"notification_type" binding:"required"`
@@ -46,8 +46,33 @@ type GetNotificationsReq struct {
 	Sort        bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
 }
 
-type DelNotificationsReq struct {
+type DelNodeNotificationsReq struct {
 	NodeId      string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	ServiceName string `form:"service_name" json:"service_name" query:"service_name" binding:"required"`
 	Type        string `form:"notification_type" json:"notification_type" query:"notification_type" binding:"required"`
+}
+
+type GetEventNotificationByIdRequest struct {
+	Id string `path:"id" binding:"required"`
+}
+
+type GetEventNotificationRequest struct {
+	OrgId        string `json:"org_id" form:"org_id" query:"org_id"`
+	NetworkId    string `json:"network_id" form:"network_id" query:"network_id"`
+	SubscriberId string `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
+	UserId       string `json:"user_id" form:"user_id" query:"user_id"`
+	Role         string `json:"role" form:"role" query:"role" validate:"oneof=OWNER ADMIN VENDOR USERS"`
+}
+
+type UpdateEventNotificationStatusRequest struct {
+	Id     string `path:"id" binding:"required"`
+	IsRead bool   `form:"read" json:"read" query:"is_read" binding:"required"`
+}
+
+type GetRealTimeEventNotificationRequest struct {
+	OrgId        string   `json:"org_id" form:"org_id" query:"org_id"`
+	NetworkId    string   `json:"network_id" form:"network_id" query:"network_id"`
+	SubscriberId string   `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
+	UserId       string   `json:"user_id" form:"user_id" query:"user_id"`
+	Scopes       []string `json:"scopes" form:"scopes" query:"scope"`
 }

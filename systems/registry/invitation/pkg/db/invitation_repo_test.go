@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	db_inv "github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
@@ -60,7 +61,12 @@ func TestInvitationRepo_AddInvitation(t *testing.T) {
 		Id:        uuid.NewV4(),
 		Name:      "test",
 		Email:     "test@ukama.com",
+<<<<<<< HEAD
+		Org:       "ukama",
+		Role:      roles.TYPE_ADMIN,
+=======
 		Role:      db_inv.Employee,
+>>>>>>> main
 		Status:    db_inv.Pending,
 		UserId:    uuid.NewV4().String(),
 		ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -115,7 +121,12 @@ func TestInvitationRepo_Getinvitation(t *testing.T) {
 			Id:        invId,
 			Name:      "test",
 			Email:     "test@ukama.com",
+<<<<<<< HEAD
+			Org:       "ukama",
+			Role:      roles.TYPE_ADMIN,
+=======
 			Role:      db_inv.Employee,
+>>>>>>> main
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -172,7 +183,12 @@ func TestInvitationRepo_GetByOrg(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama.com",
+<<<<<<< HEAD
+			Org:       "ukama",
+			Role:     roles.TYPE_ADMIN,
+=======
 			Role:      db_inv.Employee,
+>>>>>>> main
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),
@@ -229,7 +245,12 @@ func TestInvitationRepo_Delete(t *testing.T) {
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			Email:     "test@ukama",
+<<<<<<< HEAD
+			Org:       "ukama",
+			Role:      roles.TYPE_ADMIN,
+=======
 			Role:      db_inv.Employee,
+>>>>>>> main
 			Status:    db_inv.Pending,
 			UserId:    uuid.NewV4().String(),
 			ExpiresAt: time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC),

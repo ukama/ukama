@@ -1,0 +1,75 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb/gen";
+
+import "ukama/roles.proto";
+import "ukama/notification.proto";
+
+package ukama.notification.eventToNotify.v1;
+
+service EventToNotifyService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetAll(GetAllRequest) returns (GetAllResponse);
+    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+}
+
+message GetRequest {
+    string id = 1;
+}
+
+message GetResponse {
+    Notification notification = 1;
+}
+
+message GetAllRequest {
+    string orgId = 1 [json_name = "org_id"];
+    string networkId = 2 [json_name = "network_id"];
+    string subscriberId = 3 [json_name = "subscriber_id"];
+    string userId = 4 [json_name = "user_id"];
+    ukama.common.v1.RoleType RoleType = 5 [json_name = "role"];
+}
+
+message GetAllResponse {
+    repeated Notifications notifications = 1;
+}
+
+message UpdateStatusRequest {
+    string id = 1;
+    bool isRead = 2 [json_name = "is_read"];
+}
+
+message UpdateStatusResponse {
+    string id = 1;
+}
+
+message Notification {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    ukama.common.v1.NotificationType type = 4;
+    ukama.common.v1.NotificationScope scope = 5;
+    string orgId = 6 [json_name = "org_id"];
+    string networkId = 7 [json_name = "network_id"];
+    string subscriberId = 8 [json_name = "subscriber_id"];
+    string userId = 9 [json_name = "user_id"];
+    ukama.common.v1.RoleType forRole = 10 [json_name = "for_role"];
+}
+
+message Notifications {
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    string type = 4;
+    string scope = 5;
+    bool isRead = 6 [json_name = "is_read"];
+}
+
+

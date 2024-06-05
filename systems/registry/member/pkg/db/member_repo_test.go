@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -63,7 +64,7 @@ func Test_AddMember(t *testing.T) {
 
 		member := Member{
 			UserId: uuid.NewV4(),
-			Role:   Users,
+			Role:   roles.TYPE_USERS,
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -109,7 +110,7 @@ func Test_GetMember(t *testing.T) {
 		// Arrange
 		member := Member{
 			UserId: uuid.NewV4(),
-			Role:   Users,
+			Role:   roles.TYPE_USERS,
 		}
 
 		var db *extsql.DB
@@ -158,7 +159,7 @@ func Test_GetMembers(t *testing.T) {
 
 		member := Member{
 			UserId: uuid.NewV4(),
-			Role:   Users,
+			Role:   roles.TYPE_USERS,
 		}
 
 		var db *extsql.DB
@@ -206,7 +207,7 @@ func Test_RemoveMember(t *testing.T) {
 
 		member := Member{
 			UserId: uuid.NewV4(),
-			Role:   Users,
+			Role:   roles.TYPE_USERS,
 		}
 
 		var db *extsql.DB

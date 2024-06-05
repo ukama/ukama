@@ -92,7 +92,9 @@ services:
    - postgresd-inventory
 
  initclient-inventory:
-  image: ../services/initClient
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30

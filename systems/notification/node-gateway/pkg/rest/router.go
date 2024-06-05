@@ -151,3 +151,4 @@ func (r *Router) deleteNotification(c *gin.Context, req *GetNotificationReq) (*n
 func (r *Router) deleteNotifications(c *gin.Context, req *DelNotificationsReq) (*npb.ListResponse, error) {
 	return r.clients.n.Purge(req.NodeId, req.ServiceName, req.Type)
 }
+

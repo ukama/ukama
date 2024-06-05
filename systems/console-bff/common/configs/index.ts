@@ -12,6 +12,7 @@ export const VERSION = process.env.VERSION ?? "v1";
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const METRIC_API_GW = process.env.METRIC_API_GW ?? "";
+export const NOTIFICATION_API_GW = process.env.NOTIFICATION_API_GW ?? "";
 export const METRIC_API_GW_SOCKET = process.env.METRIC_API_GW_SOCKET ?? "";
 export const REGISTRY_API_GW = process.env.REGISTRY_API_GW ?? "";
 export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW ?? "";
@@ -37,7 +38,9 @@ export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8000");
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT ?? "5041"
 );
-export const METRICS_PORT = parseInt(process.env.METRICS_PORT ?? "5042");
+export const SUBSCRIPTIONS_PORT = parseInt(
+  process.env.SUBSCRIPTIONS_PORT ?? "5042"
+);
 export const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5043");
 export const USER_PORT = parseInt(process.env.USER_PORT ?? "5044");
 export const PACKAGE_PORT = parseInt(process.env.PACKAGE_PORT ?? "5045");

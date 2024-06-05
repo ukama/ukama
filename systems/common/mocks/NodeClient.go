@@ -120,6 +120,32 @@ func (_m *NodeClient) Get(_a0 string) (*registry.NodeInfo, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *NodeClient) GetAll() ([]*registry.NodeInfo, error) {
+	ret := _m.Called()
+
+	var r0 []*registry.NodeInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]*registry.NodeInfo, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []*registry.NodeInfo); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*registry.NodeInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveFromSite provides a mock function with given fields: _a0
 func (_m *NodeClient) RemoveFromSite(_a0 string) error {
 	ret := _m.Called(_a0)

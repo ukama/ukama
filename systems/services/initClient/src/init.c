@@ -124,6 +124,7 @@ static void create_url(char *url, Config *config, char* org, char *name,
 	char *systemName=NULL;
 
 	if (reqType == (ReqType)REQ_REGISTER ||
+		reqType == (ReqType)REQ_UPDATE ||
 		reqType == (ReqType)REQ_UNREGISTER ||
 		reqType == (ReqType)REQ_QUERY) {
 		systemName = config->systemName;
