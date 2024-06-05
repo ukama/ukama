@@ -36,11 +36,13 @@ typedef struct {
 static struct _websocket_client_handler handler = {NULL, NULL};
 static pthread_mutex_t mutex          = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t websocketMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t initMutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  hasData        = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  websocketFail  = PTHREAD_COND_INITIALIZER;
 static pthread_t monitorThread = NULL;
 static char dataToSend[MAX_LOG_LEN] = {0};
 static ThreadArgs gThreadArgs;
+static int logRemoteInitialized = 0;
 
 static int is_websocket_valid(WSManager *manager) {
 
@@ -184,6 +186,13 @@ void log_remote_init(char *serviceName) {
 
     int rlogdPort = 0;
 
+    pthread_mutex_lock(&initMutex);
+
+    if (logRemoteInitialized) {
+        pthread_mutex_unlock(&initMutex);
+        return;
+    }
+
     rlogdPort = usys_find_service_port(SERVICE_RLOG);
 
     if (handler.websocket) return;
@@ -208,6 +217,8 @@ void log_remote_init(char *serviceName) {
 
     pthread_detach(monitorThread);
     log_enable_rlogd(USYS_TRUE);
+    logRemoteInitialized = USYS_TRUE;
+    pthread_mutex_unlock(&initMutex);
 }
 
 int log_rlogd(char *message) {
