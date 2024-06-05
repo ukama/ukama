@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/utils"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 type SimPoolServer struct {
@@ -101,6 +102,17 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		log.Error("error adding a sims" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
+
+	iccids := make([]string, len(result))
+	for _, u := range result {
+		iccids = append(iccids, u.Iccid)
+	}
+
+	route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
+	_ = p.PublishEventMessage(route, &epb.SimUploaded{
+		Iccid: iccids,
+	})
+
 	resp := &pb.AddResponse{Sim: dbSimsToPbSim(result)}
 	return resp, nil
 }
@@ -115,25 +127,17 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 		log.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
-	route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
-	err = p.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-	iccids := []string{}
+
+	iccids := make([]string, len(s))
 	for _, u := range s {
 		iccids = append(iccids, u.Iccid)
 	}
 
 	if p.msgbus != nil {
-		route := p.baseRoutingKey.SetAction("upload").SetObject("sims").MustBuild()
-		evt := &epb.EventSimsUploaded{
-			SimType: req.GetSimType(),
-		}
-		err = p.msgbus.PublishRequest(route, evt)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
-		}
+		route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
+		_ = p.PublishEventMessage(route, &epb.SimUploaded{
+			Iccid: iccids,
+		})
 	}
 
 	return &pb.UploadResponse{Iccid: iccids}, nil
@@ -146,6 +150,12 @@ func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		log.Error("error while delete sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
+
+	route := p.baseRoutingKey.SetActionDelete().SetObject("sim").MustBuild()
+	_ = p.PublishEventMessage(route, &epb.SimRemoved{
+		Id: req.GetId(),
+	})
+
 	return &pb.DeleteResponse{Id: req.GetId()}, nil
 }
 
@@ -173,4 +183,14 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		QrCode:         p.QrCode,
 		IsFailed:       p.IsFailed,
 	}
+}
+
+func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
+
+	err := p.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+	}
+	return err
+
 }

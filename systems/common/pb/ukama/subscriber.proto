@@ -1,0 +1,61 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
+ 
+ import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+ package ukama.common.v1;
+
+ message Subscriber{
+    string firstName  = 2 [json_name = "first_name"];
+    string lastName = 3 [json_name = "last_name"];
+    string subscriberId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string email  = 6;
+    string phoneNumber  = 7 [json_name = "phone_number"];
+    string address  = 8; 
+    string proofOfIdentification =9 [json_name = "proof_of_identification"];
+    string createdAt = 10;
+    string deletedAt = 11;
+    string updatedAt = 12;
+    repeated Sim sim = 13;
+    string dob = 14 [json_name = "date_of_birth"];
+    string idSerial =15 [json_name = "id_serial"];
+    string gender =16;
+
+}
+
+message Sim {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    Package package = 5;
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 12 [json_name = "first_activated_on"];
+    google.protobuf.Timestamp lastActivatedOn = 13 [json_name = "last_activated_on"];
+    uint64 activationsCount = 14 [json_name = "activations_count"];
+    uint64 deactivationsCount = 15 [json_name = "deactivations_count"];
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
+}
+
+// Package message defines the structure for a package object
+message Package {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
+    google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
+}
