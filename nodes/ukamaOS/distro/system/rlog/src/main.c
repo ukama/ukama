@@ -99,7 +99,8 @@ int main (int argc, char **argv) {
     UInst websocketInst;
     UInst serviceInst;
 
-    log_set_service(SERVICE_NAME);
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
     init_config_and_buffer();
 
     while (USYS_TRUE) {
