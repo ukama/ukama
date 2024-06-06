@@ -140,10 +140,19 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
+		evt := &epb.AddMemberEventRequest{
+			OrgId:         m.OrgId.String(),
+			UserId:        userUUID.String(),
+			Role:          upb.RoleType(member.Role),
+			IsDeactivated: member.Deactivated,
+			CreatedAt:     member.CreatedAt.String(),
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
@@ -197,6 +206,19 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionUpdate().SetObject("member").MustBuild()
+		evt := &epb.UpdateMemberEventRequest{
+			OrgId:         m.OrgId.String(),
+			UserId:        uuid.String(),
+			IsDeactivated: member.Deactivated,
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
+	}
+
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
 
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
@@ -230,10 +252,16 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
+		evt := &epb.DeleteMemberEventRequest{
+			OrgId:  m.OrgId.String(),
+			UserId: uuid.String(),
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
