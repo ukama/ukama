@@ -76,14 +76,23 @@ int main (int argc, char **argv) {
     Agent  *agents = NULL;
     WTasks *tasks  = NULL;
     char   *debug  = DEF_LOG_LEVEL;
-    char   *hubURL = DEF_HUB_URL;
     char   *dbFile = DEF_DB_FILE;
+    char   hubURL[WIMC_MAX_URL_LEN] = {0};
     
     UInst  serviceInst;
     Config serviceConfig = {0};
   
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
+
+    if (usys_find_service_port(SERVICE_NAME) == 0) {
+        usys_log_error("Unable to find service port for %s",
+                       SERVICE_NAME);
+        usys_exit(1);
+    }
+
+    sprintf(hubURL, "http://localhost:%d/hub",
+            usys_find_service_port("ukama"));
 
     /* Parsing command line args. */
     while (true) {
@@ -122,8 +131,8 @@ int main (int argc, char **argv) {
             break;
 
         case 'u':
-            hubURL = optarg;
-            if (!hubURL) {
+            strcpy(&hubURL[0], optarg);
+            if (strlen(hubURL) == 0) {
                 usage();
                 usys_exit(0);
             }
@@ -144,7 +153,7 @@ int main (int argc, char **argv) {
         usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
         usys_exit(1);
     }
-    
+
     /* Signal handler */
     signal(SIGINT, handle_sigint);
   

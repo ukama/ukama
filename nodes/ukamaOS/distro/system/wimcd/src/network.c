@@ -60,7 +60,6 @@ static void setup_webservice_endpoints(Config *config,
                                API_RES_EP("agents/update/:id/"), 0,
                                &web_service_cb_post_agent_update, config);
 
-    /* default - 403 */
     ulfius_set_default_endpoint(instance,
                                 &web_service_cb_default,
                                 config);

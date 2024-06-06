@@ -34,10 +34,8 @@
 
 #define WIMC_FLAG_CREATE_DB 1
 
-#define DEF_HUB_URL       "http://localhost:8001/"
 #define DEF_DB_FILE       "test.db"
 #define DEF_LOG_LEVEL     "TRACE"
-
 
 #define WIMC_REQ_TYPE_FETCH  "fetch"
 #define WIMC_REQ_TYPE_UPDATE "update"
