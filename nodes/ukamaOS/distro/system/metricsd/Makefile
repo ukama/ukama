@@ -50,7 +50,7 @@ override LDFLAGS =  $(LDLIBS) $(LDPATH)
 INCFLAGS := $(INCDIRS:%=-I%)
 DEPFLAGS := -MMD -MP
 MEMCHECKREPORT := $(BUILDDIR)/memcheck.report
-INCFLAGS += -I$(CURDIR)/../../vendor/build/include -I$(CURDIR)/../../vendor/build/usr/local/include
+INCFLAGS += -I$(CURDIR)/../../vendor/build/include -I$(CURDIR)/../../vendor/build/usr/local/include -I.
 
 # Tools and flags
 CPPLINT := cpplint
@@ -59,7 +59,6 @@ CPPCHECK := cppcheck
 override CPPCHECKFLAGS += --enable=style,warning,missingInclude
 MEMCHECK := valgrind
 override MEMCHECKFLAGS += --log-file=$(MEMCHECKREPORT) --track-origins=yes --leak-check=full --show-leak-kinds=all
-
 
 # This makefile name
 MAKEFILE := $(lastword $(MAKEFILE_LIST))
@@ -84,7 +83,7 @@ $(BUILDDIR)/%.d: ;
 .PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug
 
 # Main target for building
-all: $(CAPPEXE)
+all: version.h $(CAPPEXE)
 	@echo Done.
 
 # Print commands
@@ -103,6 +102,9 @@ help:
 	@echo " make list-sources - Print out all recognized sources files"
 	@echo " make list-objects - Print out final objects"
 	@echo ""
+
+version.h:
+	./../../../../builder/scripts/generate_version.sh
 
 format-style:
 	$(foreach src, $(SOURCES), $(call clang-format,$(src)))	
@@ -164,6 +166,7 @@ memcheck: $(CAPPEXE)
 clean:
 	@rm -rf $(CAPPEXE)
 	@rm -rf $(BUILDDIR)
+	@rm version.h
 	@echo Cleaned.
 
 # Force build of all files

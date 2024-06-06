@@ -1,0 +1,97 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+message SimUsage {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string simId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+    string subscriberId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string orgId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string type = 6;
+    uint64 bytesUsed = 7;
+    string sessionId = 8;
+    int64 startTime = 9;
+    int64 endTime = 10;
+}
+
+
+message SimAllocation {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string orgId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string dataPlanId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    string packageId = 12 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+    uint32 trafficPolicy = 13 [json_name = "traffic_policy"];
+}
+
+
+message SimActivePackage{
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+    string planId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
+    google.protobuf.Timestamp packageStartDate = 5 [json_name = "start_date"];
+    string iccid =6;
+    string imsi = 7;
+    string networkId = 8;
+}
+
+message SimTermination {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string iccid =2;
+    string imsi = 3;
+    string networkId = 4;
+}
+
+message SimActivation {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string iccid =2;
+    string imsi = 3;
+    string networkId = 4;
+    string packageId = 5;
+}
+
+message SimDeactivation {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string iccid =2;
+    string imsi = 3;
+    string networkId = 4;
+    string packageId = 5;
+}
+
+message SimAddPackage {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string iccid =2;
+    string imsi = 3;
+    string networkId = 4;
+    string packageId = 5;  
+}
+
+message SimRemovePackage {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string iccid =2;
+    string imsi = 3;
+    string networkId = 4;
+    string packageId = 5;  
+}

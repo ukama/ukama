@@ -24,13 +24,12 @@
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define LOOKOUT_VERSION         "0.0.1"
 #define DEF_REPORT_INTERVAL     30
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_STARTERD_HOST      "localhost"
 #define DEF_NODE_SYSTEM_EP     "v1/nodes/%s/status"
-#define DEF_NODED_EP           "noded/v1/nodeinfo"
+#define DEF_NODED_EP           "/v1/nodeinfo"
 #define DEF_STARTERD_EP        "v1/status"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define ENV_LOOKOUT_DEBUG_MODE "LOOKOUT_DEBUG_MODE"

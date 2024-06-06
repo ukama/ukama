@@ -20,6 +20,8 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
+#include "version.h"
+
 SpaceList *gSpaceList = NULL;
 
 void handle_sigint(int signum) {
@@ -99,7 +101,8 @@ int main(int argc, char **argv) {
 
     pthread_t thread;
 
-    log_set_service(SERVICE_NAME);
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
 
     /* Parsing command line args. */
     while (true) {
@@ -120,7 +123,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'v':
-            usys_puts(STARTER_VERSION);
+            usys_puts(VERSION);
             usys_exit(0);
             break;
 

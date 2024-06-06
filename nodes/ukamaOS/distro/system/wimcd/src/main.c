@@ -27,6 +27,8 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
+#include "version.h"
+
 void handle_sigint(int signum) {
 
     usys_log_debug("Terminate signal.\n");
@@ -80,7 +82,8 @@ int main (int argc, char **argv) {
     UInst  serviceInst;
     Config serviceConfig = {0};
   
-    log_set_service(SERVICE_NAME);
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
 
     /* Parsing command line args. */
     while (true) {
@@ -101,7 +104,7 @@ int main (int argc, char **argv) {
             break;
             
         case 'v':
-            usys_puts(WIMC_VERSION);
+            usys_puts(VERSION);
             usys_exit(0);
             break;
 

@@ -25,10 +25,10 @@
 #include "config.h"
 #include "mesh_config.h"
 #include "server.h"
+#include "version.h"
 
 #define DEF_LOG_LEVEL "TRACE"
 #define SERVICE_NAME  SERVICE_BOOTSTRAP
-#define VERSION       "0.0.1"
 
 static void usage() {
 
@@ -90,6 +90,7 @@ int main (int argc, char **argv) {
     struct _u_instance webInst;
 
     usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
 
 	/* Prase command line args. */
 	while (TRUE) {
@@ -204,15 +205,15 @@ int main (int argc, char **argv) {
 
     if (start_web_services(&webInst) != TRUE) {
         usys_log_error("Web service failed to setup. Exiting.");
-        exit(1);
+        goto done;
     }
 
     pause();
 
- done:
     ulfius_stop_framework(&webInst);
     ulfius_clean_instance(&webInst);
 
+done:
 	clear_config(config);
 	clear_mesh_config(meshConfig);
 	free_server_info(serverInfo);

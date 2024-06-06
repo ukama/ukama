@@ -312,10 +312,10 @@ static void report_memory_failure(UResponse *response, int errnum) {
  */
 static int web_service_cb_ping(const URequest *request, UResponse *response,
                 void *epConfig) {
-    int respCode = RESP_CODE_SUCCESS;
 
-    ulfius_set_string_body_response(response, respCode,
-                    "NodeD Service: Hi, there..!!");
+    ulfius_set_string_body_response(response,
+                                    200,
+                                    "OK");
 
     return U_CALLBACK_CONTINUE;
 }
@@ -332,14 +332,10 @@ static int web_service_cb_ping(const URequest *request, UResponse *response,
  */
 static int web_service_cb_default(const URequest *request, UResponse *response,
                 void *epConfig) {
-    int respCode = RESP_CODE_SUCCESS;
 
-    char *msg;
-
-    asprintf(&msg, "URL endpoint %s not implemented.", request->http_url);
-
-    ulfius_set_string_body_response(response, respCode, msg);
-
+    ulfius_set_string_body_response(response,
+                                    404,
+                                    "Not Found");
     return U_CALLBACK_CONTINUE;
 }
 
