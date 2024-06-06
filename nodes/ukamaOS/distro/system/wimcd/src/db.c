@@ -63,23 +63,18 @@ static int db_insert_entry(sqlite3 *db, char *name, char *tag, char *path) {
   return val;
 }
 
-/* 
- * parse_response -- query callback.
- *
- */
-
-static int parse_response(void **arg, int argc, char **argv, char **colName) {
+static int parse_response(void *arg, int argc, char **argv, char **colName) {
   
   int i;
   char **path = (char **)arg;
   
   for(i=0; i<argc; i++){
     if (strcmp(colName[i], "Path") == 0) {
-      strcpy(*path, argv[1]);
-      return 0;
+        *path = strdup(argv[i]);
+        return 0;
     }
   }
-  
+
   return 0;
 }
 
@@ -98,8 +93,8 @@ int db_read_path(sqlite3 *db, char *name, char *tag, char **path) {
     goto failure;
   }
   
-  sprintf(buf, "SELECT * FROM Containers WHERE (Name='%s' AND Tag='%s');",
-	  name, tag);
+  sprintf(buf, "SELECT Path FROM Containers WHERE Name='%s' AND Tag='%s';",
+          name, tag);
 
   val = sqlite3_exec(db, buf, parse_response, path, &err);
 

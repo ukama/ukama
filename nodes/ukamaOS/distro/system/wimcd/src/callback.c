@@ -89,14 +89,12 @@ int web_service_cb_get_capp(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-#if 0
     if (db_read_path(config->db, cappName, cappTag, &path[0])) {
         usys_log_debug("Path found in db. name:%s tag:%s path:%s",
                        cappName, cappTag, path[0]);
         ulfius_set_string_body_response(response, HttpStatus_OK, path);
         return U_CALLBACK_CONTINUE;
     }
-#endif
 
     /* Check with hub */
     if (!get_artifact_info_from_hub(&artifact,
