@@ -67,7 +67,3 @@ message EventRegistryNodeDettach{
     string nodeId = 1;
     repeated string nodegroup = 2;
 }
- 
- 
- 
- 
