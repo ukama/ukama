@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -83,59 +82,6 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "member")
-	}
-
-	if m.msgbus != nil {
-		route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-		evt := &epb.AddMemberEventRequest{
-			OrgId:         m.OrgId.String(),
-			UserId:        userUUID.String(),
-			Role:          upb.RoleType(member.Role),
-			IsDeactivated: member.Deactivated,
-			CreatedAt:     member.CreatedAt.String(),
-		}
-		err = m.msgbus.PublishRequest(route, evt)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-		}
-	}
-
-	_ = m.PushOrgMemberCountMetric(m.OrgId)
-
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
-}
-
-/* This is called when user already exists as a member of another org */
-func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
-
-	// Get the User
-	userUUID, err := uuid.FromString(req.GetUserUuid())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
-	}
-
-	/* validate user uuid */
-	_, err = m.userClient.GetById(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
-	}
-
-	log.Infof("Adding member")
-	member := &db.Member{
-		UserId: userUUID,
-		Role:   roles.RoleType(req.Role),
-	}
-
-	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.orgClient.AddUser(orgId, userId)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
