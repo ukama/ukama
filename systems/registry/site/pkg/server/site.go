@@ -133,7 +133,8 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
-	evt := &epb.AddSiteEventRequest{
+
+	evt := &epb.EventAddSite{
 		SiteId:        site.Id.String(),
 		Name:          site.Name,
 		NetworkId:     site.NetworkId.String(),
@@ -260,7 +261,7 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
-	evt := &epb.UpdateSiteEventRequest{
+	evt := &epb.EventUpdateSite{
 		SiteId:        site.Id.String(),
 		Name:          site.Name,
 		IsDeactivated: site.IsDeactivated,
