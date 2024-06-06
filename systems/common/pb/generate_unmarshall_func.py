@@ -60,6 +60,7 @@ print("import (")
 print("\"google.golang.org/protobuf/types/known/anypb\"")
 print("\"google.golang.org/protobuf/proto\"")
 print("log \"github.com/sirupsen/logrus\"")
+print("upb \"github.com/ukama/ukama/systems/common/pb/gen/ukama\"")
 print(")")
 
 for name in message_names:
