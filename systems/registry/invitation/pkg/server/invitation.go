@@ -169,9 +169,29 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*
 			"invalid format of invitation uuid. Error %s", err.Error())
 	}
 
+	invite, err := i.iRepo.Get(iuuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
+
 	err = i.iRepo.Delete(iuuid, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
+
+	if i.msgbus != nil {
+		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
+		evt := &epb.EventInvitationDeleted{
+			Id:     invite.Id.String(),
+			Email:  invite.Email,
+			Name:   invite.Name,
+			Role:   upb.RoleType(invite.Role),
+			UserId: invite.UserId,
+		}
+		err = i.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return &pb.DeleteResponse{
@@ -204,7 +224,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
-		evt := &epb.EventInvitationCreated{
+		evt := &epb.EventInvitationUpdated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
 			Email:     invite.Email,
