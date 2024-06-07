@@ -41,38 +41,66 @@ func NewNotificationEventServer(orgName string, orgId string, n *EventToNotifySe
 func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	/*
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOrgAdd]):
-			//c := evt.EventToEventConfig[evt.EventOrgAdd]
-			// msg, err := epb.UnmarshalOrgAddEvent(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
-			// Handle Org Add event
 
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserAdd]):
-			// c := evt.EventToEventConfig[evt.EventUserAdd]
-			// msg, err := epb.UnmarshalUserAddEvent(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOrgAdd]):
+		c := evt.EventToEventConfig[evt.EventOrgAdd]
+		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
 
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDeactivate]):
-			// c := evt.EventToEventConfig[evt.EventUserDeactivate]
-			// msg, err := epb.UnmarshalUserDeactivateEvent(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
-			// Handle User Deactivate event
+		_ = es.ProcessEvent(&c, msg.Id, "", "", "", msg.Owner, jmsg)
 
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDelete]):
-			// c := evt.EventToEventConfig[evt.EventUserDelete]
-			// msg, err := epb.UnmarshalUserDeleteEvent(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
-			// Handle User Delete event
-	*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserAdd]):
+		c := evt.EventToEventConfig[evt.EventUserAdd]
+		msg, err := epb.UnmarshalEventUserCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDeactivate]):
+		c := evt.EventToEventConfig[evt.EventUserDeactivate]
+		msg, err := epb.UnmarshalEventUserDeactivate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDelete]):
+		c := evt.EventToEventConfig[evt.EventUserDelete]
+		msg, err := epb.UnmarshalEventUserDelete(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberCreate]):
 		c := evt.EventToEventConfig[evt.EventMemberCreate]
 		msg, err := epb.UnmarshalAddMemberEventRequest(e.Msg, c.Name)
@@ -96,18 +124,24 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			SubscriberId: "",
 		}
 		es.n.storeUser(user)
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
-				// c := evt.EventToEventConfig[evt.EventMemberDelete]
-				// msg, err := epb.UnmarshalMemberDeleteEvent(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// Handle Member Delete event
-		*/
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
+		c := evt.EventToEventConfig[evt.EventMemberDelete]
+		msg, err := epb.UnmarshalDeleteMemberEventRequest(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkAdd]):
 		c := evt.EventToEventConfig[evt.EventNetworkAdd]
-		msg, err := epb.UnmarshalNetworkCreatedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventNetworkCreate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -119,18 +153,23 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, msg.OrgId, msg.Id, "", "", "", jmsg)
 
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkDelete]):
-				// c := evt.EventToEventConfig[evt.EventNetworkDelete]
-				// msg, err := epb.UnmarshalNetworkDeleteEvent(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// Handle Network Delete event
-		*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkDelete]):
+		c := evt.EventToEventConfig[evt.EventNetworkDelete]
+		msg, err := epb.UnmarshalEventNetworkDelete(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		// Handle Network Delete event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, msg.OrgId, msg.Id, "", "", "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
 		c := evt.EventToEventConfig[evt.EventNodeCreate]
-		msg, err := epb.UnmarshalNodeCreatedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +183,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeUpdate]
-		msg, err := epb.UnmarshalNodeUpdatedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeUpdate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +197,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeStateUpdate]
-		msg, err := epb.UnmarshalNodeStateUpdatedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeStatusUpdate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +211,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
 		c := evt.EventToEventConfig[evt.EventNodeDelete]
-		msg, err := epb.UnmarshalNodeDeletedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +225,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
 		c := evt.EventToEventConfig[evt.EventNodeAssign]
-		msg, err := epb.UnmarshalNodeAssignedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -200,7 +239,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
 		c := evt.EventToEventConfig[evt.EventNodeRelease]
-		msg, err := epb.UnmarshalNodeReleasedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -218,6 +257,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
+
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
@@ -225,24 +265,33 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
 
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteDelete]):
-				// c := evt.EventToEventConfig[evt.EventInviteDelete]
-				// msg, err := epb.UnmarshalInviteDeleteEvent(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// Handle Invite Delete event
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteDelete]):
+		c := evt.EventToEventConfig[evt.EventInviteDelete]
+		msg, err := epb.UnmarshalEventInvitationDeleted(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
 
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteUpdate]):
-				// c := evt.EventToEventConfig[evt.EventInviteUpdate]
-				// msg, err := epb.UnmarshalInviteUpdateEvent(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// Handle Invite Update event
+		// Handle Invite Delete event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
 
-		*/
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteUpdate]):
+		c := evt.EventToEventConfig[evt.EventInviteUpdate]
+		msg, err := epb.UnmarshalEventInvitationUpdated(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		// Handle Invite Update event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
 		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
@@ -272,13 +321,19 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivate]):
-		// c := evt.EventToEventConfig[evt.EventSimActivate]
-		// msg, err := epb.UnmarshalSimActivate(e.Msg, c.Name)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		c := evt.EventToEventConfig[evt.EventSimActivate]
+		msg, err := epb.UnmarshalSimActivation(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
 
-		// n := notification(&c, es.orgId, "", "", "")
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
 		msg, err := epb.UnmarshalSimAllocation(e.Msg, c.Name)
@@ -293,20 +348,33 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
 
-	/*
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimDelete]):
-			// c := evt.EventToEventConfig[evt.EventSimDelete]
-			// msg, err := epb.UnmarshalSimDelete(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
-		case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
-			//c := evt.EventToEventConfig[evt.EventSimAddPackage]
-			// msg, err := epb.UnmarshalSimActivePackage(e.Msg, c.Name)
-			// if err != nil {
-			// 	return nil, err
-			// }
-	*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimDelete]):
+		c := evt.EventToEventConfig[evt.EventSimDelete]
+		msg, err := epb.UnmarshalSimTermination(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
+		c := evt.EventToEventConfig[evt.EventSimAddPackage]
+		msg, err := epb.UnmarshalSimAddPackage(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
 		msg, err := epb.UnmarshalSimActivePackage(e.Msg, c.Name)
@@ -319,16 +387,22 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
 
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimRemovePackage]):
-				// c := evt.EventToEventConfig[evt.EventSimRemovePackage]
-				// msg, err := epb.UnmarshalSimRemovePackage(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-		*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimRemovePackage]):
+		c := evt.EventToEventConfig[evt.EventSimRemovePackage]
+		msg, err := epb.UnmarshalSimRemovePackage(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberCreate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberCreate]
 		msg, err := epb.UnmarshalEventSubscriberAdded(e.Msg, c.Name)
@@ -343,14 +417,20 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
 
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
-				//c := evt.EventToEventConfig[evt.EventSubscriberUpdate]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-		*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
+		c := evt.EventToEventConfig[evt.EventSubscriberUpdate]
+		msg, err := epb.UnmarshalEventSubscriberAdded(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberDelete]):
 		c := evt.EventToEventConfig[evt.EventSubscriberDelete]
 		msg, err := epb.UnmarshalEventSubscriberDeleted(e.Msg, c.Name)
@@ -450,12 +530,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
 
 		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMarkupDelete]):
-				c := evt.EventToEventConfig[evt.EventMarkupDelete]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
 				c := evt.EventToEventConfig[evt.EventComponentsSync]
 				// msg, err := epb.Unmarshal(e.Msg, c.Name)
