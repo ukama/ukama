@@ -20,6 +20,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -75,8 +76,9 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		Certificate: req.GetOrg().GetCertificate(),
 	}
 
+	OrgId := uuid.NewV4()
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
-		org.Id = uuid.NewV4()
+		org.Id = OrgId
 		_, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
 			OrgId:   org.Id.String(),
 			OrgName: org.Name,
@@ -100,8 +102,13 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
+	evt := &epb.EventOrgCreate{
+		Id:    OrgId.String(),
+		Name:  org.Name,
+		Owner: org.Owner.String(),
+	}
 	route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
+	err = o.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -267,8 +274,13 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
+	evt := &epb.EventOrgRegisterUser{
+		OrgId:   org.Id.String(),
+		OrgName: org.Name,
+		UserId:  user.Uuid.String(),
+	}
 	route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
+	err = o.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}

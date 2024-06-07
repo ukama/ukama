@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/nucleus/org/mocks"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -54,12 +55,9 @@ func TestOrgServer_Add(t *testing.T) {
 
 	orchSystem.On("DeployOrg", pOrg).Return(&providers.DeployOrgResponse{}, nil)
 
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{
-		Org: &pb.Organization{
-			Name:        orgName,
-			Owner:       ownerUuid.String(),
-			Certificate: certificate,
-		}}).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.EventOrgCreate) bool {
+		return e.Name == org.Name
+	})).Return(nil).Once()
 
 	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
