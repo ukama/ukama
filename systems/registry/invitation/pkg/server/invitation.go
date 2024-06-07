@@ -180,7 +180,7 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*
 	}
 
 	if i.msgbus != nil {
-		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
+		route := i.baseRoutingKey.SetActionDelete().SetObject("invitation").MustBuild()
 		evt := &epb.EventInvitationDeleted{
 			Id:     invite.Id.String(),
 			Email:  invite.Email,
