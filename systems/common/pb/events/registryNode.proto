@@ -1,0 +1,69 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+ 
+ package ukama.events.v1;
+ 
+ /* added a new node */
+ message EventRegistryNodeCreate{
+     string nodeId = 1;
+     string name = 2;
+     string type = 3;
+     string org = 4;
+ }
+ 
+ /* updated a node */
+ message EventRegistryNodeUpdate{
+     string nodeId = 1;
+     string name = 2;
+ }
+ 
+ /* updated a node state*/
+ message EventRegistryNodeStatusUpdate{
+     string nodeId = 1;
+     oneof  status { 
+        string connectivity = 2;
+        string state = 3; 
+     }
+ }
+ 
+ /* removed a node */
+ message EventRegistryNodeDelete{
+     string nodeId = 1;
+ }
+ 
+ /* Assigned to a site */
+ message EventRegistryNodeAssign{
+     string nodeId = 1;
+     string type = 3;
+     string network = 4;
+     string site = 5;
+ }
+ 
+ /*Release from site */
+ message EventRegistryNodeRelease{
+     string nodeId = 1;
+     string type = 3;
+     string network = 4;
+     string site = 5;
+ }
+ 
+ /* Attach node */
+ message EventRegistryNodeAttach{
+    string nodeId = 1;
+    repeated string nodegroup = 2;
+}
+
+ /* Dettach node */
+message EventRegistryNodeDettach{
+    string nodeId = 1;
+    repeated string nodegroup = 2;
+}

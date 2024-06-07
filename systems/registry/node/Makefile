@@ -23,13 +23,14 @@ deps:
 	go install
 
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=./pb/gen --go-grpc_out=./pb/gen --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=./pb/gen \
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 					  nodeservice.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm -rf bin/
+	rm -rf pb/gen
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1

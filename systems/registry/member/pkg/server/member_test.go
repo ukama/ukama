@@ -167,9 +167,9 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
 		mRepo.On("RemoveMember", member.UserId, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
-		}).Return(nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
+			return a.UserId == member.UserId.String()
+		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 

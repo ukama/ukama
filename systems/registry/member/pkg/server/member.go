@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -107,50 +106,6 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
 }
 
-/* This is called when user already exists as a member of another org */
-func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
-
-	// Get the User
-	userUUID, err := uuid.FromString(req.GetUserUuid())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
-	}
-
-	/* validate user uuid */
-	_, err = m.userClient.GetById(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
-	}
-
-	log.Infof("Adding member")
-	member := &db.Member{
-		UserId: userUUID,
-		Role:   roles.RoleType(req.Role),
-	}
-
-	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.orgClient.AddUser(orgId, userId)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "member")
-	}
-
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	_ = m.PushOrgMemberCountMetric(m.OrgId)
-
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
-}
-
 func (m *MemberServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	uuid, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
@@ -197,6 +152,19 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionUpdate().SetObject("member").MustBuild()
+		evt := &epb.UpdateMemberEventRequest{
+			OrgId:         m.OrgId.String(),
+			UserId:        uuid.String(),
+			IsDeactivated: member.Deactivated,
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
+	}
+
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
 
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
@@ -230,10 +198,16 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if m.msgbus != nil {
+		route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
+		evt := &epb.DeleteMemberEventRequest{
+			OrgId:  m.OrgId.String(),
+			UserId: uuid.String(),
+		}
+		err = m.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	_ = m.PushOrgMemberCountMetric(m.OrgId)
