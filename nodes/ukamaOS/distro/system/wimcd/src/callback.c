@@ -50,16 +50,46 @@ static void create_hub_urls_for_agent(char *hubURL,
     }
 }
 
-int web_service_cb_get_capp(const URequest *request,
-                            UResponse *response,
-                            void *data) {
+static int file_exists_and_non_empty(char *name, char *tag) {
+
+
+    char *fileName = NULL;
+    FILE *file     = NULL;
+    long filesize  = 0;
+
+    fileName = (char *)malloc((strlen(DEFAULT_APPS_PKGS_PATH) +
+                               strlen(name) + strlen(tag) + 2)*sizeof(char));
+
+    sprintf(fileName, "%s/%s_%s.tar.gz",
+            DEFAULT_APPS_PKGS_PATH,
+            name, tag);
+
+    file = fopen(fileName, "r");
+    if (file == NULL) {
+        return 0;
+    }
+
+    fseek(file, 0, SEEK_END);
+    filesize = ftell(file);
+    fclose(file);
+
+    if (filesize > 0) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int web_service_cb_post_capp(const URequest *request,
+                             UResponse *response,
+                             void *data) {
 
     int ret=TRUE, resCode=200, i=0;
     int httpStatus=0;
     uuid_t uuid;
 
     char idStr[36+1]={0};
-    char path[WIMC_MAX_PATH_LEN]={0};
+    char status[WIMC_MAX_PATH_LEN]={0};
     char cbURL[WIMC_MAX_URL_LEN] = {0};
 
     char indexURL[WIMC_MAX_URL_LEN] = {0};
@@ -89,11 +119,28 @@ int web_service_cb_get_capp(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    if (db_read_path(config->db, cappName, cappTag, &path[0])) {
-        usys_log_debug("Path found in db. name:%s tag:%s path:%s",
-                       cappName, cappTag, path[0]);
-        ulfius_set_string_body_response(response, HttpStatus_OK, path);
-        return U_CALLBACK_CONTINUE;
+    /*
+     * if app is downloading -> 409 (conflict)
+     * if app is 'available' but not found in pkg -> start downloading - 202
+     * if app is 'available and also found in pkg -> 304
+     */
+    if (db_read_status(config->db, cappName, cappTag, &status[0])) {
+        if (strcmp(&status[0], "download") == 0) {
+            usys_log_debug("capp found in db. name:%s tag:%s status:%s",
+                           cappName, cappTag, &status[0]);
+            ulfius_set_string_body_response(response,
+                                            HttpStatus_Conflict,
+                                            HttpStatusStr(HttpStatus_Conflict));
+            return U_CALLBACK_CONTINUE;
+        } else if (strcmp(&status[0], "available") == 0) {
+            if (file_exists_and_non_empty(cappName, cappTag)) {
+                usys_log_debug("capp found in the default location");
+                ulfius_set_string_body_response(response,
+                                                HttpStatus_NotModified,
+                                                HttpStatusStr(HttpStatus_NotModified));
+                return U_CALLBACK_CONTINUE;
+            }
+        }
     }
 
     /* Check with hub */

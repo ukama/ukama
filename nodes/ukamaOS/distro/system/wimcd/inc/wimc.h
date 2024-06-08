@@ -101,6 +101,8 @@
 #define AGENT_EXEC "/usr/bin/casync"
 #define DEFAULT_PATH "/tmp"
 
+#define DEFAULT_APPS_PKGS_PATH "/ukama/apps/pkgs"
+
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
 
