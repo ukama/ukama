@@ -71,11 +71,10 @@ int main(int argc, char **argv) {
     int opt=0, opdix=0;
     uuid_t uuid;
     long code;
-    char *dbg=DEF_LOG_LEVEL;
+    char *debug=DEF_LOG_LEVEL;
     char *method="test";
 
     char wimcURL[WIMC_MAX_URL_LEN] = {0};
-    char debug[WIMC_MAX_URL_LEN] = {0};
     char agentMethod[WIMC_MAX_URL_LEN] = {0};
 
     UInst inst;
@@ -113,7 +112,7 @@ int main(int argc, char **argv) {
             break;
             
         case 'l':
-            dbg = optarg;
+            debug = optarg;
             set_log_level(debug);
             break;
             
@@ -129,7 +128,6 @@ int main(int argc, char **argv) {
 
     uuid_clear(uuid);
     uuid_generate(uuid);
-    strncpy(&debug[0],       dbg,    strlen(dbg));
     strncpy(&agentMethod[0], method, strlen(method));
 
     if (start_web_service(&wimcURL[0], &inst) != TRUE) {
