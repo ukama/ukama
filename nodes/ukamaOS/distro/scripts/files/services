@@ -1196,5 +1196,6 @@ notify		18009/tcp   notifyd
 rlog            18010/tcp   rlogd
 rlog-admin      18011/tcp   rlogd-admin
 bootstrap       18012/tcp   bootstrap
+wimc-agent	18013/tcp   wimc-agent
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote

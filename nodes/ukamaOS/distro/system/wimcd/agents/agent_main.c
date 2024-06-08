@@ -24,11 +24,10 @@
 #include "usys_mem.h"
 #include "usys_getopt.h"
 #include "usys_api.h"
+#include "usys_services.h"
 
 #include "version.h"
 
-#define WIMC_SERVICE_NAME "wimc"
-#define SERVICE_NAME      "wimc-agent"
 #define DEF_LOG_LEVEL     "TRACE"
 
 static UsysOption longOptions[] = {
@@ -79,17 +78,15 @@ int main(int argc, char **argv) {
 
     UInst inst;
 
-    usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_service(SERVICE_WIMC_AGENT);
+    usys_log_remote_init(SERVICE_WIMC_AGENT);
 
-    if (usys_find_service_port(WIMC_SERVICE_NAME) == 0) {
-        usys_log_error("Unable to find service port for %s",
-                       WIMC_SERVICE_NAME);
+    if (usys_find_service_port(SERVICE_WIMC) == 0) {
+        usys_log_error("Unable to find service port for %s", SERVICE_WIMC);
         usys_exit(1);
     }
 
-    sprintf(wimcURL, "http://localhost:%d",
-            usys_find_service_port(WIMC_SERVICE_NAME));
+    sprintf(wimcURL, "http://localhost:%d", usys_find_service_port(SERVICE_WIMC));
 
     while (TRUE) {
 
@@ -105,21 +102,21 @@ int main(int argc, char **argv) {
         case 'm':
             method = optarg;
             break;
-            
+
         case 'h':
             usage();
             exit(0);
             break;
-            
+
         case 'l':
             debug = optarg;
             set_log_level(debug);
             break;
-            
+
         case 'v':
-            fprintf(stdout, "%s - Version: %s\n", SERVICE_NAME, VERSION);
+            fprintf(stdout, "%s - Version: %s\n", SERVICE_WIMC_AGENT, VERSION);
             exit(0);
-            
+
         default:
             usage();
             exit(0);
