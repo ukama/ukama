@@ -322,7 +322,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivate]):
 		c := evt.EventToEventConfig[evt.EventSimActivate]
-		msg, err := epb.UnmarshalSimActivation(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimActivation(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -332,11 +332,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
-		msg, err := epb.UnmarshalSimAllocation(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +350,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimDelete]):
 		c := evt.EventToEventConfig[evt.EventSimDelete]
-		msg, err := epb.UnmarshalSimTermination(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimTermination(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -360,11 +360,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
 		c := evt.EventToEventConfig[evt.EventSimAddPackage]
-		msg, err := epb.UnmarshalSimAddPackage(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimAddPackage(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -373,11 +373,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
-		msg, err := epb.UnmarshalSimActivePackage(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -387,11 +387,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimRemovePackage]):
 		c := evt.EventToEventConfig[evt.EventSimRemovePackage]
-		msg, err := epb.UnmarshalSimRemovePackage(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventSimRemovePackage(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -401,7 +401,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberCreate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberCreate]
