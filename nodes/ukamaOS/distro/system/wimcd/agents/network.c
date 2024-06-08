@@ -24,7 +24,7 @@
 #include "usys_types.h"
 #include "usys_log.h"
 
-#define AGENT_EP "/v1/capps"
+#define AGENT_EP "/v1/apps"
 #define STAT_EP  "/stats"
 
 static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
@@ -45,7 +45,7 @@ bool start_web_service(char *wimcURL, struct _u_instance *webInstance) {
 
     int servicePort = 0;
 
-    servicePort = usys_find_service_port(SERVICE_NAME);
+    servicePort = usys_find_service_port(SERVICE_WIMC_AGENT);
 
     if (ulfius_init_instance(webInstance, servicePort, NULL, NULL) != U_OK) {
         usys_log_error("Error initializing instance for port %d", servicePort);
