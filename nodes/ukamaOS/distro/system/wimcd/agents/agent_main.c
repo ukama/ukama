@@ -23,17 +23,16 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_getopt.h"
+#include "usys_api.h"
 
 #include "version.h"
 
-#define DEF_LOG_LEVEL          "TRACE"
-#define DEF_WIMC_URL           "http://localhost:8087"
-#define DEF_AGENT_SERVICE_PORT "8088"
+#define WIMC_SERVICE_NAME "wimc"
+#define SERVICE_NAME      "wimc-agent"
+#define DEF_LOG_LEVEL     "TRACE"
 
 static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
-    { "port",          required_argument, 0, 'p' },
-    { "wimc",          required_argument, 0, 'w' },
     { "method",        required_argument, 0, 'm' },
     { "help",          no_argument, 0, 'h' },
     { "version",       no_argument, 0, 'v' },
@@ -47,8 +46,6 @@ void usage() {
     printf("Usage: Agent [options] \n");
     printf("Options:\n");
     printf("--h, --help                         This help menu. \n");
-    printf("--w, --wimc                         WIMC port \n");
-    printf("--p, --port                         Local listening port. \n");
     printf("--m, --method                       Tx Method <Test | Chunk>.\n");
     printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process. \n");
     printf("--v, --version                      Version. \n");
@@ -74,36 +71,38 @@ int main(int argc, char **argv) {
     int opt=0, opdix=0;
     uuid_t uuid;
     long code;
-    char *url=DEF_WIMC_URL, *port=DEF_AGENT_SERVICE_PORT, *dbg=DEF_LOG_LEVEL;
+    char *dbg=DEF_LOG_LEVEL;
     char *method="test";
 
     char wimcURL[WIMC_MAX_URL_LEN] = {0};
-    char servicePort[WIMC_MAX_URL_LEN] = {0};
     char debug[WIMC_MAX_URL_LEN] = {0};
     char agentMethod[WIMC_MAX_URL_LEN] = {0};
 
     UInst inst;
-    
-    /* Prase command line args. */
+
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
+
+    if (usys_find_service_port(WIMC_SERVICE_NAME) == 0) {
+        usys_log_error("Unable to find service port for %s",
+                       WIMC_SERVICE_NAME);
+        usys_exit(1);
+    }
+
+    sprintf(wimcURL, "http://localhost:%d",
+            usys_find_service_port(WIMC_SERVICE_NAME));
+
     while (TRUE) {
 
         opt   = 0;
         opdix = 0;
 
-        opt = usys_getopt_long(argc, argv, "w:p:m:l:hV:", longOptions, &opdix);
+        opt = usys_getopt_long(argc, argv, "m:l:hV:", longOptions, &opdix);
         if (opt == -1) {
             break;
         }
 
         switch (opt) {
-        case 'w':
-            url = optarg;
-            break;
-
-        case 'p':
-            port = optarg;
-            break;
-            
         case 'm':
             method = optarg;
             break;
@@ -119,29 +118,26 @@ int main(int argc, char **argv) {
             break;
             
         case 'v':
-            fprintf(stdout, "Agent - Version: %s\n", VERSION);
+            fprintf(stdout, "%s - Version: %s\n", SERVICE_NAME, VERSION);
             exit(0);
             
         default:
             usage();
             exit(0);
         }
-    } /* while */
-    
+    }
+
     uuid_clear(uuid);
     uuid_generate(uuid);
-    strncpy(&wimcURL[0],     url,    strlen(url));
-    strncpy(&servicePort[0], port,   strlen(port));
     strncpy(&debug[0],       dbg,    strlen(dbg));
     strncpy(&agentMethod[0], method, strlen(method));
-    
-    if (start_web_service(&servicePort[0], &wimcURL[0], &inst) != TRUE) {
+
+    if (start_web_service(&wimcURL[0], &inst) != TRUE) {
         log_error("Failed to start webservice. Exiting.");
         exit(0);
     }
 
     if (!register_agent_with_wimc(&wimcURL[0],
-                                  &servicePort[0],
                                   &agentMethod[0],
                                   uuid)) {
         usys_log_error("Failed to register to wimc.d. Exiting");
@@ -155,6 +151,6 @@ cleanup:
     ulfius_clean_instance(&inst);
 
     unregister_agent_with_wimc(&wimcURL[0], uuid);
-    
+
     return 1;
 }

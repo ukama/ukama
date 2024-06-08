@@ -41,12 +41,14 @@ static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
                                 &agent_web_service_cb_default, NULL);
 }
 
-bool start_web_service(char *port,
-                       char *wimcURL,
-                       struct _u_instance *webInstance) {
+bool start_web_service(char *wimcURL, struct _u_instance *webInstance) {
 
-    if (ulfius_init_instance(webInstance, atoi(port), NULL, NULL) != U_OK) {
-        usys_log_error("Error initializing instance for port %s", port);
+    int servicePort = 0;
+
+    servicePort = usys_find_service_port(SERVICE_NAME);
+
+    if (ulfius_init_instance(webInstance, servicePort, NULL, NULL) != U_OK) {
+        usys_log_error("Error initializing instance for port %d", servicePort);
         return USYS_FALSE;
     }
 
@@ -54,17 +56,17 @@ bool start_web_service(char *port,
     webInstance->max_post_body_size = 1024;
 
     setup_endpoints(wimcURL, webInstance);
-  
+
     if (ulfius_start_framework(webInstance) != U_OK) {
-        usys_log_error("Failed to start webservices at port:%s", port);
+        usys_log_error("Failed to start webservices at port:%s", servicePort);
 
         ulfius_stop_framework(webInstance); 
         ulfius_clean_instance(webInstance);
-        
+
         return USYS_FALSE;
     }
 
-    usys_log_debug("Webservice started on port:%s", port);
+    usys_log_debug("Webservice started on port: %d", servicePort);
 
     return USYS_TRUE;
 }
