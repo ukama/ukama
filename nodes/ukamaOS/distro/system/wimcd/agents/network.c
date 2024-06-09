@@ -6,10 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * Network related stuff based on ulfius framework for the Agents.
- */
-
 #include <ulfius.h>
 #include <stdlib.h>
 
@@ -24,17 +20,18 @@
 #include "usys_types.h"
 #include "usys_log.h"
 
-#define AGENT_EP "/v1/apps"
-#define STAT_EP  "/stats"
-
 static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &agent_web_service_cb_ping, NULL);
 
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &agent_web_service_cb_version, NULL);
+
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("capp"), 0,
+                               API_RES_EP("app"), 0,
                                &agent_web_service_cb_post_capp, wimcURL);
 
     ulfius_set_default_endpoint(instance,

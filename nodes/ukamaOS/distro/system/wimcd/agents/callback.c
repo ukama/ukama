@@ -24,6 +24,8 @@
 #include "usys_mem.h"
 #include "usys_log.h"
 
+#include "version.h"
+
 static void log_json(json_t *json) {
 
     char *str = NULL;
@@ -157,6 +159,17 @@ int agent_web_service_cb_ping(const URequest *request,
     ulfius_set_string_body_response(response,
                                     HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int agent_web_service_cb_version(const URequest *request,
+                                 UResponse *response,
+                                 void *data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }

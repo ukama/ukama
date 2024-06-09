@@ -18,6 +18,9 @@ int agent_web_service_cb_post_capp(const URequest *request,
 int agent_web_service_cb_ping(const URequest *request,
                               UResponse *response,
                               void *data);
+int agent_web_service_cb_version(const URequest *request,
+                                 UResponse *response,
+                                 void *data);
 int agent_web_service_cb_default(const URequest *request,
                                  UResponse *response,
                                  void *data);
