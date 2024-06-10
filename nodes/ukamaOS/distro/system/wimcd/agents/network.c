@@ -19,6 +19,16 @@
 
 #include "usys_types.h"
 #include "usys_log.h"
+#include "usys_services.h"
+
+static int get_agent_port(char *method) {
+
+    char buffer[128] = {0};
+
+    sprintf(buffer, "wimc-agent-%s", method);
+
+    return usys_find_service_port(buffer);
+}
 
 static void setup_endpoints(struct _u_instance *instance) {
 
@@ -38,12 +48,11 @@ static void setup_endpoints(struct _u_instance *instance) {
                                 &agent_web_service_cb_default, NULL);
 }
 
-bool start_web_service(struct _u_instance *webInstance) {
+bool start_web_service(char *method, struct _u_instance *webInstance) {
 
     int servicePort = 0;
 
-    servicePort = usys_find_service_port(SERVICE_WIMC_AGENT);
-
+    servicePort = get_agent_port(method);
     if (ulfius_init_instance(webInstance, servicePort, NULL, NULL) != U_OK) {
         usys_log_error("Error initializing instance for port %d", servicePort);
         return USYS_FALSE;

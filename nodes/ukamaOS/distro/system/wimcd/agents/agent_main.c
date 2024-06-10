@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (start_web_service(&inst) != TRUE) {
+    if (start_web_service(method, &inst) != TRUE) {
         log_error("Failed to start webservice. Exiting.");
         exit(0);
     }
