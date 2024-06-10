@@ -189,7 +189,7 @@ func TestOrgServer_GetByOwner(t *testing.T) {
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
-			Return([]db.Org{db.Org{Id: ownerId}}, nil).Once()
+			Return([]db.Org{{Id: ownerId}}, nil).Once()
 
 		// Act
 		orgResp, err := s.GetByOwner(context.TODO(), &pb.GetByOwnerRequest{
