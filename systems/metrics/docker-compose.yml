@@ -92,4 +92,4 @@ volumes:
 networks:
  ukama-net:
   external: true
-  name: services_ukama-net
+  name: services_dev-net
