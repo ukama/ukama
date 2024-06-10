@@ -1,0 +1,72 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+package pkg
+
+import (
+	"time"
+
+	cors "github.com/gin-contrib/cors"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+)
+
+type Config struct {
+	config.BaseConfig `mapstructure:",squash"`
+	Metrics           *config.Metrics
+	Server            rest.HttpConfig
+	Storage           MinioConfig
+	Chunker           ChunkerConfig
+	Service           *config.Service
+	Queue             *config.Queue     `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
+	OrgName           string
+	IsGlobal          bool `default:"true"`
+}
+
+type MinioConfig struct {
+	TimeoutSecond      int
+	Endpoint           string
+	AccessKey          string
+	SecretKey          string
+	BucketSuffix       string
+	Region             string
+	SkipBucketCreation bool
+}
+
+type ChunkerConfig struct {
+	Host          string
+	TimeoutSecond int
+}
+
+func NewConfig(name string) *Config {
+	return &Config{
+		Server: rest.HttpConfig{
+			Port: 8088,
+			Cors: cors.Config{
+				AllowOrigins: []string{"http://localhost", "https://localhost"},
+			},
+		},
+		Metrics: config.DefaultMetrics(),
+		Storage: MinioConfig{
+			Endpoint:      "localhost:9000",
+			AccessKey:     "minioadmin",
+			SecretKey:     "minioadmin",
+			BucketSuffix:  "local-test",
+			TimeoutSecond: 3,
+		},
+		Chunker: ChunkerConfig{
+			Host:          "http://localhost:8098",
+			TimeoutSecond: 600,
+		},
+		Service: config.LoadServiceHostConfig(name),
+		MsgClient: &config.MsgClient{
+			Timeout: 5 * time.Second,
+		},
+	}
+}

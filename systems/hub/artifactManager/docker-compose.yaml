@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  minio:
+    image: quay.io/minio/minio
+    command: server /tmp/data --console-address ":9001"
+    ports:
+        - 9000:9000
+        - 9001:9001
+    networks:
+      amazin-object-storage:
+        # Don't copy those addresses in your application. Use the local docker socket to get them.
+    environment:
+      # Same for the environment variables, use the local docker socket to read it.
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+
+
+  hub: # Here, this is where you can configure your gateway.
+    build: .
+    ports: [ "8080:8080" ]
+    networks:
+      amazin-object-storage:
+    restart: always
+    environment:
+      - DEBUGMODE=TRUE
+      - STORAGE_ENDPOINT=minio:9000
+
+
+
+networks:
+  amazin-object-storage:

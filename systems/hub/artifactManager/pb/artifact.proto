@@ -1,0 +1,106 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/hub/artifactManager/pb/gen";
+ 
+ package ukama.hub.artifactmanager.v1;
+ 
+ import "validator.proto";
+ import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+ service ArtifactService {
+     rpc StoreArtifact(StoreArtifactRequest) returns (StoreArtifactResponse);
+     rpc GetArtifactLocation(GetArtifactLocationRequest) returns (GetArtifactLocationResponse);
+     rpc GetArtifact(GetArtifactRequest) returns (GetArtifactResponse);
+     rpc GetArtifcatVersionList(GetArtifactVersionListRequest) returns (GetArtifactVersionListResponse);
+     rpc ListArtifacts(ListArtifactRequest) returns (ListArtifactResponse);
+ }
+ 
+ enum ArtifactType {
+    ARTIFACT_TYPE_INAVLID = 0;
+    ARTIFACT_TYPE_CAPP = 1;
+ }
+ 
+ message ExtraInfoMap {
+   string key=1;
+   string value =2;
+ }
+
+ message FormatInfo {
+	string Type =1 ; 
+	string Url     =2;     
+   int64 Size= 3;          
+   google.protobuf.Timestamp created_at = 4;
+   repeated ExtraInfoMap ExtraInfo = 5;  
+}
+
+message VersionInfo {
+   string Version  =1 [json_name = "version"];   
+	repeated FormatInfo Formats = 2 [json_name = "FormatInfo"];   
+}
+ 
+message StoreArtifactRequest {
+   string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+   ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+   string version =3; 
+   bytes data = 4;
+}
+
+ message StoreArtifactResponse {
+   string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+   ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+ }
+
+ message GetArtifactRequest {
+   string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+   ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+   string version =3 [(validator.field) = {string_not_empty: true}, json_name = "version"];
+ } 
+
+ message GetArtifactResponse {
+   string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+   ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+   VersionInfo version =3 [(validator.field) = {string_not_empty: true}, json_name = "version_info"];
+   bytes data = 4;
+ } 
+
+ message GetArtifactLocationRequest {
+    string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+    ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+    string Version = 3 [json_name = "version"];
+ } 
+
+ message GetArtifactLocationResponse {
+   string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+   ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+   string Url = 3 [json_name = "url"];
+}
+
+ message GetArtifactVersionListRequest {
+    string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+    ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+    string Location = 3 [json_name = "location"]; 
+ } 
+
+ message GetArtifactVersionListResponse {
+    string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+    ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+    repeated VersionInfo Versions = 4 [json_name = "versions"];
+ }
+
+ message ListArtifactRequest {
+    ArtifactType Type = 1 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+ }
+
+ message ListArtifactResponse {
+   repeated string artifact = 1;
+ }
+

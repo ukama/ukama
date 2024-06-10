@@ -1,0 +1,38 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/hub/distributor/pb/gen";
+ 
+ package ukama.hub.artifactmanager.v1;
+ 
+ import "validator.proto";
+ 
+ service DistributorService {
+     rpc Store(Request) returns (Response);
+     rpc Get(ChunkRequest) returns (ChunkResponse);
+ }
+ 
+ 
+ message Request {
+     string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+     string Version = 3 [json_name = "version"];
+     string Store= 4 [json_name = "location"];
+ }
+ 
+ message Response {}
+
+ message ChunkRequest {
+    string id = 1; 
+ }
+
+ message ChunkResponse {
+    string id = 1; 
+    bytes data =2;
+ }
