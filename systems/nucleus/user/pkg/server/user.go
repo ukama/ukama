@@ -286,7 +286,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		Email:  usr.Email,
 		Phone:  usr.Phone,
 	}
-	route := u.baseRoutingKey.SetAction("delete").SetObject("user").MustBuild()
+	route := u.baseRoutingKey.SetActionDelete().SetObject("user").MustBuild()
 
 	err = u.msgbus.PublishRequest(route, evt)
 	if err != nil {
