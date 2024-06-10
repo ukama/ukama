@@ -34,7 +34,13 @@ import {
 import {
   GetLatestMetricInput,
   GetMetricByTabInput,
+  GetNetworkNotificationsInput,
+  GetNodeNotificationsInput,
   GetNotificationsInput,
+  GetOrgNotificationsInput,
+  GetSiteNotificationsInput,
+  GetSubscriberNotificationsInput,
+  GetUserNotificationsInput,
   LatestMetricRes,
   MetricRes,
   MetricsRes,
@@ -380,82 +386,82 @@ class MetricResolvers {
     return payload;
   }
 
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}`;
-  //   },
-  // })
-  // async getUserNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetUserNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.userId);
-  //   return payload;
-  // }
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}-${args.orgId}-${args.role}`;
-  //   },
-  // })
-  // async getOrgNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetOrgNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.orgId);
-  //   return payload;
-  // }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}`;
+    },
+  })
+  async getUserNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetUserNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.userId);
+    return payload;
+  }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}-${args.orgId}-${args.role}`;
+    },
+  })
+  async getOrgNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetOrgNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.orgId);
+    return payload;
+  }
 
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}`;
-  //   },
-  // })
-  // async getNetworkNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetNetworkNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.orgId);
-  //   return payload;
-  // }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}`;
+    },
+  })
+  async getNetworkNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetNetworkNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.orgId);
+    return payload;
+  }
 
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}`;
-  //   },
-  // })
-  // async getSiteNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetSiteNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.orgId);
-  //   return payload;
-  // }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}`;
+    },
+  })
+  async getSiteNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetSiteNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.orgId);
+    return payload;
+  }
 
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}-${args.nodeId}`;
-  //   },
-  // })
-  // async getNodeNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetNodeNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.orgId);
-  //   return payload;
-  // }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}-${args.nodeId}`;
+    },
+  })
+  async getNodeNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetNodeNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.orgId);
+    return payload;
+  }
 
-  // @Subscription(() => NotificationRes, {
-  //   topics: ({ args }) => {
-  //     return `notification-${args.userId}-${args.orgId}-${args.networkId}-${args.subscriberId}`;
-  //   },
-  // })
-  // async getSubscriberNotifications(
-  //   @Root() payload: NotificationRes,
-  //   @Args() args: GetSubscriberNotificationsInput
-  // ): Promise<NotificationRes> {
-  //   logger.info(args.orgId);
-  //   return payload;
-  // }
+  @Subscription(() => NotificationsRes, {
+    topics: ({ args }) => {
+      return `notification-${args.userId}-${args.orgId}-${args.networkId}-${args.subscriberId}`;
+    },
+  })
+  async getSubscriberNotifications(
+    @Root() payload: NotificationsRes,
+    @Args() args: GetSubscriberNotificationsInput
+  ): Promise<NotificationsRes> {
+    logger.info(args.orgId);
+    return payload;
+  }
 }
 
 export default MetricResolvers;
