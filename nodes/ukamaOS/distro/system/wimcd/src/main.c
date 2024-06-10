@@ -78,23 +78,27 @@ int main (int argc, char **argv) {
     char   *debug  = DEF_LOG_LEVEL;
     char   *dbFile = DEF_DB_FILE;
     char   hubURL[WIMC_MAX_URL_LEN] = {0};
-    
+
     UInst  serviceInst;
     Config serviceConfig = {0};
-  
+
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
 
     if (usys_find_service_port(SERVICE_NAME) == 0) {
-        usys_log_error("Unable to find service port for %s",
-                       SERVICE_NAME);
+        usys_log_error("Unable to find service port for %s", SERVICE_NAME);
         usys_exit(1);
     }
 
-    sprintf(hubURL, "http://localhost:%d/hub",
-            usys_find_service_port("ukama"));
+    if (usys_find_service_port(SERVICE_UKAMA) == 0) {
+        usys_log_error("Unable to find service port for %s", SERVICE_UKAMA);
+        usys_exit(1);
+    }
 
-    /* Parsing command line args. */
+    sprintf(hubURL,
+            "http://localhost:%d/hub",
+            usys_find_service_port(SERVICE_UKAMA));
+
     while (true) {
 
         opt = 0;

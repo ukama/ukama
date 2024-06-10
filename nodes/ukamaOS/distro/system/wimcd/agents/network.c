@@ -20,7 +20,7 @@
 #include "usys_types.h"
 #include "usys_log.h"
 
-static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
+static void setup_endpoints(struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
@@ -32,13 +32,13 @@ static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("app"), 0,
-                               &agent_web_service_cb_post_capp, wimcURL);
+                               &agent_web_service_cb_post_capp, NULL);
 
     ulfius_set_default_endpoint(instance,
                                 &agent_web_service_cb_default, NULL);
 }
 
-bool start_web_service(char *wimcURL, struct _u_instance *webInstance) {
+bool start_web_service(struct _u_instance *webInstance) {
 
     int servicePort = 0;
 
@@ -52,7 +52,7 @@ bool start_web_service(char *wimcURL, struct _u_instance *webInstance) {
     u_map_put(webInstance->default_headers, "Access-Control-Allow-Origin", "*");
     webInstance->max_post_body_size = 1024;
 
-    setup_endpoints(wimcURL, webInstance);
+    setup_endpoints(webInstance);
 
     if (ulfius_start_framework(webInstance) != U_OK) {
         usys_log_error("Failed to start webservices at port:%s", servicePort);

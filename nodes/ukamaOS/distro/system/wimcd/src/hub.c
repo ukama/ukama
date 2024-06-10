@@ -6,11 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * Interact with ukama's hub.
- *
- */
-
 #include <sqlite3.h>
 #include <jansson.h>
 #include <ulfius.h>

@@ -11,7 +11,6 @@
 #include <sqlite3.h>
 #include <getopt.h>
 #include <ulfius.h>
-#include <uuid/uuid.h>
 
 #include "log.h"
 #include "wimc.h"
@@ -68,13 +67,9 @@ void set_log_level(char *slevel) {
 int main(int argc, char **argv) {
 
     int opt=0, opdix=0;
-    uuid_t uuid;
     long code;
     char *debug=DEF_LOG_LEVEL;
     char *method="test";
-
-    char wimcURL[WIMC_MAX_URL_LEN] = {0};
-    char agentMethod[WIMC_MAX_URL_LEN] = {0};
 
     UInst inst;
 
@@ -85,8 +80,6 @@ int main(int argc, char **argv) {
         usys_log_error("Unable to find service port for %s", SERVICE_WIMC);
         usys_exit(1);
     }
-
-    sprintf(wimcURL, "http://localhost:%d", usys_find_service_port(SERVICE_WIMC));
 
     while (TRUE) {
 
@@ -123,20 +116,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    uuid_clear(uuid);
-    uuid_generate(uuid);
-    strncpy(&agentMethod[0], method, strlen(method));
-
-    if (start_web_service(&wimcURL[0], &inst) != TRUE) {
+    if (start_web_service(&inst) != TRUE) {
         log_error("Failed to start webservice. Exiting.");
         exit(0);
-    }
-
-    if (!register_agent_with_wimc(&wimcURL[0],
-                                  &agentMethod[0],
-                                  uuid)) {
-        usys_log_error("Failed to register to wimc.d. Exiting");
-        goto cleanup;
     }
 
     pause();
@@ -144,8 +126,6 @@ int main(int argc, char **argv) {
 cleanup:
     ulfius_stop_framework(&inst);
     ulfius_clean_instance(&inst);
-
-    unregister_agent_with_wimc(&wimcURL[0], uuid);
 
     return 1;
 }

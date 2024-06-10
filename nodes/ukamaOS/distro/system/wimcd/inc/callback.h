@@ -48,21 +48,17 @@ int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
 
-int web_service_cb_post_capp(const URequest *request,
-                             UResponse *response,
-                             void *epConfig);
+int web_service_cb_post_app(const URequest *request,
+                            UResponse *response,
+                            void *epConfig);
 
-int web_service_cb_post_agent(const URequest *request,
-                              UResponse *response,
-                              void *data);
+int web_service_cb_get_app_status(const URequest *request,
+                                  UResponse *response,
+                                  void *epConfig);
 
-int web_service_cb_delete_agent(const URequest *request,
-                                UResponse *response,
-                                void *data);
-
-int web_service_cb_post_agent_update(const struct _u_request *request,
-                                     struct _u_response *response,
-                                     void *data);
+int web_service_cb_put_app_stats_update(const struct _u_request *request,
+                                        struct _u_response *response,
+                                        void *data);
 
 extern int db_read_path(sqlite3 *db, char *name, char *tag, char *path);
 

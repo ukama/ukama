@@ -31,33 +31,6 @@ struct Response {
     size_t size;
 };
 
-static void cleanup_agent_request(AgentReq *request) {
-
-  if (request->reg) {
-    Register *reg = request->reg;
-    
-    if (reg->method)
-      free(reg->method);
-
-    if (reg->url)
-      free(reg->url);
-    
-    free(reg);
-  }
-
-  if (request->unReg) {
-    free(request->unReg);
-  }
-
-  if (request->update) {
-    if (request->update->voidStr)
-      free(request->update->voidStr);
-    free(request->update);
-  }
-  
-  free(request);
-}
-
 static int get_task_status(TaskStatus state) {
 
   if (state == (TaskStatus)WSTATUS_PEND) {
@@ -273,53 +246,4 @@ long communicate_with_wimc(int reqType,
     if (json) json_decref(json);
     
     return code;
-}
-
-int register_agent_with_wimc(char *url,
-                             char *agentMethod,
-                             uuid_t uuid) {
-
-    char idStr[36+1]               = {0};
-    char cbURL[WIMC_MAX_URL_LEN]   = {0};
-    char wimcURL[WIMC_MAX_URL_LEN] = {0};
-
-    uuid_unparse(uuid, &idStr[0]);
-
-    /* setup cbURL and wimcURL EP */
-    sprintf(cbURL, "http://localhost:%d/v1/%s",
-            usys_find_service_port(SERVICE_WIMC_AGENT),
-            AGENT_CB_EP);
-    sprintf(wimcURL, "%s/%s/%s", url, WIMC_EP, idStr);
-
-    if (communicate_with_wimc(REQUEST_REGISTER,
-                              wimcURL,
-                              cbURL,
-                              agentMethod) != HttpStatus_OK) {
-        usys_log_error("Error registering agent with WIMC");
-        return USYS_FALSE;
-    }
-
-    usys_log_debug("Agent registerd");
-    return USYS_TRUE;
-}
-
-int unregister_agent_with_wimc(char *url,
-                               uuid_t uuid) {
-
-    char idStr[36+1]               = {0};
-    char wimcURL[WIMC_MAX_URL_LEN] = {0};
-
-    uuid_unparse(uuid, &idStr[0]);
-    sprintf(wimcURL, "%s/%s/%s", url, WIMC_EP, idStr);
-
-    if (communicate_with_wimc(REQUEST_UNREGISTER,
-                              wimcURL,
-                              NULL,
-                              NULL) != HttpStatus_OK) {
-        usys_log_error("Error un-registering agent with WIMC");
-        return USYS_FALSE;
-    }
-
-    usys_log_debug("Agent de-registerd");
-    return USYS_TRUE;
 }

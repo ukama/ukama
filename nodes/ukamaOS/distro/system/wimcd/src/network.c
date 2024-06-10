@@ -15,13 +15,12 @@
 #include "usys_log.h"
 #include "usys_types.h"
 
-
-static int start_framework(Config *config, UInst *instance) {
+static int start_framework(UInst *instance) {
 
     if (ulfius_start_framework(instance) != U_OK) {
         usys_log_error("Error starting the webservice/websocket.");
 
-        ulfius_stop_framework(instance); /* don't think need this. XXX */
+        ulfius_stop_framework(instance);
         ulfius_clean_instance(instance);
 
         return USYS_FALSE;
@@ -45,20 +44,16 @@ static void setup_webservice_endpoints(Config *config,
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("apps/:name/:tag"), 0,
-                               &web_service_cb_post_capp, config);
+                               &web_service_cb_post_app, config);
 
-    /* Agent related end-points */
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("agents/:id"), 0,
-                               &web_service_cb_post_agent, config);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("apps/:name/:tag/status"), 0,
+                               &web_service_cb_get_app_status, config);
 
-    ulfius_add_endpoint_by_val(instance, "DELETE", URL_PREFIX,
-                               API_RES_EP("agents/:id"), 0,
-                               &web_service_cb_delete_agent, config);
-
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("agents/:id/stats"), 0,
-                               &web_service_cb_post_agent_update, config);
+    /* used by agent to update its stats */
+    ulfius_add_endpoint_by_val(instance, "PUT", URL_PREFIX,
+                               API_RES_EP("apps/:name/:tag/stats"), 0,
+                               &web_service_cb_put_app_stats_update, config);
 
     ulfius_set_default_endpoint(instance,
                                 &web_service_cb_default,
@@ -76,13 +71,11 @@ int start_web_service(Config *config, UInst *serviceInst) {
         return USYS_FALSE;
     }
 
-    /* Set few params. */
     u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
 
-    /* setup endpoints and methods callback. */
     setup_webservice_endpoints(config, serviceInst);
 
-    if (!start_framework(config, serviceInst)) {
+    if (!start_framework(serviceInst)) {
         usys_log_error("Failed to start webservices on port: %d",
                        config->servicePort);
         return USYS_FALSE;
