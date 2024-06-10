@@ -101,7 +101,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+		err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -136,7 +136,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+	err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -169,7 +169,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, data, nodeId)
+		err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nodeId, data, nodeId)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -196,15 +196,25 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
 	}
 
-	err = toggleSwitch(siteId, req.Port, req.Status)
-	if err != nil {
-		return nil, fmt.Errorf("failed to toggle internet switch: %v", err)
+	msg := &pb.ToggleInternetSwitchRequest{
+		SiteId: siteId.String(),
+		Status: req.Status,
+		Port:   req.Port,
 	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	err = c.SendRebootSwitchPortRequest(c.orgName+"."+"."+"."+fmt.Sprintf("%d", req.Port), data, req.Port)
 
+	if err != nil {
+		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
+	}
 	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
-func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId string) error {
+func (c *ControllerServer) SendRebootRequestToNode(target string, anyMsg []byte, nodeId string) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 
 	msg := &cpb.NodeFeederMessage{
@@ -218,9 +228,17 @@ func (c *ControllerServer) publishMessage(target string, anyMsg []byte, nodeId s
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
 }
+func (c *ControllerServer) SendRebootSwitchPortRequest(target string, anyMsg []byte, portId int32) error {
+	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 
-func toggleSwitch(siteId uuid.UUID, port int32, status bool) error {
+	msg := &cpb.NodeFeederMessage{
+		Target:     target,
+		HTTPMethod: "POST",
+		Path:       "device/v1/reboot/switchport/" + fmt.Sprintf("%d", portId),
+		Msg:        anyMsg,
+	}
+	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 
-	fmt.Println("Placeholder implementation for toggling switch. Needs actual logic based on your system.")
-	return nil
+	err := c.msgbus.PublishRequest(route, msg)
+	return err
 }
