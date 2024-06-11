@@ -12,16 +12,22 @@ import (
 	"os"
 	"time"
 
+	"github.com/num30/config"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/hub/cmd/version"
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
 	"github.com/ukama/ukama/systems/hub/hub/pkg/server"
+	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	generated "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -40,6 +46,11 @@ func main() {
 		instanceId = uuid.NewV4().String()
 	}
 
+	orgId, err := uuid.FromString(serviceConfig.OrgId)
+	if err != nil {
+		log.Fatalf("invalid org uuid. Error %s", err.Error())
+	}
+
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -47,20 +58,34 @@ func main() {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	r := server.NewRouter(&serviceConfig.Server, storage, chunker,
-		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, serviceConfig.OrgName, mbClient)
+	memberServer := server.NewArtifactServer(orgId, serviceConfig.OrgName, storage, chunker,
+		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.pushGateway, serviceConfig.IsGlobal)
 
-	metrics.StartMetricsServer(serviceConfig.Metrics)
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		generated.RegisterArtifactServiceServer(s, memberServer)
+	})
+
+	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
 
-	r.Run()
+	waitForExit()
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
-	config.LoadConfig(pkg.ServiceName, serviceConfig)
+	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	if err != nil {
+		log.Fatal("Error reading config ", err)
+	} else if serviceConfig.DebugMode {
+		b, err := yaml.Marshal(serviceConfig)
+		if err != nil {
+			log.Infof("Config:\n%s", string(b))
+		}
+	}
 
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
@@ -72,4 +97,19 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	go func() {
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }

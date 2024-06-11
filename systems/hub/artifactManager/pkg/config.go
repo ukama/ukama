@@ -27,6 +27,7 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	OrgName           string
 	IsGlobal          bool `default:"true"`
+	PushGateway       string 
 }
 
 type MinioConfig struct {

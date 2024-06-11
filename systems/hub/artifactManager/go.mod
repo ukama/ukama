@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/hub/hub
+module github.com/ukama/ukama/systems/hub/artifactmanager
 
 go 1.22.0
 
@@ -6,7 +6,9 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
-replace github.com/ukama/ukama/systems/hub/hub => ./
+replace github.com/ukama/ukama/systems/hub/artifactmanager => ./
+
+replace github.com/ukama/ukama/systems/hub/distributor => ../distributor
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
