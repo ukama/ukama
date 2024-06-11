@@ -42,14 +42,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	/* Signal Handling */
-	handleSigterm(func() {
-		log.Infof("Cleaning distribution service.")
-		/* Call anything required for clean exit */
-
-		cancel()
-	})
-
 	/* config parsig */
 	initConfig()
 
@@ -63,7 +55,17 @@ func main() {
 	go startDistributionServer(ctx)
 
 	/* Start the HTTP server for chunking request. */
-	startChunkRequestServer(ctx)
+	g := startChunkRequestServer()
+
+	/* Signal Handling */
+	handleSigterm(func() {
+		log.Infof("Cleaning distribution service.")
+		/* Call anything required for clean exit */
+		g.StopServer()
+
+		cancel()
+	})
+
 }
 
 /* Start HTTP distribution server for distributing chunks */
@@ -76,7 +78,7 @@ func startDistributionServer(ctx context.Context) {
 }
 
 /* Start HTTP server for accepting chinking request from UkamaHub */
-func startChunkRequestServer(ctx context.Context) {
+func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -109,6 +111,7 @@ func startChunkRequestServer(ctx context.Context) {
 
 	go msgBusListener(mbClient)
 
+	return grpcServer
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */
