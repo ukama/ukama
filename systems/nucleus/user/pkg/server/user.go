@@ -17,6 +17,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/user/pkg"
@@ -94,8 +95,14 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
+	evt := &epb.EventUserCreate{
+		UserId: user.Id.String(),
+		Email:  req.User.Email,
+		Name:   req.User.Name,
+		Phone:  req.User.Phone,
+	}
 	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
-	err = u.msgbus.PublishRequest(route, req)
+	err = u.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -165,6 +172,18 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
+	evt := &epb.EventUserUpdate{
+		UserId: user.Id.String(),
+		Email:  req.User.Email,
+		Name:   req.User.Name,
+		Phone:  req.User.Phone,
+	}
+	route := u.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
 	return &pb.UpdateResponse{User: dbUserToPbUser(user)}, nil
 }
 
@@ -210,8 +229,15 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
+
+	evt := &epb.EventUserDeactivate{
+		UserId: user.Id.String(),
+		Name:   usr.Name,
+		Email:  usr.Email,
+		Phone:  usr.Phone,
+	}
 	route := u.baseRoutingKey.SetAction("deactivate").SetObject("user").MustBuild()
-	err = u.msgbus.PublishRequest(route, req)
+	err = u.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -254,9 +280,15 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	route := u.baseRoutingKey.SetAction("delete").SetObject("user").MustBuild()
+	evt := &epb.EventUserDeactivate{
+		UserId: usr.Id.String(),
+		Name:   usr.Name,
+		Email:  usr.Email,
+		Phone:  usr.Phone,
+	}
+	route := u.baseRoutingKey.SetActionDelete().SetObject("user").MustBuild()
 
-	err = u.msgbus.PublishRequest(route, req)
+	err = u.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
