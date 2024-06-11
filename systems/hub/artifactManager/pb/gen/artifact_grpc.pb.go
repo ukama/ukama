@@ -25,7 +25,7 @@ type ArtifactServiceClient interface {
 	StoreArtifact(ctx context.Context, in *StoreArtifactRequest, opts ...grpc.CallOption) (*StoreArtifactResponse, error)
 	GetArtifactLocation(ctx context.Context, in *GetArtifactLocationRequest, opts ...grpc.CallOption) (*GetArtifactLocationResponse, error)
 	GetArtifact(ctx context.Context, in *GetArtifactRequest, opts ...grpc.CallOption) (*GetArtifactResponse, error)
-	GetArtifcatVersionList(ctx context.Context, in *GetArtifactVersionListRequest, opts ...grpc.CallOption) (*GetArtifactVersionListResponse, error)
+	GetArtifactVersionList(ctx context.Context, in *GetArtifactVersionListRequest, opts ...grpc.CallOption) (*GetArtifactVersionListResponse, error)
 	ListArtifacts(ctx context.Context, in *ListArtifactRequest, opts ...grpc.CallOption) (*ListArtifactResponse, error)
 }
 
@@ -64,9 +64,9 @@ func (c *artifactServiceClient) GetArtifact(ctx context.Context, in *GetArtifact
 	return out, nil
 }
 
-func (c *artifactServiceClient) GetArtifcatVersionList(ctx context.Context, in *GetArtifactVersionListRequest, opts ...grpc.CallOption) (*GetArtifactVersionListResponse, error) {
+func (c *artifactServiceClient) GetArtifactVersionList(ctx context.Context, in *GetArtifactVersionListRequest, opts ...grpc.CallOption) (*GetArtifactVersionListResponse, error) {
 	out := new(GetArtifactVersionListResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.artifactmanager.v1.ArtifactService/GetArtifcatVersionList", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hub.artifactmanager.v1.ArtifactService/GetArtifactVersionList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ type ArtifactServiceServer interface {
 	StoreArtifact(context.Context, *StoreArtifactRequest) (*StoreArtifactResponse, error)
 	GetArtifactLocation(context.Context, *GetArtifactLocationRequest) (*GetArtifactLocationResponse, error)
 	GetArtifact(context.Context, *GetArtifactRequest) (*GetArtifactResponse, error)
-	GetArtifcatVersionList(context.Context, *GetArtifactVersionListRequest) (*GetArtifactVersionListResponse, error)
+	GetArtifactVersionList(context.Context, *GetArtifactVersionListRequest) (*GetArtifactVersionListResponse, error)
 	ListArtifacts(context.Context, *ListArtifactRequest) (*ListArtifactResponse, error)
 	mustEmbedUnimplementedArtifactServiceServer()
 }
@@ -107,8 +107,8 @@ func (UnimplementedArtifactServiceServer) GetArtifactLocation(context.Context, *
 func (UnimplementedArtifactServiceServer) GetArtifact(context.Context, *GetArtifactRequest) (*GetArtifactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetArtifact not implemented")
 }
-func (UnimplementedArtifactServiceServer) GetArtifcatVersionList(context.Context, *GetArtifactVersionListRequest) (*GetArtifactVersionListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetArtifcatVersionList not implemented")
+func (UnimplementedArtifactServiceServer) GetArtifactVersionList(context.Context, *GetArtifactVersionListRequest) (*GetArtifactVersionListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetArtifactVersionList not implemented")
 }
 func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *ListArtifactRequest) (*ListArtifactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
@@ -180,20 +180,20 @@ func _ArtifactService_GetArtifact_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ArtifactService_GetArtifcatVersionList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ArtifactService_GetArtifactVersionList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetArtifactVersionListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ArtifactServiceServer).GetArtifcatVersionList(ctx, in)
+		return srv.(ArtifactServiceServer).GetArtifactVersionList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.hub.artifactmanager.v1.ArtifactService/GetArtifcatVersionList",
+		FullMethod: "/ukama.hub.artifactmanager.v1.ArtifactService/GetArtifactVersionList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ArtifactServiceServer).GetArtifcatVersionList(ctx, req.(*GetArtifactVersionListRequest))
+		return srv.(ArtifactServiceServer).GetArtifactVersionList(ctx, req.(*GetArtifactVersionListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -236,8 +236,8 @@ var ArtifactService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ArtifactService_GetArtifact_Handler,
 		},
 		{
-			MethodName: "GetArtifcatVersionList",
-			Handler:    _ArtifactService_GetArtifcatVersionList_Handler,
+			MethodName: "GetArtifactVersionList",
+			Handler:    _ArtifactService_GetArtifactVersionList_Handler,
 		},
 		{
 			MethodName: "ListArtifacts",

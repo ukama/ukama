@@ -53,33 +53,39 @@ type CappInfo struct {
 }
 
 type Storage interface {
-	PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error)
-	GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
-	ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error)
-	ListApps(ctx context.Context) ([]string, error)
+	PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error)
+	GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
+	ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]AritfactInfo, error)
+	ListApps(ctx context.Context, artifactType string) ([]string, error)
 	GetEndpoint() string
+	ValidateArtifactType(artifactType string) error
 }
 
 type MinioWrapper struct {
-	minioClient *minio.Client
-	bucketName  string
-	region      string
+	minioClient   *minio.Client
+	bucketSuffix  string
+	region        string
+	typeToNameMap map[string]string
 }
 
 // host in host:port format
 func NewMinioWrapper(options *MinioConfig) *MinioWrapper {
 	m := &MinioWrapper{
-		minioClient: getClient(options.Endpoint, options.AccessKey, options.SecretKey),
-		bucketName:  BucketNamePrefix + options.BucketSuffix,
-		region:      options.Region,
+		minioClient:   getClient(options.Endpoint, options.AccessKey, options.SecretKey),
+		bucketSuffix:  options.BucketSuffix,
+		region:        options.Region,
+		typeToNameMap: options.ArtifactTypeBucketMap,
 	}
 
 	if !options.SkipBucketCreation {
-		log.Infof("Creating bucket %s", m.bucketName)
+		for bucket, _ := range options.ArtifactTypeBucketMap {
+			bucketName := BucketNamePrefix + bucket + m.bucketSuffix
+			log.Infof("Creating bucket %s", bucketName)
 
-		err := m.createBucketIfMissing()
-		if err != nil {
-			log.Fatalf("Failed to create bucket %s: %v", m.bucketName, err)
+			err := m.createBucketIfMissing(bucketName)
+			if err != nil {
+				log.Fatalf("Failed to create bucket %s: %v", bucketName, err)
+			}
 		}
 	} else {
 		log.Infof("Skipping bucket creation")
@@ -96,20 +102,31 @@ func formatCappFilename(artifactName string, version *semver.Version, ext string
 	return formatCappPath(artifactName) + "/" + version.String() + ext
 }
 
+func (m *MinioWrapper) GetBucketName(artifactType string) string {
+	return BucketNamePrefix + m.typeToNameMap[artifactType] + m.bucketSuffix
+}
+
+func (m *MinioWrapper) ValidateArtifactType(artifactType string) error {
+	if _, ok := m.typeToNameMap[artifactType]; !ok {
+		return fmt.Errorf("%s type artifact not supported", artifactType)
+	}
+	return nil
+}
+
 // PutFile stores the file in storage. Based on input params we build the file path: /<artifactName>/<version>.<ext>
 // artifactName - name of the artifact without extension
 // version - artifact version
 // ext - extension, use consts declared in this package to stay consistent
 // content - content of file
 // returns remote location of the file or error
-func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error) {
+func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
 	log.Infof("Uploading %s-%s to storage\n", artifactName, version.String())
 
 	if !NameRegex.MatchString(artifactName) {
 		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}
 
-	n, err := m.minioClient.PutObject(ctx, m.bucketName, formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
+	n, err := m.minioClient.PutObject(ctx, m.GetBucketName(artifactType), formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -122,11 +139,11 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version
 	return n.Location, nil
 }
 
-func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
+func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
 	fPath := formatCappFilename(artifactName, version, ext)
 
-	log.Infof("Downloading %s from bucket %s", fPath, m.bucketName)
-	o, err := m.minioClient.GetObject(ctx, m.bucketName, fPath, minio.GetObjectOptions{})
+	log.Infof("Downloading %s from bucket %s", fPath, m.GetBucketName(artifactType))
+	o, err := m.minioClient.GetObject(ctx, m.GetBucketName(artifactType), fPath, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -134,11 +151,11 @@ func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version
 	return o, nil
 }
 
-func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error) {
+func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]AritfactInfo, error) {
 	path := formatCappPath(artifactName) + "/"
 
 	log.Infof("Listing objects in %s", path)
-	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
+	objectCh := m.minioClient.ListObjects(ctx, m.GetBucketName(artifactType), minio.ListObjectsOptions{
 		Prefix:       path,
 		Recursive:    false,
 		WithMetadata: false,
@@ -187,10 +204,10 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 	return &result, nil
 }
 
-func (m *MinioWrapper) ListApps(ctx context.Context) ([]string, error) {
+func (m *MinioWrapper) ListApps(ctx context.Context, artifactType string) ([]string, error) {
 	log.Infof("Listing all objects")
 
-	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
+	objectCh := m.minioClient.ListObjects(ctx, m.GetBucketName(artifactType), minio.ListObjectsOptions{
 		Prefix:       cappsRoot,
 		Recursive:    false,
 		WithMetadata: false,
@@ -229,17 +246,17 @@ func getClient(host string, accessKeyId string, accessSecret string) *minio.Clie
 	return c
 }
 
-func (m *MinioWrapper) createBucketIfMissing() error {
+func (m *MinioWrapper) createBucketIfMissing(bucketName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if !strings.HasPrefix(m.bucketName, BucketNamePrefix) {
+	if !strings.HasPrefix(bucketName, BucketNamePrefix) {
 		return fmt.Errorf("bucket name should start with artifact_hub")
 	}
 
-	exists, err := m.minioClient.BucketExists(ctx, m.bucketName)
+	exists, err := m.minioClient.BucketExists(ctx, bucketName)
 	if err == nil && exists {
-		log.Infof("Bucket %s already exists", m.bucketName)
+		log.Infof("Bucket %s already exists", bucketName)
 
 		return nil
 	}
@@ -247,13 +264,13 @@ func (m *MinioWrapper) createBucketIfMissing() error {
 		return errors.Wrap(err, "failed to check if bucket exists")
 	}
 
-	log.Infof("Bucket %s does not exist, creating it", m.bucketName)
+	log.Infof("Bucket %s does not exist, creating it", bucketName)
 	objLocking := true
 	if IsDebugMode {
 		objLocking = false
 	}
 
-	err = m.minioClient.MakeBucket(ctx, m.bucketName, minio.MakeBucketOptions{
+	err = m.minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{
 		ObjectLocking: objLocking,
 	})
 	if err != nil {

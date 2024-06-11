@@ -82,8 +82,8 @@ func (_m *ArtifactServiceClient) GetArtifactLocation(ctx context.Context, in *ge
 	return r0, r1
 }
 
-// GetArtifcatVersionList provides a mock function with given fields: ctx, in, opts
-func (_m *ArtifactServiceClient) GetArtifcatVersionList(ctx context.Context, in *gen.GetArtifactVersionListRequest, opts ...grpc.CallOption) (*gen.GetArtifactVersionListResponse, error) {
+// GetArtifactVersionList provides a mock function with given fields: ctx, in, opts
+func (_m *ArtifactServiceClient) GetArtifactVersionList(ctx context.Context, in *gen.GetArtifactVersionListRequest, opts ...grpc.CallOption) (*gen.GetArtifactVersionListResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]

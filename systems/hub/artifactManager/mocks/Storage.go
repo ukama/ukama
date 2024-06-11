@@ -32,25 +32,25 @@ func (_m *Storage) GetEndpoint() string {
 	return r0
 }
 
-// GetFile provides a mock function with given fields: ctx, artifactName, version, ext
-func (_m *Storage) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (io.ReadCloser, error) {
-	ret := _m.Called(ctx, artifactName, version, ext)
+// GetFile provides a mock function with given fields: ctx, artifactName, artifactType, version, ext
+func (_m *Storage) GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (io.ReadCloser, error) {
+	ret := _m.Called(ctx, artifactName, artifactType, version, ext)
 
 	var r0 io.ReadCloser
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *semver.Version, string) (io.ReadCloser, error)); ok {
-		return rf(ctx, artifactName, version, ext)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string) (io.ReadCloser, error)); ok {
+		return rf(ctx, artifactName, artifactType, version, ext)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *semver.Version, string) io.ReadCloser); ok {
-		r0 = rf(ctx, artifactName, version, ext)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string) io.ReadCloser); ok {
+		r0 = rf(ctx, artifactName, artifactType, version, ext)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(io.ReadCloser)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *semver.Version, string) error); ok {
-		r1 = rf(ctx, artifactName, version, ext)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *semver.Version, string) error); ok {
+		r1 = rf(ctx, artifactName, artifactType, version, ext)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,25 +58,25 @@ func (_m *Storage) GetFile(ctx context.Context, artifactName string, version *se
 	return r0, r1
 }
 
-// ListApps provides a mock function with given fields: ctx
-func (_m *Storage) ListApps(ctx context.Context) (*[]pkg.CappInfo, error) {
-	ret := _m.Called(ctx)
+// ListApps provides a mock function with given fields: ctx, artifactType
+func (_m *Storage) ListApps(ctx context.Context, artifactType string) ([]string, error) {
+	ret := _m.Called(ctx, artifactType)
 
-	var r0 *[]pkg.CappInfo
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*[]pkg.CappInfo, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+		return rf(ctx, artifactType)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *[]pkg.CappInfo); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = rf(ctx, artifactType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*[]pkg.CappInfo)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, artifactType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -84,25 +84,25 @@ func (_m *Storage) ListApps(ctx context.Context) (*[]pkg.CappInfo, error) {
 	return r0, r1
 }
 
-// ListVersions provides a mock function with given fields: ctx, artifactName
-func (_m *Storage) ListVersions(ctx context.Context, artifactName string) (*[]pkg.AritfactInfo, error) {
-	ret := _m.Called(ctx, artifactName)
+// ListVersions provides a mock function with given fields: ctx, artifactName, artifactType
+func (_m *Storage) ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]pkg.AritfactInfo, error) {
+	ret := _m.Called(ctx, artifactName, artifactType)
 
 	var r0 *[]pkg.AritfactInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*[]pkg.AritfactInfo, error)); ok {
-		return rf(ctx, artifactName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*[]pkg.AritfactInfo, error)); ok {
+		return rf(ctx, artifactName, artifactType)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *[]pkg.AritfactInfo); ok {
-		r0 = rf(ctx, artifactName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *[]pkg.AritfactInfo); ok {
+		r0 = rf(ctx, artifactName, artifactType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*[]pkg.AritfactInfo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, artifactName)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, artifactName, artifactType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -110,28 +110,42 @@ func (_m *Storage) ListVersions(ctx context.Context, artifactName string) (*[]pk
 	return r0, r1
 }
 
-// PutFile provides a mock function with given fields: ctx, artifactName, version, ext, content
-func (_m *Storage) PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error) {
-	ret := _m.Called(ctx, artifactName, version, ext, content)
+// PutFile provides a mock function with given fields: ctx, artifactName, artifactType, version, ext, content
+func (_m *Storage) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
+	ret := _m.Called(ctx, artifactName, artifactType, version, ext, content)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *semver.Version, string, io.Reader) (string, error)); ok {
-		return rf(ctx, artifactName, version, ext, content)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader) (string, error)); ok {
+		return rf(ctx, artifactName, artifactType, version, ext, content)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *semver.Version, string, io.Reader) string); ok {
-		r0 = rf(ctx, artifactName, version, ext, content)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader) string); ok {
+		r0 = rf(ctx, artifactName, artifactType, version, ext, content)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *semver.Version, string, io.Reader) error); ok {
-		r1 = rf(ctx, artifactName, version, ext, content)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *semver.Version, string, io.Reader) error); ok {
+		r1 = rf(ctx, artifactName, artifactType, version, ext, content)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// ValidateArtifactType provides a mock function with given fields: artifactType
+func (_m *Storage) ValidateArtifactType(artifactType string) error {
+	ret := _m.Called(artifactType)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(artifactType)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 type mockConstructorTestingTNewStorage interface {

@@ -33,13 +33,14 @@ type Config struct {
 }
 
 type MinioConfig struct {
-	TimeoutSecond      int
-	Endpoint           string
-	AccessKey          string
-	SecretKey          string
-	BucketSuffix       string
-	Region             string
-	SkipBucketCreation bool
+	TimeoutSecond         int
+	Endpoint              string
+	AccessKey             string
+	SecretKey             string
+	BucketSuffix          string
+	Region                string
+	SkipBucketCreation    bool
+	ArtifactTypeBucketMap map[string]string
 }
 
 type ChunkerConfig struct {
@@ -62,6 +63,10 @@ func NewConfig(name string) *Config {
 			SecretKey:     "minioadmin",
 			BucketSuffix:  "local-test",
 			TimeoutSecond: 3,
+			ArtifactTypeBucketMap: map[string]string{
+				"artifact_capp": "capp",
+				"artifact_cert": "cert",
+			},
 		},
 		Chunker: ChunkerConfig{
 			Host:          "http://localhost:8098",

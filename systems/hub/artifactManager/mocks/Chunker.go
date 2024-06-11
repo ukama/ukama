@@ -13,13 +13,13 @@ type Chunker struct {
 	mock.Mock
 }
 
-// Chunk provides a mock function with given fields: name, ver, fileStorageUrl
-func (_m *Chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string) error {
-	ret := _m.Called(name, ver, fileStorageUrl)
+// Chunk provides a mock function with given fields: name, artifactType, ver, fileStorageUrl
+func (_m *Chunker) Chunk(name string, artifactType string, ver *semver.Version, fileStorageUrl string) error {
+	ret := _m.Called(name, artifactType, ver, fileStorageUrl)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *semver.Version, string) error); ok {
-		r0 = rf(name, ver, fileStorageUrl)
+	if rf, ok := ret.Get(0).(func(string, string, *semver.Version, string) error); ok {
+		r0 = rf(name, artifactType, ver, fileStorageUrl)
 	} else {
 		r0 = ret.Error(0)
 	}

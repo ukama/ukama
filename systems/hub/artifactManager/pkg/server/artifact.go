@@ -98,14 +98,14 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 		return nil, err
 	}
 
-	loc, err := s.storage.PutFile(ctx, in.Name, v, pkg.TarGzExtension, bytes.NewReader(in.Data))
+	loc, err := s.storage.PutFile(ctx, in.Name, strings.ToLower(in.Type.String()), v, pkg.TarGzExtension, bytes.NewReader(in.Data))
 	if err != nil {
 		log.Errorf("Error storing artifact: %s %s", in.Name, in.Version)
 		return nil, err
 	}
 
 	go func() {
-		err = s.chunker.Chunk(in.Name, v, loc)
+		err = s.chunker.Chunk(in.Name, strings.ToLower(in.Type.String()), v, loc)
 		if err != nil {
 			log.Errorf("Error chunking artifact: %s %s. Error: %+v", in.Name, in.Version, err)
 		}
@@ -129,7 +129,7 @@ func (s *ArtifcatServer) GetArtifact(ctx context.Context, in *pb.GetArtifactRequ
 		return nil, status.Error(codes.NotFound, "Artifact file name is not valid")
 	}
 
-	rd, err := s.storage.GetFile(ctx, in.Name, v, ext)
+	rd, err := s.storage.GetFile(ctx, in.Name, strings.ToLower(in.Type.String()), v, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -151,10 +151,10 @@ func (s *ArtifcatServer) GetArtifact(ctx context.Context, in *pb.GetArtifactRequ
 	}, nil
 }
 
-func (s *ArtifcatServer) GetArtifcatVersionList(ctx context.Context, in *pb.GetArtifactVersionListRequest) (*pb.GetArtifactVersionListResponse, error) {
+func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetArtifactVersionListRequest) (*pb.GetArtifactVersionListResponse, error) {
 	log.Infof("Getting version list: %s of type %s", in.Name, in.Type)
 
-	ls, err := s.storage.ListVersions(ctx, in.Name)
+	ls, err := s.storage.ListVersions(ctx, in.Name, strings.ToLower(in.Type.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (s *ArtifcatServer) GetArtifcatVersionList(ctx context.Context, in *pb.GetA
 func (s *ArtifcatServer) ListArtifacts(ctx context.Context, in *pb.ListArtifactRequest) (*pb.ListArtifactResponse, error) {
 	log.Infof("Getting list of %s artifacts", in.Type)
 
-	ls, err := s.storage.ListApps(ctx)
+	ls, err := s.storage.ListApps(ctx, strings.ToLower(in.Type.String()))
 	if err != nil {
 		return nil, err
 	}

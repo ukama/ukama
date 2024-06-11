@@ -20,13 +20,13 @@ import "google/protobuf/wrappers.proto";
      rpc StoreArtifact(StoreArtifactRequest) returns (StoreArtifactResponse);
      rpc GetArtifactLocation(GetArtifactLocationRequest) returns (GetArtifactLocationResponse);
      rpc GetArtifact(GetArtifactRequest) returns (GetArtifactResponse);
-     rpc GetArtifcatVersionList(GetArtifactVersionListRequest) returns (GetArtifactVersionListResponse);
+     rpc GetArtifactVersionList(GetArtifactVersionListRequest) returns (GetArtifactVersionListResponse);
      rpc ListArtifacts(ListArtifactRequest) returns (ListArtifactResponse);
  }
  
  enum ArtifactType {
-    ARTIFACT_TYPE_INAVLID = 0;
-    ARTIFACT_TYPE_CAPP = 1;
+    ARTIFACT_INVALID = 0;
+    ARTIFACT_CAPP = 1;
  }
  
  message ExtraInfoMap {

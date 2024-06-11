@@ -66,8 +66,8 @@ func (_m *ArtifactServiceServer) GetArtifactLocation(_a0 context.Context, _a1 *g
 	return r0, r1
 }
 
-// GetArtifcatVersionList provides a mock function with given fields: _a0, _a1
-func (_m *ArtifactServiceServer) GetArtifcatVersionList(_a0 context.Context, _a1 *gen.GetArtifactVersionListRequest) (*gen.GetArtifactVersionListResponse, error) {
+// GetArtifactVersionList provides a mock function with given fields: _a0, _a1
+func (_m *ArtifactServiceServer) GetArtifactVersionList(_a0 context.Context, _a1 *gen.GetArtifactVersionListRequest) (*gen.GetArtifactVersionListResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.GetArtifactVersionListResponse
