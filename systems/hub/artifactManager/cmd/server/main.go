@@ -12,15 +12,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/num30/config"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/common/config"
+	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/hub/hub/cmd/version"
-	"github.com/ukama/ukama/systems/hub/hub/pkg"
-	"github.com/ukama/ukama/systems/hub/hub/pkg/server"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/cmd/version"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg/server"
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
@@ -59,7 +57,7 @@ func main() {
 		serviceConfig.MsgClient.ListenerRoutes)
 
 	memberServer := server.NewArtifactServer(orgId, serviceConfig.OrgName, storage, chunker,
-		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.pushGateway, serviceConfig.IsGlobal)
+		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

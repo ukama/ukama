@@ -26,8 +26,10 @@ type Config struct {
 	Queue             *config.Queue     `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	OrgName           string
+	OrgId             string
 	IsGlobal          bool `default:"true"`
-	PushGateway       string 
+	PushGateway       string
+	Grpc              *config.Grpc `default:"{}"`
 }
 
 type MinioConfig struct {
@@ -65,6 +67,7 @@ func NewConfig(name string) *Config {
 			Host:          "http://localhost:8098",
 			TimeoutSecond: 600,
 		},
+
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,

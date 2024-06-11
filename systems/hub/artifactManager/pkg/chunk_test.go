@@ -14,8 +14,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ukama/ukama/systems/hub/hub/mocks"
-	"github.com/ukama/ukama/systems/hub/hub/pkg"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/mocks"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"

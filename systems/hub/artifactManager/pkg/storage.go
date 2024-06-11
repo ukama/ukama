@@ -56,7 +56,7 @@ type Storage interface {
 	PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error)
 	GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
 	ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error)
-	ListApps(ctx context.Context) (*[]CappInfo, error)
+	ListApps(ctx context.Context) ([]string, error)
 	GetEndpoint() string
 }
 
@@ -187,7 +187,7 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 	return &result, nil
 }
 
-func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
+func (m *MinioWrapper) ListApps(ctx context.Context) ([]string, error) {
 	log.Infof("Listing all objects")
 
 	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
@@ -196,7 +196,7 @@ func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 		WithMetadata: false,
 	})
 
-	ls := []CappInfo{}
+	ls := []string{}
 
 	for object := range objectCh {
 		if object.Err != nil {
@@ -204,10 +204,10 @@ func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 			return nil, object.Err
 		}
 
-		ls = append(ls, CappInfo{Name: strings.TrimSuffix(strings.TrimPrefix(object.Key, cappsRoot), "/")})
+		ls = append(ls, strings.TrimSuffix(strings.TrimPrefix(object.Key, cappsRoot), "/"))
 	}
 
-	return &ls, nil
+	return ls, nil
 }
 
 func (m *MinioWrapper) GetEndpoint() string {

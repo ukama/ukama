@@ -71,8 +71,8 @@ func (this *GetArtifactRequest) Validate() error {
 	if _, ok := ArtifactType_name[int32(this.Type)]; !ok {
 		return github_com_mwitkow_go_proto_validators.FieldError("Type", fmt.Errorf(`value '%v' must be a valid ArtifactType field`, this.Type))
 	}
-	if this.Version == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Version", fmt.Errorf(`value '%v' must not be an empty string`, this.Version))
+	if this.FileName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("FileName", fmt.Errorf(`value '%v' must not be an empty string`, this.FileName))
 	}
 	return nil
 }
@@ -83,10 +83,11 @@ func (this *GetArtifactResponse) Validate() error {
 	if _, ok := ArtifactType_name[int32(this.Type)]; !ok {
 		return github_com_mwitkow_go_proto_validators.FieldError("Type", fmt.Errorf(`value '%v' must be a valid ArtifactType field`, this.Type))
 	}
-	if this.Version != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Version); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Version", err)
-		}
+	if this.Version == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Version", fmt.Errorf(`value '%v' must not be an empty string`, this.Version))
+	}
+	if this.FileName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("FileName", fmt.Errorf(`value '%v' must not be an empty string`, this.FileName))
 	}
 	return nil
 }

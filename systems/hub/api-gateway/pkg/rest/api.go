@@ -19,7 +19,8 @@ type ArtifactUploadRequest struct {
 }
 
 type ArtifactRequest struct {
-	Name         string `path:"filename" validate:"required"`
+	Name         string `path:"name" validate:"required"`
+	FileName     string `path:"filename" validate:"required"`
 	ArtifactType string `path:"type" validate:"required"`
 }
 

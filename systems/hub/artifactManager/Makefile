@@ -8,9 +8,9 @@ include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: integration.build
+build: 
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/hub/hub/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/hub cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/hub/artifactmanager/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/hub cmd/server/main.go
 
 test:
 	go test -v ./...

@@ -62,14 +62,15 @@ message StoreArtifactRequest {
  message GetArtifactRequest {
    string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
    ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
-   string version =3 [(validator.field) = {string_not_empty: true}, json_name = "version"];
+   string FileName =3 [(validator.field) = {string_not_empty: true}, json_name = "version"];
  } 
 
  message GetArtifactResponse {
    string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
    ArtifactType Type = 2 [(validator.field) = { is_in_enum : true}, json_name= "type"];
-   VersionInfo version =3 [(validator.field) = {string_not_empty: true}, json_name = "version_info"];
-   bytes data = 4;
+   string version =3 [(validator.field) = {string_not_empty: true}, json_name = "version_info"];
+   string FileName = 4 [(validator.field) = {string_not_empty: true}, json_name = "filename"];
+   bytes data = 5;
  } 
 
  message GetArtifactLocationRequest {

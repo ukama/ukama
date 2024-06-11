@@ -14,11 +14,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/errors"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
@@ -129,8 +127,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		capps := auth.Group("/hub", "Artifact store", "Artifact operations")
-		capps.GET("/:type/:name/:filename", formatDoc("Get Artifact", "Get artifact of name and type"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
-		capps.PUT("/:type/:name/:version", formatDoc("Upload artifact", "Upload a artifact file"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
+		capps.GET("/:type/:name/:filename", formatDoc("Get Artifact contents", "Get artifact contents with name and type"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
+		capps.PUT("/:type/:name/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
 		capps.GET("/:type/:name", formatDoc("List of versions for artifcat", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
 		capps.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
 		capps.GET("/location/:type/:name/:filename/:version", formatDoc("Location", "Provide a location of the artifact to download from"), tonic.Handler(r.artifactLocationHandler, http.StatusOK))
@@ -138,20 +136,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error {
-	log.Infof("Getting artifact %s of type %s", req.Name, req.ArtifactType)
-
-	v, ext, err := parseArtifactName(req.Name)
-	if err != nil {
-		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
-			Message:  "Artifact name is not valid",
-		}
-	}
+	log.Infof("Getting artifact %s of type %s with filname %s", req.Name, req.ArtifactType, req.FileName)
 
 	resp, err := r.clients.a.GetArtifact(&apb.GetArtifactRequest{
-		Name:    req.Name,
-		Type:    apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
-		Version: v.String(),
+		Name:     req.Name,
+		Type:     apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
+		FileName: req.FileName,
 	})
 	if err != nil {
 		return err
@@ -169,28 +159,9 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition",
-		fmt.Sprintf("attachment; filename=%s-%s%s", resp.Name, resp.Version.Version, ext))
+		fmt.Sprintf("attachment; filename=%s", resp.FileName))
 
 	return nil
-}
-
-func parseArtifactName(name string) (ver *semver.Version, ext string, err error) {
-	if strings.HasSuffix(name, pkg.TarGzExtension) {
-		name = strings.TrimSuffix(name, pkg.TarGzExtension)
-		ext = pkg.TarGzExtension
-	} else if strings.HasSuffix(name, pkg.ChunkIndexExtension) {
-		name = strings.TrimSuffix(name, pkg.ChunkIndexExtension)
-		ext = pkg.ChunkIndexExtension
-	} else {
-		return nil, "", fmt.Errorf("Unsupported extension")
-	}
-
-	ver, err = semver.NewVersion(name)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to parse version")
-	}
-
-	return ver, ext, nil
 }
 
 func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) (*apb.StoreArtifactResponse, error) {
@@ -222,7 +193,7 @@ func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) 
 	if !r.isValidGzip(uploadedFile) {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusBadRequest,
-			Message:  fmt.Sprintf("The uploaded file is not valid gzip data", err.Error()),
+			Message:  fmt.Sprintf("The uploaded file is not valid gzip data %s", err.Error()),
 		}
 	}
 

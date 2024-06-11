@@ -8,7 +8,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	pkg "github.com/ukama/ukama/systems/hub/hub/pkg"
+	pkg "github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
 
 	semver "github.com/Masterminds/semver/v3"
 )

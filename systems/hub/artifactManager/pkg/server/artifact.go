@@ -9,16 +9,31 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
+	"path"
+	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
+	"github.com/minio/minio-go/v7"
+	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/errors"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 )
+
+const CappsPath = "/v1/capps"
+const ChunksPath = "/v1/chunks"
 
 type ArtifcatServer struct {
 	pb.ArtifactServiceServer
@@ -48,21 +63,153 @@ func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chu
 	}
 }
 
+func (s *ArtifcatServer) parseVersion(version string) (*semver.Version, error) {
+	v, err := semver.NewVersion(version)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid version format. Refer to https://semver.org/ for more information")
+	}
+	return v, err
+}
+
+func (s *ArtifcatServer) parseArtifactName(name string) (ver *semver.Version, ext string, err error) {
+	if strings.HasSuffix(name, pkg.TarGzExtension) {
+		name = strings.TrimSuffix(name, pkg.TarGzExtension)
+		ext = pkg.TarGzExtension
+	} else if strings.HasSuffix(name, pkg.ChunkIndexExtension) {
+		name = strings.TrimSuffix(name, pkg.ChunkIndexExtension)
+		ext = pkg.ChunkIndexExtension
+	} else {
+		return nil, "", fmt.Errorf("Unsupported extension")
+	}
+
+	ver, err = semver.NewVersion(name)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "failed to parse version")
+	}
+
+	return ver, ext, nil
+}
+
 func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifactRequest) (*pb.StoreArtifactResponse, error) {
+	log.Infof("Storing artifact: %s %s", in.Name, in.Version)
+
+	v, err := s.parseVersion(in.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	loc, err := s.storage.PutFile(ctx, in.Name, v, pkg.TarGzExtension, bytes.NewReader(in.Data))
+	if err != nil {
+		log.Errorf("Error storing artifact: %s %s", in.Name, in.Version)
+		return nil, err
+	}
+
+	go func() {
+		err = s.chunker.Chunk(in.Name, v, loc)
+		if err != nil {
+			log.Errorf("Error chunking artifact: %s %s. Error: %+v", in.Name, in.Version, err)
+		}
+	}()
+
 	return nil, nil
 }
+
 func (s *ArtifcatServer) GetArtifactLocation(ctx context.Context, in *pb.GetArtifactLocationRequest) (*pb.GetArtifactLocationResponse, error) {
-	return nil, nil
+	log.Infof("Getting apps storage endpoint")
+	return &pb.GetArtifactLocationResponse{
+		Url: s.storage.GetEndpoint(),
+	}, nil
 }
 
 func (s *ArtifcatServer) GetArtifact(ctx context.Context, in *pb.GetArtifactRequest) (*pb.GetArtifactResponse, error) {
-	return nil, nil
+	log.Infof("Getting artifact: %s of type %s with filename %s", in.Name, in.Type, in.FileName)
+
+	v, ext, err := s.parseArtifactName(in.FileName)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "Artifact file name is not valid")
+	}
+
+	rd, err := s.storage.GetFile(ctx, in.Name, v, ext)
+	if err != nil {
+		return nil, err
+	}
+	defer rd.Close()
+
+	data, err := io.ReadAll(rd)
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return nil, status.Error(codes.NotFound, "Artifact not found")
+		}
+	}
+
+	return &pb.GetArtifactResponse{
+		FileName: fmt.Sprintf("%s-%s%s", in.Name, v.String(), ext),
+		Name:     in.Name,
+		Type:     in.Type,
+		Version:  v.String(),
+		Data:     data,
+	}, nil
 }
 
 func (s *ArtifcatServer) GetArtifcatVersionList(ctx context.Context, in *pb.GetArtifactVersionListRequest) (*pb.GetArtifactVersionListResponse, error) {
-	return nil, nil
+	log.Infof("Getting version list: %s of type %s", in.Name, in.Type)
+
+	ls, err := s.storage.ListVersions(ctx, in.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(*ls) == 0 {
+		return nil, status.Error(codes.NotFound, "Artifact name is not valid")
+	}
+
+	vers := []*pb.VersionInfo{}
+	for _, v := range *ls {
+		formats := []*pb.FormatInfo{
+			{
+				Url:       path.Join(CappsPath, in.Name, v.Version+pkg.TarGzExtension),
+				CreatedAt: timestamppb.New(v.CreatedAt),
+				Size:      v.SizeBytes,
+				Type:      "tar.gz",
+			},
+		}
+
+		if v.Chunked {
+			formats = append(formats, &pb.FormatInfo{
+				Url:  path.Join(CappsPath, in.Name, v.Version+pkg.ChunkIndexExtension),
+				Type: "chunk",
+				ExtraInfo: []*pb.ExtraInfoMap{
+					{
+						Key:   "chunks",
+						Value: fmt.Sprintf("%s/", ChunksPath),
+					},
+				},
+			})
+		}
+
+		vers = append(vers, &pb.VersionInfo{
+			Version: v.Version,
+			Formats: formats,
+		})
+	}
+
+	return &pb.GetArtifactVersionListResponse{
+		Name:     in.Name,
+		Type:     in.Type,
+		Versions: vers,
+	}, nil
+
 }
 
 func (s *ArtifcatServer) ListArtifacts(ctx context.Context, in *pb.ListArtifactRequest) (*pb.ListArtifactResponse, error) {
-	return nil, nil
+	log.Infof("Getting list of %s artifacts", in.Type)
+
+	ls, err := s.storage.ListApps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ListArtifactResponse{
+		Artifact: ls,
+	}, nil
 }
