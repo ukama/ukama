@@ -16,8 +16,8 @@ type DistributorServiceClient struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields: ctx, in, opts
-func (_m *DistributorServiceClient) Get(ctx context.Context, in *gen.ChunkRequest, opts ...grpc.CallOption) (*gen.ChunkResponse, error) {
+// CreateChunk provides a mock function with given fields: ctx, in, opts
+func (_m *DistributorServiceClient) CreateChunk(ctx context.Context, in *gen.CreateChunkRequest, opts ...grpc.CallOption) (*gen.CreateChunkResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -27,20 +27,20 @@ func (_m *DistributorServiceClient) Get(ctx context.Context, in *gen.ChunkReques
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.ChunkResponse
+	var r0 *gen.CreateChunkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ChunkRequest, ...grpc.CallOption) (*gen.ChunkResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateChunkRequest, ...grpc.CallOption) (*gen.CreateChunkResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ChunkRequest, ...grpc.CallOption) *gen.ChunkResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateChunkRequest, ...grpc.CallOption) *gen.CreateChunkResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ChunkResponse)
+			r0 = ret.Get(0).(*gen.CreateChunkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ChunkRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateChunkRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -49,8 +49,8 @@ func (_m *DistributorServiceClient) Get(ctx context.Context, in *gen.ChunkReques
 	return r0, r1
 }
 
-// Store provides a mock function with given fields: ctx, in, opts
-func (_m *DistributorServiceClient) Store(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
+// GetChunk provides a mock function with given fields: ctx, in, opts
+func (_m *DistributorServiceClient) GetChunk(ctx context.Context, in *gen.GetChunkRequest, opts ...grpc.CallOption) (*gen.GetChunkResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -60,20 +60,86 @@ func (_m *DistributorServiceClient) Store(ctx context.Context, in *gen.Request, 
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.Response
+	var r0 *gen.GetChunkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) (*gen.GetChunkResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) *gen.GetChunkResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Response)
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// HeadChunk provides a mock function with given fields: ctx, in, opts
+func (_m *DistributorServiceClient) HeadChunk(ctx context.Context, in *gen.GetChunkRequest, opts ...grpc.CallOption) (*gen.GetChunkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetChunkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) (*gen.GetChunkResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) *gen.GetChunkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PutChunk provides a mock function with given fields: ctx, in, opts
+func (_m *DistributorServiceClient) PutChunk(ctx context.Context, in *gen.GetChunkRequest, opts ...grpc.CallOption) (*gen.GetChunkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetChunkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) (*gen.GetChunkResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) *gen.GetChunkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

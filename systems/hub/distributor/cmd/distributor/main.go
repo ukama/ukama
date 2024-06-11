@@ -14,7 +14,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"google.golang.org/grpc"
+
 	"github.com/ukama/ukama/systems/common/config"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
@@ -25,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	generated "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -79,6 +83,11 @@ func startChunkRequestServer(ctx context.Context) {
 		instanceId = uuid.NewV4().String()
 	}
 
+	orgId, err := uuid.FromString(serviceConfig.OrgId)
+	if err != nil {
+		log.Fatalf("invalid org uuid. Error %s", err.Error())
+	}
+
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -86,13 +95,20 @@ func startChunkRequestServer(ctx context.Context) {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	r := server.NewRouter(serviceConfig, serviceConfig.OrgName, mbClient)
+	distributorServer := server.NewDistributionServer(orgId, serviceConfig.OrgName, serviceConfig,
+		mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
 
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		generated.RegisterDistributorServiceServer(s, distributorServer)
+	})
+
+	go grpcServer.StartServer()
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
 	go msgBusListener(mbClient)
 
-	r.Run()
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */

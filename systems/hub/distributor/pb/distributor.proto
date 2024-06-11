@@ -10,29 +10,36 @@
 
  option go_package = "github.com/ukama/ukama/systems/hub/distributor/pb/gen";
  
- package ukama.hub.artifactmanager.v1;
+ package ukama.hub.distributor.v1;
  
  import "validator.proto";
  
  service DistributorService {
-     rpc Store(Request) returns (Response);
-     rpc Get(ChunkRequest) returns (ChunkResponse);
+     rpc CreateChunk(CreateChunkRequest) returns (CreateChunkResponse);
+     rpc GetChunk(GetChunkRequest) returns (GetChunkResponse);
+     rpc HeadChunk(GetChunkRequest) returns (GetChunkResponse);
+     rpc PutChunk(GetChunkRequest) returns (GetChunkResponse);
  }
  
  
- message Request {
+ message CreateChunkRequest {
      string Name = 1 [(validator.field) = {string_not_empty: true}, json_name = "name"];
+     string Type =2 [(validator.field) = {string_not_empty: true}, json_name = "type"];
      string Version = 3 [json_name = "version"];
      string Store= 4 [json_name = "location"];
  }
  
- message Response {}
-
- message ChunkRequest {
-    string id = 1; 
+ message CreateChunkResponse {
+    bytes index =1;
+    int64 size= 2;  
  }
 
- message ChunkResponse {
-    string id = 1; 
+ message GetChunkRequest {
+    bytes id = 1;
+    string method = 2;
+ }
+
+ message GetChunkResponse {
+    bytes id = 1; 
     bytes data =2;
  }

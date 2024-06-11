@@ -98,7 +98,7 @@ func storeIndex(name string, idx casync.Index) error {
 }
 
 /* Read file from local store*/
-func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func ReadFromLocalStore(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	var (
 		tgzFile string
 		err     error
@@ -109,7 +109,7 @@ func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Vers
 	tgzFile = wp + fileWithExt(fname, fext)
 
 	/* Read from local store */
-	err = GetArtifactFromLocalStore(ctx, fname, fversion, fstore, tgzFile)
+	err = GetArtifactFromLocalStore(ctx, fname, aType, fversion, fstore, tgzFile)
 	if err != nil {
 		log.Errorf("Failed to read artifact %s from local store %s : %s ",
 			fname, fstore, err.Error())
@@ -131,7 +131,7 @@ func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Vers
 }
 
 /* Read file from local store*/
-func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func ReadFromS3Store(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	var (
 		tgzFile string
 		err     error
@@ -142,7 +142,7 @@ func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version
 	log.Debugf("Using S3 store %s to read file %s", fstore, fname)
 
 	/* Read data from artifact store */
-	err = GetArtifactFromS3(ctx, fname, fversion, fstore, tgzFile)
+	err = GetArtifactFromS3(ctx, fname, aType, fversion, fstore, tgzFile)
 	if err != nil {
 		log.Errorf("Error while pulling data from artifact store: %s", err.Error())
 
@@ -163,7 +163,7 @@ func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version
 }
 
 /* Read from store */
-func ReadFromStore(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func ReadFromStore(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	loc, err := url.Parse(fstore)
 	if err != nil {
 		return fmt.Errorf("unable to parse store location %s : %s", fstore, err)
@@ -171,12 +171,12 @@ func ReadFromStore(ctx context.Context, fname string, fversion *semver.Version, 
 
 	switch loc.Scheme {
 	case "s3+http", "s3+https":
-		err := ReadFromS3Store(ctx, fname, fversion, fext, fstore, wp)
+		err := ReadFromS3Store(ctx, fname, aType, fversion, fext, fstore, wp)
 		if err != nil {
 			return err
 		}
 	default:
-		err := ReadFromLocalStore(ctx, fname, fversion, fext, fstore, wp)
+		err := ReadFromLocalStore(ctx, fname, aType, fversion, fext, fstore, wp)
 		if err != nil {
 			return err
 		}
@@ -207,11 +207,11 @@ func prepareWorkplace() (string, error) {
 }
 
 /* Read contents to be chunked from remote or S3 server and store them on locally*/
-func ReadRemoteContents(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) (string, bool, error) {
+func ReadRemoteContents(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) (string, bool, error) {
 	isDir := false
 
 	/* Read file from store */
-	err := ReadFromStore(ctx, fname, fversion, fext, fstore, wp)
+	err := ReadFromStore(ctx, fname, aType, fversion, fext, fstore, wp)
 	if err != nil {
 		return "", false, err
 	}
@@ -370,7 +370,7 @@ func CreateChunkForBlob(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg
 }
 
 /* Handler for creating chunks */
-func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, fname string, fversion *semver.Version, fstore string) (*casync.Index, error) {
+func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, fname string, aType string, fversion *semver.Version, fstore string) (*casync.Index, error) {
 	var (
 		index     *casync.Index
 		err       error
@@ -389,7 +389,7 @@ func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.
 	storePath := chunkCfg.Stores[0]
 
 	/* Read contents */
-	content, isFS, err := ReadRemoteContents(ctx, fname, fversion, chunkCfg.Extension, fstore, wp)
+	content, isFS, err := ReadRemoteContents(ctx, fname, aType, fversion, chunkCfg.Extension, fstore, wp)
 	if err != nil {
 		log.Errorf("Failed to read contents for chunking %s", err.Error())
 

@@ -25,11 +25,14 @@ import (
 	casync "github.com/folbricht/desync"
 	minio "github.com/minio/minio-go/v6"
 	log "github.com/sirupsen/logrus"
-	mc "github.com/ukama/ukama/systems/hub/hub/pkg"
+	mc "github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
 )
 
-/* Local store path for artifact
-storepath/filename-version.tgz */
+/*
+	Local store path for artifact
+
+storepath/filename-version.tgz
+*/
 func localStoreFilePath(fname string, fversion *semver.Version, fstore string) string {
 	n := fname + "-" + fversion.String() + ".tar.gz"
 	cpath := filepath.Join(fstore, n)
@@ -38,7 +41,7 @@ func localStoreFilePath(fname string, fversion *semver.Version, fstore string) s
 }
 
 /* Read artifact from local store */
-func GetArtifactFromLocalStore(ctx context.Context, fname string, fversion *semver.Version, fstore string, dest string) error {
+func GetArtifactFromLocalStore(ctx context.Context, fname string, aType string, fversion *semver.Version, fstore string, dest string) error {
 	cpath := localStoreFilePath(fname, fversion, fstore)
 
 	log.Debugf("Copying a image file %s to %s", cpath, dest)
@@ -66,7 +69,7 @@ func GetArtifactFromLocalStore(ctx context.Context, fname string, fversion *semv
 }
 
 /* Preparing a store access to read artifacts from */
-func GetArtifactFromS3(ctx context.Context, fname string, fversion *semver.Version, fstore string, dest string) error {
+func GetArtifactFromS3(ctx context.Context, fname string, aType string, fversion *semver.Version, fstore string, dest string) error {
 	/* Get store config */
 	artCfg, err := pkg.GetLocalStoreCredentialsFor(fstore)
 	if err != nil {
@@ -84,7 +87,7 @@ func GetArtifactFromS3(ctx context.Context, fname string, fversion *semver.Versi
 	}
 
 	log.Debugf("Reading file %s from s3 store to %s.", fname, dest)
-	r, err := store.GetFile(ctx, fname, fversion, mc.TarGzExtension)
+	r, err := store.GetFile(ctx, fname, aType, fversion, mc.TarGzExtension)
 	if err != nil {
 		log.Errorf("failed to read a file %s from store %s : %s", fname, fstore, err.Error())
 

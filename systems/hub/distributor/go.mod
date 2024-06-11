@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
-replace github.com/ukama/ukama/systems/hub/hub => ../hub
+replace github.com/ukama/ukama/systems/hub/artifactmanager => ../artifactManager
 
 replace github.com/ukama/ukama/systems/hub/distributor => ./
 
@@ -21,9 +21,16 @@ require (
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
-	github.com/ukama/ukama/systems/hub/hub v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/hub/artifactmanager v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
+)
+
+require (
+	github.com/golang/protobuf v1.5.4
+	github.com/mwitkow/go-proto-validators v0.3.2
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	google.golang.org/grpc v1.62.1
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
@@ -59,12 +66,13 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
 	github.com/hanwen/go-fuse/v2 v2.2.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -95,7 +103,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/penglongli/gin-metrics v0.1.10 // indirect
@@ -150,8 +157,6 @@ require (
 	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
-	google.golang.org/grpc v1.62.1 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

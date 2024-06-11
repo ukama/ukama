@@ -16,18 +16,21 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *Request) Validate() error {
+func (this *CreateChunkRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
+	if this.Type == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Type", fmt.Errorf(`value '%v' must not be an empty string`, this.Type))
+	}
 	return nil
 }
-func (this *Response) Validate() error {
+func (this *CreateChunkResponse) Validate() error {
 	return nil
 }
-func (this *ChunkRequest) Validate() error {
+func (this *GetChunkRequest) Validate() error {
 	return nil
 }
-func (this *ChunkResponse) Validate() error {
+func (this *GetChunkResponse) Validate() error {
 	return nil
 }

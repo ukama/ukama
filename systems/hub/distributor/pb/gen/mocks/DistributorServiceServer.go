@@ -14,24 +14,24 @@ type DistributorServiceServer struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields: _a0, _a1
-func (_m *DistributorServiceServer) Get(_a0 context.Context, _a1 *gen.ChunkRequest) (*gen.ChunkResponse, error) {
+// CreateChunk provides a mock function with given fields: _a0, _a1
+func (_m *DistributorServiceServer) CreateChunk(_a0 context.Context, _a1 *gen.CreateChunkRequest) (*gen.CreateChunkResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ChunkResponse
+	var r0 *gen.CreateChunkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ChunkRequest) (*gen.ChunkResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateChunkRequest) (*gen.CreateChunkResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ChunkRequest) *gen.ChunkResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateChunkRequest) *gen.CreateChunkResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ChunkResponse)
+			r0 = ret.Get(0).(*gen.CreateChunkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ChunkRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateChunkRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -40,24 +40,76 @@ func (_m *DistributorServiceServer) Get(_a0 context.Context, _a1 *gen.ChunkReque
 	return r0, r1
 }
 
-// Store provides a mock function with given fields: _a0, _a1
-func (_m *DistributorServiceServer) Store(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
+// GetChunk provides a mock function with given fields: _a0, _a1
+func (_m *DistributorServiceServer) GetChunk(_a0 context.Context, _a1 *gen.GetChunkRequest) (*gen.GetChunkResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.Response
+	var r0 *gen.GetChunkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) (*gen.GetChunkResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) *gen.GetChunkResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Response)
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// HeadChunk provides a mock function with given fields: _a0, _a1
+func (_m *DistributorServiceServer) HeadChunk(_a0 context.Context, _a1 *gen.GetChunkRequest) (*gen.GetChunkResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetChunkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) (*gen.GetChunkResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) *gen.GetChunkResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PutChunk provides a mock function with given fields: _a0, _a1
+func (_m *DistributorServiceServer) PutChunk(_a0 context.Context, _a1 *gen.GetChunkRequest) (*gen.GetChunkResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetChunkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) (*gen.GetChunkResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetChunkRequest) *gen.GetChunkResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetChunkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetChunkRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

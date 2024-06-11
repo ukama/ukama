@@ -22,8 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DistributorServiceClient interface {
-	Store(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
-	Get(ctx context.Context, in *ChunkRequest, opts ...grpc.CallOption) (*ChunkResponse, error)
+	CreateChunk(ctx context.Context, in *CreateChunkRequest, opts ...grpc.CallOption) (*CreateChunkResponse, error)
+	GetChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
+	HeadChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
+	PutChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
 }
 
 type distributorServiceClient struct {
@@ -34,18 +36,36 @@ func NewDistributorServiceClient(cc grpc.ClientConnInterface) DistributorService
 	return &distributorServiceClient{cc}
 }
 
-func (c *distributorServiceClient) Store(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/ukama.hub.artifactmanager.v1.DistributorService/Store", in, out, opts...)
+func (c *distributorServiceClient) CreateChunk(ctx context.Context, in *CreateChunkRequest, opts ...grpc.CallOption) (*CreateChunkResponse, error) {
+	out := new(CreateChunkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/CreateChunk", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *distributorServiceClient) Get(ctx context.Context, in *ChunkRequest, opts ...grpc.CallOption) (*ChunkResponse, error) {
-	out := new(ChunkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.artifactmanager.v1.DistributorService/Get", in, out, opts...)
+func (c *distributorServiceClient) GetChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
+	out := new(GetChunkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/GetChunk", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *distributorServiceClient) HeadChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
+	out := new(GetChunkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/HeadChunk", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *distributorServiceClient) PutChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
+	out := new(GetChunkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/PutChunk", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +76,10 @@ func (c *distributorServiceClient) Get(ctx context.Context, in *ChunkRequest, op
 // All implementations must embed UnimplementedDistributorServiceServer
 // for forward compatibility
 type DistributorServiceServer interface {
-	Store(context.Context, *Request) (*Response, error)
-	Get(context.Context, *ChunkRequest) (*ChunkResponse, error)
+	CreateChunk(context.Context, *CreateChunkRequest) (*CreateChunkResponse, error)
+	GetChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
+	HeadChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
+	PutChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
 	mustEmbedUnimplementedDistributorServiceServer()
 }
 
@@ -65,11 +87,17 @@ type DistributorServiceServer interface {
 type UnimplementedDistributorServiceServer struct {
 }
 
-func (UnimplementedDistributorServiceServer) Store(context.Context, *Request) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Store not implemented")
+func (UnimplementedDistributorServiceServer) CreateChunk(context.Context, *CreateChunkRequest) (*CreateChunkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateChunk not implemented")
 }
-func (UnimplementedDistributorServiceServer) Get(context.Context, *ChunkRequest) (*ChunkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedDistributorServiceServer) GetChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChunk not implemented")
+}
+func (UnimplementedDistributorServiceServer) HeadChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HeadChunk not implemented")
+}
+func (UnimplementedDistributorServiceServer) PutChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutChunk not implemented")
 }
 func (UnimplementedDistributorServiceServer) mustEmbedUnimplementedDistributorServiceServer() {}
 
@@ -84,38 +112,74 @@ func RegisterDistributorServiceServer(s grpc.ServiceRegistrar, srv DistributorSe
 	s.RegisterService(&DistributorService_ServiceDesc, srv)
 }
 
-func _DistributorService_Store_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
+func _DistributorService_CreateChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateChunkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DistributorServiceServer).Store(ctx, in)
+		return srv.(DistributorServiceServer).CreateChunk(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.hub.artifactmanager.v1.DistributorService/Store",
+		FullMethod: "/ukama.hub.distributor.v1.DistributorService/CreateChunk",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).Store(ctx, req.(*Request))
+		return srv.(DistributorServiceServer).CreateChunk(ctx, req.(*CreateChunkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DistributorService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChunkRequest)
+func _DistributorService_GetChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChunkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DistributorServiceServer).Get(ctx, in)
+		return srv.(DistributorServiceServer).GetChunk(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.hub.artifactmanager.v1.DistributorService/Get",
+		FullMethod: "/ukama.hub.distributor.v1.DistributorService/GetChunk",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).Get(ctx, req.(*ChunkRequest))
+		return srv.(DistributorServiceServer).GetChunk(ctx, req.(*GetChunkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DistributorService_HeadChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChunkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DistributorServiceServer).HeadChunk(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.hub.distributor.v1.DistributorService/HeadChunk",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DistributorServiceServer).HeadChunk(ctx, req.(*GetChunkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DistributorService_PutChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChunkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DistributorServiceServer).PutChunk(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.hub.distributor.v1.DistributorService/PutChunk",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DistributorServiceServer).PutChunk(ctx, req.(*GetChunkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -124,16 +188,24 @@ func _DistributorService_Get_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DistributorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.hub.artifactmanager.v1.DistributorService",
+	ServiceName: "ukama.hub.distributor.v1.DistributorService",
 	HandlerType: (*DistributorServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Store",
-			Handler:    _DistributorService_Store_Handler,
+			MethodName: "CreateChunk",
+			Handler:    _DistributorService_CreateChunk_Handler,
 		},
 		{
-			MethodName: "Get",
-			Handler:    _DistributorService_Get_Handler,
+			MethodName: "GetChunk",
+			Handler:    _DistributorService_GetChunk_Handler,
+		},
+		{
+			MethodName: "HeadChunk",
+			Handler:    _DistributorService_HeadChunk_Handler,
+		},
+		{
+			MethodName: "PutChunk",
+			Handler:    _DistributorService_PutChunk_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

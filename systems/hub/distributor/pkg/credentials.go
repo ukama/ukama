@@ -13,7 +13,7 @@ import (
 
 	"github.com/minio/minio-go/v6/pkg/credentials"
 
-	mc "github.com/ukama/ukama/systems/hub/hub/pkg"
+	mc "github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
 )
 
 type StoreCredentialsOptions struct {
