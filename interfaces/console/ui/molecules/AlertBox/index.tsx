@@ -31,6 +31,16 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
 
+  const formatTime = (isoString:string) => {
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString();
+    const hours = date.getHours();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = (hours % 12 || 12).toString();
+    return `${month}/${day} ${formattedHours}${period}`;
+  };
+
   return (
     <Box
       bgcolor={'white'}
@@ -42,13 +52,14 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
         <Typography variant="h6" fontWeight="500" fontFamily="Rubik">
           Alerts
         </Typography>
+        
         <Typography
           fontSize="16px"
           fontWeight="lighter"
           fontFamily="Work Sans"
           paddingLeft={1}
         >
-          ({alerts?.filter((alert) => !alert.isRead).length})
+          ({alerts?.filter((alert) => !alert.isRead).length || 0})
         </Typography>
       </Box>
       <Divider sx={{ margin: 0 }} />
@@ -85,7 +96,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                   fontWeight="400"
                   fontFamily="Work Sans"
                 >
-                  {alert.createdAt}
+                  {formatTime(alert.createdAt)}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" width="100%">
