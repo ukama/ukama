@@ -7,12 +7,16 @@
  */
 
 'use client';
+import { metricsClient } from '@/client/ApolloClient';
 import { useAppContext } from '@/context';
 import {
+  Notification_Scope,
+  Role_Type,
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
 } from '@/generated';
+import { NotificationsResDto, useGetNotificationsQuery, useNotificationSubscriptionSubscription } from '@/generated/metrics';
 import { MyAppProps } from '@/types';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { getTitleFromPath } from '@/utils';
@@ -28,6 +32,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
+  const [alerts, setAlerts] = useState<NotificationsResDto[] | undefined> (undefined)
   const {
     token,
     user,
@@ -162,6 +167,111 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       });
   };
 
+
+const getRoleType = (role: string): Role_Type => {
+  switch (role) {
+    case 'ROLE_ADMIN':
+      return Role_Type.RoleAdmin;
+    case 'ROLE_INVALID':
+      return Role_Type.RoleInvalid;
+    case 'ROLE_NETWORK_OWNER':
+      return Role_Type.RoleNetworkOwner;
+    case 'ROLE_OWNER':
+      return Role_Type.RoleOwner;
+    case 'ROLE_USER':
+      return Role_Type.RoleUser;
+    case 'ROLE_VENDOR':
+      return Role_Type.RoleVendor;
+    default:
+      return Role_Type.RoleInvalid;
+  }
+}
+// mapping for role to scope
+const RoleToNotificationScopes: { [key in Role_Type]: Notification_Scope[] } = {
+  [Role_Type.RoleOwner]: [
+    Notification_Scope.ScopeOrg,
+    Notification_Scope.ScopeNetworks,
+    Notification_Scope.ScopeNetwork,
+    Notification_Scope.ScopeSites,
+    Notification_Scope.ScopeSite,
+    Notification_Scope.ScopeSubscribers,
+    Notification_Scope.ScopeSubscriber,
+    Notification_Scope.ScopeUsers,
+    Notification_Scope.ScopeUser,
+    Notification_Scope.ScopeNode
+  ],
+  [Role_Type.RoleAdmin]: [
+    Notification_Scope.ScopeOrg,
+    Notification_Scope.ScopeNetworks,
+    Notification_Scope.ScopeNetwork,
+    Notification_Scope.ScopeSites,
+    Notification_Scope.ScopeSite,
+    Notification_Scope.ScopeSubscribers,
+    Notification_Scope.ScopeSubscriber,
+    Notification_Scope.ScopeUsers,
+    Notification_Scope.ScopeUser,
+    Notification_Scope.ScopeNode
+  ],
+  [Role_Type.RoleNetworkOwner]: [
+    Notification_Scope.ScopeNetwork,
+    Notification_Scope.ScopeSite,
+    Notification_Scope.ScopeSites,
+    Notification_Scope.ScopeSubscribers,
+    Notification_Scope.ScopeSubscriber,
+    Notification_Scope.ScopeUsers,
+    Notification_Scope.ScopeUser,
+    Notification_Scope.ScopeNode
+  ],
+  [Role_Type.RoleVendor]: [
+    Notification_Scope.ScopeNetwork
+  ],
+  [Role_Type.RoleUser]: [
+    Notification_Scope.ScopeUser
+  ],
+  [Role_Type.RoleInvalid]: []
+};
+
+const getScopesByRole = (role:string):Notification_Scope[] => {
+const roleType = getRoleType(role)
+return RoleToNotificationScopes[roleType] || []
+}
+
+useGetNotificationsQuery({
+  client: metricsClient,
+  fetchPolicy: 'cache-and-network',
+
+  variables: {
+    data: {
+      orgId: user.orgId,
+      userId: user.id,
+      networkId: network.id,
+      forRole: getRoleType(user.role),
+      scopes: getScopesByRole(Role_Type.RoleVendor),
+    },
+  },
+  onCompleted: (data) => {
+    const alerts = data.getNotifications.notifications;
+    setAlerts(alerts);
+  },
+});
+
+useNotificationSubscriptionSubscription({
+  client: metricsClient,
+  variables: {
+    networkId: network.id,
+    orgId: user.orgId,
+    userId: user.id,
+    forRole: getRoleType(user.role),
+    scopes: getScopesByRole(Role_Type.RoleVendor),
+  },
+  onData: ({ data }) => {
+    const newAlert = data.data?.notificationSubscription;
+    if (newAlert) {
+      setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
+    }
+  },
+});
+
   return (
     <Layout
       page={pageName}
@@ -173,6 +283,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handleAddNetwork={handleAddNetworkAction}
       networks={networksData?.getNetworks.networks || []}
       isLoading={networksLoading || skeltonLoading}
+      alerts={alerts}
+      setAlerts={setAlerts}
     >
       <Component {...pageProps} />
       <AddNetworkDialog
