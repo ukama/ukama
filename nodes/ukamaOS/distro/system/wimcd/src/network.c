@@ -30,6 +30,40 @@ static int start_framework(UInst *instance) {
     return USYS_TRUE;
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static void setup_webservice_endpoints(Config *config,
                                        UInst *instance) {
 
@@ -37,23 +71,33 @@ static void setup_webservice_endpoints(Config *config,
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("apps/:name/:tag"), 0,
                                &web_service_cb_post_app, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("apps/:name/:tag"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("apps/:name/:tag/status"), 0,
                                &web_service_cb_get_app_status, config);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX,
+                              API_RES_EP("apps/:name/:tag/status"));
 
     /* used by agent to update its stats */
     ulfius_add_endpoint_by_val(instance, "PUT", URL_PREFIX,
                                API_RES_EP("apps/:name/:tag/stats"), 0,
                                &web_service_cb_put_app_stats_update, config);
+    setup_unsupported_methods(instance, "PUT", URL_PREFIX,
+                              API_RES_EP("apps/:name/:tag/stats"));
 
     ulfius_set_default_endpoint(instance,
                                 &web_service_cb_default,

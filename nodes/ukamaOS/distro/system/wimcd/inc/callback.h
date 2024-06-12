@@ -48,6 +48,10 @@ int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
 
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data);
+
 int web_service_cb_post_app(const URequest *request,
                             UResponse *response,
                             void *epConfig);
