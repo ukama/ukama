@@ -76,5 +76,10 @@ func NewConfig(name string) *Config {
 			Timeout: 600 * time.Second,
 			Chunker: "distributor:9090",
 		},
+
+		Grpc: &config.Grpc{
+			Port:       9090,
+			MaxMsgSize: 209715200,
+		},
 	}
 }

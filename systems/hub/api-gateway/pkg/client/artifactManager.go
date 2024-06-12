@@ -25,11 +25,13 @@ type ArtifactManager struct {
 	host    string
 }
 
-func NewArtifactManager(host string, timeout time.Duration) *ArtifactManager {
+func NewArtifactManager(host string, maxMsgSize int, timeout time.Duration) *ArtifactManager {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(maxMsgSize),
+		grpc.MaxCallSendMsgSize(maxMsgSize)))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

@@ -28,6 +28,7 @@ type Config struct {
 
 type GrpcEndpoints struct {
 	Timeout         time.Duration
+	MaxMsgSize      int `default:"4194304"`
 	ArtifactManager string
 	Distributor     string
 }
@@ -49,6 +50,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:         3 * time.Second,
+			MaxMsgSize:      209715200,
 			ArtifactManager: "artifactmanager:9090",
 			Distributor:     "distributor:9090",
 		},

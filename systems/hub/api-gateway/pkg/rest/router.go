@@ -68,7 +68,7 @@ type distributor interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.a = client.NewArtifactManager(endpoints.ArtifactManager, endpoints.Timeout)
+	c.a = client.NewArtifactManager(endpoints.ArtifactManager, endpoints.MaxMsgSize, endpoints.Timeout)
 	c.d = client.NewDistributor(endpoints.Distributor, endpoints.Timeout)
 
 	return c
