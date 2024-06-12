@@ -57,21 +57,36 @@ func (r *ArtifactManager) Close() {
 }
 
 func (a *ArtifactManager) StoreArtifact(in *apb.StoreArtifactRequest) (*apb.StoreArtifactResponse, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.StoreArtifact(ctx, in)
 }
 
 func (a *ArtifactManager) GetArtifactLocation(in *apb.GetArtifactLocationRequest) (*apb.GetArtifactLocationResponse, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetArtifactLocation(ctx, in)
 }
 
 func (a *ArtifactManager) GetArtifact(in *apb.GetArtifactRequest) (*apb.GetArtifactResponse, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetArtifact(ctx, in)
 }
 
-func (a *ArtifactManager) GetArtifcatVersionList(in *apb.GetArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error) {
-	return nil, nil
+func (a *ArtifactManager) GetArtifactVersionList(in *apb.GetArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetArtifactVersionList(ctx, in)
 }
 
 func (a *ArtifactManager) ListArtifacts(in *apb.ListArtifactRequest) (*apb.ListArtifactResponse, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.ListArtifacts(ctx, in)
 }

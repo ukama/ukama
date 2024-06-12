@@ -12,7 +12,6 @@ replace github.com/ukama/ukama/systems/hub/distributor => ../distributor
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
-	github.com/gin-contrib/cors v1.7.1
 	github.com/golang/protobuf v1.5.4
 	github.com/minio/minio-go/v7 v7.0.61
 	github.com/mwitkow/go-proto-validators v0.3.2
@@ -25,6 +24,8 @@ require (
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require github.com/gin-contrib/cors v1.7.1 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -46,7 +47,7 @@ require (
 	github.com/go-playground/validator/v10 v10.19.0 // indirect
 	github.com/go-resty/resty/v2 v2.12.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
@@ -107,6 +108,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
+	github.com/ukama/ukama/systems/hub/distributor v0.0.0-20240611182237-950759d18354
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.13.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect

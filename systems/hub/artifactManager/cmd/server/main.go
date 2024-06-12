@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/artifactmanager/cmd/version"
 	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
+	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg/client"
 	"github.com/ukama/ukama/systems/hub/artifactmanager/pkg/server"
 	"gopkg.in/yaml.v2"
 
@@ -36,7 +37,7 @@ func main() {
 	initConfig()
 
 	storage := pkg.NewMinioWrapper(&serviceConfig.Storage)
-	chunker := pkg.NewChunker(&serviceConfig.Chunker, storage)
+	chunker := client.NewDistributor(serviceConfig.Services.Chunker, serviceConfig.Services.Timeout)
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {

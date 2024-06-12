@@ -21,8 +21,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/hub/artifactManager v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/hub/distributor v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/hub/hub v0.0.0-20240607182648-ada9f9d8b2d3
+	github.com/ukama/ukama/systems/hub/distributor v0.0.0-20240611182237-950759d18354
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.62.1
 )
@@ -89,6 +88,7 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect

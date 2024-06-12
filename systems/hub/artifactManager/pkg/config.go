@@ -19,8 +19,8 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Metrics           *config.Metrics
 	Server            rest.HttpConfig
+	Services          GrpcEndpoints `mapstructure:"services"`
 	Storage           MinioConfig
-	Chunker           ChunkerConfig
 	Service           *config.Service
 	Queue             *config.Queue     `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
@@ -29,6 +29,11 @@ type Config struct {
 	IsGlobal          bool
 	PushGateway       string
 	Grpc              *config.Grpc `default:"{}"`
+}
+
+type GrpcEndpoints struct {
+	Timeout time.Duration
+	Chunker string
 }
 
 type MinioConfig struct {
@@ -61,14 +66,15 @@ func NewConfig(name string) *Config {
 				"certart": "cert",
 			},
 		},
-		Chunker: ChunkerConfig{
-			Host:          "http://localhost:8098",
-			TimeoutSecond: 600,
-		},
 
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
+		},
+
+		Services: GrpcEndpoints{
+			Timeout: 600 * time.Second,
+			Chunker: "distributor:9090",
 		},
 	}
 }

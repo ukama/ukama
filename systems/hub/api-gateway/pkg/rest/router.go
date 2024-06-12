@@ -58,7 +58,7 @@ type artifactManager interface {
 	StoreArtifact(in *apb.StoreArtifactRequest) (*apb.StoreArtifactResponse, error)
 	GetArtifactLocation(in *apb.GetArtifactLocationRequest) (*apb.GetArtifactLocationResponse, error)
 	GetArtifact(in *apb.GetArtifactRequest) (*apb.GetArtifactResponse, error)
-	GetArtifcatVersionList(in *apb.GetArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error)
+	GetArtifactVersionList(in *apb.GetArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error)
 	ListArtifacts(in *apb.ListArtifactRequest) (*apb.ListArtifactResponse, error)
 }
 
@@ -140,7 +140,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	}
 }
-
 
 func proxy(c *gin.Context) error {
 	remote, err := url.Parse("http://distributor:8099")
@@ -257,7 +256,7 @@ func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) 
 func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error) {
 	log.Infof("Getting version list: %s of type ", req.Name, req.ArtifactType)
 
-	return r.clients.a.GetArtifcatVersionList(&apb.GetArtifactVersionListRequest{
+	return r.clients.a.GetArtifactVersionList(&apb.GetArtifactVersionListRequest{
 		Name: req.Name,
 		Type: apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
 	})

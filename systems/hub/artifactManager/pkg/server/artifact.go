@@ -30,6 +30,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
+	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 )
 
 const CappsPath = "/v1/capps"
@@ -45,12 +46,16 @@ type ArtifcatServer struct {
 	OrgName               string
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
-	chunker               pkg.Chunker
+	chunker               chunkServer
 	orgName               string
 	IsGlobal              bool
 }
 
-func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chunker pkg.Chunker, storageTimeout time.Duration,
+type chunkServer interface {
+	CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error)
+}
+
+func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chunk chunkServer, storageTimeout time.Duration,
 	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ArtifcatServer {
 
 	return &ArtifcatServer{
@@ -60,6 +65,7 @@ func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chu
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
+		chunker:        chunk,
 	}
 }
 
@@ -105,10 +111,27 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 	}
 
 	go func() {
-		err = s.chunker.Chunk(in.Name, strings.ToLower(in.Type.String()), v, loc)
+		aType := strings.ToLower(in.Type.String())
+		fPath := fmt.Sprintf("%s/%s/%s", in.Name, v.String(), pkg.TarGzExtension)
+		resp, err := s.chunker.CreateChunk(&dpb.CreateChunkRequest{
+			Name:    in.Name,
+			Type:    aType,
+			Version: v.String(),
+			Store:   "s3+" + strings.TrimSuffix(loc, fPath),
+		})
 		if err != nil {
 			log.Errorf("Error chunking artifact: %s %s. Error: %+v", in.Name, in.Version, err)
 		}
+
+		nctx, cancel := context.WithTimeout(context.Background(),
+			s.storageRequestTimeout)
+		defer cancel()
+
+		_, err = s.storage.PutFile(nctx, in.Name, aType, v, pkg.ChunkIndexExtension, bytes.NewReader(resp.Index))
+		if err != nil {
+			log.Errorf("Failed to store artifact index file %+v", in)
+		}
+
 	}()
 
 	return nil, nil
