@@ -84,9 +84,8 @@ int web_service_cb_get_app_status(const URequest *request,
                                   UResponse *response,
                                   void *data) {
 
-    char *name=NULL, *tag=NULL;
+    char   *name=NULL, *tag=NULL, *status=NULL;
     Config *config=NULL;
-    char status[WIMC_MAX_PATH_LEN] = {0};
     json_t *jResponse = NULL;
 
     config = (Config *)data;
@@ -101,7 +100,7 @@ int web_service_cb_get_app_status(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    if (db_read_status(config->db, name, tag, &status[0])) {
+    if (db_read_status(config->db, name, tag, &status)) {
         if (strcmp(status, "download") == 0) {
             jResponse = json_pack("{s:s}",
                                   "message", "download");
@@ -136,6 +135,7 @@ int web_service_cb_get_app_status(const URequest *request,
                                           jResponse);
             json_decref(jResponse);
         }
+        free(status);
     } else {
         jResponse = json_pack("{s:s}",
                               "message", HttpStatus_NotFound);
