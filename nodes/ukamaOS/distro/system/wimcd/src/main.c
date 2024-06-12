@@ -95,8 +95,7 @@ int main (int argc, char **argv) {
         usys_exit(1);
     }
 
-    sprintf(hubURL,
-            "http://localhost:%d/hub",
+    sprintf(hubURL, "http://localhost:%d",
             usys_find_service_port(SERVICE_UKAMA));
 
     while (true) {

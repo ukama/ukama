@@ -222,12 +222,14 @@ bool get_artifact_info_from_hub(Artifact *artifact,
     for (i=0; i<count; i++) {
         if (strcmp(artifacts[i]->version, tag) == 0) {
             copy_artifact(artifacts[i], artifact);
-            break;
+            *status = HttpStatus_OK;
+            ret = USYS_TRUE;
+            goto done;
         }
     }
 
-    *status = HttpStatus_OK;
-    ret = USYS_TRUE;
+    *status = HttpStatus_NotFound;
+    ret = USYS_FALSE;
 
 done:
     for (i=0; i<count; i++) {
