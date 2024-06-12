@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NetworkDto } from '@/generated';
+import { NetworkDto, NotificationResDto } from '@/generated';
 import { HorizontalContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -19,6 +19,7 @@ import BackButton from '../molecules/BackButton';
 import LoadingWrapper from '../molecules/LoadingWrapper';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { NotificationsResDto } from '@/generated/metrics';
 
 interface ILayoutProps {
   page: string;
@@ -31,6 +32,8 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
+  alerts: NotificationsResDto [] | undefined
+  setAlerts: Function
 }
 
 const Layout = ({
@@ -44,6 +47,8 @@ const Layout = ({
   handlePageChange,
   handleAddNetwork,
   handleNetworkChange,
+  alerts,
+  setAlerts
 }: ILayoutProps) => {
   const theme = useTheme();
   const router = useRouter();
@@ -71,6 +76,8 @@ const Layout = ({
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
+          alerts={alerts}
+          setAlerts={setAlerts}
         />
       )}
       <HorizontalContainer>

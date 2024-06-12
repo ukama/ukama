@@ -17,6 +17,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
+import Alert from './Alert';
+import { NotificationsResDto } from '@/generated/metrics';
 
 const Logo = dynamic(() =>
   import('../../../public/svg/Logo').then((module) => ({
@@ -29,6 +31,8 @@ interface IHeaderProps {
   isLoading: boolean;
   isDarkMode: boolean;
   onNavigate: Function;
+  alerts:NotificationsResDto[] | undefined;
+  setAlerts: Function
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -72,7 +76,7 @@ const IconStyle = {
   },
 };
 
-const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
+const Header = ({ onNavigate, isLoading, isOpen, alerts, setAlerts }: IHeaderProps) => {
   const { user, setUser } = useAppContext();
   const isManager =
     user.role === 'ADMIN' || user.role === 'OWNER' ? true : false;
@@ -115,11 +119,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
               >
                 <SettingsIcon />
               </IconButton>
-              <IconButton sx={{ ...IconStyle }}>
-                <Badge badgeContent={4} color="secondary">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
+              <Alert alerts={alerts} setAlerts={setAlerts}/>
               <IconButton
                 sx={{
                   ...IconStyle,
