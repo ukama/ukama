@@ -9,13 +9,12 @@
 package server
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -109,7 +108,7 @@ func (r *Router) Run() {
 }
 
 func (r *Router) init(f func(*gin.Context, string) error) {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, true, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "API Gateway", "Hub system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
@@ -190,50 +189,53 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 	return nil
 }
 
-func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) (*apb.StoreArtifactResponse, error) {
+// curl --request PUT   http://0.0.0.0:8000/v1/hub/cappart/test-capp/0.0.1  -F "file=@/cdrive/handson/desync/ukaa.caidx"
+func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse, error) {
+
+	req := &ArtifactUploadRequest{}
+	req.ArtifactName = c.Param("filename")
+	req.ArtifactType = c.Param("type")
+	req.Version = c.Param("version")
 	log.Infof("Adding artifact %s with version %s of type : %s", req.ArtifactName, req.Version, req.ArtifactType)
+
 	_, err := r.parseVersion(req.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	file, err := c.FormFile("file")
+	bufReader := NewBufReader(c.Request.Body)
+	defer c.Request.Body.Close()
+
+	uncompressedStream, err := gzip.NewReader(bufReader)
 	if err != nil {
+		log.Infof("Failed to read gz file: %v", err)
+
 		return nil, rest.HttpError{
 			HttpCode: http.StatusBadRequest,
-			Message:  fmt.Sprintf("get form err: %s", err.Error()),
+			Message:  "Not a tar.gz file",
 		}
 	}
 
-	// Open the uploaded file
-	uploadedFile, err := file.Open()
-	if err != nil {
-		return nil, rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  fmt.Sprintf("file open error: %s", err.Error()),
-		}
-	}
-	defer uploadedFile.Close()
+	tr := tar.NewReader(uncompressedStream)
 
-	// Validate if the file is proper gzip data
-	if !r.isValidGzip(uploadedFile) {
+	_, err = tr.Next()
+	if err != nil {
+		log.Infof("Failed to read tar file: %v", err)
+
 		return nil, rest.HttpError{
 			HttpCode: http.StatusBadRequest,
-			Message:  fmt.Sprintf("The uploaded file is not valid gzip data %s", err.Error()),
+			Message:  "Not a tar.gz file",
 		}
 	}
 
-	data, err := os.ReadFile(file.Filename)
-	if err != nil {
-		log.Fatalf("could not read file: %v", err)
-	}
+	bufReader.Reset()
 
 	// Call gRPresp, err :C client to send the file
 	return r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
 		Name:    req.ArtifactName,
 		Type:    apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
 		Version: req.Version,
-		Data:    data,
+		Data:    bufReader.buff,
 	})
 
 	// loc, err := r.storage.PutFile(ctx, name, v, pkg.TarGzExtension, bufReader)
@@ -254,7 +256,7 @@ func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) 
 }
 
 func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error) {
-	log.Infof("Getting version list: %s of type ", req.Name, req.ArtifactType)
+	log.Infof("Getting version list: %s of type %s", req.Name, req.ArtifactType)
 
 	return r.clients.a.GetArtifactVersionList(&apb.GetArtifactVersionListRequest{
 		Name: req.Name,
@@ -263,7 +265,7 @@ func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersio
 }
 
 func (r *Router) artifactLocationHandler(c *gin.Context, req *ArtifactLocationRequest) (*apb.GetArtifactLocationResponse, error) {
-	log.Infof("Getting location for %s version %s  of type %s", req.Name, req.ArtifactType)
+	log.Infof("Getting location for %s version %s  of type %s", req.Name, req.Version, req.ArtifactType)
 
 	return r.clients.a.GetArtifactLocation(&apb.GetArtifactLocationRequest{
 		Name:    req.Name,
@@ -292,12 +294,6 @@ func (r *Router) parseVersion(version string) (*semver.Version, error) {
 	}
 
 	return v, err
-}
-
-// isValidGzip checks if the file is valid gzip data
-func (r *Router) isValidGzip(file io.Reader) bool {
-	_, err := gzip.NewReader(file)
-	return err == nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
