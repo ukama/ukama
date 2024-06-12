@@ -34,19 +34,14 @@ import {
 import {
   GetLatestMetricInput,
   GetMetricByTabInput,
-  GetNetworkNotificationsInput,
-  GetNodeNotificationsInput,
   GetNotificationsInput,
-  GetOrgNotificationsInput,
-  GetSiteNotificationsInput,
-  GetSubscriberNotificationsInput,
-  GetUserNotificationsInput,
   LatestMetricRes,
   MetricRes,
   MetricsRes,
   NotificationsRes,
+  NotificationsResDto,
   StatsMetric,
-  SubMetricByTabInput,
+  SubMetricByTabInput
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.js";
@@ -307,7 +302,10 @@ class MetricResolvers {
   }
 
   @Query(() => NotificationsRes)
-  async getNotifications(@Arg("data") data: GetNotificationsInput) {
+  async getNotifications(
+    @Arg("data") data: GetNotificationsInput,
+    @PubSub() pubSub: PubSubEngine
+  ) {
     const notifications = getNotifications(data);
     const workerData = {
       url: `${NOTIFICATION_API_GW_WS}/v1/distributor/live`,
@@ -315,7 +313,6 @@ class MetricResolvers {
       scope: data.scopes,
       userId: data.userId,
       networkId: data.networkId,
-      subscriberId: data.subscriberId,
       key: "UKAMA_NOTIFICATION_STORAGE_KEY",
     };
 
@@ -323,47 +320,32 @@ class MetricResolvers {
       workerData,
     });
 
+    const key = `notification-${data.userId}-${data.orgId}-${data.forRole}-${data.networkId}`;
     worker.on("message", (_data: any) => {
       if (!_data.isError) {
         const res = JSON.parse(_data.data);
-        const result = res.data;
-        console.log(result);
-        // if (result && result.data) {
-        //       switch (result.scope) {
-        // case NOTIFICATION_SCOPE.ORG:
-        //   // do something
-        //   break;
-        // case NOTIFICATION_SCOPE.NETWORK:
-        //   // do something
-        //   break;
-        // case NOTIFICATION_SCOPE.SITE:
-        //   // do something
-        //   break;
-        // case NOTIFICATION_SCOPE.NODE:
-        //   // do something
-        //   break;
-        // case NOTIFICATION_SCOPE.SUBSCRIBER:
-        //   // do something
-        //   break;
-        // case NOTIFICATION_SCOPE.USER:
-        //   // do something
-        //   break;
-        //         default:
-        //           // do something
-        //           break;
-        //       }
-        //     } else {
-        //       return getErrorRes("No metric data found");
-        //     }
+        if (res && res.id) {
+          pubSub.publish(key, {
+            createdAt: res.createdAt,
+            description: res.description,
+            id: res.id,
+            isRead: res.isRead,
+            scope: res.scope,
+            title: res.title,
+            type: res.type,
+          } as NotificationsResDto);
+        } else {
+          return getErrorRes("No notification data found");
+        }
       }
     });
 
-    // worker.on("exit", (code: any) => {
-    //   removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
-    //   logger.info(
-    //     `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
-    //   );
-    // });
+    worker.on("exit", (code: any) => {
+      removeKeyFromStorage(key);
+      logger.info(
+        `WS_THREAD exited with code [${code}] for ${data.orgId}/${data.userId}/${data.networkId}`
+      );
+    });
     return notifications;
   }
 
@@ -386,80 +368,19 @@ class MetricResolvers {
     return payload;
   }
 
-  @Subscription(() => NotificationsRes, {
+  @Subscription(() => NotificationsResDto, {
     topics: ({ args }) => {
-      return `notification-${args.userId}`;
+      return `notification-${args.userId}-${args.orgId}-${args.forRole}-${args.networkId}`;
     },
   })
-  async getUserNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetUserNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.userId);
-    return payload;
-  }
-  @Subscription(() => NotificationsRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}`;
-    },
-  })
-  async getOrgNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetOrgNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
-
-  @Subscription(() => NotificationsRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}`;
-    },
-  })
-  async getNetworkNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetNetworkNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
-
-  @Subscription(() => NotificationsRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}`;
-    },
-  })
-  async getSiteNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetSiteNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
-
-  @Subscription(() => NotificationsRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.role}-${args.networkId}-${args.siteId}-${args.nodeId}`;
-    },
-  })
-  async getNodeNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetNodeNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.orgId);
-    return payload;
-  }
-
-  @Subscription(() => NotificationsRes, {
-    topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.networkId}-${args.subscriberId}`;
-    },
-  })
-  async getSubscriberNotifications(
-    @Root() payload: NotificationsRes,
-    @Args() args: GetSubscriberNotificationsInput
-  ): Promise<NotificationsRes> {
-    logger.info(args.orgId);
+  async notificationSubscription(
+    @Root() payload: NotificationsResDto,
+    @Args() args: GetNotificationsInput
+  ): Promise<NotificationsResDto> {
+    await storeInStorage(
+      `notification-${args.userId}-${args.orgId}-${args.forRole}-${args.networkId}`,
+      getTimestampCount("0")
+    );
     return payload;
   }
 }

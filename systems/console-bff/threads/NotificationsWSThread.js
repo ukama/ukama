@@ -74,15 +74,15 @@ const runWorker = async () => {
         id: faker.string.uuid(),
         type: NOTIFICATION_TYPE[TYPE_INDEX],
         scope: NOTIFICATION_SCOPE[SCOPE_INDEX],
-        title: faker.string.sample(10),
+        title: faker.lorem.sentence(1),
         isRead: false,
         createdAt: new Date().toISOString(),
-        description: faker.lorem.sentence(5),
+        description: faker.lorem.sentence(10),
       };
       parentPort.postMessage({
         isError: false,
         message: "success",
-        data: data.toString(),
+        data: JSON.stringify(data),
       });
     }, INTERVAL);
   }

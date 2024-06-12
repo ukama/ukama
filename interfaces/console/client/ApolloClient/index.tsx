@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { useAppContext } from '@/context';
 import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
@@ -43,9 +42,9 @@ export const MetricLink = () => {
     if (data) {
       let parsedData = JSON.parse(data);
       if (parsedData['commonData']) {
-        user.orgId = parsedData['commonData']['orgId'];
-        user.id = parsedData['commonData']['userId'];
-        user.orgName = parsedData['commonData']['orgName'];
+        // user.orgId = parsedData['commonData']['orgId'];
+        // user.id = parsedData['commonData']['userId'];
+        // user.orgName = parsedData['commonData']['orgName'];
       }
     }
   }

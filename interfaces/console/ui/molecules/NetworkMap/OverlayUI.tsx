@@ -8,8 +8,6 @@
 
 import { NodeStatusEnum } from '@/generated';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,
@@ -23,7 +21,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { TreeItem, TreeView } from '@mui/x-tree-view';
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
@@ -75,10 +73,8 @@ export const SitesTree = ({ sites }: ISitesTree) => {
         <Typography variant="body1" fontWeight={600}>
           Network ({sites.length})
         </Typography>
-        <TreeView
+        <SimpleTreeView
           aria-label="sites-tree"
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
           sx={{
             flexGrow: 1,
             overflowY: 'auto',
@@ -88,16 +84,16 @@ export const SitesTree = ({ sites }: ISitesTree) => {
         >
           {sites?.map((site: any) => {
             return (
-              <TreeItem key={site.id} nodeId={site.id} label={site.name}>
+              <TreeItem key={site.id} itemId={site.id} label={site.name}>
                 <TreeItem
-                  nodeId={site.nodeId}
+                  itemId={site.nodeId}
                   label={site.nodeName}
                   onClick={() => router.push(`/nodes/${site.nodeId}`)}
                 />
               </TreeItem>
             );
           })}
-        </TreeView>
+        </SimpleTreeView>
       </Stack>
     </Box>
   );

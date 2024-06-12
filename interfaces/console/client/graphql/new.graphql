@@ -813,3 +813,31 @@ mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
     id
   }
 }
+
+### End Invitation ###
+
+### Common Data ###
+
+query GetCountries {
+  getCountries {
+    countries {
+      name
+      code
+    }
+  }
+}
+
+query GetTimezones {
+  getTimezones {
+    timezones {
+      value
+      abbr
+      offset
+      isdst
+      text
+      utc
+    }
+  }
+}
+
+### End Common Data ###
