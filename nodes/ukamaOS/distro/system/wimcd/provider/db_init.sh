@@ -18,6 +18,7 @@ CREATE TABLE Containers (
 
 INSERT INTO Containers VALUES('test-capp', '0.0.3', 'tar.gz', '/v1/capps/test-capp/0.0.3.tar.gz', '2024-06-11T18:24:09.128Z', 25864577, '', '');
 INSERT INTO Containers VALUES('test-capp', '0.0.3', 'chunk', '/v1/capps/test-capp/0.0.3.caibx', '0001-01-01T00:00:00Z', NULL, '/v1/capps/test-capp/0.0.3.caibx', '/v1/chunks/');
+INSERT INTO Containers VALUES('test-capp', 'latest', 'chunk', '/v1/capps/test-capp/latest.caibx', '0001-01-01T00:00:00Z', NULL, '/v1/capps/test-capp/latest.caibx', '/v1/chunks/');
 INSERT INTO Containers VALUES('another-capp', '1.2.0', 'tar.gz', '/v1/capps/another-capp/1.2.0.tar.gz', '2024-05-01T12:00:00.000Z', 12345678, '', '');
 INSERT INTO Containers VALUES('another-capp', '1.2.0', 'chunk', '/v1/capps/another-capp/1.2.0.caibx', '0001-01-01T00:00:00Z', NULL, '/v1/capps/another-capp/1.2.0.caibx', '/v1/chunks/');
 INSERT INTO Containers VALUES('my-app', '2.3.4', 'tar.gz', '/v1/capps/my-app/2.3.4.tar.gz', '2024-04-20T08:30:45.123Z', 98765432, '', '');
