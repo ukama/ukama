@@ -182,11 +182,8 @@ bool get_artifact_info_from_hub(Artifact *artifact,
 
     if (name == NULL || tag == NULL) return USYS_FALSE;
 
-    /* create HUB EP: http://localhost:8001/v1/capps/:name */
-    sprintf(hubEP, "%s/%s/%s",
-            config->hubURL,
-            WIMC_EP_HUB_CAPPS,
-            name);
+    /* create HUB EP: http://localhost:18300/v1/hub/apps/:name */
+    sprintf(hubEP, "%s/%s/%s", config->hubURL, WIMC_EP_HUB_APPS, name);
 
     curl = curl_easy_init();
     if (curl == NULL) {
