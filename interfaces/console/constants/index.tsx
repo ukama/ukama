@@ -1,16 +1,9 @@
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import AppsIcon from '@mui/icons-material/Apps';
-import BillingIcon from '@mui/icons-material/CreditCard';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import HomeIcon from '@mui/icons-material/Home';
-import {
-  default as PeopleAltIcon,
-  default as UsersIcon,
-} from '@mui/icons-material/PeopleAlt';
+import { default as PeopleAltIcon } from '@mui/icons-material/PeopleAlt';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
-import RouterIcon from '@mui/icons-material/Router';
 import SimCardIcon from '@mui/icons-material/SimCard';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
@@ -42,11 +35,6 @@ const NODE_ACTIONS_BUTTONS = [
   },
 ];
 
-const TABLE_EXPORT_OPTIONS = [
-  { id: 1, label: 'EXPORT', value: 'EXPORT' },
-  { id: 2, label: 'WORD', value: 'WORD' },
-  { id: 3, label: 'PDF', value: 'PDF' },
-];
 export const MEMBER_ROLES = [
   { id: 1, label: 'Administrator', value: 'ADMIN' },
   { id: 2, label: 'Vendor', value: 'VENDOR' },
@@ -77,49 +65,12 @@ export const SIM_TYPES = [
   { id: 3, label: 'Operator Data', value: SIM_TYPE_OPERATOR },
   { id: 4, label: 'Ukama Data', value: 'ukama_data' },
 ];
-const NODE_TYPE = [
-  {
-    id: 1,
-    label: 'Home',
-    value: 'HOME',
-  },
-  {
-    id: 3,
-    label: 'Tower',
-    value: 'TOWER',
-  },
-  {
-    id: 2,
-    label: 'Amplifier',
-    value: 'AMPLIFIER',
-  },
-];
+
 const LANGUAGE_OPTIONS = [
   { id: 1, label: '🇺🇸  English, US', value: 'en' },
   { id: 2, label: '🇫🇷  French, France', value: 'fr' },
 ];
 
-const SIDEBAR_MENU1 = [
-  { id: '1', title: 'Home', Icon: HomeIcon, route: '/' },
-  { id: '2', title: 'Nodes', Icon: RouterIcon, route: '/nodes' },
-  { id: '3', title: 'Users', Icon: UsersIcon, route: '/users' },
-  { id: '4', title: 'Billing', Icon: BillingIcon, route: '/billing' },
-];
-const STATS_OPTIONS = [
-  { id: 1, label: 'Connected', value: 'Connected' },
-  { id: 2, label: 'Device uptime', value: 'Device uptime' },
-  { id: 3, label: 'Throughput', value: 'Throughput' },
-];
-const STATS_PERIOD = [
-  { id: '1', label: 'DAY' },
-  { id: '2', label: 'WEEK' },
-  { id: '3', label: 'MONTH' },
-  { id: '4', label: 'LIVE' },
-];
-
-const SIDEBAR_MENU2 = [
-  { id: '5', title: 'Integrations', Icon: AppsIcon, route: '/store' },
-];
 const MONTH_FILTER = [
   { id: 1, label: 'January ', value: 'JANUARY ' },
   { id: 2, label: 'February', value: 'FEBRUARY' },
@@ -264,31 +215,10 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
   },
 ];
 
-const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
-  {
-    id: 1,
-    Icon: DeleteIcon,
-    title: 'Deactivate',
-    route: 'deactivate',
-  },
-  { id: 2, Icon: EditIcon, title: 'Edit', route: 'edit' },
-];
-
-const UserActivation = {
-  title: 'Add Users',
-  subTitle: `Install Ukama eSIMs on all desired devices to start using the network. For remote installation, you can share digital instructions below.`,
-};
-
 const BillingTabs = [
   { id: 0, label: 'CURRENT BILL', value: '1' },
   { id: 1, label: 'BILLING HISTORY', value: '2' },
 ];
-
-const DEFAULT_RESPONSE = {
-  error: null,
-  loading: false,
-  response: null,
-};
 
 const ROAMING_SELECT = [
   {
@@ -305,19 +235,6 @@ const ROAMING_SELECT = [
     id: 3,
     value: 'esim2',
     text: 'ESIM 2',
-  },
-];
-
-const RF_NODES = [
-  {
-    id: 1,
-    value: 'off',
-    text: 'TURN OFF RF FOR INDIVIDAL NODES',
-  },
-  {
-    id: 2,
-    value: 'on',
-    text: 'TURN ON RF FOR INDIVIDAL NODES',
   },
 ];
 
@@ -417,13 +334,6 @@ const MASK_PLACEHOLDERS = {
   tnode: 'uk- ______ -tnode- __ - ____',
 };
 
-const SIM_VARIANT = [
-  { id: 2, title: 'eSIM', type: 'eSIM' },
-  { id: 1, title: 'Physical SIM', type: 'Physical SIM' },
-];
-
-export { NodeAppLogs, NodeApps, SimCardData } from './stubData';
-
 const NODE_IMAGES = {
   tnode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png',
@@ -433,55 +343,13 @@ const NODE_IMAGES = {
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
 };
 
-const BILLING_PLANS = [
-  {
-    id: 1,
-    label: 'Default roaming - $5/GB; prorated per MB',
-    value: 'default',
-  },
-  { id: 2, label: 'Unlimited plan - ', value: 'unlimited' },
-  { id: 3, label: 'Set plan - $', value: 'plan1' },
-  {
-    id: 4,
-    label: 'No plan - disables roaming for all residents.',
-    value: 'no_plan',
-  },
-];
-
-const BillingDialogList = [
-  {
-    id: 0,
-    title: 'Choose roaming plan',
-    description:
-      'Choose a roaming plan below, and it will apply to all residents that have roaming enabled. Your selection can always be changed later.',
-  },
-  {
-    id: 1,
-    title: 'Customize preferences',
-    description: 'Monitor and budget data usage with these settings.',
-  },
-  {
-    id: 2,
-    title: 'Enter payment information',
-    description: 'Enter your payment information',
-  },
-  {
-    id: 3,
-    title: 'Payment set up successfully ',
-    description:
-      'Your payment and preferences have been set up successfully! You can change your settings at any time.',
-  },
-];
+export { NodeAppLogs, NodeApps, SimCardData } from './stubData';
 
 export {
   APP_VERSION,
   BASIC_MENU_ACTIONS,
-  BILLING_PLANS,
-  BillingDialogList,
   BillingTabs,
   COPY_RIGHTS,
-  DEACTIVATE_EDIT_ACTION_MENU,
-  DEFAULT_RESPONSE,
   DRAWER_WIDTH,
   DataTableWithOptionColumns,
   HealtChartsConfigure,
@@ -493,19 +361,10 @@ export {
   MONTH_FILTER,
   NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
-  NODE_TYPE,
   NodePageTabs,
   NodeResourcesTabConfigure,
-  RF_NODES,
   ROAMING_SELECT,
   SETTING_MENU,
-  SIDEBAR_MENU1,
-  SIDEBAR_MENU2,
-  SIM_VARIANT,
-  STATS_OPTIONS,
-  STATS_PERIOD,
-  TABLE_EXPORT_OPTIONS,
   TIME_FILTER,
   TooltipsText,
-  UserActivation,
 };

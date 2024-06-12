@@ -23,21 +23,6 @@ type TSnackbarMessage = {
   show: boolean;
 };
 
-const INIT_CONTEXT = {
-  pageName: 'Home',
-  skeltonLoading: false,
-  snackbarMessage: {
-    id: 'message-id',
-    message: '',
-    type: 'info',
-    show: false,
-  },
-  network: {
-    id: '',
-    name: '',
-  },
-};
-
 const AppContext = createContext({
   pageName: 'Home',
   setPageName: (pageName: string) => {},

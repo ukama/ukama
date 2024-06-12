@@ -36,6 +36,8 @@ import UserApi from "../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "../user/resolver/types";
 import { configureExpress } from "./configureExpress";
 
+const COOKIE_EXPIRY_TIME = 3017874138705;
+
 function delay(time: any) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
@@ -128,6 +130,19 @@ const startServer = async () => {
       .catch(err => {
         res.send(new HTTP500Error("Subscriptions service ping failed: " + err));
       });
+  });
+
+  app.get("/set-theme", (req, res) => {
+    const theme = req.query.theme;
+    res.cookie("theme", theme, {
+      domain: BASE_DOMAIN,
+      secure: true,
+      sameSite: "lax",
+      maxAge: COOKIE_EXPIRY_TIME - (new Date().getTime() - 2017874138705),
+      httpOnly: false,
+      path: "/",
+    });
+    res.send("Theme set successfully");
   });
 
   app.get("/get-user", async (req, res) => {

@@ -56,3 +56,45 @@ export class ValidateSessionRes {
   @Field()
   token: string;
 }
+
+@ObjectType()
+export class CountryDto {
+  @Field()
+  name: string;
+
+  @Field()
+  code: string;
+}
+
+@ObjectType()
+export class CountriesRes {
+  @Field(() => [CountryDto])
+  countries: CountryDto[];
+}
+
+@ObjectType()
+export class TimezoneDto {
+  @Field()
+  value: string;
+
+  @Field()
+  abbr: string;
+
+  @Field()
+  offset: number;
+
+  @Field()
+  isdst: boolean;
+
+  @Field()
+  text: string;
+
+  @Field(() => [String])
+  utc: string[];
+}
+
+@ObjectType()
+export class TimezoneRes {
+  @Field(() => [TimezoneDto])
+  timezones: TimezoneDto[];
+}
