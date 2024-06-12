@@ -11,7 +11,6 @@ package pkg
 import (
 	"time"
 
-	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 )
@@ -27,7 +26,7 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	OrgName           string
 	OrgId             string
-	IsGlobal          bool `default:"true"`
+	IsGlobal          bool
 	PushGateway       string
 	Grpc              *config.Grpc `default:"{}"`
 }
@@ -50,12 +49,6 @@ type ChunkerConfig struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8088,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost"},
-			},
-		},
 		Metrics: config.DefaultMetrics(),
 		Storage: MinioConfig{
 			Endpoint:      "localhost:9000",
@@ -64,8 +57,8 @@ func NewConfig(name string) *Config {
 			BucketSuffix:  "local-test",
 			TimeoutSecond: 3,
 			ArtifactTypeBucketMap: map[string]string{
-				"artifact_capp": "capp",
-				"artifact_cert": "cert",
+				"cappart": "capp",
+				"certart": "cert",
 			},
 		},
 		Chunker: ChunkerConfig{

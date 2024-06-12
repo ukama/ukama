@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "hub"
+const ServiceName = "artifactmanager"
 
 const SystemName = "hub"
 

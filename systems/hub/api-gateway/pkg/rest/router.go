@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -61,8 +63,8 @@ type artifactManager interface {
 }
 
 type distributor interface {
-	Store(in *dpb.Request) (*dpb.Response, error)
-	Get(in *dpb.ChunkRequest) (*dpb.ChunkResponse, error)
+	CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error)
+	Chunk(in *dpb.GetChunkRequest) (*dpb.GetChunkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -126,13 +128,38 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		capps := auth.Group("/hub", "Artifact store", "Artifact operations")
-		capps.GET("/:type/:name/:filename", formatDoc("Get Artifact contents", "Get artifact contents with name and type"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
-		capps.PUT("/:type/:name/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
-		capps.GET("/:type/:name", formatDoc("List of versions for artifcat", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
-		capps.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
-		capps.GET("/location/:type/:name/:filename/:version", formatDoc("Location", "Provide a location of the artifact to download from"), tonic.Handler(r.artifactLocationHandler, http.StatusOK))
+		artifact := auth.Group("/hub", "Artifact store", "Artifact operations")
+		artifact.GET("/:type/:name/:filename", formatDoc("Get Artifact contents", "Get artifact contents or its index files"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
+		artifact.PUT("/:type/:filename/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
+		artifact.GET("/:type/:name", formatDoc("List of versions for artifcat", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
+		artifact.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
+		//capps.GET("/location/:type/:name/:filename/:version", formatDoc("Location", "Provide a location of the artifact to download from"), tonic.Handler(r.artifactLocationHandler, http.StatusOK))
+
+		distr := auth.Group("/ditributor", "Get Artifacts in chunks", "Download Artifact in chunk")
+		distr.GET("/*proxypath", formatDoc("Get Artifact contents", "Get artifact contents or its index files"), tonic.Handler(proxy, http.StatusOK))
+
 	}
+}
+
+
+func proxy(c *gin.Context) error {
+	remote, err := url.Parse("http://distributor:8099")
+	if err != nil {
+		panic(err)
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(remote)
+	proxy.Director = func(req *http.Request) {
+		req.Header = c.Request.Header
+		req.Host = remote.Host
+		req.URL.Scheme = remote.Scheme
+		req.URL.Host = remote.Host
+		req.URL.Path = c.Param("proxyPath")
+	}
+
+	proxy.ServeHTTP(c.Writer, c.Request)
+
+	return nil
 }
 
 func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error {
@@ -165,7 +192,7 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 }
 
 func (r *Router) artifactPutHandler(c *gin.Context, req *ArtifactUploadRequest) (*apb.StoreArtifactResponse, error) {
-	log.Infof("Adding artifact %s with version %s of type : %s %s", req.ArtifactName, req.Version, req.ArtifactType)
+	log.Infof("Adding artifact %s with version %s of type : %s", req.ArtifactName, req.Version, req.ArtifactType)
 	_, err := r.parseVersion(req.Version)
 	if err != nil {
 		return nil, err

@@ -152,5 +152,9 @@ func NewConfig(name string) *Config {
 			TimeoutSecond:      3,
 			SkipBucketCreation: true,
 		},
+
+		Grpc: &config.Grpc{
+			Port: 9090,
+		},
 	}
 }

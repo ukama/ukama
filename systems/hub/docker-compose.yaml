@@ -29,30 +29,49 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-
-  hub: # Here, this is where you can configure your gateway.
+  gateway:
     build:
-      context: ./hub
       dockerfile: ./Dockerfile
-    ports: [ "8088:8088" ]
+      context: ./api-gateway
+    ports:
+    - '8000:8080'
     environment:
-      - DEBUGMODE=TRUE
-      - BYPASS_AUTH_MODE=true
+    - DEBUGMODE=true
+    - BYPASS_AUTH_MODE=true
+    - NODEMETRICSPORT=10251
+    - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
+    - SERVICES_DISTRIBUTOR=distributor:9090
+    - ORGNAME=${ORGNAME}
+    - ORGID=${ORGID}
+    - ISGLOBAL=true
+    depends_on:
+    - artifactmanager
+    - distributor
+    networks:
+    - ukama-net
+
+  artifactmanager: # Here, this is where you can configure your gateway.
+    build:
+      context: ./artifactManager
+      dockerfile: ./Dockerfile
+    environment:
       - STORAGE_ENDPOINT=minio:9000
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-hub:9095
-      - HUB_SERVICE_HOST=hub
-      - HUB_SERVICE_PORT=8088
-      - CHUNKER_HOST=http://distr:8098
-      - ORGNAME=ukama-test-org
+      - ARTIFACTMANAGER_SERVICE_HOST=artifactmanager
+      - ARTIFACTMANAGER_SERVICE_PORT=9090
+      - CHUNKER_HOST=http://distributor:9090
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+      - ISGLOBAL=TRUE
+      - PUSHGATEWAY=http://localhost:9091
     restart: always
     networks:
       - ukama-net
     depends_on:
       - msgclient-hub
 
-
-  distr: # Here, this is where you can configure your gateway.
+  distributor: # Here, this is where you can configure your gateway.
     build:
       context: ./distributor
       dockerfile: ./Dockerfile
@@ -61,16 +80,18 @@ services:
       - DEBUGMODE=TRUE
       - STORE_ENDPOINT=minio:9000
       - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
-      - DISTRIBUTION_ADDRESS=distr:8099
+      - DISTRIBUTION_ADDRESS=distributor:8099
       - DISTRIBUTION_LOGFILE=-
       - STORAGE_ENDPOINT=minio:9000
       - STORAGE_ACCESSKEY=minioadmin
       - STORAGE_SECRETKEY=minioadmin
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-hub:9095
-      - DISTRIBUTOR_SERVICE_HOST=distr
+      - DISTRIBUTOR_SERVICE_HOST=distributor
       - DISTRIBUTOR_SERVICE_PORT=9090
-      - ORGNAME=ukama-test-org
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+      - ISGLOBAL=TRUE
     networks:
       - ukama-net
     restart: always
@@ -115,7 +136,7 @@ services:
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
   postgress-data:

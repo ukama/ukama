@@ -96,17 +96,19 @@ func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	distributorServer := server.NewDistributionServer(orgId, serviceConfig.OrgName, serviceConfig,
 		mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("Distribution server is %+v and config %+v", distributorServer, serviceConfig.Grpc)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)
 	})
 
 	go grpcServer.StartServer()
+
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
 	go msgBusListener(mbClient)
@@ -124,6 +126,7 @@ func initConfig() {
 /* Handles Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting. */
 func handleSigterm(handleExit func()) {
 	c := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
 
@@ -131,8 +134,12 @@ func handleSigterm(handleExit func()) {
 		<-c
 		handleExit()
 		log.Infof("Exiting distribution service.")
-		os.Exit(1)
+		done <- true
 	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {

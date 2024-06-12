@@ -22,7 +22,6 @@ import (
 	pb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/chunk"
-	"github.com/ukama/ukama/systems/hub/distributor/pkg/distribution"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -39,7 +38,6 @@ type DistributorServer struct {
 	OrgName        string
 	Store          pkg.StoreConfig
 	ChunkConfig    pkg.ChunkConfig
-	orgName        string
 	IsGlobal       bool
 	castore        casync.Store
 	converters     casync.Converters
@@ -48,10 +46,10 @@ type DistributorServer struct {
 func NewDistributionServer(orgId uuid.UUID, orgName string, config *pkg.Config,
 	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *DistributorServer {
 
-	s, c, err := distribution.InitDistribution(&config.Distribution)
-	if err != nil {
-		log.Fatalf("Distribution initialization failed.")
-	}
+	// s, c, err := distribution.InitDistribution(&config.Distribution)
+	// if err != nil {
+	// 	log.Fatalf("Distribution initialization failed.")
+	// }
 	//compressed := c.hasCompression()
 
 	return &DistributorServer{
@@ -63,8 +61,8 @@ func NewDistributionServer(orgId uuid.UUID, orgName string, config *pkg.Config,
 		pushGateway:    pushGateway,
 		Store:          config.Distribution.StoreCfg,
 		ChunkConfig:    config.Distribution.Chunk,
-		castore:        s,
-		converters:     c,
+		// castore:        s,
+		// converters:     c,
 	}
 }
 

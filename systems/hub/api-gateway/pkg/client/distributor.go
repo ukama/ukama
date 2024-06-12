@@ -56,10 +56,10 @@ func (r *Distributor) Close() {
 	r.conn.Close()
 }
 
-func (d *Distributor) Store(in *dpb.Request) (*dpb.Response, error) {
+func (d *Distributor) CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error) {
 	return nil, nil
 }
 
-func (d *Distributor) Get(in *dpb.ChunkRequest) (*dpb.ChunkResponse, error) {
+func (d *Distributor) Chunk(in *dpb.GetChunkRequest) (*dpb.GetChunkResponse, error) {
 	return nil, nil
 }

@@ -56,13 +56,13 @@ func main() {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	memberServer := server.NewArtifactServer(orgId, serviceConfig.OrgName, storage, chunker,
+	artifcatServer := server.NewArtifactServer(orgId, serviceConfig.OrgName, storage, chunker,
 		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		generated.RegisterArtifactServiceServer(s, memberServer)
+		generated.RegisterArtifactServiceServer(s, artifcatServer)
 	})
 
 	go grpcServer.StartServer()
