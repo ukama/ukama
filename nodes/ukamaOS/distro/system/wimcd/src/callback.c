@@ -155,24 +155,20 @@ int web_service_cb_post_app(const URequest *request,
     int ret=TRUE, resCode=200, i=0;
     int httpStatus=0;
 
-    char idStr[36+1]={0};
-    char status[WIMC_MAX_PATH_LEN]={0};
-    char cbURL[WIMC_MAX_URL_LEN] = {0};
-
+    char cbURL[WIMC_MAX_URL_LEN]    = {0};
     char indexURL[WIMC_MAX_URL_LEN] = {0};
     char storeURL[WIMC_MAX_URL_LEN] = {0};
 
     Artifact artifact;
     Config *config;
 
-    char *name=NULL, *tag=NULL;
+    char *name=NULL, *tag=NULL, *status=NULL;
 
     WimcReq   *wimcRequest  = NULL;
     WRespType respType=WRESP_ERROR;
-    
     Agent *agent=NULL;
     ArtifactFormat *artifactFormat=NULL;
-  
+
     config = (Config *)data;
 
     name = (char *)u_map_get(request->map_url, "name");
@@ -190,23 +186,26 @@ int web_service_cb_post_app(const URequest *request,
      * if app is 'available' but not found in pkg -> start downloading - 202
      * if app is 'available and also found in pkg -> 304
      */
-    if (db_read_status(config->db, name, tag, &status[0])) {
-        if (strcmp(&status[0], "download") == 0) {
+    if (db_read_status(config->db, name, tag, &status)) {
+        if (strcmp(status, "download") == 0) {
             usys_log_debug("capp found in db. name:%s tag:%s status:%s",
-                           name, tag, &status[0]);
+                           name, tag, status);
             ulfius_set_string_body_response(response,
                                             HttpStatus_Conflict,
                                             HttpStatusStr(HttpStatus_Conflict));
+            free(status);
             return U_CALLBACK_CONTINUE;
-        } else if (strcmp(&status[0], "available") == 0) {
+        } else if (strcmp(status, "available") == 0) {
             if (file_exists_and_non_empty(name, tag)) {
                 usys_log_debug("capp found in the default location");
                 ulfius_set_string_body_response(response,
                                                 HttpStatus_NotModified,
                                                 HttpStatusStr(HttpStatus_NotModified));
+                free(status);
                 return U_CALLBACK_CONTINUE;
             }
         }
+        free(status);
     }
 
     /* Check with hub */
@@ -276,6 +275,8 @@ int web_service_cb_post_app(const URequest *request,
                                HttpStatus_ServiceUnavailable,
                                HttpStatusStr(HttpStatus_ServiceUnavailable));
     }
+
+    db_insert_entry(config->db, name, tag, "download");
 
     cleanup_wimc_request(wimcRequest);
     free_artifact(&artifact);
