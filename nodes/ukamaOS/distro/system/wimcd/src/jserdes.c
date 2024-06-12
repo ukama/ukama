@@ -236,12 +236,9 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
   return FALSE;
 }
 
-/*
- * deserialize_hub_response --
- *
- */
-int deserialize_hub_response(Artifact ***artifacts, int *counter,
-			     json_t *json) {
+int deserialize_hub_response(Artifact ***artifacts,
+                             int *counter,
+                             json_t *json) {
 
     int i=0, j=0, count=0, formatsCount=0;
 
@@ -251,7 +248,7 @@ int deserialize_hub_response(Artifact ***artifacts, int *counter,
     json_t *version=NULL, *createdAt=NULL;
     json_t *size=NULL, *type=NULL, *extraInfo=NULL;
     json_t *formatElem=NULL, *value=NULL;
-    
+
     ArtifactFormat *formats = NULL;
 
     /* sanity check */
@@ -282,8 +279,8 @@ int deserialize_hub_response(Artifact ***artifacts, int *counter,
         }
 
         for (i=0; i<count; i++) {
+
             elem = json_array_get(jArray, i);
-            
             if (elem == NULL) {
                 goto failure;
             }
@@ -291,7 +288,7 @@ int deserialize_hub_response(Artifact ***artifacts, int *counter,
             (*artifacts)[i] = (Artifact *)calloc(1, sizeof(Artifact));
 
             /* name */
-            (*artifacts[i])->name = strdup(json_string_value(name));
+            (*artifacts)[i]->name = strdup(json_string_value(name));
 
             /* version */
             version = json_object_get(elem, JSON_VERSION);
