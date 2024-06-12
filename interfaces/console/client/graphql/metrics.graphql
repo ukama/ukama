@@ -67,82 +67,28 @@ query GetNotifications($data: GetNotificationsInput!) {
     }
   }
 }
-subscription GetNetworkNotifications($orgId: String!, $userId: String!, $networkId: String!, $role: ROLE_TYPE!) {
-  getNetworkNotifications(orgId: $orgId, userId: $userId, networkId: $networkId, role: $role) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
+subscription NotificationSubscription(
+  $orgId: String!
+  $networkId: String!
+  $userId: String!
+  $forRole: ROLE_TYPE!
+  $scopes: [NOTIFICATION_SCOPE!]!
+) {
+  notificationSubscription(
+    orgId: $orgId
+    networkId: $networkId
+    userId: $userId
+    forRole: $forRole
+    scopes: $scopes
+  ) {
+    id
+    title
+    description
+    createdAt
+    type
+    scope
+    isRead
   }
 }
-subscription GetNodeNotifications($orgId: String!, $userId: String!, $networkId: String!, $siteId: String!, $nodeId: String!, $role: ROLE_TYPE!) {
-  getNodeNotifications(orgId: $orgId, userId: $userId, networkId: $networkId, siteId: $siteId, nodeId: $nodeId, role: $role) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-subscription GetOrgNotifications($orgId: String!, $userId: String!, $role: ROLE_TYPE!) {
-  getOrgNotifications(orgId: $orgId, userId: $userId, role: $role) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-subscription GetSiteNotifications($orgId: String!, $userId: String!, $networkId: String!, $siteId: String!, $role: ROLE_TYPE!) {
-  getSiteNotifications(orgId: $orgId, userId: $userId, networkId: $networkId, siteId: $siteId, role: $role) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-subscription GetSubscriberNotifications($orgId: String!, $userId: String!, $networkId: String!, $subscriberId: String!) {
-  getSubscriberNotifications(orgId: $orgId, userId: $userId, networkId: $networkId, subscriberId: $subscriberId) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-subscription GetUserNotifications($userId: String!) {
-  getUserNotifications(userId: $userId) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
+
 

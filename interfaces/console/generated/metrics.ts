@@ -48,7 +48,6 @@ export type GetNotificationsInput = {
   networkId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
   scopes: Array<Notification_Scope>;
-  subscriberId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
 
@@ -159,12 +158,7 @@ export type StatsMetric = {
 export type Subscription = {
   __typename?: 'Subscription';
   getMetricByTabSub: LatestMetricRes;
-  getNetworkNotifications: NotificationsRes;
-  getNodeNotifications: NotificationsRes;
-  getOrgNotifications: NotificationsRes;
-  getSiteNotifications: NotificationsRes;
-  getSubscriberNotifications: NotificationsRes;
-  getUserNotifications: NotificationsRes;
+  notificationSubscription: NotificationsResDto;
 };
 
 
@@ -177,49 +171,11 @@ export type SubscriptionGetMetricByTabSubArgs = {
 };
 
 
-export type SubscriptionGetNetworkNotificationsArgs = {
+export type SubscriptionNotificationSubscriptionArgs = {
+  forRole: Role_Type;
   networkId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
-  role: Role_Type;
-  userId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionGetNodeNotificationsArgs = {
-  networkId: Scalars['String']['input'];
-  nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  role: Role_Type;
-  siteId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionGetOrgNotificationsArgs = {
-  orgId: Scalars['String']['input'];
-  role: Role_Type;
-  userId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionGetSiteNotificationsArgs = {
-  networkId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  role: Role_Type;
-  siteId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionGetSubscriberNotificationsArgs = {
-  networkId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionGetUserNotificationsArgs = {
+  scopes: Array<Notification_Scope>;
   userId: Scalars['String']['input'];
 };
 
@@ -265,64 +221,16 @@ export type GetNotificationsQueryVariables = Exact<{
 
 export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
 
-export type GetNetworkNotificationsSubscriptionVariables = Exact<{
+export type NotificationSubscriptionSubscriptionVariables = Exact<{
   orgId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
   networkId: Scalars['String']['input'];
-  role: Role_Type;
-}>;
-
-
-export type GetNetworkNotificationsSubscription = { __typename?: 'Subscription', getNetworkNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
-
-export type GetNodeNotificationsSubscriptionVariables = Exact<{
-  orgId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
-  networkId: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
-  nodeId: Scalars['String']['input'];
-  role: Role_Type;
+  forRole: Role_Type;
+  scopes: Array<Notification_Scope> | Notification_Scope;
 }>;
 
 
-export type GetNodeNotificationsSubscription = { __typename?: 'Subscription', getNodeNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
-
-export type GetOrgNotificationsSubscriptionVariables = Exact<{
-  orgId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  role: Role_Type;
-}>;
-
-
-export type GetOrgNotificationsSubscription = { __typename?: 'Subscription', getOrgNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
-
-export type GetSiteNotificationsSubscriptionVariables = Exact<{
-  orgId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  networkId: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
-  role: Role_Type;
-}>;
-
-
-export type GetSiteNotificationsSubscription = { __typename?: 'Subscription', getSiteNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
-
-export type GetSubscriberNotificationsSubscriptionVariables = Exact<{
-  orgId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  networkId: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-}>;
-
-
-export type GetSubscriberNotificationsSubscription = { __typename?: 'Subscription', getSubscriberNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
-
-export type GetUserNotificationsSubscriptionVariables = Exact<{
-  userId: Scalars['String']['input'];
-}>;
-
-
-export type GetUserNotificationsSubscription = { __typename?: 'Subscription', getUserNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean }> } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, title: string, description: string, createdAt: string, type: Notification_Type, scope: Notification_Scope, isRead: boolean } };
 
 
 export const GetLatestMetricDocument = gql`
@@ -531,271 +439,49 @@ export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
 export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
 export type GetNotificationsLazyQueryHookResult = ReturnType<typeof useGetNotificationsLazyQuery>;
 export type GetNotificationsQueryResult = Apollo.QueryResult<GetNotificationsQuery, GetNotificationsQueryVariables>;
-export const GetNetworkNotificationsDocument = gql`
-    subscription GetNetworkNotifications($orgId: String!, $userId: String!, $networkId: String!, $role: ROLE_TYPE!) {
-  getNetworkNotifications(
+export const NotificationSubscriptionDocument = gql`
+    subscription NotificationSubscription($orgId: String!, $networkId: String!, $userId: String!, $forRole: ROLE_TYPE!, $scopes: [NOTIFICATION_SCOPE!]!) {
+  notificationSubscription(
     orgId: $orgId
-    userId: $userId
     networkId: $networkId
-    role: $role
-  ) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-    `;
-
-/**
- * __useGetNetworkNotificationsSubscription__
- *
- * To run a query within a React component, call `useGetNetworkNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetNetworkNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNetworkNotificationsSubscription({
- *   variables: {
- *      orgId: // value for 'orgId'
- *      userId: // value for 'userId'
- *      networkId: // value for 'networkId'
- *      role: // value for 'role'
- *   },
- * });
- */
-export function useGetNetworkNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetNetworkNotificationsSubscription, GetNetworkNotificationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetNetworkNotificationsSubscription, GetNetworkNotificationsSubscriptionVariables>(GetNetworkNotificationsDocument, options);
-      }
-export type GetNetworkNotificationsSubscriptionHookResult = ReturnType<typeof useGetNetworkNotificationsSubscription>;
-export type GetNetworkNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetNetworkNotificationsSubscription>;
-export const GetNodeNotificationsDocument = gql`
-    subscription GetNodeNotifications($orgId: String!, $userId: String!, $networkId: String!, $siteId: String!, $nodeId: String!, $role: ROLE_TYPE!) {
-  getNodeNotifications(
-    orgId: $orgId
     userId: $userId
-    networkId: $networkId
-    siteId: $siteId
-    nodeId: $nodeId
-    role: $role
+    forRole: $forRole
+    scopes: $scopes
   ) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
+    id
+    title
+    description
+    createdAt
+    type
+    scope
+    isRead
   }
 }
     `;
 
 /**
- * __useGetNodeNotificationsSubscription__
+ * __useNotificationSubscriptionSubscription__
  *
- * To run a query within a React component, call `useGetNodeNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useNotificationSubscriptionSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useNotificationSubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetNodeNotificationsSubscription({
+ * const { data, loading, error } = useNotificationSubscriptionSubscription({
  *   variables: {
  *      orgId: // value for 'orgId'
- *      userId: // value for 'userId'
  *      networkId: // value for 'networkId'
- *      siteId: // value for 'siteId'
- *      nodeId: // value for 'nodeId'
- *      role: // value for 'role'
- *   },
- * });
- */
-export function useGetNodeNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetNodeNotificationsSubscription, GetNodeNotificationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetNodeNotificationsSubscription, GetNodeNotificationsSubscriptionVariables>(GetNodeNotificationsDocument, options);
-      }
-export type GetNodeNotificationsSubscriptionHookResult = ReturnType<typeof useGetNodeNotificationsSubscription>;
-export type GetNodeNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetNodeNotificationsSubscription>;
-export const GetOrgNotificationsDocument = gql`
-    subscription GetOrgNotifications($orgId: String!, $userId: String!, $role: ROLE_TYPE!) {
-  getOrgNotifications(orgId: $orgId, userId: $userId, role: $role) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-    `;
-
-/**
- * __useGetOrgNotificationsSubscription__
- *
- * To run a query within a React component, call `useGetOrgNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetOrgNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetOrgNotificationsSubscription({
- *   variables: {
- *      orgId: // value for 'orgId'
  *      userId: // value for 'userId'
- *      role: // value for 'role'
+ *      forRole: // value for 'forRole'
+ *      scopes: // value for 'scopes'
  *   },
  * });
  */
-export function useGetOrgNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetOrgNotificationsSubscription, GetOrgNotificationsSubscriptionVariables>) {
+export function useNotificationSubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<NotificationSubscriptionSubscription, NotificationSubscriptionSubscriptionVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetOrgNotificationsSubscription, GetOrgNotificationsSubscriptionVariables>(GetOrgNotificationsDocument, options);
+        return Apollo.useSubscription<NotificationSubscriptionSubscription, NotificationSubscriptionSubscriptionVariables>(NotificationSubscriptionDocument, options);
       }
-export type GetOrgNotificationsSubscriptionHookResult = ReturnType<typeof useGetOrgNotificationsSubscription>;
-export type GetOrgNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetOrgNotificationsSubscription>;
-export const GetSiteNotificationsDocument = gql`
-    subscription GetSiteNotifications($orgId: String!, $userId: String!, $networkId: String!, $siteId: String!, $role: ROLE_TYPE!) {
-  getSiteNotifications(
-    orgId: $orgId
-    userId: $userId
-    networkId: $networkId
-    siteId: $siteId
-    role: $role
-  ) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-    `;
-
-/**
- * __useGetSiteNotificationsSubscription__
- *
- * To run a query within a React component, call `useGetSiteNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetSiteNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSiteNotificationsSubscription({
- *   variables: {
- *      orgId: // value for 'orgId'
- *      userId: // value for 'userId'
- *      networkId: // value for 'networkId'
- *      siteId: // value for 'siteId'
- *      role: // value for 'role'
- *   },
- * });
- */
-export function useGetSiteNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetSiteNotificationsSubscription, GetSiteNotificationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetSiteNotificationsSubscription, GetSiteNotificationsSubscriptionVariables>(GetSiteNotificationsDocument, options);
-      }
-export type GetSiteNotificationsSubscriptionHookResult = ReturnType<typeof useGetSiteNotificationsSubscription>;
-export type GetSiteNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetSiteNotificationsSubscription>;
-export const GetSubscriberNotificationsDocument = gql`
-    subscription GetSubscriberNotifications($orgId: String!, $userId: String!, $networkId: String!, $subscriberId: String!) {
-  getSubscriberNotifications(
-    orgId: $orgId
-    userId: $userId
-    networkId: $networkId
-    subscriberId: $subscriberId
-  ) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-    `;
-
-/**
- * __useGetSubscriberNotificationsSubscription__
- *
- * To run a query within a React component, call `useGetSubscriberNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetSubscriberNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSubscriberNotificationsSubscription({
- *   variables: {
- *      orgId: // value for 'orgId'
- *      userId: // value for 'userId'
- *      networkId: // value for 'networkId'
- *      subscriberId: // value for 'subscriberId'
- *   },
- * });
- */
-export function useGetSubscriberNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetSubscriberNotificationsSubscription, GetSubscriberNotificationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetSubscriberNotificationsSubscription, GetSubscriberNotificationsSubscriptionVariables>(GetSubscriberNotificationsDocument, options);
-      }
-export type GetSubscriberNotificationsSubscriptionHookResult = ReturnType<typeof useGetSubscriberNotificationsSubscription>;
-export type GetSubscriberNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetSubscriberNotificationsSubscription>;
-export const GetUserNotificationsDocument = gql`
-    subscription GetUserNotifications($userId: String!) {
-  getUserNotifications(userId: $userId) {
-    notifications {
-      id
-      title
-      description
-      createdAt
-      type
-      scope
-      isRead
-    }
-  }
-}
-    `;
-
-/**
- * __useGetUserNotificationsSubscription__
- *
- * To run a query within a React component, call `useGetUserNotificationsSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetUserNotificationsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetUserNotificationsSubscription({
- *   variables: {
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useGetUserNotificationsSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetUserNotificationsSubscription, GetUserNotificationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetUserNotificationsSubscription, GetUserNotificationsSubscriptionVariables>(GetUserNotificationsDocument, options);
-      }
-export type GetUserNotificationsSubscriptionHookResult = ReturnType<typeof useGetUserNotificationsSubscription>;
-export type GetUserNotificationsSubscriptionResult = Apollo.SubscriptionResult<GetUserNotificationsSubscription>;
+export type NotificationSubscriptionSubscriptionHookResult = ReturnType<typeof useNotificationSubscriptionSubscription>;
+export type NotificationSubscriptionSubscriptionResult = Apollo.SubscriptionResult<NotificationSubscriptionSubscription>;
