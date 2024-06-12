@@ -85,10 +85,10 @@ static sqlite3 *open_db(char *dbFile) {
 
 int callback_get_containers(req_t *request, resp_t *response, void *user_data) {
 
-	int resCode = 200, i;
+	int resCode = 200, i, j;
 	char *name = NULL, *str = NULL, *response_body = NULL;
 	DB *db;
-	json_t *json, *artifacts, *artifact;
+	json_t *json, *artifacts, *artifact, *formats, *format;
 
 	json = json_object();
 	db = (DB *)user_data;
@@ -110,34 +110,46 @@ int callback_get_containers(req_t *request, resp_t *response, void *user_data) {
 
 	for (i = 0; i < db->numEnt; i++) {
 		if (strcmp(db->ent[i].name, name) == 0) {
-			artifact = json_object();
-			json_object_set_new(artifact,
-                                "version",
-                                json_string(db->ent[i].version));
-			json_object_set_new(artifact,
-                                "type",
-                                json_string(db->ent[i].type));
-			json_object_set_new(artifact,
-                                "url",
-                                json_string(db->ent[i].url));
-			json_object_set_new(artifact,
-                                "created_at",
-                                json_string(db->ent[i].created_at));
+
+			int artifact_found = 0;
+			for (j = 0; j < json_array_size(artifacts); j++) {
+				artifact = json_array_get(artifacts, j);
+				if (strcmp(json_string_value(json_object_get(artifact, "version")),
+                           db->ent[i].version) == 0) {
+					formats = json_object_get(artifact, "formats");
+					artifact_found = 1;
+					break;
+				}
+			}
+
+			if (!artifact_found) {
+
+				artifact = json_object();
+				json_object_set_new(artifact, "version",
+                                    json_string(db->ent[i].version));
+				json_object_set_new(artifact, "formats",
+                                    json_array());
+				formats = json_object_get(artifact, "formats");
+				json_array_append_new(artifacts, artifact);
+			}
+
+			format = json_object();
+			json_object_set_new(format, "type", json_string(db->ent[i].type));
+			json_object_set_new(format, "url", json_string(db->ent[i].url));
+			json_object_set_new(format, "created_at", json_string(db->ent[i].created_at));
+
 			if (db->ent[i].size_bytes) {
-				json_object_set_new(artifact,
-                                    "size_bytes",
+				json_object_set_new(format, "size_bytes",
                                     json_integer(db->ent[i].size_bytes));
 			}
+
 			if (strcmp(db->ent[i].type, "chunk") == 0) {
 				json_t *extra_info = json_object();
-				json_object_set_new(extra_info,
-                                    "chunks",
+				json_object_set_new(extra_info, "chunks",
                                     json_string(db->ent[i].chunks_url));
-				json_object_set_new(artifact,
-                                    "extra_info",
-                                    extra_info);
+				json_object_set_new(format, "extra_info", extra_info);
 			}
-			json_array_append_new(artifacts, artifact);
+			json_array_append_new(formats, format);
 		}
 	}
 
