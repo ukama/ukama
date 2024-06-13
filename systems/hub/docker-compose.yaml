@@ -50,6 +50,25 @@ services:
     networks:
     - ukama-net
 
+  node-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-gateway
+    environment:
+    - DEBUGMODE=true
+    - BYPASS_AUTH_MODE=true
+    - NODEMETRICSPORT=10251
+    - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
+    - SERVICES_DISTRIBUTOR=distributor:9090
+    - ORGNAME=${ORGNAME}
+    - ORGID=${ORGID}
+    - ISGLOBAL=true
+    depends_on:
+    - artifactmanager
+    - distributor
+    networks:
+    - ukama-net
+
   artifactmanager: # Here, this is where you can configure your gateway.
     build:
       context: ./artifactManager
