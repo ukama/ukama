@@ -1,22 +1,11 @@
-import { Field, ObjectType, registerEnumType } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 
-export enum ComponentCategory {
-  ALL = 0,
-  ACCESS = 1,
-  BACKHAUL = 2,
-  POWER = 3,
-  SWITCH = 4,
-}
-
-registerEnumType(ComponentCategory, {
-  name: "ComponentCategory",
-  description: "Categories for components",
-});
+import { COMPONENT_CATEGORY } from "../../common/enums";
 
 @ObjectType()
 export class ComponentCategoryType {
-  @Field(() => ComponentCategory)
-  id: ComponentCategory;
+  @Field(() => COMPONENT_CATEGORY)
+  id: COMPONENT_CATEGORY;
 
   @Field()
   name: string;
@@ -30,8 +19,8 @@ export class ComponentAPIDto {
   @Field()
   inventory: string;
 
-  @Field(() => ComponentCategory)
-  category: ComponentCategory;
+  @Field(() => COMPONENT_CATEGORY)
+  category: COMPONENT_CATEGORY;
 
   @Field()
   type: string;

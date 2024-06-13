@@ -8,6 +8,19 @@
 import "reflect-metadata";
 import { registerEnumType } from "type-graphql";
 
+export enum COMPONENT_CATEGORY {
+  ALL = 0,
+  ACCESS = 1,
+  BACKHAUL = 2,
+  POWER = 3,
+  SWITCH = 4,
+}
+
+registerEnumType(COMPONENT_CATEGORY, {
+  name: "ComponentCategory",
+  description: "Categories for components",
+});
+
 export enum API_METHOD_TYPE {
   GET = "get",
   POST = "post",

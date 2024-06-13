@@ -14,11 +14,10 @@ import { ComponentDto, ComponentsResDto } from "./types";
 export class GetComponentsResolver {
   @Query(() => ComponentDto)
   async getComponents(
-    @Arg("userId") userId: string,
     @Arg("category") category: string,
     @Ctx() ctx: Context
   ): Promise<ComponentsResDto> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.getComponents(userId, category);
+    return dataSources.dataSource.getComponents(ctx.headers.userId, category);
   }
 }
