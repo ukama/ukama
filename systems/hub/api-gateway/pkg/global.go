@@ -10,5 +10,3 @@ package pkg
 
 const ServiceName = "api-gateway"
 const SystemName = "hub"
-const TarGzExtension = ".tar.gz"
-const ChunkIndexExtension = ".caibx"

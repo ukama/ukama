@@ -58,7 +58,6 @@ type Clients struct {
 
 type artifactManager interface {
 	StoreArtifact(in *apb.StoreArtifactRequest) (*apb.StoreArtifactResponse, error)
-	GetArtifactLocation(in *apb.GetArtifactLocationRequest) (*apb.GetArtifactLocationResponse, error)
 	GetArtifact(in *apb.GetArtifactRequest) (*apb.GetArtifactResponse, error)
 	GetArtifactVersionList(in *apb.GetArtifactVersionListRequest) (*apb.GetArtifactVersionListResponse, error)
 	ListArtifacts(in *apb.ListArtifactRequest) (*apb.ListArtifactResponse, error)
@@ -137,7 +136,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		artifact.PUT("/:type/:filename/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
 		artifact.GET("/:type/:name", formatDoc("List of versions for artifcat", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
 		artifact.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
-		//capps.GET("/location/:type/:name/:filename/:version", formatDoc("Location", "Provide a location of the artifact to download from"), tonic.Handler(r.artifactLocationHandler, http.StatusOK))
 
 		distr := auth.Group("/distributor", "Get chunks", "Download Artifact in chunk")
 		distr.GET("/*proxypath", formatDoc("Get chunks", "Get artifact chunks"), tonic.Handler(r.proxy, http.StatusOK))
@@ -211,36 +209,6 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 		return nil, err
 	}
 
-	//buf := new(bytes.Buffer)
-	//buf.ReadFrom(c.Request.Body)
-	//return buf.Bytes()
-
-	// bufReader := NewBufReader(c.Request.Body)
-	// defer c.Request.Body.Close()
-	// log.Infof("Got tar file with size %d", len(bufReader.buff))
-	// uncompressedStream, err := gzip.NewReader(bufReader)
-	// if err != nil {
-	// 	log.Infof("Failed to read gz file: %v", err)
-
-	// 	return nil, rest.HttpError{
-	// 		HttpCode: http.StatusBadRequest,
-	// 		Message:  "Not a tar.gz file",
-	// 	}
-	// }
-
-	// tr := tar.NewReader(uncompressedStream)
-
-	// _, err = tr.Next()
-	// if err != nil {
-	// 	log.Infof("Failed to read tar file: %v", err)
-
-	// 	return nil, rest.HttpError{
-	// 		HttpCode: http.StatusBadRequest,
-	// 		Message:  "Not a tar.gz file",
-	// 	}
-	// }
-
-	// bufReader.Reset()
 	var buf bytes.Buffer
 
 	// Copy the uploaded data to the buffer
@@ -252,8 +220,6 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 			Message:  fmt.Sprintf("copy to buffer err: %s", err.Error()),
 		}
 	}
-
-	// Call gRPresp, err :C client to send the file
 	log.Infof("Got tar file with size %d", size)
 
 	err = IsValidGzip(buf)
@@ -261,9 +227,6 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 		log.Errorf("Not a gzip format for file: %s", req.ArtifactName)
 		return nil, err
 	}
-
-	//base64 := make([]byte, b64.StdEncoding.EncodedLen(len(buf.Bytes())))
-	//sEnc := b64.StdEncoding.Encode(buf.Bytes())
 
 	return r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
 		Name:    req.ArtifactName,
@@ -281,17 +244,6 @@ func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersio
 		Name: req.Name,
 		Type: apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 	})
-}
-
-func (r *Router) artifactLocationHandler(c *gin.Context, req *ArtifactLocationRequest) (*apb.GetArtifactLocationResponse, error) {
-	log.Infof("Getting location for %s version %s  of type %s", req.Name, req.Version, req.ArtifactType)
-
-	return r.clients.a.GetArtifactLocation(&apb.GetArtifactLocationRequest{
-		Name:    req.Name,
-		Type:    apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
-		Version: req.Version,
-	})
-
 }
 
 func (r *Router) listArtifactsHandler(c *gin.Context, req *ArtifactListRequest) (*apb.ListArtifactResponse, error) {
