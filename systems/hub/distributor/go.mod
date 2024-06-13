@@ -14,15 +14,15 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/folbricht/desync v0.9.5
 	github.com/gin-contrib/cors v1.7.1
-	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-gonic/gin v1.9.1 // indirect
 	github.com/go-resty/resty/v2 v2.12.0
-	github.com/loopfz/gadgeto v0.11.4
+	github.com/loopfz/gadgeto v0.11.4 // indirect
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/ukama/ukama/systems/hub/artifactmanager v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.22.0
+	github.com/wI2L/fizz v0.22.0 // indirect
 )
 
 require (

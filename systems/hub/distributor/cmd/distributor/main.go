@@ -98,13 +98,13 @@ func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 		serviceConfig.MsgClient.ListenerRoutes)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	distributorServer := server.NewDistributionServer(orgId, serviceConfig.OrgName, serviceConfig,
+	chunkerServer := server.NewChunkerServer(orgId, serviceConfig.OrgName, serviceConfig,
 		mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
 
-	log.Debugf("Distribution server is %+v and config %+v", distributorServer, serviceConfig.Grpc)
+	log.Debugf("Distribution server is %+v and config %+v", chunkerServer, serviceConfig.Grpc)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		generated.RegisterDistributorServiceServer(s, distributorServer)
+		generated.RegisterChunkerServiceServer(s, chunkerServer)
 	})
 
 	go grpcServer.StartServer()

@@ -28,9 +28,3 @@ func (this *CreateChunkRequest) Validate() error {
 func (this *CreateChunkResponse) Validate() error {
 	return nil
 }
-func (this *GetChunkRequest) Validate() error {
-	return nil
-}
-func (this *GetChunkResponse) Validate() error {
-	return nil
-}

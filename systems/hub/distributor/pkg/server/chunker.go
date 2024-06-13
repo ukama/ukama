@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"github.com/Masterminds/semver/v3"
-	casync "github.com/folbricht/desync"
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -29,8 +28,8 @@ import (
 const CappsPath = "/v1/capps"
 const ChunksPath = "/v1/chunks"
 
-type DistributorServer struct {
-	pb.DistributorServiceServer
+type ChunkerServer struct {
+	pb.ChunkerServiceServer
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
@@ -39,20 +38,11 @@ type DistributorServer struct {
 	Store          pkg.StoreConfig
 	ChunkConfig    pkg.ChunkConfig
 	IsGlobal       bool
-	castore        casync.Store
-	converters     casync.Converters
 }
 
-func NewDistributionServer(orgId uuid.UUID, orgName string, config *pkg.Config,
-	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *DistributorServer {
-
-	// s, c, err := distribution.InitDistribution(&config.Distribution)
-	// if err != nil {
-	// 	log.Fatalf("Distribution initialization failed.")
-	// }
-	//compressed := c.hasCompression()
-
-	return &DistributorServer{
+func NewChunkerServer(orgId uuid.UUID, orgName string, config *pkg.Config,
+	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ChunkerServer {
+	return &ChunkerServer{
 		OrgId:          orgId,
 		OrgName:        orgName,
 		IsGlobal:       isGlobal,
@@ -66,7 +56,7 @@ func NewDistributionServer(orgId uuid.UUID, orgName string, config *pkg.Config,
 	}
 }
 
-func (s *DistributorServer) parseVersion(version string) (*semver.Version, error) {
+func (s *ChunkerServer) parseVersion(version string) (*semver.Version, error) {
 	v, err := semver.NewVersion(version)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid version format. Refer to https://semver.org/ for more information")
@@ -74,7 +64,7 @@ func (s *DistributorServer) parseVersion(version string) (*semver.Version, error
 	return v, err
 }
 
-func (s *DistributorServer) CreateChunk(ctx context.Context, in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
+func (s *ChunkerServer) CreateChunk(ctx context.Context, in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
 
 	var bSize int64
 	fname := in.Name
@@ -124,48 +114,3 @@ func (s *DistributorServer) CreateChunk(ctx context.Context, in *pb.CreateChunkR
 		Size:  bSize,
 	}, nil
 }
-
-func (s *DistributorServer) GetChunk(ctx context.Context, in *pb.GetChunkRequest) (*pb.GetChunkResponse, error) {
-	log.Debugf("Handling get chunk request %+v.", in)
-	var b []byte
-	// chunk, err := s.castore.GetChunk(in.Id)
-	// if err == nil {
-	// 	// Optimization for when the chunk modifiers match those
-	// 	// of the chunk server. In that case it's not necessary
-	// 	// to convert back and forth. Just use the raw data as loaded
-	// 	// from the store.
-	// 	if len(chunk.storage) > 0 && s.converters.equal(chunk.converters) {
-	// 		b = chunk.storage
-	// 	} else {
-	// 		b, err = chunk.Data()
-	// 		if err == nil {
-	// 			b, err = s.converters.toStorage(b)
-	// 		}
-	// 	}
-	// }
-
-	return &pb.GetChunkResponse{
-		Id:   in.Id,
-		Data: b,
-	}, nil
-}
-
-// func (s *DistributorServer) idFromPath(p string) (casync.ChunkID, error) {
-// 	ext := casync.CompressedChunkExt
-// 	if !s.compressed {
-// 		if strings.HasSuffix(p, casync.CompressedChunkExt) {
-// 			return casync.ChunkID{}, errors.New("compressed chunk requested from http chunk store serving uncompressed chunks")
-// 		}
-// 		ext = casync.UncompressedChunkExt
-// 	}
-// 	sID := strings.TrimSuffix(path.Base(p), ext)
-// 	if len(sID) < 4 {
-// 		return casync.ChunkID{}, fmt.Errorf("expected format '/<prefix>/<chunkid>%s", ext)
-// 	}
-
-// 	// Make sure the prefix does match the first characters of the ID.
-// 	if p != path.Join("/", sID[0:4], sID+ext) {
-// 		return casync.ChunkID{}, fmt.Errorf("expected format '/<prefix>/<chunkid>%s", ext)
-// 	}
-// 	return casync.ChunkIDFromString(sID)
-// }

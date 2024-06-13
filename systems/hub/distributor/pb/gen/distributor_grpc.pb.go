@@ -18,194 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// DistributorServiceClient is the client API for DistributorService service.
+// ChunkerServiceClient is the client API for ChunkerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DistributorServiceClient interface {
+type ChunkerServiceClient interface {
 	CreateChunk(ctx context.Context, in *CreateChunkRequest, opts ...grpc.CallOption) (*CreateChunkResponse, error)
-	GetChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
-	HeadChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
-	PutChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error)
 }
 
-type distributorServiceClient struct {
+type chunkerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewDistributorServiceClient(cc grpc.ClientConnInterface) DistributorServiceClient {
-	return &distributorServiceClient{cc}
+func NewChunkerServiceClient(cc grpc.ClientConnInterface) ChunkerServiceClient {
+	return &chunkerServiceClient{cc}
 }
 
-func (c *distributorServiceClient) CreateChunk(ctx context.Context, in *CreateChunkRequest, opts ...grpc.CallOption) (*CreateChunkResponse, error) {
+func (c *chunkerServiceClient) CreateChunk(ctx context.Context, in *CreateChunkRequest, opts ...grpc.CallOption) (*CreateChunkResponse, error) {
 	out := new(CreateChunkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/CreateChunk", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.ChunkerService/CreateChunk", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *distributorServiceClient) GetChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
-	out := new(GetChunkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/GetChunk", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *distributorServiceClient) HeadChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
-	out := new(GetChunkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/HeadChunk", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *distributorServiceClient) PutChunk(ctx context.Context, in *GetChunkRequest, opts ...grpc.CallOption) (*GetChunkResponse, error) {
-	out := new(GetChunkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.hub.distributor.v1.DistributorService/PutChunk", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// DistributorServiceServer is the server API for DistributorService service.
-// All implementations must embed UnimplementedDistributorServiceServer
+// ChunkerServiceServer is the server API for ChunkerService service.
+// All implementations must embed UnimplementedChunkerServiceServer
 // for forward compatibility
-type DistributorServiceServer interface {
+type ChunkerServiceServer interface {
 	CreateChunk(context.Context, *CreateChunkRequest) (*CreateChunkResponse, error)
-	GetChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
-	HeadChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
-	PutChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error)
-	mustEmbedUnimplementedDistributorServiceServer()
+	mustEmbedUnimplementedChunkerServiceServer()
 }
 
-// UnimplementedDistributorServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedDistributorServiceServer struct {
+// UnimplementedChunkerServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedChunkerServiceServer struct {
 }
 
-func (UnimplementedDistributorServiceServer) CreateChunk(context.Context, *CreateChunkRequest) (*CreateChunkResponse, error) {
+func (UnimplementedChunkerServiceServer) CreateChunk(context.Context, *CreateChunkRequest) (*CreateChunkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateChunk not implemented")
 }
-func (UnimplementedDistributorServiceServer) GetChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetChunk not implemented")
-}
-func (UnimplementedDistributorServiceServer) HeadChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HeadChunk not implemented")
-}
-func (UnimplementedDistributorServiceServer) PutChunk(context.Context, *GetChunkRequest) (*GetChunkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PutChunk not implemented")
-}
-func (UnimplementedDistributorServiceServer) mustEmbedUnimplementedDistributorServiceServer() {}
+func (UnimplementedChunkerServiceServer) mustEmbedUnimplementedChunkerServiceServer() {}
 
-// UnsafeDistributorServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to DistributorServiceServer will
+// UnsafeChunkerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ChunkerServiceServer will
 // result in compilation errors.
-type UnsafeDistributorServiceServer interface {
-	mustEmbedUnimplementedDistributorServiceServer()
+type UnsafeChunkerServiceServer interface {
+	mustEmbedUnimplementedChunkerServiceServer()
 }
 
-func RegisterDistributorServiceServer(s grpc.ServiceRegistrar, srv DistributorServiceServer) {
-	s.RegisterService(&DistributorService_ServiceDesc, srv)
+func RegisterChunkerServiceServer(s grpc.ServiceRegistrar, srv ChunkerServiceServer) {
+	s.RegisterService(&ChunkerService_ServiceDesc, srv)
 }
 
-func _DistributorService_CreateChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChunkerService_CreateChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateChunkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DistributorServiceServer).CreateChunk(ctx, in)
+		return srv.(ChunkerServiceServer).CreateChunk(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.hub.distributor.v1.DistributorService/CreateChunk",
+		FullMethod: "/ukama.hub.distributor.v1.ChunkerService/CreateChunk",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).CreateChunk(ctx, req.(*CreateChunkRequest))
+		return srv.(ChunkerServiceServer).CreateChunk(ctx, req.(*CreateChunkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DistributorService_GetChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetChunkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DistributorServiceServer).GetChunk(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.hub.distributor.v1.DistributorService/GetChunk",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).GetChunk(ctx, req.(*GetChunkRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DistributorService_HeadChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetChunkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DistributorServiceServer).HeadChunk(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.hub.distributor.v1.DistributorService/HeadChunk",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).HeadChunk(ctx, req.(*GetChunkRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DistributorService_PutChunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetChunkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DistributorServiceServer).PutChunk(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.hub.distributor.v1.DistributorService/PutChunk",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DistributorServiceServer).PutChunk(ctx, req.(*GetChunkRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// DistributorService_ServiceDesc is the grpc.ServiceDesc for DistributorService service.
+// ChunkerService_ServiceDesc is the grpc.ServiceDesc for ChunkerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var DistributorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.hub.distributor.v1.DistributorService",
-	HandlerType: (*DistributorServiceServer)(nil),
+var ChunkerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ukama.hub.distributor.v1.ChunkerService",
+	HandlerType: (*ChunkerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateChunk",
-			Handler:    _DistributorService_CreateChunk_Handler,
-		},
-		{
-			MethodName: "GetChunk",
-			Handler:    _DistributorService_GetChunk_Handler,
-		},
-		{
-			MethodName: "HeadChunk",
-			Handler:    _DistributorService_HeadChunk_Handler,
-		},
-		{
-			MethodName: "PutChunk",
-			Handler:    _DistributorService_PutChunk_Handler,
+			Handler:    _ChunkerService_CreateChunk_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
