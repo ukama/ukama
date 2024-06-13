@@ -34,6 +34,7 @@ interface ILayoutProps {
   handleNetworkChange: Function;
   alerts: NotificationsResDto [] | undefined
   setAlerts: Function
+  handleAlertRead : (index : number) => void
 }
 
 const Layout = ({
@@ -48,7 +49,8 @@ const Layout = ({
   handleAddNetwork,
   handleNetworkChange,
   alerts,
-  setAlerts
+  setAlerts,
+  handleAlertRead
 }: ILayoutProps) => {
   const theme = useTheme();
   const router = useRouter();
@@ -78,6 +80,7 @@ const Layout = ({
           isDarkMode={isDarkMode}
           alerts={alerts}
           setAlerts={setAlerts}
+          handleAlertRead={handleAlertRead}
         />
       )}
       <HorizontalContainer>

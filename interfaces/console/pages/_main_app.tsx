@@ -15,6 +15,7 @@ import {
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
+  useUpdateNotificationMutation,
 } from '@/generated';
 import { NotificationsResDto, useGetNotificationsQuery, useNotificationSubscriptionSubscription } from '@/generated/metrics';
 import { MyAppProps } from '@/types';
@@ -33,7 +34,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
-  const [alerts, setAlerts] = useState<NotificationsResDto[] | undefined> (undefined)
+  const [alerts, setAlerts] = useState<NotificationsResDto[] | undefined>(
+    undefined,
+  );
   const {
     token,
     user,
@@ -168,51 +171,73 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       });
   };
 
+  const [updateNotificationMutation] = useUpdateNotificationMutation()
 
-const getRoleType = (): Role_Type => {
-  return Object.values(Role_Type).includes(user.role as Role_Type)?(user.role as Role_Type) : Role_Type.RoleInvalid
-}
+  const getRoleType = (): Role_Type => {
+    return Object.values(Role_Type).includes(user.role as Role_Type)
+      ? (user.role as Role_Type)
+      : Role_Type.RoleInvalid;
+  };
 
-const getScopesByRole = ():Notification_Scope[] => {
-const roleType = getRoleType()
-return RoleToNotificationScopes[roleType] || []
-}
+  const getScopesByRole = (): Notification_Scope[] => {
+    const roleType = getRoleType();
+    return RoleToNotificationScopes[roleType] || [];
+  };
 
-useGetNotificationsQuery({
-  client: metricsClient,
-  fetchPolicy: 'cache-and-network',
+  useGetNotificationsQuery({
+    client: metricsClient,
+    fetchPolicy: 'cache-and-network',
 
-  variables: {
-    data: {
+    variables: {
+      data: {
+        orgId: user.orgId,
+        userId: user.id,
+        networkId: network.id,
+        forRole: getRoleType(),
+        scopes: getScopesByRole(),
+      },
+    },
+    onCompleted: (data) => {
+      const alerts = data.getNotifications.notifications;
+      setAlerts(alerts);
+    },
+  });
+
+  useNotificationSubscriptionSubscription({
+    client: metricsClient,
+    variables: {
+      networkId: network.id,
       orgId: user.orgId,
       userId: user.id,
-      networkId: network.id,
       forRole: getRoleType(),
       scopes: getScopesByRole(),
     },
-  },
-  onCompleted: (data) => {
-    const alerts = data.getNotifications.notifications;
-    setAlerts(alerts);
-  },
-});
+    onData: ({ data }) => {
+      const newAlert = data.data?.notificationSubscription;
+      if (newAlert) {
+        setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
+      }
+    },
+  });
 
-useNotificationSubscriptionSubscription({
-  client: metricsClient,
-  variables: {
-    networkId: network.id,
-    orgId: user.orgId,
-    userId: user.id,
-    forRole: getRoleType(),
-    scopes: getScopesByRole(),
-  },
-  onData: ({ data }) => {
-    const newAlert = data.data?.notificationSubscription;
-    if (newAlert) {
-      setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
+  // Mark alert as read
+  const handleAlertRead = (index: number) => {
+    if (alerts) {
+      let alertId = alerts[index].id;
+      updateNotificationMutation({
+        variables: {
+          updateNotificationId: alertId,
+          isRead: true,
+        },
+      });
+      setAlerts((prev: any) => {
+        if (!prev) return prev;
+        const newAlerts = [...prev];
+        newAlerts[index] = { ...newAlerts[index], isRead: true };
+        return newAlerts;
+      });
     }
-  },
-});
+  };
 
   return (
     <Layout
@@ -227,6 +252,7 @@ useNotificationSubscriptionSubscription({
       isLoading={networksLoading || skeltonLoading}
       alerts={alerts}
       setAlerts={setAlerts}
+      handleAlertRead={handleAlertRead}
     >
       <Component {...pageProps} />
       <AddNetworkDialog

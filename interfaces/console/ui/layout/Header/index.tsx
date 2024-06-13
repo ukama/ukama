@@ -33,6 +33,7 @@ interface IHeaderProps {
   onNavigate: Function;
   alerts:NotificationsResDto[] | undefined;
   setAlerts: Function
+  handleAlertRead: (index: number) => void
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -76,7 +77,7 @@ const IconStyle = {
   },
 };
 
-const Header = ({ onNavigate, isLoading, isOpen, alerts, setAlerts }: IHeaderProps) => {
+const Header = ({ onNavigate, isLoading, isOpen, alerts, setAlerts, handleAlertRead }: IHeaderProps) => {
   const { user, setUser } = useAppContext();
   const isManager =
     user.role === 'ADMIN' || user.role === 'OWNER' ? true : false;
@@ -119,7 +120,7 @@ const Header = ({ onNavigate, isLoading, isOpen, alerts, setAlerts }: IHeaderPro
               >
                 <SettingsIcon />
               </IconButton>
-              <Alert alerts={alerts} setAlerts={setAlerts}/>
+              <Alert alerts={alerts} setAlerts={setAlerts} handleAlertRead={handleAlertRead}/>
               <IconButton
                 sx={{
                   ...IconStyle,

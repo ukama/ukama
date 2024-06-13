@@ -1,4 +1,3 @@
-import { useUpdateNotificationMutation } from '@/generated';
 import { NotificationsResDto } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import AlertBox from '@/ui/molecules/AlertBox';
@@ -24,11 +23,11 @@ const IconStyle = {
 interface IAlertsProps {
   alerts: NotificationsResDto[] | undefined;
   setAlerts: Function;
+  handleAlertRead : (index: number) => void
 }
 
-const Alerts = ({ alerts, setAlerts }: IAlertsProps) => {
+const Alerts = ({ alerts, setAlerts, handleAlertRead }: IAlertsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [updateNotificationMutation] = useUpdateNotificationMutation();
 
   // Handle popover open
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -40,24 +39,6 @@ const Alerts = ({ alerts, setAlerts }: IAlertsProps) => {
     setAnchorEl(null);
   };
 
-  // Mark alert as read
-  const handleAlertRead = (index: number) => {
-    if (alerts) {
-      let alertId = alerts[index].id;
-      updateNotificationMutation({
-        variables: {
-          updateNotificationId: alertId,
-          isRead: true,
-        },
-      });
-      setAlerts((prev: any) => {
-        if (!prev) return prev;
-        const newAlerts = [...prev];
-        newAlerts[index] = { ...newAlerts[index], isRead: true };
-        return newAlerts;
-      });
-    }
-  };
 
   const unreadCount = alerts?.filter((alert) => !alert.isRead).length;
   const open = Boolean(anchorEl);
