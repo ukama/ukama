@@ -101,7 +101,8 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, err
 		}
 
-		err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/node/"+nId.String()+"/reboot", data)
+
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -136,7 +137,8 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nId.String(), data, nId.String())
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/node/"+nId.String()+"/reboot", data)
+
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -169,7 +171,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.SendRebootRequestToNode(c.orgName+"."+"."+"."+nodeId, data, nodeId)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/node/"+nId.String()+"/reboot", data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -205,7 +207,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.SendRebootSwitchPortRequest(c.orgName+"."+"."+"."+fmt.Sprintf("%d", req.Port), data, req.Port)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "/v1/switch/"+fmt.Sprintf("%d/%t", req.Port, req.Status), data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
@@ -214,31 +216,16 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
-func (c *ControllerServer) SendRebootRequestToNode(target string, anyMsg []byte, nodeId string) error {
+func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-
 	msg := &cpb.NodeFeederMessage{
-		Target:     target,
-		HTTPMethod: "POST",
-		Path:       "/v1/reboot/" + nodeId,
-		Msg:        anyMsg,
+	  Target: target,
+	  HTTPMethod: "POST",
+	  Path: path,
+	  Msg: anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
-
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
-}
-func (c *ControllerServer) SendRebootSwitchPortRequest(target string, anyMsg []byte, portId int32) error {
-	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-
-	msg := &cpb.NodeFeederMessage{
-		Target:     target,
-		HTTPMethod: "POST",
-		Path:       "device/v1/reboot/switchport/" + fmt.Sprintf("%d", portId),
-		Msg:        anyMsg,
-	}
-	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
-
-	err := c.msgbus.PublishRequest(route, msg)
-	return err
-}
+  }
+  
