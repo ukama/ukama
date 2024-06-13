@@ -41,7 +41,7 @@ static void setup_endpoints(struct _u_instance *instance) {
                                &agent_web_service_cb_version, NULL);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("app"), 0,
+                               API_RES_EP("apps"), 0,
                                &agent_web_service_cb_post_capp, NULL);
 
     ulfius_set_default_endpoint(instance,
