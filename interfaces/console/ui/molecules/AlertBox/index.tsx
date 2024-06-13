@@ -40,14 +40,12 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
       height={'310px'}
     >
       <Box display="flex" justifyContent="flex-start" alignItems="center" p={2}>
-        <Typography variant="h6" fontWeight="500" fontFamily="Rubik">
+        <Typography variant="h6">
           Alerts
         </Typography>
         
         <Typography
-          fontSize="16px"
-          fontWeight="lighter"
-          fontFamily="Work Sans"
+          variant='body1'
           paddingLeft={1}
         >
           ({alerts?.filter((alert) => !alert.isRead).length || 0})
@@ -77,7 +75,6 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                 <Typography
                   fontSize="16px"
                   fontWeight="500"
-                  fontFamily="Work Sans"
                 >
                   {alert.title}
                 </Typography>
@@ -85,7 +82,6 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                 <Typography
                   fontSize="12px"
                   fontWeight="400"
-                  fontFamily="Work Sans"
                 >
                   {formatTime(alert.createdAt)}
                 </Typography>
@@ -94,9 +90,6 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                 <Typography
                   variant="body2"
                   sx={{ flexGrow: 1 }}
-                  fontSize="14px"
-                  fontWeight="400"
-                  fontFamily="Work Sans"
                 >
                   {alert.description}
                 </Typography>
