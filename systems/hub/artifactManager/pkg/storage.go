@@ -31,7 +31,7 @@ var NameRegex = regexp.MustCompile("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
 const BucketNamePrefix = "hub-"
 const TarGzExtension = ".tar.gz"
 const ChunkIndexExtension = ".caibx"
-const cappsRoot = "capps/"
+const appsRoot = "apps/"
 
 type InvalidInputError struct {
 	Message string
@@ -94,12 +94,12 @@ func NewMinioWrapper(options *MinioConfig) *MinioWrapper {
 	return m
 }
 
-func formatCappPath(artifactName string) string {
-	return cappsRoot + artifactName
+func formatAppPath(artifactName string) string {
+	return appsRoot + artifactName
 }
 
-func formatCappFilename(artifactName string, version *semver.Version, ext string) string {
-	return formatCappPath(artifactName) + "/" + version.String() + ext
+func formatAppFilename(artifactName string, version *semver.Version, ext string) string {
+	return formatAppPath(artifactName) + "/" + version.String() + ext
 }
 
 func (m *MinioWrapper) GetBucketName(artifactType string) string {
@@ -120,15 +120,15 @@ func (m *MinioWrapper) ValidateArtifactType(artifactType string) error {
 // content - content of file
 // returns remote location of the file or error
 func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
-	log.Infof("Uploading %s-%s to storage\n", artifactName, version.String())
+	log.Infof("Uploading %s-%s to storage", artifactName, version.String())
 
 	bucket := m.GetBucketName(artifactType)
-	log.Infof("Uploading %s-%s to storage to bucket %s\n", artifactName, version.String(), bucket)
+	log.Infof("Uploading %s-%s to storage to bucket %s", artifactName, version.String(), bucket)
 	if !NameRegex.MatchString(artifactName) {
 		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}
 
-	n, err := m.minioClient.PutObject(ctx, bucket, formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
+	n, err := m.minioClient.PutObject(ctx, bucket, formatAppFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +142,7 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifac
 }
 
 func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
-	fPath := formatCappFilename(artifactName, version, ext)
+	fPath := formatAppFilename(artifactName, version, ext)
 
 	log.Infof("Downloading %s from bucket %s", fPath, m.GetBucketName(artifactType))
 	o, err := m.minioClient.GetObject(ctx, m.GetBucketName(artifactType), fPath, minio.GetObjectOptions{})
@@ -154,7 +154,7 @@ func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, artifac
 }
 
 func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]AritfactInfo, error) {
-	path := formatCappPath(artifactName) + "/"
+	path := formatAppPath(artifactName) + "/"
 
 	log.Infof("Listing objects in %s", path)
 	objectCh := m.minioClient.ListObjects(ctx, m.GetBucketName(artifactType), minio.ListObjectsOptions{
@@ -180,7 +180,7 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string, ar
 
 		if strings.HasSuffix(object.Key, TarGzExtension) {
 			version := strings.TrimSuffix(strings.TrimPrefix(object.Key,
-				formatCappPath(artifactName)+"/"), TarGzExtension)
+				formatAppPath(artifactName)+"/"), TarGzExtension)
 
 			_, err := semver.NewVersion(version)
 			if err != nil {
@@ -210,7 +210,7 @@ func (m *MinioWrapper) ListApps(ctx context.Context, artifactType string) ([]str
 	log.Infof("Listing all objects")
 
 	objectCh := m.minioClient.ListObjects(ctx, m.GetBucketName(artifactType), minio.ListObjectsOptions{
-		Prefix:       cappsRoot,
+		Prefix:       appsRoot,
 		Recursive:    false,
 		WithMetadata: false,
 	})
@@ -223,14 +223,14 @@ func (m *MinioWrapper) ListApps(ctx context.Context, artifactType string) ([]str
 			return nil, object.Err
 		}
 
-		ls = append(ls, strings.TrimSuffix(strings.TrimPrefix(object.Key, cappsRoot), "/"))
+		ls = append(ls, strings.TrimSuffix(strings.TrimPrefix(object.Key, appsRoot), "/"))
 	}
 
 	return ls, nil
 }
 
 func (m *MinioWrapper) GetEndpoint() string {
-	return m.minioClient.EndpointURL().String() + "/" + cappsRoot
+	return m.minioClient.EndpointURL().String() + "/" + appsRoot
 }
 
 // host in host:port format

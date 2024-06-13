@@ -35,7 +35,7 @@ type GrpcEndpoints struct {
 
 type HttpEndpoints struct {
 	Timeout     time.Duration
-	NodeMetrics string
+	Distributor string `default:"http://distributor:8099"`
 }
 
 func NewConfig() *Config {
@@ -56,7 +56,7 @@ func NewConfig() *Config {
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
-			NodeMetrics: "http://localhost",
+			Distributor: "http://distributor:8099",
 		},
 
 		Server: rest.HttpConfig{

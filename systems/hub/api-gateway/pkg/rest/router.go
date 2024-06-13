@@ -48,6 +48,7 @@ type RouterConfig struct {
 	isGlobal      bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
+	distributor   string
 }
 
 type Clients struct {
@@ -98,6 +99,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.BaseConfig.DebugMode,
 		auth:          svcConf.Auth,
+		isGlobal:      svcConf.IsGlobal,
+		distributor:   svcConf.HttpServices.Distributor,
 	}
 }
 
@@ -136,14 +139,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		artifact.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
 		//capps.GET("/location/:type/:name/:filename/:version", formatDoc("Location", "Provide a location of the artifact to download from"), tonic.Handler(r.artifactLocationHandler, http.StatusOK))
 
-		distr := auth.Group("/ditributor", "Get Artifacts in chunks", "Download Artifact in chunk")
-		distr.GET("/*proxypath", formatDoc("Get Artifact contents", "Get artifact contents or its index files"), tonic.Handler(proxy, http.StatusOK))
+		distr := auth.Group("/distributor", "Get chunks", "Download Artifact in chunk")
+		distr.GET("/*proxypath", formatDoc("Get chunks", "Get artifact chunks"), tonic.Handler(r.proxy, http.StatusOK))
 
 	}
 }
 
-func proxy(c *gin.Context) error {
-	remote, err := url.Parse("http://distributor:8099")
+func (r *Router) proxy(c *gin.Context) error {
+	remote, err := url.Parse(r.config.distributor)
 	if err != nil {
 		panic(err)
 	}
@@ -154,7 +157,8 @@ func proxy(c *gin.Context) error {
 		req.Host = remote.Host
 		req.URL.Scheme = remote.Scheme
 		req.URL.Host = remote.Host
-		req.URL.Path = c.Param("proxyPath")
+		req.URL.Path = c.Param("proxypath")
+		log.Infof("Proxy request %+v", req)
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
@@ -162,6 +166,8 @@ func proxy(c *gin.Context) error {
 	return nil
 }
 
+// curl --request GET http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34.tar.gz --output test-capp-v-0.0.34.tar.gz
+// curl --request GET http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34.caibx --output test-capp-v0.0.34.caibx
 func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error {
 	log.Infof("Getting artifact %s of type %s with filname %s", req.Name, req.ArtifactType, req.FileName)
 
@@ -191,7 +197,7 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 	return nil
 }
 
-// curl --request PUT   http://0.0.0.0:8000/v1/hub/cappart/test-capp/0.0.1  -F "file=@/cdrive/handson/desync/ukaa.caidx"
+// curl --request PUT   http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34 --header 'Content-Type: application/gzip' --data-binary "@/home/vishal/cdrive/handson/desync/hello.tar.gz"
 func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse, error) {
 
 	req := &ArtifactUploadRequest{}

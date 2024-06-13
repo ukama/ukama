@@ -37,7 +37,7 @@ func main() {
 	initConfig()
 
 	storage := pkg.NewMinioWrapper(&serviceConfig.Storage)
-	chunker := client.NewDistributor(serviceConfig.Services.Chunker, serviceConfig.Services.Timeout)
+	chunker := client.NewDistributor(serviceConfig.Services.Chunker, serviceConfig.Grpc.MaxMsgSize, serviceConfig.Services.Timeout)
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {

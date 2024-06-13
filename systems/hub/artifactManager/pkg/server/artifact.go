@@ -58,14 +58,15 @@ func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chu
 	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ArtifcatServer {
 
 	return &ArtifcatServer{
-		OrgId:          orgId,
-		OrgName:        orgName,
-		IsGlobal:       isGlobal,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		pushGateway:    pushGateway,
-		chunker:        chunk,
-		storage:        storage,
+		OrgId:                 orgId,
+		OrgName:               orgName,
+		IsGlobal:              isGlobal,
+		msgbus:                msgBus,
+		baseRoutingKey:        msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		pushGateway:           pushGateway,
+		chunker:               chunk,
+		storage:               storage,
+		storageRequestTimeout: storageTimeout,
 	}
 }
 
@@ -133,12 +134,15 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 
 		_, err = s.storage.PutFile(nctx, in.Name, aType, v, pkg.ChunkIndexExtension, bytes.NewReader(resp.Index))
 		if err != nil {
-			log.Errorf("Failed to store artifact index file %+v", in)
+			log.Errorf("Failed to store artifact index file %+v. Error %s", cReq, err.Error())
 		}
 
 	}()
 
-	return nil, nil
+	return &pb.StoreArtifactResponse{
+		Name: in.Name,
+		Type: in.Type,
+	}, nil
 }
 
 func (s *ArtifcatServer) GetArtifactLocation(ctx context.Context, in *pb.GetArtifactLocationRequest) (*pb.GetArtifactLocationResponse, error) {

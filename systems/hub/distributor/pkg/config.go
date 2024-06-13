@@ -160,7 +160,7 @@ func NewConfig(name string) *Config {
 
 		Grpc: &config.Grpc{
 			Port:       9090,
-			MaxMsgSize: 4194304,
+			MaxMsgSize: 209715200,
 		},
 	}
 }
