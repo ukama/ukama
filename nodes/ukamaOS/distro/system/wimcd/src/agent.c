@@ -172,7 +172,8 @@ void create_wimc_request(WimcReq **request,
   (*request)->fetch = fetch;
 }
 
-static bool send_request_to_agent(char *agentMethod,
+static bool send_request_to_agent(char *name, char *tag,
+                                  char *agentMethod,
                                   const json_t *json,
                                   long *statusCode) {
 
@@ -195,20 +196,19 @@ static bool send_request_to_agent(char *agentMethod,
     }
 
     sprintf(agentURL,
-            "http://localhost:%d/v1/apps",
-            get_agent_port_by_method(agentMethod));
+            "http://localhost:%d/v1/apps/%s/%s",
+            get_agent_port_by_method(agentMethod), name, tag);
 
     response.buffer = malloc(1);
     response.size   = 0;
     jStr = json_dumps(json, 0);
+    usys_log_debug("Sending request to Agent: %s", jStr);
 
-    /* Add to the header. */
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "charset: utf-8");
 
-    curl_easy_setopt(curl, CURLOPT_URL, agentURL);
-
+    curl_easy_setopt(curl, CURLOPT_URL,           agentURL);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER,    headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS,    jStr);
@@ -252,7 +252,9 @@ bool communicate_with_agent(WimcReq *request,
 
     add_to_tasks(config->tasks, request);
 
-    if (send_request_to_agent(agentMethod, json, &agentRetCode)) {
+    if (send_request_to_agent(request->fetch->content->name,
+                              request->fetch->content->tag,
+                              agentMethod, json, &agentRetCode)) {
         if (agentRetCode == HttpStatus_OK) {
             usys_log_debug("Agent iniated to fetch capp");
         } else {
