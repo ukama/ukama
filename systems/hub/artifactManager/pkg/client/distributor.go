@@ -18,14 +18,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Distributor struct {
+type Chunker struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.DistributorServiceClient
+	client  pb.ChunkerServiceClient
 	host    string
 }
 
-func NewDistributor(host string, maxMsgSize int, timeout time.Duration) *Distributor {
+func NewChunker(host string, maxMsgSize int, timeout time.Duration) *Chunker {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -35,9 +35,9 @@ func NewDistributor(host string, maxMsgSize int, timeout time.Duration) *Distrib
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewDistributorServiceClient(conn)
+	client := pb.NewChunkerServiceClient(conn)
 
-	return &Distributor{
+	return &Chunker{
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
@@ -45,8 +45,8 @@ func NewDistributor(host string, maxMsgSize int, timeout time.Duration) *Distrib
 	}
 }
 
-func NewDistributorFromClient(c pb.DistributorServiceClient) *Distributor {
-	return &Distributor{
+func NewDistributorFromClient(c pb.ChunkerServiceClient) *Chunker {
+	return &Chunker{
 		host:    "localhost",
 		timeout: 1 * time.Second,
 		conn:    nil,
@@ -54,21 +54,14 @@ func NewDistributorFromClient(c pb.DistributorServiceClient) *Distributor {
 	}
 }
 
-func (d *Distributor) Close() {
+func (d *Chunker) Close() {
 	d.conn.Close()
 }
 
-func (d *Distributor) CreateChunk(in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
+func (d *Chunker) CreateChunk(in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	log.Infof("Sending chunking request: %+v", in)
 
 	return d.client.CreateChunk(ctx, in)
-}
-
-func (d *Distributor) GetChunk(in *pb.GetChunkRequest) (*pb.GetChunkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
-	defer cancel()
-
-	return d.client.GetChunk(ctx, in)
 }
