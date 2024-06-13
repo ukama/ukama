@@ -269,14 +269,13 @@ int web_service_cb_post_app(const URequest *request,
         ulfius_set_string_body_response(response,
                                         HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));
+        db_insert_entry(config->db, name, tag, "download");
     } else {
         usys_log_error("Error sending capp fetch request to agent %s:%s", name, tag);
         ulfius_set_string_body_response(response,
                                HttpStatus_ServiceUnavailable,
                                HttpStatusStr(HttpStatus_ServiceUnavailable));
     }
-
-    db_insert_entry(config->db, name, tag, "download");
 
     cleanup_wimc_request(wimcRequest);
     free_artifact(&artifact);

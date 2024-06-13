@@ -173,13 +173,14 @@ void create_wimc_request(WimcReq **request,
 }
 
 static bool send_request_to_agent(char *agentMethod,
-                                  json_t *json,
-                                  int *statusCode) {
+                                  const json_t *json,
+                                  long *statusCode) {
 
     bool  ret  = USYS_FALSE;
     CURL *curl = NULL;
     char *jStr = NULL;
     char agentURL[WIMC_MAX_URL_LEN] = {0};
+    CURLcode res;
 
     struct curl_slist *headers=NULL;
     struct Response response;
@@ -216,10 +217,13 @@ static bool send_request_to_agent(char *agentMethod,
 
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
 
-    if (curl_easy_perform(curl) != CURLE_OK) {
-        log_error("Error sending request to Agent: %s");
+    res = curl_easy_perform(curl);
+    if ( res != CURLE_OK) {
+        log_error("Error sending request to Agent: %s", curl_easy_strerror(res));
+        *statusCode = 0;
+        ret = USYS_FALSE;
     } else {
-        *statusCode = HttpStatus_OK;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, statusCode);
         ret = USYS_TRUE;
     }
 
@@ -239,7 +243,7 @@ bool communicate_with_agent(WimcReq *request,
 
     long code=0;
     json_t *json=NULL;
-    int agentRetCode=0;
+    long agentRetCode=0;
 
     if (!serialize_wimc_request(request, &json)) {
         usys_log_error("Error serializing wimc request to agent");
@@ -252,7 +256,7 @@ bool communicate_with_agent(WimcReq *request,
         if (agentRetCode == HttpStatus_OK) {
             usys_log_debug("Agent iniated to fetch capp");
         } else {
-            usys_log_error("Agent reutrned an error: %d", agentRetCode);
+            usys_log_error("Agent reutrned an error: %ld", agentRetCode);
             json_decref(json);
 
             return USYS_FALSE;
