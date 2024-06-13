@@ -28,7 +28,7 @@ import (
 // app name regex. Follows OCI image naming standards
 var NameRegex = regexp.MustCompile("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
 
-const BucketNamePrefix = "artifact-hub-"
+const BucketNamePrefix = "hub-"
 const TarGzExtension = ".tar.gz"
 const ChunkIndexExtension = ".caibx"
 const cappsRoot = "capps/"
@@ -122,11 +122,13 @@ func (m *MinioWrapper) ValidateArtifactType(artifactType string) error {
 func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
 	log.Infof("Uploading %s-%s to storage\n", artifactName, version.String())
 
+	bucket := m.GetBucketName(artifactType)
+	log.Infof("Uploading %s-%s to storage to bucket %s\n", artifactName, version.String(), bucket)
 	if !NameRegex.MatchString(artifactName) {
 		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}
 
-	n, err := m.minioClient.PutObject(ctx, m.GetBucketName(artifactType), formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
+	n, err := m.minioClient.PutObject(ctx, bucket, formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
 	if err != nil {
 		return "", err
 	}

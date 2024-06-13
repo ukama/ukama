@@ -9,12 +9,14 @@
 package server
 
 import (
-	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -165,7 +167,7 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 
 	resp, err := r.clients.a.GetArtifact(&apb.GetArtifactRequest{
 		Name:     req.Name,
-		Type:     apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
+		Type:     apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 		FileName: req.FileName,
 	})
 	if err != nil {
@@ -203,55 +205,66 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 		return nil, err
 	}
 
-	bufReader := NewBufReader(c.Request.Body)
-	defer c.Request.Body.Close()
+	//buf := new(bytes.Buffer)
+	//buf.ReadFrom(c.Request.Body)
+	//return buf.Bytes()
 
-	uncompressedStream, err := gzip.NewReader(bufReader)
-	if err != nil {
-		log.Infof("Failed to read gz file: %v", err)
-
-		return nil, rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  "Not a tar.gz file",
-		}
-	}
-
-	tr := tar.NewReader(uncompressedStream)
-
-	_, err = tr.Next()
-	if err != nil {
-		log.Infof("Failed to read tar file: %v", err)
-
-		return nil, rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  "Not a tar.gz file",
-		}
-	}
-
-	bufReader.Reset()
-
-	// Call gRPresp, err :C client to send the file
-	return r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
-		Name:    req.ArtifactName,
-		Type:    apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
-		Version: req.Version,
-		Data:    bufReader.buff,
-	})
-
-	// loc, err := r.storage.PutFile(ctx, name, v, pkg.TarGzExtension, bufReader)
+	// bufReader := NewBufReader(c.Request.Body)
+	// defer c.Request.Body.Close()
+	// log.Infof("Got tar file with size %d", len(bufReader.buff))
+	// uncompressedStream, err := gzip.NewReader(bufReader)
 	// if err != nil {
-	// 	log.Errorf("Error adding artifact: %s %s", name, ver)
+	// 	log.Infof("Failed to read gz file: %v", err)
 
-	// 	return err
+	// 	return nil, rest.HttpError{
+	// 		HttpCode: http.StatusBadRequest,
+	// 		Message:  "Not a tar.gz file",
+	// 	}
 	// }
 
-	/* Call chunker */
-	// go func() {
-	// 	err = r.chunker.Chunk(name, v, loc)
-	// 	if err != nil {
-	// 		log.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
+	// tr := tar.NewReader(uncompressedStream)
+
+	// _, err = tr.Next()
+	// if err != nil {
+	// 	log.Infof("Failed to read tar file: %v", err)
+
+	// 	return nil, rest.HttpError{
+	// 		HttpCode: http.StatusBadRequest,
+	// 		Message:  "Not a tar.gz file",
 	// 	}
-	// }()
+	// }
+
+	// bufReader.Reset()
+	var buf bytes.Buffer
+
+	// Copy the uploaded data to the buffer
+	size, err := io.Copy(&buf, c.Request.Body)
+	if err != nil {
+		log.Errorf("Failed to copy buffer: %v", err)
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  fmt.Sprintf("copy to buffer err: %s", err.Error()),
+		}
+	}
+
+	// Call gRPresp, err :C client to send the file
+	log.Infof("Got tar file with size %d", size)
+
+	err = IsValidGzip(buf)
+	if err != nil {
+		log.Errorf("Not a gzip format for file: %s", req.ArtifactName)
+		return nil, err
+	}
+
+	//base64 := make([]byte, b64.StdEncoding.EncodedLen(len(buf.Bytes())))
+	//sEnc := b64.StdEncoding.Encode(buf.Bytes())
+
+	return r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
+		Name:    req.ArtifactName,
+		Type:    apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
+		Version: req.Version,
+		Data:    buf.Bytes(),
+	})
 
 }
 
@@ -260,7 +273,7 @@ func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersio
 
 	return r.clients.a.GetArtifactVersionList(&apb.GetArtifactVersionListRequest{
 		Name: req.Name,
-		Type: apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
+		Type: apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 	})
 }
 
@@ -269,7 +282,7 @@ func (r *Router) artifactLocationHandler(c *gin.Context, req *ArtifactLocationRe
 
 	return r.clients.a.GetArtifactLocation(&apb.GetArtifactLocationRequest{
 		Name:    req.Name,
-		Type:    apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
+		Type:    apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 		Version: req.Version,
 	})
 
@@ -279,7 +292,7 @@ func (r *Router) listArtifactsHandler(c *gin.Context, req *ArtifactListRequest) 
 	log.Infof("Getting list of artifacts of type %s", req.ArtifactType)
 
 	return r.clients.a.ListArtifacts(&apb.ListArtifactRequest{
-		Type: apb.ArtifactType(apb.ArtifactType_value[req.ArtifactType]),
+		Type: apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 	})
 
 }
@@ -294,6 +307,18 @@ func (r *Router) parseVersion(version string) (*semver.Version, error) {
 	}
 
 	return v, err
+}
+
+func IsValidGzip(buf bytes.Buffer) error {
+	// Validate if the buffer contains gzip-compressed data
+	_, err := gzip.NewReader(&buf)
+	if err != nil && err != io.EOF {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "Invalid file format",
+		}
+	}
+	return nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

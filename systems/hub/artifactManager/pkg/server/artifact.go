@@ -47,7 +47,6 @@ type ArtifcatServer struct {
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
 	chunker               chunkServer
-	orgName               string
 	IsGlobal              bool
 }
 
@@ -66,6 +65,7 @@ func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chu
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		pushGateway:    pushGateway,
 		chunker:        chunk,
+		storage:        storage,
 	}
 }
 
@@ -85,7 +85,7 @@ func (s *ArtifcatServer) parseArtifactName(name string) (ver *semver.Version, ex
 		name = strings.TrimSuffix(name, pkg.ChunkIndexExtension)
 		ext = pkg.ChunkIndexExtension
 	} else {
-		return nil, "", fmt.Errorf("Unsupported extension")
+		return nil, "", fmt.Errorf("unsupported extension")
 	}
 
 	ver, err = semver.NewVersion(name)
@@ -97,13 +97,14 @@ func (s *ArtifcatServer) parseArtifactName(name string) (ver *semver.Version, ex
 }
 
 func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifactRequest) (*pb.StoreArtifactResponse, error) {
-	log.Infof("Storing artifact: %s %s", in.Name, in.Version)
+	log.Infof("Storing artifact: %s %s of type %d", in.Name, in.Version, in.Type)
 
 	v, err := s.parseVersion(in.Version)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Infof("Got file %s with size %d", in.Name, len(in.Data))
 	loc, err := s.storage.PutFile(ctx, in.Name, strings.ToLower(in.Type.String()), v, pkg.TarGzExtension, bytes.NewReader(in.Data))
 	if err != nil {
 		log.Errorf("Error storing artifact: %s %s", in.Name, in.Version)
@@ -113,14 +114,17 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 	go func() {
 		aType := strings.ToLower(in.Type.String())
 		fPath := fmt.Sprintf("%s/%s/%s", in.Name, v.String(), pkg.TarGzExtension)
-		resp, err := s.chunker.CreateChunk(&dpb.CreateChunkRequest{
+		cReq := &dpb.CreateChunkRequest{
 			Name:    in.Name,
 			Type:    aType,
 			Version: v.String(),
 			Store:   "s3+" + strings.TrimSuffix(loc, fPath),
-		})
+		}
+		log.Infof("Sending chunking request %+v", cReq)
+		resp, err := s.chunker.CreateChunk(cReq)
 		if err != nil {
 			log.Errorf("Error chunking artifact: %s %s. Error: %+v", in.Name, in.Version, err)
+			return
 		}
 
 		nctx, cancel := context.WithTimeout(context.Background(),

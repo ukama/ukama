@@ -59,6 +59,7 @@ func (d *Distributor) Close() {
 func (d *Distributor) CreateChunk(in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
+	log.Infof("Sending chunking request: %+v", in)
 
 	return d.client.CreateChunk(ctx, in)
 }

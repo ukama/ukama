@@ -59,11 +59,11 @@ func NewConfig(name string) *Config {
 			Endpoint:      "localhost:9000",
 			AccessKey:     "minioadmin",
 			SecretKey:     "minioadmin",
-			BucketSuffix:  "local-test",
+			BucketSuffix:  "-local-test",
 			TimeoutSecond: 3,
 			ArtifactTypeBucketMap: map[string]string{
-				"cappart": "capp",
-				"certart": "cert",
+				"app":  "app",
+				"cert": "cert",
 			},
 		},
 

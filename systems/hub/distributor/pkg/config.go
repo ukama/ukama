@@ -67,13 +67,14 @@ type DistributionConfig struct {
 }
 
 type MinioConfig struct {
-	TimeoutSecond      int
-	Endpoint           string
-	AccessKey          string
-	SecretKey          string
-	BucketSuffix       string
-	Region             string
-	SkipBucketCreation bool
+	TimeoutSecond         int
+	Endpoint              string
+	AccessKey             string
+	SecretKey             string
+	BucketSuffix          string
+	Region                string
+	SkipBucketCreation    bool
+	ArtifactTypeBucketMap map[string]string
 }
 
 type Config struct {
@@ -126,7 +127,7 @@ func NewConfig(name string) *Config {
 
 			Chunk: ChunkConfig{
 				N:            10,
-				Stores:       []string{"s3+http://localhost:9000/artifact-hub-local-test/chunks?lookup=path"},
+				Stores:       []string{"s3+http://localhost:9000/hub-chunks-local-test/chunks?lookup=path"},
 				MinChunkSize: 64,
 				MaxChunkSize: 256,
 				AvgChunkSize: 64,
@@ -148,13 +149,18 @@ func NewConfig(name string) *Config {
 			Endpoint:           "localhost:9000",
 			AccessKey:          "minioadmin",
 			SecretKey:          "minioadmin",
-			BucketSuffix:       "local-test",
+			BucketSuffix:       "-local-test",
 			TimeoutSecond:      3,
 			SkipBucketCreation: true,
+			ArtifactTypeBucketMap: map[string]string{
+				"app":  "app",
+				"cert": "cert",
+			},
 		},
 
 		Grpc: &config.Grpc{
-			Port: 9090,
+			Port:       9090,
+			MaxMsgSize: 4194304,
 		},
 	}
 }

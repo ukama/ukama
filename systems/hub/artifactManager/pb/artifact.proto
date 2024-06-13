@@ -25,8 +25,9 @@ import "google/protobuf/wrappers.proto";
  }
  
  enum ArtifactType {
-    INVALIDART = 0;
-    CAPPART = 1;
+    ARTIFACT_INVALID = 0;
+    APP = 1;
+    CERT = 2;
  }
  
  message ExtraInfoMap {
