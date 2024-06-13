@@ -122,8 +122,8 @@ int web_service_cb_get_app_status(const URequest *request,
                 jResponse = json_pack("{s:s}",
                                       "message", "App corrupted at default location.");
                 ulfius_set_json_body_response(response,
-                                              HttpStatus_InternalServerError,
-                                              jResponse);
+                                            HttpStatusStr(HttpStatus_InternalServerError),
+                                            jResponse);
                 json_decref(jResponse);
             }
         } else {
@@ -131,14 +131,14 @@ int web_service_cb_get_app_status(const URequest *request,
             jResponse = json_pack("{s:s}",
                                   "message", "Unknown app status.");
             ulfius_set_json_body_response(response,
-                                          HttpStatus_InternalServerError,
+                                          HttpStatusStr(HttpStatus_InternalServerError),
                                           jResponse);
             json_decref(jResponse);
         }
         free(status);
     } else {
         jResponse = json_pack("{s:s}",
-                              "message", HttpStatus_NotFound);
+                              "message", HttpStatusStr(HttpStatus_NotFound));
         ulfius_set_json_body_response(response,
                                       HttpStatus_NotFound,
                                       jResponse);
