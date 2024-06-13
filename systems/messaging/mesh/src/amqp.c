@@ -433,7 +433,7 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff) {
     memcpy(anyEvent.value.data, buff, len);
 
     anyLen = google__protobuf__any__get_packed_size(&anyEvent);
-    anyBuff = malloc(anyLen);
+    anyBuff = malloc(anyLen+1);
     if (anyBuff == NULL) {
         log_error("Error allocating buffer of size: %d", anyLen);
         return NULL;
@@ -464,7 +464,7 @@ static void *serialize_node_online_event(char *nodeID, char *nodeIP, int nodePor
 
 	len = ukama__events__v1__node_online_event__get_packed_size(&nodeEvent);
 
-	buff = malloc(len);
+	buff = malloc(len+1);
 	if (buff==NULL) {
 		log_error("Error allocating buffer of size: %d", len);
 		return NULL;
@@ -494,7 +494,7 @@ static void *serialize_node_offline_event(char *nodeID) {
 	nodeEvent.nodeid   = strdup(nodeID);
 	len = ukama__events__v1__node_offline_event__get_packed_size(&nodeEvent);
 
-	buff = malloc(len);
+	buff = malloc(len+1);
 	if (buff==NULL) {
 		log_error("Error allocating buffer of size: %d", len);
 		return NULL;
@@ -613,7 +613,7 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	/* Step-4: send the message to AMQP broker */
 	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
-							 amqp_cstring_bytes(buff));
+							 amqp_cstring_bytes((char *)buff));
 	if (ret < 0) {
 		ret = FALSE;
 		log_error("Error sending AMQP message. Error: %s",
@@ -701,8 +701,9 @@ int publish_boot_event(char *exchange) {
     /* send the message to AMQP broker */
     ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
                              amqp_cstring_bytes(key), 0, 0, &prop,
-                             amqp_cstring_bytes(buff));
+                             amqp_cstring_bytes((char *)buff));
     if (ret != AMQP_STATUS_OK) {
+        free(buff);
         ret = FALSE;
         log_error("Error sending AMQP boot message. Error: %s",
                   amqp_error_string2(ret));
@@ -714,6 +715,8 @@ int publish_boot_event(char *exchange) {
     amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
     amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
     amqp_destroy_connection(conn);
+
+    free(buff);
 
     return ret;
 }

@@ -31,9 +31,11 @@ type HttpEndpoints struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
-	Mailer  string
-	Notify  string
+	Timeout           time.Duration
+	Mailer            string
+	Notify            string
+	EventNotification string
+	Distributor       string
 }
 
 func NewConfig() *Config {
@@ -47,9 +49,11 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 5 * time.Second,
-			Mailer:  "mailer:9090",
-			Notify:  "notify:9090",
+			Timeout:           3 * time.Second,
+			Mailer:            "mailer:9090",
+			Notify:            "notify:9090",
+			EventNotification: "event-notify:9090",
+			Distributor:       "distributor:9090",
 		},
 
 		Server: rest.HttpConfig{
@@ -58,7 +62,7 @@ func NewConfig() *Config {
 		},
 
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout:     5 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
 

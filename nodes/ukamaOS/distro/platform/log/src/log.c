@@ -69,7 +69,7 @@ static void stdout_callback(log_Event *ev) {
 
 static void rlogd_callback(log_Event *ev) {
     char buf[16];
-    char msg[256] = {0};
+    char msg[512] = {0};
     buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
     sprintf(ev->udata, "%s %s %-5s %s:%d: ", l.service, buf,
             levelStrings[ev->level], ev->file, ev->line);

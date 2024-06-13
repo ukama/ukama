@@ -33,6 +33,7 @@ type GetSessionByImsi struct {
 
 type CDR struct {
 	Session       int    `json:"session" validate:"required"`
+	NodeId        string `json:"node_id" validate:"required"`
 	Imsi          string `json:"imsi" validate:"required"`
 	Policy        string `json:"policy" validate:"required"`
 	ApnName       string `json:"apn_name" validate:"required"`
@@ -81,7 +82,8 @@ type Policy struct {
 	Uuid      uuid.UUID `json:"uuid" validate:"required"`
 	Ulbr      uint64    `json:"ulbr" validate:"required"`
 	Dlbr      uint64    `json:"dlbr" validate:"required"`
-	Data      uint64    `json:"data" validate:"required"`
+	Data      uint64    `json:"total_data" validate:"required"`
+	Consumed  uint64    `json:"consumed_data"`
 	Burst     uint64    `json:"burst" validate:"required"`
 	StartTime int64     `json:"start_time" validate:"required"`
 	EndTime   int64     `json:"end_time" validate:"required"`
@@ -111,6 +113,11 @@ type CreateSubscriber struct {
 	ReRoute string `json:"reroute" validate:"required"`
 }
 
+type UpdateSubscriber struct {
+	Imsi   string `json:"imsi" path:"imsi" validate:"required"`
+	Policy Policy `json:"policy" validate:"required"`
+}
+
 type GetFlowsForImsi struct {
 	Imsi string `json:"imsi" path:"imsi" validate:"required"`
 }
@@ -123,12 +130,16 @@ type SubscriberResponse struct {
 }
 
 type PolicyResponse struct {
-	ID        uuid.UUID `json:"id" path:"id"`
-	Data      uint64    `json:"data" path:"data"`
+	ID        uuid.UUID `json:"uuid" path:"id"`
+	Burst     uint64    `json:"burst" path:"burst"`
+	Data      uint64    `json:"total_data" path:"data"`
+	Consumed  uint64    `json:"consumed_data" path:"consumed"`
 	Dlbr      uint64    `json:"dlbr" path:"dlbr"`
 	Ulbr      uint64    `json:"ulbr" path:"ulbr"`
 	StartTime int64     `json:"start_time" path:"start_time"`
 	EndTime   int64     `json:"end_time" path:"end_time"`
+	CreatedAt int64     `json:"created_at" path:"created_at"`
+	UpdatedAt int64     `json:"updated_at" path:"updated_at"`
 }
 
 type UsageRequest struct {
@@ -143,6 +154,7 @@ type UsageResponse struct {
 type SessionResponse struct {
 	ID         int
 	Imsi       string
+	NodeId     string
 	PolicyID   string
 	ApnName    string
 	UeIpaddr   string

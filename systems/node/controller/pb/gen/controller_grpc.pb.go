@@ -23,6 +23,7 @@ const (
 	ControllerService_RestartNode_FullMethodName          = "/ukama.node.controller.v1.ControllerService/RestartNode"
 	ControllerService_RestartNodes_FullMethodName         = "/ukama.node.controller.v1.ControllerService/RestartNodes"
 	ControllerService_ToggleInternetSwitch_FullMethodName = "/ukama.node.controller.v1.ControllerService/ToggleInternetSwitch"
+	ControllerService_PingNode_FullMethodName             = "/ukama.node.controller.v1.ControllerService/PingNode"
 )
 
 // ControllerServiceClient is the client API for ControllerService service.
@@ -33,6 +34,7 @@ type ControllerServiceClient interface {
 	RestartNode(ctx context.Context, in *RestartNodeRequest, opts ...grpc.CallOption) (*RestartNodeResponse, error)
 	RestartNodes(ctx context.Context, in *RestartNodesRequest, opts ...grpc.CallOption) (*RestartNodesResponse, error)
 	ToggleInternetSwitch(ctx context.Context, in *ToggleInternetSwitchRequest, opts ...grpc.CallOption) (*ToggleInternetSwitchResponse, error)
+	PingNode(ctx context.Context, in *PingNodeRequest, opts ...grpc.CallOption) (*PingNodeResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -79,6 +81,15 @@ func (c *controllerServiceClient) ToggleInternetSwitch(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *controllerServiceClient) PingNode(ctx context.Context, in *PingNodeRequest, opts ...grpc.CallOption) (*PingNodeResponse, error) {
+	out := new(PingNodeResponse)
+	err := c.cc.Invoke(ctx, ControllerService_PingNode_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControllerServiceServer is the server API for ControllerService service.
 // All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type ControllerServiceServer interface {
 	RestartNode(context.Context, *RestartNodeRequest) (*RestartNodeResponse, error)
 	RestartNodes(context.Context, *RestartNodesRequest) (*RestartNodesResponse, error)
 	ToggleInternetSwitch(context.Context, *ToggleInternetSwitchRequest) (*ToggleInternetSwitchResponse, error)
+	PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedControllerServiceServer) RestartNodes(context.Context, *Resta
 }
 func (UnimplementedControllerServiceServer) ToggleInternetSwitch(context.Context, *ToggleInternetSwitchRequest) (*ToggleInternetSwitchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ToggleInternetSwitch not implemented")
+}
+func (UnimplementedControllerServiceServer) PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PingNode not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 
@@ -191,6 +206,24 @@ func _ControllerService_ToggleInternetSwitch_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerService_PingNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).PingNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerService_PingNode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).PingNode(ctx, req.(*PingNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ToggleInternetSwitch",
 			Handler:    _ControllerService_ToggleInternetSwitch_Handler,
+		},
+		{
+			MethodName: "PingNode",
+			Handler:    _ControllerService_PingNode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

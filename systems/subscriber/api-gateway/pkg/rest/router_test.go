@@ -250,7 +250,6 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	s := &subPb.Subscriber{
 		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		OrgId:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		FirstName:             "John",
 		LastName:              "Doe",
 		NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
@@ -296,7 +295,6 @@ func TestRouter_Subscriber(t *testing.T) {
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
-			OrgId:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -317,7 +315,6 @@ func TestRouter_Subscriber(t *testing.T) {
 			IdSerial:              data.IdSerial,
 			NetworkId:             data.NetworkId,
 			Gender:                data.Gender,
-			OrgId:                 data.OrgId,
 		}
 
 		csub.On("Add", mock.Anything, preq).Return(&subPb.AddSubscriberResponse{
@@ -399,7 +396,6 @@ func TestRouter_SimManager(t *testing.T) {
 	sim := &smPb.Sim{
 		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
 		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		OrgId:        "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		NetworkId:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		Iccid:        "1234567890123456789",
 		Msisdn:       "555-555-1234",

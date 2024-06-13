@@ -112,7 +112,6 @@ func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gor
 
 
 
-
 func (s netRepo) Delete(networkId uuid.UUID) error {
 	result := s.Db.GetGormDb().Where("id = ?", networkId).Delete(&Network{})
 	if result.Error != nil {

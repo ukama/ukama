@@ -47,14 +47,19 @@ func (o *OperatorAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, fro
 	return o.client.GetUsages(iccid, cdrType, from, to, region)
 }
 
-func (o *OperatorAgentAdaper) ActivateSim(ctx context.Context, iccid string) error {
+func (o *OperatorAgentAdaper) ActivateSim(ctx context.Context, req ReqData) error {
 	// think of how to use ctx with restclient
-	return o.client.ActivateSim(iccid)
+	return o.client.ActivateSim(req.Iccid)
 }
 
-func (o *OperatorAgentAdaper) DeactivateSim(ctx context.Context, iccid string) error {
+func (o *OperatorAgentAdaper) DeactivateSim(ctx context.Context, req ReqData) error {
 	// think of how to use ctx with restclient
-	return o.client.DeactivateSim(iccid)
+	return o.client.DeactivateSim(req.Iccid)
+}
+
+func (o *OperatorAgentAdaper) UpdatePackage(ctx context.Context, req ReqData) error {
+	// think of how to use ctx with restclient
+	return nil
 }
 
 func (o *OperatorAgentAdaper) TerminateSim(ctx context.Context, iccid string) error {

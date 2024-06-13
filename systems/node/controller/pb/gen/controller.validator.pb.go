@@ -17,6 +17,25 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *PingNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.RequestId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
+	}
+	return nil
+}
+func (this *PingNodeResponse) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.RequestId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
+	}
+	return nil
+}
+
 var _regex_RestartNodesRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *RestartNodesRequest) Validate() error {

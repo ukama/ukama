@@ -235,8 +235,6 @@ done:
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {
 
-	Config *config = (Config *)data;
-
 	return;
 }
 

@@ -56,6 +56,7 @@ func TestGetStats_Error(t *testing.T) {
 	res, err := simService.GetStats(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestDelete_Success(t *testing.T) {
@@ -66,9 +67,13 @@ func TestDelete_Success(t *testing.T) {
 		Id: []uint64{1},
 	}
 	mockRepo.On("Delete", mock.Anything).Return(nil)
+	msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimRemoved")).Return(nil).Once()
 	res, err := simService.Delete(context.Background(), reqMock)
 	assert.NoError(t, err)
 	assert.Equal(t, reqMock.Id[0], res.Id[0])
+
+	mockRepo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
 }
 
 func TestDelete_Error(t *testing.T) {
@@ -82,6 +87,7 @@ func TestDelete_Error(t *testing.T) {
 	res, err := simService.Delete(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestAdd_Success(t *testing.T) {
@@ -100,10 +106,13 @@ func TestAdd_Success(t *testing.T) {
 			},
 		},
 	}
+	msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 	mockRepo.On("Add", mock.Anything).Return(nil)
 	res, err := simService.Add(context.Background(), reqMock)
 	assert.NoError(t, err)
 	assert.Equal(t, reqMock.Sim[0].Iccid, res.Sim[0].Iccid)
+	mockRepo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
 }
 
 func TestAdd_Error(t *testing.T) {
@@ -126,6 +135,7 @@ func TestAdd_Error(t *testing.T) {
 	res, err := simService.Add(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestGet_Success(t *testing.T) {
@@ -147,6 +157,7 @@ func TestGet_Success(t *testing.T) {
 	res, err := simService.Get(context.Background(), reqMock)
 	assert.NoError(t, err)
 	assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestGet_Error(t *testing.T) {
@@ -161,6 +172,7 @@ func TestGet_Error(t *testing.T) {
 	res, err := simService.Get(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestGetByIccid_Success(t *testing.T) {
@@ -181,6 +193,7 @@ func TestGetByIccid_Success(t *testing.T) {
 	res, err := simService.GetByIccid(context.Background(), reqMock)
 	assert.NoError(t, err)
 	assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestGetByIccid_Error(t *testing.T) {
@@ -194,4 +207,5 @@ func TestGetByIccid_Error(t *testing.T) {
 	res, err := simService.GetByIccid(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
+	mockRepo.AssertExpectations(t)
 }

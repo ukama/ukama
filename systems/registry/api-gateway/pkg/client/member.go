@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -87,7 +88,7 @@ func (r *MemberRegistry) AddMember(userUUID string, role string) (*pb.MemberResp
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: pb.RoleType(pb.RoleType_value[role])}
+	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: upb.RoleType(upb.RoleType_value[role])}
 	res, err := r.client.AddMember(ctx, member)
 
 	if err != nil {
@@ -97,19 +98,6 @@ func (r *MemberRegistry) AddMember(userUUID string, role string) (*pb.MemberResp
 	return res, nil
 }
 
-func (r *MemberRegistry) AddOtherMember(userUUID string, role string) (*pb.MemberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: pb.RoleType(pb.RoleType_value[role])}
-	res, err := r.client.AddOtherMember(ctx, member)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
 
 func (r *MemberRegistry) UpdateMember(userUUID string, isDeactivated bool, role string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)

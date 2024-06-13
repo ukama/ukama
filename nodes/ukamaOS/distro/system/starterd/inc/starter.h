@@ -21,12 +21,11 @@
 #define STATUS_NOK             (-1)
 
 #define DEF_LOG_LEVEL           "TRACE"
-#define STARTER_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
 #define DEF_WIMC_HOST          "localhost"
-#define DEF_NODED_EP           "/noded/v1/nodeinfo"
+#define DEF_NODED_EP           "/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "/notify/v1/event/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_NODE_TYPE          "tower"
@@ -34,8 +33,8 @@
 #define ENV_STARTER_DEBUG_MODE "STARTER_DEBUG_MODE"
 
 /* for spaces and capps */
-#define DEF_CAPP_PATH          "/capps/pkgs"
-#define DEF_SPACE_ROOTFS_PATH  "/capps/rootfs"
+#define DEF_CAPP_PATH          "/ukama/apps/pkgs"
+#define DEF_SPACE_ROOTFS_PATH  "/ukama/apps/rootfs"
 #define DEF_CAPP_CONFIG_FILE   "config.json"
 
 /* runtime status */

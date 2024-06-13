@@ -18,6 +18,8 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
+#include "version.h"
+
 /**
  * @fn      int web_service_cb_ping(const URequest*, UResponse*, void*)
  * @brief   reports ping response to client
@@ -32,6 +34,14 @@ int web_service_cb_ping(const URequest *request, UResponse *response,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request, UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }

@@ -1,0 +1,2 @@
+uk-983794-hnode-78-9379 testapp log_time log_level log_message
+uk-983794-hnode-78-9379 testApp another_log_time another_log_level another_log_message

@@ -278,7 +278,6 @@ func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb
 		IdSerial:              req.IdSerial,
 		NetworkId:             req.NetworkId,
 		Gender:                req.Gender,
-		OrgId:                 req.OrgId,
 	})
 
 	if err != nil {

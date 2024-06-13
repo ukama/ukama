@@ -18,6 +18,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/member/cmd/version"
@@ -31,7 +32,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
-	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -171,7 +171,7 @@ func initMemberDB(d sql.Db, orgClient cnucl.OrgClient, userClient cnucl.UserClie
 			member := &db.Member{
 				UserId:      OwnerUUID,
 				Deactivated: false,
-				Role:        db.RoleType(pb.RoleType_OWNER),
+				Role:        roles.RoleType(roles.TYPE_OWNER),
 			}
 			if err := mDB.Transaction(func(tx *gorm.DB) error {
 				err := orgClient.AddUser(org.Id, member.UserId.String())

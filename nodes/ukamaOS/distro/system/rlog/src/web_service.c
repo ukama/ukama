@@ -11,6 +11,7 @@
 #include "usys_log.h"
 
 #include "rlogd.h"
+#include "version.h"
 
 extern ThreadData *gData;
 
@@ -19,6 +20,14 @@ int web_service_cb_ping(const URequest *request, UResponse *response,
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_version(const URequest *request, UResponse *response,
+                           void *data) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -64,8 +73,8 @@ int web_service_cb_get_output(const URequest *request, UResponse *response,
 int web_service_cb_default(const URequest *request, UResponse *response,
                            void *data) {
 
-    ulfius_set_string_body_response(response, HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+    ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
     return U_CALLBACK_CONTINUE;
 }

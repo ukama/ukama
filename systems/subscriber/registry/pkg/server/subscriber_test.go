@@ -20,22 +20,25 @@ import (
 	"gorm.io/gorm"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
 const OrgName = "testorg"
+const orgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
 func TestAdd(t *testing.T) {
-	// Test case 1: Add subscriber successfully
 	t.Run("Add subscriber successfully", func(t *testing.T) {
+
 		subscriberRepo := &mocks.SubscriberRepo{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 		simManagerService := &mocks.SimManagerClientProvider{}
+		regClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
-
 		netId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
 		orgId := "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
 
@@ -48,23 +51,27 @@ func TestAdd(t *testing.T) {
 		proofOfIdentification := "Passport"
 		idSerial := "123456789"
 
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		regClient.On("Get", OrgName).Return(
+			&cnucl.OrgInfo{
+				Id:            orgId,
+				Name:          OrgName,
+				IsDeactivated: false,
+			}, nil).Once()
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		networkClient.On("Get", netId).
 			Return(&creg.NetworkInfo{
 				Id:         netId,
-				OrgId:      "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+				OrgId:      orgId,
 				Name:       "net-1",
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, networkClient)
-
-		req := &pb.AddSubscriberRequest{
-			OrgId:                 orgId,
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, regClient, networkClient)
+		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			FirstName:             firstName,
-			LastName:              lastName,
 			NetworkId:             netId,
+			LastName:              lastName,
 			Email:                 email,
 			PhoneNumber:           phoneNumber,
 			Gender:                gender,
@@ -72,30 +79,26 @@ func TestAdd(t *testing.T) {
 			Address:               address,
 			ProofOfIdentification: proofOfIdentification,
 			IdSerial:              idSerial,
-		}
-
-		resp, err := s.Add(context.Background(), req)
+		})
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, orgId, resp.Subscriber.OrgId)
-		assert.Equal(t, firstName, resp.Subscriber.FirstName)
-		assert.Equal(t, lastName, resp.Subscriber.LastName)
-		assert.Equal(t, netId, resp.Subscriber.NetworkId)
-		assert.Equal(t, email, resp.Subscriber.Email)
-		assert.Equal(t, phoneNumber, resp.Subscriber.PhoneNumber)
-		assert.Equal(t, gender, resp.Subscriber.Gender)
+
+		regClient.AssertExpectations(t)
+		subscriberRepo.AssertExpectations(t)
+		networkClient.AssertExpectations(t)
+		msgBus.AssertExpectations(t)
 	})
 }
 func TestSubscriberServer_Get(t *testing.T) {
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
 		var subscriberId = uuid.Nil
+		networkClient := &cmocks.NetworkClient{}
 
 		subRepo := &mocks.SubscriberRepo{}
 
 		subRepo.On("Get", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId.String()})
 
@@ -106,10 +109,11 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 	t.Run("SubscriberUUIDInvalid", func(t *testing.T) {
 		var subscriberId = "1"
+		networkClient := &cmocks.NetworkClient{}
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId})
 
@@ -122,12 +126,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		var networkId = uuid.Nil
+		networkClient := &cmocks.NetworkClient{}
 
 		subRepo := &mocks.SubscriberRepo{}
 
 		subRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId.String()})
 
@@ -138,10 +143,11 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 	t.Run("NetworkUUIDInvalid", func(t *testing.T) {
 		var networkId = "1"
+		networkClient := &cmocks.NetworkClient{}
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, nil)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId})
 

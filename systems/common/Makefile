@@ -14,6 +14,8 @@ gen:
 
 	mockery --all --recursive --dir ./
 
+	python3 pb/generate_unmarshall_func.py
+
 test:
 	go test -v ./...
 
@@ -21,3 +23,5 @@ test:
 lint:
 	golangci-lint run
 
+clean:
+	rm -rf ./pb/gen

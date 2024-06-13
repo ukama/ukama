@@ -24,7 +24,8 @@
 #include "usys_mem.h"
 #include "usys_getopt.h"
 
-#define VERSION                "0.0.1"
+#include "version.h"
+
 #define DEF_LOG_LEVEL          "TRACE"
 #define DEF_WIMC_URL           "http://localhost:8087"
 #define DEF_AGENT_SERVICE_PORT "8088"

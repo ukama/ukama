@@ -27,13 +27,15 @@ typedef struct setupConfig_ {
 
 typedef struct buildConfig_ {
 
-    int  nodeCount;
-    char *nodeIDsList;
+    char *nodesIDFilename;
     char *kernelImage;
     char *initRAMImage;
     char *diskImage;
     char *systemsList;
     char *interfacesList;
+
+    int  nodesCount;
+    char **nodesIDList;
 } BuildConfig;
 
 typedef struct deployConfig_ {
@@ -42,7 +44,10 @@ typedef struct deployConfig_ {
     KeyValuePair *keyValuePair;
 
     char *systemsList;
-    char *nodeIDsList;
+    char *nodesIDFilename;
+
+    int  nodesCount;
+    char **nodesIDList;
 } DeployConfig;
 
 typedef struct config_ {

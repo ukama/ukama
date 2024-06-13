@@ -25,14 +25,14 @@ func main() {
 	ccmd.ProcessVersionArgument(global.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	registryClient := multipl.NewRegistryProvider(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds, serviceConfig.DebugMode)
+	//registryClient := multipl.NewRegistryProvider(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds, serviceConfig.DebugMode)
 
 	pub, err := multipl.NewQPub(serviceConfig.Queue.Uri, global.ServiceName, serviceConfig.Registry.Host, os.Getenv(global.POD_NAME_ENV_VAR))
 	if err != nil {
 		logrus.Fatalf("Failed to create publisher: %v", err)
 	}
 
-	m := multipl.NewRequestMultiplier(registryClient, pub)
+	m := multipl.NewRequestMultiplier(serviceConfig.Registry.Host, pub)
 
 	ipResolve, err := pkg.NewNodeIpResolver(serviceConfig.Net.Host, serviceConfig.Registry.TimeoutSeconds)
 	if err != nil {

@@ -130,9 +130,9 @@ int process_config_file(char *fileName, Config *config) {
         return FALSE;
     }
 
-    if (!read_bootstrap_server_info(&config->bootstrapServer)) {
+    if (!read_bootstrap_server_info(&config->bootstrapRemoteServer)) {
         usys_log_debug("Unable to read bootstrap server info");
-        config->bootstrapServer = strdup(DEF_BOOTSTRAP_SERVER);
+        config->bootstrapRemoteServer = strdup(DEF_BOOTSTRAP_SERVER);
     }
 
 	toml_free(fileData);
@@ -157,12 +157,12 @@ void print_config(Config *config) {
 		usys_log_debug("remote IP file: %s", config->remoteIPFile);
 	}
 
-	if (config->bootstrapServer) {
-	    usys_log_debug("bootstrap server: %s", config->bootstrapServer);
+	if (config->bootstrapRemoteServer) {
+	    usys_log_debug("bootstrap remote server: %s", config->bootstrapRemoteServer);
 	}
 
-    if (config->bootstrapPort) {
-        usys_log_debug("bootstrap port: %d", config->bootstrapPort);
+    if (config->bootstrapRemotePort) {
+        usys_log_debug("bootstrap remote port: %d", config->bootstrapRemotePort);
     }
 }
 
@@ -173,5 +173,5 @@ void clear_config(Config *config) {
 	free(config->nodedHost);
 	free(config->meshConfig);
 	free(config->remoteIPFile);
-	free(config->bootstrapServer);
+	free(config->bootstrapRemoteServer);
 }

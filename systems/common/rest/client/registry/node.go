@@ -66,6 +66,7 @@ type AddToSiteRequest struct {
 
 type NodeClient interface {
 	Get(string) (*NodeInfo, error)
+	GetAll() ([]*NodeInfo, error)
 	Add(AddNodeRequest) (*NodeInfo, error)
 	Attach(string, AttachNodesRequest) error
 	Detach(string) error
@@ -218,4 +219,30 @@ func (n *nodeClient) Delete(nodeId string) error {
 	}
 
 	return nil
+}
+
+func (n *nodeClient) GetAll() ([]*NodeInfo, error) {
+	log.Debugf("Getting all nodes.")
+
+	type Nodes struct {
+		NodeList []*NodeInfo
+	}
+
+	nodes := Nodes{}
+
+	resp, err := n.R.Get(n.u.String() + NodeEndpoint)
+	if err != nil {
+		log.Errorf("GetNode failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("GetNode failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &nodes)
+	if err != nil {
+		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("node info deserailization failure: %w", err)
+	}
+
+	return nodes.NodeList, nil
 }

@@ -10,9 +10,8 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
-
 // added a new network
-message NetworkCreatedEvent {
+message EventNetworkCreate {
     string id = 1;
     string name = 2;
     string orgId = 3;
@@ -20,7 +19,12 @@ message NetworkCreatedEvent {
     repeated string allowedNetworks = 5;
     double budget = 6;
     double overdraft = 7;
-    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
+    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];
     bool isDeactivated = 9;
     bool paymentLinks = 10;
+}
+
+message EventNetworkDelete {
+    string id = 1;
+    string orgId = 2;
 }

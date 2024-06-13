@@ -19,6 +19,8 @@
 #include "usys_file.h"
 #include "usys_services.h"
 
+#include "version.h"
+
 /**
  * @fn      void handle_sigint(int)
  * @brief   Handle terminate signal for Noded
@@ -128,7 +130,8 @@ int main(int argc, char **argv) {
 
     Config serviceConfig = {0};
 
-    log_set_service(SERVICE_NAME);
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_remote_init(SERVICE_NAME);
 
     /* Parsing command line args. */
     while (true) {
@@ -147,7 +150,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'v':
-            usys_puts(NOTIFY_VERSION);
+            usys_puts(VERSION);
             usys_exit(0);
             break;
 

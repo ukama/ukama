@@ -97,3 +97,35 @@ export enum GRAPHS_TYPE {
 registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
 });
+
+export enum ROLE_TYPE {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  VENDOR = "VENDOR",
+  USERS = "USERS",
+}
+registerEnumType(ROLE_TYPE, {
+  name: "ROLE_TYPE",
+});
+
+export enum NOTIFICATION_TYPE {
+  UNKNOWN = "UNKNOWN",
+  INFO = "INFO",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
+}
+registerEnumType(NOTIFICATION_TYPE, {
+  name: "NOTIFICATION_TYPE",
+});
+
+export enum NOTIFICATION_SCOPE {
+  ORG = "ORG",
+  NETWORK = "NETWORK",
+  SITE = "SITE",
+  SUBSCRIBER = "SUBSCRIBER",
+  USER = "USER",
+  NODE = "NODE",
+}
+registerEnumType(NOTIFICATION_SCOPE, {
+  name: "NOTIFICATION_SCOPE",
+});

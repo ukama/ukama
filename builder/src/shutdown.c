@@ -20,19 +20,18 @@
 
 #define SHUTDOWN_SCRIPT "./scripts/shutdown.sh"
 
-bool shutdown_node(char *id) {
+bool shutdown_nodes(int count, char **nodesIDList) {
 
-    char *nodeID = NULL;
+    int i;
     char runMe[MAX_BUFFER] = {0};
 
-    if (strcmp(id, "random") == 0) {
-        nodeID = DEF_NODE_ID;
-    } else {
-        nodeID = id;
+    for (i=0; i<count; i++) {
+        sprintf(runMe, "%s node %s", SHUTDOWN_SCRIPT, nodesIDList[i]);
+        if (system(runMe) < 0) {
+            usys_log_error("Unable to shutdown node: %s", nodesIDList[i]);
+            continue;
+        }
     }
-
-    sprintf(runMe, "%s node %s", SHUTDOWN_SCRIPT, nodeID);
-    if (system(runMe) < 0) return USYS_FALSE;
 
     return USYS_TRUE;
 }

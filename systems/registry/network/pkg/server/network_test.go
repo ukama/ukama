@@ -17,6 +17,7 @@ import (
 	"github.com/tj/assert"
 	"gorm.io/gorm"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -201,8 +202,9 @@ func TestNetworkServer_Delete(t *testing.T) {
 
 		netRepo := &mocks.NetRepo{}
 		netRepo.On("Delete", netId).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
-			NetworkId: netId.String(),
+		msgclientRepo.On("PublishRequest", mock.Anything, &epb.EventNetworkDelete{
+			Id:    netId.String(),
+			OrgId: orgId.String(),
 		}).Return(nil).Once()
 		netRepo.On("GetNetworkCount").Return(int64(2), nil).Once()
 		s := NewNetworkServer(OrgName, netRepo, nil, msgclientRepo, "", "", "", "", orgId.String())

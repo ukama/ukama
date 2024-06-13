@@ -56,7 +56,8 @@ type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
-	ToggleInternetSwitch(status bool, port int32, siteId string )(*contPb.ToggleInternetSwitchResponse,error)
+	ToggleInternetSwitch(status bool, port int32, siteId string) (*contPb.ToggleInternetSwitchResponse, error)
+	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
 }
 
 type configurator interface {
@@ -136,6 +137,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
 		controller.POST("/sites/:site_id/toggle-internet-port", formatDoc("Toggle internet port for a site", "Turns the internet port on or off for a specific site"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
 
+		controller.POST("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.postPingNodeHandler, http.StatusAccepted))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -147,6 +149,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 	}
+}
+
+func (r *Router) postPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
+	return r.clients.Controller.PingNode(&contPb.PingNodeRequest{
+		NodeId:    req.NodeId,
+		RequestId: req.RequestId,
+		Message:   req.Message,
+		Timestamp: req.TimeStamp,
+	})
 }
 
 func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest) (*contPb.RestartNodeResponse, error) {
@@ -216,7 +227,7 @@ func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesReques
 	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
 }
 func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
-	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port , req.SiteId)
+	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

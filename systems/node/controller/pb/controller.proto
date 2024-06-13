@@ -11,6 +11,20 @@ service ControllerService {
   rpc RestartNode(RestartNodeRequest) returns (RestartNodeResponse);
   rpc RestartNodes(RestartNodesRequest) returns (RestartNodesResponse);
   rpc ToggleInternetSwitch(ToggleInternetSwitchRequest) returns (ToggleInternetSwitchResponse);
+  rpc PingNode(PingNodeRequest) returns  (PingNodeResponse);
+}
+
+message PingNodeRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  string requestId = 2  [(validator.field) = {string_not_empty: true}, json_name = "request_id"];
+  string message = 3;
+  uint64 timestamp = 4;
+}
+
+message PingNodeResponse {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  string requestId = 2  [(validator.field) = {string_not_empty: true}, json_name = "request_id"];
+  uint64 timestamp = 3;
 }
 
 message RestartNodesRequest {

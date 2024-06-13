@@ -37,6 +37,11 @@ const (
 	EVTGEN_NODEFEEDER_PUBLISH = "request.cloud.local.{{ .Org}}.messaging.eventgenerator.nodefeeder.publish"
 	MESH_NODE_ONLINE          = "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"
 	REGISTRY_NODE_CREATE      = "event.cloud.local.{{ .Org}}.registry.node.node.create"
+	NODE_UPDATE_EVENT         = "event.cloud.local.{{ .Org}}.registry.node.node.create"
+	NODE_ASSIGNED_EVENT       = "event.cloud.local.{{ .Org}}.registry.node.node.assign"
+	ADD_MEMBER_EVENT          = "event.cloud.local.{{ .Org}}.registry.member.member.create"
+	ADD_ORG_EVENT             = "event.cloud.local.{{ .Org}}.nucleus.org.org.add"
+	ADD_USER_EVENT            = "event.cloud.local.{{ .Org}}.nucleus.user.user.add"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -128,6 +133,11 @@ func usageError() {
 	log.Printf(EVTGEN_NODEFEEDER_PUBLISH)
 	log.Printf(MESH_NODE_ONLINE)
 	log.Printf(REGISTRY_NODE_CREATE)
+	log.Printf(NODE_UPDATE_EVENT)
+	log.Printf(NODE_ASSIGNED_EVENT)
+	log.Printf(ADD_MEMBER_EVENT)
+	log.Printf(ADD_ORG_EVENT)
+	log.Printf(ADD_USER_EVENT)
 	log.Printf("Example: For Route: event.cloud.global.{{ .Org}}.messaging.mesh.ip.update of Org ukama-org  Key is event.cloud.global.ukamaorg.messaging.mesh.ip.update ")
 
 }
@@ -182,6 +192,36 @@ func start(m mb.MsgBusServiceClient) {
 				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
 			}
 
+		case msgbus.PrepareRoute(serviceConfig.OrgName, NODE_UPDATE_EVENT):
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, REGISTRY_NODE_CREATE)
+			err := pkg.RegistryNodeCreateEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+		case msgbus.PrepareRoute(serviceConfig.OrgName, NODE_ASSIGNED_EVENT):
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, NODE_ASSIGNED_EVENT)
+			err := pkg.RegistryNodeAssignedEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+		case msgbus.PrepareRoute(serviceConfig.OrgName, ADD_MEMBER_EVENT):
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, ADD_MEMBER_EVENT)
+			err := pkg.RegistryAddMemberEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+		case msgbus.PrepareRoute(serviceConfig.OrgName, ADD_ORG_EVENT):
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, ADD_ORG_EVENT)
+			err := pkg.NucleusOrgCreateEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
+		case msgbus.PrepareRoute(serviceConfig.OrgName, ADD_USER_EVENT):
+			k := msgbus.PrepareRoute(serviceConfig.OrgName, ADD_USER_EVENT)
+			err := pkg.NucleusAddUserEvent(serviceConfig, k, m)
+			if err != nil {
+				log.Errorf("Failed to publish message for key: %s. Error: %s", k, err.Error())
+			}
 		default:
 			log.Infof("No message for route %s implemented", route)
 		}

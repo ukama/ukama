@@ -16,6 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
 	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/rest"
 	"github.com/ukama/ukama/systems/common/config"
@@ -42,7 +43,18 @@ func main() {
 
 	log.Infof("Starting pcrf controller service %s", pkg.ServiceName)
 
-	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.SyncPeriod, svcConf.DebugMode)
+	nodeClient, err := client.NewNodedClient(svcConf.HttpServices.Noded, svcConf.DebugMode)
+	if err != nil {
+		log.Fatalf("Failed to create node client: %v", err)
+	}
+
+	NodeId, err := nodeClient.GetNodeId()
+	if err != nil {
+		log.Fatalf("Failed to read node info: %v", err)
+	}
+	log.Infof("PRCF running on node %s", NodeId)
+
+	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.SyncPeriod, NodeId, svcConf.DebugMode)
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)
 	}
@@ -53,9 +65,10 @@ func main() {
 	if err != nil {
 		log.Errorf("Failed to create auth client: %v", err)
 	}
+
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), NodeId, ac.AuthenticateUser)
 	go r.Run()
 
 	<-done
@@ -71,6 +84,6 @@ func initConfig() {
 func sigHandler(sigs chan os.Signal, done chan bool, ctr *controller.Controller) {
 	sig := <-sigs
 	log.Infof("Starting signal handler routine for %v", sig)
-	ctr.ExitController()
+	_ = ctr.ExitController()
 	done <- true
 }
