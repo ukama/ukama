@@ -15,8 +15,8 @@ services:
       - MINIO_ROOT_USER=minio
       - MINIO_ROOT_PASSWORD=minio123
 
-  hub: # Here, this is where you can configure your gateway.
-    build: ../hub/
+  artifactmanager: # Here, this is where you can configure your gateway.
+    build: ../artifactManager/
     ports: [ "8080:8080" ]
     networks:
       distr-net:

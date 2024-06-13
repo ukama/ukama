@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/hub /usr/bin/hub
+COPY bin/artifactmanager /usr/bin/artifactmanager
 
-CMD ["/usr/bin/hub"]
+CMD ["/usr/bin/artifactmanager"]

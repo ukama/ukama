@@ -16,7 +16,7 @@ services:
       - MINIO_ROOT_PASSWORD=minio123
 
 
-  hub: # Here, this is where you can configure your gateway.
+  artifactmanager: # Here, this is where you can configure your gateway.
     build: .
     ports: [ "8080:8080" ]
     networks:
