@@ -42,12 +42,18 @@ type ChunkerServer struct {
 
 func NewChunkerServer(orgId uuid.UUID, orgName string, config *pkg.Config,
 	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ChunkerServer {
+
+	rotuingKey := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
+	if isGlobal {
+		rotuingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
+	}
+
 	return &ChunkerServer{
 		OrgId:          orgId,
 		OrgName:        orgName,
 		IsGlobal:       isGlobal,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey: rotuingKey,
 		pushGateway:    pushGateway,
 		Store:          config.Distribution.StoreCfg,
 		ChunkConfig:    config.Distribution.Chunk,
@@ -96,12 +102,12 @@ func (s *ChunkerServer) CreateChunk(ctx context.Context, in *pb.CreateChunkReque
 			return nil, status.Error(codes.Internal, "Error while creating index file:"+err.Error())
 		}
 
-		capp := &epb.CappCreatedEvent{
+		capp := &epb.EventArtifactChunkReady{
 			Name:    fname,
 			Version: ver.String(),
 		}
 
-		route := s.baseRoutingKey.SetAction("create").SetObject("capp").MustBuild()
+		route := s.baseRoutingKey.SetAction("chunkready").SetObject(in.Type).MustBuild()
 
 		err = s.msgbus.PublishRequest(route, capp)
 		if err != nil {

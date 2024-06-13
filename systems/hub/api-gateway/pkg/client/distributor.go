@@ -13,29 +13,31 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
+	pb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Distributor struct {
+type Chunker struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  dpb.DistributorServiceClient
+	client  pb.ChunkerServiceClient
 	host    string
 }
 
-func NewDistributor(host string, timeout time.Duration) *Distributor {
+func NewChunker(host string, maxMsgSize int, timeout time.Duration) *Chunker {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(maxMsgSize),
+		grpc.MaxCallSendMsgSize(maxMsgSize)))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	client := dpb.NewDistributorServiceClient(conn)
+	client := pb.NewChunkerServiceClient(conn)
 
-	return &Distributor{
+	return &Chunker{
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
@@ -43,8 +45,8 @@ func NewDistributor(host string, timeout time.Duration) *Distributor {
 	}
 }
 
-func NewDistributorFromClient(c dpb.DistributorServiceClient) *Distributor {
-	return &Distributor{
+func NewDistributorFromClient(c pb.ChunkerServiceClient) *Chunker {
+	return &Chunker{
 		host:    "localhost",
 		timeout: 1 * time.Second,
 		conn:    nil,
@@ -52,14 +54,14 @@ func NewDistributorFromClient(c dpb.DistributorServiceClient) *Distributor {
 	}
 }
 
-func (r *Distributor) Close() {
-	r.conn.Close()
+func (d *Chunker) Close() {
+	d.conn.Close()
 }
 
-func (d *Distributor) CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error) {
-	return nil, nil
-}
+func (d *Chunker) CreateChunk(in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	defer cancel()
+	log.Infof("Sending chunking request: %+v", in)
 
-func (d *Distributor) Chunk(in *dpb.GetChunkRequest) (*dpb.GetChunkResponse, error) {
-	return nil, nil
+	return d.client.CreateChunk(ctx, in)
 }

@@ -61,13 +61,12 @@ type artifactManager interface {
 
 type distributor interface {
 	CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error)
-	Chunk(in *dpb.GetChunkRequest) (*dpb.GetChunkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.a = client.NewArtifactManager(endpoints.ArtifactManager, endpoints.MaxMsgSize, endpoints.Timeout)
-	c.d = client.NewDistributor(endpoints.Distributor, endpoints.Timeout)
+	c.d = client.NewChunker(endpoints.Distributor, endpoints.MaxMsgSize, endpoints.Timeout)
 
 	return c
 }

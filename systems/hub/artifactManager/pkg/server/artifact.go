@@ -28,6 +28,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
@@ -57,12 +58,17 @@ type chunkServer interface {
 func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chunk chunkServer, storageTimeout time.Duration,
 	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ArtifcatServer {
 
+	rotuingKey := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
+	if isGlobal {
+		rotuingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
+	}
+
 	return &ArtifcatServer{
 		OrgId:                 orgId,
 		OrgName:               orgName,
 		IsGlobal:              isGlobal,
 		msgbus:                msgBus,
-		baseRoutingKey:        msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey:        rotuingKey,
 		pushGateway:           pushGateway,
 		chunker:               chunk,
 		storage:               storage,
@@ -135,6 +141,18 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 		_, err = s.storage.PutFile(nctx, in.Name, aType, v, pkg.ChunkIndexExtension, bytes.NewReader(resp.Index))
 		if err != nil {
 			log.Errorf("Failed to store artifact index file %+v. Error %s", cReq, err.Error())
+		}
+
+		capp := &epb.EventArtifactUploaded{
+			Name:    in.Name,
+			Version: v.String(),
+		}
+
+		route := s.baseRoutingKey.SetAction("uploaded").SetObject(aType).MustBuild()
+
+		err = s.msgbus.PublishRequest(route, capp)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
 		}
 
 	}()
