@@ -62,8 +62,9 @@ func NewConfig(name string) *Config {
 			BucketSuffix:  "-local-test",
 			TimeoutSecond: 3,
 			ArtifactTypeBucketMap: map[string]string{
-				"app":  "app",
-				"cert": "cert",
+				"app":    "app",
+				"cert":   "cert",
+				"chunks": "chunks",
 			},
 		},
 
