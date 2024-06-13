@@ -71,6 +71,7 @@ type UpdateSiteRequest struct {
 type AddSiteRequest struct {
 	NetworkId     string  `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 	Name          string  `example:"s1-site" json:"site" validate:"required"`
+	Location	  string  `example:"location" json:"location" validate:"required"`
 	BackhaulId    string  `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
 	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
 	AccessId      string  `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
