@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
@@ -188,7 +189,7 @@ func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) [
 		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
 			Inventory:     i.InventoryID,
-			Category:      db.ParseType(i.Category),
+			Category:      ukama.ParseType(i.Category),  // Use ukama.ParseType here,
 			UserId:        uId,
 			Type:          i.Type,
 			Description:   i.Description,

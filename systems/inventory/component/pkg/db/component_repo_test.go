@@ -19,6 +19,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	component_db "github.com/ukama/ukama/systems/inventory/component/pkg/db"
 )
@@ -153,7 +154,7 @@ func Test_ComponentRepo_Add(t *testing.T) {
 				Id:            uuid.NewV4(),
 				Inventory:     "5",
 				UserId:        uId,
-				Category:      component_db.ACCESS,
+				Category:      ukama.ACCESS,
 				Type:          "tower node",
 				Description:   "Tower node descp",
 				DatasheetURL:  "http://datasheepurl",
@@ -224,7 +225,7 @@ func Test_ComponentRepo_Delete(t *testing.T) {
 				Id:            cId,
 				Inventory:     "5",
 				UserId:        uuid.NewV4(),
-				Category:      component_db.ACCESS,
+				Category:      ukama.ACCESS,
 				Type:          "tower node",
 				Description:   "Tower node descp",
 				DatasheetURL:  "http://datasheepurl",
