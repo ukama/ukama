@@ -20,6 +20,7 @@ import { NotificationsResDto, useGetNotificationsQuery, useNotificationSubscript
 import { MyAppProps } from '@/types';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { getTitleFromPath } from '@/utils';
+import { RoleToNotificationScopes } from '@/utils/roletoNotificationScope';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -168,71 +169,12 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   };
 
 
-const getRoleType = (role: string): Role_Type => {
-  switch (role) {
-    case 'ROLE_ADMIN':
-      return Role_Type.RoleAdmin;
-    case 'ROLE_INVALID':
-      return Role_Type.RoleInvalid;
-    case 'ROLE_NETWORK_OWNER':
-      return Role_Type.RoleNetworkOwner;
-    case 'ROLE_OWNER':
-      return Role_Type.RoleOwner;
-    case 'ROLE_USER':
-      return Role_Type.RoleUser;
-    case 'ROLE_VENDOR':
-      return Role_Type.RoleVendor;
-    default:
-      return Role_Type.RoleInvalid;
-  }
+const getRoleType = (): Role_Type => {
+  return Object.values(Role_Type).includes(user.role as Role_Type)?(user.role as Role_Type) : Role_Type.RoleInvalid
 }
-// mapping for role to scope
-const RoleToNotificationScopes: { [key in Role_Type]: Notification_Scope[] } = {
-  [Role_Type.RoleOwner]: [
-    Notification_Scope.ScopeOrg,
-    Notification_Scope.ScopeNetworks,
-    Notification_Scope.ScopeNetwork,
-    Notification_Scope.ScopeSites,
-    Notification_Scope.ScopeSite,
-    Notification_Scope.ScopeSubscribers,
-    Notification_Scope.ScopeSubscriber,
-    Notification_Scope.ScopeUsers,
-    Notification_Scope.ScopeUser,
-    Notification_Scope.ScopeNode
-  ],
-  [Role_Type.RoleAdmin]: [
-    Notification_Scope.ScopeOrg,
-    Notification_Scope.ScopeNetworks,
-    Notification_Scope.ScopeNetwork,
-    Notification_Scope.ScopeSites,
-    Notification_Scope.ScopeSite,
-    Notification_Scope.ScopeSubscribers,
-    Notification_Scope.ScopeSubscriber,
-    Notification_Scope.ScopeUsers,
-    Notification_Scope.ScopeUser,
-    Notification_Scope.ScopeNode
-  ],
-  [Role_Type.RoleNetworkOwner]: [
-    Notification_Scope.ScopeNetwork,
-    Notification_Scope.ScopeSite,
-    Notification_Scope.ScopeSites,
-    Notification_Scope.ScopeSubscribers,
-    Notification_Scope.ScopeSubscriber,
-    Notification_Scope.ScopeUsers,
-    Notification_Scope.ScopeUser,
-    Notification_Scope.ScopeNode
-  ],
-  [Role_Type.RoleVendor]: [
-    Notification_Scope.ScopeNetwork
-  ],
-  [Role_Type.RoleUser]: [
-    Notification_Scope.ScopeUser
-  ],
-  [Role_Type.RoleInvalid]: []
-};
 
-const getScopesByRole = (role:string):Notification_Scope[] => {
-const roleType = getRoleType(role)
+const getScopesByRole = ():Notification_Scope[] => {
+const roleType = getRoleType()
 return RoleToNotificationScopes[roleType] || []
 }
 
@@ -245,8 +187,8 @@ useGetNotificationsQuery({
       orgId: user.orgId,
       userId: user.id,
       networkId: network.id,
-      forRole: getRoleType(user.role),
-      scopes: getScopesByRole(Role_Type.RoleVendor),
+      forRole: getRoleType(),
+      scopes: getScopesByRole(),
     },
   },
   onCompleted: (data) => {
@@ -261,8 +203,8 @@ useNotificationSubscriptionSubscription({
     networkId: network.id,
     orgId: user.orgId,
     userId: user.id,
-    forRole: getRoleType(user.role),
-    scopes: getScopesByRole(Role_Type.RoleVendor),
+    forRole: getRoleType(),
+    scopes: getScopesByRole(),
   },
   onData: ({ data }) => {
     const newAlert = data.data?.notificationSubscription;
