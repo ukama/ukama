@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { NotificationsResDto } from '@/generated/metrics';
 import DeleteNotification from '../DeletNotification';
+import { formatTime } from '@/utils/formatTime';
 
 interface AlertBoxProps {
   alerts: NotificationsResDto[] | undefined;
@@ -30,16 +31,6 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
 
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
-
-  const formatTime = (isoString:string) => {
-    const date = new Date(isoString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString();
-    const hours = date.getHours();
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = (hours % 12 || 12).toString();
-    return `${month}/${day} ${formattedHours}${period}`;
-  };
 
   return (
     <Box
