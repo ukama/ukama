@@ -7,15 +7,21 @@
  */
 
 'use client';
+import { metricsClient } from '@/client/ApolloClient';
 import { useAppContext } from '@/context';
 import {
+  Notification_Scope,
+  Role_Type,
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
+  useUpdateNotificationMutation,
 } from '@/generated';
+import { NotificationsResDto, useGetNotificationsQuery, useNotificationSubscriptionSubscription } from '@/generated/metrics';
 import { MyAppProps } from '@/types';
 import AddNetworkDialog from '@/ui/molecules/AddNetworkDialog';
 import { getTitleFromPath } from '@/utils';
+import { RoleToNotificationScopes } from '@/utils/roletoNotificationScope';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -28,6 +34,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
+  const [alerts, setAlerts] = useState<NotificationsResDto[] | undefined>(
+    undefined,
+  );
   const {
     token,
     user,
@@ -162,6 +171,74 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       });
   };
 
+  const [updateNotificationMutation] = useUpdateNotificationMutation()
+
+  const getRoleType = (): Role_Type => {
+    return Object.values(Role_Type).includes(user.role as Role_Type)
+      ? (user.role as Role_Type)
+      : Role_Type.RoleInvalid;
+  };
+
+  const getScopesByRole = (): Notification_Scope[] => {
+    const roleType = getRoleType();
+    return RoleToNotificationScopes[roleType] || [];
+  };
+
+  useGetNotificationsQuery({
+    client: metricsClient,
+    fetchPolicy: 'cache-first',
+
+    variables: {
+      data: {
+        orgId: user.orgId,
+        userId: user.id,
+        networkId: network.id,
+        forRole: getRoleType(),
+        scopes: getScopesByRole(),
+      },
+    },
+    onCompleted: (data) => {
+      const alerts = data.getNotifications.notifications;
+      setAlerts(alerts);
+    },
+  });
+
+  useNotificationSubscriptionSubscription({
+    client: metricsClient,
+    variables: {
+      networkId: network.id,
+      orgId: user.orgId,
+      userId: user.id,
+      forRole: getRoleType(),
+      scopes: getScopesByRole(),
+    },
+    onData: ({ data }) => {
+      const newAlert = data.data?.notificationSubscription;
+      if (newAlert) {
+        setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
+      }
+    },
+  });
+
+  // Mark alert as read
+  const handleAlertRead = (index: number) => {
+    if (alerts) {
+      let alertId = alerts[index].id;
+      updateNotificationMutation({
+        variables: {
+          updateNotificationId: alertId,
+          isRead: true,
+        },
+      });
+      setAlerts((prev: any) => {
+        if (!prev) return prev;
+        const newAlerts = [...prev];
+        newAlerts[index] = { ...newAlerts[index], isRead: true };
+        return newAlerts;
+      });
+    }
+  };
+
   return (
     <Layout
       page={pageName}
@@ -173,6 +250,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       handleAddNetwork={handleAddNetworkAction}
       networks={networksData?.getNetworks.networks || []}
       isLoading={networksLoading || skeltonLoading}
+      alerts={alerts}
+      setAlerts={setAlerts}
+      handleAlertRead={handleAlertRead}
     >
       <Component {...pageProps} />
       <AddNetworkDialog

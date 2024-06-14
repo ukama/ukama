@@ -87,14 +87,11 @@ const getNodeRangeMetric = async (
 const getNotifications = async (
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, subscriberId, userId, networkId, forRole } = args;
+  const { orgId, userId, networkId, forRole } = args;
 
   let params = "";
   if (orgId) {
     params = params + `&org_id=${orgId}`;
-  }
-  if (subscriberId) {
-    params = params + `&subscriber_id=${subscriberId}`;
   }
   if (userId) {
     params = params + `&user_id=${userId}`;

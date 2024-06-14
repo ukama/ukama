@@ -807,6 +807,12 @@ mutation UpdateInvitation($data: UpateInvitationInputDto!) {
     id
   }
 }
+# Notifications
+mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
+  updateNotification(isRead: $isRead, id: $updateNotificationId) {
+    id
+  }
+}
 
 ### End Invitation ###
 
