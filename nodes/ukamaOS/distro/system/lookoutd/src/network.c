@@ -46,15 +46,32 @@ static int start_framework(Config *config, UInst *instance) {
 	return USYS_TRUE;
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
     
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
