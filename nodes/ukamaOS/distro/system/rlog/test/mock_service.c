@@ -48,5 +48,5 @@ int main(int argc, char **argv) {
         usys_log_info(&logMessage[0]);
     }
     
-	return 0;
+    return 0;
 }

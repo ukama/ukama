@@ -103,4 +103,8 @@ int web_service_cb_post_config(const URequest *request,
                               UResponse *response,
 							  void *epConfig);
 
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data);
+
 #endif /* INC_WEB_SERVICE_H_ */

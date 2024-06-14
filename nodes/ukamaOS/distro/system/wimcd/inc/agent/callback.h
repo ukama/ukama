@@ -25,4 +25,8 @@ int agent_web_service_cb_default(const URequest *request,
                                  UResponse *response,
                                  void *data);
 
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data);
+
 #endif /* AGENT_CALLBACK_H */

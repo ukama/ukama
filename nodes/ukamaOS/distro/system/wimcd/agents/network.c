@@ -31,19 +31,59 @@ static int get_agent_port(char *method) {
     return usys_find_service_port(buffer);
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static void setup_endpoints(struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &agent_web_service_cb_ping, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &agent_web_service_cb_version, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("apps/:name/:tag"), 0,
                                &agent_web_service_cb_post_capp, NULL);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("apps/:name/:tag"));
 
     ulfius_set_default_endpoint(instance,
                                 &agent_web_service_cb_default, NULL);
