@@ -23,6 +23,11 @@
 #include "usys_types.h"
 #include "usys_mem.h"
 #include "usys_log.h"
+#include "usys_services.h"
+#include "usys_api.h"
+#include "usys_file.h"
+
+#include "version.h"
 
 static void log_json(json_t *json) {
 
@@ -40,8 +45,6 @@ static void log_json(json_t *json) {
 static int validate_post_request(WimcReq *req) {
 
   WFetch *fetch=NULL;
-  WContent *content=NULL;
-
   fetch = req->fetch;
   
   if (!validate_url(fetch->cbURL) ||
@@ -75,8 +78,8 @@ static void free_wimc_request(WimcReq *req) {
     usys_free(req);
 }
 
-int agent_web_service_cb_post_capp(const struct _u_request *request,
-                                   struct _u_response *response,
+int agent_web_service_cb_post_capp(const URequest *request,
+                                   UResponse *response,
                                    void *data) {
 
     int retCode=0;
@@ -84,13 +87,10 @@ int agent_web_service_cb_post_capp(const struct _u_request *request,
     json_t       *json = NULL;
     json_error_t jerr;
     WimcReq      *req = NULL;
-    char         *wimcURL = NULL;
-
-    wimcURL = (char *)data;
 
     json = ulfius_get_json_body_request(request, &jerr);
     if (!json) {
-        usys_log_error("JSON error for the agent register request: %s",
+        usys_log_error("JSON error for the wimc's  request: %s",
                        jerr.text);
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
@@ -113,13 +113,15 @@ int agent_web_service_cb_post_capp(const struct _u_request *request,
 
     /* setup cbURL */
     req->fetch->cbURL = (char *)calloc(1, WIMC_MAX_URL_LEN);
-    if (req->fetch->cbURL != NULL) {
-        sprintf(req->fetch->cbURL, "%s/v1/agents/update", wimcURL);
-    } else {
+    if (req->fetch->cbURL == NULL) {
         usys_log_error("Error allocating memory: %ld", WIMC_MAX_URL_LEN);
         retCode = HttpStatus_InternalServerError;
         goto done;
     }
+    sprintf(req->fetch->cbURL, "http://localhost:%d/v1/apps/%s/%s/stats",
+            usys_find_service_port(SERVICE_WIMC),
+            req->fetch->content->name,
+            req->fetch->content->tag);
 
     if (!validate_post_request(req)) {
         usys_log_error("Invalid parameters for capp post");
@@ -157,6 +159,17 @@ int agent_web_service_cb_ping(const URequest *request,
     ulfius_set_string_body_response(response,
                                     HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int agent_web_service_cb_version(const URequest *request,
+                                 UResponse *response,
+                                 void *data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }

@@ -94,53 +94,47 @@ sqlite3 *create_db(char *dbFile) {
 int init_db(sqlite3 *db) {
 
   int ret;
-  char *sql, *errMsg;
+  char *errMsg = NULL;
+  const char *sql = "CREATE TABLE IF NOT EXISTS Containers ("
+      "Name TEXT NOT NULL,"
+      "Tag TEXT NOT NULL,"
+      "Path TEXT NOT NULL,"
+      "Status TEXT NOT NULL,"
+      "Flags TEXT);";
 
-  sql = "DROP TABLE IF EXISTS Containers; CREATE TABLE Containers (Name TEXT, Tag TEXT, Path TEXT, Status TEXT, Flags INIT); INSERT INTO Containers VALUES('Null', 'latest', '/dev/null', 'Available', 0);"; 
-  
   ret = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
     
   if (ret != SQLITE_OK) {
-        
-    fprintf(stderr, "Error initializing the db: %s\n", errMsg);
-    sqlite3_free(errMsg);
+      log_error("Error initializing the db: %s", errMsg);
+      sqlite3_free(errMsg);
 
-    return FALSE;
-  } 
-    
+      return FALSE;
+  }
   return TRUE;
 }
 
-/*
- * open_db -- Open db. A new db is created and initialized with "containers"
- *            table if it doesn't exist.
- */
+void open_db(sqlite3 **db, char *dbFile, int flag) {
 
-sqlite3 *open_db(char *dbFile, int flag) {
-
-  sqlite3 *db;
-
-  db = create_db(dbFile);
-  if (db == NULL) {
-    return NULL;
-  }
-
-  if (flag == WIMC_FLAG_CREATE_DB) {
-    
-    /* initialize db with new table. */
-    if (!init_db(db)) {
-      /* close the db and delete file. */
-      sqlite3_close(db);
-      delete_file(dbFile);
-      return NULL;
+    *db = create_db(dbFile);
+    if (*db == NULL) {
+        log_error("Failed to created db: %s", dbFile);
+        return;
     }
-  } else {
-    /* sanity check. Try to query the default table. */
-    if (!table_exists(db)) {
-      sqlite3_close(db);
-      return NULL;
-    }      
-  }
-  
-  return db;
+
+    if (flag == WIMC_FLAG_CREATE_DB) {
+        if (!init_db(*db)) {
+            log_error("Failed to initialize db: %s", dbFile);
+            sqlite3_close(*db);
+            delete_file(dbFile);
+            *db = NULL;
+            return;
+        }
+    } else {
+        if (!table_exists(*db)) {
+            log_error("Default table does not exist in db: %s", dbFile);
+            sqlite3_close(*db);
+            *db = NULL;
+            return;
+        }
+    }
 }
