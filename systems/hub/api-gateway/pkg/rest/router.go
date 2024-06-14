@@ -162,8 +162,6 @@ func (r *Router) proxy(c *gin.Context) error {
 	return nil
 }
 
-// curl --request GET http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34.tar.gz --output test-capp-v-0.0.34.tar.gz
-// curl --request GET http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34.caibx --output test-capp-v0.0.34.caibx
 func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error {
 	log.Infof("Getting artifact %s of type %s with filname %s", req.Name, req.ArtifactType, req.FileName)
 
@@ -193,7 +191,6 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 	return nil
 }
 
-// curl --request PUT   http://0.0.0.0:8000/v1/hub/app/test-capp/0.0.34 --header 'Content-Type: application/gzip' --data-binary "@/home/vishal/cdrive/handson/desync/hello.tar.gz"
 func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse, error) {
 
 	req := &ArtifactUploadRequest{}
