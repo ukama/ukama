@@ -13,7 +13,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	apb "github.com/ukama/ukama/systems/hub/artifactManager/pb/gen"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

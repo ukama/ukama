@@ -18,7 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
-	apb "github.com/ukama/ukama/systems/hub/artifactManager/pb/gen"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 	"github.com/ukama/ukama/systems/hub/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/hub/node-gateway/pkg"
@@ -49,7 +49,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	a artifactManager
-	d distributor
+	c chunker
 }
 
 type artifactManager interface {
@@ -59,14 +59,14 @@ type artifactManager interface {
 	ListArtifacts(in *apb.ListArtifactRequest) (*apb.ListArtifactResponse, error)
 }
 
-type distributor interface {
+type chunker interface {
 	CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.a = client.NewArtifactManager(endpoints.ArtifactManager, endpoints.MaxMsgSize, endpoints.Timeout)
-	c.d = client.NewChunker(endpoints.Distributor, endpoints.MaxMsgSize, endpoints.Timeout)
+	c.c = client.NewChunker(endpoints.Distributor, endpoints.MaxMsgSize, endpoints.Timeout)
 
 	return c
 }
