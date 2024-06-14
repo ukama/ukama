@@ -34,8 +34,8 @@ import (
 	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 )
 
-const CappsPath = "/v1/capps"
-const ChunksPath = "/v1/chunks"
+const UrlPath = "/v1/hub"
+const ChunksPath = "/v1/distributor/"
 
 type ArtifcatServer struct {
 	pb.ArtifactServiceServer
@@ -201,7 +201,7 @@ func (s *ArtifcatServer) GetArtifact(ctx context.Context, in *pb.GetArtifactRequ
 }
 
 func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetArtifactVersionListRequest) (*pb.GetArtifactVersionListResponse, error) {
-	log.Infof("Getting version list: %s of type %s", in.Name, in.Type)
+	log.Infof("Getting version list: %s of type %s", in.Name, in.Type.String())
 
 	ls, err := s.storage.ListVersions(ctx, in.Name, strings.ToLower(in.Type.String()))
 	if err != nil {
@@ -216,7 +216,7 @@ func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetA
 	for _, v := range *ls {
 		formats := []*pb.FormatInfo{
 			{
-				Url:       path.Join(CappsPath, in.Name, v.Version+pkg.TarGzExtension),
+				Url:       path.Join(UrlPath, strings.ToLower(in.Type.String()), in.Name, v.Version+pkg.TarGzExtension),
 				CreatedAt: timestamppb.New(v.CreatedAt),
 				Size:      v.SizeBytes,
 				Type:      "tar.gz",
@@ -225,8 +225,10 @@ func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetA
 
 		if v.Chunked {
 			formats = append(formats, &pb.FormatInfo{
-				Url:  path.Join(CappsPath, in.Name, v.Version+pkg.ChunkIndexExtension),
-				Type: "chunk",
+				Url:       path.Join(UrlPath, strings.ToLower(in.Type.String()), in.Name, v.Version+pkg.ChunkIndexExtension),
+				Type:      "chunk",
+				CreatedAt: timestamppb.New(v.CreatedAt),
+				Size:      v.SizeBytes,
 				ExtraInfo: []*pb.ExtraInfoMap{
 					{
 						Key:   "chunks",
