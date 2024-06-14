@@ -24,7 +24,7 @@ import (
 	"github.com/ukama/ukama/systems/hub/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg/client"
-	apb "github.com/ukama/ukama/systems/hub/artifactManager/pb/gen"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 
 	"github.com/Masterminds/semver/v3"
@@ -53,7 +53,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	a artifactManager
-	d distributor
+	c chunker
 }
 
 type artifactManager interface {
@@ -63,14 +63,14 @@ type artifactManager interface {
 	ListArtifacts(in *apb.ListArtifactRequest) (*apb.ListArtifactResponse, error)
 }
 
-type distributor interface {
+type chunker interface {
 	CreateChunk(in *dpb.CreateChunkRequest) (*dpb.CreateChunkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.a = client.NewArtifactManager(endpoints.ArtifactManager, endpoints.MaxMsgSize, endpoints.Timeout)
-	c.d = client.NewChunker(endpoints.Distributor, endpoints.MaxMsgSize, endpoints.Timeout)
+	c.c = client.NewChunker(endpoints.Distributor, endpoints.MaxMsgSize, endpoints.Timeout)
 
 	return c
 }

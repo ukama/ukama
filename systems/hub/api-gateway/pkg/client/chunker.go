@@ -45,7 +45,7 @@ func NewChunker(host string, maxMsgSize int, timeout time.Duration) *Chunker {
 	}
 }
 
-func NewDistributorFromClient(c pb.ChunkerServiceClient) *Chunker {
+func NewChunkerFromClient(c pb.ChunkerServiceClient) *Chunker {
 	return &Chunker{
 		host:    "localhost",
 		timeout: 1 * time.Second,
