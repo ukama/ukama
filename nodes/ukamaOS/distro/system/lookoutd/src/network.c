@@ -57,6 +57,27 @@ static void setup_unsupported_methods(UInst *instance,
                                    &web_service_cb_not_allowed,
                                    (void *)allowedMethod);
     }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
 }
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
