@@ -53,15 +53,53 @@ static int start_framework(UInst *instance) {
     return USYS_TRUE;
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static void setup_websocket_endpoints(char *nodeID, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_socket_cb_ping, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
     
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
-                               API_RES_EP("logit/"), 0,
+                               API_RES_EP("logit"), 0,
                                &web_socket_cb_post_log, nodeID);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("logit"));
 
     ulfius_set_default_endpoint(instance, &web_socket_cb_default, NULL);
 }
@@ -71,26 +109,38 @@ static void setup_webservice_endpoints(UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &web_service_cb_version, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("level"), 0,
                                &web_service_cb_get_level, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("level"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("output"), 0,
                                &web_service_cb_get_output, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("output"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("level/:level"), 0,
                                &web_service_cb_post_level, NULL);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("level/:level"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("output/:output"), 0,
                                &web_service_cb_post_output, NULL);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("output/:output"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
 }
