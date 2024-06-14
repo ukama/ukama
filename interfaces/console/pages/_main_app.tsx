@@ -186,7 +186,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   useGetNotificationsQuery({
     client: metricsClient,
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
 
     variables: {
       data: {
