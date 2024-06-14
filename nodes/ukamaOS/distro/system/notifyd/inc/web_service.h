@@ -105,4 +105,8 @@ int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
 
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *data);
+
 #endif /* INC_WEB_SERVICE_H_ */
