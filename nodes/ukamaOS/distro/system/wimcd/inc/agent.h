@@ -125,8 +125,9 @@ typedef struct _Agent {
 } Agent;
 
 /* Functions header */
+bool register_agent(Agent **agents, char *method, char *url, char *uuid);
 int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid);
+Agent *find_matching_agent(Agent *agents, char *method);
 void clear_agents(Agent *agent);
-int get_agent_port_by_method(char *method);
 
 #endif /* WIMC_AGENT_H */
