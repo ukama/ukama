@@ -61,8 +61,6 @@ XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC)
 
-all: mock_provider
-
 mock_provider: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
@@ -74,6 +72,8 @@ $(VENDOR_PKG):
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
+
+all: mock_provider
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)

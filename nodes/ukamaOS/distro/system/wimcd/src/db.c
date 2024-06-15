@@ -25,20 +25,24 @@
 #define TRUE 1
 #define FALSE 0
 
-int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status) {
+/*
+ * insert_entry -- 
+ *
+ */
+static int db_insert_entry(sqlite3 *db, char *name, char *tag, char *path) {
 
   int val=FALSE;
   char *buff, *err=NULL;
 
   buff = (char *)calloc(1, 2048);
   
-  if (db == NULL || name == NULL || tag == NULL || status == NULL ||
+  /* sanity checks. */
+  if (db == NULL || name == NULL || tag == NULL || path == NULL ||
       buff == NULL) {
     goto failure;
   }
 
-  sprintf(buff, "INSERT INTO Containers VALUES('%s', '%s', 'null', '%s', 'null');",
-          name, tag, status);
+  sprintf(buff, "INSERT INTO Containers VALUES('%s', '%s', '%s', 'null', 'null');", name, tag, path);
 
   val = sqlite3_exec(db, buff, 0, 0, &err);
 
@@ -48,8 +52,8 @@ int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status) {
     val = FALSE;
     goto failure;
   } else {
-    log_debug("Succesfully insert in db. Name: %s Tag: %s Status: %s",
-	      name, tag, status);
+    log_debug("Succesfully insert in db. Name: %s Tag: %s Path: %s",
+	      name, tag, path);
   }
 
   val = TRUE;
@@ -59,52 +63,68 @@ int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status) {
   return val;
 }
 
-static int parse_status_response(void *arg, int argc, char **argv, char **colName) {
+/* 
+ * parse_response -- query callback.
+ *
+ */
 
-    int i;
-    char **status = (char **)arg;
-
-    for(i=0; i<argc; i++){
-        if (strcmp(colName[i], "Status") == 0) {
-            if (argv[i] != NULL) {
-                *status = strdup(argv[i]);
-            return 0;
-            }
-        }
-    }
-
-    return 0;
-}
-
-int db_read_status(sqlite3 *db, char *name, char *tag, char **status) {
+static int parse_response(void **arg, int argc, char **argv, char **colName) {
   
-    int val = FALSE;
-    char buf[1024] = {0};
-    char *err = NULL;
-
-    if (db == NULL || name == NULL || tag == NULL || status == NULL) {
-        return FALSE;
+  int i;
+  char **path = (char **)arg;
+  
+  for(i=0; i<argc; i++){
+    if (strcmp(colName[i], "Path") == 0) {
+      strcpy(*path, argv[1]);
+      return 0;
     }
-
-    sprintf(buf, "SELECT Status FROM Containers WHERE Name='%s' AND Tag='%s';",
-            name, tag);
-
-    val = sqlite3_exec(db, buf, parse_status_response, status, &err);
-
-    if (val != SQLITE_OK) {
-        log_error("SQL error: query failure: %s", err);
-        sqlite3_free(err);
-        return FALSE;
-    } else {
-        if (*status == NULL) {
-            return FALSE;
-        }
-    }
-
-    log_debug("db query. Name: %s Tag: %s Status: %s", name, tag, *status);
-
-    return TRUE;
+  }
+  
+  return 0;
 }
+
+/*
+ * read_path -- for given container name and tag, return the path.
+ *
+ */
+int db_read_path(sqlite3 *db, char *name, char *tag, char **path) {
+  
+  int val=FALSE;
+  char buf[1024];
+  char *err=NULL;
+  
+  /* sanity checks. */
+  if (db == NULL || name == NULL || tag == NULL || path == NULL) {
+    goto failure;
+  }
+  
+  sprintf(buf, "SELECT * FROM Containers WHERE (Name='%s' AND Tag='%s');",
+	  name, tag);
+
+  val = sqlite3_exec(db, buf, parse_response, path, &err);
+
+  if (val != SQLITE_OK) {
+    log_error("SQL error: query failure: %s", err);
+    sqlite3_free(err);
+    val = FALSE;
+    goto failure;
+  } else {
+    if (*path==NULL) {
+      goto failure;
+    }
+
+    log_debug("db query. Name: %s Tag: %s Path: %s",
+	      name, tag, *path);
+  }
+  val = TRUE;
+
+ failure:
+  return val;
+}
+
+/*
+ * update_local_db -- update entries in local db.
+ */
 
 void update_local_db(sqlite3 *db, char *name, char *tag, char *path) {
 

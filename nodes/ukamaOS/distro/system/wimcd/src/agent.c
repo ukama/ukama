@@ -6,6 +6,10 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+/*
+ * Agent related functions.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,22 +26,79 @@
 #include "usys_types.h"
 #include "usys_mem.h"
 #include "usys_log.h"
-#include "usys_services.h"
 
 struct Response {
     char *buffer;
     size_t size;
 };
 
-int get_agent_port_by_method(char *method) {
+bool register_agent(Agent **agents,
+                    char *agentID,
+                    char *agentMethod,
+                    char *agentURL) {
 
-    char buffer[128] = {0};
-
-    sprintf(buffer, "wimc-agent-%s", method);
-
-    return usys_find_service_port(buffer);
-}
+    int i;
+    Agent *ptr = NULL;
+    uuid_t uuid;
     
+    uuid_parse(agentID, uuid);
+    ptr = *agents;
+
+    for (i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid) == 0) { /* have valid agent id. */
+            if (strcasecmp(agentMethod, ptr[i].method) == 0 &&
+                strcasecmp(agentURL, ptr[i].url) == 0) {
+                /* An existing entry. */
+                log_debug("Found similar agent. id: %s, method %s and url: %s",
+                          agentID, agentMethod, agentURL);
+                return USYS_FALSE;
+            }
+        } else {
+
+            ptr[i].method = strdup(agentMethod);
+            ptr[i].url    = strdup(agentURL);
+            ptr[i].state  = WIMC_AGENT_STATE_REGISTER;
+
+            uuid_copy(ptr[i].uuid, uuid);
+            
+            return USYS_TRUE;
+        }
+    }
+
+    usys_log_debug("Max. allowable number of agents reached. Ignoring");
+    return USYS_FALSE;
+}
+
+bool delete_agent(Agent **agents,
+                  char *agentID) {
+
+    Agent *ptr = NULL;
+    uuid_t uuid;
+
+    uuid_parse(agentID, uuid);
+    ptr = *agents;
+
+    for (int i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid) == 0) { /* have valid agent id. */
+            if (uuid_compare(uuid, ptr[i].uuid) == 0) { /* match */
+
+                usys_log_debug("Agent removed id: %s, method %s and url: %s",
+                               agentID, ptr[i].method, ptr[i].url);
+
+                uuid_clear(ptr[i].uuid);
+                usys_free(ptr[i].method);
+                usys_free(ptr[i].url);
+                ptr[i].state = 0;
+
+                return USYS_TRUE;
+            }
+        }
+    }
+
+    usys_log_debug("Agent with UUID not found: %s", agentID);
+    return USYS_FALSE;
+}
+
 int process_agent_update_request(WTasks **tasks,
                                  AgentReq *req,
                                  sqlite3 *db) {
@@ -91,6 +152,31 @@ int process_agent_update_request(WTasks **tasks,
   return HttpStatus_OK;
 }
 
+Agent *find_matching_agent(Agent *agents, char *method) {
+
+    int i;
+    Agent *ptr = agents;
+
+    /* Sanity check. */
+    if (agents == NULL)
+        return NULL;
+
+    for (i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
+            if (strcmp(method, ptr[i].method)==0) {
+                return ptr;
+            }
+        }
+    }
+
+    /* NULL if no match found. */
+    return NULL;
+}
+
+/*
+ * cleanup_wimc_request --
+ *
+ */
 void cleanup_wimc_request(WimcReq *request) {
 
     if (request == NULL) return;
@@ -115,25 +201,28 @@ void cleanup_wimc_request(WimcReq *request) {
     usys_free(request);
 }
 
+/*
+ * response_callback --
+ */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
-                                void *userp) {
+				void *userp) {
 
-    size_t realsize = size * nmemb;
-    struct Response *response = (struct Response *)userp;
+  size_t realsize = size * nmemb;
+  struct Response *response = (struct Response *)userp;
 
-    response->buffer = realloc(response->buffer, response->size + realsize + 1);
+  response->buffer = realloc(response->buffer, response->size + realsize + 1);
 
-    if(response->buffer == NULL) {
-        log_error("Not enough memory to realloc of size: %s",
-                  response->size + realsize + 1);
-        return 0;
-    }
+  if(response->buffer == NULL) {
+    log_error("Not enough memory to realloc of size: %s",
+	      response->size + realsize + 1);
+    return 0;
+  }
 
-    memcpy(&(response->buffer[response->size]), contents, realsize);
-    response->size += realsize;
-    response->buffer[response->size] = 0;
+  memcpy(&(response->buffer[response->size]), contents, realsize);
+  response->size += realsize;
+  response->buffer[response->size] = 0; /* Null terminate. */
 
-    return realsize;
+  return realsize;
 }
 
 void create_wimc_request(WimcReq **request,
@@ -172,16 +261,13 @@ void create_wimc_request(WimcReq **request,
   (*request)->fetch = fetch;
 }
 
-static bool send_request_to_agent(char *name, char *tag,
-                                  char *agentMethod,
-                                  const json_t *json,
-                                  long *statusCode) {
+static bool send_request_to_agent(char *agentURL,
+                                  json_t *json,
+                                  int *statusCode) {
 
     bool  ret  = USYS_FALSE;
     CURL *curl = NULL;
     char *jStr = NULL;
-    char agentURL[WIMC_MAX_URL_LEN] = {0};
-    CURLcode res;
 
     struct curl_slist *headers=NULL;
     struct Response response;
@@ -195,20 +281,17 @@ static bool send_request_to_agent(char *name, char *tag,
         return USYS_FALSE;
     }
 
-    sprintf(agentURL,
-            "http://localhost:%d/v1/apps/%s/%s",
-            get_agent_port_by_method(agentMethod), name, tag);
-
     response.buffer = malloc(1);
     response.size   = 0;
     jStr = json_dumps(json, 0);
-    usys_log_debug("Sending request to Agent: %s", jStr);
 
+    /* Add to the header. */
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "charset: utf-8");
 
-    curl_easy_setopt(curl, CURLOPT_URL,           agentURL);
+    curl_easy_setopt(curl, CURLOPT_URL, agentURL);
+
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER,    headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS,    jStr);
@@ -217,13 +300,10 @@ static bool send_request_to_agent(char *name, char *tag,
 
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
 
-    res = curl_easy_perform(curl);
-    if ( res != CURLE_OK) {
-        log_error("Error sending request to Agent: %s", curl_easy_strerror(res));
-        *statusCode = 0;
-        ret = USYS_FALSE;
+    if (curl_easy_perform(curl) != CURLE_OK) {
+        log_error("Error sending request to Agent: %s");
     } else {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, statusCode);
+        *statusCode = HttpStatus_OK;
         ret = USYS_TRUE;
     }
 
@@ -238,12 +318,13 @@ static bool send_request_to_agent(char *name, char *tag,
 }
 
 bool communicate_with_agent(WimcReq *request,
-                            char *agentMethod,
-                            Config *config) {
+                            char *url,
+                            Config *config,
+                            uuid_t *uuid) {
 
     long code=0;
     json_t *json=NULL;
-    long agentRetCode=0;
+    int agentRetCode=0;
 
     if (!serialize_wimc_request(request, &json)) {
         usys_log_error("Error serializing wimc request to agent");
@@ -251,14 +332,13 @@ bool communicate_with_agent(WimcReq *request,
     }
 
     add_to_tasks(config->tasks, request);
+    uuid_copy(*uuid, request->fetch->uuid);
 
-    if (send_request_to_agent(request->fetch->content->name,
-                              request->fetch->content->tag,
-                              agentMethod, json, &agentRetCode)) {
+    if (send_request_to_agent(url, json, &agentRetCode)) {
         if (agentRetCode == HttpStatus_OK) {
             usys_log_debug("Agent iniated to fetch capp");
         } else {
-            usys_log_error("Agent reutrned an error: %ld", agentRetCode);
+            usys_log_error("Agent reutrned an error: %d", agentRetCode);
             json_decref(json);
 
             return USYS_FALSE;

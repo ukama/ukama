@@ -29,7 +29,6 @@ extern "C" {
 #define SERVICE_RLOG_ADMIN    "rlog-admin"	
 #define SERVICE_REMOTE        "remote"
 #define SERVICE_BOOTSTRAP_REMOTE "bootstrap-remote"
-#define SERVICE_WIMC_AGENT    "wimc-agent"
 
 #ifdef __cplusplus
 }

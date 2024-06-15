@@ -18,8 +18,6 @@
 #include "usys_mem.h"
 #include "usys_types.h"
 
-#include "version.h"
-
 static void free_agent_request_update(AgentReq *req) {
 
     usys_free(req->update->voidStr);
@@ -50,174 +48,68 @@ static void create_hub_urls_for_agent(char *hubURL,
     }
 }
 
-static int file_exists_and_non_empty(char *name, char *tag) {
-
-
-    char *fileName = NULL;
-    FILE *file     = NULL;
-    long filesize  = 0;
-
-    fileName = (char *)malloc((strlen(DEFAULT_APPS_PKGS_PATH) +
-                               strlen(name) + strlen(tag) + 2)*sizeof(char));
-
-    sprintf(fileName, "%s/%s_%s.tar.gz",
-            DEFAULT_APPS_PKGS_PATH,
-            name, tag);
-
-    file = fopen(fileName, "r");
-    if (file == NULL) {
-        return 0;
-    }
-
-    fseek(file, 0, SEEK_END);
-    filesize = ftell(file);
-    fclose(file);
-
-    if (filesize > 0) {
-        return 1;
-    }
-
-    return 0;
-}
-
-int web_service_cb_get_app_status(const URequest *request,
-                                  UResponse *response,
-                                  void *data) {
-
-    char   *name=NULL, *tag=NULL, *status=NULL;
-    Config *config=NULL;
-    json_t *jResponse = NULL;
-
-    config = (Config *)data;
-
-    name = (char *)u_map_get(request->map_url, "name");
-    tag  = (char *)u_map_get(request->map_url, "tag");
-
-    if (name == NULL || tag == NULL) {
-        usys_log_error("app name:tag not found in the request.");
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (db_read_status(config->db, name, tag, &status)) {
-        if (strcmp(status, "download") == 0) {
-            jResponse = json_pack("{s:s}",
-                                  "message", "download");
-            ulfius_set_json_body_response(response,
-                                          HttpStatus_OK,
-                                          jResponse);
-            json_decref(jResponse);
-        } else if (strcmp(status, "available") == 0) {
-            if (file_exists_and_non_empty(name, tag)) {
-                usys_log_debug("app found in the default location");
-                jResponse = json_pack("{s:s}",
-                                      "message", "available");
-                ulfius_set_json_body_response(response,
-                                              HttpStatus_OK,
-                                              jResponse);
-                json_decref(jResponse);
-            } else {
-                usys_log_error("app is corrupted at default location");
-                jResponse = json_pack("{s:s}",
-                                      "message", "App corrupted at default location.");
-                ulfius_set_json_body_response(response,
-                                            HttpStatusStr(HttpStatus_InternalServerError),
-                                            jResponse);
-                json_decref(jResponse);
-            }
-        } else {
-            usys_log_error("Unknown status found for app '%s:%s'.", name, tag);
-            jResponse = json_pack("{s:s}",
-                                  "message", "Unknown app status.");
-            ulfius_set_json_body_response(response,
-                                          HttpStatusStr(HttpStatus_InternalServerError),
-                                          jResponse);
-            json_decref(jResponse);
-        }
-        free(status);
-    } else {
-        jResponse = json_pack("{s:s}",
-                              "message", HttpStatusStr(HttpStatus_NotFound));
-        ulfius_set_json_body_response(response,
-                                      HttpStatus_NotFound,
-                                      jResponse);
-        json_decref(jResponse);
-    }
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_app(const URequest *request,
+int web_service_cb_get_capp(const URequest *request,
                             UResponse *response,
                             void *data) {
 
     int ret=TRUE, resCode=200, i=0;
     int httpStatus=0;
+    uuid_t uuid;
 
-    char cbURL[WIMC_MAX_URL_LEN]    = {0};
+    char idStr[36+1]={0};
+    char path[WIMC_MAX_PATH_LEN]={0};
+    char cbURL[WIMC_MAX_URL_LEN] = {0};
+
     char indexURL[WIMC_MAX_URL_LEN] = {0};
     char storeURL[WIMC_MAX_URL_LEN] = {0};
 
     Artifact artifact;
     Config *config;
 
-    char *name=NULL, *tag=NULL, *status=NULL;
+    char *cappName=NULL, *cappTag=NULL;
 
     WimcReq   *wimcRequest  = NULL;
     WRespType respType=WRESP_ERROR;
+    
     Agent *agent=NULL;
     ArtifactFormat *artifactFormat=NULL;
-
+  
     config = (Config *)data;
+    uuid_clear(uuid);
 
-    name = (char *)u_map_get(request->map_url, "name");
-    tag  = (char *)u_map_get(request->map_url, "tag");
+    cappName = (char *)u_map_get(request->map_url, "name");
+    cappTag  = (char *)u_map_get(request->map_url, "tag");
 
-    if (name == NULL || tag == NULL) {
+    if (cappName == NULL || cappTag == NULL) {
         usys_log_error("capp name:tag not found");
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
-    /*
-     * if app is downloading -> 409 (conflict)
-     * if app is 'available' but not found in pkg -> start downloading - 202
-     * if app is 'available and also found in pkg -> 304
-     */
-    if (db_read_status(config->db, name, tag, &status)) {
-        if (strcmp(status, "download") == 0) {
-            usys_log_debug("capp found in db. name:%s tag:%s status:%s",
-                           name, tag, status);
-            ulfius_set_string_body_response(response,
-                                            HttpStatus_Conflict,
-                                            HttpStatusStr(HttpStatus_Conflict));
-            free(status);
-            return U_CALLBACK_CONTINUE;
-        } else if (strcmp(status, "available") == 0) {
-            if (file_exists_and_non_empty(name, tag)) {
-                usys_log_debug("capp found in the default location");
-                ulfius_set_string_body_response(response,
-                                                HttpStatus_NotModified,
-                                                HttpStatusStr(HttpStatus_NotModified));
-                free(status);
-                return U_CALLBACK_CONTINUE;
-            }
-        }
-        free(status);
+#if 0
+    if (db_read_path(config->db, cappName, cappTag, &path[0])) {
+        usys_log_debug("Path found in db. name:%s tag:%s path:%s",
+                       cappName, cappTag, path[0]);
+        ulfius_set_string_body_response(response, HttpStatus_OK, path);
+        return U_CALLBACK_CONTINUE;
     }
+#endif
 
     /* Check with hub */
-    if (!get_artifact_info_from_hub(&artifact, config, name, tag, &httpStatus)) {
+    if (!get_artifact_info_from_hub(&artifact,
+                                    config,
+                                    cappName, cappTag,
+                                    &httpStatus)) {
         if (httpStatus == HttpStatus_InternalServerError) {
-            usys_log_error("Unable to connect with hub at: %s", config->hubURL);
+            usys_log_error("Unable to connect with hub at: %s",
+                           config->hubURL);
             ulfius_set_string_body_response(response,
                                 HttpStatus_InternalServerError,
                                 HttpStatusStr(HttpStatus_InternalServerError));
         } else if (httpStatus == HttpStatus_NotFound) {
             usys_log_error("No matching capp %s:%s found by hub: %s",
-                           name, tag, config->hubURL);
+                           cappName, cappTag, config->hubURL);
             ulfius_set_string_body_response(response,
                                             HttpStatus_NotFound,
                                             HttpStatusStr(HttpStatus_NotFound));
@@ -225,30 +117,35 @@ int web_service_cb_post_app(const URequest *request,
 
         return U_CALLBACK_CONTINUE;
     } else {
-        usys_log_debug("capp %s:%s is available at hub", name, tag);
+        usys_log_debug("capp %s:%s is available at hub: %s",
+                       cappName, cappTag, config->hubURL);
     }
 
-    /* Find matching agent */
+    /* Find matching agent. */
     for (i=0; i < artifact.formatsCount; i++) {
-        if (get_agent_port_by_method(artifact.formats[i]->type)) {
+        agent = find_matching_agent(*config->agents,
+                                    artifact.formats[i]->type);
+        if (agent) {
             artifactFormat = artifact.formats[i];
-            usys_log_debug("Matching agent for method: %s",
-                           artifact.formats[i]->type);
+            uuid_unparse(agent->uuid, &idStr[0]);
+            usys_log_debug("Matching agent: %s method: %s URL: %s",
+                           idStr, agent->method, agent->url);
             break;
         }
     }
 
-    if (artifactFormat == NULL) {
-        usys_log_error("No matching agent found for app %s:%s", name, tag);
+    if (agent == NULL) {
+        usys_log_error("No matching agent found for capp %s:%s",
+                       cappName, cappTag);
         free_artifact(&artifact);
         ulfius_set_string_body_response(response,
-                                        HttpStatus_InternalServerError,
-                                        HttpStatusStr(HttpStatus_InternalServerError));
+                                HttpStatus_ServiceUnavailable,
+                                HttpStatusStr(HttpStatus_ServiceUnavailable));
         return U_CALLBACK_CONTINUE;
     }
 
     /* create URLs for agent to fetch the artifacts from */
-    if (strcmp(artifactFormat->type, WIMC_METHOD_CHUNK_STR) == 0) {
+    if (strcmp(agent->method, WIMC_METHOD_CHUNK_STR) == 0) {
         create_hub_urls_for_agent(config->hubURL,
                                   artifactFormat->url,
                                   &indexURL[0],
@@ -258,20 +155,20 @@ int web_service_cb_post_app(const URequest *request,
 
     /* create request */
     create_wimc_request(&wimcRequest,
-                        name, tag,
+                        cappName, cappTag,
                         indexURL,
                         storeURL,
                         artifactFormat->type,
                         DEFAULT_INTERVAL);
 
     /* Send the request to agent */
-    if (communicate_with_agent(wimcRequest, artifactFormat->type, config)) {
+    if (communicate_with_agent(wimcRequest, agent->url, config, &uuid)) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));
-        db_insert_entry(config->db, name, tag, "download");
     } else {
-        usys_log_error("Error sending capp fetch request to agent %s:%s", name, tag);
+        usys_log_error("Error sending capp fetch request to agent %s:%s",
+                       cappName, cappTag);
         ulfius_set_string_body_response(response,
                                HttpStatus_ServiceUnavailable,
                                HttpStatusStr(HttpStatus_ServiceUnavailable));
@@ -283,9 +180,9 @@ int web_service_cb_post_app(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_put_app_stats_update(const struct _u_request *request,
-                                        struct _u_response *response,
-                                        void *data) {
+int web_service_cb_post_agent_update(const struct _u_request *request,
+                                     struct _u_response *response,
+                                     void *data) {
 
     int retCode=0;
     char *agentID = NULL;
@@ -334,21 +231,128 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_post_agent(const URequest *request,
+                              UResponse *response,
+                              void *data) {
+
+    int ret=WIMC_OK, retCode;
+    uuid_t uuid;
+    json_t *json=NULL, *jMethod=NULL, *jURL=NULL;
+    json_error_t jerr;
+
+    char *agentID     = NULL;
+    char *agentURL    = NULL;
+    char *agentMethod = NULL;
+
+    Config *config = NULL;
+
+    config = (Config *)data;
+    
+    agentID = (char *)u_map_get(request->map_url, "id");
+    if (agentID == NULL) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* convert id to uuid */
+    if (uuid_parse(agentID, uuid) == -1) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json = ulfius_get_json_body_request(request, &jerr);
+    if (!json) {
+        usys_log_error("JSON error for the agent register request: %s",
+                       jerr.text);
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    jMethod = json_object_get(json, JSON_METHOD);
+    jURL    = json_object_get(json, JSON_URL);
+    if (jURL == NULL || jMethod == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        json_decref(json);
+        return U_CALLBACK_CONTINUE;
+    } else {
+        agentURL    = json_string_value(jURL);
+        agentMethod = json_string_value(jMethod);
+
+        if (agentURL == NULL || agentMethod == NULL) {
+            ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+            json_decref(json);
+            return U_CALLBACK_CONTINUE;
+        }
+    }
+
+    if (!register_agent(config->agents,agentID, agentMethod, agentURL)) {
+        ulfius_set_string_body_response(response,
+                                HttpStatus_Conflict,
+                                HttpStatusStr(HttpStatus_Conflict));
+        
+        json_decref(json);
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_string_body_response(response, HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+    json_decref(json);
+    
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_delete_agent(const URequest *request,
+                                UResponse *response,
+                                void *data) {
+
+    int retCode;
+    uuid_t uuid;
+
+    char *agentID  = NULL;
+    Config *config = NULL;
+
+    config  = (Config *)data;
+    agentID = (char *)u_map_get(request->map_url, "id");
+    if (agentID == NULL) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* convert id to uuid */
+    if (uuid_parse(agentID, uuid) == -1) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* Find matching agent and delete it */
+    if (!delete_agent(config->agents, agentID)) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+    } else {
+        ulfius_set_string_body_response(response, HttpStatus_OK,
+                                        HttpStatusStr(HttpStatus_OK));
+    }
+    
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig) {
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_version(const URequest *request,
-                           UResponse *response,
-                           void *epConfig) {
-
-    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -360,15 +364,5 @@ int web_service_cb_default(const URequest *request,
     ulfius_set_string_body_response(response, HttpStatus_NotFound,
                                     HttpStatusStr(HttpStatus_NotFound));
 
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_not_allowed(const URequest *request,
-                               UResponse *response,
-                               void *user_data) {
-
-    ulfius_set_string_body_response(response,
-                                    HttpStatus_MethodNotAllowed,
-                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
     return U_CALLBACK_CONTINUE;
 }
