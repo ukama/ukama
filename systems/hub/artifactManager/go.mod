@@ -23,9 +23,13 @@ require (
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools v2.2.0+incompatible
 )
 
-require github.com/gin-contrib/cors v1.7.1 // indirect
+require (
+	github.com/gin-contrib/cors v1.7.1 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
