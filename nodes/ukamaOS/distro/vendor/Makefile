@@ -329,6 +329,8 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--with-included-unistring \
 		--disable-valgrind-tests --disable-guile --enable-local-libopts \
 		--without-idn --disable-doc --without-p11-kit \
+		--disable-hardware-acceleration \
+        --disable-rsa \
 		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
