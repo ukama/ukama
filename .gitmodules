@@ -78,7 +78,7 @@
 	url = https://github.com/ukama/prometheus-client.git
 [submodule "nodes/ukamaOS/distro/vendor/sqlite"]
 	path = nodes/ukamaOS/distro/vendor/sqlite
-	url = https://github.com/ukama/sqlite.git
+	url = https://github.com/sqlite/sqlite.git
 [submodule "nodes/ukamaOS/distro/vendor/sysctl"]
 	path = nodes/ukamaOS/distro/vendor/sysctl
 	url = https://github.com/ukama/sysctl.git
