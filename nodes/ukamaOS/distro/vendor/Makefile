@@ -245,7 +245,7 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-nettle:
+nettle: gmp
 	$(call print_msg,"nettle")
 ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.* ${DEPDIR}/lib64/libnettle.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
