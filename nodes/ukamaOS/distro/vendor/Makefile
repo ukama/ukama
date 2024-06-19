@@ -200,7 +200,16 @@ endif
 libuuid:
 	$(call print_msg,"libuuid")
 ifeq (,$(wildcard ${DEPDIR}/lib/libuuid.*))
-	mkdir -p $@/${BUILD_DIR} && cd $@ && \
+	mkdir -p $@/${BUILD_DIR} && cd $@
+	find . -name 'libtool' -exec rm -f {} + && \
+	find . -name 'ltmain.sh' -exec rm -f {} + && \
+	find . -name 'aclocal.m4' -exec rm -f {} + && \
+	find . -name 'autom4te.cache' -exec rm -rf {} + && \
+	find . -name 'configure' -exec rm -f {} + && \
+	find . -name 'config.log' -exec rm -f {} + && \
+	find . -name 'config.status' -exec rm -f {} + && \
+	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoreconf --force --install --verbose
 	aclocal && autoconf && cd ${BUILD_DIR} && \
 	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} \
@@ -320,6 +329,16 @@ endif
 gnutls: p11-kit openssl nettle gmp
 	$(call print_msg,"gnutls")
 ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
+	cd $@ \
+	find . -name 'libtool' -exec rm -f {} + && \
+	find . -name 'ltmain.sh' -exec rm -f {} + && \
+	find . -name 'aclocal.m4' -exec rm -f {} + && \
+	find . -name 'autom4te.cache' -exec rm -rf {} + && \
+	find . -name 'configure' -exec rm -f {} + && \
+	find . -name 'config.log' -exec rm -f {} + && \
+	find . -name 'config.status' -exec rm -f {} + && \
+	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoreconf --force --install --verbose && cd -
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" ../configure --prefix=${DEPDIR} \
@@ -331,7 +350,8 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--without-idn --disable-doc --without-p11-kit \
 		--disable-hardware-acceleration \
         --disable-rsa \
-		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
+		PKG_CONFIG_PATH=${PKG_CFG_PATH}
+	cp $@/src/gl/parse-datetime.c $@/${BUILD_DIR}/src/gl/
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
