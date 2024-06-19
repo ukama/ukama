@@ -140,7 +140,7 @@ else
 	@echo -e  ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-ulfius: orcania yder jansson gnutls curl libmicrohttpd libunistring
+ulfius: orcania yder jansson p11-kit gnutls curl libmicrohttpd libunistring
 	$(call print_msg,"ulfius")
 ifeq (,$(wildcard ${DEPDIR}/lib/libulfius.a))
 	$(MAKE) -C $@/src CC=$(XCC) clean
@@ -200,16 +200,7 @@ endif
 libuuid:
 	$(call print_msg,"libuuid")
 ifeq (,$(wildcard ${DEPDIR}/lib/libuuid.*))
-	mkdir -p $@/${BUILD_DIR} && cd $@
-	find . -name 'libtool' -exec rm -f {} + && \
-	find . -name 'ltmain.sh' -exec rm -f {} + && \
-	find . -name 'aclocal.m4' -exec rm -f {} + && \
-	find . -name 'autom4te.cache' -exec rm -rf {} + && \
-	find . -name 'configure' -exec rm -f {} + && \
-	find . -name 'config.log' -exec rm -f {} + && \
-	find . -name 'config.status' -exec rm -f {} + && \
-	find . -name 'Makefile.in' -exec rm -f {} + && \
-	autoreconf --force --install --verbose
+	mkdir -p $@/${BUILD_DIR} && cd $@ && \
 	aclocal && autoconf && cd ${BUILD_DIR} && \
 	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} \
@@ -326,10 +317,10 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-gnutls: p11-kit openssl nettle gmp
+gnutls: openssl nettle gmp
 	$(call print_msg,"gnutls")
 ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
-	cd $@ \
+	cd $@ && \
 	find . -name 'libtool' -exec rm -f {} + && \
 	find . -name 'ltmain.sh' -exec rm -f {} + && \
 	find . -name 'aclocal.m4' -exec rm -f {} + && \
@@ -350,8 +341,8 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--without-idn --disable-doc --without-p11-kit \
 		--disable-hardware-acceleration \
         --disable-rsa \
-		PKG_CONFIG_PATH=${PKG_CFG_PATH}
-	cp $@/src/gl/parse-datetime.c $@/${BUILD_DIR}/src/gl/
+		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
+	cp ../src/gl/parse-datetime.c ./src/gl/ && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
