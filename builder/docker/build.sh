@@ -8,18 +8,45 @@
 
 REPO_DIR=/workspace/ukama
 VENDOR_DIR=${REPO_DIR}/nodes/ukamaOS/distro/vendor
+VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
+VENDOR_LIBRARIES=$(grep -E "^LIST \+= " "$VENDOR_MAKEFILE" | awk '{print $3}')
 
 is_empty() {
-    if [ -z "$(ls -A "$1")" ]; then
+    # Check if the directory contains anything other than .git
+    if [ -z "$(ls -A "$1" | grep -v '.git')" ]; then
         return 0
     else
         return 1
     fi
 }
 
+build_libraries() {
+
+    BUILD_DIR=${VENDOR_DIR}/build
+    for lib in $VENDOR_LIBRARIES; do
+        if [ "$lib" == "zlib" ]; then
+            LIB_PATH="${BUILD_DIR}/lib/libz.a"
+        elif [ "$lib" == "libmicrohttpd" ]; then
+            LIB_PATH="${BUILD_DIR}/lib/libmicrohttpd.a"
+        elif [ "$lib" == "libuuid" ]; then
+            LIB_PATH="${BUILD_DIR}/lib/libuuid.a"
+        elif [ "$lib" == "openssl" ]; then
+            LIB_PATH="${BUILD_DIR}/lib/libssl.a"
+        else
+            LIB_PATH="${BUILD_DIR}/lib/lib${lib}.a"
+        fi
+
+        if [ ! -f "$LIB_PATH" ]; then
+            make $lib
+        fi
+    done
+}
+
 # clone Ukama code and update the submodule
-git clone http://github.com/ukama/ukama
+git clone https://github.com/ukama/ukama
 cd ukama
+git fetch
+git checkout build-update
 git submodule init
 git submodule update
 
@@ -28,7 +55,7 @@ if [ ! -d "$VENDOR_DIR" ]; then
     exit 1
 fi
 
-# Loop through first-level directories within the base directory
+# Loop through first-level directories within submodules
 for dir in "$VENDOR_DIR"/*; do
     if [ -d "$dir" ]; then
         if is_empty "$dir"; then
@@ -38,31 +65,6 @@ for dir in "$VENDOR_DIR"/*; do
     fi
 done
 
-# install needed package for build
-apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository universe \
-    && apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    wget \
-    autoconf \
-    automake \
-    libtool \
-    pkg-config \
-    libssl-dev \
-    texinfo \
-    cmake \
-    tcl \
-    zlib1g-dev \
-    texlive \
-    texlive-latex-extra \
-    ghostscript \
-    gperf \
-    gtk-doc-tools \
-    libev-dev
-
-rm -rf /var/lib/apt/lists/*
 cd /workspace
 
 # Install some additional packages needed for building vendor
@@ -86,11 +88,12 @@ wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
     && rm -rf libtool-2.4.7.tar.gz \
     && rm -rf libtool-2.4.7
 
+# Build the vendor libraries
+cd ${VENDOR_DIR} && build_libraries
+
 # Build the builder
 cd ${REPO_DIR}/builder && make
 
 echo "All Done."
 
 exit 0
-
-
