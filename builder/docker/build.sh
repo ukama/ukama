@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 REPO_DIR=/workspace/ukama
 VENDOR_DIR=${REPO_DIR}/nodes/ukamaOS/distro/vendor
 VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
-VENDOR_LIBRARIES=$(grep -E "^LIST \+= " "$VENDOR_MAKEFILE" | awk '{print $3}')
+VENDOR_LIBRARIES=
 
 is_empty() {
     # Check if the directory contains anything other than .git
@@ -20,7 +20,25 @@ is_empty() {
     fi
 }
 
+spinner() {
+
+    local pid=$!
+    local delay=0.1
+    local spinstr='|/-\'
+
+    while [ "$(ps a | awk '{print $1}' | grep -w $pid)" ]; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
+
 build_libraries() {
+
+    VENDOR_LIBRARIES=$(grep -E "^LIST \+= " "$VENDOR_MAKEFILE" | awk '{print $3}')
 
     BUILD_DIR=${VENDOR_DIR}/build
     for lib in $VENDOR_LIBRARIES; do
