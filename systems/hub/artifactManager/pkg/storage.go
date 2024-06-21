@@ -78,7 +78,7 @@ func NewMinioWrapper(options *MinioConfig) *MinioWrapper {
 	}
 
 	if !options.SkipBucketCreation {
-		for bucket, _ := range options.ArtifactTypeBucketMap {
+		for _, bucket := range options.ArtifactTypeBucketMap {
 			bucketName := BucketNamePrefix + bucket + m.bucketSuffix
 			log.Infof("Creating bucket %s", bucketName)
 
