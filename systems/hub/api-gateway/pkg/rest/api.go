@@ -13,7 +13,7 @@ import (
 )
 
 type ArtifactUploadRequest struct {
-	ArtifactName string `path:"filename" validate:"required"`
+	ArtifactName string `path:"name" validate:"required"`
 	ArtifactType string `path:"type" validate:"required"`
 	Version      string `path:"version" validate:"required"`
 }
