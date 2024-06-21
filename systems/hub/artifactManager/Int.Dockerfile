@@ -4,4 +4,4 @@ ENV PROJECT_NAME=hub
 
 RUN mkdir -p /usr/bin/testdata
 COPY bin/integration /usr/bin/integration
-COPY test/integration/testdata/capp.tar.gz /testdata/capp.tar.gz
+COPY test/integration/testdata /testdata

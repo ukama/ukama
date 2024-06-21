@@ -28,7 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const AppsPath = "/v1/hub/apps"
+const AppsPath = "/v1/hub/app"
 const AppName = "hub-integration-test"
 const AppVer = "0.1.2"
 const FileName = "0.1.2.tar.gz"
