@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -10,6 +9,8 @@ REPO_DIR=/workspace/ukama
 VENDOR_DIR=${REPO_DIR}/nodes/ukamaOS/distro/vendor
 VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
 VENDOR_LIBRARIES=
+
+set -e
 
 is_empty() {
     # Check if the directory contains anything other than .git
@@ -111,6 +112,14 @@ cd ${VENDOR_DIR} && build_libraries
 
 # Build the builder
 cd ${REPO_DIR}/builder && make
+
+# Build the nodes
+./builder nodes build --config-file ./ukama.json
+
+# copy the created init, kernel and img file
+cp ${REPO_DIR}/builder/script/vmlinuz* ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/script/initrd*  ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/script/*.img    ${REPO_DIR}/..
 
 echo "All Done."
 
