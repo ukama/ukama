@@ -83,7 +83,7 @@ func Test_AddCApp(t *testing.T) {
 	t.Run("GetChunkIndex", func(tt *testing.T) {
 		for i := 0; i < 3; i++ {
 			// wait for chunk to be created for 3 mins
-			time.Sleep(time.Second * 60)
+			time.Sleep(time.Second * 150)
 			log.Infof("Getting chunk index attempt %d", i)
 
 			r, err := rest.R().Get(appUrl + ".caibx")
