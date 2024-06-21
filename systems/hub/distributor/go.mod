@@ -15,7 +15,7 @@ require (
 	github.com/folbricht/desync v0.9.5
 	github.com/gin-contrib/cors v1.7.1
 	github.com/gin-gonic/gin v1.9.1 // indirect
-	github.com/go-resty/resty/v2 v2.12.0
+	github.com/go-resty/resty/v2 v2.12.0 // indirect
 	github.com/loopfz/gadgeto v0.11.4 // indirect
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/minio/minio-go/v6 v6.0.57
@@ -28,6 +28,7 @@ require (
 require (
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2
+	github.com/num30/config v0.1.2
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0
@@ -48,6 +49,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
+	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect

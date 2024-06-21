@@ -12,64 +12,80 @@
 package integration
 
 import (
-	"fmt"
-
-	"net/http"
-
+	"context"
 	"testing"
+	"time"
 
+	confr "github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/config"
-
-	"github.com/go-resty/resty/v2"
-	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	pb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
+	"google.golang.org/grpc"
 )
-
-const ChunksPath = "/v1/chunks"
 
 type TestConfig struct {
-	config.BaseConfig
-	DistributionHost string
+	ServiceHost string        `default:"distributor:9090"`
+	Queue       *config.Queue `default:"{}"`
+	MaxMsgSize  int           `default:"209715200"`
 }
-
-var (
-	cappname    = "ukamaos"
-	cappversion = "1.0.1"
-)
 
 var tConfig *TestConfig
 
 func init() {
-	tConfig = &TestConfig{
-		DistributionHost: "http://localhost:8098",
-	}
+	tConfig = &TestConfig{}
+	r := confr.NewConfReader("integration")
+	r.Read(tConfig)
 
-	config.LoadConfig("integration", tConfig)
 	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	log.Infof("%+v", tConfig)
 }
 
-// Call webhost endpoint and check response
-func Test_PutChunks(t *testing.T) {
-	appUrl := fmt.Sprintf("%s%s", tConfig.DistributionHost, ChunksPath)
+func Test_FullFlow(t *testing.T) {
+	const AppType = "app"
+	const AppName = "am-integration-test"
+	const AppVer = "0.1.2"
+	const FileName = "0.1.2.tar.gz"
+	const IndexFile = "0.1.2.caibx"
+	const Store = "s3+http://minio:9000/app"
+	// connect to Grpc service
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 
-	rest := resty.New().EnableTrace().SetDebug(tConfig.DebugMode)
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
+	conn, c, err := CreateDistributorClient()
+	defer conn.Close()
+	if err != nil {
+		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+		return
+	}
 
-	t.Run("Ping", func(t *testing.T) {
-		r, err := rest.R().Get(tConfig.DistributionHost + "/ping")
-
+	// Contact the server and print out its response.
+	t.Run("CreateChunk", func(t *testing.T) {
+		_, err := c.CreateChunk(ctx, &pb.CreateChunkRequest{
+			Name:    AppName,
+			Type:    AppType,
+			Version: AppVer,
+			Store:   Store,
+		})
 		assert.NoError(t, err)
-		assert.Equal(t, r.StatusCode(), http.StatusOK)
-	})
-
-	t.Run("Put", func(tt *testing.T) {
-		r, err := rest.R().SetBody(map[string]interface{}{
-			"store": "testdata/art"}).Put(appUrl + "/" + cappname + "/" + cappversion)
-
-		assert.NoError(tt, err)
-		log.Infof("Response: '%d'", r.StatusCode())
-		assert.Equal(tt, r.StatusCode(), http.StatusOK)
 
 	})
+}
+
+func CreateDistributorClient() (*grpc.ClientConn, pb.ChunkerServiceClient, error) {
+	log.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
+	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(tConfig.MaxMsgSize),
+		grpc.MaxCallSendMsgSize(tConfig.MaxMsgSize)))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	c := pb.NewChunkerServiceClient(conn)
+	return conn, c, nil
 }
