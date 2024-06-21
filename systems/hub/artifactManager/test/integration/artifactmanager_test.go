@@ -84,6 +84,8 @@ func Test_FullFlow(t *testing.T) {
 
 	})
 
+	time.Sleep(10 * time.Second)
+
 	t.Run("GetArtifact", func(t *testing.T) {
 		_, err := c.GetArtifact(ctx, &pb.GetArtifactRequest{
 			Name:     AppName,

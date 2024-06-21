@@ -27,9 +27,10 @@ import (
 )
 
 type TestConfig struct {
-	ServiceHost string        `default:"distributor:9090"`
+	ServiceHost string        `default:"localhost:9090"`
 	Queue       *config.Queue `default:"{}"`
 	MaxMsgSize  int           `default:"209715200"`
+	Store       string        `default:"s3+http://minio:9000/hub-app-local-test/apps"`
 }
 
 var tConfig *TestConfig
@@ -49,7 +50,7 @@ func Test_FullFlow(t *testing.T) {
 	const AppVer = "0.1.2"
 	const FileName = "0.1.2.tar.gz"
 	const IndexFile = "0.1.2.caibx"
-	const Store = "s3+http://minio:9000/app"
+
 	// connect to Grpc service
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -68,7 +69,7 @@ func Test_FullFlow(t *testing.T) {
 			Name:    AppName,
 			Type:    AppType,
 			Version: AppVer,
-			Store:   Store,
+			Store:   tConfig.Store,
 		})
 		assert.NoError(t, err)
 
