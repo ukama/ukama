@@ -194,7 +194,7 @@ func (r *Router) artifactGetHandler(c *gin.Context, req *ArtifactRequest) error 
 func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse, error) {
 
 	req := &ArtifactUploadRequest{}
-	req.ArtifactName = c.Param("filename")
+	req.ArtifactName = c.Param("name")
 	req.ArtifactType = c.Param("type")
 	req.Version = c.Param("version")
 	log.Infof("Adding artifact %s with version %s of type : %s", req.ArtifactName, req.Version, req.ArtifactType)
