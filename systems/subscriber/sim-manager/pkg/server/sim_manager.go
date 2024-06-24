@@ -265,7 +265,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
-	evt := &epb.SimAllocation{
+	evt := &epb.EventSimAllocation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
 		NetworkId:    sim.NetworkId.String(),
@@ -505,11 +505,12 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	evtMsg := &epb.SimTermination{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
+	evtMsg := &epb.EventSimTermination{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
@@ -613,12 +614,13 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	evtMsg := &epb.SimAddPackage{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: packageId.String(),
+	evtMsg := &epb.EventSimAddPackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
@@ -718,12 +720,13 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
-	evtMsg := &epb.SimActivation{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: pkg.Id.String(),
+	evtMsg := &epb.EventSimActivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    pkg.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
@@ -780,12 +783,13 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	evtMsg := &epb.SimRemovePackage{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: packageId.String(),
+	evtMsg := &epb.EventSimRemovePackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
@@ -840,12 +844,13 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	evtMsg := &epb.SimActivation{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
+	evtMsg := &epb.EventSimActivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
@@ -904,12 +909,13 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	evtMsg := &epb.SimDeactivation{
-		Id:        sim.Id.String(),
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
+	evtMsg := &epb.EventSimDeactivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)

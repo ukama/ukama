@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 
@@ -56,7 +57,9 @@ func TestUserService_Add(t *testing.T) {
 	}
 
 	userRepo.On("Add", user, mock.Anything).Return(nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{User: userRequest}).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserCreate) bool {
+		return e.Name == name && e.Email == email
+	})).Return(nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
@@ -173,7 +176,9 @@ func TestUserService_Deactivate(t *testing.T) {
 		return u.Id.String() == userUUID.String()
 	}), mock.Anything).Return(nil)
 
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserId: userUUID.String()}).Return(nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
+		return e.UserId == userUUID.String()
+	})).Return(nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 	s := server.NewUserService(OrgName, userRepo, nil, msgclientRepo, "")
@@ -204,9 +209,9 @@ func TestUserService_Delete(t *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: userId, Deactivated: true}, nil).Once()
 		userRepo.On("Delete", userId, mock.Anything).Return(nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
-			UserId: userId.String(),
-		}).Return(nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
+			return e.UserId == userId.String()
+		})).Return(nil).Once()
 
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
