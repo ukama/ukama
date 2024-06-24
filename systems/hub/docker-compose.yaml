@@ -75,6 +75,8 @@ services:
     build:
       context: ./artifactManager
       dockerfile: ./Dockerfile
+    ports:
+    - '9010:9090'
     environment:
       - STORAGE_ENDPOINT=minio:9000
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
@@ -96,7 +98,7 @@ services:
     build:
       context: ./distributor
       dockerfile: ./Dockerfile
-    ports: [ "8098:8098", "8099:8099" ]
+    ports: [ "9020:9090", "8099:8099" ]
     environment:
       - DEBUGMODE=TRUE
       - STORE_ENDPOINT=minio:9000
