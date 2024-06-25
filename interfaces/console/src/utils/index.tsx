@@ -19,9 +19,8 @@ import {
 } from '@/client/graphql/generated/metrics';
 
 import colors from '@/theme/colors';
-import { TNodeSiteTree, TObject } from '@/types';
+import { TNodeSiteTree } from '@/types';
 import { Typography } from '@mui/material';
-import { format, intervalToDuration } from 'date-fns';
 import { RoleToNotificationScopes } from './roletoNotificationScope';
 
 const getTitleFromPath = (path: string, id: string) => {
@@ -52,59 +51,6 @@ const getTitleFromPath = (path: string, id: string) => {
   }
 };
 
-const getColorByType = (type: string) => {
-  switch (type) {
-    case 'Alert_Type.Error':
-      return 'error';
-    case 'Alert_Type.Warning':
-      return 'warning';
-    default:
-      return 'success';
-  }
-};
-const NetworkStatusLabel = ({ message }: any) => {
-  return (
-    <Typography variant="h6">
-      Your <span style={{ color: colors.primaryMain }}>network</span> {message}
-    </Typography>
-  );
-};
-
-const getStatusByType = (status: string) => {
-  if (status === 'DOWN') return <NetworkStatusLabel message="is down." />;
-  else if (status === 'ONLINE')
-    return <NetworkStatusLabel message="is online and well:" />;
-  else return <NetworkStatusLabel message=" is offline; no nodes connected." />;
-};
-
-const parseObjectInNameValue = (obj: any) => {
-  let updatedObj: TObject[] = [];
-  if (obj) {
-    updatedObj = Object.keys(obj).map((key) => {
-      return {
-        name: key,
-        value:
-          key === 'timestamp' ? format(obj[key], 'MMM dd HH:mm:ss') : obj[key],
-      };
-    });
-
-    let removeIndex = updatedObj
-      .map((item) => item?.name)
-      .indexOf('__typename');
-    ~removeIndex && updatedObj.splice(removeIndex, 1);
-    removeIndex = updatedObj.map((item) => item?.name).indexOf('id');
-    ~removeIndex && updatedObj.splice(removeIndex, 1);
-  }
-
-  return updatedObj;
-};
-
-const uniqueObjectsArray = (name: string, list: TObject[]): TObject[] | [] => {
-  const last =
-    list.length > 0 ? list.filter((item: TObject) => item.name !== name) : [];
-  return last;
-};
-
 const hexToRGB = (hex: string, alpha: number): string => {
   var h = '0123456789ABCDEF';
   var r = h.indexOf(hex[1]) * 16 + h.indexOf(hex[2]);
@@ -115,19 +61,6 @@ const hexToRGB = (hex: string, alpha: number): string => {
   }
 
   return `rgba(${r}, ${g}, ${b})`;
-};
-
-const random = (min: number, max: number) => Math.random() * (max - min) + min;
-
-const getRandomData = () => {
-  const data = [];
-  for (let i = 0; i < 10; i++) {
-    data.push({
-      x: Date.now() / 1000 - (10 - i),
-      y: random(-2, 2),
-    });
-  }
-  return data;
 };
 
 const getGraphFilterByType = (type: string) => {
@@ -165,63 +98,6 @@ const getTabByIndex = (index: number) => {
     default:
       return 'Graphs_Tab.Overview';
   }
-};
-
-const getMetricPayload = ({
-  tab = 0,
-  nodeId = '',
-  regPolling = true,
-  nodeType = NodeTypeEnum.Hnode,
-  to = Math.floor(Date.now() / 1000),
-  from = Math.floor(Date.now() / 1000),
-}: {
-  to?: number;
-  tab: number;
-  from?: number;
-  nodeId?: string;
-  nodeType: string;
-  regPolling?: boolean;
-}) => {
-  return {
-    data: {
-      step: 1,
-      nodeId: nodeId,
-      regPolling: regPolling,
-      to: to,
-      from: from, //20sec
-      nodeType: nodeType as NodeTypeEnum,
-      tab: getTabByIndex(tab),
-    },
-  };
-};
-
-const isMetricData = (metric: any) => {
-  let isData = false;
-  metric.forEach((item: any) => {
-    if (item.data.length > 0) {
-      isData = true;
-    }
-  });
-  return isData;
-};
-
-const isContainNodeUpdate = (list: any = []): boolean => {
-  let isUpdate = false;
-  for (const ele of list) {
-    if (ele.isUpdateAvailable) {
-      isUpdate = true;
-      break;
-    }
-  }
-
-  return isUpdate;
-};
-
-const getDefaultMetricList = (name: string) => {
-  return {
-    name: name,
-    data: [],
-  };
 };
 
 const getTitleByKey = (key: string) => {
@@ -298,40 +174,6 @@ export const getNodeTabTypeByIndex = (index: number) => {
   }
 };
 
-const getMetricsInitObj = () => {
-  return {
-    temperaturetrx: null,
-    temperaturerfe: null,
-    subscribersactive: null,
-    subscribersattached: null,
-    temperaturectl: null,
-    temperaturecom: null,
-    rrc: null,
-    rlc: null,
-    erab: null,
-    throughputuplink: null,
-    throughputdownlink: null,
-    cputrxusage: null,
-    memorytrxused: null,
-    disktrxused: null,
-    cpuctlused: null,
-    diskctlused: null,
-    memoryctlused: null,
-    powerlevel: null,
-    cpucomusage: null,
-    diskcomused: null,
-    memorycomused: null,
-    txpower: null,
-    rxpower: null,
-    papower: null,
-    uptimetrx: null,
-  };
-};
-
-const getMetricObjectByKey = (key: string) => {
-  return { name: getTitleByKey(key), data: [] };
-};
-
 const formatBytes = (bytes = 0): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -346,76 +188,6 @@ const formatBytes = (bytes = 0): string => {
 const formatBytesToMB = (bytes = 0): string => {
   if (bytes === 0) return '0';
   return (bytes / (1024 * 1024)).toFixed(2);
-};
-
-const secondsToDuration = (end: any) => {
-  // const units = ["year", "month", "day", "hour", "minute"];
-  const units = ['hour', 'minute'];
-
-  const duration: any = intervalToDuration({
-    start: 0,
-    end: end * 1000,
-  });
-
-  const response: any = [];
-  let required = false;
-
-  units.forEach((unit, index) => {
-    if (
-      duration[`${unit}s`] > 0 ||
-      required === true ||
-      index === units.length - 1
-    ) {
-      response.push(
-        `${duration[`${unit}s`]} ${unit}${duration[`${unit}s`] === 1 ? '' : 's'}`,
-      );
-      required = true;
-    }
-  });
-
-  return response.join(' ');
-};
-
-const secToHoursNMints = (seconds: number, separator: string) => {
-  return (
-    [Math.floor(seconds / 60 / 60), Math.floor((seconds / 60) % 60)]
-      .join(separator ? separator : ':')
-      .replace(/\b(\d)\b/g, '0$1') + ' minutes'
-  );
-};
-
-const formatSecondsToDuration = (totalSeconds: number) => {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds - hours * 3600 - minutes * 60;
-
-  return [`${hours}h`, `${minutes}m`, `${seconds}s`]
-    .filter((item) => item[0] !== '0')
-    .join(' ');
-};
-
-const isEmailValid = (email: string): boolean =>
-  /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,20}$/.test(email);
-
-const doesHttpOnlyCookieExist = (cookiename: string): boolean => {
-  var d = new Date();
-  d.setTime(d.getTime() + 1000);
-  var expires = 'expires=' + d.toUTCString();
-
-  document.cookie = cookiename + '=new_value;path=/;' + expires;
-  return document.cookie.indexOf(cookiename + '=') == -1;
-};
-
-const getTowerNodeFromNodes = (nodes: any): string => {
-  if (nodes.length > 0) {
-    for (const node of nodes) {
-      if (node.type === NodeTypeEnum.Tnode) return node.id;
-    }
-    for (const node of nodes) {
-      if (node.type === NodeTypeEnum.Hnode) return node.id;
-    }
-  }
-  return '';
 };
 
 const getDataUsageSymbol = (dataUnit: string): string => {
@@ -455,29 +227,6 @@ const fileToBase64 = (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 };
-
-function calculateCenterLatLng(coordinates: any) {
-  var totalCoords = coordinates.length;
-  if (totalCoords === 0) return { lat: 37.7780627, lng: -121.9822475 };
-  if (totalCoords === 1)
-    return { lat: coordinates[0].lat, lng: coordinates[0].lng };
-
-  var sumLat = 0;
-  var sumLng = 0;
-
-  // Calculate the sum of latitudes and longitudes
-  for (var i = 0; i < totalCoords; i++) {
-    sumLat += coordinates[i].lat;
-    sumLng += coordinates[i].lng;
-  }
-
-  // Calculate the average latitudes and longitudes
-  var avgLat = sumLat / totalCoords;
-  var avgLng = sumLng / totalCoords;
-
-  // Return the center latitude and longitude
-  return { lat: avgLat, lng: avgLng };
-}
 
 const getUnixTime = (): number => {
   return Math.floor(Date.now() / 1000);
@@ -615,40 +364,22 @@ const inviteStatusEnumToString = (status: Invitation_Status): string => {
 };
 
 export {
-  calculateCenterLatLng,
-  doesHttpOnlyCookieExist,
   fileToBase64,
   formatBytes,
   formatBytesToMB,
-  formatSecondsToDuration,
   formatTime,
-  getColorByType,
   getDataPlanUsage,
-  getDefaultMetricList,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
-  getMetricObjectByKey,
-  getMetricPayload,
-  getMetricsInitObj,
-  getRandomData,
   getRoleType,
   getScopesByRole,
   getSimValuefromSimType,
-  getStatusByType,
   getTitleFromPath,
-  getTowerNodeFromNodes,
   getUnixTime,
   hexToRGB,
   inviteStatusEnumToString,
-  isContainNodeUpdate,
-  isEmailValid,
-  isMetricData,
-  parseObjectInNameValue,
   provideStatusColor,
   roleEnumToString,
-  secToHoursNMints,
-  secondsToDuration,
   structureNodeSiteDate,
-  uniqueObjectsArray,
 };
