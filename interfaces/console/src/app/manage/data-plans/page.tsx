@@ -194,7 +194,7 @@ const Page = () => {
           py: 3,
           px: 4,
           width: '100%',
-          overflow: "scroll",
+          overflow: 'scroll',
           borderRadius: '10px',
           bgcolor: colors.white,
           height: 'calc(100vh - 400px)',

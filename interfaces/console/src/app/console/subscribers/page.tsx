@@ -732,7 +732,7 @@ const Page = () => {
             onSearchChange={(e: string) => setSearch(e)}
             search={search}
           />
-          <br /> 
+          <br />
           <DataTableWithOptions
             icon={SubscriberIcon}
             isRowClickable={false}

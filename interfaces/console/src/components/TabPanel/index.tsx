@@ -6,8 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import React from 'react';
 import { Box } from '@mui/material';
+import React from 'react';
 
 interface TabPanelProps {
   id: string;

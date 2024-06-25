@@ -10,10 +10,10 @@ import { HistoryBillingColumns } from '@/constants/tableColumns';
 import { RoundedCard } from '@/styles/global';
 import colors from '@/theme/colors';
 import { Box, Stack, Typography } from '@mui/material';
+import { NoBillYet } from '../../../public/svg';
 import LoadingWrapper from '../LoadingWrapper';
 import SimpleDataTable from '../SimpleDataTable';
 import TableHeader from '../TableHeader';
-import { NoBillYet } from '../../../public/svg';
 
 interface IBillHistoryTab {
   loading: boolean;
