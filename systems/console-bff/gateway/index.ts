@@ -18,7 +18,6 @@ import { json } from "body-parser";
 import cors from "cors";
 import { createServer } from "http";
 
-import { whoami } from "../common/auth/authCalls";
 import {
   AUTH_APP_URL,
   BASE_DOMAIN,
@@ -32,8 +31,7 @@ import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
-import UserApi from "../user/datasource/user_api";
-import { UserResDto, WhoamiDto } from "../user/resolver/types";
+import InitAPI from "../init/datasource/init_api";
 import { configureExpress } from "./configureExpress";
 
 const COOKIE_EXPIRY_TIME = 3017874138705;
@@ -147,65 +145,12 @@ const startServer = async () => {
 
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];
-    let kId = "";
+    const initAPI = new InitAPI();
     if (cookies) {
-      const whoamiRes = await whoami(cookies);
-      if (whoamiRes?.data) {
-        kId = whoamiRes.data.identity.id;
-      }
-    } else {
-      res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
-    }
-    if (kId) {
-      const userApi = new UserApi();
-      userApi
-        .auth(kId)
-        .then((user: UserResDto) => {
-          if (user.uuid) {
-            userApi
-              .whoami(user.uuid)
-              .then((whoamiRes: WhoamiDto) => {
-                const orgId =
-                  whoamiRes.ownerOf.length > 0
-                    ? whoamiRes.ownerOf[0].id
-                    : whoamiRes.memberOf.length > 0
-                    ? whoamiRes.memberOf[0].id
-                    : "";
-
-                const orgName =
-                  whoamiRes.ownerOf.length > 0
-                    ? whoamiRes.ownerOf[0].name
-                    : whoamiRes.memberOf.length > 0
-                    ? whoamiRes.memberOf[0].name
-                    : "";
-
-                const cookie = `uid=${user.uuid}&org-id=${orgId}&org-name=${orgName}`;
-
-                const base64Cookie = Buffer.from(cookie).toString("base64");
-                res.cookie("user_session", base64Cookie, {
-                  domain: BASE_DOMAIN,
-                  secure: true,
-                  sameSite: "lax",
-                  maxAge: 86400,
-                  httpOnly: true,
-                  path: "/",
-                });
-                res.setHeader("Access-Control-Allow-Origin", CONSOLE_APP_URL);
-                res.setHeader("Access-Control-Allow-Credentials", "true");
-                res.send(whoamiRes);
-              })
-              .catch(err => {
-                logger.error(err);
-                res.send(new HTTP500Error("Failed to get user details"));
-              });
-          } else {
-            res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
-          }
-        })
-        .catch(err => {
-          logger.error(err);
-          res.send(new HTTP500Error("Failed to authenticate user"));
-        });
+      const sessionRes = await initAPI.validateSession(cookies);
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("cache-control", "max-age=3600");
+      return res.send(sessionRes);
     } else {
       res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
     }

@@ -55,6 +55,9 @@ export class ValidateSessionRes {
 
   @Field()
   token: string;
+
+  @Field()
+  isEmailVerified: boolean;
 }
 
 @ObjectType()

@@ -9,10 +9,8 @@ import { NonEmptyArray } from "type-graphql";
 
 import { GetCountriesResolver } from "./getCountries";
 import { GetTimezonesResolver } from "./getTimezones";
-import { GetTokenResolver } from "./getToken";
 
 const resolvers: NonEmptyArray<any> = [
-  GetTokenResolver,
   GetCountriesResolver,
   GetTimezonesResolver,
 ];

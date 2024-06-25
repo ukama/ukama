@@ -455,6 +455,6 @@ export class UploadSimsInputDto {
   @Field()
   data: string;
 
-  @Field()
+  @Field(() => SIM_TYPES)
   simType: SIM_TYPES;
 }
