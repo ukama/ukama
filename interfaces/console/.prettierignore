@@ -1,1 +1,3 @@
 .next
+src/client/graphql/generated
+.env.example

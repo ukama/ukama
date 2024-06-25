@@ -84,8 +84,8 @@ export const SiteHealth = ({
         nodeHealth == 'good'
           ? '#03744B'
           : nodeHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={nodeHealth ? 2 : 0}
     />
@@ -110,8 +110,8 @@ export const SiteHealth = ({
         solarHealth == 'good'
           ? '#03744B'
           : solarHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={solarHealth ? 2 : 0}
     />
@@ -132,8 +132,8 @@ export const SiteHealth = ({
         batteryHealth == 'good'
           ? '#03744B'
           : batteryHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={batteryHealth ? 2 : 0}
     />
@@ -153,8 +153,8 @@ export const SiteHealth = ({
         backhaulHealth == 'good'
           ? '#03744B'
           : backhaulHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={backhaulHealth ? 2 : 0}
     />
@@ -181,8 +181,8 @@ export const SiteHealth = ({
         switchHealth == 'good'
           ? '#03744B'
           : switchHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={switchHealth ? 2 : 0}
     />
@@ -208,8 +208,8 @@ export const SiteHealth = ({
         controllerHealth == 'good'
           ? '#03744B'
           : controllerHealth == 'warning'
-          ? '#CF0A0A'
-          : '#F2F8F6'
+            ? '#CF0A0A'
+            : '#F2F8F6'
       }
       strokeWidth={controllerHealth ? 2 : 0}
     />
