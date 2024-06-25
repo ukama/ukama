@@ -115,5 +115,6 @@ export {
   getLatestMetric,
   getMetricRange,
   getNodeRangeMetric,
-  getNotifications,
+  getNotifications
 };
+

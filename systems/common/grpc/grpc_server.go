@@ -54,7 +54,9 @@ func (g *UkamaGrpcServer) StartServer() {
 
 func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	logrusEntry := log.NewEntry(log.New())
-
+	if g.config.MaxMsgSize == 0 {
+		g.config.MaxMsgSize = 4194304
+	}
 	sInterc := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(logrusEntry),
 		grpc_prometheus.StreamServerInterceptor,
@@ -70,6 +72,8 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	uInterc = append(uInterc, g.ExtraUnaryInterceptors...)
 
 	server := grpc.NewServer(
+		grpc.MaxRecvMsgSize(g.config.MaxMsgSize),
+		grpc.MaxSendMsgSize(g.config.MaxMsgSize),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(sInterc...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(uInterc...)),
 	)

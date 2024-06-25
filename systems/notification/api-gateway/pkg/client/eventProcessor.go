@@ -78,7 +78,7 @@ func (n *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStat
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{UserNotificationId: id, IsRead: isRead})
+	return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
 }
 
 func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string, role string) (*pb.GetAllResponse, error) {
@@ -89,5 +89,5 @@ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId 
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		Role:         upb.RoleType(upb.RoleType_value[role])})
+		RoleType:     upb.RoleType(upb.RoleType_value[role])})
 }

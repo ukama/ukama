@@ -34,7 +34,7 @@ message GetAllRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
-    ukama.common.v1.RoleType role = 5 [json_name = "role"];
+    ukama.common.v1.RoleType RoleType = 5 [json_name = "role"];
 }
 
 message GetAllResponse {
@@ -42,8 +42,8 @@ message GetAllResponse {
 }
 
 message UpdateStatusRequest {
-    string userNotificationId = 1 [json_name = "user_notification_id"];
-    bool isRead = 2 [json_name = "is_read"] ;
+    string id = 1;
+    bool isRead = 2 [json_name = "is_read"];
 }
 
 message UpdateStatusResponse {

@@ -16,6 +16,8 @@
 #include "starter.h"
 #include "usys_log.h"
 
+#include "version.h"
+
 extern SpaceList *gSpaceList;
 extern void json_free(JsonObj** json);
 extern bool json_serialize_add_capp_to_array(JsonObj **json,
@@ -160,12 +162,21 @@ int web_service_cb_ping(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *data) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
     
-    ulfius_set_string_body_response(response, HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+    ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
     return U_CALLBACK_CONTINUE;
 }
@@ -365,7 +376,7 @@ int web_service_cb_post_terminate(const URequest *request,
 
     /* Only if the capp is running */
     status = killpg(capp->runtime->pid, SIGTERM);
-    if ( status == 0 ){
+    if (status == 0){
         usys_log_debug("SIGTERM send to capp: %s:%s", capp->name, capp->tag);
         ulfius_set_string_body_response(response, HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));
@@ -429,5 +440,15 @@ int web_service_cb_post_exec(const URequest *request,
                                HttpStatusStr(HttpStatus_InternalServerError));
     }
 
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_MethodNotAllowed,
+                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
     return U_CALLBACK_CONTINUE;
 }

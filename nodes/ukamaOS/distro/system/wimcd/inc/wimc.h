@@ -20,7 +20,6 @@
 #include "agent.h"
 
 #define SERVICE_NAME       SERVICE_WIMC
-#define WIMC_VERSION       "0.0.1"
 
 #define EP_BS              "/"
 #define REST_API_VERSION   "v1"
@@ -35,10 +34,8 @@
 
 #define WIMC_FLAG_CREATE_DB 1
 
-#define DEF_HUB_URL       "http://localhost:8001/"
 #define DEF_DB_FILE       "test.db"
 #define DEF_LOG_LEVEL     "TRACE"
-
 
 #define WIMC_REQ_TYPE_FETCH  "fetch"
 #define WIMC_REQ_TYPE_UPDATE "update"
@@ -75,7 +72,7 @@
 #define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_TASKS    "/content/tasks"
 
-#define WIMC_EP_HUB_CAPPS    "v1/capps"
+#define WIMC_EP_HUB_APPS    "v1/hub/apps"
 #define WIMC_EP_AGENT_UPDATE "v1/agents"
 
 #define WIMC_MAX_NAME_LEN   256
@@ -103,6 +100,8 @@
 #define DEFAULT_SHMEM "shared_memory"
 #define AGENT_EXEC "/usr/bin/casync"
 #define DEFAULT_PATH "/tmp"
+
+#define DEFAULT_APPS_PKGS_PATH "/ukama/apps/pkgs"
 
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;

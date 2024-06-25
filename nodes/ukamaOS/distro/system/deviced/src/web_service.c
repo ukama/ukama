@@ -16,6 +16,8 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
+#include "version.h"
+
 extern void process_reboot(Config *config);
 
 int web_service_cb_ping(const URequest *request,
@@ -28,13 +30,34 @@ int web_service_cb_ping(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
+
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
     
-    ulfius_set_string_body_response(response, HttpStatus_Unauthorized,
-                                    HttpStatusStr(HttpStatus_Unauthorized));
+    ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_MethodNotAllowed,
+                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
     return U_CALLBACK_CONTINUE;
 }
 

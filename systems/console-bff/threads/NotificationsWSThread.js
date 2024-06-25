@@ -13,40 +13,6 @@ const { isMainThread, parentPort } = require("worker_threads");
 
 const runWorker = async () => {
   if (!isMainThread) {
-    // const { url, orgId, scope, userId, networkId, subscriberId } = workerData;
-    // let params = "";
-    // if (orgId) {
-    //   params = params + `&org_id=${orgId}`;
-    // }
-    // if (subscriberId) {
-    //   params = params + `&subscriber_id=${subscriberId}`;
-    // }
-    // if (userId) {
-    //   params = params + `&user_id=${userId}`;
-    // }
-    // if (networkId) {
-    //   params = params + `&network_id=${networkId}`;
-    // }
-    // if (scope) {
-    //   params = params + `&scope=${scope}`;
-    // }
-    // if (params.length > 0) params = params.substring(1);
-
-    // const ws = new WebSocket(`${url}?${params}`);
-
-    // ws.on("open", async function open() {
-    //   console.log("connected");
-    // });
-
-    // ws.on("error", e => {
-    //   console.log(e);
-    //   parentPort.postMessage({ isError: true, message: e.message, data: null });
-    // });
-
-    // ws.on("message", async function message(data) {
-    //   console.log(data);
-    // });
-
     const INTERVAL = 10000; // 10 seconds
     const NOTIFICATION_TYPE = [
       "NOTIF_INFO",

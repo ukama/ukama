@@ -56,7 +56,7 @@ func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.No
 func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
 	log.Infof("Update notification %v", req)
 
-	nuuid, err := uuid.FromString(req.GetUserNotificationId())
+	nuuid, err := uuid.FromString(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of notification uuid. Error %s", err.Error())

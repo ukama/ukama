@@ -11,7 +11,7 @@
     "nodes": {
       "kernel-image" : "s3://path/to/vmlinuz.img",
       "initram-image" : "s3://path/to/initrd.img",
-      "disk-image" : "s3://path/to/ukma-xxx-xxx-xxx.img"
+      "disk-image" : "s3://path/to/ukma-xxx-xxx-xxx.img",
       "nodes-id-filename" : "nodes_id_build.json"
     },
     "systems": {

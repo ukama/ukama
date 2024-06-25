@@ -239,7 +239,7 @@ func (r *Router) getEventNotifications(c *gin.Context, req *GetEventNotification
 }
 
 func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotificationStatusRequest) (*epb.UpdateStatusResponse, error) {
-	return r.clients.e.UpdateStatus(req.UserNotificationId, req.IsRead)
+	return r.clients.e.UpdateStatus(req.Id, req.IsRead)
 }
 
 func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEventNotificationRequest) error {

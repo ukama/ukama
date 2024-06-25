@@ -61,11 +61,12 @@ type GetEventNotificationRequest struct {
 	NetworkId    string `json:"network_id" form:"network_id" query:"network_id"`
 	SubscriberId string `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
 	UserId       string `json:"user_id" form:"user_id" query:"user_id"`
-	Role         string `json:"role" form:"role" query:"role" validate:"oneof=ROLE_INVALID ROLE_OWNER ROLE_ADMIN ROLE_NETWORK_OWNER ROLE_VENDOR ROLE_USER"`
+	RoleType     string `json:"role" form:"role_type" query:"role" validate:"oneof=OWNER ADMIN VENDOR USERS"`
 }
+
 type UpdateEventNotificationStatusRequest struct {
-	UserNotificationId string `path:"id" binding:"required"`
-	IsRead             bool   `form:"read" json:"read" query:"is_read" binding:"required"`
+	Id     string `path:"id" binding:"required"`
+	IsRead bool   `form:"read" json:"read" query:"is_read" binding:"required"`
 }
 
 type GetRealTimeEventNotificationRequest struct {

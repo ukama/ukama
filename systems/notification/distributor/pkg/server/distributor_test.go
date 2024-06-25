@@ -59,6 +59,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 
 	mresp := &mpb.MemberResponse{
 		Member: &mpb.Member{
+			OrgId:  testOrgId,
 			UserId: req.UserId,
 			Role:   upb.RoleType_ROLE_OWNER,
 		},

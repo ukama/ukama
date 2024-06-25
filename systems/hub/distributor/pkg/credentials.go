@@ -13,7 +13,7 @@ import (
 
 	"github.com/minio/minio-go/v6/pkg/credentials"
 
-	mc "github.com/ukama/ukama/systems/hub/hub/pkg"
+	mc "github.com/ukama/ukama/systems/hub/artifactmanager/pkg"
 )
 
 type StoreCredentialsOptions struct {
@@ -40,13 +40,14 @@ func (cp *S3CredentialsProvider) Retrieve() (credentials.Value, error) {
 func InitStoreCredentialsOptions(c *MinioConfig) {
 	store = &StoreCredentialsOptions{
 		mc.MinioConfig{
-			TimeoutSecond:      c.TimeoutSecond,
-			Endpoint:           c.Endpoint,
-			AccessKey:          c.AccessKey,
-			SecretKey:          c.SecretKey,
-			BucketSuffix:       c.BucketSuffix,
-			Region:             c.Region,
-			SkipBucketCreation: c.SkipBucketCreation,
+			TimeoutSecond:         c.TimeoutSecond,
+			Endpoint:              c.Endpoint,
+			AccessKey:             c.AccessKey,
+			SecretKey:             c.SecretKey,
+			BucketSuffix:          c.BucketSuffix,
+			Region:                c.Region,
+			SkipBucketCreation:    c.SkipBucketCreation,
+			ArtifactTypeBucketMap: c.ArtifactTypeBucketMap,
 		},
 	}
 }

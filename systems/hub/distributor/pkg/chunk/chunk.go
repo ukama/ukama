@@ -26,6 +26,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var S3Schemes = []string{"s3+http", "s3+https"}
+
 type tarOptions struct {
 	casync.LocalFSOptions
 }
@@ -97,8 +99,24 @@ func storeIndex(name string, idx casync.Index) error {
 	return err
 }
 
+type Store interface {
+	Read(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error
+}
+
+type s3Store struct {
+	Scheme []string
+}
+
+type localStore struct {
+	Scheme []string
+}
+
+func NewS3Store() *s3Store {
+	return &s3Store{Scheme: S3Schemes}
+}
+
 /* Read file from local store*/
-func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func (s3 *localStore) Read(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	var (
 		tgzFile string
 		err     error
@@ -109,7 +127,7 @@ func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Vers
 	tgzFile = wp + fileWithExt(fname, fext)
 
 	/* Read from local store */
-	err = GetArtifactFromLocalStore(ctx, fname, fversion, fstore, tgzFile)
+	err = GetArtifactFromLocalStore(ctx, fname, aType, fversion, fstore, tgzFile)
 	if err != nil {
 		log.Errorf("Failed to read artifact %s from local store %s : %s ",
 			fname, fstore, err.Error())
@@ -131,7 +149,7 @@ func ReadFromLocalStore(ctx context.Context, fname string, fversion *semver.Vers
 }
 
 /* Read file from local store*/
-func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func (s3 *s3Store) Read(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	var (
 		tgzFile string
 		err     error
@@ -142,7 +160,7 @@ func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version
 	log.Debugf("Using S3 store %s to read file %s", fstore, fname)
 
 	/* Read data from artifact store */
-	err = GetArtifactFromS3(ctx, fname, fversion, fstore, tgzFile)
+	err = GetArtifactFromS3(ctx, fname, aType, fversion, fstore, tgzFile)
 	if err != nil {
 		log.Errorf("Error while pulling data from artifact store: %s", err.Error())
 
@@ -163,23 +181,28 @@ func ReadFromS3Store(ctx context.Context, fname string, fversion *semver.Version
 }
 
 /* Read from store */
-func ReadFromStore(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) error {
+func ReadFromStore(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) error {
 	loc, err := url.Parse(fstore)
 	if err != nil {
 		return fmt.Errorf("unable to parse store location %s : %s", fstore, err)
 	}
 
-	switch loc.Scheme {
-	case "s3+http", "s3+https":
-		err := ReadFromS3Store(ctx, fname, fversion, fext, fstore, wp)
-		if err != nil {
-			return err
+	var st Store = nil
+	for _, s := range S3Schemes {
+		if loc.Scheme == s {
+			st = NewS3Store()
+			break
 		}
-	default:
-		err := ReadFromLocalStore(ctx, fname, fversion, fext, fstore, wp)
-		if err != nil {
-			return err
-		}
+	}
+
+	/* Choose local store if scheme dosen't match. */
+	if st == nil {
+		st = new(localStore)
+	}
+
+	err = st.Read(ctx, fname, aType, fversion, fext, fstore, wp)
+	if err != nil {
+		return err
 	}
 
 	return err
@@ -207,11 +230,11 @@ func prepareWorkplace() (string, error) {
 }
 
 /* Read contents to be chunked from remote or S3 server and store them on locally*/
-func ReadRemoteContents(ctx context.Context, fname string, fversion *semver.Version, fext string, fstore string, wp string) (string, bool, error) {
+func ReadRemoteContents(ctx context.Context, fname string, aType string, fversion *semver.Version, fext string, fstore string, wp string) (string, bool, error) {
 	isDir := false
 
 	/* Read file from store */
-	err := ReadFromStore(ctx, fname, fversion, fext, fstore, wp)
+	err := ReadFromStore(ctx, fname, aType, fversion, fext, fstore, wp)
 	if err != nil {
 		return "", false, err
 	}
@@ -232,14 +255,51 @@ func ReadRemoteContents(ctx context.Context, fname string, fversion *semver.Vers
 	return content, isDir, nil
 }
 
+type chunker interface {
+	MakeChunk(ctx context.Context, content string, store string, wp string) (*casync.Index, error)
+	GetIndexExtension() string
+}
+
+type blob struct {
+	indexExt string `default:".caibx"`
+	config   *pkg.ChunkConfig
+	store    *pkg.StoreConfig
+}
+
+type archive struct {
+	indexExt string `default:".caidx"`
+	config   *pkg.ChunkConfig
+	store    *pkg.StoreConfig
+}
+
+func NewArchiveChunker(c *pkg.ChunkConfig, s *pkg.StoreConfig) *archive {
+	return &archive{
+		config:   c,
+		store:    s,
+		indexExt: ".caidx",
+	}
+}
+
+func NewBlobChunker(c *pkg.ChunkConfig, s *pkg.StoreConfig) *blob {
+	return &blob{
+		config:   c,
+		store:    s,
+		indexExt: ".caibx",
+	}
+}
+
+func (a *archive) GetIndexExtension() string {
+	return a.indexExt
+}
+
 /* Create chunks for given tar file. */
-func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, content string, store string, wp string) (*casync.Index, error) {
+func (a *archive) MakeChunk(ctx context.Context, content string, store string, wp string) (*casync.Index, error) {
 	var fs casync.FilesystemReader
 	var err error
 
 	var tarOpt tarOptions
 
-	opt := storeOptions(storeCfg, chunkCfg)
+	opt := storeOptions(a.store, a.config)
 
 	log.Debugf("Starting chunking process for %s from store %s, opt %+v tarOpt %+v.",
 		content, store, opt, tarOpt)
@@ -248,7 +308,7 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 	}
 
 	/* What to expect from content */
-	switch chunkCfg.InFormat {
+	switch a.config.InFormat {
 	case "disk":
 		local := casync.NewLocalFS(content, tarOpt.LocalFSOptions)
 		fs = local
@@ -271,7 +331,7 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 		op.AddRoot = true
 		fs = casync.NewTarReader(r, op)
 	default:
-		return nil, fmt.Errorf("invalid input format '%s'", chunkCfg.InFormat)
+		return nil, fmt.Errorf("invalid input format '%s'", a.config.InFormat)
 	}
 
 	r, w := io.Pipe()
@@ -286,16 +346,14 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 	defer s.Close()
 
 	if s == nil {
-		log.Errorf("Error Writable store %s not found", err.Error())
-
+		log.Errorf("Error Writable store %s not found", store)
 		return nil, fmt.Errorf("store '%s' not found", store)
 	}
 
 	/* Get chunker */
-	c, err := casync.NewChunker(r, chunkCfg.MinChunkSize, chunkCfg.AvgChunkSize, chunkCfg.MaxChunkSize)
+	c, err := casync.NewChunker(r, a.config.MinChunkSize, a.config.AvgChunkSize, a.config.MaxChunkSize)
 	if err != nil {
 		log.Errorf("Error while getting new chunker %s", err.Error())
-
 		return nil, err
 	}
 
@@ -303,7 +361,6 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 	var tarErr error
 	go func() {
 		tarErr = casync.Tar(ctx, w, fs)
-
 		w.Close()
 	}()
 
@@ -311,7 +368,6 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 	index, err := casync.ChunkStream(ctx, c, s, opt.N)
 	if err != nil {
 		log.Errorf("Error while chunking %s", err.Error())
-
 		return nil, err
 	}
 
@@ -320,36 +376,38 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 	/* Any issues with tar */
 	if tarErr != nil {
 		log.Errorf("Error realted to tar %s", tarErr.Error())
-
 		return nil, tarErr
 	}
 
 	return &index, nil
 }
 
+func (b *blob) GetIndexExtension() string {
+	return b.indexExt
+}
+
 /* Create chunks for the blobs */
-func CreateChunkForBlob(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, content string, store string, wp string) (*casync.Index, error) {
+func (b *blob) MakeChunk(ctx context.Context, content string, storeLoc string, wp string) (*casync.Index, error) {
 	// Open the target store if one was given
 	var s casync.WriteStore
-	opt := storeOptions(storeCfg, chunkCfg)
+	opt := storeOptions(b.store, b.config)
 
-	s, err := WritableStore(store, *opt)
+	s, err := WritableStore(storeLoc, *opt)
 	if err != nil {
+		log.Errorf("failed to get writable store: %v", err)
 		return nil, err
 	}
 	defer s.Close()
 
 	if s == nil {
 		log.Errorf("Err:: No store avalibale.")
-
 		return nil, fmt.Errorf("not able to find store")
 	}
 
 	/* Create a index file. */
 	log.Debugf("Creating index for a  file %s.", content)
-	//pbi := NewProgressBar("index ")
-	index, stats, err := casync.IndexFromFile(ctx, content, chunkCfg.N, chunkCfg.MinChunkSize,
-		chunkCfg.AvgChunkSize, chunkCfg.MaxChunkSize, casync.NullProgressBar{})
+	index, stats, err := casync.IndexFromFile(ctx, content, b.config.N, b.config.MinChunkSize,
+		b.config.AvgChunkSize, b.config.MaxChunkSize, casync.NullProgressBar{})
 	if err != nil {
 		return nil, err
 	}
@@ -358,23 +416,22 @@ func CreateChunkForBlob(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg
 		stats.ChunksAccepted, stats.ChunksProduced)
 
 	/* Create chunks for the file */
-	log.Debugf("Creating chunks for a  file %s and storing to %s.", content, store)
-	if s != nil {
-		err = casync.ChopFile(ctx, content, index.Chunks, s, chunkCfg.N, casync.NullProgressBar{})
-		if err != nil {
-			return nil, err
-		}
+	log.Debugf("Creating chunks for a  file %s and storing to %s.", content, storeLoc)
+	err = casync.ChopFile(ctx, content, index.Chunks, s, b.config.N, casync.NullProgressBar{})
+	if err != nil {
+		return nil, err
 	}
 
 	return &index, nil
 }
 
 /* Handler for creating chunks */
-func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, fname string, fversion *semver.Version, fstore string) (*casync.Index, error) {
+func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.ChunkConfig, fname string, aType string, fversion *semver.Version, fstore string) (*casync.Index, error) {
 	var (
 		index     *casync.Index
 		err       error
 		indexFile string
+		ch        chunker
 	)
 
 	/* Prepare workplace */
@@ -386,40 +443,39 @@ func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.
 	}
 
 	/* Only first store is considered */
-	storePath := chunkCfg.Stores[0]
+	storeLoc := chunkCfg.Stores[0]
 
 	/* Read contents */
-	content, isFS, err := ReadRemoteContents(ctx, fname, fversion, chunkCfg.Extension, fstore, wp)
+	content, isFS, err := ReadRemoteContents(ctx, fname, aType, fversion, chunkCfg.Extension, fstore, wp)
 	if err != nil {
 		log.Errorf("Failed to read contents for chunking %s", err.Error())
 
 		return nil, err
 	}
-	log.Debugf("Workplace %s, Contents %s FS: %t Store %s", wp, content, isFS, storePath)
+	log.Debugf("Workplace %s, Contents %s FS: %t Store %s", wp, content, isFS, storeLoc)
 
 	/* Start chunking process */
 	if isFS {
-		log.Debugf("Creating archived chunks for FS.")
-
-		index, err = CreateArchivedChunk(ctx, storeCfg, chunkCfg, content, storePath, wp)
-		indexFile = wp + "index.caidx"
+		log.Debugf("Creating chunks for FS.")
+		ch = NewArchiveChunker(chunkCfg, storeCfg)
 
 	} else {
-		log.Debugf("Creating chunks.")
-
-		index, err = CreateChunkForBlob(ctx, storeCfg, chunkCfg, content, storePath, wp)
-		indexFile = wp + "index.caibx"
+		log.Debugf("Creating chunks for Blob.")
+		ch = NewBlobChunker(chunkCfg, storeCfg)
 	}
 
+	index, err = ch.MakeChunk(ctx, content, storeLoc, wp)
 	if err != nil {
-		log.Errorf("Error while creating chunks for %s from %s: %s", fname, storePath, err.Error())
+		log.Errorf("Error while creating chunks for %s from %s: %s", fname, storeLoc, err.Error())
 
 		return nil, err
 	}
 
 	/* Store index file */
+	indexFile = wp + ch.GetIndexExtension()
 	err = storeIndex(indexFile, *index)
 	if err != nil {
+
 		log.Errorf("failed to write index file.")
 
 		return nil, fmt.Errorf("failed to write index file")

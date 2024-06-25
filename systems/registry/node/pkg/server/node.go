@@ -35,7 +35,6 @@ import (
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
-
 type NodeServer struct {
 	orgName        string
 	org            uuid.UUID
@@ -43,7 +42,7 @@ type NodeServer struct {
 	siteRepo       db.SiteRepo
 	nodeStatusRepo db.NodeStatusRepo
 	nameGenerator  namegenerator.Generator
-	siteService providers.SiteClientProvider
+	siteService    providers.SiteClientProvider
 	pushGateway    string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -60,7 +59,7 @@ func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, n
 		nodeRepo:       nodeRepo,
 		nodeStatusRepo: nodeStatusRepo,
 		siteRepo:       siteRepo,
-		siteService: siteService,
+		siteService:    siteService,
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
 		msgbus:         msgBus,
@@ -82,7 +81,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		Id:    nId.StringLowercase(),
+		Id: nId.StringLowercase(),
 		Status: db.NodeStatus{
 			NodeId: nId.StringLowercase(),
 			Conn:   db.Unknown,
@@ -97,17 +96,19 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	route := n.baseRoutingKey.SetAction("create").SetObject("node").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
 
-	evt := &epb.NodeCreatedEvent{
-		NodeId: nId.StringLowercase(),
-		Name:   node.Name,
-		Type:   node.Type,
-	}
+		evt := &epb.EventRegistryNodeCreate{
+			NodeId: nId.StringLowercase(),
+			Name:   node.Name,
+			Type:   node.Type,
+		}
 
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
@@ -135,7 +136,6 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 
 	return resp, nil
 }
-
 
 func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetSiteId())
@@ -183,8 +183,6 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 	return resp, nil
 }
 
-
-
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	if req.Free {
 		// return only free nodes
@@ -210,16 +208,22 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 		NodeId: nodeId.StringLowercase(),
 	}
 
-	pbStatus := &pb.NodeStatus{}
-
-	if req.State != "" {
-		nodeUpdates.State = dbNodeState
-		pbStatus.State = dbNodeState.String()
+	evt := &epb.EventRegistryNodeStatusUpdate{
+		NodeId: nodeUpdates.NodeId,
 	}
 
 	if req.Connectivity != "" {
 		nodeUpdates.Conn = dbConnState
-		pbStatus.Connectivity = dbConnState.String()
+		evt.Status = &epb.EventRegistryNodeStatusUpdate_Connectivity{
+			Connectivity: dbConnState.String(),
+		}
+	}
+
+	if req.State != "" {
+		nodeUpdates.State = dbNodeState
+		evt.Status = &epb.EventRegistryNodeStatusUpdate_State{
+			State: dbNodeState.String(),
+		}
 	}
 
 	err = n.nodeStatusRepo.Update(nodeUpdates)
@@ -234,6 +238,15 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 		log.Error("error updating the node state, ", err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetActionUpdate().SetObject("status").MustBuild()
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
@@ -277,18 +290,19 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 		return resp, nil
 	}
 
-	route := n.baseRoutingKey.SetAction("update").SetObject("node").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild()
 
-	evt := &epb.NodeUpdatedEvent{
-		NodeId: nodeUpdates.Id,
-		Name:   nodeUpdates.Name,
+		evt := &epb.EventRegistryNodeUpdate{
+			NodeId: nodeUpdates.Id,
+			Name:   nodeUpdates.Name,
+		}
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
-
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
-	}
-
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
 
@@ -305,15 +319,17 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	route := n.baseRoutingKey.SetAction("delete").SetObject("node").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild()
 
-	evt := &epb.NodeDeletedEvent{
-		NodeId: nodeId.StringLowercase(),
-	}
+		evt := &epb.EventRegistryNodeDelete{
+			NodeId: nodeId.StringLowercase(),
+		}
 
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
@@ -338,6 +354,20 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("attach").SetObject("node").MustBuild()
+
+		evt := &epb.EventRegistryNodeAttach{
+			NodeId:    nodeId.StringLowercase(),
+			Nodegroup: nds,
+		}
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.AttachNodesResponse{}, nil
@@ -351,9 +381,34 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
+	node, err := n.nodeRepo.Get(nodeId)
+	if err != nil {
+		log.Error("error getting the node, ", err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	attachednodes := make([]string, len(node.Attached))
+	for _, an := range node.Attached {
+		attachednodes = append(attachednodes, an.Id)
+	}
+
 	err = n.nodeRepo.DetachNode(nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("dettach").SetObject("node").MustBuild()
+
+		evt := &epb.EventRegistryNodeAttach{
+			NodeId:    nodeId.StringLowercase(),
+			Nodegroup: attachednodes,
+		}
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
@@ -362,19 +417,17 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 }
 
 func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteRequest) (*pb.AddNodeToSiteResponse, error) {
-	log.Infof("Add node req : %s",req )
+	log.Infof("Add node req : %s", req)
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	
 	netID, err := uuid.FromString(req.GetNetworkId())
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
-
 
 	siteID, err := uuid.FromString(req.GetSiteId())
 
@@ -410,18 +463,20 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
 
-	evt := &epb.NodeAssignedEvent{
-		NodeId:  nodeId.StringLowercase(),
-		Type:    nodeId.GetNodeType(),
-		Site:    siteID.String(),
-		Network: netID.String(),
-	}
+		evt := &epb.EventRegistryNodeAssign{
+			NodeId:  nodeId.StringLowercase(),
+			Type:    nodeId.GetNodeType(),
+			Site:    siteID.String(),
+			Network: netID.String(),
+		}
 
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return &pb.AddNodeToSiteResponse{}, nil
@@ -439,18 +494,20 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	route := n.baseRoutingKey.SetAction("release").SetObject("node").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("release").SetObject("node").MustBuild()
 
-	evt := &epb.NodeReleasedEvent{
-		NodeId:  nodeId.StringLowercase(),
-		Type:    nodeId.GetNodeType(),
-		Site:    nd.SiteId.String(),
-		Network: nd.NetworkId.String(),
-	}
+		evt := &epb.NodeReleasedEvent{
+			NodeId:  nodeId.StringLowercase(),
+			Type:    nodeId.GetNodeType(),
+			Site:    nd.SiteId.String(),
+			Network: nd.NetworkId.String(),
+		}
 
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil

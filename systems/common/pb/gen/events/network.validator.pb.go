@@ -14,6 +14,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *NetworkCreatedEvent) Validate() error {
+func (this *EventNetworkCreate) Validate() error {
+	return nil
+}
+func (this *EventNetworkDelete) Validate() error {
 	return nil
 }

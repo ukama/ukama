@@ -1,0 +1,29 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+ 
+ package ukama.events.v1;
+ 
+ import "validator.proto";
+ import "google/protobuf/timestamp.proto";
+ import "ukama/subscriber.proto";
+ 
+ message AddSubscriber {
+    ukama.common.v1.Subscriber subscriber =1;
+ }
+ 
+ message RemoveSubscriber {
+    ukama.common.v1.Subscriber subscriber =1;
+ }
+ 
+ message UpdateSubscriber {
+    ukama.common.v1.Subscriber subscriber =1;
+ }

@@ -22,7 +22,6 @@ service MemberService {
 
     /* Members */
     rpc AddMember(AddMemberRequest) returns (MemberResponse);
-    rpc AddOtherMember(AddMemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMemberByUserId(GetMemberByUserIdRequest) returns (GetMemberByUserIdResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);

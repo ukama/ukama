@@ -18,3 +18,9 @@ var _ = math.Inf
 func (this *EventInvitationCreated) Validate() error {
 	return nil
 }
+func (this *EventInvitationDeleted) Validate() error {
+	return nil
+}
+func (this *EventInvitationUpdated) Validate() error {
+	return nil
+}

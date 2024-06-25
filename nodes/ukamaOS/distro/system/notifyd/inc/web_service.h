@@ -93,6 +93,10 @@ int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig);
 
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig);
+
 int web_service_cb_post_event(const URequest *request,
                               UResponse *response,
                               void *epConfig);
@@ -100,5 +104,9 @@ int web_service_cb_post_event(const URequest *request,
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
+
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *data);
 
 #endif /* INC_WEB_SERVICE_H_ */

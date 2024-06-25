@@ -18,11 +18,10 @@ static int start_framework(Config *config, UInst *instance) {
 
     if (ulfius_start_framework(instance) != U_OK) {
 		usys_log_error("Error starting the webservice/websocket.");
-    
-		/* clean up. */
-		ulfius_stop_framework(instance); /* don't think need this. XXX */
+
+		ulfius_stop_framework(instance);
 		ulfius_clean_instance(instance);
-    
+
 		return USYS_FALSE;
 	}
 
@@ -30,25 +29,73 @@ static int start_framework(Config *config, UInst *instance) {
 	return USYS_TRUE;
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
     if (config->clientMode == USYS_TRUE) {
         /* Node ID is not requried in client-mode */
         ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("reboot/"), 0,
+                                   API_RES_EP("reboot"), 0,
                                    &web_service_cb_post_reboot, config);
+        setup_unsupported_methods(instance, "POST",
+                                  URL_PREFIX, API_RES_EP("reboot"));
     } else {
         ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                    API_RES_EP("reboot/:id"), 0,
                                    &web_service_cb_post_reboot, config);
+        setup_unsupported_methods(instance, "POST",
+                                  URL_PREFIX, API_RES_EP("reboot/:id"));
 
         ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                    API_RES_EP("restart/:id"), 0,
                                    &web_service_cb_post_restart, config);
+        setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart/:id"));
     }
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);

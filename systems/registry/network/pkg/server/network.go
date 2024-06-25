@@ -99,30 +99,30 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
+		evt := &epb.EventNetworkCreate {
+			Id:               network.Id.String(),
+			Name:             network.Name,
+			OrgId:            n.orgId,
+			AllowedCountries: network.AllowedCountries,
+			AllowedNetworks:  network.AllowedNetworks,
+			Budget:           network.Budget,
+			Overdraft:        network.Overdraft,
+			TrafficPolicy:    network.TrafficPolicy,
+			PaymentLinks:     network.PaymentLinks,
+			IsDeactivated:    network.Deactivated,
+		}
 
-	evt := &epb.NetworkCreatedEvent{
-		Id:               network.Id.String(),
-		Name:             network.Name,
-		OrgId:            n.orgId,
-		AllowedCountries: network.AllowedCountries,
-		AllowedNetworks:  network.AllowedNetworks,
-		Budget:           network.Budget,
-		Overdraft:        network.Overdraft,
-		TrafficPolicy:    network.TrafficPolicy,
-		PaymentLinks:     network.PaymentLinks,
-		IsDeactivated:    network.Deactivated,
-	}
-
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
-			evt, route, err.Error())
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+				evt, route, err.Error())
+		}
 	}
 
 	n.pushNetworkCount()
@@ -187,11 +187,18 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	// publish event before returning resp
-	route := n.baseRoutingKey.SetAction("delete").SetObject("network").MustBuild()
-	err = n.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("delete").SetObject("network").MustBuild()
+		evt := &epb.EventNetworkDelete{
+			Id:    req.NetworkId,
+			OrgId: n.orgId,
+		}
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+				evt, route, err.Error())
+		}
 	}
 
 	n.pushNetworkCount()

@@ -15,6 +15,10 @@ int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig);
 
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig);
+
 int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig);
@@ -38,5 +42,9 @@ int web_service_cb_get_all_capps_status(const URequest *request,
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
+
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data);
 
 #endif /* WEB_SERVICE_H_ */

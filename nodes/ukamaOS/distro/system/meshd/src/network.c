@@ -186,6 +186,8 @@ int start_web_services(Config *config, UInst *clientInst) {
 
     ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "ping", 0,
                                &web_service_cb_ping, config);
+    ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "version", 0,
+                               &web_service_cb_version, config);
     ulfius_set_default_endpoint(clientInst, &web_service_cb_default, config);
 
     if (!start_framework(config, clientInst, WEB_SERVICE)) {

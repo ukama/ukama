@@ -15,6 +15,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -264,7 +265,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
-	evt := &epb.SimAllocation{
+	evt := &epb.EventSimAllocation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
 		NetworkId:    sim.NetworkId.String(),
@@ -279,11 +280,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageId:    sim.Package.Id.String(),
 	}
 
-	err = s.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
-			evt, route, err.Error())
-	}
+	_ = s.PublishEventMessage(route, evt)
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		//TODO: Commenting below code, Need to address issue #702
@@ -508,12 +505,15 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	route := s.baseRoutingKey.SetAction("delete").SetObject("sim").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	evtMsg := &epb.EventSimTermination{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
 	}
+	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	_, _, _, terminatedCount, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -614,12 +614,16 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	evtMsg := &epb.EventSimAddPackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageId.String(),
 	}
+	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	return &pb.AddPackageResponse{}, nil
 }
@@ -708,13 +712,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			}
 		}
 
-		route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
-
-		err = s.msgbus.PublishRequest(route, req)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-		}
-
 		return nil
 	})
 
@@ -722,6 +719,17 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		return nil, status.Errorf(codes.Internal,
 			"failed to set package as active. Error %s", err.Error())
 	}
+
+	evtMsg := &epb.EventSimActivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    pkg.Id.String(),
+	}
+	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	/* Update package for opertaor */
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
@@ -765,17 +773,26 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
 	}
 
+	sim, err := s.getSim(req.SimId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
 	err = s.packageRepo.Delete(packageId, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	evtMsg := &epb.EventSimRemovePackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageId.String(),
 	}
+	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	return &pb.RemovePackageResponse{}, nil
 }
@@ -823,20 +840,20 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 	}
 
 	err = s.simRepo.Update(simUpdates, nil)
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	msg := &pb.ToggleSimStatusRequest{
-		SimId: reqSimId,
-	}
 
+	evtMsg := &epb.EventSimActivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
+	}
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
-	}
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	_, activeCount, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -888,19 +905,20 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		DeactivationsCount: sim.DeactivationsCount + 1}
 
 	err = s.simRepo.Update(simUpdates, nil)
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	msg := &pb.ToggleSimStatusRequest{
-		SimId: reqSimId,
+
+	evtMsg := &epb.EventSimDeactivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
-
-	err = s.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
-	}
+	_ = s.PublishEventMessage(route, evtMsg)
 
 	_, _, inactiveCount, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -928,6 +946,16 @@ func (s *SimManagerServer) getSim(simId string) (*sims.Sim, error) {
 	}
 
 	return sim, nil
+}
+
+func (s *SimManagerServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
+
+	err := s.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+	}
+	return err
+
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {

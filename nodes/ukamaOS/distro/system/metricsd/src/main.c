@@ -20,9 +20,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "version.h"
+
 #define METRIC_CONFIG "./config/metrics_config.toml"
 #define DEF_LOG_LEVEL "TRACE"
-#define VERSION "v0.0.1-"GITHASH
 
 /* Terminate signal handler for Metrics collector */
 void handle_sigint(int signum) {

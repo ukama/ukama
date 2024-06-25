@@ -100,6 +100,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 		return err
 	}
 
+	/* Get valid scopes for request */
 	commonScopes := []notification.NotificationScope{}
 	if roleType != roles.TYPE_INVALID {
 		roleScopes := notification.RoleToNotificationScopes[roleType]
