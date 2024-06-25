@@ -199,9 +199,9 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
           <Box component="div" role="tabpanel" hidden={selectedTab !== 1}>
             <DataPlanComponent
-              packageName={packageName || ''}
-              currentSite={currentSite || ''}
-              bundle={bundle || ''}
+              packageName={packageName ?? ''}
+              currentSite={currentSite ?? ''}
+              bundle={bundle ?? ''}
             />
           </Box>
 
@@ -223,7 +223,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
         </Box>
       </Box>
       <DialogActions>
-        {onEditName || onEditEmail ? (
+        {onEditName ?? onEditEmail ? (
           <Button
             variant="contained"
             onClick={handleSaveSubscriber}

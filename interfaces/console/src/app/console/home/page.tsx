@@ -19,7 +19,7 @@ import { Box, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-const DynamicMap = dynamic(() => import('@/components/NetworkMap/DynamicMap'), {
+const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
     <Skeleton
@@ -161,7 +161,7 @@ export default function Page() {
               width={'100%'}
               isLoading={networkNodesLoading}
             >
-              <DynamicMap
+              <NetworkMap
                 id="network-map"
                 zoom={10}
                 className="network-map"
@@ -173,7 +173,7 @@ export default function Page() {
                     <SitesTree
                       sites={[]}
                       // sites={structureNodeSiteDate(
-                      //   networkNodes?.getNodesByNetwork.nodes || [],
+                      //   networkNodes?.getNodesByNetwork.nodes ?? [],
                       // )}
                     />
                     {/* <SitesSelection
@@ -182,7 +182,7 @@ export default function Page() {
                     /> */}
                   </>
                 )}
-              </DynamicMap>
+              </NetworkMap>
             </LoadingWrapper>
           ) : (
             <EmptyView

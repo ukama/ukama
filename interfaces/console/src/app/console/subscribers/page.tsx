@@ -113,7 +113,7 @@ const Page = () => {
         (subscriber) => {
           const s = search.toLowerCase();
           if (
-            subscriber.firstName.toLowerCase().includes(s) ||
+            subscriber.firstName.toLowerCase().includes(s) ??
             subscriber.lastName.toLowerCase().includes(s)
           )
             return subscriber;
@@ -233,7 +233,7 @@ const Page = () => {
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
     variables: {
-      networkId: selectedNetwork || network.id,
+      networkId: selectedNetwork ?? network.id,
     },
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
@@ -288,7 +288,7 @@ const Page = () => {
         const networkName =
           networkList?.getNetworks?.networks.find(
             (net) => net.id === subscriber.networkId,
-          )?.name || '';
+          )?.name ?? '';
 
         return {
           id: subscriber.uuid,
@@ -678,7 +678,6 @@ const Page = () => {
                       uuid,
                       name,
                       duration,
-                      users,
                       currency,
                       dataVolume,
                       dataUnit,
@@ -688,7 +687,6 @@ const Page = () => {
                         <PlanCard
                           uuid={uuid}
                           name={name}
-                          users={users}
                           amount={amount}
                           isOptions={false}
                           dataUnit={dataUnit}
@@ -758,9 +756,9 @@ const Page = () => {
         pSimCount={simStatData?.getSimPoolStats.physical}
         eSimCount={simStatData?.getSimPoolStats.physical}
         submitButtonState={
-          addSubscriberLoading || allocateSimLoading || packagesLoading
+          addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
         }
-        loading={addSubscriberLoading || allocateSimLoading || packagesLoading}
+        loading={addSubscriberLoading ?? allocateSimLoading ?? packagesLoading}
       />
       <DeleteConfirmation
         open={isConfirmationOpen}
@@ -777,7 +775,7 @@ const Page = () => {
         subscriberInfo={subcriberInfo}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
-        loading={updateSubscriberLoading || deleteSimLoading}
+        loading={updateSubscriberLoading ?? deleteSimLoading}
         handleDeleteSubscriber={handleDeleteSubscriberModal}
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
@@ -793,9 +791,9 @@ const Page = () => {
         onCancel={handleCloseTopUp}
         subscriberId={topUpDetails.subscriberId}
         handleTopUp={handleTopUp}
-        loadingTopUp={packagesLoading || addPackageToSimLoading}
+        loadingTopUp={packagesLoading ?? addPackageToSimLoading}
         packages={packagesData?.getPackages.packages ?? []}
-        sims={subscriberSimList || []}
+        sims={subscriberSimList ?? []}
       />
     </Stack>
   );

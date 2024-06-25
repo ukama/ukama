@@ -84,7 +84,7 @@ const CellValueByType = ({
     case 'actions':
       if (
         (withStatusColumn &&
-          row['status'] === Invitation_Status.InviteAccepted) ||
+          row['status'] === Invitation_Status.InviteAccepted) ??
         row['status'] === Invitation_Status.InviteDeclined
       ) {
         return <div>none</div>;

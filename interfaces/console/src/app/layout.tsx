@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   const headersList = headers();
   const cookieStore = cookies();
-  const cookieTheme = cookieStore.get('theme') || {
+  const cookieTheme = cookieStore.get('theme') ?? {
     name: 'theme',
     value: 'light',
   };

@@ -51,7 +51,7 @@ const DraftDropdown = ({
   handleDraftUpdated,
   handleDraftSelected,
 }: IDraftDropdown) => {
-  const { id = '', name = '' } = draft || {};
+  const { id = '', name = '' } = draft ?? {};
   const [newName, setNewName] = useState('');
   const [editNameId, setEditNameId] = useState('-1');
   const classes = useStyles({ isEmpty: !id });

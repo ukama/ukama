@@ -123,7 +123,7 @@ const SimpleTableCell = ({
         <ChipDropdown
           onCreateNetwork={handleCreateNetwork}
           menu={
-            (networkList && networkList.map((network: any) => network.name)) ||
+            (networkList && networkList.map((network: any) => network.name)) ??
             []
           }
         />

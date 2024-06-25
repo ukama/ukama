@@ -51,7 +51,7 @@ const Page = () => {
   const { loading: networkLoading } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      setNetworkList(data?.getNetworks.networks || []);
+      setNetworkList(data?.getNetworks.networks ?? []);
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -68,7 +68,7 @@ const Page = () => {
   //     const nodes = data.node.filter((node: any) => {
   //       if (node.id.includes(nodeSearch)) return node;
   //     });
-  //     setData((prev: any) => ({ ...prev, node: nodes || [] }));
+  //     setData((prev: any) => ({ ...prev, node: nodes ?? [] }));
   //   } else if (nodeSearch.length === 0) {
   //     setData((prev: any) => ({ ...prev, node: data.node }));
   //   }
@@ -99,7 +99,7 @@ const Page = () => {
             title={'My node pool'}
             buttonTitle={'CLAIM NODE'}
             handleButtonAction={() => {}}
-            subtitle={data.length.toString() || '0'}
+            subtitle={data.length.toString() ?? '0'}
             onSearchChange={(e: string) => setSearch(e)}
           />
           <br />

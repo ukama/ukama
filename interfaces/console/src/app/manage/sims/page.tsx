@@ -98,7 +98,7 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={uploadSimsLoading || simsLoading}
+      isLoading={uploadSimsLoading ?? simsLoading}
       height={'calc(100vh - 400px)'}
     >
       <Paper
@@ -116,7 +116,7 @@ const Page = () => {
             showSearch={false}
             title={'My SIM pool'}
             buttonTitle={'CLAIM SIMS'}
-            subtitle={data.length.toString() || '0'}
+            subtitle={data.length.toString() ?? '0'}
             handleButtonAction={() => setIsUploadSims(true)}
           />
           <br />

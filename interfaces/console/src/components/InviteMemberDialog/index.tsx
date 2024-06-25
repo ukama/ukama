@@ -147,9 +147,9 @@ const InviteMemberDialog = ({
           {labelSuccessBtn && (
             <Button
               disabled={
-                !member.role ||
-                !member.email ||
-                !member.name ||
+                !member.role ??
+                !member.email ??
+                !member.name ??
                 invitationLoading
               }
               variant="contained"

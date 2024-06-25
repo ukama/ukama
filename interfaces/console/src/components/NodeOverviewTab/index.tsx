@@ -46,7 +46,7 @@ const NodeOverviewTab = ({
   getNodeSoftwareUpdateInfos,
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
-  const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
+  const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
     setSelected(0);
@@ -72,18 +72,18 @@ const NodeOverviewTab = ({
             handleAction={handleOnSelected}
           >
             <NodeStatItem
-              value={`${capitalize(selectedNode?.type.toLowerCase() || 'HOME')} Node`}
+              value={`${capitalize(selectedNode?.type.toLowerCase() ?? 'HOME')} Node`}
               name={'Model type'}
             />
 
             <NodeStatItem
-              value={selectedNode?.id.toLowerCase() || '-'}
+              value={selectedNode?.id.toLowerCase() ?? '-'}
               name={'Serial #'}
             />
             {/* {selectedNode?.type === 'TOWER' && (
                 <Grid item xs={12}>
                   <NodeGroup
-                    nodes={nodeGroupData?.attached || []}
+                    nodes={nodeGroupData?.attached ?? []}
                     loading={nodeGroupLoading}
                     handleNodeAction={onNodeSelected}
                   />
@@ -151,10 +151,10 @@ const NodeOverviewTab = ({
       <Grid item xs={12} md={8}>
         {selected === 0 && (
           <NodeDetailsCard
-            nodeType={selectedNode?.type || undefined}
+            nodeType={selectedNode?.type ?? undefined}
             getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
             loading={loading}
-            nodeTitle={selectedNode?.name || 'HOME'}
+            nodeTitle={selectedNode?.name ?? 'HOME'}
             handleUpdateNode={handleUpdateNode}
             isUpdateAvailable={isUpdateAvailable}
           />
@@ -222,7 +222,7 @@ const NodeOverviewTab = ({
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
               {HealtChartsConfigure[
-                (selectedNode?.type as string) || 'hnode'
+                (selectedNode?.type as string) ?? 'hnode'
               ][4].show && (
                 <LineChart
                   tabSection={Graphs_Type.Subscribers}
@@ -241,7 +241,7 @@ const NodeOverviewTab = ({
                 />
               )}
               {HealtChartsConfigure[
-                (selectedNode?.type as string) || 'hnode'
+                (selectedNode?.type as string) ?? 'hnode'
               ][5].show && (
                 <LineChart
                   tabSection={Graphs_Type.Subscribers}

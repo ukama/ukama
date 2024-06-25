@@ -54,7 +54,7 @@ const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
       const siteB = links[i].siteB;
       const locs: LatLngTuple[] = [];
       sites.forEach((site) => {
-        if (site.id === siteA || site.id === siteB) {
+        if (site.id === siteA ?? site.id === siteB) {
           // const l: LatLngTuple = [
           //   parseFloat(site.location.lat),
           //   parseFloat(site.location.lng),
@@ -237,7 +237,7 @@ const CustomMarker = ({
         markers.length > 0 &&
         data.map((item) => {
           const color =
-            linkSites.siteA === item.id || linkSites.siteB === item.id
+            linkSites.siteA === item.id ?? linkSites.siteB === item.id
               ? colors.secondaryMain
               : colors.black38;
           const m = markers.find((m) => m.id === item.location.id);
@@ -255,8 +255,8 @@ const CustomMarker = ({
               icon={svgIcon}
               title={`Population Covered: ${item.populationCovered}`}
               position={{
-                lat: m?.lat || 0,
-                lng: m?.lng || 0,
+                lat: m?.lat ?? 0,
+                lng: m?.lng ?? 0,
               }}
               attribution={item.id}
               opacity={m?.lat === 0 ? 0 : 1}

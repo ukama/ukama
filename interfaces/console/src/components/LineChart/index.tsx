@@ -126,7 +126,7 @@ const LineChart = ({
       variant="subtitle1"
       title={title}
       handleFilterChange={() => {}}
-      loading={loading || !initData}
+      loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
         <MetricSubscription type={tabSection} from={metricFrom} />

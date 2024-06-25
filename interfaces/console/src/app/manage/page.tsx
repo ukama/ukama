@@ -17,7 +17,7 @@ const Page = () => {
   const { token, user } = useAppContext();
   useEffect(() => {
     if (
-      user.role === Role_Type.RoleOwner ||
+      user.role === Role_Type.RoleOwner ??
       user.role === Role_Type.RoleAdmin
     ) {
       router.push('/manage/members');

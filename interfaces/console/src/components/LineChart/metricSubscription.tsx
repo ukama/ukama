@@ -29,8 +29,8 @@ const MetricSubscription = ({ from, type }: IMetricSubscription) => {
       nodeId: 'uk-test36-hnode-a1-00ff',
     },
     onData: (data) => {
-      PubSub.publish(data.data.data?.getMetricByTabSub.type || '', [
-        Math.floor(data.data.data?.getMetricByTabSub.value[0] || 0) * 1000,
+      PubSub.publish(data.data.data?.getMetricByTabSub.type ?? '', [
+        Math.floor(data.data.data?.getMetricByTabSub.value[0] ?? 0) * 1000,
         data.data.data?.getMetricByTabSub.value[1],
       ]);
     },

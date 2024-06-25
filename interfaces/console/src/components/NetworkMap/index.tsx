@@ -31,7 +31,7 @@ interface IMap {
   markersData: NodesLocation | undefined;
 }
 
-const Map = ({ id, zoom, markersData, children }: IMap) => {
+const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {
   let mapClassName = styles.map;
   let mapContainer = styles['leaflet-container'];
 
@@ -61,4 +61,4 @@ const Map = ({ id, zoom, markersData, children }: IMap) => {
   );
 };
 
-export default Map;
+export default NetworkMap;

@@ -255,7 +255,7 @@ const Page = () => {
         Members
       </Typography>
       <DataTableWithOptions
-        dataset={data.members || []}
+        dataset={data.members ?? []}
         icon={PeopleAltIcon}
         isRowClickable={false}
         columns={MEMBER_TABLE_COLUMN}
@@ -270,7 +270,7 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={membersLoading || invitationsLoading || deleteInviteLoading}
+      isLoading={membersLoading ?? invitationsLoading ?? deleteInviteLoading}
       height={'calc(100vh - 400px)'}
     >
       <Paper
@@ -331,7 +331,7 @@ const Page = () => {
                   </Typography>
                   <SimpleDataTable
                     dataKey="id"
-                    dataset={data.invites || []}
+                    dataset={data.invites ?? []}
                     columns={INVITATION_TABLE_COLUMN}
                     handleDeleteElement={(id: string) =>
                       handleDeleteInviteAction(id)

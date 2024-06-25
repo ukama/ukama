@@ -211,7 +211,7 @@ export default function ConosleLayout({
           handleAlertRead={handleAlertRead}
           handleAddNetwork={handleAddNetworkAction}
           handleNetworkChange={handleNetworkChange}
-          networks={networksData?.getNetworks.networks || []}
+          networks={networksData?.getNetworks.networks ?? []}
         >
           {children}
         </AppLayout>

@@ -29,7 +29,7 @@ const NodeResourcesTab = ({
   metricFrom,
   selectedNode,
 }: INodeResourcesTab) => {
-  const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
+  const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
   return (

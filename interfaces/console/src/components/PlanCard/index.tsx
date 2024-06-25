@@ -5,17 +5,22 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 
 import { colors } from '@/theme';
 import { getDataPlanUsage, getDuration } from '@/utils';
-import { PeopleAlt } from '@mui/icons-material';
 import { Card, Grid, Stack, Typography } from '@mui/material';
 import OptionsPopover from '../OptionsPopover';
 
 interface IPlanCard {
   uuid: string;
   name: string;
-  users: string;
   amount: string;
   duration: number;
   currency: string;
@@ -28,7 +33,6 @@ interface IPlanCard {
 const PlanCard = ({
   uuid,
   name,
-  users,
   amount,
   dataUnit,
   duration,
@@ -88,19 +92,6 @@ const PlanCard = ({
             dataUnit,
           )}
         </Typography>
-        {false && (
-          <Stack
-            spacing={0.6}
-            direction={'row'}
-            alignItems={'flex-end'}
-            justifyContent={'center'}
-          >
-            <PeopleAlt htmlColor={colors.black54} />
-            <Typography variant="body2" fontWeight={400}>
-              {users}
-            </Typography>
-          </Stack>
-        )}
       </Stack>
     </Card>
   );

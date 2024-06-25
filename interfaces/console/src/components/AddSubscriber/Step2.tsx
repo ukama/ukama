@@ -236,7 +236,7 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                   type="submit"
                   variant="contained"
                   onClick={handleSubmitButton}
-                  disabled={!formData.iccid || !formData.plan}
+                  disabled={!formData.iccid ?? !formData.plan}
                 >
                   <Typography variant="body1"> ADD SUBSCRIBER</Typography>
                 </Button>

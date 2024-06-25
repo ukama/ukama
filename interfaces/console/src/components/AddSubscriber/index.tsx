@@ -74,7 +74,6 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
   const handleDialogClose = () => {
     setActiveStep(1);
     setFormData(INIT_ADD_SUBSCRIBER);
-    onSuccess = false;
     onClose();
   };
   const getSubscriberForm = (step: number) => {

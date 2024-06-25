@@ -46,7 +46,7 @@ const DataPlanComponent: React.FC<Props> = ({
           Current site
         </Typography>
         <Typography variant="subtitle1" sx={{ color: colors.black }}>
-          {currentSite || ''}
+          {currentSite ?? ''}
         </Typography>
       </Stack>
       <Stack direction="row" spacing={2}>

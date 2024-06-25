@@ -32,7 +32,7 @@ interface ILayoutProps {
 
 const isHaveId = (pathname: string) => {
   if (
-    pathname.includes('/console/nodes') ||
+    pathname.includes('/console/nodes') ??
     pathname.includes('/console/sites')
   ) {
     return pathname.split('/').length > 2;
@@ -91,7 +91,7 @@ const AppLayout = ({
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
           placeholder={placeholder}
-          networks={networks || []}
+          networks={networks ?? []}
           handleAddNetwork={handleAddNetwork}
           handleNetworkChange={handleNetworkChange}
         />

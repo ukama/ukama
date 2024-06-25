@@ -44,7 +44,7 @@ interface IMap {
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
 
-const Map = ({
+const MapComponent = ({
   id,
   zoom,
   data,
@@ -104,4 +104,4 @@ const Map = ({
   );
 };
 
-export default Map;
+export default MapComponent;

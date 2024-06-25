@@ -184,7 +184,7 @@ export default function Page({ params }: { params: { id: string } }) {
     updateNode({
       variables: {
         data: {
-          id: selectedNode?.id || '',
+          id: selectedNode?.id ?? '',
           name: str,
         },
       },
@@ -205,7 +205,7 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
-        nodes={getNodesData?.getNodes.nodes || []}
+        nodes={getNodesData?.getNodes.nodes ?? []}
         loading={getNodeLoading}
         onAddNode={() => {}}
         selectedNode={selectedNode}
@@ -225,7 +225,7 @@ export default function Page({ params }: { params: { id: string } }) {
             sx={
               {
                 // display:
-                //   (selectedNode?.type === 'HOME' && label === 'Radio') ||
+                //   (selectedNode?.type === 'HOME' && label === 'Radio') ??
                 //   (selectedNode?.type === 'AMPLIFIER' && label === 'Network')
                 //     ? 'none'
                 //     : 'block',
@@ -283,14 +283,14 @@ export default function Page({ params }: { params: { id: string } }) {
         <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <NodeSoftwareTab
             loading={nodeAppsLoading}
-            nodeApps={nodeAppsRes?.getNodeApps.apps || []}
+            nodeApps={nodeAppsRes?.getNodeApps.apps ?? []}
           />
         </TabPanel>
         <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
           <NodeSchematicTab
             getSearchValue={() => {}}
             schematicsSpecsData={SPEC_DATA}
-            nodeTitle={selectedNode?.name || 'Node'}
+            nodeTitle={selectedNode?.name ?? 'Node'}
             loading={false}
           />
         </TabPanel>
@@ -301,7 +301,7 @@ export default function Page({ params }: { params: { id: string } }) {
           isOpen={isEditNode}
           labelSuccessBtn="Save"
           labelNegativeBtn="Cancel"
-          nodeName={selectedNode?.name || ''}
+          nodeName={selectedNode?.name ?? ''}
           handleSuccessAction={handleEditNode}
           handleCloseAction={() => setIsEditNode(false)}
         />

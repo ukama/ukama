@@ -210,7 +210,7 @@ const getDataPlanUsage = (
   dataVolume: string,
   dataUnit: string,
 ): string => {
-  const symbol = currency === 'Dollar' ? '$' : '$';
+  const symbol = currency === 'Dollar' ? '$' : '';
   return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
     dataUnit,
   )} / ${duration}`;
@@ -243,7 +243,7 @@ const structureNodeSiteDate = (data: any) => {
   data.forEach((node: any) => {
     if (node.type === NodeTypeEnum.Tnode) {
       t.push({
-        id: node.site?.siteId || '',
+        id: node.site?.siteId ?? '',
         name: `Site ${count++}`,
         nodeId: node.id,
         nodeType: node.type,
@@ -257,12 +257,12 @@ const structureNodeSiteDate = (data: any) => {
 
 export const getMetricValue = (key: string, metrics: MetricsRes) => {
   const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
-  return metric?.values || [];
+  return metric?.values ?? [];
 };
 
 export const isMetricValue = (key: string, metrics: MetricsRes) => {
   const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
-  return (metric && metric.values.length > 1) || false;
+  return (metric && metric.values.length > 1) ?? false;
 };
 
 const getSimValuefromSimType = (simType: string) => {
@@ -322,7 +322,7 @@ const getRoleType = (userRole: string): Role_Type => {
 
 const getScopesByRole = (userRole: string): Notification_Scope[] => {
   const roleType = getRoleType(userRole);
-  return RoleToNotificationScopes[roleType] || [];
+  return RoleToNotificationScopes[roleType] ?? [];
 };
 
 const formatTime = (isoString: string) => {
@@ -331,7 +331,7 @@ const formatTime = (isoString: string) => {
   const month = (date.getMonth() + 1).toString();
   const hours = date.getHours();
   const period = hours >= 12 ? 'PM' : 'AM';
-  const formattedHours = (hours % 12 || 12).toString();
+  const formattedHours = (hours % 12 ?? 12).toString();
   return `${month}/${day} ${formattedHours}${period}`;
 };
 

@@ -21,6 +21,17 @@ type User = {
   isEmailVerified: boolean;
 };
 
+const USER_INIT = {
+  id: '',
+  name: '',
+  token: '',
+  email: '',
+  orgId: '',
+  orgName: '',
+  isEmailVerified: false,
+  role: Role_Type.RoleInvalid,
+};
+
 const whoami = async (session: string) => {
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW}/get-user`, {
     method: 'GET',
@@ -34,7 +45,7 @@ const whoami = async (session: string) => {
 };
 
 function isUserHaveOrg(userObj: { orgId: string; orgName: string }) {
-  return userObj.orgId !== '' || userObj.orgName !== '';
+  return userObj.orgId !== '' ?? userObj.orgName !== '';
 }
 
 function isValidUser(userObj: {
@@ -58,69 +69,84 @@ function decodeBase64Token(token: string): string {
 }
 
 function getUserFromToken(token: string): User {
-  const parseToken = decodeBase64Token(token);
-  const s = parseToken.split(';');
-  return {
-    id: s[2] ?? '',
-    role: s[5] ?? '',
-    name: s[3] ?? '',
-    email: s[4] ?? '',
-    orgId: s[0] ?? '',
-    token: token ?? '',
-    orgName: s[1] ?? '',
-    isEmailVerified: s[6] === 'true' ? true : false ?? false,
-  };
+  try {
+    const parseToken = decodeBase64Token(token);
+    const parts = parseToken.split(';');
+
+    if (parts.length < 7) {
+      console.error('Token is missing required parts');
+      return USER_INIT;
+    }
+
+    const [orgId, orgName, id, name, email, role, isEmailVerified] = parts;
+
+    return {
+      id,
+      role,
+      name,
+      email,
+      orgId,
+      token,
+      orgName,
+      isEmailVerified: isEmailVerified === 'true',
+    };
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return USER_INIT;
+  }
 }
+
+const getUserObject = async (session: string, cookieToken: string) => {
+  if (cookieToken) {
+    return getUserFromToken(cookieToken);
+  } else {
+    const res = await whoami(`ukama_session=${session}`);
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    const jsonRes = await res.json();
+    return {
+      id: jsonRes.userId,
+      role: jsonRes.role,
+      name: jsonRes.name,
+      email: jsonRes.email,
+      orgId: jsonRes.orgId,
+      token: jsonRes.token,
+      orgName: jsonRes.orgName,
+      isEmailVerified: jsonRes.isEmailVerified,
+    };
+  }
+};
 
 const middleware = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
   const cookieStore = cookies();
   const session = cookieStore.get('ukama_session');
-  let cookieToken = cookieStore.get('token')?.value || '';
+  const cookieToken = cookieStore.get('token')?.value ?? '';
   const response = NextResponse.next();
-  let userObj: User = {
-    id: '',
-    role: Role_Type.RoleInvalid,
-    name: '',
-    email: '',
-    orgId: '',
-    token: '',
-    orgName: '',
-    isEmailVerified: false,
-  };
 
   if (!session) {
     return NextResponse.redirect(
       new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
-  } else if (session && cookieToken) {
-    userObj = getUserFromToken(cookieToken);
-  } else if (session && !cookieToken) {
-    const res = await whoami(`ukama_session=${session.value}`);
-    if (!res.ok) {
-      return NextResponse.rewrite(
-        new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
-      );
-    } else {
-      const jsonRes = await res.json();
-      userObj.id = jsonRes.userId;
-      userObj.role = jsonRes.role;
-      userObj.name = jsonRes.name;
-      userObj.email = jsonRes.email;
-      userObj.orgId = jsonRes.orgId;
-      userObj.token = jsonRes.token;
-      userObj.orgName = jsonRes.orgName;
-      userObj.isEmailVerified = jsonRes.isEmailVerified;
-    }
   }
 
-  // TODO: ADD CHECK TO CROSS MATCH cookieToken and whoami resposne token
+  let userObj: User;
+  try {
+    userObj = await getUserObject(session.value, cookieToken);
+  } catch (error) {
+    return NextResponse.rewrite(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
 
   if (!userObj.isEmailVerified) {
     return NextResponse.redirect(
       new URL('/user/verification', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
-  } else if (userObj.token && !cookieToken) {
+  }
+
+  if (userObj.token && !cookieToken) {
     response.cookies.set('token', userObj.token, {
       path: '/',
       name: 'token',
@@ -144,14 +170,13 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
-  if (
-    (pathname.includes('/console') || pathname === '/') &&
-    !isUserHaveOrg(userObj)
-  ) {
+  if (pathname.includes('/console') && !isUserHaveOrg(userObj)) {
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );
-  } else if (
+  }
+
+  if (
     pathname.includes('/console') &&
     (userObj.role === Role_Type.RoleInvalid ||
       userObj.role === Role_Type.RoleUser)
@@ -159,7 +184,9 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(
       new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
-  } else if (
+  }
+
+  if (
     pathname.includes('/manage') &&
     userObj.role !== Role_Type.RoleOwner &&
     userObj.role !== Role_Type.RoleAdmin
@@ -167,15 +194,14 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
-  } else if (
-    pathname === '/' &&
-    isUserHaveOrg(userObj) &&
-    isValidUser(userObj)
-  ) {
+  }
+
+  if (pathname === '/' && isUserHaveOrg(userObj) && isValidUser(userObj)) {
     return NextResponse.redirect(
       new URL('/console/home', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
+
   return response;
 };
 

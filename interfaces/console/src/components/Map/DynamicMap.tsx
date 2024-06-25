@@ -47,7 +47,7 @@ interface IMap {
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
 }
 
-const Map = ({
+const UkamaMap = ({
   id,
   zoom,
   layer,
@@ -119,4 +119,4 @@ const Map = ({
   );
 };
 
-export default Map;
+export default UkamaMap;

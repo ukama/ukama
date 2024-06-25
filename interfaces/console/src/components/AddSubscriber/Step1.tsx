@@ -112,7 +112,7 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                   <FormControlLabel
                     value="eSim"
                     control={<Radio />}
-                    label={`eSIM (${eSimCount || 0} left)`}
+                    label={`eSIM (${eSimCount ?? 0} left)`}
                     sx={{
                       pl: 1,
                       pr: 5,
@@ -124,7 +124,7 @@ const Step1: React.FC<SubscriberDialogProps> = ({
                   <FormControlLabel
                     value="pSim"
                     control={<Radio />}
-                    label={`pSIM (${pSimCount || 0} left)`}
+                    label={`pSIM (${pSimCount ?? 0} left)`}
                     sx={{
                       pl: 1,
                       pr: 5,

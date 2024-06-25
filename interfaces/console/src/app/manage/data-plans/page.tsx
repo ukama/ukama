@@ -182,9 +182,9 @@ const Page = () => {
       width={'100%'}
       radius="medium"
       isLoading={
-        packagesLoading ||
-        dataPlanLoading ||
-        updatePkgLoading ||
+        packagesLoading ??
+        dataPlanLoading ??
+        updatePkgLoading ??
         deletePkgLoading
       }
       height={'calc(100vh - 400px)'}
@@ -220,7 +220,6 @@ const Page = () => {
                   uuid,
                   name,
                   duration,
-                  users,
                   currency,
                   dataVolume,
                   dataUnit,
@@ -230,7 +229,6 @@ const Page = () => {
                     <PlanCard
                       uuid={uuid}
                       name={name}
-                      users={users}
                       amount={amount}
                       dataUnit={dataUnit}
                       duration={duration}

@@ -67,7 +67,7 @@ const Header = ({
 }: IHeaderProps) => {
   const { user } = useAppContext();
   const isManager =
-    user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin
+    user.role === Role_Type.RoleOwner ?? user.role === Role_Type.RoleAdmin
       ? true
       : false;
   return (

@@ -19,7 +19,7 @@ const httpLink = () =>
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: `${process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL}/graphql` || '',
+    url: `${process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL}/graphql` ?? '',
   }),
 );
 

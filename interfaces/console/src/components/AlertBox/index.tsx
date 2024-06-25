@@ -49,7 +49,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
         <Typography variant="h6">Alerts</Typography>
 
         <Typography variant="body1" paddingLeft={1}>
-          ({alerts?.filter((alert) => !alert.isRead).length || 0})
+          ({alerts?.filter((alert) => !alert.isRead).length ?? 0})
         </Typography>
       </Box>
       <Divider sx={{ margin: 0 }} />

@@ -253,7 +253,7 @@ const TopUpData: React.FC<TopUpProps> = ({
         <Button
           variant="contained"
           onClick={handleClick}
-          disabled={loadingTopUp || loading}
+          disabled={loadingTopUp ?? loading}
         >
           TOP UP
         </Button>

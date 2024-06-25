@@ -81,11 +81,11 @@ export default function Page() {
         nodesData?.getNodes.nodes.filter((node) => {
           const s = search.toLowerCase();
           if (
-            node.name.toLowerCase().includes(s) ||
+            node.name.toLowerCase().includes(s) ??
             node.name.toLowerCase().includes(s)
           )
             return node;
-        }) || [];
+        }) ?? [];
       setNodes({ nodes: _nodes });
     } else if (search.length === 0) {
       setNodes({ nodes: nodesData?.getNodes.nodes ?? [] });
@@ -122,7 +122,7 @@ export default function Page() {
   };
 
   const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
-  const isLoading = nodesLoading || availableNodeLoading;
+  const isLoading = nodesLoading ?? availableNodeLoading;
 
   return (
     <>
@@ -151,7 +151,7 @@ export default function Page() {
               handleButtonAction={handleClaimNodeAction}
             />
             <DataTableWithOptions
-              dataset={nodes || []}
+              dataset={nodes ?? []}
               icon={RouterIcon}
               onMenuItemClick={() => {}}
               columns={NODE_TABLE_COLUMNS}

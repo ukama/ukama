@@ -37,7 +37,7 @@ const GraphTitleWrapper = ({
 }: IGraphTitleWrapper) => {
   return (
     <Grid item container width="100%">
-      {(title || showFilter) && (
+      {(title ?? showFilter) && (
         <Grid item container width="100%" mb={2}>
           {title && (
             <Grid item xs={6}>
