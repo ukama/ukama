@@ -23,10 +23,6 @@ import (
 
 var en = &mocks.EventToNotifyServiceClient{}
 var nId = uuid.NewV4().String()
-var uId = uuid.NewV4().String()
-var nwId = uuid.NewV4().String()
-var orgId = uuid.NewV4().String()
-var subId = uuid.NewV4().String()
 
 func TestEventProcessor_Get(t *testing.T) {
 	notifReq := &pb.GetRequest{
@@ -57,7 +53,7 @@ func TestEventProcessor_Get(t *testing.T) {
 		assert.Equal(t, &data.Notification, &resp.Notification)
 	}
 
-	c.AssertExpectations(t)
+	en.AssertExpectations(t)
 }
 
 func TestEventProcessor_GetAll(t *testing.T) {
@@ -93,5 +89,5 @@ func TestEventProcessor_GetAll(t *testing.T) {
 		assert.Equal(t, data.Notifications, resp.Notifications)
 	}
 
-	c.AssertExpectations(t)
+	en.AssertExpectations(t)
 }

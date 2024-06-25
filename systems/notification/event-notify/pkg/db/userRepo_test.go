@@ -207,7 +207,7 @@ func TestUserRepo_GetUser(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
 			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
-			WithArgs(user.OrgId, user.SubscriberId, user.UserId).
+			WithArgs(user.OrgId, user.SubscriberId, user.UserId, user.Role).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{

@@ -113,7 +113,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg)
+		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.MemberId, jmsg)
 
 		user := &db.Users{
 			Id:           uuid.NewV4(),

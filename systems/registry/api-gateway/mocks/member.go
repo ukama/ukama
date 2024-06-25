@@ -42,36 +42,6 @@ func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, 
 	return r0, r1
 }
 
-// AddOtherMember provides a mock function with given fields: userUUID, role
-func (_m *member) AddOtherMember(userUUID string, role string) (*gen.MemberResponse, error) {
-	ret := _m.Called(userUUID, role)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddOtherMember")
-	}
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.MemberResponse, error)); ok {
-		return rf(userUUID, role)
-	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.MemberResponse); ok {
-		r0 = rf(userUUID, role)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(userUUID, role)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetMember provides a mock function with given fields: userUUID
 func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
 	ret := _m.Called(userUUID)

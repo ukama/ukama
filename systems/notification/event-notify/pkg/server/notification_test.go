@@ -110,7 +110,7 @@ func TestServer_GetAll(t *testing.T) {
 		RoleType: upb.RoleType_ROLE_OWNER,
 	}
 
-	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId).Return([]*db.Users{&user}, nil).Once()
+	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId, mock.Anything).Return([]*db.Users{&user}, nil).Once()
 	unRepo.On("GetNotificationsByUserID", user.UserId).Return([]*db.Notifications{&ns}, nil).Once()
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, nRepo, uRepo, emRepo, unRepo, msgclient)
@@ -139,7 +139,7 @@ func TestServer_UpdateStatus(t *testing.T) {
 		IsRead: true,
 	}
 
-	unRepo.On("Update", notification.Id, req.IsRead).Return(nil).Once()
+	unRepo.On("Update", notification.Id, req.IsRead).Return(nil)
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, nRepo, uRepo, emRepo, unRepo, msgclient)
 

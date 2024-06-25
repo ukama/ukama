@@ -63,6 +63,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	// Get the User
 	userUUID, err := uuid.FromString(req.GetUserUuid())
+	memUUID := uuid.NewV4()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of user uuid. Error %s", err.Error())
@@ -77,8 +78,9 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	log.Infof("Adding member")
 	member := &db.Member{
-		UserId: userUUID,
-		Role:   roles.RoleType(req.Role),
+		MemberId: memUUID,
+		UserId:   userUUID,
+		Role:     roles.RoleType(req.Role),
 	}
 
 	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
@@ -90,7 +92,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
 		evt := &epb.AddMemberEventRequest{
 			OrgId:         m.OrgId.String(),
-			UserId:        userUUID.String(),
+			MemberId:      memUUID.String(),
 			Role:          upb.RoleType(member.Role),
 			IsDeactivated: member.Deactivated,
 			CreatedAt:     member.CreatedAt.String(),
@@ -171,7 +173,7 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 		route := m.baseRoutingKey.SetActionUpdate().SetObject("member").MustBuild()
 		evt := &epb.UpdateMemberEventRequest{
 			OrgId:         m.OrgId.String(),
-			UserId:        uuid.String(),
+			MemberId:      uuid.String(),
 			IsDeactivated: member.Deactivated,
 		}
 		err = m.msgbus.PublishRequest(route, evt)
@@ -216,8 +218,8 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 	if m.msgbus != nil {
 		route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
 		evt := &epb.DeleteMemberEventRequest{
-			OrgId:  m.OrgId.String(),
-			UserId: uuid.String(),
+			OrgId:    m.OrgId.String(),
+			MemberId: uuid.String(),
 		}
 		err = m.msgbus.PublishRequest(route, evt)
 		if err != nil {

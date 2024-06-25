@@ -58,7 +58,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 	// 	Id: member.UserId.String(),
 	// }, nil).Once()
 	msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.create", mock.MatchedBy(func(r *epb.AddMemberEventRequest) bool {
-		return r.UserId == req.UserUuid
+		return r.Role == req.GetRole()
 	})).Return(nil).Once()
 
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
@@ -158,6 +158,8 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 		userClient := &cmocks.UserClient{}
 
 		member := db.Member{
+			Model: gorm.Model{
+				ID: 1},
 			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: true,
@@ -166,9 +168,9 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
 		mRepo.On("RemoveMember", member.MemberId, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &pb.MemberRequest{
-			MemberId: member.MemberId.String(),
-		}).Return(nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
+			return a.MemberId == member.MemberId.String()
+		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
@@ -192,6 +194,8 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 		userClient := &cmocks.UserClient{}
 
 		member := db.Member{
+			Model: gorm.Model{
+				ID: 1},
 			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: false,
