@@ -41,7 +41,7 @@ import {
   NotificationsRes,
   NotificationsResDto,
   StatsMetric,
-  SubMetricByTabInput
+  SubMetricByTabInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.js";

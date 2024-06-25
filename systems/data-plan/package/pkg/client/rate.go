@@ -31,10 +31,8 @@ type RateService interface {
 }
 
 func NewRate(rate string, timeout time.Duration) (*Rate, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, rate, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(rate, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
 		return nil, err
