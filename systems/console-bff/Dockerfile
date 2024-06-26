@@ -12,6 +12,6 @@ COPY . .
 
 RUN apk update && apk add --no-cache supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /etc/supervisor/supervisord.conf
 RUN mkdir -p /var/log/
-EXPOSE 4000 4001
-CMD ["/usr/bin/supervisord"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]

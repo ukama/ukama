@@ -5,8 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { exec } from "child_process";
+
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
+import { logger } from "../logger";
 import { Meta, THeaders } from "../types";
 
 const getTimestampCount = (count: string) =>
@@ -150,11 +153,54 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   }
 };
 
+const findProcessNKill = (port: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const command = `lsof -i tcp:${port} | awk 'NR>1 {print $2}'`;
+
+    exec(command, (err, stdout) => {
+      if (err) {
+        reject(new Error(`Failed to execute command: ${err.message}`));
+        return;
+      }
+      if (stdout) {
+        const pid = stdout.replace(/\n/g, "");
+
+        if (!pid) {
+          reject(new Error("PID not found."));
+          return;
+        }
+        killProcess(pid)
+          .then(() => resolve(true))
+          .catch(error => reject(error));
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
+const killProcess = (pid: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const command = `kill -9 ${pid}`;
+
+    exec(command, err => {
+      if (err) {
+        reject(new Error(`Error killing process ${pid}: ${err.message}`));
+      } else {
+        logger.info(`Process ${pid} killed.`);
+        resolve();
+      }
+    });
+  });
+};
+
 export {
+  findProcessNKill,
   getGraphsKeyByType,
   getPaginatedOutput,
   getStripeIdByUserId,
   getTimestampCount,
+  killProcess,
   parseGatewayHeaders,
   parseHeaders,
   parseToken,

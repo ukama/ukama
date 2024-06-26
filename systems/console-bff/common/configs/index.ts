@@ -39,12 +39,12 @@ export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
 
 // PORTS
-export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8000");
+export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "4000");
+export const SUBSCRIPTIONS_PORT = parseInt(
+  process.env.SUBSCRIPTIONS_PORT ?? "4001"
+);
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT ?? "5041"
-);
-export const SUBSCRIPTIONS_PORT = parseInt(
-  process.env.SUBSCRIPTIONS_PORT ?? "5042"
 );
 export const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5043");
 export const USER_PORT = parseInt(process.env.USER_PORT ?? "5044");
@@ -52,14 +52,14 @@ export const PACKAGE_PORT = parseInt(process.env.PACKAGE_PORT ?? "5045");
 export const RATE_PORT = parseInt(process.env.RATE_PORT ?? "5046");
 export const ORG_PORT = parseInt(process.env.ORG_PORT ?? "5047");
 export const NETWORK_PORT = parseInt(process.env.NETWORK_PORT ?? "5048");
-export const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5049");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5051");
 export const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
 export const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 export const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
-export const INIT_PORT = parseInt(process.env.INIT_API ?? "5055");
+export const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5055");
+export const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5056");
 export const NOTIFICATION_PORT = parseInt(
-  process.env.NOTIFICATION_PORT ?? "5056"
+  process.env.SUBSCRIBER_PORT ?? "5057"
 );
 
 export const SUB_GRAPH_LIST = [

@@ -131,10 +131,9 @@ services:
    - postgresd
 
  initclient-subscriber:
-  # build:
-  #  dockerfile: ./Dockerfile
-  #  context: ../services/initClient
-  image: salman-init
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=subscriber
