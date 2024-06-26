@@ -108,17 +108,6 @@ export type UserActivateFormType = {
   securityCode: string;
 };
 
-export type ResponseProps = {
-  loading: boolean;
-  error: any | null;
-  response: {
-    id?: string;
-    name?: string;
-    email?: string;
-    isValid: boolean;
-  } | void | null;
-};
-
 export type TVariant = 'small' | 'medium' | 'large';
 
 export type TObject = { [key: string]: boolean | string | number };

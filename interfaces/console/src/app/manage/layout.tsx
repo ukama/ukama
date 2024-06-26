@@ -35,7 +35,7 @@ const ManageMenu = () => {
           <Link
             key={id}
             href={path}
-            prefetch={id === 'manage-members' ? true : false}
+            prefetch={id === 'manage-members'}
             style={{
               borderRadius: 4,
               textDecoration: 'none',

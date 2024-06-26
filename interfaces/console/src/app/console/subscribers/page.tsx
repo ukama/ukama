@@ -73,7 +73,6 @@ const Page = () => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
-  const [subcriberInfo, setSubscriberInfo] = useState<any>();
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
@@ -126,6 +125,7 @@ const Page = () => {
       }));
     }
   }, [search]);
+
   const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
     onCompleted: (res) => {
       if (res.getSimsBySubscriber) {
@@ -147,18 +147,13 @@ const Page = () => {
       }
     },
   });
-  const [getSubscriber] = useGetSubscriberLazyQuery({
+  const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
     onCompleted: (res) => {
-      if (
-        res.getSubscriber &&
-        res.getSubscriber.sim &&
-        res.getSubscriber?.sim.length > 0
-      ) {
-        setSubscriberInfo(res.getSubscriber);
+      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
         getPackagesForSim({
           variables: {
             data: {
-              sim_id: res?.getSubscriber && res.getSubscriber.sim[0].id,
+              sim_id: res?.getSubscriber?.sim[0].id,
             },
           },
         });
@@ -207,26 +202,25 @@ const Page = () => {
       });
     }
   };
-  const [activatePackageSim, { loading: activatePackageSimLoading }] =
-    useSetActivePackageForSimMutation({
-      onCompleted: () => {
-        setSnackbarMessage({
-          id: 'package-activated-success',
-          message: 'Package activated successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        setSubscriberSuccess(true);
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'package-activated-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [activatePackageSim] = useSetActivePackageForSimMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'package-activated-success',
+        message: 'Package activated successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      setSubscriberSuccess(true);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'package-activated-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   const {
     data,
     loading: getSubscriberByNetworkLoading,
@@ -269,7 +263,7 @@ const Page = () => {
   //   },
   // });
 
-  const { data: networkList, loading: netLoading } = useGetNetworksQuery({
+  const { data: networkList } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
 
     onError: (error) => {
@@ -304,11 +298,9 @@ const Page = () => {
   );
 
   const [getSim] = useGetSimLazyQuery({
-    onCompleted: (res) => {
-      if (res.getSim) {
-      }
-    },
+    onCompleted: (res) => {},
   });
+
   const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
     useToggleSimStatusMutation({
       onCompleted: () => {
@@ -771,20 +763,13 @@ const Page = () => {
         ishowSubscriberDetails={isSubscriberDetailsOpen}
         handleClose={handleCloseSubscriberDetails}
         subscriberId={selectedSubscriber}
-        onCancel={handleCloseSubscriberDetails}
-        subscriberInfo={subcriberInfo}
+        subscriberInfo={subcriberInfo?.getSubscriber}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
         loading={updateSubscriberLoading ?? deleteSimLoading}
         handleDeleteSubscriber={handleDeleteSubscriberModal}
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
-        // currentSite={
-        //   sitesData?.getSites?.sites &&
-        //   sitesData?.getSites?.sites.length > 0
-        //     ? sitesData?.getSites?.sites[0].name
-        //     : '-'
-        // }
       />
       <TopUpData
         isToPup={isToPupData}

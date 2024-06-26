@@ -7,7 +7,6 @@
  */
 'use client';
 import { DataVolume, Throughput, UsersWithBG } from '@/../public/svg';
-import { NodeStatusEnum } from '@/client/graphql/generated';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { LabelOverlayUI, SitesTree } from '@/components/NetworkMap/OverlayUI';
@@ -18,7 +17,6 @@ import NetworkIcon from '@mui/icons-material/Hub';
 import { Box, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -45,10 +43,10 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
 const networkLoading = false;
 const networkNodesLoading = false;
 export default function Page() {
-  const { network, setSnackbarMessage } = useAppContext();
-  const [filterState, setFilterState] = useState<NodeStatusEnum>(
-    NodeStatusEnum.Undefined,
-  );
+  const { network } = useAppContext();
+  // const [filterState, setFilterState] = useState<NodeStatusEnum>(
+  //   NodeStatusEnum.Undefined,
+  // );
   // const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
   //   fetchPolicy: 'no-cache',
   //   variables: {

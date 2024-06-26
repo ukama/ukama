@@ -23,7 +23,6 @@ interface ILineChart {
   hasData?: boolean;
   loading?: boolean;
   tabSection: Graphs_Type;
-  onFilterChange?: Function;
 }
 
 const getOptions = (topic: string, title: string, initData: any) => {
@@ -36,12 +35,12 @@ const getOptions = (topic: string, title: string, initData: any) => {
       legend: { enabled: false },
       events: {
         load: function () {
-          var chart: any =
+          const chart: any =
             Highcharts.charts.length > 0
               ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
               : null;
           if (chart) {
-            var series: any = chart?.series[0];
+            const series: any = chart?.series[0];
             PubSub.subscribe(topic, (_, data) => {
               if (topic === chart?.title?.textStr && series) {
                 series.addPoint(data, true, true);
@@ -89,7 +88,7 @@ const getOptions = (topic: string, title: string, initData: any) => {
       {
         name: title,
         data: (function () {
-          var data = [...initData];
+          const data = [...initData];
           return data;
         })(),
       },

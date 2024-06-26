@@ -183,26 +183,6 @@ const Step1: React.FC<SubscriberDialogProps> = ({
               />
             </Grid>
             <Grid item xs={12}>
-              {/* <Stack direction="column" spacing={1}>
-                <Typography variant="caption" sx={{ color: colors.black38 }}>
-                  ALLOW ROAMING
-                </Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="body1">
-                    Roaming allows subscriber to use data outside of their home
-                    Ukama network. Insert billing information.
-                  </Typography>
-                  <Switch
-                    id="roamingStatus"
-                    name="roamingStatus"
-                    size="small"
-                    value={values.roamingStatus}
-                    checked={values.roamingStatus}
-                    onChange={handleChange}
-                  />
-                </Stack>
-              </Stack> */}
-
               <Stack
                 direction="row"
                 justifyContent={'flex-end'}

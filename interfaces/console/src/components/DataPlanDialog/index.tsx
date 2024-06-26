@@ -106,7 +106,7 @@ const DataPlanDialog = ({
                 onChange={(e) =>
                   setDataplan({
                     ...dataplan,
-                    dataVolume: parseInt(e.target.value as string),
+                    dataVolume: parseInt(e.target.value),
                   })
                 }
               />
@@ -125,7 +125,7 @@ const DataPlanDialog = ({
                 onChange={(e) =>
                   setDataplan({
                     ...dataplan,
-                    amount: parseInt(e.target.value as string),
+                    amount: parseInt(e.target.value),
                   })
                 }
               />
@@ -149,7 +149,7 @@ const DataPlanDialog = ({
                   onChange={(e) =>
                     setDataplan({
                       ...dataplan,
-                      dataUnit: e.target.value as string,
+                      dataUnit: e.target.value,
                     })
                   }
                 >

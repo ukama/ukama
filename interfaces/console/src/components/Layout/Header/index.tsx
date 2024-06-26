@@ -27,7 +27,6 @@ const Logo = dynamic(() =>
 interface IHeaderProps {
   isOpen: boolean;
   isLoading: boolean;
-  isDarkMode: boolean;
   onNavigate: Function;
   alerts: NotificationsResDto[] | undefined;
   handleAlertRead: (index: number) => void;
@@ -67,9 +66,8 @@ const Header = ({
 }: IHeaderProps) => {
   const { user } = useAppContext();
   const isManager =
-    user.role === Role_Type.RoleOwner ?? user.role === Role_Type.RoleAdmin
-      ? true
-      : false;
+    user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
+
   return (
     <AppBar
       open={isOpen}

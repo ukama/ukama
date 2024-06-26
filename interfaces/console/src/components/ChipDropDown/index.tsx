@@ -39,7 +39,7 @@ const ChipDropdown: React.FC<ChipComponentProps> = ({
   return (
     <>
       <Chip
-        label={selectedNetwork ?? menu?.length ? menu && menu[0] : 'Not added'}
+        label={selectedNetwork ?? (menu?.length ? menu[0] : 'Not added')}
         component="div"
         variant="outlined"
         sx={{ border: `1px solid ${colors.black70}`, color: colors.black70 }}
@@ -51,15 +51,11 @@ const ChipDropdown: React.FC<ChipComponentProps> = ({
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {menu &&
-          menu.map((network) => (
-            <MenuItem
-              key={network}
-              onClick={() => handleNetworkSelect(network)}
-            >
-              {network}
-            </MenuItem>
-          ))}
+        {menu?.map((network) => (
+          <MenuItem key={network} onClick={() => handleNetworkSelect(network)}>
+            {network}
+          </MenuItem>
+        ))}
         <MenuItem onClick={onCreateNetwork}>Create Network</MenuItem>
       </Menu>
     </>

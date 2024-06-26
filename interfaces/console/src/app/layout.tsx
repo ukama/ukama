@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     icon: [
       {
         url: '/svg/ulogo.svg',
-        href: '/svg/ulogo.svg',
       },
     ],
   },
@@ -64,7 +63,7 @@ export default function RootLayout({
               orgName: orgName ?? '',
             }}
           >
-            <AppThemeProvider themeCookie={cookieTheme?.value ?? 'dark'}>
+            <AppThemeProvider themeCookie={cookieTheme?.value}>
               {children}
             </AppThemeProvider>
           </AppContextWrapper>

@@ -79,7 +79,6 @@ const AppLayout = ({
         isOpen={open}
         isLoading={isLoading}
         onNavigate={onNavigate}
-        isDarkMode={isDarkMode}
         alerts={alerts}
         handleAlertRead={handleAlertRead}
       />

@@ -72,7 +72,7 @@ const Sidebar = ({
   handleNetworkChange,
 }: ISidebarProps) => {
   const pathname = usePathname();
-  const { user, network } = useAppContext();
+  const { network } = useAppContext();
   const getDropDownData = () =>
     networks?.map((network) => ({
       id: network.id,
@@ -90,7 +90,6 @@ const Sidebar = ({
         <Box mx={2} my={1.5}>
           <BasicDropdown
             value={network.id}
-            isLoading={isLoading}
             list={getDropDownData()}
             placeholder={placeholder}
             handleOnChange={handleNetworkChange}

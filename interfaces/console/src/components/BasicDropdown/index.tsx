@@ -21,7 +21,6 @@ import {
 interface IBasicDropdown {
   value: string;
   placeholder: string;
-  isLoading?: boolean;
   handleOnChange: Function;
   handleAddNetwork: Function;
   list: SelectItemType[];

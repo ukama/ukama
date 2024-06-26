@@ -19,27 +19,22 @@ import { CenterContainer } from '@/styles/global';
 import { colors } from '@/theme';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Box, Container, Paper, Stack, Typography } from '@mui/material';
-import { useRouter } from 'next/navigation';
 
 const Page = () => {
-  const router = useRouter();
   const { user } = useAppContext();
 
-  const {
-    data: invitationsData,
-    loading: invitationsLoading,
-    refetch: refetchInvitations,
-  } = useGetInvitationsQuery({
-    fetchPolicy: 'network-only',
-    variables: {
-      email: user.email,
-    },
-    onCompleted: (data) => {
-      if (data.getInvitations.status === Invitation_Status.InviteAccepted) {
-        // router.push('/');
-      }
-    },
-  });
+  const { data: invitationsData, refetch: refetchInvitations } =
+    useGetInvitationsQuery({
+      fetchPolicy: 'network-only',
+      variables: {
+        email: user.email,
+      },
+      onCompleted: (data) => {
+        if (data.getInvitations.status === Invitation_Status.InviteAccepted) {
+          // TODO: ON ACCEPT INVITE REDIRECT TO ROOT SO THAT TOKEN CAN BE REFRESHED
+        }
+      },
+    });
 
   const [updateInvitation] = useUpdateInvitationMutation({
     fetchPolicy: 'network-only',

@@ -15,7 +15,6 @@ const networkNameValidationRule = Yup.string().required(
 const emailValidatonRule = Yup.string()
   .required('Email is required.')
   .email('Please enter a valid email.');
-// const iccidValidator = Yup.string().required("Iccid is required.");
 
 const iccidValidator = Yup.string()
   .notRequired()

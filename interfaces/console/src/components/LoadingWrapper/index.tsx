@@ -28,8 +28,8 @@ const LoadingWrapper = ({
   isLoading = false,
   cstyle = {},
 }: ILoadingWrapper) => {
-  const borderRadius =
-    radius === 'medium' ? '10px' : radius === 'small' ? '4px' : '0px';
+  const smr = radius === 'small' ? '4px' : '0px';
+  const borderRadius = radius === 'medium' ? '10px' : smr;
   if (isLoading)
     return (
       <SkeletonRoundedCard
@@ -45,8 +45,8 @@ const LoadingWrapper = ({
   return (
     <div
       style={{
-        height: height ? height : 'inherit',
-        width: width ? width : 'inherit',
+        height: height ?? 'inherit',
+        width: width ?? 'inherit',
         ...cstyle,
       }}
     >

@@ -28,7 +28,6 @@ import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
 import UserInfo from './userInfo';
 interface SubscriberProps {
-  onCancel: () => void;
   ishowSubscriberDetails: boolean;
   subscriberId: string;
   handleClose: () => void;
@@ -108,12 +107,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     }
   }, [subscriberInfo]);
 
-  const handleSimEdit = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-  const handleEditName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFirstName(event.target.value);
-  };
   const handleSaveSubscriber = () => {
     setOnEditEmail(false);
     setOnEditName(false);
@@ -129,9 +122,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     >
       <DialogTitle id="alert-dialog-title">
         <Stack direction="row" spacing={2} alignItems={'center'}>
-          <Typography variant="h6">
-            {subscriberInfo && subscriberInfo.firstName}
-          </Typography>
+          <Typography variant="h6">{subscriberInfo?.firstName}</Typography>
           <IconButton
             aria-controls="menu"
             aria-haspopup="true"

@@ -108,6 +108,7 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
             goBack={() => setActiveStep((prevStep) => prevStep - 1)}
           />
         );
+
       case 3:
         return <Step4 qrCode={qrCode} simType={formData.simType} />;
       default:
@@ -120,6 +121,7 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       setActiveStep(1);
     };
   }, []);
+
   const getSubTitle = (step: number) => {
     switch (step) {
       case 1:
@@ -127,22 +129,22 @@ const AddSubscriberDialog: React.FC<SubscriberDialogProps> = ({
       case 2:
         return 'Enter the ICCID for the SIM you have assigned to the subscriber, and select their data plan. Please ensure the ICCID is correct, because it cannot be undone once assigned.';
       case 3:
-        return formData.simType == 'eSim '
-          ? `You have successfully added ${name} as a subscriber to your network, and an ${formData.simType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`
-          : `You have successfully added ${name} as a subscriber to your network, and ${formData.simType} installation instructions have been sent out to them. `;
+        if (formData.simType === 'eSim') {
+          return `You have successfully added ${formData.name} as a subscriber to your network, and an ${formData.simType} installation invitation has been sent out to them. If they would rather install their eSIM now, have them scan the QR code below.`;
+        } else {
+          return `You have successfully added ${formData.name} as a subscriber to your network, and ${formData.simType} installation instructions have been sent out to them.`;
+        }
       default:
         return 'Add subscribers to your network.';
     }
   };
+  const title =
+    activeStep > 1 ? `Add subscriber ${formData.name}` : 'Add Subscriber';
 
   return (
     <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {onSuccess
-          ? `Successfully added ${name}`
-          : activeStep > 1
-            ? `Add subscriber ${name}`
-            : 'Add Subscriber'}
+        {onSuccess ? `Successfully added ${formData.name}` : title}
       </DialogTitle>
       <IconButton
         aria-label="close"

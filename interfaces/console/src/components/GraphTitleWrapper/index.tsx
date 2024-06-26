@@ -22,7 +22,7 @@ interface IGraphTitleWrapper {
   variant?: Variant;
   showFilter?: boolean;
   children: React.ReactNode;
-  handleFilterChange?: Function;
+  handleFilterChange?: Function | undefined;
 }
 
 const GraphTitleWrapper = ({
@@ -33,8 +33,13 @@ const GraphTitleWrapper = ({
   loading = true,
   showFilter = true,
   variant = 'subtitle1',
-  handleFilterChange,
+  handleFilterChange = undefined,
 }: IGraphTitleWrapper) => {
+  const GTChild = hasData ? (
+    children
+  ) : (
+    <EmptyView size="large" title="No activity yet!" icon={BarChartIcon} />
+  );
   return (
     <Grid item container width="100%">
       {(title ?? showFilter) && (
@@ -50,9 +55,7 @@ const GraphTitleWrapper = ({
             <Grid item xs={6} display="flex" justifyContent="flex-end">
               <TimeFilter
                 filter={filter}
-                handleFilterSelect={(v: string) =>
-                  handleFilterChange && handleFilterChange(v)
-                }
+                handleFilterSelect={(v: string) => handleFilterChange?.(v)}
               />
             </Grid>
           )}
@@ -66,17 +69,7 @@ const GraphTitleWrapper = ({
         alignItems={'center'}
         justifyContent="center"
       >
-        {loading ? (
-          <GraphLoading />
-        ) : hasData ? (
-          children
-        ) : (
-          <EmptyView
-            size="large"
-            title="No activity yet!"
-            icon={BarChartIcon}
-          />
-        )}
+        {loading ? <GraphLoading /> : GTChild}
       </Grid>
     </Grid>
   );

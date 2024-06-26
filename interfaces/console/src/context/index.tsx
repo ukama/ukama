@@ -8,7 +8,7 @@
 'use client';
 
 import { TNetwork, TSnackbarMessage, TUser } from '@/types';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const AppContext = createContext({
   pageName: 'Home',
@@ -70,24 +70,44 @@ const AppContextWrapper = ({
   });
   const [user, setUser] = useState<TUser>(initalUserValues);
 
-  const value = {
-    isDarkMode,
-    setIsDarkMode,
-    user,
-    setUser,
-    token,
-    setToken,
-    network,
-    setNetwork,
-    pageName,
-    setPageName,
-    skeltonLoading,
-    setSkeltonLoading,
-    isValidSession,
-    setIsValidSession,
-    snackbarMessage,
-    setSnackbarMessage,
-  };
+  const value = useMemo(
+    () => ({
+      isDarkMode,
+      setIsDarkMode,
+      user,
+      setUser,
+      token,
+      setToken,
+      network,
+      setNetwork,
+      pageName,
+      setPageName,
+      skeltonLoading,
+      setSkeltonLoading,
+      isValidSession,
+      setIsValidSession,
+      snackbarMessage,
+      setSnackbarMessage,
+    }),
+    [
+      isDarkMode,
+      setIsDarkMode,
+      user,
+      setUser,
+      token,
+      setToken,
+      network,
+      setNetwork,
+      pageName,
+      setPageName,
+      skeltonLoading,
+      setSkeltonLoading,
+      isValidSession,
+      setIsValidSession,
+      snackbarMessage,
+      setSnackbarMessage,
+    ],
+  );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

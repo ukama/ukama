@@ -8,9 +8,6 @@
 
 import { Link, Site } from '@/client/graphql/generated';
 import { colors } from '@/theme';
-// import parse_georaster from 'georaster'
-// import GeoRasterLayer from 'georaster-layer-for-leaflet'
-// import { v4 as uuidv4 } from 'uuid'
 import Leaflet, { LatLngLiteral, LatLngTuple, Layer, Polyline } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
@@ -20,9 +17,9 @@ interface ICustomMarker {
   layer: string;
   links: Link[];
   linkSites: any;
+  zoom?: number;
   isAddLink: boolean;
   coverageLoading: boolean;
-  zoom?: number | undefined;
   center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
   selectedLink: string | undefined;
@@ -77,17 +74,6 @@ const addRasterData = async (url: string, map: any, id: string) => {
   const buf = await fetch(url).then((response) => {
     return response.arrayBuffer();
   });
-
-  //  const rast = await parse_georaster(buf)
-
-  //  var layer = new GeoRasterLayer({
-  //   georaster: rast,
-  //   opacity: 1,
-  //   resolution: 300,
-  //   attribution: id,
-  //  }).addTo(map)
-
-  //  return layer
 };
 
 const getKey = (lat: string, lng: string) =>

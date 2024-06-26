@@ -3,7 +3,6 @@ body {
   margin: 0;
   height: 100%;
   overflow-x: hidden;
-  /* background-color: #e0e0e0; */
 }
 *.highcharts-credits {
   display: none;

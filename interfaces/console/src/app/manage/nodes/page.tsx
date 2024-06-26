@@ -18,7 +18,7 @@ import { AlertColor, Box, Paper } from '@mui/material';
 import { useState } from 'react';
 
 const Page = () => {
-  const [data, setData] = useState([]);
+  // const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const { setSnackbarMessage } = useAppContext();
   const [networkList, setNetworkList] = useState<NetworkDto[]>([]);
@@ -99,15 +99,15 @@ const Page = () => {
             title={'My node pool'}
             buttonTitle={'CLAIM NODE'}
             handleButtonAction={() => {}}
-            subtitle={data.length.toString() ?? '0'}
+            subtitle={'0'}
             onSearchChange={(e: string) => setSearch(e)}
           />
           <br />
-          {data.length === 0 ? (
+          {[].length === 0 ? (
             <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
           ) : (
             <SimpleDataTable
-              dataset={data}
+              dataset={[]}
               networkList={networkList}
               columns={MANAGE_NODE_POOL_COLUMN}
               handleCreateNetwork={handleCreateNetwork}

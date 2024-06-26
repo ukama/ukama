@@ -27,7 +27,6 @@ type AddNetworkDialogProps = {
   isOpen: boolean;
   loading: boolean;
   description: string;
-  isClosable?: boolean;
   handleCloseAction: any;
   labelSuccessBtn?: string;
   handleSuccessAction?: any;
@@ -49,7 +48,7 @@ const validationSchema = Yup.object({
   name: Yup.string()
     .required('Network name is required')
     .matches(
-      /^[a-z0-9\-]*$/,
+      /^[a-z0-9-]*$/,
       'Network name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
     ),
   budget: Yup.number().default(0),

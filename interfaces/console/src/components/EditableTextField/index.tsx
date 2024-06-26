@@ -14,7 +14,7 @@ type EditableTextFieldProps = {
   label: string;
   type?: string;
   value: string;
-  isEditable?: boolean;
+  editable?: boolean;
   handleOnChange?: Function;
 };
 
@@ -22,10 +22,10 @@ const EditableTextField = ({
   label,
   value,
   type = 'text',
-  isEditable = true,
+  editable = true,
   handleOnChange = () => {},
 }: EditableTextFieldProps) => {
-  const [iseditable, setIsEditable] = useState(false);
+  const [isEditable, setIsEditable] = useState<boolean>(false);
   return (
     <TextField
       fullWidth
@@ -34,7 +34,7 @@ const EditableTextField = ({
       label={label}
       value={value}
       variant="standard"
-      disabled={!iseditable}
+      disabled={!editable}
       sx={{
         width: '300px',
         '& input': {
@@ -47,7 +47,7 @@ const EditableTextField = ({
       }}
       InputLabelProps={{ shrink: true }}
       onChange={(e) => handleOnChange(e.target.value)}
-      inputRef={(input) => iseditable && input?.focus()}
+      inputRef={(input) => isEditable && input?.focus()}
       InputProps={{
         type: type,
         disableUnderline: true,
@@ -58,11 +58,11 @@ const EditableTextField = ({
           >
             <IconButton
               edge="end"
-              onClick={() => setIsEditable(!iseditable)}
+              onClick={() => setIsEditable(!isEditable)}
               sx={{
                 svg: {
                   path: {
-                    fill: iseditable ? colors.primaryMain : '-moz-initial',
+                    fill: isEditable ? colors.primaryMain : '-moz-initial',
                   },
                 },
               }}

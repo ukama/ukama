@@ -46,7 +46,7 @@ const SPEC_DATA = [
   { id: 'pdf-3', title: 'PDF with Technical Specs', readingTime: '2mint' },
 ];
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: Readonly<{ params: { id: string } }>) {
   const router = useRouter();
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
@@ -65,11 +65,11 @@ export default function Page({ params }: { params: { id: string } }) {
     fetchPolicy: 'cache-first',
   });
 
-  const { data: getNodeData, loading: getNodeLoading } = useGetNodeQuery({
+  const { loading: getNodeLoading } = useGetNodeQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
       data: {
-        id: params.id as string,
+        id: params.id,
       },
     },
     onCompleted: (data) => {
@@ -87,11 +87,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const [
     getNodeMetricByTab,
-    {
-      data: nodeMetricsData,
-      loading: nodeMetricsLoading,
-      variables: nodeMetricsVariables,
-    },
+    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
   ] = useGetMetricByTabLazyQuery({
     client: metricsClient,
     fetchPolicy: 'network-only',
@@ -237,7 +233,7 @@ export default function Page({ params }: { params: { id: string } }) {
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={false}
+        isLoading={getNodesLoading || updateNodeLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}

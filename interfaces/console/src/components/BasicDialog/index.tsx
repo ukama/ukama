@@ -22,7 +22,6 @@ type BasicDialogProps = {
   title: string;
   isOpen: boolean;
   description: string;
-  isClosable?: boolean;
   handleCloseAction: any;
   labelSuccessBtn?: string;
   handleSuccessAction?: any;
@@ -36,7 +35,6 @@ const BasicDialog = ({
   labelSuccessBtn,
   labelNegativeBtn,
   handleCloseAction,
-  isClosable = true,
   handleSuccessAction,
 }: BasicDialogProps) => {
   return (
@@ -47,7 +45,6 @@ const BasicDialog = ({
       onClose={handleCloseAction}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
-      onBackdropClick={() => isClosable && handleCloseAction()}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>{title}</DialogTitle>

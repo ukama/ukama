@@ -169,11 +169,7 @@ const DataTableWithOptions = ({
                             endIcon={<ArrowDropDown />}
                             aria-controls="network-menu"
                           >
-                            <b>
-                              {selectedNetwork
-                                ? selectedNetwork
-                                : 'networkName'}
-                            </b>
+                            <b>{selectedNetwork || 'networkName'}</b>
                           </Button>
                           <Menu
                             id="network-menu"
@@ -181,25 +177,20 @@ const DataTableWithOptions = ({
                             open={Boolean(anchorEl)}
                             onClose={handleCloseMenu}
                           >
-                            {networkList &&
-                              networkList.map(({ name, id }: NetworkDto) => {
-                                return (
-                                  <MenuItem
-                                    key={id}
-                                    onClick={() =>
-                                      handleNetworkSelect(name, id)
-                                    }
-                                  >
-                                    <ListItem>
-                                      <ListItemText
-                                        sx={{ typography: 'body1' }}
-                                      >
-                                        {name}
-                                      </ListItemText>
-                                    </ListItem>
-                                  </MenuItem>
-                                );
-                              })}
+                            {networkList?.map(({ name, id }: NetworkDto) => {
+                              return (
+                                <MenuItem
+                                  key={id}
+                                  onClick={() => handleNetworkSelect(name, id)}
+                                >
+                                  <ListItem>
+                                    <ListItemText sx={{ typography: 'body1' }}>
+                                      {name}
+                                    </ListItemText>
+                                  </ListItem>
+                                </MenuItem>
+                              );
+                            })}
                           </Menu>
                         </>
                       ) : (
@@ -212,7 +203,7 @@ const DataTableWithOptions = ({
             </TableHead>
             <TableBody>
               {dataset?.map((row: any, id: number) => (
-                <TableRow role="row" tabIndex={-1} key={`row-${id}`}>
+                <TableRow role="row" tabIndex={-1} key={`tr-${id}`}>
                   {columns.map((column: ColumnsWithOptions, index: number) => (
                     <TableCell
                       key={`cell-${index}`}

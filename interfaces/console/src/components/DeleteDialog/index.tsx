@@ -70,7 +70,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
           <Typography variant="body1" sx={{ color: colors.black }}>
-            Are you certain you wish to delete the following subscriber -
+            Are you certain you wish to delete the following subscriber -{' '}
             <span style={{ color: 'black' }}>{itemName}</span> ? This action
             will also remove all SIMs associated with them from your network.
           </Typography>

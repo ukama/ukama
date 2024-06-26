@@ -45,7 +45,7 @@ const whoami = async (session: string) => {
 };
 
 function isUserHaveOrg(userObj: { orgId: string; orgName: string }) {
-  return userObj.orgId !== '' ?? userObj.orgName !== '';
+  return userObj.orgId !== '' || userObj.orgName !== '';
 }
 
 function isValidUser(userObj: {

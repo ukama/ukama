@@ -89,7 +89,7 @@ const DraftDropdown = ({
         }}
         displayEmpty
         className={classes.selectStyle}
-        renderValue={(selected) => (selected ? selected : 'Add/Select a draft')}
+        renderValue={(selected) => selected || 'Add/Select a draft'}
         onClose={() => {
           setEditNameId('-1');
           setNewName('');

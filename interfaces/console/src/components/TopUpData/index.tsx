@@ -165,19 +165,18 @@ const TopUpData: React.FC<TopUpProps> = ({
               }}
               className={classes.selectStyle}
             >
-              {sims &&
-                sims.map((sim) => (
-                  <MenuItem
-                    key={sim.id}
-                    value={sim.id}
-                    sx={{
-                      m: 0,
-                      p: '6px 16px',
-                    }}
-                  >
-                    <Typography variant="body1">{`${sim.iccid}`}</Typography>
-                  </MenuItem>
-                ))}
+              {sims?.map((sim) => (
+                <MenuItem
+                  key={sim.id}
+                  value={sim.id}
+                  sx={{
+                    m: 0,
+                    p: '6px 16px',
+                  }}
+                >
+                  <Typography variant="body1">{`${sim.iccid}`}</Typography>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -221,21 +220,20 @@ const TopUpData: React.FC<TopUpProps> = ({
               }}
               className={classes.selectStyle}
             >
-              {packages &&
-                packages.map((pkg) => (
-                  <MenuItem
-                    key={pkg.uuid}
-                    value={pkg.uuid}
-                    sx={{
-                      m: 0,
-                      p: '6px 16px',
-                    }}
-                  >
-                    <Typography variant="body1">
-                      {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
-                    </Typography>
-                  </MenuItem>
-                ))}
+              {packages?.map((pkg) => (
+                <MenuItem
+                  key={pkg.uuid}
+                  value={pkg.uuid}
+                  sx={{
+                    m: 0,
+                    p: '6px 16px',
+                  }}
+                >
+                  <Typography variant="body1">
+                    {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+                  </Typography>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
