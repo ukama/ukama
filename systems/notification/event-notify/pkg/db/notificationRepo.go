@@ -9,7 +9,6 @@
 package db
 
 import (
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -19,7 +18,6 @@ import (
 type NotificationRepo interface {
 	Add(org *Notification) error
 	Get(id uuid.UUID) (*Notification, error)
-	Update(id uuid.UUID, isRead bool) error
 }
 
 type notificationRepo struct {
@@ -44,16 +42,4 @@ func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
 		return nil, result.Error
 	}
 	return &notification, nil
-}
-
-func (r *notificationRepo) Update(id uuid.UUID, isRead bool) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&Notification{}).Where("id = ?", id).Update("is_read", isRead).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
 }

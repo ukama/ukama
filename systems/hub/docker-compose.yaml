@@ -1,160 +1,157 @@
-version: "3.7"
+version: '3.7'
 
 services:
+ minio:
+  image: quay.io/minio/minio
+  command: server /tmp/data --console-address ":9001"
+  ports:
+   - 9000:9000
+   - 9001:9001
+  networks:
+   - ukama-net
+     # Don't copy those addresses in your application. Use the local docker socket to get them.
+  environment:
+   # Same for the environment variables, use the local docker socket to read it.
+   - MINIO_ROOT_USER=minioadmin
+   - MINIO_ROOT_PASSWORD=minioadmin
 
-  minio:
-    image: quay.io/minio/minio
-    command: server /tmp/data --console-address ":9001"
-    ports:
-        - 9000:9000
-        - 9001:9001
-    networks:
-      - ukama-net
-        # Don't copy those addresses in your application. Use the local docker socket to get them.
-    environment:
-      # Same for the environment variables, use the local docker socket to read it.
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+ postgresd-hub:
+  image: postgres:13.3
+  ports:
+   - '5408:5432'
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
 
+ gateway:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./api-gateway
+  ports:
+   - '8000:8080'
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+   - NODEMETRICSPORT=10251
+   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
+   - SERVICES_DISTRIBUTOR=distributor:9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - ISGLOBAL=true
+  depends_on:
+   - artifactmanager
+   - distributor
+  networks:
+   - ukama-net
 
-  postgresd-hub:
-    image: postgres:13.3
-    ports:
-      - "5408:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
-    networks:
-      - ukama-net
-    volumes:
-      - postgress-data:/var/lib/postgresql
+ node-gateway:
+  build:
+   dockerfile: ./Dockerfile
+   context: ./node-gateway
+  ports:
+   - '8100:8080'
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+   - NODEMETRICSPORT=10251
+   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
+   - SERVICES_DISTRIBUTOR=distributor:9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - ISGLOBAL=true
+  depends_on:
+   - artifactmanager
+   - distributor
+  networks:
+   - ukama-net
 
-  gateway:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./api-gateway
-    ports:
-    - '8000:8080'
-    environment:
-    - DEBUGMODE=true
-    - BYPASS_AUTH_MODE=true
-    - NODEMETRICSPORT=10251
-    - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-    - SERVICES_DISTRIBUTOR=distributor:9090
-    - ORGNAME=${ORGNAME}
-    - ORGID=${ORGID}
-    - ISGLOBAL=true
-    depends_on:
-    - artifactmanager
-    - distributor
-    networks:
-    - ukama-net
+ artifactmanager: # Here, this is where you can configure your gateway.
+  build:
+   context: ./artifactManager
+   dockerfile: ./Dockerfile
+  ports:
+   - '9010:9090'
+  environment:
+   - STORAGE_ENDPOINT=minio:9000
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-hub:9095
+   - ARTIFACTMANAGER_SERVICE_HOST=artifactmanager
+   - ARTIFACTMANAGER_SERVICE_PORT=9090
+   - CHUNKER_HOST=http://distributor:9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - ISGLOBAL=TRUE
+   - PUSHGATEWAY=http://localhost:9091
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-hub
 
-  node-gateway:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./node-gateway
-    ports:
-    - '8100:8080'
-    environment:
-    - DEBUGMODE=true
-    - BYPASS_AUTH_MODE=true
-    - NODEMETRICSPORT=10251
-    - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-    - SERVICES_DISTRIBUTOR=distributor:9090
-    - ORGNAME=${ORGNAME}
-    - ORGID=${ORGID}
-    - ISGLOBAL=true
-    depends_on:
-    - artifactmanager
-    - distributor
-    networks:
-    - ukama-net
+ distributor: # Here, this is where you can configure your gateway.
+  build:
+   context: ./distributor
+   dockerfile: ./Dockerfile
+  ports: ['9020:9090', '8099:8099']
+  environment:
+   - DEBUGMODE=TRUE
+   - STORE_ENDPOINT=minio:9000
+   - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/hub-chunks-local-test/chunks?lookup=path
+   - DISTRIBUTION_ADDRESS=distributor:8099
+   - DISTRIBUTION_LOGFILE=-
+   - STORAGE_ENDPOINT=minio:9000
+   - STORAGE_ACCESSKEY=minioadmin
+   - STORAGE_SECRETKEY=minioadmin
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-hub:9095
+   - DISTRIBUTOR_SERVICE_HOST=distributor
+   - DISTRIBUTOR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - ISGLOBAL=TRUE
+  networks:
+   - ukama-net
+  restart: always
 
-  artifactmanager: # Here, this is where you can configure your gateway.
-    build:
-      context: ./artifactManager
-      dockerfile: ./Dockerfile
-    ports:
-    - '9010:9090'
-    environment:
-      - STORAGE_ENDPOINT=minio:9000
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-hub:9095
-      - ARTIFACTMANAGER_SERVICE_HOST=artifactmanager
-      - ARTIFACTMANAGER_SERVICE_PORT=9090
-      - CHUNKER_HOST=http://distributor:9090
-      - ORGNAME=${ORGNAME}
-      - ORGID=${ORGID}
-      - ISGLOBAL=TRUE
-      - PUSHGATEWAY=http://localhost:9091
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - msgclient-hub
+ msgclient-hub:
+  build:
+   context: ../services/msgClient
+   dockerfile: ./Dockerfile
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-hub
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=hub
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-hub
 
-  distributor: # Here, this is where you can configure your gateway.
-    build:
-      context: ./distributor
-      dockerfile: ./Dockerfile
-    ports: [ "9020:9090", "8099:8099" ]
-    environment:
-      - DEBUGMODE=TRUE
-      - STORE_ENDPOINT=minio:9000
-      - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/hub-chunks-local-test/chunks?lookup=path
-      - DISTRIBUTION_ADDRESS=distributor:8099
-      - DISTRIBUTION_LOGFILE=-
-      - STORAGE_ENDPOINT=minio:9000
-      - STORAGE_ACCESSKEY=minioadmin
-      - STORAGE_SECRETKEY=minioadmin
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-hub:9095
-      - DISTRIBUTOR_SERVICE_HOST=distributor
-      - DISTRIBUTOR_SERVICE_PORT=9090
-      - ORGNAME=${ORGNAME}
-      - ORGID=${ORGID}
-      - ISGLOBAL=TRUE
-    networks:
-      - ukama-net
-    restart: always
-
-  msgclient-hub:
-    build:
-      context: ../services/msgClient
-      dockerfile: ./Dockerfile
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-hub
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - SYSTEM=hub
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - postgresd-hub
-
-
-  initclient-hub:
-    build:
-      dockerfile: ./Dockerfile
-      context: ../services/initClient
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_SYSTEM_NAME=hub
-      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_SYSTEM_PORT=8889
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8000
-      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_CLIENT_PORT=9091
-      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
-    restart: always
-    networks:
-      - ukama-net
+ initclient-hub:
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=hub
+   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_SYSTEM_PORT=8889
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8000
+   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_CLIENT_PORT=9091
+   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
  ukama-net:
@@ -162,4 +159,4 @@ networks:
   name: services_ukama-net
 
 volumes:
-  postgress-data:
+ postgress-data:

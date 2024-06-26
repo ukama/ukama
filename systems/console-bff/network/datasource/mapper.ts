@@ -49,16 +49,18 @@ export const dtoToNetworksDto = (res: NetworksAPIResDto): NetworksResDto => {
     networks.push({
       id: network.id,
       name: network.name,
-      orgId: network.org_id,
       budget: network.budget,
+      isDefault: false,
       isDeactivated: network.is_deactivated,
       createdAt: network.created_at,
       countries: network.allowed_countries,
       networks: network.allowed_networks,
+      overdraft: network.overdraft,
+      paymentLinks: network.payment_links,
+      trafficPolicy: network.traffic_policy,
     });
   });
   return {
-    orgId: res.org_id,
     networks: networks,
   };
 };
@@ -67,11 +69,14 @@ export const dtoToNetworkDto = (res: NetworkAPIResDto): NetworkDto => {
   return {
     id: res.network.id,
     name: res.network.name,
-    orgId: res.network.org_id,
     budget: res.network.budget,
+    isDefault: false,
     isDeactivated: res.network.is_deactivated,
     createdAt: res.network.created_at,
     countries: res.network.allowed_countries,
     networks: res.network.allowed_networks,
+    overdraft: res.network.overdraft,
+    paymentLinks: res.network.payment_links,
+    trafficPolicy: res.network.traffic_policy,
   };
 };

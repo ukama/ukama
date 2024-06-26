@@ -1,0 +1,93 @@
+# Metrics Query
+
+query GetLatestMetric($data: GetLatestMetricInput!) {
+  getLatestMetric(data: $data) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}
+
+query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+}
+
+subscription GetMetricByTabSub(
+  $nodeId: String!
+  $orgId: String!
+  $type: GRAPHS_TYPE!
+  $userId: String!
+  $from: Float!
+) {
+  getMetricByTabSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}
+
+query GetStatsMetric {
+  getStatsMetric {
+    activeSubscriber
+    averageSignalStrength
+    averageThroughput
+  }
+}
+
+query GetNotifications($data: GetNotificationsInput!) {
+  getNotifications(data: $data) {
+    notifications {
+      id
+      title
+      description
+      createdAt
+      type
+      scope
+      isRead
+    }
+  }
+}
+subscription NotificationSubscription(
+  $orgId: String!
+  $networkId: String!
+  $userId: String!
+  $forRole: ROLE_TYPE!
+  $scopes: [NOTIFICATION_SCOPE!]!
+) {
+  notificationSubscription(
+    orgId: $orgId
+    networkId: $networkId
+    userId: $userId
+    forRole: $forRole
+    scopes: $scopes
+  ) {
+    id
+    title
+    description
+    createdAt
+    type
+    scope
+    isRead
+  }
+}

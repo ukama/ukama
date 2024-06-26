@@ -31,10 +31,8 @@ type CDRService interface {
 }
 
 func NewCDR(cdr string, timeout time.Duration) (*CDR, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, cdr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cdr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Errorf("Failed to connect to cdr service at %s. Error %s", cdr, err.Error())
 		return nil, err

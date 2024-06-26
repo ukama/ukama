@@ -72,10 +72,12 @@ type invitation interface {
 	UpdateInvitation(invitationId string, status string) (*invpb.UpdateStatusResponse, error)
 	RemoveInvitation(invitationId string) (*invpb.DeleteResponse, error)
 	GetAllInvitations() (*invpb.GetAllResponse, error)
+	GetInvitationsByEmail(email string) (*invpb.GetByEmailResponse, error)
 }
 
 type member interface {
 	GetMember(userUUID string) (*mpb.MemberResponse, error)
+	GetMemberByUserId(userUUID string) (*mpb.GetMemberByUserIdResponse, error)
 	GetMembers() (*mpb.GetMembersResponse, error)
 	AddMember(userUUID string, role string) (*mpb.MemberResponse, error)
 	UpdateMember(userUUID string, isDeactivated bool, role string) error
@@ -164,10 +166,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const mem = "/members"
 		member := auth.Group(mem, "Members", "Operations on Members")
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
+		member.GET("/user/:user_id", formatDoc("Get Member", "Get member by user id"), tonic.Handler(r.getMemberByUserIdHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
-		member.GET("/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
-		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
-		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
+		member.GET("/:member_id", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+		member.PATCH("/:member_id", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
+		member.DELETE("/:member_id", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
 		// Invitation routes
 		const inv = "/invitations"
@@ -176,7 +179,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("", formatDoc("Get Invitations", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
+		invitations.GET("/", formatDoc("Get Invitations", "Get all invitations of an organization"), tonic.Handler(r.getAllInvitationsHandler, http.StatusOK))
+		invitations.GET("/user/:email", formatDoc("Get Invitations by email", "Get invitations by email"), tonic.Handler(r.getInvitationsByEmailHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -270,8 +274,12 @@ func (r *Router) getMembersHandler(c *gin.Context, req *GetMembersRequest) (*mpb
 	return r.clients.Member.GetMembers()
 }
 
+func (r *Router) getMemberByUserIdHandler(c *gin.Context, req *GetMemberByUserRequest) (*mpb.GetMemberByUserIdResponse, error) {
+	return r.clients.Member.GetMemberByUserId(req.UserId)
+}
+
 func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.GetMember(req.UserUuid)
+	return r.clients.Member.GetMember(req.MemberId)
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
@@ -279,11 +287,11 @@ func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.Mem
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Member.UpdateMember(req.UserUuid, req.IsDeactivated, req.Role)
+	return r.clients.Member.UpdateMember(req.MemberId, req.IsDeactivated, req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *RemoveMemberRequest) error {
-	return r.clients.Member.RemoveMember(req.UserUuid)
+	return r.clients.Member.RemoveMember(req.MemberId)
 }
 
 // Network handlers
@@ -366,6 +374,10 @@ func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRe
 
 func (r *Router) getAllInvitationsHandler(c *gin.Context) (*invpb.GetAllResponse, error) {
 	return r.clients.Invitation.GetAllInvitations()
+}
+
+func (r *Router) getInvitationsByEmailHandler(c *gin.Context, req *GetInvitationsByEmailReq) (*invpb.GetByEmailResponse, error) {
+	return r.clients.Invitation.GetInvitationsByEmail(req.Email)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -24,6 +25,7 @@ import (
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type EventToNotifyServer struct {
@@ -59,7 +61,7 @@ func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateSt
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of notification uuid. Error %s", err.Error())
 	}
-	err = n.notificationRepo.Update(nuuid, req.GetIsRead())
+	err = n.userNotificationRepo.Update(nuuid, req.GetIsRead())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -128,7 +130,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 			"no user uuid. Error %s", err.Error())
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(req.GetRoleType()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -151,6 +153,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
+		createdAt, _ := time.Parse(time.RFC3339, i.CreatedAt)
 		n := &pb.Notifications{
 			Id:          i.Id.String(),
 			Title:       i.Title,
@@ -158,6 +161,7 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Type:        upb.NotificationType_name[int32(i.Type)],
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
+			CreatedAt:   timestamppb.New(createdAt),
 		}
 		res = append(res, n)
 	}
@@ -175,6 +179,7 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		NetworkId:    notification.NetworkId,
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
+		CreatedAt:    timestamppb.New(notification.CreatedAt),
 	}
 }
 

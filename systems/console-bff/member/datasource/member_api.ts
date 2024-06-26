@@ -29,6 +29,12 @@ class MemberApi extends RESTDataSource {
     );
   };
 
+  getMemberByUserId = async (userId: string): Promise<MemberDto> => {
+    return this.get(`/${VERSION}/members/user/${userId}`).then(res =>
+      dtoToMemberResDto(res)
+    );
+  };
+
   removeMember = async (id: string): Promise<CBooleanResponse> => {
     return this.delete(`/${VERSION}/members/${id}`).then(() => {
       return {
@@ -47,7 +53,7 @@ class MemberApi extends RESTDataSource {
     memberId: string,
     req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${VERSION}/members/${memberId}`, {
+    return this.patch(`/${VERSION}/members/${memberId}`, {
       body: {
         isDeactivated: req.isDeactivated,
         role: req.role,

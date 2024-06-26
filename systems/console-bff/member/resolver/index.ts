@@ -9,6 +9,7 @@ import { NonEmptyArray } from "type-graphql";
 
 import { AddMemberResolver } from "./addMember";
 import { GetMemberResolver } from "./getMember";
+import { GetMemberByUserIdResolver } from "./getMemberByUserId";
 import { GetMembersResolver } from "./getMembers";
 import { RemoveMemberResolver } from "./removeMember";
 import { UpdateMemberResolver } from "./updateMember";
@@ -19,6 +20,7 @@ const resolvers: NonEmptyArray<any> = [
   GetMembersResolver,
   RemoveMemberResolver,
   UpdateMemberResolver,
+  GetMemberByUserIdResolver,
 ];
 
 export default resolvers;

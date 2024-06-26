@@ -6,9 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
-import { SUBSCRIBER_API_GW } from "../../common/configs";
+import { ENCRYPTION_KEY, SUBSCRIBER_API_GW } from "../../common/configs";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
@@ -52,7 +53,7 @@ class SimApi extends RESTDataSource {
   baseURL = SUBSCRIBER_API_GW;
 
   uploadSims = async (req: UploadSimsInputDto): Promise<UploadSimsResDto> => {
-    return this.put(`/upload`, {
+    return this.put(`/${VERSION}/${SIMPOOL}/upload`, {
       body: {
         data: req.data,
         sim_type: req.simType,
@@ -78,10 +79,7 @@ class SimApi extends RESTDataSource {
   ): Promise<AllocateSimAPIDto> => {
     const getToken = (): string | null => {
       if (req.iccid) {
-        const token = generateTokenFromIccid(
-          req.iccid,
-          process.env.ENCRYPTION_KEY ?? ""
-        );
+        const token = generateTokenFromIccid(req.iccid, ENCRYPTION_KEY ?? "");
         return token;
       }
 
@@ -96,25 +94,25 @@ class SimApi extends RESTDataSource {
       body: {
         ...requestBody,
       },
-    })
-      .then(res => {
-        this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
-        this.getPackagesForSim({ sim_id: res.sim.id })
-          .then((response: any) => {
-            this.setActivePackageForSim({
-              sim_id: res.sim.id,
-              package_id: response.packages[0].id,
-            });
-          })
-          .catch((error: any) => {
-            throw new GraphQLError(error);
-          });
-
-        return dtoToAllocateSimResDto(res);
+    }).then(res => {
+      this.addPackageToSim({
+        package_id: req.package_id,
+        sim_id: res.sim.id,
+        start_date: dayjs().format(),
       })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+        .then(async (response: any) => {
+          await this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
+          await this.setActivePackageForSim({
+            sim_id: res.sim.id,
+            package_id: response.packages[0].id,
+          });
+        })
+        .catch((error: any) => {
+          throw new GraphQLError(error);
+        });
+
+      return dtoToAllocateSimResDto(res);
+    });
   };
 
   getSim = async (req: GetSimInputDto): Promise<SimDto> => {
@@ -199,7 +197,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`).then(res => res);
+    return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (

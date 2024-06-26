@@ -283,19 +283,19 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	_ = s.PublishEventMessage(route, evt)
 
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
-		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
-			To:           []string{remoteSubResp.Subscriber.Email},
-			TemplateName: "sim-allocation",
-			Values: map[string]interface{}{
-				"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
-				"NETWORK":    netInfo.Name,
-				"NAME":       remoteSubResp.Subscriber.FirstName,
-				"QRCODE":     poolSim.QrCode},
-		})
-		if err != nil {
-			return nil, err
-		}
-
+		//TODO: Commenting below code, Need to address issue #702
+		// err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
+		// 	To:           []string{remoteSubResp.Subscriber.Email},
+		// 	TemplateName: "sim-allocation",
+		// 	Values: map[string]interface{}{
+		// 		"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
+		// 		"NETWORK":    netInfo.Name,
+		// 		"NAME":       remoteSubResp.Subscriber.FirstName,
+		// 		"QRCODE":     poolSim.QrCode},
+		// })
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()

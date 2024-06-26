@@ -1,0 +1,385 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+import {
+  Invitation_Status,
+  NodeTypeEnum,
+  Notification_Scope,
+  Role_Type,
+} from '@/client/graphql/generated';
+import {
+  Graphs_Type,
+  MetricRes,
+  MetricsRes,
+} from '@/client/graphql/generated/metrics';
+
+import colors from '@/theme/colors';
+import { TNodeSiteTree } from '@/types';
+import { Typography } from '@mui/material';
+import { RoleToNotificationScopes } from './roletoNotificationScope';
+
+const getTitleFromPath = (path: string, id: string) => {
+  if (id) return id;
+  switch (path) {
+    case '/console/home':
+      return 'Home';
+    case '/settings':
+      return 'Settings';
+    case '/console/sites':
+      return 'Sites';
+    case '/console/nodes':
+      return 'Nodes';
+    case '/console/subscribers':
+      return 'Subscribers';
+    // case '/site_planning':
+    //   return 'Site Planning';
+    case '/manage':
+      return 'Manage';
+    case '/onboarding':
+      return 'OnBoarding';
+    case '/unauthorized':
+      return 'Unauthorized';
+    case '/ping':
+      return 'Ping';
+    default:
+      return '404';
+  }
+};
+
+const hexToRGB = (hex: string, alpha: number): string => {
+  const h = '0123456789ABCDEF';
+  const r = h.indexOf(hex[1]) * 16 + h.indexOf(hex[2]);
+  const g = h.indexOf(hex[3]) * 16 + h.indexOf(hex[4]);
+  const b = h.indexOf(hex[5]) * 16 + h.indexOf(hex[6]);
+  if (alpha) {
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return `rgba(${r}, ${g}, ${b})`;
+};
+
+const getGraphFilterByType = (type: string) => {
+  switch (type) {
+    case 'DAY':
+      return {
+        to: Math.round(Date.now() / 1000),
+        from: Math.round(Date.now() / 1000) - 86400,
+      };
+    case 'WEEK':
+      return {
+        to: Math.round(Date.now() / 1000),
+        from: Math.round(Date.now() / 1000) - 604800,
+      };
+    case 'MONTH':
+      return {
+        to: Math.round(Date.now() / 1000),
+        from: Math.round(Date.now() / 1000) - 2628002,
+      };
+  }
+};
+
+const getTabByIndex = (index: number) => {
+  switch (index) {
+    case 0:
+      return 'Graphs_Tab.Overview';
+    case 1:
+      return 'Graphs_Tab.Network';
+    case 2:
+      return 'Graphs_Tab.Resources';
+    case 3:
+      return 'Graphs_Tab.Radio';
+    case 4:
+      return 'Graphs_Tab.Home';
+    default:
+      return 'Graphs_Tab.Overview';
+  }
+};
+
+const getTitleByKey = (key: string) => {
+  switch (key) {
+    case 'uptime_trx':
+      return 'Uptime TRX';
+    case 'temperaturetrx':
+      return 'Temp. (TRX)';
+    case 'temperaturerfe':
+      return 'Temp. (RFE)';
+    case 'subscribersactive':
+      return 'Active';
+    case 'subscribersattached':
+      return 'Attached';
+    case 'temperaturectl':
+      return 'Temp. (CTL)';
+    case 'temperaturecom':
+      return 'Temp. (COM)';
+    case 'rrc':
+      return 'RRC CNX success';
+    case 'rlc':
+      return 'RLS  drop rate';
+    case 'erab':
+      return 'ERAB drop rate';
+    case 'throughputuplink':
+      return 'Throughput (U/L)';
+    case 'throughputdownlink':
+      return 'Throughput (D/L)';
+    case 'cputrxusage':
+      return 'CPU-TRX';
+    case 'memorytrxused':
+      return 'Memory-TRX';
+    case 'disktrxused':
+      return 'DISK-TRX';
+    case 'cpuctlused':
+      return 'CPU-CTL';
+    case 'diskctlused':
+      return 'DISK-CTL';
+    case 'memoryctlused':
+      return 'Memory-CTL';
+    case 'powerlevel':
+      return 'Power';
+    case 'cpucomusage':
+      return 'CPU-COM';
+    case 'diskcomused':
+      return 'DISK-COM';
+    case 'memorycomused':
+      return 'Memory-COM';
+    case 'txpower':
+      return 'TX Power';
+    case 'rxpower':
+      return 'RX Power';
+    case 'papower':
+      return 'PA Power';
+    default:
+      return '';
+  }
+};
+
+export const getNodeTabTypeByIndex = (index: number) => {
+  switch (index) {
+    case 0:
+      return Graphs_Type.NodeHealth;
+    case 1:
+      return Graphs_Type.Network;
+    case 2:
+      return Graphs_Type.Resources;
+    case 3:
+      return Graphs_Type.Radio;
+    case 4:
+      return Graphs_Type.Subscribers;
+    default:
+      return Graphs_Type.NodeHealth;
+  }
+};
+
+const formatBytes = (bytes = 0): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = 3;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ` ${sizes[i]}`;
+};
+
+const formatBytesToMB = (bytes = 0): string => {
+  if (bytes === 0) return '0';
+  return (bytes / (1024 * 1024)).toFixed(2);
+};
+
+const getDataUsageSymbol = (dataUnit: string): string => {
+  switch (dataUnit) {
+    case 'GigaBytes':
+      return 'GB';
+    case 'MegaBytes':
+      return 'MB';
+    case 'KiloBytes':
+      return 'KB';
+    default:
+      return 'MB';
+  }
+};
+
+const getDataPlanUsage = (
+  duration: string,
+  currency: string,
+  amount: string,
+  dataVolume: string,
+  dataUnit: string,
+): string => {
+  const symbol = currency === 'Dollar' ? '$' : '';
+  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+    dataUnit,
+  )} / ${duration}`;
+};
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      resolve(base64String.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const getUnixTime = (): number => {
+  return Math.floor(Date.now() / 1000);
+};
+
+const getDuration = (number: number): string => {
+  return number > 1 ? `${number} Days` : `${number} Day`;
+};
+
+const structureNodeSiteDate = (data: any) => {
+  let count = 1;
+  const t: TNodeSiteTree[] = [];
+
+  data.forEach((node: any) => {
+    if (node.type === NodeTypeEnum.Tnode) {
+      t.push({
+        id: node.site?.siteId ?? '',
+        name: `Site ${count++}`,
+        nodeId: node.id,
+        nodeType: node.type,
+        nodeName: node.name,
+      });
+    }
+  });
+
+  return t;
+};
+
+export const getMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return metric?.values ?? [];
+};
+
+export const isMetricValue = (key: string, metrics: MetricsRes) => {
+  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  return (metric && metric.values.length > 1) ?? false;
+};
+
+const getSimValuefromSimType = (simType: string) => {
+  switch (simType) {
+    case 'operator_data':
+      return 'Operator Data';
+    case 'ukama_data':
+      return 'Ukama Data';
+    case 'test':
+      return 'Test';
+    default:
+      return 'Unknown';
+  }
+};
+
+const getInvitationStatusColor = (status: string) => {
+  switch (status) {
+    case Invitation_Status.InviteAccepted:
+      return (
+        <Typography variant="body2" color={colors.green}>
+          Accepted
+        </Typography>
+      );
+    case Invitation_Status.InviteDeclined:
+      return (
+        <Typography variant="body2" color={colors.red}>
+          Declined
+        </Typography>
+      );
+    case Invitation_Status.InvitePending:
+      return (
+        <Typography variant="body2" color={colors.yellow}>
+          Pending
+        </Typography>
+      );
+  }
+};
+
+const provideStatusColor = (status: Invitation_Status) => {
+  switch (status) {
+    case Invitation_Status.InvitePending:
+      return 'info';
+    case Invitation_Status.InviteAccepted:
+      return 'success';
+    case Invitation_Status.InviteDeclined:
+      return 'warning';
+    default:
+      return 'info';
+  }
+};
+
+const getRoleType = (userRole: string): Role_Type => {
+  return Object.values(Role_Type).includes(userRole as Role_Type)
+    ? (userRole as Role_Type)
+    : Role_Type.RoleInvalid;
+};
+
+const getScopesByRole = (userRole: string): Notification_Scope[] => {
+  const roleType = getRoleType(userRole);
+  return RoleToNotificationScopes[roleType] ?? [];
+};
+
+const formatTime = (isoString: string) => {
+  const date = new Date(isoString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString();
+  const hours = date.getHours();
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = (hours % 12).toString();
+  return `${month}/${day} ${formattedHours}${period}`;
+};
+
+const roleEnumToString = (role: Role_Type): string => {
+  switch (role) {
+    case Role_Type.RoleOwner:
+      return 'OWNER';
+    case Role_Type.RoleAdmin:
+      return 'ADMIN';
+    case Role_Type.RoleNetworkOwner:
+      return 'NETWORK OWNER';
+    case Role_Type.RoleVendor:
+      return 'VENDOR';
+    case Role_Type.RoleUser:
+      return 'USER';
+    default:
+      return 'Invalid';
+  }
+};
+
+const inviteStatusEnumToString = (status: Invitation_Status): string => {
+  switch (status) {
+    case Invitation_Status.InviteAccepted:
+      return 'ACCEPTED';
+    case Invitation_Status.InviteDeclined:
+      return 'DECLINED';
+    case Invitation_Status.InvitePending:
+      return 'PENDING';
+  }
+};
+
+export {
+  fileToBase64,
+  formatBytes,
+  formatBytesToMB,
+  formatTime,
+  getDataPlanUsage,
+  getDuration,
+  getGraphFilterByType,
+  getInvitationStatusColor,
+  getRoleType,
+  getScopesByRole,
+  getSimValuefromSimType,
+  getTitleFromPath,
+  getUnixTime,
+  hexToRGB,
+  inviteStatusEnumToString,
+  provideStatusColor,
+  roleEnumToString,
+  structureNodeSiteDate,
+};

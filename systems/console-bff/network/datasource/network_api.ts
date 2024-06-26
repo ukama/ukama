@@ -8,6 +8,7 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
   AddSiteInputDto,
@@ -74,6 +75,16 @@ class NetworkApi extends RESTDataSource {
     return this.post(`/${VERSION}/networks/${networkId}/sites`, {
       body: req,
     }).then(res => dtoToSiteDto(res));
+  };
+
+  setDefaultNetwork = async (networkId: string): Promise<TBooleanResponse> => {
+    return this.patch(`/${VERSION}/networks/${networkId}`)
+      .then(() => {
+        return { success: true };
+      })
+      .catch(() => {
+        return { success: false };
+      });
   };
 }
 

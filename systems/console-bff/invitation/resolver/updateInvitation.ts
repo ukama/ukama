@@ -5,22 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { UpateInvitationInputDto, UpdateInvitationResDto } from "./types";
 
 @Resolver()
 export class UpdateInvitationResolver {
   @Mutation(() => UpdateInvitationResDto)
-  @UseMiddleware(Authentication)
   async updateInvitation(
-    @Arg("id") id: string,
     @Arg("data") data: UpateInvitationInputDto,
     @Ctx() ctx: Context
   ): Promise<UpdateInvitationResDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.updateInvitation(id, data);
+    return await dataSources.dataSource.updateInvitation(data);
   }
 }

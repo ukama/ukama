@@ -27,10 +27,8 @@ type PackageClient struct {
 }
 
 func NewPackageClient(packageHost string, timeout time.Duration) *PackageClient {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	packageConn, err := grpc.DialContext(ctx, packageHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	packageConn, err := grpc.NewClient(packageHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

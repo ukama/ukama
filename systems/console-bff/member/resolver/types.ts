@@ -16,6 +16,9 @@ export class MemberAPIDto {
   org_id: string;
 
   @Field()
+  member_id: string;
+
+  @Field()
   member_since: string;
 
   @Field()
@@ -43,7 +46,13 @@ export class MemberDto {
   userId: string;
 
   @Field()
-  orgId: string;
+  name?: string;
+
+  @Field()
+  email?: string;
+
+  @Field()
+  memberId: string;
 
   @Field()
   isDeactivated: boolean;
@@ -83,4 +92,58 @@ export class UpdateMemberInputDto {
 export class MemberInputDto {
   @Field()
   memberId: boolean;
+}
+
+@ObjectType()
+export class UserResDto {
+  @Field()
+  name: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  uuid: string;
+
+  @Field()
+  phone: string;
+
+  @Field()
+  isDeactivated: boolean;
+
+  @Field()
+  authId: string;
+
+  @Field()
+  registeredSince: string;
+}
+
+@ObjectType()
+export class UserAPIObj {
+  @Field()
+  name: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  id: string;
+
+  @Field()
+  phone: string;
+
+  @Field()
+  is_deactivated: boolean;
+
+  @Field()
+  auth_id: string;
+
+  @Field()
+  registered_since: string;
+}
+
+@ObjectType()
+export class UserAPIResDto {
+  @Field(() => [UserAPIObj])
+  user: UserAPIObj;
 }

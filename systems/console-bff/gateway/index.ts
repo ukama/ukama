@@ -20,6 +20,7 @@ import { createServer } from "http";
 
 import {
   AUTH_APP_URL,
+  BASE_DOMAIN,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
   PLAYGROUND_URL,
@@ -30,9 +31,10 @@ import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
-import UserApi from "../user/datasource/user_api";
-import { UserResDto, WhoamiDto } from "./../user/resolver/types";
+import InitAPI from "../init/datasource/init_api";
 import { configureExpress } from "./configureExpress";
+
+const COOKIE_EXPIRY_TIME = 3017874138705;
 
 function delay(time: any) {
   return new Promise(resolve => setTimeout(resolve, time));
@@ -42,6 +44,7 @@ let headers: THeaders = {
     Authorization: "",
     Cookie: "",
   },
+  token: "",
   orgId: "",
   userId: "",
   orgName: "",
@@ -72,9 +75,10 @@ const loadServers = async () => {
               headers.auth.Authorization
             );
             request.http.headers.set("cookie", headers.auth.Cookie);
-            request.http.headers.set("orgId", headers.orgId);
-            request.http.headers.set("userId", headers.userId);
-            request.http.headers.set("orgName", headers.orgName);
+            request.http.headers.set("token", headers.token);
+            // request.http.headers.set("orgId", headers.orgId);
+            // request.http.headers.set("userId", headers.userId);
+            // request.http.headers.set("orgName", headers.orgName);
           }
         },
       });
@@ -88,6 +92,7 @@ const startServer = async () => {
   const gateway = await loadServers();
   const server = new ApolloServer({
     gateway,
+    csrfPrevention: true,
     plugins: [
       ApolloServerPluginInlineTrace({}),
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -125,33 +130,27 @@ const startServer = async () => {
       });
   });
 
-  app.get("/get-user", (req, res) => {
-    const kId = req.query["kid"] as string;
-    if (kId) {
-      const userApi = new UserApi();
-      userApi
-        .auth(kId)
-        .then((user: UserResDto) => {
-          if (user.uuid) {
-            userApi
-              .whoami(user.uuid)
-              .then((whoamiRes: WhoamiDto) => {
-                res.setHeader("Access-Control-Allow-Origin", AUTH_APP_URL);
-                res.setHeader("Access-Control-Allow-Credentials", "true");
-                res.send(whoamiRes);
-              })
-              .catch(err => {
-                logger.error(err);
-                res.send(new HTTP500Error("Failed to get user details"));
-              });
-          } else {
-            res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
-          }
-        })
-        .catch(err => {
-          logger.error(err);
-          res.send(new HTTP500Error("Failed to authenticate user"));
-        });
+  app.get("/set-theme", (req, res) => {
+    const theme = req.query.theme;
+    res.cookie("theme", theme, {
+      domain: BASE_DOMAIN,
+      secure: true,
+      sameSite: "lax",
+      maxAge: COOKIE_EXPIRY_TIME - (new Date().getTime() - 2017874138705),
+      httpOnly: false,
+      path: "/",
+    });
+    res.send("Theme set successfully");
+  });
+
+  app.get("/get-user", async (req, res) => {
+    const cookies = req.headers["cookie"];
+    const initAPI = new InitAPI();
+    if (cookies) {
+      const sessionRes = await initAPI.validateSession(cookies);
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("cache-control", "max-age=3600");
+      return res.send(sessionRes);
     } else {
       res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
     }

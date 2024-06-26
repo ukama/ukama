@@ -99,7 +99,9 @@ services:
    - postgresd-nucleus
 
  initclient-nucleus:
-  image: ../services/initClient
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
@@ -120,7 +122,7 @@ services:
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
  postgress-data:

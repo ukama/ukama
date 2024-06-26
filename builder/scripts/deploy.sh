@@ -167,6 +167,7 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         sleep 2
         register_user
         ;;
+
     "init")
         sleep 2
         echo  "$TAG Add org in lookup..."
@@ -174,6 +175,18 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
         ;;
+
+    "dataplan")
+        sleep 2
+        echo  "$TAG Add default baserate in dataplan..."
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
+        QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
+        psql $DB_URI -c "$QUERY1"
+
+        echo  "$TAG Set default markup..."
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
+        QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
+        psql $DB_URI -c "$QUERY2"
     esac
     cd ../
 done

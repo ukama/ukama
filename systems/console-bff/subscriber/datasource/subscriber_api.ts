@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
 import { SUBSCRIBER_API_GW } from "../../common/configs";
@@ -17,7 +18,11 @@ import {
   UpdateSubscriberInputDto,
 } from "../resolver/types";
 import { CBooleanResponse } from "./../../common/types";
-import { dtoToSubscriberResDto, dtoToSubscribersResDto } from "./mapper";
+import {
+  addSubscriberReqToSubscriberResDto,
+  dtoToSubscriberResDto,
+  dtoToSubscribersResDto,
+} from "./mapper";
 
 const VERSION = "v1";
 const SUBSCRIBER = "subscriber";
@@ -28,8 +33,19 @@ class SubscriberApi extends RESTDataSource {
   addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
     this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`);
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
-      body: { ...req },
-    }).then(res => dtoToSubscriberResDto(res));
+      body: {
+        address: "none",
+        email: req.email,
+        phone: req.phone,
+        id_serial: "none",
+        gender: "undefined",
+        last_name: req.last_name,
+        first_name: req.first_name,
+        network_id: req.network_id,
+        proof_of_Identification: "default",
+        dob: dayjs().subtract(10, "year").format(),
+      },
+    }).then(res => addSubscriberReqToSubscriberResDto(res));
   };
 
   updateSubscriber = async (

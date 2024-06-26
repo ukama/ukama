@@ -7,14 +7,16 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { CreateInvitationResolver } from "./createInvitation";
 import { DeleteInvitationResolver } from "./deleteInvitation";
 import { GetInvitationResolver } from "./getInvitation";
 import { GetInVitationsByOrgResolver } from "./getInvitationByOrg";
-import { SendInvitationResolver } from "./sendInvitation";
+import { GetInvitationsResolver } from "./getInvitations";
 import { UpdateInvitationResolver } from "./updateInvitation";
 
 const resolvers: NonEmptyArray<any> = [
-  SendInvitationResolver,
+  GetInvitationsResolver,
+  CreateInvitationResolver,
   GetInvitationResolver,
   GetInVitationsByOrgResolver,
   DeleteInvitationResolver,

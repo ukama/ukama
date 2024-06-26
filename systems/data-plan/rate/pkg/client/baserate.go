@@ -31,10 +31,8 @@ type BaseRateSrvc interface {
 }
 
 func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, baseRate, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(baseRate, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Errorf("Failed to connect to base rate service at %s. Error %s", baseRate, err.Error())
 		return nil, err

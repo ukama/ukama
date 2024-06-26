@@ -22,11 +22,13 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/invitation/pkg"
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uTypes "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -59,6 +61,7 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, aut
 		orgClient:            orgClient,
 		userClient:           userClient,
 		msgbus:               msgBus,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		orgName:              orgName,
 		TemplateName:         TemplateName,
 	}
@@ -79,31 +82,31 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		return nil, err
 	}
 
-	orgInfo, err := i.orgClient.Get(i.orgName)
-	if err != nil {
-		return nil, err
-	}
+	// orgInfo, err := i.orgClient.Get(i.orgName)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
-	if err != nil {
-		return nil, err
-	}
+	// orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{req.GetEmail()},
-		TemplateName: i.TemplateName,
-		Values: map[string]interface{}{
-			"INVITATION": invitationId.String(),
-			"LINK":       link,
-			"OWNER":      orgOwnerInfo.Name,
-			"ORG":        orgInfo.Name,
-			"ROLE":       req.GetRole().String(),
-		},
-	})
+	// err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
+	// 	To:           []string{req.GetEmail()},
+	// 	TemplateName: i.TemplateName,
+	// 	Values: map[string]interface{}{
+	// 		"INVITATION": invitationId.String(),
+	// 		"LINK":       link,
+	// 		"OWNER":      orgOwnerInfo.Name,
+	// 		"ORG":        orgInfo.Name,
+	// 		"ROLE":       req.GetRole().String(),
+	// 	},
+	// })
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	invitedUserInfo, err := i.userClient.GetByEmail(req.GetEmail())
 	if err != nil {
@@ -144,8 +147,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 			Link:      invite.Link,
 			Email:     invite.Email,
 			Name:      invite.Name,
-			Role:      upb.RoleType(invite.Role),
-			Status:    pb.StatusType_name[int32(invite.Status)],
+			Role:      uTypes.RoleType(invite.Role),
+			Status:    uTypes.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -208,10 +211,6 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			"invalid format of invitation uuid. Error %s", err.Error())
 	}
 
-	if req.GetStatus() == pb.StatusType_Unknown {
-		return nil, status.Errorf(codes.InvalidArgument, "Status is required")
-	}
-
 	err = i.iRepo.UpdateStatus(iuuid, uint8(req.GetStatus().Number()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
@@ -230,7 +229,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			Email:     invite.Email,
 			Name:      invite.Name,
 			Role:      upb.RoleType(invite.Role),
-			Status:    pb.StatusType_name[int32(invite.Status)],
+			Status:    uTypes.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -299,9 +298,9 @@ func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 		Id:       invitation.Id.String(),
 		Link:     invitation.Link,
 		Email:    invitation.Email,
-		Role:     pb.RoleType(invitation.Role),
+		Role:     uTypes.RoleType(invitation.Role),
 		Name:     invitation.Name,
-		Status:   pb.StatusType(invitation.Status),
+		Status:   uTypes.InvitationStatus(invitation.Status),
 		UserId:   invitation.UserId,
 		ExpireAt: invitation.ExpiresAt.String(),
 	}

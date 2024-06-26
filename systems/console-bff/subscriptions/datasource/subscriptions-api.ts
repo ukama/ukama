@@ -87,31 +87,27 @@ const getNodeRangeMetric = async (
 const getNotifications = async (
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, subscriberId, userId, networkId, forRole } = args;
+  const { orgId, userId, networkId, forRole } = args;
+
   let params = "";
   if (orgId) {
-    params = params + `orgId=${orgId}`;
-  }
-  if (subscriberId) {
-    params = params + `subscriberId=${subscriberId}`;
+    params = params + `&org_id=${orgId}`;
   }
   if (userId) {
-    params = params + `userId=${userId}`;
+    params = params + `&user_id=${userId}`;
   }
   if (networkId) {
-    params = params + `networkId=${networkId}`;
+    params = params + `&network_id=${networkId}`;
   }
   if (forRole) {
-    params = params + `forRole=${forRole}`;
+    params = params + `&role=${forRole}`;
   }
+  if (params.length > 0) params = params.substring(1);
+
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${NOTIFICATION_API_GW}/v1/notification/notifications?${params}`,
-  })
-    .then(res => parseNotificationsRes(res))
-    .catch(err => {
-      throw new GraphQLError(err);
-    });
+    url: `${NOTIFICATION_API_GW}/v1/event-notification?${params}`,
+  }).then(res => parseNotificationsRes(res.data));
 };
 
 export {

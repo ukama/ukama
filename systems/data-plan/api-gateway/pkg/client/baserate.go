@@ -27,10 +27,8 @@ type BaseRateClient struct {
 }
 
 func NewBaseRateClient(baserateHost string, timeout time.Duration) *BaseRateClient {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, baserateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(baserateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

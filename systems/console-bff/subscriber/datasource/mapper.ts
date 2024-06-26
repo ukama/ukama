@@ -13,6 +13,25 @@ import {
   SubscribersResDto,
 } from "../resolver/types";
 
+export const addSubscriberReqToSubscriberResDto = (
+  res: SubscriberAPIResDto
+): SubscriberDto => {
+  return {
+    sim: [],
+    email: res.subscriber.email,
+    gender: res.subscriber.gender,
+    address: res.subscriber.address,
+    dob: res.subscriber.date_of_birth,
+    phone: res.subscriber.phone_number,
+    idSerial: res.subscriber.id_serial,
+    uuid: res.subscriber.subscriber_id,
+    lastName: res.subscriber.last_name,
+    firstName: res.subscriber.first_name,
+    networkId: res.subscriber.network_id,
+    proofOfIdentification: res.subscriber.proof_of_identification,
+  };
+};
+
 export const dtoToSubscriberResDto = (
   res: SubscriberAPIResDto
 ): SubscriberDto => {
@@ -22,7 +41,6 @@ export const dtoToSubscriberResDto = (
       imsi: sim.imsi,
       type: sim.type,
       iccid: sim.iccid,
-      orgId: sim.org_id,
       msisdn: sim.msisdn,
       status: sim.status,
       package: sim.package,
@@ -38,7 +56,6 @@ export const dtoToSubscriberResDto = (
   return {
     sim: sims,
     email: res.subscriber.email,
-    orgId: res.subscriber.org_id,
     gender: res.subscriber.gender,
     address: res.subscriber.address,
     dob: res.subscriber.date_of_birth,

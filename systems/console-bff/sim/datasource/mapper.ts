@@ -36,7 +36,6 @@ export const dtoToAllocateSimResDto = (
     deactivationsCount: res.sim.deactivationsCount,
     subscriber_id: res.sim.subscriber_id,
     network_id: res.sim.network_id,
-    org_id: res.sim.org_id,
     package: res.sim?.package ?? {},
     imsi: res.sim.imsi,
     status: res.sim.status,

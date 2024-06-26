@@ -86,13 +86,12 @@ services:
    - DISTRIBUTOR_SERVICE_HOST=distributor
    - DISTRIBUTOR_SERVICE_PORT=9090
    - EVENTNOTIFYHOST=eventnotify:9090
-   - HTTP_NUCLEUS=http://{LOCAL_HOST_IP}:8060
-   - HTTP_REGISTRY=http://{LOCAL_HOST_IP}:8075
-   - HTTP_SUBSCRIBER=http://{LOCAL_HOST_IP}:8078
-   - EVENTNOTIFYHOST=eventnotify:9090
+   - HTTP_NUCLEUS=http://${LOCAL_HOST_IP}:8060
+   - HTTP_REGISTRY=http://${LOCAL_HOST_IP}:8075
+   - HTTP_SUBSCRIBER=http://${LOCAL_HOST_IP}:8078
+   - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-
   restart: always
   networks:
    - ukama-net
@@ -138,12 +137,13 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  build: ../services/initClient
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
    - ENV_DNS_REFRESH_TIME_PERIOD=30
-   # - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_SYSTEM_DNS=api-gateway-notification
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080

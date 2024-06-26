@@ -11,27 +11,32 @@ import "reflect-metadata";
 import SubGraphServer from "../common/apollo";
 import { PACKAGE_PORT } from "../common/configs";
 import { logger } from "../common/logger";
-import { parseGatewayHeaders } from "../common/utils";
+import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import PackageAPI from "./datasource/package_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const server = await SubGraphServer(resolvers);
-  await startStandaloneServer(server, {
-    context: async ({ req }) => {
-      return {
-        headers: parseGatewayHeaders(req.headers),
-        dataSources: {
-          dataSource: new PackageAPI(),
-        },
-      };
-    },
-    listen: { port: PACKAGE_PORT },
-  });
+  const isSuccess = await findProcessNKill(`${PACKAGE_PORT}`);
+  if (isSuccess) {
+    const server = await SubGraphServer(resolvers);
+    await startStandaloneServer(server, {
+      context: async ({ req }) => {
+        return {
+          headers: parseGatewayHeaders(req.headers),
+          dataSources: {
+            dataSource: new PackageAPI(),
+          },
+        };
+      },
+      listen: { port: PACKAGE_PORT },
+    });
 
-  logger.info(
-    `🚀 Ukama User service running at http://localhost:${PACKAGE_PORT}/graphql`
-  );
+    logger.info(
+      `🚀 Ukama Package service running at http://localhost:${PACKAGE_PORT}/graphql`
+    );
+  } else {
+    logger.error(`Server failed to start on port ${PACKAGE_PORT}`);
+  }
 };
 
 runServer();

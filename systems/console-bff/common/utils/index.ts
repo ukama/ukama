@@ -5,8 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { exec } from "child_process";
+
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
+import { logger } from "../logger";
 import { Meta, THeaders } from "../types";
 
 const getTimestampCount = (count: string) =>
@@ -18,26 +21,12 @@ const parseHeaders = (reqHeader: any): THeaders => {
       Authorization: "",
       Cookie: "",
     },
+    token: "",
     orgId: "",
     userId: "",
     orgName: "",
   };
   if (reqHeader.get("introspection") === "true") return headers;
-  if (reqHeader.get("org-id")) {
-    headers.orgId = reqHeader.get("org-id") as string;
-  } else {
-    throw new HTTP401Error(Messages.HEADER_ERR_ORG);
-  }
-  if (reqHeader.get("user-id")) {
-    headers.userId = reqHeader.get("user-id") as string;
-  } else {
-    throw new HTTP401Error(Messages.HEADER_ERR_USER);
-  }
-  if (reqHeader.get("org-name")) {
-    headers.orgName = reqHeader.get("org-name") as string;
-  } else {
-    throw new HTTP401Error(Messages.HEADER_ERR_ORG_NAME);
-  }
 
   if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
     if (reqHeader.get("x-session-token")) {
@@ -49,11 +38,45 @@ const parseHeaders = (reqHeader: any): THeaders => {
         cookies.find(item => (item.includes("ukama_session") ? item : "")) ??
         "";
       headers.auth.Cookie = session;
+      const t =
+        cookies.find(item =>
+          !item.includes("csrf_token") && item.includes("token") ? item : ""
+        ) ?? "";
+
+      if (t !== "") {
+        headers.token = t.replace("token=", "");
+      } else {
+        throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+      }
     }
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
   }
   return headers;
+};
+
+const parseToken = (token: string, get: "orgId" | "orgName" | "userId") => {
+  const headers: THeaders = {
+    auth: {
+      Authorization: "",
+      Cookie: "",
+    },
+    token: "",
+    orgId: "",
+    userId: "",
+    orgName: "",
+  };
+
+  if (token) {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    const headersStr = decoded.split(";");
+    if (headersStr.length < 3) throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+    headers.orgId = headersStr[0];
+    headers.orgName = headersStr[1];
+    headers.userId = headersStr[2];
+    headers.token = token;
+    return headers[get];
+  }
 };
 
 const parseGatewayHeaders = (reqHeader: any): THeaders => {
@@ -62,9 +85,10 @@ const parseGatewayHeaders = (reqHeader: any): THeaders => {
       Authorization: reqHeader["x-session-token"] ?? "",
       Cookie: reqHeader["cookie"] ?? "",
     },
-    orgId: reqHeader["orgid"] ?? "",
-    userId: reqHeader["userid"] ?? "",
-    orgName: reqHeader["orgname"] ?? "",
+    token: reqHeader["token"] ?? "",
+    orgId: parseToken(reqHeader["token"], "orgId") ?? "",
+    userId: parseToken(reqHeader["token"], "userId") ?? "",
+    orgName: parseToken(reqHeader["token"], "orgName") ?? "",
   };
 };
 
@@ -129,11 +153,55 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   }
 };
 
+const findProcessNKill = (port: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const command = `lsof -i tcp:${port} | awk 'NR>1 {print $2}'`;
+
+    exec(command, (err, stdout) => {
+      if (err) {
+        reject(new Error(`Failed to execute command: ${err.message}`));
+        return;
+      }
+      if (stdout) {
+        const pid = stdout.replace(/\n/g, "");
+
+        if (!pid) {
+          reject(new Error("PID not found."));
+          return;
+        }
+        killProcess(pid)
+          .then(() => resolve(true))
+          .catch(error => reject(error));
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
+const killProcess = (pid: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const command = `kill -9 ${pid}`;
+
+    exec(command, err => {
+      if (err) {
+        reject(new Error(`Error killing process ${pid}: ${err.message}`));
+      } else {
+        logger.info(`Process ${pid} killed.`);
+        resolve();
+      }
+    });
+  });
+};
+
 export {
+  findProcessNKill,
   getGraphsKeyByType,
   getPaginatedOutput,
   getStripeIdByUserId,
   getTimestampCount,
+  killProcess,
   parseGatewayHeaders,
   parseHeaders,
+  parseToken,
 };

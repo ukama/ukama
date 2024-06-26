@@ -39,13 +39,10 @@ export class PackageAPIDto {
   name: string;
 
   @Field()
-  org_id: string;
-
-  @Field()
   active: boolean;
 
   @Field()
-  duration: string;
+  duration: number;
 
   @Field()
   sim_type: string;
@@ -60,13 +57,13 @@ export class PackageAPIDto {
   updated_at: string;
 
   @Field()
-  sms_volume: string;
+  sms_volume: number;
 
   @Field()
-  data_volume: string;
+  data_volume: number;
 
   @Field()
-  voice_volume: string;
+  voice_volume: number;
 
   @Field()
   ulbr: string;
@@ -163,13 +160,10 @@ export class PackageDto {
   name: string;
 
   @Field()
-  orgId: string;
-
-  @Field()
   active: boolean;
 
   @Field()
-  duration: string;
+  duration: number;
 
   @Field()
   simType: string;
@@ -184,13 +178,13 @@ export class PackageDto {
   updatedAt: string;
 
   @Field()
-  smsVolume: string;
+  smsVolume: number;
 
   @Field()
-  dataVolume: string;
+  dataVolume: number;
 
   @Field()
-  voiceVolume: string;
+  voiceVolume: number;
 
   @Field()
   ulbr: string;
