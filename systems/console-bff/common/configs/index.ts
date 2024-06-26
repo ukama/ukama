@@ -39,9 +39,9 @@ export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
 
 // PORTS
-export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "4000");
+export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");
 export const SUBSCRIPTIONS_PORT = parseInt(
-  process.env.SUBSCRIPTIONS_PORT ?? "4001"
+  process.env.SUBSCRIPTIONS_PORT ?? "8081"
 );
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT ?? "5041"
