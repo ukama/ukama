@@ -11,7 +11,6 @@ VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
 VENDOR_LIBRARIES=
 
 set -e
-BRANCH=$1
 
 is_empty() {
     # Check if the directory contains anything other than .git
