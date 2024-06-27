@@ -61,7 +61,6 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", netId).
 			Return(&creg.NetworkInfo{
 				Id:         netId,
-				OrgId:      orgId,
 				Name:       "net-1",
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()

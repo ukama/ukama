@@ -17,12 +17,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
 type Mailer interface {
 	SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error)
 	GetEmailById(mailId string) (*pb.GetEmailByIdResponse, error)
 }
-
-
 
 type mailer struct {
 	conn    *grpc.ClientConn
@@ -32,10 +31,8 @@ type mailer struct {
 }
 
 func NewMailer(host string, timeout time.Duration) (*mailer, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 		return nil, err
@@ -51,7 +48,7 @@ func NewMailer(host string, timeout time.Duration) (*mailer, error) {
 	}, nil
 }
 
-func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *mailer {
+func NewMailerFromClient(mailerClient pb.MailerServiceClient) *mailer {
 	return &mailer{
 		host:    "localhost",
 		timeout: 10 * time.Second,
@@ -59,8 +56,6 @@ func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *mailer {
 		client:  mailerClient,
 	}
 }
-
-
 
 func (m *mailer) Close() {
 	m.conn.Close()
@@ -83,7 +78,7 @@ func (m *mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error)
 	defer cancel()
 
 	res, err := m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
-		MailId:mailerId,
+		MailId: mailerId,
 	})
 	if err != nil {
 		return nil, err

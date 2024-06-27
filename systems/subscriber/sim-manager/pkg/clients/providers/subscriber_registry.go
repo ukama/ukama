@@ -9,7 +9,6 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -40,12 +39,9 @@ func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient
 	if p.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
-		defer cancel()
-
 		log.Infoln("Connecting to Subscriber Registry service ", p.subscriberRegistryHost)
 
-		conn, err := grpc.DialContext(ctx, p.subscriberRegistryHost, grpc.WithBlock(),
+		conn, err := grpc.NewClient(p.subscriberRegistryHost,
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", p.subscriberRegistryHost, err)
