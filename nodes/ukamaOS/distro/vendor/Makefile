@@ -200,6 +200,16 @@ endif
 libuuid:
 	$(call print_msg,"libuuid")
 ifeq (,$(wildcard ${DEPDIR}/lib/libuuid.*))
+	cd $@ && \
+	find . -name 'libtool' -exec rm -f {} + && \
+	find . -name 'ltmain.sh' -exec rm -f {} + && \
+	find . -name 'aclocal.m4' -exec rm -f {} + && \
+	find . -name 'autom4te.cache' -exec rm -rf {} + && \
+	find . -name 'configure' -exec rm -f {} + && \
+	find . -name 'config.log' -exec rm -f {} + && \
+	find . -name 'config.status' -exec rm -f {} + && \
+	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoreconf --force --install --verbose && cd -
 	mkdir -p $@/${BUILD_DIR} && cd $@ && \
 	aclocal && autoconf && cd ${BUILD_DIR} && \
 	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
@@ -285,23 +295,6 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libunistring.*))
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
-
-#libidn2:
-#	$(call print_msg,"libidn2")
-#	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
-#	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
-#		./configure --prefix=${DEPDIR} --disable-doc --host=${HOST} && \
-#	make -j${NPROCS} && make -j${NPROCS} install
-#	$(call post_build_cleanup,$@/${BUILD_DIR})
-
-#p11-kit:
-#	$(call print_msg,"p11-kit")
-#	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
-#	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
-#		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
-#		--without-libtasn1 --without-systemd && \
-#	make -j${NPROCS} && make -j${NPROCS} install
-#	$(call post_build_cleanup,$@/${BUILD_DIR})
 
 p11-kit:
 	$(call print_msg,"p11-kit")
