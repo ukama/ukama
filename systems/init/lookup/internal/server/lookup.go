@@ -354,6 +354,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,
 		Health:      system.Health,
+		Url: 	   system.URL,
 	}, nil
 
 }
@@ -381,6 +382,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Ip:          sysIp,
 		Port:        req.Port,
 		OrgID:       org.ID,
+		URL:         req.GetUrl(),
 	}
 
 	logrus.Debugf("System details: %+v", sys)
@@ -410,6 +412,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Certificate: resp.Certificate,
 		Ip:          resp.Ip.IPNet.IP.String(),
 		Port:        resp.Port,
+		Url:         resp.URL,
 	}, nil
 }
 
@@ -465,6 +468,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		Certificate: dbSystem.Certificate,
 		Ip:          dbSystem.Ip.IPNet.IP.String(),
 		Port:        dbSystem.Port,
+		Url:         dbSystem.URL,
 	}, nil
 }
 

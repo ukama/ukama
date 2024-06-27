@@ -205,6 +205,7 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 		Port:        req.Port,
+		Url:         req.URL,
 	})
 
 }

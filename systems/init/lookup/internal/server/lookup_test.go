@@ -294,6 +294,7 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 		Certificate: "ukama_certs",
 		Ip:          orgIp,
 		Port:        100,
+		URL:         "http://localhost:100",
 	}
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()

@@ -148,6 +148,7 @@ message GetSystemResponse {
     string ip = 5;
     int32 port = 6;
     uint32 health = 7;
+    string url = 8;
 }
 
 message AddSystemRequest{
@@ -156,6 +157,7 @@ message AddSystemRequest{
     string certificate = 3 [(validator.field) = {string_not_empty: true}];
     string ip = 4 [(validator.field) = {string_not_empty: true}];
     int32 port = 5 [(validator.field) = {string_not_empty: true}];
+    string url = 6;
 }
 
 message AddSystemResponse {
@@ -165,6 +167,7 @@ message AddSystemResponse {
     string certificate = 4;
     string ip = 5;
     int32 port = 6;
+    string url = 7;
 }
 
 message UpdateSystemRequest{
@@ -182,6 +185,7 @@ message UpdateSystemResponse {
     string certificate = 4;
     string ip = 5;
     int32 port = 6;
+    string url = 7;
 }
 
 message DeleteSystemRequest{
