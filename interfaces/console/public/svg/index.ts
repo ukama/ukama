@@ -4,6 +4,7 @@ import { NoBillYet } from './NoBillYet';
 import { SiteHealth } from './SiteHealth';
 import Throughput from './Throughput';
 import { UsersWithBG } from './UsersWithBG';
+import { SiteStatusIcon } from './SiteStatusIcon';
 
 export {
   DataBilling,
@@ -12,4 +13,5 @@ export {
   SiteHealth,
   Throughput,
   UsersWithBG,
+  SiteStatusIcon,
 };

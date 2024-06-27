@@ -38,7 +38,10 @@ const NODE_ACTIONS_BUTTONS = [
     name: 'Turn RF Off',
   },
 ];
-
+const SITE_CONFIG_STEPS = [
+  'Configure Site Installation (1/2)',
+  'Configure Site Installation (2/2)',
+];
 export const MEMBER_ROLES = [
   { id: 1, label: 'Administrator', value: Role_Type.RoleAdmin },
   { id: 2, label: 'Vendor', value: Role_Type.RoleVendor },
@@ -344,4 +347,5 @@ export {
   SETTING_MENU,
   TIME_FILTER,
   TooltipsText,
+  SITE_CONFIG_STEPS,
 };
