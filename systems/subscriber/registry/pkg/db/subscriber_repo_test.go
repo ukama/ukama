@@ -108,7 +108,7 @@ func TestSubscriber_Add(t *testing.T) {
 		subscriber.DeletedAt).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err = repo.Add(&subscriber)
+	err = repo.Add(&subscriber, nil)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 

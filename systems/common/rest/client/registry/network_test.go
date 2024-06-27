@@ -80,6 +80,39 @@ func TestNetworkClient_Get(t *testing.T) {
 		assert.Nil(tt, n)
 	})
 
+	t.Run("DefaultNetworkFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			// Test request parameters
+			assert.Equal(tt, req.URL.String(), registry.NetworkEndpoint+"/default")
+
+			// fake network info
+			ntwk := `{"network":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_deactivated": true}}`
+
+			// Send mock response
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+
+				// Send response to be tested
+				Body: io.NopCloser(bytes.NewBufferString(ntwk)),
+
+				// Must be set to non-nil value or it panics
+				Header: make(http.Header),
+			}
+		}
+
+		testNetworkClient := registry.NewNetworkClient("")
+
+		// We replace the transport mechanism by mocking the http request
+		// so that the test stays a unit test e.g no server/network call.
+		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		n, err := testNetworkClient.GetDefault()
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, testUuid, n.Id)
+	})
+
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.NetworkEndpoint+"/"+testUuid)

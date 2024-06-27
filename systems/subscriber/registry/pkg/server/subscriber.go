@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -62,7 +63,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	var dob string
 	var err error
-	subscriberId := uuid.NewV4()
 
 	if req.GetDob() != "" {
 		dob, err = validate.ValidateDate(req.GetDob())
@@ -76,6 +76,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	// }
 
 	var networkInfo *creg.NetworkInfo
+
 	if req.GetNetworkId() != "" {
 		networkInfo, err = s.networkClient.Get(req.GetNetworkId())
 		if err != nil {
@@ -83,10 +84,10 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		}
 	} else {
 		networkInfo, err = s.networkClient.GetDefault()
-		log.Infof("Default network %+v", networkInfo)
 		if err != nil {
 			return nil, status.Errorf(codes.NotFound, "default network not found: %s", err.Error())
 		}
+		log.Infof("Default network %+v", networkInfo)
 	}
 
 	// if s.orgId != networkInfo.OrgId {
@@ -107,7 +108,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	subscriber := &db.Subscriber{
-		SubscriberId:          subscriberId,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
 		NetworkId:             nid,
@@ -120,7 +120,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		IdSerial:              req.GetIdSerial(),
 	}
 
-	err = s.subscriberRepo.Add(subscriber)
+	err = s.subscriberRepo.Add(subscriber, func(*db.Subscriber, *gorm.DB) error {
+		subscriber.SubscriberId = uuid.NewV4()
+
+		return nil
+	})
 	if err != nil {
 		log.Error("error while adding subscriber" + err.Error())
 

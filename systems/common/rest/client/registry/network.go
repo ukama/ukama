@@ -133,14 +133,12 @@ func (n *networkClient) GetDefault() (*NetworkInfo, error) {
 	log.Debugf("Get default network")
 
 	ntwk := Network{}
-	log.Infof("URL: %s", n.u.String()+NetworkEndpoint+"/default")
 	resp, err := n.R.Get(n.u.String() + NetworkEndpoint + "/default")
 	if err != nil {
 		log.Errorf("GetDefaultNetwork failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("GetDefaultNetwork failure: %w", err)
 	}
-	log.Infof("Network Response: %v", resp)
 	err = json.Unmarshal(resp.Body(), &ntwk)
 	if err != nil {
 		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())

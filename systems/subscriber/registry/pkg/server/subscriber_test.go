@@ -13,14 +13,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
-	"gorm.io/gorm"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+	"gorm.io/gorm"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -29,7 +29,7 @@ import (
 )
 
 const OrgName = "testorg"
-const orgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
+const OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
 func TestAdd(t *testing.T) {
 	t.Run("Add subscriber successfully", func(t *testing.T) {
@@ -39,45 +39,41 @@ func TestAdd(t *testing.T) {
 		simManagerService := &mocks.SimManagerClientProvider{}
 		regClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
-		netId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
-		orgId := "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+		networkId := uuid.NewV4()
+		sub := &db.Subscriber{
+			FirstName:             "John",
+			LastName:              "Doe",
+			Email:                 "johndoe@example.com",
+			PhoneNumber:           "1234567890",
+			Gender:                "Male",
+			Address:               "1 Main St",
+			ProofOfIdentification: "Passport",
+			IdSerial:              "123456789",
+			NetworkId:             networkId,
+			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
+		}
 
-		firstName := "John"
-		lastName := "Doe"
-		email := "johndoe@example.com"
-		phoneNumber := "1234567890"
-		gender := "Male"
-		address := "1 Main St"
-		proofOfIdentification := "Passport"
-		idSerial := "123456789"
-
-		regClient.On("Get", OrgName).Return(
-			&cnucl.OrgInfo{
-				Id:            orgId,
-				Name:          OrgName,
-				IsDeactivated: false,
-			}, nil).Once()
-		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
-		networkClient.On("Get", netId).
+		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
-				Id:         netId,
+				Id:         networkId.String(),
 				Name:       "net-1",
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, regClient, networkClient)
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			FirstName:             firstName,
-			NetworkId:             netId,
-			LastName:              lastName,
-			Email:                 email,
-			PhoneNumber:           phoneNumber,
-			Gender:                gender,
-			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
-			Address:               address,
-			ProofOfIdentification: proofOfIdentification,
-			IdSerial:              idSerial,
+			FirstName:             sub.FirstName,
+			LastName:              sub.LastName,
+			Email:                 sub.Email,
+			PhoneNumber:           sub.PhoneNumber,
+			Gender:                sub.Gender,
+			Dob:                   sub.DOB,
+			NetworkId:             networkId.String(),
+			Address:               sub.Address,
+			ProofOfIdentification: sub.ProofOfIdentification,
+			IdSerial:              sub.IdSerial,
 		})
 		assert.NoError(t, err)
 
@@ -93,39 +89,46 @@ func TestAdd(t *testing.T) {
 		simManagerService := &mocks.SimManagerClientProvider{}
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
-		orgId := "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+		networkId := uuid.NewV4()
 
-		firstName := "John"
-		lastName := "Doe"
-		email := "johndoe@example.com"
-		phoneNumber := "1234567890"
-		gender := "Male"
-		address := "1 Main St"
-		proofOfIdentification := "Passport"
-		idSerial := "123456789"
+		sub := &db.Subscriber{
+			FirstName:             "John",
+			LastName:              "Doe",
+			Email:                 "johndoe@example.com",
+			PhoneNumber:           "1234567890",
+			Gender:                "Male",
+			Address:               "1 Main St",
+			ProofOfIdentification: "Passport",
+			IdSerial:              "123456789",
+			NetworkId:             networkId,
+			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
+		}
 
-		orgClient.On("Get", OrgName).Return(
-			&cnucl.OrgInfo{
-				Id:            orgId,
-				Name:          OrgName,
-				IsDeactivated: false,
-			}, nil).Once()
-		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
+		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, orgId, orgClient, networkClient)
-		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			FirstName:             firstName,
-			NetworkId:             "",
-			LastName:              lastName,
-			Email:                 email,
-			PhoneNumber:           phoneNumber,
-			Gender:                gender,
-			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
-			Address:               address,
-			ProofOfIdentification: proofOfIdentification,
-			IdSerial:              idSerial,
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
+
+		networkClient.On("GetDefault", mock.Anything).Return(
+			&creg.NetworkInfo{
+				Id: networkId.String(),
+			}, nil).Once()
+
+		res, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
+			FirstName:             sub.FirstName,
+			LastName:              sub.LastName,
+			Email:                 sub.Email,
+			PhoneNumber:           sub.PhoneNumber,
+			Gender:                sub.Gender,
+			Dob:                   sub.DOB,
+			Address:               sub.Address,
+			ProofOfIdentification: sub.ProofOfIdentification,
+			IdSerial:              sub.IdSerial,
 		})
+
+		log.Info("res", res)
+
 		assert.NoError(t, err)
 	})
 }
@@ -140,7 +143,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo.On("Get", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId.String()})
 
@@ -155,7 +158,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId})
 
@@ -174,7 +177,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId.String()})
 
@@ -189,7 +192,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, orgId, nil, networkClient)
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId})
 
