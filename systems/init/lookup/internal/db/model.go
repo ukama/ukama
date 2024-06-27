@@ -23,14 +23,12 @@ type Node struct {
 
 type Org struct {
 	gorm.Model
-	Name             string    `gorm:"uniqueIndex"`
-	OrgId            uuid.UUID `gorm:"type:uuid;uniqueIndex:org_id_unique_index,where:deleted_at is null;not null;column_name:org_org_id;"`
-	Certificate      string
-	Ip               pgtype.Inet `gorm:"type:inet"`
-	AuthURL          string
-	SubscriberBffURL string
-	Nodes            []Node
-	Systems          []System
+	Name        string    `gorm:"uniqueIndex"`
+	OrgId       uuid.UUID `gorm:"type:uuid;uniqueIndex:org_id_unique_index,where:deleted_at is null;not null;column_name:org_org_id;"`
+	Certificate string
+	Ip          pgtype.Inet `gorm:"type:inet"`
+	Nodes       []Node
+	Systems     []System
 }
 
 type System struct {

@@ -87,12 +87,10 @@ func Test_orgRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		org := int_db.Org{
-			Name:             "ukama",
-			Certificate:      "ukama_certs",
-			Ip:               dIp,
-			OrgId:            uuid.NewV4(),
-			AuthURL:          "http://localhost:8080",
-			SubscriberBffURL: "http://localhost:8081",
+			Name:        "ukama",
+			Certificate: "ukama_certs",
+			Ip:          dIp,
+			OrgId:       uuid.NewV4(),
 		}
 
 		var db *extsql.DB
@@ -103,7 +101,7 @@ func Test_orgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.OrgId, org.Certificate, org.Ip, org.AuthURL, org.SubscriberBffURL).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.OrgId, org.Certificate, org.Ip).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

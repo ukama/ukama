@@ -72,12 +72,10 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 	}
 
 	org := &db.Org{
-		Name:             req.GetOrgName(),
-		Certificate:      req.GetCertificate(),
-		OrgId:            id,
-		Ip:               orgIp,
-		AuthURL:          req.GetAuthUrl(),
-		SubscriberBffURL: req.GetSubscriberBffUrl(),
+		Name:        req.GetOrgName(),
+		Certificate: req.GetCertificate(),
+		OrgId:       id,
+		Ip:          orgIp,
 	}
 
 	err = l.orgRepo.Add(org)
@@ -97,12 +95,10 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 	}
 
 	return &pb.AddOrgResponse{
-		OrgName:          dbOrg.Name,
-		Certificate:      dbOrg.Certificate,
-		Ip:               dbOrg.Ip.IPNet.String(),
-		OrgId:            dbOrg.OrgId.String(),
-		AuthUrl:          dbOrg.AuthURL,
-		SubscriberBffUrl: dbOrg.SubscriberBffURL,
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
+		OrgId:       dbOrg.OrgId.String(),
 	}, nil
 }
 
@@ -110,10 +106,8 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 	logrus.Infof("Updating Organization %s", req.OrgName)
 	req.GetIp()
 	org := &db.Org{
-		Name:             req.GetOrgName(),
-		Certificate:      req.GetCertificate(),
-		AuthURL:          req.GetAuthUrl(),
-		SubscriberBffURL: req.GetSubscriberBffUrl(),
+		Name:        req.GetOrgName(),
+		Certificate: req.GetCertificate(),
 	}
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
@@ -145,11 +139,9 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 	}
 
 	return &pb.UpdateOrgResponse{
-		OrgName:          dbOrg.Name,
-		Certificate:      dbOrg.Certificate,
-		Ip:               dbOrg.Ip.IPNet.String(),
-		AuthUrl:          dbOrg.AuthURL,
-		SubscriberBffUrl: dbOrg.SubscriberBffURL,
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
 	}, nil
 
 }
@@ -163,12 +155,10 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 	}
 
 	return &pb.GetOrgResponse{
-		
-		OrgName:          dbOrg.Name,
-		Certificate:      dbOrg.Certificate,
-		Ip:               dbOrg.Ip.IPNet.String(),
-		AuthUrl:          dbOrg.AuthURL,
-		SubscriberBffUrl: dbOrg.SubscriberBffURL,
+
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
 	}, nil
 }
 
