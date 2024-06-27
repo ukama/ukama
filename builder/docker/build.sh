@@ -6,6 +6,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 REPO_DIR=/workspace/ukama
+PLATFORM_DIR=${REPO_DIR}/nodes/ukamaOS/distro/platform
 VENDOR_DIR=${REPO_DIR}/nodes/ukamaOS/distro/vendor
 VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
 VENDOR_LIBRARIES=
@@ -116,6 +117,9 @@ wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
 cd ${VENDOR_DIR} && build_libraries
 
 # Build the builder
+export LD_LIBRARY_PATH=${VENDOR_DIR}/build/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${VENDOR_DIR}/build/lib64:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${PLATFORM_DIR}/build:${LD_LIBRARY_PATH}
 cd ${REPO_DIR}/builder && make
 
 # Build the nodes
