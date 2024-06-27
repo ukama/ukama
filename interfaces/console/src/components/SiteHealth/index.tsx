@@ -125,4 +125,6 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
   },
 );
 
+SiteOverallHealth.displayName = 'SiteOverallHealth';
+
 export default SiteOverallHealth;

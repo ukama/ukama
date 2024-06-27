@@ -9,9 +9,16 @@
 import { Link, Site } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import Leaflet, { LatLngLiteral, LatLngTuple, Layer, Polyline } from 'leaflet';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import SitePopup from '../SitePopup';
+
 interface ICustomMarker {
   data: Site[];
   layer: string;
@@ -52,11 +59,6 @@ const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
       const locs: LatLngTuple[] = [];
       sites.forEach((site) => {
         if (site.id === siteA ?? site.id === siteB) {
-          // const l: LatLngTuple = [
-          //   parseFloat(site.location.lat),
-          //   parseFloat(site.location.lng),
-          // ];
-          // if (!locs.toString().includes(l.toString()))
           locs.push([
             parseFloat(site.location.lat),
             parseFloat(site.location.lng),
@@ -102,7 +104,13 @@ const CustomMarker = ({
   const [markers, setMarkers] = useState<IMarker[]>([]);
   const [polylines, setPolylines] = useState<Polyline[]>();
 
+  const memoizedHandleLinkClick = useCallback(handleLinkClick, [
+    handleLinkClick,
+  ]);
+
   useEffect(() => {
+    if (!map) return;
+
     map.setMaxBounds([
       [84.67351256610522, -174.0234375],
       [-58.995311187950925, 223.2421875],
@@ -112,11 +120,6 @@ const CustomMarker = ({
       layer === 'satellite'
         ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png'
         : 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      // "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"//dark
-      // 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', //Terain
-      // 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', //Satellite
-      // 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', //Hybrid
-      // 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         noWrap: true,
@@ -125,13 +128,15 @@ const CustomMarker = ({
         maxNativeZoom: 20,
       },
     ).addTo(map);
-  }, [layer]);
+  }, [layer, map]);
 
   useEffect(() => {
     if (center) map.setView(center, zoom);
-  }, [center]);
+  }, [center, map, zoom]);
 
   useEffect(() => {
+    if (!map) return;
+
     polylines?.forEach((p) => p.removeFrom(map));
     const layers: any = [];
     const latlngs = getLatLng(data, links);
@@ -145,9 +150,8 @@ const CustomMarker = ({
           interactive: true,
         })
         .addEventListener('click', (e) => {
-          handleLinkClick(e.target.options.attribution);
+          memoizedHandleLinkClick(e.target.options.attribution);
         })
-        .addEventListener('', (e) => {})
         .addTo(map);
       layers.push(p);
     });
@@ -176,7 +180,7 @@ const CustomMarker = ({
         );
     });
     setMarkers(m);
-  }, [data]);
+  }, [data, links, map, memoizedHandleLinkClick]);
 
   useEffect(() => {
     polylines?.forEach((p) =>
@@ -190,16 +194,15 @@ const CustomMarker = ({
         p.setStyle({ color: colors.secondaryMain, weight: 3 });
       }
     }
-  }, [selectedLink]);
+  }, [selectedLink, polylines]);
 
   useEffect(() => {
     if (coverageLoading) map.closePopup();
-  }, [coverageLoading]);
+  }, [coverageLoading, map]);
 
   useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng;
-      //  const id = uuidv4()
       const id = '';
       handleAddMarker({ lat, lng }, id);
       Leaflet.tooltip().openTooltip();

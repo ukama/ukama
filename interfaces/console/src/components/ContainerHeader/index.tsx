@@ -49,7 +49,7 @@ const ContainerHeader = ({
 
   useEffect(() => {
     handleSearchChange(currentSearchValue.toLowerCase());
-  }, [currentSearchValue]);
+  }, [currentSearchValue, handleSearchChange]);
 
   return (
     <Grid

@@ -134,7 +134,7 @@ const DataTableWithOptions = ({
     if (networkList && networkList.length > 0) {
       setSelectedNetwork(networkList[0].name);
     }
-  }, []);
+  }, [networkList]);
 
   return (
     <Box
