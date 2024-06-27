@@ -122,7 +122,12 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 	/* register */
 	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, commonScopes)
 
-	defer n.notify.Deregister(id)
+	defer func() {
+		if err := n.notify.Deregister(id); err != nil {
+			// Handle the error, for example, log it
+			log.Printf("Error deregistering: %v", err)
+		}
+	}()
 
 	for {
 		select {

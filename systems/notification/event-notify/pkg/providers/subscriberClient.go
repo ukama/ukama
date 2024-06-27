@@ -18,8 +18,6 @@ import (
 	spb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
-const subscriberVersion = "/v1/"
-
 type SubscriberProvider interface {
 	GetSubscriber(subscriberId string) (*spb.GetSubscriberResponse, error)
 }
@@ -30,7 +28,7 @@ type subscriberProvider struct {
 	icHost string
 }
 
-func (r *subscriberProvider) GetRestyClient(org string) (*rest.RestClient, error) {
+func (r *subscriberProvider) getRestyClient(org string) (*rest.RestClient, error) {
 	/* Add user to member db of the org */
 	url, err := ic.GetHostUrl(ic.CreateHostString(org, "subscriber"), r.icHost, &org, r.debug)
 	if err != nil {
@@ -43,9 +41,9 @@ func (r *subscriberProvider) GetRestyClient(org string) (*rest.RestClient, error
 	return rc, nil
 }
 
-func NewSubscriberProvider(icHost string, debug bool) *registryProvider {
+func NewSubscriberProvider(icHost string, debug bool) *subscriberProvider {
 
-	r := &registryProvider{
+	r := &subscriberProvider{
 		debug:  debug,
 		icHost: icHost,
 	}
@@ -53,12 +51,12 @@ func NewSubscriberProvider(icHost string, debug bool) *registryProvider {
 	return r
 }
 
-func (r *registryProvider) GetSubscriber(orgName string, subscriberId string) (*spb.GetSubscriberResponse, error) {
+func (r *subscriberProvider) GetSubscriber(orgName string, subscriberId string) (*spb.GetSubscriberResponse, error) {
 
 	var err error
 
 	/* Get Provider */
-	r.R, err = r.GetRestyClient(orgName)
+	r.R, err = r.getRestyClient(orgName)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +65,7 @@ func (r *registryProvider) GetSubscriber(orgName string, subscriberId string) (*
 
 	resp, err := r.R.C.R().
 		SetError(errStatus).
-		Get(r.R.URL.String() + subscriberVersion + "subscriber/" + subscriberId)
+		Get(r.R.URL.String() + "v1/subscriber/" + subscriberId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to subscriber at %s . Error %s", r.R.URL.String(), err.Error())

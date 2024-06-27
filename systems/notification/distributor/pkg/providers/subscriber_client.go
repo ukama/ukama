@@ -43,9 +43,9 @@ func (r *subscriberProvider) GetRestyClient(org string) (*rest.RestClient, error
 	return rc, nil
 }
 
-func NewSubscriberProvider(icHost string, debug bool) *registryProvider {
+func NewSubscriberProvider(icHost string, debug bool) *subscriberProvider {
 
-	r := &registryProvider{
+	r := &subscriberProvider{
 		debug:  debug,
 		icHost: icHost,
 	}
@@ -53,7 +53,7 @@ func NewSubscriberProvider(icHost string, debug bool) *registryProvider {
 	return r
 }
 
-func (r *registryProvider) GetSubscriber(orgName string, subscriberId string) (*spb.GetSubscriberResponse, error) {
+func (r *subscriberProvider) GetSubscriber(orgName string, subscriberId string) (*spb.GetSubscriberResponse, error) {
 
 	var err error
 

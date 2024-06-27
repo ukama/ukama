@@ -43,15 +43,6 @@ var notification = db.Notification{
 	UpdatedAt:   time.Now(),
 }
 
-var un = db.UserNotification{
-	Id:             uuid.NewV4(),
-	NotificationId: uuid.NewV4(),
-	UserId:         testUserId,
-	IsRead:         false,
-	CreatedAt:      time.Now(),
-	UpdatedAt:      time.Now(),
-}
-
 var ns = db.Notifications{
 	Id:          uuid.NewV4(),
 	Title:       "Title1",

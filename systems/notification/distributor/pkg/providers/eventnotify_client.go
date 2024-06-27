@@ -9,9 +9,7 @@
 package providers
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
@@ -37,12 +35,9 @@ func (o *eventNotifyClientProvider) GetClient() (pb.EventToNotifyServiceClient, 
 	if o.eventNotifyService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
 		log.Infoln("Connecting to event-notify service ", o.eventNotifyHost)
 
-		conn, err := grpc.DialContext(ctx, o.eventNotifyHost, grpc.WithBlock(),
+		conn, err := grpc.NewClient(o.eventNotifyHost,
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Errorf("Failed to connect to event-notify service %s. Error: %v", o.eventNotifyHost, err)

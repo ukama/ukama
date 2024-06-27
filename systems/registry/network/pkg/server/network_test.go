@@ -127,7 +127,6 @@ func TestNetworkServer_GetDefault(t *testing.T) {
 		netRepo.AssertExpectations(t)
 	})
 	t.Run("No default network", func(t *testing.T) {
-		const netName = "network-1"
 
 		netRepo := &mocks.NetRepo{}
 		msgcRepo := &cmocks.MsgBusServiceClient{}
