@@ -62,6 +62,22 @@ build_libraries() {
     done
 }
 
+create_ukama_build_file() {
+
+    local original_file="ukama.json"
+    local new_file="ukama_build.json"
+
+    # Use sed to replace everything up to the last directory with /workspace
+    sed -E 's|/[^/]+(/[^/]+)*|/workspace|g' "$original_file" > "$new_file"
+
+    if [[ -f "$new_file" ]]; then
+        echo "New file created: $new_file"
+    else
+        echo "Failed to create the new file."
+        return 1
+    fi
+}
+
 #default branch is main
 BRANCH=${1:-main}
 
@@ -123,7 +139,9 @@ export LD_LIBRARY_PATH=${PLATFORM_DIR}/build:${LD_LIBRARY_PATH}
 cd ${REPO_DIR}/builder && make
 
 # Build the nodes
-./builder nodes build --config-file ./ukama.json
+create_ukama_build_file
+./builder nodes build --config-file ./ukama_build.json
+rm ./ukama_build.json
 
 # copy the created init, kernel and img file
 cp ${REPO_DIR}/builder/script/vmlinuz* ${REPO_DIR}/..
