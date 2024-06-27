@@ -11,6 +11,7 @@ VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
 VENDOR_LIBRARIES=
 
 set -e
+BRANCH=$1
 
 is_empty() {
     # Check if the directory contains anything other than .git
@@ -61,11 +62,16 @@ build_libraries() {
     done
 }
 
+#default branch is main
+BRANCH=${1:-main}
+
 # clone Ukama code and update the submodule
 git clone https://github.com/ukama/ukama
 cd ukama
-git fetch
-git checkout build-update
+if [ "$BRANCH" != "main" ]; then
+    git fetch
+    git checkout "$BRANCH"
+fi
 git submodule init
 git submodule update
 

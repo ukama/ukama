@@ -7,6 +7,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 CWD=`pwd`
+BRANCH=$1
 
 # Build docker image using local Dockerfile
 docker image rm --force builder
@@ -14,7 +15,7 @@ docker build -t builder .
 
 # Run the docker
 docker run -v ${CWD}:/workspace builder \
-       /bin/bash -c "/workspace/build.sh > /workspace/build.log 2>&1"
+       /bin/bash -c "/workspace/build.sh ${BRANCH} > /workspace/build.log 2>&1"
 
 # clean up
 docker image rm --force builder:latest
