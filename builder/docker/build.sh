@@ -138,7 +138,8 @@ export LD_LIBRARY_PATH=${VENDOR_DIR}/build/lib64:${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=${PLATFORM_DIR}/build:${LD_LIBRARY_PATH}
 cd ${REPO_DIR}/builder && make
 
-# Build the nodes
+# Build the node(s)
+export DOCKER_BUILD=true
 create_ukama_build_file
 ./builder nodes build --config-file ./ukama_build.json
 rm ./ukama_build.json
