@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     gperf \
     gtk-doc-tools \
     libev-dev \
+    bison \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
