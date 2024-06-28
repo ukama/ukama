@@ -68,7 +68,8 @@ create_ukama_build_file() {
     local new_file="ukama_build.json"
 
     # Use sed to replace everything up to the last directory with /workspace
-    sed -E 's|/[^/]+(/[^/]+)*|/workspace|g' "$original_file" > "$new_file"
+    sed -E '/"setup": \{/,/\}/ s|("/)[^/]+(/[^/"]*")|"/workspace"|g' \
+        "$original_file" > "$new_file"
 
     if [[ -f "$new_file" ]]; then
         echo "New file created: $new_file"
