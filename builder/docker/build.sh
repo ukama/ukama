@@ -82,14 +82,16 @@ create_ukama_build_file() {
 BRANCH=${1:-main}
 
 # clone Ukama code and update the submodule
-git clone https://github.com/ukama/ukama
-cd ukama
-if [ "$BRANCH" != "main" ]; then
-    git fetch
-    git checkout "$BRANCH"
+if [ ! -d "ukama" ]; then
+    git clone https://github.com/ukama/ukama
+    cd ukama
+    if [ "$BRANCH" != "main" ]; then
+        git fetch
+        git checkout "$BRANCH"
+    fi
+    git submodule init
+    git submodule update
 fi
-git submodule init
-git submodule update
 
 if [ ! -d "$VENDOR_DIR" ]; then
     echo "The specified directory does not exist: ${VENDOR_DIR}"
