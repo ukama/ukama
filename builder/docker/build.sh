@@ -67,9 +67,11 @@ create_ukama_build_file() {
     local original_file="ukama.json"
     local new_file="ukama_build.json"
 
-    # Use sed to replace everything up to the last directory with /workspace
-    sed -E '/"setup": \{/,/\}/ s|("/)[^/]+(/[^/"]*")|"/workspace"|g' \
-        "$original_file" > "$new_file"
+    # Use jq to replace paths under the setup section
+    jq '
+        .setup["ukama-repo"] = "/workspace" |
+        .setup["auth-repo"] = "/workspace"
+    ' "$original_file" > "$new_file"
 
     if [[ -f "$new_file" ]]; then
         echo "New file created: $new_file"
