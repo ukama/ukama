@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     gtk-doc-tools \
     libev-dev \
     bison \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
