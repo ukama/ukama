@@ -36,7 +36,7 @@ const MapLayer = ({ data }: IMapLayer) => {
         attribution: '&copy; <a href="https://www.mapbox.com">Mapbox</a> ',
       },
     ).addTo(map);
-  }, []);
+  }, [map]);
 
   useEffect(() => {
     if (data && data.nodes.length > 0) {

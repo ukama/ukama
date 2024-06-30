@@ -5,7 +5,41 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
+export const Dummysites = [
+  {
+    siteId: 'site1',
+    name: 'Site very long name #1',
+    address: '1000 Nelson Way',
+    users: 2,
+    status: {
+      online: true,
+      charging: true,
+      signal: 'Good',
+    },
+  },
+  {
+    siteId: 'site2',
+    name: 'Site very long name #2',
+    address: '2000 Nelson Way',
+    users: 3,
+    status: {
+      online: false,
+      charging: true,
+      signal: 'Poor',
+    },
+  },
+  {
+    siteId: 'site3',
+    name: 'Site very long name #3',
+    address: '3000 Nelson Way',
+    users: 1,
+    status: {
+      online: true,
+      charging: false,
+      signal: 'Good',
+    },
+  },
+];
 export const NodeApps = [
   {
     id: 1,

@@ -5,10 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
-import { Box, Grid, Paper, Stack, Typography } from '@mui/material';
-import React from 'react';
-import { SiteHealth } from '../../../public/svg';
+import React, { useState } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
+import { SiteHealth } from '@/../public/svg';
+import colors from '@/theme/colors';
 
 interface BatteryInfo {
   label: string;
@@ -35,47 +35,64 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
     batteryHealth,
     backhaulHealth,
   }) => {
-    const renderBatteryInfo = React.useCallback((batteryInfo: BatteryInfo) => {
-      const { label, value } = batteryInfo;
-      return (
-        <Box
-          display="flex"
-          component={Grid}
-          flexDirection="row"
-          alignItems="center"
-          spacing={5}
-        >
-          <Typography variant="body1" color="initial">
-            {label}:
-          </Typography>
-          <Typography variant="body1" color="initial">
-            {value}
-          </Typography>
-        </Box>
-      );
-    }, []);
+    const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
 
-    const batteryCharge = React.useMemo(
-      () => `${batteryInfo[2].value} %`,
-      [batteryInfo],
-    );
-    const batteryVoltage = React.useMemo(
-      () => `${batteryInfo[0].value} V`,
-      [batteryInfo],
-    );
-    const batteryCurrent = React.useMemo(
-      () => `${batteryInfo[1].value} A`,
-      [batteryInfo],
-    );
-    const batteryPower = React.useMemo(
-      () => `${batteryInfo[3].value} W`,
-      [batteryInfo],
-    );
+    const handleNodeClick = () => {
+      setSelectedKpi('Node');
+    };
+
+    const handleSolarClick = () => {
+      setSelectedKpi('Solar');
+    };
+
+    const handleSwitchClick = () => {
+      setSelectedKpi('Switch');
+    };
+
+    const handleControllerClick = () => {
+      setSelectedKpi('Controller');
+    };
+
+    const handleBatteryClick = () => {
+      setSelectedKpi('Battery');
+    };
+
+    const handleBackhaulClick = () => {
+      setSelectedKpi('Backhaul');
+    };
+
+    const renderKpiInfo = () => {
+      switch (selectedKpi) {
+        case 'Node':
+          return 'Nodes';
+        case 'Solar':
+          return 'Solar panels KPIs';
+        case 'Switch':
+          return 'Switch overview';
+        case 'Controller':
+          return 'Charge controller overview';
+        case 'Battery':
+          return 'Batteries KPIs';
+        case 'Backhaul':
+          return 'Backhaul overview';
+        default:
+          return 'Please select a KPI to view information';
+      }
+    };
 
     return (
-      <Box>
+      <>
         <Grid container spacing={2}>
-          <Grid item xs={8}>
+          <Grid item xs={12}>
+            <Typography
+              variant="body1"
+              color="initial"
+              sx={{ fontWeight: 'bold' }}
+            >
+              Site components
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
             <SiteHealth
               solarHealth={solarHealth}
               nodeHealth={nodeHealth}
@@ -83,48 +100,31 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
               controllerHealth={controllerHealth}
               batteryHealth={batteryHealth}
               backhaulHealth={backhaulHealth}
+              onNodeClick={handleNodeClick}
+              onSolarClick={handleSolarClick}
+              onSwitchClick={handleSwitchClick}
+              onControllerClick={handleControllerClick}
+              onBatteryClick={handleBatteryClick}
+              onBackhaulClick={handleBackhaulClick}
             />
           </Grid>
-          <Grid item xs={4}>
-            <Stack direction={'column'} spacing={2}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="column" spacing={1} sx={{ p: 1 }}>
-                  <Typography variant="h6" color="initial">
-                    Battery information
-                  </Typography>
-                  {batteryInfo.map(renderBatteryInfo)}
-                </Stack>
-              </Paper>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="column" spacing={1} sx={{ p: 1 }}>
-                  <Typography variant="h6" color="initial">
-                    Battery information
-                  </Typography>
-                  {renderBatteryInfo({
-                    label: 'Charge',
-                    value: batteryCharge,
-                  })}
-                  {renderBatteryInfo({
-                    label: 'Voltage',
-                    value: batteryVoltage,
-                  })}
-                  {renderBatteryInfo({
-                    label: 'Current',
-                    value: batteryCurrent,
-                  })}
-                  {renderBatteryInfo({
-                    label: 'Power',
-                    value: batteryPower,
-                  })}
-                </Stack>
-              </Paper>
-            </Stack>
+          <Grid item xs={6}>
+            <Box sx={{ border: `1px solid ${colors.black40}`, p: 2 }}>
+              <Typography
+                variant="body1"
+                color="initial"
+                sx={{ fontWeight: 'bold' }}
+              >
+                {renderKpiInfo()}{' '}
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
-      </Box>
+      </>
     );
   },
 );
 
-export default SiteOverallHealth;
 SiteOverallHealth.displayName = 'SiteOverallHealth';
+
+export default SiteOverallHealth;
