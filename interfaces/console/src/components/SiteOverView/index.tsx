@@ -138,7 +138,7 @@ const SiteOverView: React.FC<SiteOverViewProps> = ({
         </Paper>
       </Grid>
       <Grid item xs={6}>
-        <Paper sx={{ p: 2, height: '230px' }}>
+        <Paper sx={{ p: 2, height: '200px' }}>
           <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 2 }}>
             Site overview
           </Typography>

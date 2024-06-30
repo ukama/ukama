@@ -128,7 +128,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          <Box display="flex" alignItems="center" mr={5}>
+          <Box display="flex" alignItems="center" mr={13}>
             <PeopleIcon />
             <Typography variant="body2" ml={0.5}>
               {users}
