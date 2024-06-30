@@ -43,9 +43,15 @@ BOOTSTRAP_PORT=0
 
 # Step 0: make sure have all the right packages
 apt-get update
-apt-get install -y qemu-kvm qemu virt-manager virt-viewer libvirt-daemon-system \
-      libvirt-clients bridge-utils debootstrap \
-      extlinux kpartx
+apt-get install -y qemu-system \
+        virt-manager \
+        virt-viewer \
+        libvirt-daemon-system \
+        libvirt-clients \
+        bridge-utils \
+        debootstrap \
+        extlinux \
+        kpartx
 
 # Step 1: Download Ubuntu ISO
 echo "Downloading Ubuntu 22.04 (jammy) ISO..."

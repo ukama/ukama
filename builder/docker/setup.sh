@@ -9,6 +9,8 @@
 CWD=`pwd`
 BRANCH=$1
 
+set -e
+
 # Build docker image using local Dockerfile
 docker image rm --force builder
 docker build -t builder .

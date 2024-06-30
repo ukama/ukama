@@ -25,7 +25,18 @@ RUN apt-get update && apt-get install -y \
     gtk-doc-tools \
     libev-dev \
     bison \
-    jq \
+    jq
+
+RUN apt-get update && apt-get install -y \
+    qemu-system \
+    virt-manager \
+    virt-viewer \
+    libvirt-daemon-system \
+    libvirt-clients \
+    bridge-utils \
+    debootstrap \
+    extlinux \
+    kpartx \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
