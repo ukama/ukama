@@ -15,7 +15,7 @@ import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import colors from '@/theme/colors';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 interface SiteCardProps {
   siteId: string;
@@ -63,7 +63,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
     setAnchorEl(null);
   };
   const navigateToDetails = () => {
-    router.push(`/sites/${siteId}`);
+    router.push(`/console/sites/${siteId}`);
   };
   return (
     <Card
@@ -87,7 +87,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
           <Box mb={isSmallScreen ? 2 : 0}>
             <Typography variant="h6">
               <a
-                href={`/sites/${siteId}`} // Replace with actual link URL
+                href={`/console/sites/${siteId}`} // Replace with actual link URL
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 {name}
@@ -121,7 +121,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          <Box display="flex" alignItems="center" mr={14}>
+          <Box display="flex" alignItems="center" mr={5}>
             <PeopleIcon />
             <Typography variant="body2" ml={0.5}>
               {users}

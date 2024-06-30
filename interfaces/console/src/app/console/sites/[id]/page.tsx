@@ -8,7 +8,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
 import colors from '@/theme/colors';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteOverView from '@/components/SiteOverView';
@@ -17,9 +16,13 @@ import RestartSiteDialog from '@/components/RestartSiteDialog';
 import { Grid, Paper } from '@mui/material';
 import SiteOverallHealth from '@/components/SiteHealth';
 
-const Page: React.FC = () => {
-  const router = useRouter();
-  const { id } = router.query;
+interface SiteDetailsProps {
+  params: {
+    id: string;
+  };
+}
+const Page: React.FC<SiteDetailsProps> = ({ params }) => {
+  const { id } = params;
   const [open, setOpen] = useState(false);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
 
