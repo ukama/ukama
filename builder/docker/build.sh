@@ -69,8 +69,8 @@ create_ukama_build_file() {
 
     # Use jq to replace paths under the setup section
     jq '
-        .setup["ukama-repo"] = "/workspace" |
-        .setup["auth-repo"] = "/workspace"
+        .setup["ukama-repo"] = "/workspace/ukama" |
+        .setup["auth-repo"] = "/workspace/ukama"
     ' "$original_file" > "$new_file"
 
     if [[ -f "$new_file" ]]; then
