@@ -40,6 +40,7 @@ const colors = {
   whiteLilac: '#EBEBEC',
 
   lightPurpleGradient: 'rgba(160, 164, 255, 0.25)',
+  gray: '#f0f0f0',
   darkPurple: '#6974F8',
   darkGrayGradient: 'rgba(57,75,89,.5)',
   solitude: '#f5f6f8',

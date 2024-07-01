@@ -50,7 +50,7 @@ const MapLayer = ({ data }: IMapLayer) => {
         },
       );
     }
-  }, [data]);
+  }, [data, map]);
 
   return (
     <div>

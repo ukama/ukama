@@ -138,7 +138,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
         },
       },
     });
-  }, []);
+  });
 
   useEffect(() => {
     if (selectedTab === 4) {
@@ -150,7 +150,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
         },
       });
     }
-  }, [selectedTab]);
+  }, [selectedTab, getApps]);
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
@@ -168,7 +168,12 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
         },
       });
     }
-  }, [metricFrom]);
+  }, [
+    metricFrom,
+    nodeMetricsVariables?.data?.from,
+    getNodeMetricByTab,
+    graphType,
+  ]); // Added all missing dependencies
 
   const handleNodeSelected = (node: Node) => {
     setSelectedNode(node);
