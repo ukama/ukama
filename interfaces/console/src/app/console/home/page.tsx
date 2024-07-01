@@ -17,6 +17,10 @@ import NetworkIcon from '@mui/icons-material/Hub';
 import { Box, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
+import OnboardingCard from '@/components/OnboardingCard';
+import { useState } from 'react';
+import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
+
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -44,6 +48,23 @@ const networkLoading = false;
 const networkNodesLoading = false;
 export default function Page() {
   const { network } = useAppContext();
+  const [onboardingOpen, setOnboardingOpen] = useState(true);
+  const [openSiteConfig, setOpenSiteConfig] = useState(false);
+
+  const handleOpenSiteConfig = () => {
+    setOpenSiteConfig(true);
+  };
+
+  const handleCloseSiteConfig = () => {
+    setOpenSiteConfig(false);
+  };
+
+  const handleOnboardingClose = () => {
+    setOnboardingOpen(false);
+  };
+  const handleFormDataSubmit = (formData: any) => {
+    console.log('Form data submitted:', formData);
+  };
   // const [filterState, setFilterState] = useState<NodeStatusEnum>(
   //   NodeStatusEnum.Undefined,
   // );
@@ -190,6 +211,12 @@ export default function Page() {
             />
           )}
         </Paper>
+        <OnboardingCard open={onboardingOpen} onClose={handleOnboardingClose} />
+        <SiteConfigurationStepperDialog
+          open={openSiteConfig}
+          handleClose={handleOpenSiteConfig}
+          handleFormDataSubmit={handleFormDataSubmit}
+        />
       </Grid>
     </Grid>
   );
