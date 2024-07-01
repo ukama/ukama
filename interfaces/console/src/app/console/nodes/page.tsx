@@ -90,7 +90,7 @@ export default function Page() {
     } else if (search.length === 0) {
       setNodes({ nodes: nodesData?.getNodes.nodes ?? [] });
     }
-  }, [search]);
+  }, [search, nodesData?.getNodes.nodes]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);

@@ -180,7 +180,7 @@ const CustomMarker = ({
         );
     });
     setMarkers(m);
-  }, [data, links, map, memoizedHandleLinkClick]);
+  }, [data, links, map, memoizedHandleLinkClick, polylines]);
 
   useEffect(() => {
     polylines?.forEach((p) =>

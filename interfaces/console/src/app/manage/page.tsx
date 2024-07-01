@@ -22,7 +22,7 @@ const Page = () => {
     ) {
       router.push('/manage/members');
     }
-  }, []);
+  }, [user.role]);
   return (
     <Skeleton
       variant="rectangular"

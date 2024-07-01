@@ -127,8 +127,9 @@ const Sidebar = ({
                     Add {name}
                   </Typography>
                   <Typography variant="body2">
-                    Click to view and manage this network's {name.toLowerCase()}
-                    , including add {name.toLowerCase()}.
+                    Click to view and manage this network&apos;s{' '}
+                    {name.toLowerCase()}
+                    &#39;, including add {name.toLowerCase()}&#39;.
                   </Typography>
                 </>
               }
