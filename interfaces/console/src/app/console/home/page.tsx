@@ -6,37 +6,17 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
-import NetworkIcon from '@mui/icons-material/Hub';
-import { AlertColor, Box, Paper, Skeleton, Stack } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
-import { LabelOverlayUI, SitesTree } from '@/components/NetworkMap/OverlayUI';
 import { DataVolume, Throughput, UsersWithBG } from '@/../public/svg';
-import { MONTH_FILTER, SIM_TYPE_OPERATOR, TIME_FILTER } from '@/constants';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
-import { useAppContext } from '@/context';
+import { LabelOverlayUI, SitesTree } from '@/components/NetworkMap/OverlayUI';
 import NetworkStatus from '@/components/NetworkStatus';
-import OnboardingCard from '@/components/OnboardingCard';
-import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
-import AddSubscriberDialog from '@/components/AddSubscriber';
-import { TAddSubscriberData } from '@/types';
-import {
-  useAddSubscriberMutation,
-  useAllocateSimMutation,
-  useGetPackagesForSimLazyQuery,
-  useGetPackagesQuery,
-  useGetSimLazyQuery,
-  useGetSimpoolStatsQuery,
-  useGetSimsQuery,
-  useToggleSimStatusMutation,
-  useSetActivePackageForSimMutation,
-  useAddPackageToSimMutation,
-} from '@/client/graphql/generated';
-import TopUpData from '@/components/TopUpData';
-
+import { MONTH_FILTER, TIME_FILTER } from '@/constants';
+import { useAppContext } from '@/context';
+import NetworkIcon from '@mui/icons-material/Hub';
+import { Box, Paper, Skeleton, Stack } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import dynamic from 'next/dynamic';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -50,7 +30,6 @@ const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
     />
   ),
 });
-
 const StatusCard = dynamic(() => import('@/components/StatusCard'), {
   ssr: false,
   loading: () => (
@@ -61,323 +40,59 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
   ),
 });
 
+const networkLoading = false;
+const networkNodesLoading = false;
 export default function Page() {
-  const { network, setSnackbarMessage } = useAppContext();
-  const [isOnboardingOpen, setOnboardingOpen] = useState(true);
-  const [qrCode, setQrCode] = useState<string>('');
-  const [simId, setSimId] = useState<string>('');
-  const [onboardingStatus, setOnboardingStatus] = useState([
-    false,
-    false,
-    false,
-  ]);
-  const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
-  const [topUpDetails, setTopUpDetails] = useState<any>({
-    simId: '',
-    subscriberId: '',
-  });
-  const [isToPupData, setIsToPupData] = useState<boolean>(false);
-  const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
-  const [addSubscriberData, setAddSubscriberData] =
-    useState<TAddSubscriberData>({
-      email: '',
-      iccid: '',
-      name: '',
-      phone: '',
-      plan: '',
-      simType: 'eSim',
-      roamingStatus: false,
-    });
-  const [activeDialogs, setActiveDialogs] = useState<{
-    [key: number]: boolean;
-  }>({
-    1: false,
-    2: false,
-    3: false,
-  });
-  // useEffect(() => {
-  //   // replace these with actual conditions based on logic
-  //   if (/* condition for step 1 completion */) {
-  //     updateStepStatus(0, true);
-  //   }
-  //   if (/* condition for step 2 completion */) {
-  //     updateStepStatus(1, true);
-  //   }
-  //   if (/* condition for step 3 completion */) {
-  //     updateStepStatus(2, true);
-  //   }
-  // }, [);
+  const { network } = useAppContext();
+  // const [filterState, setFilterState] = useState<NodeStatusEnum>(
+  //   NodeStatusEnum.Undefined,
+  // );
+  // const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
+  //   fetchPolicy: 'no-cache',
+  //   variables: {
+  //     networkId: network.id,
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'home-sites-err-msg',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
-  const [activatePackageSim] = useSetActivePackageForSimMutation({
-    onCompleted: () => {
-      setSnackbarMessage({
-        id: 'package-activated-success',
-        message: 'Package activated successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-      setSubscriberSuccess(true);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'package-activated-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
+  //   client: metricsClient,
+  //   fetchPolicy: 'cache-and-network',
+  // });
 
-  const { data: packagesData, loading: packagesLoading } = useGetPackagesQuery({
-    fetchPolicy: 'cache-and-network',
-    onError: (error) =>
-      setSnackbarMessage({
-        id: 'packages',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      }),
-  });
+  // const { data: nodesLocationData, loading: nodesLocationLoading } =
+  //   useGetNodesLocationQuery({
+  //     fetchPolicy: 'cache-first',
+  //     variables: {
+  //       data: {
+  //         nodeFilterState: filterState,
+  //         networkId: network.id,
+  //       },
+  //     },
+  //   });
 
-  const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
-    useToggleSimStatusMutation({
-      onCompleted: () => {
-        setSnackbarMessage({
-          id: 'sim-activated-success',
-          message: 'Sim activated successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        getSim({
-          variables: {
-            data: {
-              simId: simId,
-            },
-          },
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'sim-activated-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-  const [addPackageToSim, { loading: addPackageToSimLoading }] =
-    useAddPackageToSimMutation({
-      onCompleted: () => {
-        setSnackbarMessage({
-          id: 'package-added-success',
-          message: 'Package added successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'package-added-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-  const handleTopUp = async (topUpplan: string, selectedSim: string) => {
-    const data = {
-      sim_id: selectedSim,
-      package_id: topUpplan,
-    };
-
-    await addPackageToSim({
-      variables: {
-        data: {
-          sim_id: selectedSim,
-          package_id: topUpplan,
-          start_date: new Date(Date.now() + 5 * 60000).toISOString(),
-        },
-      },
-    });
-    await activatePackageSim({ variables: { data } });
-  };
-  const [addSubscriber, { loading: addSubscriberLoading }] =
-    useAddSubscriberMutation({
-      onCompleted: (res) => {
-        setSnackbarMessage({
-          id: 'add-subscriber-success',
-          message: 'Subscriber added successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-
-        allocateSim({
-          variables: {
-            data: {
-              network_id: res.addSubscriber.networkId,
-              package_id: addSubscriberData.plan ?? '',
-              subscriber_id: res.addSubscriber.uuid,
-              sim_type: SIM_TYPE_OPERATOR,
-              iccid: addSubscriberData.iccid,
-              traffic_policy: 10,
-            },
-          },
-        });
-      },
-      onError: (error) =>
-        setSnackbarMessage({
-          id: 'add-subscriber-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        }),
-    });
-
-  const { data: simStatData } = useGetSimpoolStatsQuery({
-    variables: { type: SIM_TYPE_OPERATOR },
-    fetchPolicy: 'cache-and-network',
-    onError: (error) =>
-      setSnackbarMessage({
-        id: 'sims-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      }),
-  });
-
-  const handleOnboardingClose = () => setOnboardingOpen(false);
-  const updateStepStatus = (stepIndex: number, completed: boolean) => {
-    setOnboardingStatus((prevStatus) => {
-      const newStatus = [...prevStatus];
-      newStatus[stepIndex] = completed;
-      return newStatus;
-    });
-  };
-  const handleStepClick = (step: number) => {
-    console.log('Clicked step:', step);
-    setActiveDialogs({ ...activeDialogs, [step]: true });
-  };
-
-  const handleCloseDialog = (step: number) =>
-    setActiveDialogs({ ...activeDialogs, [step]: false });
-
-  const handleSiteConfig = (formData: any) =>
-    console.log('Form data submitted:', formData);
-
-  const [getSim] = useGetSimLazyQuery({
-    onCompleted: (res) => {},
-  });
-
-  const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
-    onCompleted: (res) => {
-      if (res.getPackagesForSim.packages) {
-        activatePackageSim({
-          variables: {
-            data: {
-              sim_id: res.getPackagesForSim.sim_id,
-              package_id: res.getPackagesForSim.packages[0].package_id,
-            },
-          },
-        });
-      }
-    },
-  });
-
-  const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
-    {
-      onCompleted: (res) => {
-        setSimId(res.allocateSim.id);
-        setSnackbarMessage({
-          id: 'sim-allocated-success',
-          message: 'Sim allocated successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        setQrCode(res.allocateSim.iccid);
-        getPackagesForSim({
-          variables: { data: { sim_id: res.allocateSim.id } },
-        });
-        getSim({
-          variables: { data: { simId: res.allocateSim.id } },
-        });
-      },
-      onError: (error) =>
-        setSnackbarMessage({
-          id: 'sim-allocated-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        }),
-    },
-  );
-
-  const { data: simPoolData } = useGetSimsQuery({
-    variables: { type: SIM_TYPE_OPERATOR },
-    fetchPolicy: 'network-only',
-    onError: (error) =>
-      setSnackbarMessage({
-        id: 'sims-error-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      }),
-  });
-  const handleCloseTopUp = () => {
-    setIsToPupData(false);
-  };
-
-  const handleAddSubscriber = async (values: TAddSubscriberData) => {
-    setAddSubscriberData(values);
-    await addSubscriber({
-      variables: {
-        data: {
-          email: values.email,
-          phone: values.phone,
-          first_name: values.name,
-          last_name: 'name',
-          network_id: network.id,
-        },
-      },
-    });
-  };
-
-  const renderInstallationDialog = () => (
-    <>
-      {activeDialogs[1] && (
-        <SiteConfigurationStepperDialog
-          open={activeDialogs[1]}
-          handleClose={() => handleCloseDialog(1)}
-          handleFormDataSubmit={handleSiteConfig}
-        />
-      )}
-      {activeDialogs[2] && (
-        <SiteConfigurationStepperDialog
-          open={activeDialogs[2]}
-          handleClose={() => handleCloseDialog(1)}
-          handleFormDataSubmit={handleSiteConfig}
-        />
-      )}
-      {activeDialogs[3] && (
-        <AddSubscriberDialog
-          qrCode={qrCode}
-          pkgList={packagesData?.getPackages.packages ?? []}
-          onSuccess={subscriberSuccess}
-          onClose={() => handleCloseDialog(3)}
-          onSubmit={handleAddSubscriber}
-          open={activeDialogs[3]}
-          sims={simPoolData?.getSims.sim ?? []}
-          pSimCount={simStatData?.getSimPoolStats.physical}
-          eSimCount={simStatData?.getSimPoolStats.physical}
-          submitButtonState={
-            addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
-          }
-          loading={
-            addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
-          }
-        />
-      )}
-    </>
-  );
+  // const { data: networkNodes, loading: networkNodesLoading } =
+  //   useGetNodesByNetworkQuery({
+  //     fetchPolicy: 'cache-and-network',
+  //     variables: {
+  //       networkId: network.id,
+  //     },
+  //     onError: (error) => {
+  //       setSnackbarMessage({
+  //         id: 'home-network-nodes-err-msg',
+  //         message: error.message,
+  //         type: 'error' as AlertColor,
+  //         show: true,
+  //       });
+  //     },
+  //   });
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
@@ -403,7 +118,7 @@ export default function Page() {
             Icon={UsersWithBG}
             subtitle1={`${0}`}
             options={TIME_FILTER}
-            loading={false}
+            loading={networkLoading}
             title={'Active subscribers'}
             handleSelect={(value: string) => {}}
           />
@@ -414,7 +129,7 @@ export default function Page() {
             subtitle2={`dBM`}
             subtitle1={`${0}`}
             options={TIME_FILTER}
-            loading={false}
+            loading={networkLoading}
             title={'Data Volume'}
             handleSelect={(value: string) => {}}
           />
@@ -425,16 +140,25 @@ export default function Page() {
             subtitle1={`${0}`}
             Icon={Throughput}
             options={MONTH_FILTER}
-            loading={false}
+            loading={networkLoading}
             title={'Average throughput'}
             handleSelect={(value: string) => {}}
           />
         </Stack>
       </Grid>
       <Grid xs={12}>
-        <Paper sx={{ borderRadius: '10px', height: 'calc(100vh - 332px)' }}>
+        <Paper
+          sx={{
+            borderRadius: '10px',
+            height: 'calc(100vh - 332px)',
+          }}
+        >
           {network.id ? (
-            <LoadingWrapper radius="small" width={'100%'} isLoading={false}>
+            <LoadingWrapper
+              radius="small"
+              width={'100%'}
+              isLoading={networkNodesLoading}
+            >
               <NetworkMap
                 id="network-map"
                 zoom={10}
@@ -444,7 +168,16 @@ export default function Page() {
                 {() => (
                   <>
                     <LabelOverlayUI name={network.name} />
-                    <SitesTree sites={[]} />
+                    <SitesTree
+                      sites={[]}
+                      // sites={structureNodeSiteDate(
+                      //   networkNodes?.getNodesByNetwork.nodes ?? [],
+                      // )}
+                    />
+                    {/* <SitesSelection
+                      filterState={filterState}
+                      handleFilterState={(value) => setFilterState(value)}
+                    /> */}
                   </>
                 )}
               </NetworkMap>
@@ -458,23 +191,6 @@ export default function Page() {
           )}
         </Paper>
       </Grid>
-      <OnboardingCard
-        open={isOnboardingOpen}
-        onClose={handleOnboardingClose}
-        onStepClick={handleStepClick}
-        status={onboardingStatus}
-      />
-      {renderInstallationDialog()}
-
-      <TopUpData
-        isToPup={isToPupData}
-        onCancel={handleCloseTopUp}
-        subscriberId={topUpDetails.subscriberId}
-        handleTopUp={handleTopUp}
-        loadingTopUp={packagesLoading ?? addPackageToSimLoading}
-        packages={packagesData?.getPackages.packages ?? []}
-        sims={subscriberSimList ?? []}
-      />
     </Grid>
   );
 }
