@@ -354,7 +354,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,
 		Health:      system.Health,
-		Url: 	   system.URL,
+		Url:         system.URL,
 	}, nil
 
 }

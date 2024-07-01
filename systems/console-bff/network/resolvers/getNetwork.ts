@@ -17,7 +17,7 @@ export class GetNetworkResolver {
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<NetworkDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getNetwork(networkId);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getNetwork(baseURL, networkId);
   }
 }

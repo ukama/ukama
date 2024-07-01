@@ -11,6 +11,7 @@ import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "../../user/resolver/types";
@@ -18,11 +19,12 @@ import { InitSystemAPIResDto, ValidateSessionRes } from "../resolver/types";
 import { dtoToSystenResDto } from "./mapper";
 
 class InitAPI extends RESTDataSource {
-  getSystems = async (
+  baseURL = INIT_API_GW;
+
+  getSystem = async (
     orgName: string,
     systemName: string
   ): Promise<InitSystemAPIResDto> => {
-    this.baseURL = INIT_API_GW;
     return this.get(
       `/${VERSION}/orgs/${orgName}/systems/${systemName}`,
       {}
@@ -75,8 +77,16 @@ class InitAPI extends RESTDataSource {
           : "";
 
       if (orgId && orgName) {
-        const member = await memberAPI.getMemberByUserId(userWhoami.user.uuid);
-        role = member.role as ROLE_TYPE;
+        const baseURL = await getBaseURL("member", orgName, null);
+        if (baseURL.status === 200) {
+          const member = await memberAPI.getMemberByUserId(
+            baseURL.message,
+            userWhoami.user.uuid
+          );
+          role = member.role as ROLE_TYPE;
+        } else {
+          logger.error(`Error: ${baseURL.message}`);
+        }
       }
     }
 

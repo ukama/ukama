@@ -17,7 +17,7 @@ export class AddMemberResolver {
     @Arg("data") data: AddMemberInputDto,
     @Ctx() ctx: Context
   ): Promise<MemberDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.addMember(data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.addMember(baseURL, data);
   }
 }

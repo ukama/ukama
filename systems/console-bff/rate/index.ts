@@ -8,15 +8,15 @@
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 
+import { SUB_GRAPHS } from "../common/configs";
 import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { RATE_PORT } from "./../common/configs";
 import { logger } from "./../common/logger";
 import RateAPI from "./datasource/rate_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${RATE_PORT}`);
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.rate.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
     await startStandaloneServer(server, {
@@ -28,14 +28,14 @@ const runServer = async () => {
           },
         };
       },
-      listen: { port: RATE_PORT },
+      listen: { port: SUB_GRAPHS.rate.port },
     });
 
     logger.info(
-      `🚀 Ukama Rate service running at http://localhost:${RATE_PORT}/graphql`
+      `🚀 Ukama ${SUB_GRAPHS.rate.name} service running at http://localhost:${SUB_GRAPHS.rate.port}/graphql`
     );
   } else {
-    logger.error(`Server failed to start on port ${RATE_PORT}`);
+    logger.error(`Server failed to start on port ${SUB_GRAPHS.rate.port}`);
   }
 };
 

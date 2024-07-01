@@ -18,8 +18,8 @@ export class GetSiteResolver {
     @Arg("siteId") siteId: string,
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
-    const { dataSources } = ctx;
+    const { dataSources, baseURL } = ctx;
 
-    return dataSources.dataSource.getSite(networkId, siteId);
+    return dataSources.dataSource.getSite(baseURL, networkId, siteId);
   }
 }

@@ -26,10 +26,10 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   PLAYGROUND_URL,
-  SUBSCRIPTIONS_PORT,
 } from "../common/configs";
 import { logger } from "../common/logger";
 import { storeInStorage } from "../common/storage";
+import { SUBSCRIPTIONS_PORT } from "./../common/configs/index";
 import resolvers from "./resolvers";
 
 const app = express();

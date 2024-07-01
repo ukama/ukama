@@ -18,7 +18,7 @@ export class AddSiteResolver {
     @Arg("data") data: AddSiteInputDto,
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.addSite(networkId, data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.addSite(baseURL, networkId, data);
   }
 }

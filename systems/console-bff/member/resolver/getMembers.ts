@@ -17,9 +17,9 @@ import { MemberDto, MembersResDto } from "./types";
 export class GetMembersResolver {
   @Query(() => MembersResDto)
   async getMembers(@Ctx() ctx: Context): Promise<MembersResDto> {
-    const { dataSources } = ctx;
+    const { dataSources, baseURL } = ctx;
     const members: MemberDto[] = [];
-    const res = await dataSources.dataSource.getMembers();
+    const res = await dataSources.dataSource.getMembers(baseURL);
     for (const member of res.members) {
       const user = await axios
         .get(`${NUCLEUS_API_GW}/v1/users/${member.userId}`)

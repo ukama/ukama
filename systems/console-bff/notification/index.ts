@@ -10,13 +10,13 @@ import "reflect-metadata";
 
 import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { NOTIFICATION_PORT } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import NotificationAPI from "./datasource/notification_api";
 import resolvers from "./resolvers";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${NOTIFICATION_PORT}`);
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.notification.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
     await startStandaloneServer(server, {
@@ -28,14 +28,16 @@ const runServer = async () => {
           },
         };
       },
-      listen: { port: NOTIFICATION_PORT },
+      listen: { port: SUB_GRAPHS.notification.port },
     });
 
     logger.info(
-      `🚀 Ukama Notification service running at http://localhost:${NOTIFICATION_PORT}/graphql`
+      `🚀 Ukama ${SUB_GRAPHS.notification.name} service running at http://localhost:${SUB_GRAPHS.notification.port}/graphql`
     );
   } else {
-    logger.error(`Server failed to start on port ${NOTIFICATION_PORT}`);
+    logger.error(
+      `Server failed to start on port ${SUB_GRAPHS.notification.port}`
+    );
   }
 };
 

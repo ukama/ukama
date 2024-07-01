@@ -10,13 +10,13 @@ import "reflect-metadata";
 
 import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { SIM_PORT } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import SimAPI from "./datasource/sim_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${SIM_PORT}`);
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.sim.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
     await startStandaloneServer(server, {
@@ -28,14 +28,14 @@ const runServer = async () => {
           },
         };
       },
-      listen: { port: SIM_PORT },
+      listen: { port: SUB_GRAPHS.sim.port },
     });
 
     logger.info(
-      `🚀 Ukama Sim service running at http://localhost:${SIM_PORT}/graphql`
+      `🚀 Ukama ${SUB_GRAPHS.sim.name} service running at http://localhost:${SUB_GRAPHS.sim.port}/graphql`
     );
   } else {
-    logger.error(`Server failed to start on port ${SIM_PORT}`);
+    logger.error(`Server failed to start on port ${SUB_GRAPHS.sim.port}`);
   }
 };
 

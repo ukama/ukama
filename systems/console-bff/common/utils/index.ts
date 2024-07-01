@@ -7,10 +7,11 @@
  */
 import { exec } from "child_process";
 
+import InitAPI from "../../init/datasource/init_api";
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
-import { Meta, THeaders } from "../types";
+import { Meta, ResponseObj, THeaders } from "../types";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
@@ -194,11 +195,71 @@ const killProcess = (pid: string): Promise<void> => {
   });
 };
 
+const getSystemNameByService = (service: string): string => {
+  switch (service) {
+    case "org":
+    case "user":
+      return "nucleus";
+    case "network":
+    case "member":
+    case "site":
+    case "invitation":
+    case "node":
+      return "registry";
+    case "sim":
+    case "subscriber":
+      return "subscriber";
+    case "notification":
+      return "notification";
+    case "init":
+      return "init";
+    case "billing":
+      return "billing";
+    case "planning-tool":
+      return "planning";
+    default:
+      return "";
+  }
+};
+
+const getBaseURL = async (
+  serviceName: string,
+  orgName: string,
+  redisClient: any
+): Promise<ResponseObj> => {
+  const sysName = getSystemNameByService(serviceName);
+  if (redisClient) {
+    const redisBaseURL = await redisClient.get(`${sysName}-${orgName}`);
+    if (redisBaseURL)
+      return {
+        status: 200,
+        message: redisBaseURL,
+      };
+  }
+
+  const initAPI = new InitAPI();
+  if (orgName && sysName) {
+    const intRes = await initAPI.getSystem(orgName, sysName);
+    if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
+    return {
+      status: 200,
+      message: intRes.url,
+    };
+  } else {
+    return {
+      status: 500,
+      message: "Unable to reach system",
+    };
+  }
+};
+
 export {
   findProcessNKill,
+  getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
   getStripeIdByUserId,
+  getSystemNameByService,
   getTimestampCount,
   killProcess,
   parseGatewayHeaders,
