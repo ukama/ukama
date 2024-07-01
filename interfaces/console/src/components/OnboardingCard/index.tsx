@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,21 +15,29 @@ import colors from '@/theme/colors';
 interface OnboardingCardProps {
   open: boolean;
   onClose: () => void;
-  onStepClick: (step: number) => void; // Added prop
+  onStepClick: (step: number) => void;
+  status: boolean[];
 }
 
 const OnboardingCard: React.FC<OnboardingCardProps> = ({
   open,
   onClose,
   onStepClick,
+  status,
 }) => {
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const nextIncompleteStep = status.findIndex((stepStatus) => !stepStatus);
+    setActiveStep(
+      nextIncompleteStep === -1 ? status.length : nextIncompleteStep,
+    );
+  }, [status]);
 
   const handleStepClick = (step: number) => {
-    if (!completedSteps.includes(step)) {
-      setCompletedSteps([...completedSteps, step]);
+    if (step === activeStep) {
+      onStepClick(step);
     }
-    onStepClick(step); // Call the provided callback function
   };
 
   const steps = [
@@ -81,19 +89,21 @@ const OnboardingCard: React.FC<OnboardingCardProps> = ({
       <DialogTitle sx={{ ml: 2 }}>Setup and use your network</DialogTitle>
       <DialogContent>
         <List>
-          {steps.map(({ step, title, description }) => (
+          {steps.map(({ step, title, description }, index) => (
             <ListItem
               key={step}
-              onClick={() => handleStepClick(step)}
+              onClick={() => handleStepClick(index)}
               sx={{
-                cursor: 'pointer',
+                cursor: index === activeStep ? 'pointer' : 'default',
+                opacity: index === activeStep ? 1 : 0.5,
                 '&:hover': {
-                  backgroundColor: `${colors.gray}`,
+                  backgroundColor:
+                    index === activeStep ? `${colors.gray}` : 'transparent',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
-                {completedSteps.includes(step) ? (
+                {status[index] ? (
                   <CheckCircleIcon color="success" />
                 ) : (
                   <Box

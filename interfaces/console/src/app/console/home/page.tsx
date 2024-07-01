@@ -33,7 +33,9 @@ import {
   useGetSimsQuery,
   useToggleSimStatusMutation,
   useSetActivePackageForSimMutation,
+  useAddPackageToSimMutation,
 } from '@/client/graphql/generated';
+import TopUpData from '@/components/TopUpData';
 
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
@@ -64,6 +66,17 @@ export default function Page() {
   const [isOnboardingOpen, setOnboardingOpen] = useState(true);
   const [qrCode, setQrCode] = useState<string>('');
   const [simId, setSimId] = useState<string>('');
+  const [onboardingStatus, setOnboardingStatus] = useState([
+    false,
+    false,
+    false,
+  ]);
+  const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
+  const [topUpDetails, setTopUpDetails] = useState<any>({
+    simId: '',
+    subscriberId: '',
+  });
+  const [isToPupData, setIsToPupData] = useState<boolean>(false);
   const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
   const [addSubscriberData, setAddSubscriberData] =
     useState<TAddSubscriberData>({
@@ -82,6 +95,19 @@ export default function Page() {
     2: false,
     3: false,
   });
+  // useEffect(() => {
+  //   // replace these with actual conditions based on logic
+  //   if (/* condition for step 1 completion */) {
+  //     updateStepStatus(0, true);
+  //   }
+  //   if (/* condition for step 2 completion */) {
+  //     updateStepStatus(1, true);
+  //   }
+  //   if (/* condition for step 3 completion */) {
+  //     updateStepStatus(2, true);
+  //   }
+  // }, [);
+
   const [activatePackageSim] = useSetActivePackageForSimMutation({
     onCompleted: () => {
       setSnackbarMessage({
@@ -139,7 +165,42 @@ export default function Page() {
         });
       },
     });
+  const [addPackageToSim, { loading: addPackageToSimLoading }] =
+    useAddPackageToSimMutation({
+      onCompleted: () => {
+        setSnackbarMessage({
+          id: 'package-added-success',
+          message: 'Package added successfully!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'package-added-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+  const handleTopUp = async (topUpplan: string, selectedSim: string) => {
+    const data = {
+      sim_id: selectedSim,
+      package_id: topUpplan,
+    };
 
+    await addPackageToSim({
+      variables: {
+        data: {
+          sim_id: selectedSim,
+          package_id: topUpplan,
+          start_date: new Date(Date.now() + 5 * 60000).toISOString(),
+        },
+      },
+    });
+    await activatePackageSim({ variables: { data } });
+  };
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
@@ -185,7 +246,13 @@ export default function Page() {
   });
 
   const handleOnboardingClose = () => setOnboardingOpen(false);
-
+  const updateStepStatus = (stepIndex: number, completed: boolean) => {
+    setOnboardingStatus((prevStatus) => {
+      const newStatus = [...prevStatus];
+      newStatus[stepIndex] = completed;
+      return newStatus;
+    });
+  };
   const handleStepClick = (step: number) => {
     console.log('Clicked step:', step);
     setActiveDialogs({ ...activeDialogs, [step]: true });
@@ -255,6 +322,9 @@ export default function Page() {
         show: true,
       }),
   });
+  const handleCloseTopUp = () => {
+    setIsToPupData(false);
+  };
 
   const handleAddSubscriber = async (values: TAddSubscriberData) => {
     setAddSubscriberData(values);
@@ -387,13 +457,24 @@ export default function Page() {
             />
           )}
         </Paper>
-        <OnboardingCard
-          open={isOnboardingOpen}
-          onClose={handleOnboardingClose}
-          onStepClick={handleStepClick}
-        />
-        {renderInstallationDialog()}
       </Grid>
+      <OnboardingCard
+        open={isOnboardingOpen}
+        onClose={handleOnboardingClose}
+        onStepClick={handleStepClick}
+        status={onboardingStatus}
+      />
+      {renderInstallationDialog()}
+
+      <TopUpData
+        isToPup={isToPupData}
+        onCancel={handleCloseTopUp}
+        subscriberId={topUpDetails.subscriberId}
+        handleTopUp={handleTopUp}
+        loadingTopUp={packagesLoading ?? addPackageToSimLoading}
+        packages={packagesData?.getPackages.packages ?? []}
+        sims={subscriberSimList ?? []}
+      />
     </Grid>
   );
 }
