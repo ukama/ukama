@@ -15,15 +15,21 @@ import colors from '@/theme/colors';
 interface OnboardingCardProps {
   open: boolean;
   onClose: () => void;
+  onStepClick: (step: number) => void; // Added prop
 }
 
-const OnboardingCard: React.FC<OnboardingCardProps> = ({ open, onClose }) => {
+const OnboardingCard: React.FC<OnboardingCardProps> = ({
+  open,
+  onClose,
+  onStepClick,
+}) => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const handleStepClick = (step: number) => {
     if (!completedSteps.includes(step)) {
       setCompletedSteps([...completedSteps, step]);
     }
+    onStepClick(step); // Call the provided callback function
   };
 
   const steps = [
