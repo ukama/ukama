@@ -18,7 +18,7 @@ export class UpdateNotificationResolver {
     @Arg("isRead") isRead: boolean,
     @Ctx() ctx: Context
   ): Promise<UpdateNotificationResDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.updateNotification(id, isRead);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.updateNotification(baseURL, id, isRead);
   }
 }

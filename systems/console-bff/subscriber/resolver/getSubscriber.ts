@@ -17,7 +17,7 @@ export class GetSubscriberResolver {
     @Arg("subscriberId") subscriberId: string,
     @Ctx() ctx: Context
   ): Promise<SubscriberDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getSubscriber(subscriberId);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getSubscriber(baseURL, subscriberId);
   }
 }

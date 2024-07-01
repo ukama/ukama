@@ -14,7 +14,10 @@ import { GetNodesInput, Nodes } from "./types";
 export class GetNodesResolver {
   @Query(() => Nodes)
   async getNodes(@Arg("data") data: GetNodesInput, @Ctx() context: Context) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.getNodes(data?.isFree ?? false);
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.getNodes(
+      baseURL,
+      data?.isFree ?? false
+    );
   }
 }

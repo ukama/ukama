@@ -17,7 +17,7 @@ export class GetInvitationResolver {
     @Arg("id") id: string,
     @Ctx() ctx: Context
   ): Promise<InvitationDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getInvitation(id);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getInvitation(baseURL, id);
   }
 }

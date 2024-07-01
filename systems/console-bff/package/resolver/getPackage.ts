@@ -17,7 +17,7 @@ export class GetPackageResolver {
     @Arg("packageId") packageId: string,
     @Ctx() ctx: Context
   ): Promise<PackageDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getPackage(packageId);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getPackage(baseURL, packageId);
   }
 }

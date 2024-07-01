@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import NotificationAPI from "../datasource/notification_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: NotificationAPI;
   };

@@ -17,8 +17,8 @@ export class GetNotificationResolver {
     @Arg("id") id: string,
     @Ctx() ctx: Context
   ): Promise<NotificationResDto> {
-    const { dataSources } = ctx;
+    const { dataSources, baseURL } = ctx;
 
-    return dataSources.dataSource.getNotification(id);
+    return dataSources.dataSource.getNotification(baseURL, id);
   }
 }

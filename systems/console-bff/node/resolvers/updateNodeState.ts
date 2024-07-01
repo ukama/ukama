@@ -17,8 +17,8 @@ export class UpdateNodeStateResolver {
     @Arg("data") data: UpdateNodeStateInput,
     @Ctx() context: Context
   ) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.updateNodeState({
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.updateNodeState(baseURL, {
       id: data.id,
       state: data.state,
     });

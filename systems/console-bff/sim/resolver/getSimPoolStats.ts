@@ -17,7 +17,7 @@ export class GetSimPoolStatsResolver {
     @Arg("type") type: string,
     @Ctx() ctx: Context
   ): Promise<SimPoolStatsDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getSimPoolStats(type);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getSimPoolStats(baseURL, type);
   }
 }

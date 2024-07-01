@@ -6,15 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
-import { createClient } from "redis";
 import "reflect-metadata";
 
 import { THeaders } from "../common/types";
-import {
-  findProcessNKill,
-  getBaseURL,
-  parseGatewayHeaders,
-} from "../common/utils";
+import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
 import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
@@ -25,21 +20,12 @@ const runServer = async () => {
   const isSuccess = await findProcessNKill(`${SUB_GRAPHS.user.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
-    const redisClient = createClient();
-    const connectPromise = redisClient.connect();
-    await connectPromise;
-
     await startStandaloneServer(server, {
       context: async ({ req }) => {
-        const headers: THeaders = parseGatewayHeaders(req.headers);
-        const baseURL = getBaseURL(
-          SUB_GRAPHS.user.name,
-          headers.orgName,
-          redisClient.isOpen ? redisClient : null
-        );
+        const hedares: THeaders = parseGatewayHeaders(req.headers);
         return {
-          headers: headers,
-          baseURL: baseURL,
+          headers: hedares,
+
           dataSources: {
             dataSource: new UserAPI(),
           },

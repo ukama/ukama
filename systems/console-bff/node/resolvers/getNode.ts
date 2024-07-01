@@ -14,7 +14,7 @@ import { Node, NodeInput } from "./types";
 export class GetNodeResolver {
   @Query(() => Node)
   async getNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.getNode({ id: data.id });
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.getNode(baseURL, { id: data.id });
   }
 }

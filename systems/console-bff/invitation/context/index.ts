@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import InvitationAPI from "../datasource/invitation_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: InvitationAPI;
   };

@@ -19,7 +19,7 @@ export class DeleteSimResolver {
     @Arg("data") data: DeleteSimInputDto,
     @Ctx() ctx: Context
   ): Promise<DeleteSimResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.deleteSim(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.deleteSim(baseURL, data);
   }
 }

@@ -37,7 +37,7 @@ const runServer = async () => {
       context: async ({ req }) => {
         const headers: THeaders = parseGatewayHeaders(req.headers);
         const baseURL = await getBaseURL(
-          SUB_GRAPHS.member.name,
+          SUB_GRAPHS.network.name,
           headers.orgName,
           redisClient.isOpen ? redisClient : null
         );

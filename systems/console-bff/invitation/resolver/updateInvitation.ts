@@ -17,7 +17,7 @@ export class UpdateInvitationResolver {
     @Arg("data") data: UpateInvitationInputDto,
     @Ctx() ctx: Context
   ): Promise<UpdateInvitationResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.updateInvitation(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.updateInvitation(baseURL, data);
   }
 }

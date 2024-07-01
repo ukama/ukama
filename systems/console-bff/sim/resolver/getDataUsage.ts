@@ -19,7 +19,7 @@ export class GetDataUsageResolver {
     @Arg("simId") simId: string,
     @Ctx() ctx: Context
   ): Promise<SimDataUsage> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getDataUsage(simId);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getDataUsage(baseURL, simId);
   }
 }

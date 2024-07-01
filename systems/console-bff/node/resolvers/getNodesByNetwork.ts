@@ -17,7 +17,7 @@ export class GetNodesByNetworkResolver {
     @Arg("networkId") networkId: string,
     @Ctx() context: Context
   ) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.getNodesByNetwork(networkId);
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.getNodesByNetwork(baseURL, networkId);
   }
 }
