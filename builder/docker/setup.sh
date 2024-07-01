@@ -16,7 +16,7 @@ docker image rm --force builder
 docker build -t builder .
 
 # Run the docker
-docker run -v ${CWD}:/workspace builder \
+docker run --privileged -v ${CWD}:/workspace builder \
        /bin/bash -c "/workspace/build.sh ${BRANCH} > /workspace/build.log 2>&1"
 
 # clean up
