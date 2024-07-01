@@ -18,6 +18,9 @@ import {
   Stack,
   Typography,
   styled,
+  Tooltip,
+  tooltipClasses,
+  TooltipProps,
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -45,6 +48,23 @@ const UkamaDrawer = styled(Drawer, {
     [theme.breakpoints.down('md')]: {
       paddingTop: 44,
     },
+  },
+}));
+
+const BlueTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: '#2962FF',
+    color: 'white',
+    maxWidth: 300,
+    fontSize: '14px',
+    border: '1px solid #dadde9',
+    padding: '16px',
+    borderRadius: '8px',
+  },
+  [`& .${tooltipClasses.arrow}`]: {
+    color: '#2962FF',
   },
 }));
 
@@ -99,38 +119,54 @@ const Sidebar = ({
         <Divider sx={{ mx: 2, my: 0 }} />
         <Stack direction="column" spacing={1.5} px={2} py={2}>
           {NavList.map(({ name, path, icon: Icon }) => (
-            <Link
+            <BlueTooltip
               key={path}
-              href={path}
-              prefetch={true}
-              style={{
-                borderRadius: 4,
-                textDecoration: 'none',
-                backgroundColor:
-                  pathname === path ? colors.white38 : 'transparent',
-              }}
+              title={
+                <>
+                  <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+                    Add {name}
+                  </Typography>
+                  <Typography variant="body2">
+                    Click to view and manage this network's {name.toLowerCase()}
+                    , including add {name.toLowerCase()}.
+                  </Typography>
+                </>
+              }
+              placement="right"
+              arrow
             >
-              <Stack
-                px={2}
-                py={1}
-                spacing={2}
-                direction={'row'}
-                alignItems={'flex-start'}
+              <Link
+                href={path}
+                prefetch={true}
+                style={{
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  backgroundColor:
+                    pathname === path ? colors.white38 : 'transparent',
+                }}
               >
-                <Icon
-                  sx={{
-                    color: isDarkMode ? colors.white70 : colors.vulcan100,
-                  }}
-                />
-                <Typography
-                  variant="body1"
-                  fontWeight={400}
-                  color={colors.vulcan100}
+                <Stack
+                  px={2}
+                  py={1}
+                  spacing={2}
+                  direction={'row'}
+                  alignItems={'flex-start'}
                 >
-                  {name}
-                </Typography>
-              </Stack>
-            </Link>
+                  <Icon
+                    sx={{
+                      color: isDarkMode ? colors.white70 : colors.vulcan100,
+                    }}
+                  />
+                  <Typography
+                    variant="body1"
+                    fontWeight={400}
+                    color={colors.vulcan100}
+                  >
+                    {name}
+                  </Typography>
+                </Stack>
+              </Link>
+            </BlueTooltip>
           ))}
         </Stack>
       </Stack>
