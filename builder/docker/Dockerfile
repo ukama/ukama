@@ -39,4 +39,10 @@ RUN apt-get update && apt-get install -y \
     kpartx \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && \
+    apt-get install -y \
+    fdisk \
+    util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workspace
