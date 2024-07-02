@@ -7,12 +7,12 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { GetComponentResolver } from "./getComponent";
-import { GetComponentsResolver } from "./getComponents";
+import { GetComponentByIdResolver } from "./getComponentById";
+import { GetComponentsByUserResolver } from "./getComponentsByUserId";
 
 const resolvers: NonEmptyArray<any> = [
-  GetComponentResolver,
-  GetComponentsResolver,
+  GetComponentByIdResolver,
+  GetComponentsByUserResolver,
 ];
 
 export default resolvers;

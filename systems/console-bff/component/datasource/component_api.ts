@@ -7,24 +7,31 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { INVENTORY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
+import { THeaders } from "../../common/types";
 import { ComponentDto, ComponentsResDto } from "../resolvers/types";
 import { dtoTocomponentDto, dtoTocomponentsDto } from "./mapper";
 
-class ComponentApi extends RESTDataSource {
-  baseURL = INVENTORY_API_GW;
+const COMPONENTS = "components";
 
+class ComponentApi extends RESTDataSource {
   getComponents = async (
-    userId: string,
+    headers: THeaders,
+    baseURL: string,
     category: string
   ): Promise<ComponentsResDto> => {
+    this.baseURL = baseURL;
     return this.get(
-      `/${VERSION}/components/user/${userId}?category=${category}`
+      `/${VERSION}/${COMPONENTS}/user/${headers.userId}?category=${category}`
     ).then(res => dtoTocomponentsDto(res));
   };
 
-  getComponent = async (componentId: string): Promise<ComponentDto> => {
-    return this.get(`/${VERSION}/components/${componentId}`).then(res =>
+  getComponentById = async (
+    baseURL: string,
+    componentId: string
+  ): Promise<ComponentDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${COMPONENTS}/${componentId}`).then(res =>
       dtoTocomponentDto(res)
     );
   };

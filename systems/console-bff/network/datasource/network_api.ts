@@ -57,6 +57,20 @@ class NetworkApi extends RESTDataSource {
       },
     }).then(res => dtoToNetworkDto(res));
   };
+
+  setDefaultNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<TBooleanResponse> => {
+    this.baseURL = baseURL;
+    return this.patch(`/${VERSION}/networks/${networkId}`)
+      .then(() => {
+        return { success: true };
+      })
+      .catch(() => {
+        return { success: false };
+      });
+  };
 }
 
 export default NetworkApi;

@@ -60,7 +60,9 @@ const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5055");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5056");
 const NOTIFICATION_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5057");
 export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5058");
-
+export const COMPONENT_INVENTORY_PORT = parseInt(
+  process.env.SITE_PORT ?? "5059"
+);
 export const SUB_GRAPHS = {
   org: {
     name: "org",
@@ -84,6 +86,12 @@ export const SUB_GRAPHS = {
     name: "network",
     port: NETWORK_PORT,
     url: `http://localhost:${NETWORK_PORT}`,
+    isPingedSuccess: false,
+  },
+  component: {
+    name: "component",
+    port: COMPONENT_INVENTORY_PORT,
+    url: `http://localhost:${COMPONENT_INVENTORY_PORT}`,
     isPingedSuccess: false,
   },
   subscriber: {
