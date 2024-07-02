@@ -19,7 +19,7 @@ const (
 	LABEL_NETWROK    = "network"
 	LABEL_NODE       = "node"
 	LABEL_SUBSCRIBER = "susbscriber"
-	LABEL_SITE	     = "site"
+	LABEL_SITE       = "site"
 )
 
 type Config struct {
