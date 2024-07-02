@@ -30,7 +30,7 @@ type Config struct {
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	ExporterHost      string            `default:"localhost"`
-	Org               string            `default:"8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"`
+	Org               string            `default:""`
 	IsMsgBus          bool              `default:"true"`
 	MetricConfig      []MetricConfig    `default:"{}"`
 	Metrics           *config.Metrics   `default:"{}"`

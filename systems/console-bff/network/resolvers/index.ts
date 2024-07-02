@@ -10,11 +10,13 @@ import { NonEmptyArray } from "type-graphql";
 import { AddNetworkResolver } from "./addNetwork";
 import { GetNetworkResolver } from "./getNetwork";
 import { GetNetworksResolver } from "./getNetworks";
+import { SetDefaultNetworkResolver } from "./setDefaultNetwork";
 
 const resolvers: NonEmptyArray<any> = [
   AddNetworkResolver,
   GetNetworkResolver,
   GetNetworksResolver,
+  SetDefaultNetworkResolver,
 ];
 
 export default resolvers;

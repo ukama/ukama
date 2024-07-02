@@ -23,7 +23,7 @@ class ComponentApi extends RESTDataSource {
       `Request Url: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
     );
     return this.get(
-      `/${VERSION}/user/${headers.userId}?category=${category}`
+      `/${VERSION}/components/user/${headers.userId}?category=${category}`
     ).then(res => dtoTocomponentsDto(res));
   };
 
@@ -31,7 +31,7 @@ class ComponentApi extends RESTDataSource {
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/components/${componentId}`
     );
-    return this.get(`/${VERSION}/${componentId}`).then(res =>
+    return this.get(`/${VERSION}/components/${componentId}`).then(res =>
       dtoTocomponentDto(res)
     );
   };
