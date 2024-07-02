@@ -39,7 +39,11 @@ class NetworkApi extends RESTDataSource {
     );
   };
 
-  addNetwork = async (req: AddNetworkInputDto): Promise<NetworkDto> => {
+  addNetwork = async (
+    baseURL: string,
+    req: AddNetworkInputDto
+  ): Promise<NetworkDto> => {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/networks`, {
       body: {
         allowed_countries: req.countries,
