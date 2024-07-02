@@ -19,7 +19,7 @@ export class UpdateMemberResolver {
     @Arg("data") data: UpdateMemberInputDto,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.updateMember(memberId, data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.updateMember(baseURL, memberId, data);
   }
 }

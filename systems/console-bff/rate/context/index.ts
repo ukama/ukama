@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import RateAPI from "../datasource/rate_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: RateAPI;
   };

@@ -17,7 +17,7 @@ export class DeleteSubscriberResolver {
     @Arg("subscriberId") subscriberId: string,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.deleteSubscriber(subscriberId);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.deleteSubscriber(baseURL, subscriberId);
   }
 }

@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import NodeAPI from "../dataSource/node-api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: NodeAPI;
   };

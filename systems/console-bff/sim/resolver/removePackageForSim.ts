@@ -22,7 +22,7 @@ export class RemovePackageForSimResolver {
     @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: Context
   ): Promise<RemovePackageFromSimResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.removePackageFromSim(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.removePackageFromSim(baseURL, data);
   }
 }

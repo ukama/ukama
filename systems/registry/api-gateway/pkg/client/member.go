@@ -29,11 +29,8 @@ type MemberRegistry struct {
 }
 
 func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry {
-	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

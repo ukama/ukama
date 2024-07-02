@@ -18,7 +18,7 @@ export class GetSimsResolver {
     @Arg("type") type: SIM_TYPES,
     @Ctx() ctx: Context
   ): Promise<SimsResDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getSims(type);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getSims(baseURL, type);
   }
 }

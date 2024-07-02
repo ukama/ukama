@@ -7,7 +7,7 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
 import {
   AddNodeInput,
@@ -24,31 +24,40 @@ import { parseNodeRes, parseNodesRes } from "./mapper";
 
 const NODES = "nodes";
 class NodeAPI extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
-
-  async getNode(args: NodeInput): Promise<Node> {
+  async getNode(baseURL: string, args: NodeInput): Promise<Node> {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${NODES}/${args.id}`).then(res =>
       parseNodeRes(res.node)
     );
   }
-  async getNodes(args: boolean): Promise<Nodes> {
+  async getNodes(baseURL: string, args: boolean): Promise<Nodes> {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${NODES}?free=${args}`).then(res =>
       parseNodesRes(res)
     );
   }
-  async getNodesByNetwork(networkId: string): Promise<Nodes> {
+  async getNodesByNetwork(baseURL: string, networkId: string): Promise<Nodes> {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${NODES}/networks/${networkId}`).then(res =>
       parseNodesRes(res)
     );
   }
-  async deleteNodeFromOrg(args: NodeInput): Promise<DeleteNode> {
+  async deleteNodeFromOrg(
+    baseURL: string,
+    args: NodeInput
+  ): Promise<DeleteNode> {
+    this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${NODES}/${args.id}/sites`).then(() =>
       this.delete(`${args.id}`).then(() => {
         return { id: args.id };
       })
     );
   }
-  async attachNode(args: AttachNodeInput): Promise<CBooleanResponse> {
+  async attachNode(
+    baseURL: string,
+    args: AttachNodeInput
+  ): Promise<CBooleanResponse> {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/${NODES}/${args.parentNode}/attach`, {
       body: {
         anodel: args.anodel,
@@ -56,12 +65,17 @@ class NodeAPI extends RESTDataSource {
       },
     }).then(res => (res ? { success: true } : { success: false }));
   }
-  async detachhNode(args: NodeInput): Promise<CBooleanResponse> {
+  async detachhNode(
+    baseURL: string,
+    args: NodeInput
+  ): Promise<CBooleanResponse> {
+    this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${NODES}/${args.id}/detach`).then(res =>
       res ? { success: true } : { success: false }
     );
   }
-  async addNode(args: AddNodeInput): Promise<Node> {
+  async addNode(baseURL: string, args: AddNodeInput): Promise<Node> {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/${NODES}/`, {
       body: {
         name: args.name,
@@ -70,7 +84,11 @@ class NodeAPI extends RESTDataSource {
       },
     }).then(res => parseNodeRes(res.node));
   }
-  async addNodeToSite(args: AddNodeToSiteInput): Promise<CBooleanResponse> {
+  async addNodeToSite(
+    baseURL: string,
+    args: AddNodeToSiteInput
+  ): Promise<CBooleanResponse> {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/${NODES}/${args.nodeId}/sites`, {
       body: {
         net_id: args.networkId,
@@ -78,17 +96,26 @@ class NodeAPI extends RESTDataSource {
       },
     }).then(res => (res ? { success: true } : { success: false }));
   }
-  async releaseNodeFromSite(args: NodeInput): Promise<CBooleanResponse> {
+  async releaseNodeFromSite(
+    baseURL: string,
+    args: NodeInput
+  ): Promise<CBooleanResponse> {
+    this.baseURL = baseURL;
     return await this.delete(`/${VERSION}/${NODES}/${args.id}/sites`).then(
       res => (res ? { success: true } : { success: false })
     );
   }
-  async updateNodeState(args: UpdateNodeStateInput): Promise<Node> {
+  async updateNodeState(
+    baseURL: string,
+    args: UpdateNodeStateInput
+  ): Promise<Node> {
+    this.baseURL = baseURL;
     return this.patch(
       `/${VERSION}/${NODES}/${args.id}/state/${args.state}`
     ).then(res => parseNodeRes(res));
   }
-  async updateNode(args: UpdateNodeInput): Promise<Node> {
+  async updateNode(baseURL: string, args: UpdateNodeInput): Promise<Node> {
+    this.baseURL = baseURL;
     return this.put(`/${VERSION}/${NODES}/${args.id}`, {
       body: {
         name: args.name,

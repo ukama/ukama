@@ -104,7 +104,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 
 func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
 	logrus.Infof("Updating Organization %s", req.OrgName)
-
+	req.GetIp()
 	org := &db.Org{
 		Name:        req.GetOrgName(),
 		Certificate: req.GetCertificate(),
@@ -155,9 +155,31 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 	}
 
 	return &pb.GetOrgResponse{
+
 		OrgName:     dbOrg.Name,
 		Certificate: dbOrg.Certificate,
 		Ip:          dbOrg.Ip.IPNet.String(),
+	}, nil
+}
+
+func (l *LookupServer) GetOrgs(ctx context.Context, req *pb.GetOrgsRequest) (*pb.GetOrgsResponse, error) {
+	logrus.Info("Get Organizations")
+
+	dbOrgs, err := l.orgRepo.GetAll()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+	orgs := []*pb.OrgName{}
+
+	for _, org := range dbOrgs {
+		orgs = append(orgs, &pb.OrgName{
+			Name: org.Name,
+		})
+
+	}
+
+	return &pb.GetOrgsResponse{
+		Orgs: orgs,
 	}, nil
 }
 
@@ -332,6 +354,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,
 		Health:      system.Health,
+		Url:         system.URL,
 	}, nil
 
 }
@@ -359,6 +382,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Ip:          sysIp,
 		Port:        req.Port,
 		OrgID:       org.ID,
+		URL:         req.GetUrl(),
 	}
 
 	logrus.Debugf("System details: %+v", sys)
@@ -388,6 +412,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Certificate: resp.Certificate,
 		Ip:          resp.Ip.IPNet.IP.String(),
 		Port:        resp.Port,
+		Url:         resp.URL,
 	}, nil
 }
 
@@ -443,6 +468,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		Certificate: dbSystem.Certificate,
 		Ip:          dbSystem.Ip.IPNet.IP.String(),
 		Port:        dbSystem.Port,
+		Url:         dbSystem.URL,
 	}, nil
 }
 

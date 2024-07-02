@@ -42,6 +42,36 @@ func (_m *network) AddNetwork(netName string, allowedCountries []string, allowed
 	return r0, r1
 }
 
+// GetDefault provides a mock function with given fields:
+func (_m *network) GetDefault() (*gen.GetDefaultResponse, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefault")
+	}
+
+	var r0 *gen.GetDefaultResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*gen.GetDefaultResponse, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *gen.GetDefaultResponse); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetDefaultResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNetwork provides a mock function with given fields: netID
 func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 	ret := _m.Called(netID)
@@ -95,6 +125,36 @@ func (_m *network) GetNetworks() (*gen.GetNetworksResponse, error) {
 
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SetNetworkDefault provides a mock function with given fields: netID
+func (_m *network) SetNetworkDefault(netID string) (*gen.SetDefaultResponse, error) {
+	ret := _m.Called(netID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetNetworkDefault")
+	}
+
+	var r0 *gen.SetDefaultResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.SetDefaultResponse, error)); ok {
+		return rf(netID)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.SetDefaultResponse); ok {
+		r0 = rf(netID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SetDefaultResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(netID)
 	} else {
 		r1 = ret.Error(1)
 	}

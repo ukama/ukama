@@ -86,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
-	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, cnucl.NewOrgClient(serviceConfig.RegistryHost),networkClient)
+	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, cnucl.NewOrgClient(serviceConfig.RegistryHost), networkClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterRegistryServiceServer(s, srv)

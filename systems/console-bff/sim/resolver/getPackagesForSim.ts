@@ -17,8 +17,8 @@ export class GetPackagesForSimResolver {
     @Arg("data") data: GetPackagesForSimInputDto,
     @Ctx() ctx: Context
   ): Promise<GetSimPackagesDtoAPI> {
-    const { dataSources } = ctx;
+    const { dataSources, baseURL } = ctx;
 
-    return await dataSources.dataSource.getPackagesForSim(data);
+    return await dataSources.dataSource.getPackagesForSim(baseURL, data);
   }
 }

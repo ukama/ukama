@@ -123,7 +123,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			NetworkId:    "",
 			SubscriberId: "",
 		}
-		es.n.storeUser(user)
+
+		err = es.n.storeUser(user)
+		if err != nil {
+			log.Errorf("Error storing user: %v", err)
+		}
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
 		c := evt.EventToEventConfig[evt.EventMemberDelete]
@@ -600,7 +604,10 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		dn.EventMsgID = id
 	}
 
-	es.n.storeNotification(dn)
+	err = es.n.storeNotification(dn)
+	if err != nil {
+		log.Errorf("failed to store notification: %v", err)
+	}
 
 	return dn
 }

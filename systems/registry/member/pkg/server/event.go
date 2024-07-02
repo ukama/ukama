@@ -46,10 +46,14 @@ func (p *MemberEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			return &epb.EventResponse{}, err
 		}
 		if msg.Status == uType.InvitationStatus_INVITE_ACCEPTED && p.orgName != p.masterOrgName {
-			p.m.AddMember(ctx, &pb.AddMemberRequest{
+			_, err := p.m.AddMember(ctx, &pb.AddMemberRequest{
 				UserUuid: msg.UserId,
 				Role:     uType.RoleType(msg.Role),
 			})
+			if err != nil {
+				log.Errorf("Failed to add member with error %s", err.Error())
+				return &epb.EventResponse{}, err
+			}
 		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)

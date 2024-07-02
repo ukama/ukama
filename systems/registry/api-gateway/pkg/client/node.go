@@ -29,11 +29,8 @@ type Node struct {
 }
 
 func NewNode(nodeHost string, timeout time.Duration) *Node {
-	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -94,7 +91,7 @@ func (n *Node) GetAll(free bool) (*pb.GetAllResponse, error) {
 	defer cancel()
 
 	res, err := n.client.GetAll(ctx, &pb.GetAllRequest{
-		Free:  free,
+		Free: free,
 	})
 	if err != nil {
 		return nil, err

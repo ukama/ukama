@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import PackagesAPI from "../datasource/package_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: PackagesAPI;
   };

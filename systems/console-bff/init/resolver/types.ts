@@ -27,6 +27,9 @@ export class InitSystemAPIResDto {
   ip: string;
 
   @Field()
+  url: string;
+
+  @Field()
   port: number;
 
   @Field()

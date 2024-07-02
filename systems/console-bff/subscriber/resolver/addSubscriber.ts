@@ -17,7 +17,7 @@ export class AddSubscriberResolver {
     @Arg("data") data: SubscriberInputDto,
     @Ctx() ctx: Context
   ): Promise<SubscriberDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.addSubscriber(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.addSubscriber(baseURL, data);
   }
 }

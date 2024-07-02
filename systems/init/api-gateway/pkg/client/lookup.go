@@ -26,10 +26,8 @@ type Lookup struct {
 }
 
 func Newlookup(host string, timeout time.Duration) *Lookup {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -75,6 +73,13 @@ func (l *Lookup) GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
 	defer cancel()
 
 	return l.client.GetOrg(ctx, req)
+}
+
+func (l *Lookup) GetOrgs(req *pb.GetOrgsRequest) (*pb.GetOrgsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.GetOrgs(ctx, req)
 }
 
 func (l *Lookup) AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {

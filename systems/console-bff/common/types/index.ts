@@ -99,3 +99,12 @@ export class IdResponse {
   @Field()
   uuid: string;
 }
+
+@ObjectType()
+export class ResponseObj {
+  @Field()
+  status: number;
+
+  @Field()
+  message: string;
+}

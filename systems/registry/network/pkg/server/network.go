@@ -148,6 +148,20 @@ func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	}, nil
 }
 
+func (n *NetworkServer) SetDefault(ctx context.Context, req *pb.SetDefaultRequest) (*pb.SetDefaultResponse, error) {
+	netId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	_, err = n.netRepo.SetDefault(netId, true)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	return &pb.SetDefaultResponse{}, nil
+}
+
 func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
 	nt, err := n.netRepo.GetByName(req.GetName())
 	if err != nil {
@@ -155,6 +169,17 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 	}
 
 	return &pb.GetByNameResponse{
+		Network: dbNtwkToPbNtwk(nt),
+	}, nil
+}
+
+func (n *NetworkServer) GetDefault(ctx context.Context, req *pb.GetDefaultRequest) (*pb.GetDefaultResponse, error) {
+	nt, err := n.netRepo.GetDefault()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	return &pb.GetDefaultResponse{
 		Network: dbNtwkToPbNtwk(nt),
 	}, nil
 }
@@ -218,6 +243,7 @@ func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 		PaymentLinks:     ntwk.PaymentLinks,
 		IsDeactivated:    ntwk.Deactivated,
 		SyncStatus:       ntwk.SyncStatus.String(),
+		IsDefault:        ntwk.IsDefault,
 		CreatedAt:        timestamppb.New(ntwk.CreatedAt),
 	}
 }

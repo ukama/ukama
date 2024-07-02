@@ -7,7 +7,6 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { DATA_API_GW } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
 import {
   DefaultMarkupHistoryResDto,
@@ -16,26 +15,34 @@ import {
 } from "../resolver/types";
 import { dtoToDefaultMarkupDto, dtoToDefaultMarkupHistoryDto } from "./mapper";
 
-const version = "/v1/markup";
+const VERSION = "v1";
+const MARKUP = "markup";
 
 class RateApi extends RESTDataSource {
-  baseURL = DATA_API_GW + version;
   defaultMarkup = async (
+    baseURL: string,
     req: DefaultMarkupInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${req.markup}/default`).then(() => {
+    this.baseURL = baseURL;
+    return this.post(`/${VERSION}/${MARKUP}/${req.markup}/default`).then(() => {
       return {
         success: true,
       };
     });
   };
 
-  getDefaultMarkup = async (): Promise<DefaultMarkupResDto> => {
-    return this.get(`/default`).then(res => dtoToDefaultMarkupDto(res));
+  getDefaultMarkup = async (baseURL: string): Promise<DefaultMarkupResDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${MARKUP}/default`).then(res =>
+      dtoToDefaultMarkupDto(res)
+    );
   };
 
-  getDefaultMarkupHistory = async (): Promise<DefaultMarkupHistoryResDto> => {
-    return this.get(`/default/history`).then(res =>
+  getDefaultMarkupHistory = async (
+    baseURL: string
+  ): Promise<DefaultMarkupHistoryResDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${MARKUP}/default/history`).then(res =>
       dtoToDefaultMarkupHistoryDto(res)
     );
   };

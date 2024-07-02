@@ -17,7 +17,7 @@ export class GetSitesResolver {
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<SitesResDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getSites(networkId);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getSites(baseURL, networkId);
   }
 }

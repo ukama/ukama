@@ -10,13 +10,13 @@ import "reflect-metadata";
 
 import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { INIT_PORT } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import InitAPI from "./datasource/init_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${INIT_PORT}`);
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.init.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
     await startStandaloneServer(server, {
@@ -30,14 +30,14 @@ const runServer = async () => {
           },
         };
       },
-      listen: { port: INIT_PORT },
+      listen: { port: SUB_GRAPHS.init.port },
     });
 
     logger.info(
-      `🚀 Ukama Init service running at http://localhost:${INIT_PORT}/graphql`
+      `🚀 Ukama ${SUB_GRAPHS.init.name} service running at http://localhost:${SUB_GRAPHS.init.port}/graphql`
     );
   } else {
-    logger.error(`Server failed to start on port ${INIT_PORT}`);
+    logger.error(`Server failed to start on port ${SUB_GRAPHS.init.port}`);
   }
 };
 

@@ -8,7 +8,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
 
-import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
@@ -22,24 +21,29 @@ const VERSION = "v1";
 const PACKAGES = "packages";
 
 class PackageApi extends RESTDataSource {
-  baseURL = DATA_API_GW;
-  getPackage = async (packageId: string): Promise<PackageDto> => {
+  getPackage = async (
+    baseURL: string,
+    packageId: string
+  ): Promise<PackageDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {}).then(res =>
       dtoToPackageDto(res)
     );
   };
 
-  getPackages = async (): Promise<PackagesResDto> => {
+  getPackages = async (baseURL: string): Promise<PackagesResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
       dtoToPackagesDto(res)
     );
   };
 
   addPackage = async (
+    baseURL: string,
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
-    this.logger.info(`Add pacakge request`);
+    this.baseURL = baseURL;
     const baserate = await this.get(`/${VERSION}/baserates/history`);
     return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
@@ -69,7 +73,11 @@ class PackageApi extends RESTDataSource {
     }).then(res => dtoToPackageDto(res));
   };
 
-  deletePackage = async (packageId: string): Promise<IdResponse> => {
+  deletePackage = async (
+    baseURL: string,
+    packageId: string
+  ): Promise<IdResponse> => {
+    this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`).then(() => {
       return {
         uuid: packageId,
@@ -78,9 +86,11 @@ class PackageApi extends RESTDataSource {
   };
 
   updatePackage = async (
+    baseURL: string,
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
+    this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
       body: {
         name: req.name,

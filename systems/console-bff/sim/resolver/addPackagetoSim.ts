@@ -19,7 +19,7 @@ export class AddPackageToSimResolver {
     @Arg("data") data: AddPackageToSimInputDto,
     @Ctx() ctx: Context
   ): Promise<AddPackageSimResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.addPackageToSim(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.addPackageToSim(baseURL, data);
   }
 }

@@ -17,7 +17,7 @@ export class GetSubscriberMetricsByNetworkResolver {
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<SubscriberMetricsByNetworkDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getSubMetricsByNetwork();
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getSubMetricsByNetwork(baseURL);
   }
 }

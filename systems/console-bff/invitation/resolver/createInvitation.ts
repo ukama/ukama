@@ -17,7 +17,7 @@ export class CreateInvitationResolver {
     @Arg("data") data: CreateInvitationInputDto,
     @Ctx() ctx: Context
   ): Promise<InvitationDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.sendInvitation(data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.sendInvitation(baseURL, data);
   }
 }

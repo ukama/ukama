@@ -15,8 +15,8 @@ import { InvitationDto, InvitationsResDto } from "./types";
 export class GetInVitationsByOrgResolver {
   @Query(() => InvitationsResDto)
   async getInvitationsByOrg(@Ctx() ctx: Context): Promise<InvitationsResDto> {
-    const { dataSources } = ctx;
-    const res = await dataSources.dataSource.getInvitationsByOrg();
+    const { dataSources, baseURL } = ctx;
+    const res = await dataSources.dataSource.getInvitationsByOrg(baseURL);
     const Invitations: InvitationDto[] = [];
     for (const invitation of res.invitations) {
       if (invitation.status !== INVITATION_STATUS.INVITE_ACCEPTED) {

@@ -9,7 +9,6 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
-import { SUBSCRIBER_API_GW } from "../../common/configs";
 import {
   SubscriberDto,
   SubscriberInputDto,
@@ -28,9 +27,11 @@ const VERSION = "v1";
 const SUBSCRIBER = "subscriber";
 
 class SubscriberApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW;
-
-  addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
+  addSubscriber = async (
+    baseURL: string,
+    req: SubscriberInputDto
+  ): Promise<SubscriberDto> => {
+    this.baseURL = baseURL;
     this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`);
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
       body: {
@@ -49,9 +50,11 @@ class SubscriberApi extends RESTDataSource {
   };
 
   updateSubscriber = async (
+    baseURL: string,
     subscriberId: string,
     req: UpdateSubscriberInputDto
   ): Promise<CBooleanResponse> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -63,8 +66,10 @@ class SubscriberApi extends RESTDataSource {
   };
 
   deleteSubscriber = async (
+    baseURL: string,
     subscriberId: string
   ): Promise<CBooleanResponse> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -75,7 +80,11 @@ class SubscriberApi extends RESTDataSource {
     });
   };
 
-  getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
+  getSubscriber = async (
+    baseURL: string,
+    subscriberId: string
+  ): Promise<SubscriberDto> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -84,7 +93,10 @@ class SubscriberApi extends RESTDataSource {
     );
   };
 
-  getSubMetricsByNetwork = async (): Promise<SubscriberMetricsByNetworkDto> => {
+  getSubMetricsByNetwork = async (
+    baseURL: string
+  ): Promise<SubscriberMetricsByNetworkDto> => {
+    this.baseURL = baseURL;
     return {
       total: 4,
       active: 1,
@@ -94,11 +106,12 @@ class SubscriberApi extends RESTDataSource {
   };
 
   getSubscribersByNetwork = async (
+    baseURL: string,
     networkId: string
   ): Promise<SubscribersResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
       .then(res => dtoToSubscribersResDto(res))
-
       .catch(err => {
         throw new GraphQLError(err);
       });

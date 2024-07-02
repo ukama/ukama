@@ -18,5 +18,6 @@ export const dtoToSystenResDto = (
     port: res.port,
     systemId: res.systemId,
     systemName: res.systemName,
+    url: res.url,
   };
 };

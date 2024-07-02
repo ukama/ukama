@@ -7,7 +7,7 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { NOTIFICATION_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import {
   NotificationResDto,
   UpdateNotificationResDto,
@@ -15,17 +15,21 @@ import {
 import { dtoToNotificationDto, dtoToUpdateNotificationDto } from "./mapper";
 
 class NotificationApi extends RESTDataSource {
-  baseURL = NOTIFICATION_API_GW;
-
-  getNotification = async (id: string): Promise<NotificationResDto> => {
+  getNotification = async (
+    baseURL: string,
+    id: string
+  ): Promise<NotificationResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/event-notification/${id}`).then(res =>
       dtoToNotificationDto(res)
     );
   };
   updateNotification = async (
+    baseURL: string,
     id: string,
     isRead: boolean
   ): Promise<UpdateNotificationResDto> => {
+    this.baseURL = baseURL;
     return this.post(
       `/${VERSION}/event-notification/${id}?is_read=${isRead}`
     ).then(res => dtoToUpdateNotificationDto(res));

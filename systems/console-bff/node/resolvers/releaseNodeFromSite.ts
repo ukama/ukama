@@ -18,8 +18,8 @@ export class ReleaseNodeFromSiteResolver {
     @Arg("data") data: NodeInput,
     @Ctx() context: Context
   ) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.releaseNodeFromSite({
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.releaseNodeFromSite(baseURL, {
       id: data.id,
     });
   }

@@ -25,9 +25,11 @@ type NetworkServiceClient interface {
 	// Networks
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetDefault(ctx context.Context, in *GetDefaultRequest, opts ...grpc.CallOption) (*GetDefaultResponse, error)
 	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	GetAll(ctx context.Context, in *GetNetworksRequest, opts ...grpc.CallOption) (*GetNetworksResponse, error)
+	SetDefault(ctx context.Context, in *SetDefaultRequest, opts ...grpc.CallOption) (*SetDefaultResponse, error)
 }
 
 type networkServiceClient struct {
@@ -50,6 +52,15 @@ func (c *networkServiceClient) Add(ctx context.Context, in *AddRequest, opts ...
 func (c *networkServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.registry.network.v1.NetworkService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkServiceClient) GetDefault(ctx context.Context, in *GetDefaultRequest, opts ...grpc.CallOption) (*GetDefaultResponse, error) {
+	out := new(GetDefaultResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.network.v1.NetworkService/GetDefault", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +94,15 @@ func (c *networkServiceClient) GetAll(ctx context.Context, in *GetNetworksReques
 	return out, nil
 }
 
+func (c *networkServiceClient) SetDefault(ctx context.Context, in *SetDefaultRequest, opts ...grpc.CallOption) (*SetDefaultResponse, error) {
+	out := new(SetDefaultResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.network.v1.NetworkService/SetDefault", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NetworkServiceServer is the server API for NetworkService service.
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
@@ -90,9 +110,11 @@ type NetworkServiceServer interface {
 	// Networks
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetDefault(context.Context, *GetDefaultRequest) (*GetDefaultResponse, error)
 	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	GetAll(context.Context, *GetNetworksRequest) (*GetNetworksResponse, error)
+	SetDefault(context.Context, *SetDefaultRequest) (*SetDefaultResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -106,6 +128,9 @@ func (UnimplementedNetworkServiceServer) Add(context.Context, *AddRequest) (*Add
 func (UnimplementedNetworkServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedNetworkServiceServer) GetDefault(context.Context, *GetDefaultRequest) (*GetDefaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDefault not implemented")
+}
 func (UnimplementedNetworkServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
 }
@@ -114,6 +139,9 @@ func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest)
 }
 func (UnimplementedNetworkServiceServer) GetAll(context.Context, *GetNetworksRequest) (*GetNetworksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
+}
+func (UnimplementedNetworkServiceServer) SetDefault(context.Context, *SetDefaultRequest) (*SetDefaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetDefault not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -160,6 +188,24 @@ func _NetworkService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NetworkServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkService_GetDefault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDefaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetDefault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.network.v1.NetworkService/GetDefault",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetDefault(ctx, req.(*GetDefaultRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -218,6 +264,24 @@ func _NetworkService_GetAll_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_SetDefault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetDefaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).SetDefault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.network.v1.NetworkService/SetDefault",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).SetDefault(ctx, req.(*SetDefaultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NetworkService_ServiceDesc is the grpc.ServiceDesc for NetworkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -234,6 +298,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NetworkService_Get_Handler,
 		},
 		{
+			MethodName: "GetDefault",
+			Handler:    _NetworkService_GetDefault_Handler,
+		},
+		{
 			MethodName: "GetByName",
 			Handler:    _NetworkService_GetByName_Handler,
 		},
@@ -244,6 +312,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAll",
 			Handler:    _NetworkService_GetAll_Handler,
+		},
+		{
+			MethodName: "SetDefault",
+			Handler:    _NetworkService_SetDefault_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

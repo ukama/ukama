@@ -9,9 +9,7 @@
 package client
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -39,12 +37,9 @@ func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceC
 	if u.simManagerService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
 		log.Infoln("Connecting to SimManager service ", u.simManagerHost)
 
-		conn, err := grpc.DialContext(ctx, u.simManagerHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(u.simManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Errorf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
 

@@ -20,7 +20,7 @@ export class SetActivePackageForSimResolver {
     @Arg("data") data: SetActivePackageForSimInputDto,
     @Ctx() ctx: Context
   ): Promise<SetActivePackageForSimResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.setActivePackageForSim(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.setActivePackageForSim(baseURL, data);
   }
 }

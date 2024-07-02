@@ -17,7 +17,7 @@ export class AddPackageResolver {
     @Arg("data") data: AddPackageInputDto,
     @Ctx() ctx: Context
   ): Promise<PackageDto> {
-    const { dataSources, headers } = ctx;
-    return dataSources.dataSource.addPackage(data, headers);
+    const { dataSources, headers, baseURL } = ctx;
+    return dataSources.dataSource.addPackage(baseURL, data, headers);
   }
 }

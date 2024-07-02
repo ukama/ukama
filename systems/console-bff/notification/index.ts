@@ -6,36 +6,59 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
+import { createClient } from "redis";
 import "reflect-metadata";
 
-import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
+import { THeaders } from "../common/types";
+import {
+  findProcessNKill,
+  getBaseURL,
+  parseGatewayHeaders,
+} from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { NOTIFICATION_PORT } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import NotificationAPI from "./datasource/notification_api";
 import resolvers from "./resolvers";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${NOTIFICATION_PORT}`);
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.notification.port}`);
   if (isSuccess) {
     const server = await SubGraphServer(resolvers);
+    const redisClient = createClient().on("error", error => {
+      logger.error(
+        `Error creating redis for ${SUB_GRAPHS.notification.name} service, Error: ${error}`
+      );
+    });
+    const connectPromise = redisClient.connect();
+    await connectPromise;
+
     await startStandaloneServer(server, {
       context: async ({ req }) => {
+        const headers: THeaders = parseGatewayHeaders(req.headers);
+        const baseURL = await getBaseURL(
+          SUB_GRAPHS.notification.name,
+          headers.orgName,
+          redisClient.isOpen ? redisClient : null
+        );
         return {
-          headers: parseGatewayHeaders(req.headers),
+          headers: headers,
+          baseURL: baseURL.message,
           dataSources: {
             dataSource: new NotificationAPI(),
           },
         };
       },
-      listen: { port: NOTIFICATION_PORT },
+      listen: { port: SUB_GRAPHS.notification.port },
     });
 
     logger.info(
-      `🚀 Ukama Notification service running at http://localhost:${NOTIFICATION_PORT}/graphql`
+      `🚀 Ukama ${SUB_GRAPHS.notification.name} service running at http://localhost:${SUB_GRAPHS.notification.port}/graphql`
     );
   } else {
-    logger.error(`Server failed to start on port ${NOTIFICATION_PORT}`);
+    logger.error(
+      `Server failed to start on port ${SUB_GRAPHS.notification.port}`
+    );
   }
 };
 

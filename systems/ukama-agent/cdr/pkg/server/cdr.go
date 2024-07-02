@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- package server
+package server
 
 import (
 	"context"
@@ -267,7 +267,6 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 
 /* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and rport the usage */
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
-
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
 		if !dsql.IsNotFoundError(err) {

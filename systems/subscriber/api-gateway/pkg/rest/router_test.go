@@ -20,6 +20,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -248,7 +249,7 @@ func TestRouter_Subscriber(t *testing.T) {
 		sub: client.NewRegistryFromClient(csub),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	s := &subPb.Subscriber{
+	s := &upb.Subscriber{
 		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
 		FirstName:             "John",
 		LastName:              "Doe",

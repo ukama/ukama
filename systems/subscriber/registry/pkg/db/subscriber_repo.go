@@ -15,7 +15,7 @@ import (
 )
 
 type SubscriberRepo interface {
-	Add(subscriber *Subscriber) error
+	Add(subscriber *Subscriber, nestedFunc func(*Subscriber, *gorm.DB) error) error
 	Get(subscriberId uuid.UUID) (*Subscriber, error)
 	Delete(subscriberId uuid.UUID) error
 	Update(subscriberId uuid.UUID, sub Subscriber) error
@@ -33,9 +33,24 @@ func NewSubscriberRepo(db sql.Db) SubscriberRepo {
 	}
 }
 
-func (s *subscriberRepo) Add(subscriber *Subscriber) error {
-	db := s.Db.GetGormDb()
-	return db.Create(subscriber).Error
+func (s *subscriberRepo) Add(subscriber *Subscriber, nestedFunc func(*Subscriber, *gorm.DB) error) error {
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(subscriber, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		result := tx.Create(subscriber)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 func (s *subscriberRepo) ListSubscribers() ([]Subscriber, error) {
 

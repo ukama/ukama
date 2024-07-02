@@ -17,7 +17,7 @@ export class RemoveMemberResolver {
     @Arg("id") id: string,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.removeMember(id);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.removeMember(baseURL, id);
   }
 }

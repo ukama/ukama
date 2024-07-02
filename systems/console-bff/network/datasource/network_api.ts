@@ -7,7 +7,7 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import { TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
@@ -25,9 +25,11 @@ import {
 } from "./mapper";
 
 class NetworkApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
-
-  getNetworks = async (orgId: string): Promise<NetworksResDto> => {
+  getNetworks = async (
+    baseURL: string,
+    orgId: string
+  ): Promise<NetworksResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks`, {
       params: {
         org: orgId,
@@ -35,25 +37,42 @@ class NetworkApi extends RESTDataSource {
     }).then(res => dtoToNetworksDto(res));
   };
 
-  getNetwork = async (networkId: string): Promise<NetworkDto> => {
+  getNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<NetworkDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks/${networkId}`).then(res =>
       dtoToNetworkDto(res)
     );
   };
 
-  getSites = async (networkId: string): Promise<SitesResDto> => {
+  getSites = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<SitesResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
       dtoToSitesDto(res)
     );
   };
 
-  getSite = async (siteId: string, networkId: string): Promise<SiteDto> => {
+  getSite = async (
+    baseURL: string,
+    siteId: string,
+    networkId: string
+  ): Promise<SiteDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
       res => dtoToSiteDto(res)
     );
   };
 
-  addNetwork = async (req: AddNetworkInputDto): Promise<NetworkDto> => {
+  addNetwork = async (
+    baseURL: string,
+    req: AddNetworkInputDto
+  ): Promise<NetworkDto> => {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/networks`, {
       body: {
         allowed_countries: req.countries,
@@ -69,15 +88,21 @@ class NetworkApi extends RESTDataSource {
   };
 
   addSite = async (
+    baseURL: string,
     networkId: string,
     req: AddSiteInputDto
   ): Promise<SiteDto> => {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/networks/${networkId}/sites`, {
       body: req,
     }).then(res => dtoToSiteDto(res));
   };
 
-  setDefaultNetwork = async (networkId: string): Promise<TBooleanResponse> => {
+  setDefaultNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<TBooleanResponse> => {
+    this.baseURL = baseURL;
     return this.patch(`/${VERSION}/networks/${networkId}`)
       .then(() => {
         return { success: true };

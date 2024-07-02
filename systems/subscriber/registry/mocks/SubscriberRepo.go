@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -14,17 +16,17 @@ type SubscriberRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: subscriber
-func (_m *SubscriberRepo) Add(subscriber *db.Subscriber) error {
-	ret := _m.Called(subscriber)
+// Add provides a mock function with given fields: subscriber, nestedFunc
+func (_m *SubscriberRepo) Add(subscriber *db.Subscriber, nestedFunc func(*db.Subscriber, *gorm.DB) error) error {
+	ret := _m.Called(subscriber, nestedFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Subscriber) error); ok {
-		r0 = rf(subscriber)
+	if rf, ok := ret.Get(0).(func(*db.Subscriber, func(*db.Subscriber, *gorm.DB) error) error); ok {
+		r0 = rf(subscriber, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -142,6 +142,36 @@ func (_m *NetRepo) GetByName(network string) (*db.Network, error) {
 	return r0, r1
 }
 
+// GetDefault provides a mock function with given fields:
+func (_m *NetRepo) GetDefault() (*db.Network, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefault")
+	}
+
+	var r0 *db.Network
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*db.Network, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *db.Network); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Network)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNetworkCount provides a mock function with given fields:
 func (_m *NetRepo) GetNetworkCount() (int64, error) {
 	ret := _m.Called()
@@ -163,6 +193,36 @@ func (_m *NetRepo) GetNetworkCount() (int64, error) {
 
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SetDefault provides a mock function with given fields: id, isDefault
+func (_m *NetRepo) SetDefault(id uuid.UUID, isDefault bool) (*db.Network, error) {
+	ret := _m.Called(id, isDefault)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDefault")
+	}
+
+	var r0 *db.Network
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) (*db.Network, error)); ok {
+		return rf(id, isDefault)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) *db.Network); ok {
+		r0 = rf(id, isDefault)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Network)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID, bool) error); ok {
+		r1 = rf(id, isDefault)
 	} else {
 		r1 = ret.Error(1)
 	}
