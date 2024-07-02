@@ -21,6 +21,7 @@ export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const DATA_API_GW = process.env.DATA_API_GW ?? "";
 export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 export const BILLING_API_GW = process.env.BILLING_API_GW ?? "";
+export const INVENTORY_API_GW = process.env.INVENTORY_API_GW ?? "";
 
 // FRONTEND URLS
 export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "";

@@ -17,7 +17,7 @@ export class GetComponentsByUserResolver {
     @Arg("category") category: string,
     @Ctx() ctx: Context
   ): Promise<ComponentsResDto> {
-    const { baseURL, dataSources, headers } = ctx;
-    return dataSources.dataSource.getComponents(headers, baseURL, category);
+    const { dataSources, headers } = ctx;
+    return dataSources.dataSource.getComponents(headers, category);
   }
 }

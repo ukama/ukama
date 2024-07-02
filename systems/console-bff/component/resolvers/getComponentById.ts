@@ -17,7 +17,7 @@ export class GetComponentByIdResolver {
     @Arg("componentId") componentId: string,
     @Ctx() ctx: Context
   ): Promise<ComponentDto> {
-    const { baseURL, dataSources } = ctx;
-    return dataSources.dataSource.getComponentById(baseURL, componentId);
+    const { dataSources } = ctx;
+    return dataSources.dataSource.getComponentById(componentId);
   }
 }
