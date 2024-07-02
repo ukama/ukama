@@ -137,3 +137,9 @@ export class AddNetworkInputDto {
   @Field(() => [String], { nullable: true })
   networks: string[];
 }
+
+@InputType()
+export class SetDefaultNetworkInputDto {
+  @Field()
+  id: string;
+}
