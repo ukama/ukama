@@ -30,7 +30,8 @@
     "all-dev": "concurrently \"yarn notification-dev\" \"yarn init-dev\" \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn subscriber-dev\" \"yarn sim-dev\" \"yarn package-dev\" \"yarn rate-dev\" \"yarn gateway-dev\" \"yarn invitation-dev\" \"yarn member-dev\"",
     "planning-tool-dev": "prisma generate --schema=./planning-tool/prisma/schema.prisma && nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"ts-node planning-tool/index.ts\"",
     "subscriptions-dev": "yarn clear-cache && nodemon --watch \"subscriptions/**\" --ext \"ts,json,graphql\" --exec \"ts-node subscriptions/index.ts\"",
-    "all-start": "node -p 8080 dist/org/index.js & node dist/notification/index.js & node dist/user/index.js & node dist/network/index.js & node dist/site/index.js & node dist/node/index.js & node dist/subscriber/index.js & node dist/sim/index.js & node dist/package/index.js & node dist/rate/index.js & node dist/invitation/index.js & node dist/member/index.js & node dist/gateway/index.js"
+    "all-start": "node -p 8080 dist/org/index.js & node dist/notification/index.js & node dist/user/index.js & node dist/network/index.js & node dist/site/index.js & node dist/node/index.js & node dist/subscriber/index.js & node dist/sim/index.js & node dist/package/index.js & node dist/rate/index.js & node dist/invitation/index.js & node dist/member/index.js & node dist/gateway/index.js",
+    "test": "ORG_ID=FBC2A80D-339E-4D3C-ACAA-329DD3D1B221 ORG_NAME=ukama-test-org USER_ID=3f97aafa-bfba-4540-bf8b-e915a5a0e4f5 jest"
   },
   "dependencies": {
     "@apollo/datasource-rest": "^6.1.0",
