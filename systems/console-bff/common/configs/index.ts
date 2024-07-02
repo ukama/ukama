@@ -21,6 +21,7 @@ export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const DATA_API_GW = process.env.DATA_API_GW ?? "";
 export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 export const BILLING_API_GW = process.env.BILLING_API_GW ?? "";
+export const INVENTORY_API_GW = process.env.INVENTORY_API_GW ?? "";
 
 // FRONTEND URLS
 export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "";
@@ -59,7 +60,10 @@ const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
 const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5055");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5056");
 const NOTIFICATION_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5057");
-
+export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5058");
+export const COMPONENT_INVENTORY_PORT = parseInt(
+  process.env.SITE_PORT ?? "5059"
+);
 export const SUB_GRAPHS = {
   org: {
     name: "org",
@@ -85,6 +89,12 @@ export const SUB_GRAPHS = {
     url: `http://localhost:${NETWORK_PORT}`,
     isPingedSuccess: false,
   },
+  component: {
+    name: "component",
+    port: COMPONENT_INVENTORY_PORT,
+    url: `http://localhost:${COMPONENT_INVENTORY_PORT}`,
+    isPingedSuccess: false,
+  },
   subscriber: {
     name: "subscriber",
     port: SUBSCRIBER_PORT,
@@ -95,6 +105,12 @@ export const SUB_GRAPHS = {
     name: "sim",
     port: SIM_PORT,
     url: `http://localhost:${SIM_PORT}`,
+    isPingedSuccess: false,
+  },
+  site: {
+    name: "site",
+    port: SITE_PORT,
+    url: `http://localhost:${SITE_PORT}`,
     isPingedSuccess: false,
   },
   package: {

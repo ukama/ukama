@@ -11,18 +11,10 @@ import { VERSION } from "../../common/configs";
 import { TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
-  AddSiteInputDto,
   NetworkDto,
   NetworksResDto,
-  SiteDto,
-  SitesResDto,
 } from "../resolvers/types";
-import {
-  dtoToNetworkDto,
-  dtoToNetworksDto,
-  dtoToSiteDto,
-  dtoToSitesDto,
-} from "./mapper";
+import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
 class NetworkApi extends RESTDataSource {
   getNetworks = async (
@@ -47,27 +39,6 @@ class NetworkApi extends RESTDataSource {
     );
   };
 
-  getSites = async (
-    baseURL: string,
-    networkId: string
-  ): Promise<SitesResDto> => {
-    this.baseURL = baseURL;
-    return this.get(`/${VERSION}/networks/${networkId}/sites`).then(res =>
-      dtoToSitesDto(res)
-    );
-  };
-
-  getSite = async (
-    baseURL: string,
-    siteId: string,
-    networkId: string
-  ): Promise<SiteDto> => {
-    this.baseURL = baseURL;
-    return this.get(`/${VERSION}/networks/${networkId}/sites/${siteId}`).then(
-      res => dtoToSiteDto(res)
-    );
-  };
-
   addNetwork = async (
     baseURL: string,
     req: AddNetworkInputDto
@@ -85,17 +56,6 @@ class NetworkApi extends RESTDataSource {
         traffic_policy: 0,
       },
     }).then(res => dtoToNetworkDto(res));
-  };
-
-  addSite = async (
-    baseURL: string,
-    networkId: string,
-    req: AddSiteInputDto
-  ): Promise<SiteDto> => {
-    this.baseURL = baseURL;
-    return this.post(`/${VERSION}/networks/${networkId}/sites`, {
-      body: req,
-    }).then(res => dtoToSiteDto(res));
   };
 
   setDefaultNetwork = async (

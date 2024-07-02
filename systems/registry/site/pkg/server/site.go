@@ -10,8 +10,6 @@ package server
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -89,6 +87,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
+
 	for _, componentIdStr := range []string{
 		backhaulId.String(),
 		powerId.String(),
@@ -96,7 +95,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		switchId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
-		if err := s.inventoryClient.ValidateComponent(s.orgName,componentIdStr); err != nil {
+		if err := s.inventoryClient.ValidateComponent(s.orgName, componentIdStr); err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "component")
 		}
 	}
@@ -116,6 +115,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	site := &db.Site{
 		NetworkId:     networkId,
 		Name:          req.Name,
+		Location:      req.Location,
 		BackhaulId:    backhaulId,
 		PowerId:       powerId,
 		AccessId:      accessId,
@@ -290,6 +290,7 @@ func dbSiteToPbSite(site *db.Site) *pb.Site {
 	return &pb.Site{
 		Id:            site.Id.String(),
 		Name:          site.Name,
+		Location:      site.Location,
 		NetworkId:     site.NetworkId.String(),
 		IsDeactivated: site.IsDeactivated,
 		BackhaulId:    site.BackhaulId.String(),
@@ -322,12 +323,4 @@ func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
 	if err != nil {
 		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
 	}
-}
-
-func ValidateInstallDate(dob string) (time.Time, error) {
-	t, err := time.Parse("02-01-2006", dob)
-	if err != nil {
-		return time.Time{}, errors.New("invalid date format, must be dd-mm-yyyy")
-	}
-	return t, nil
 }

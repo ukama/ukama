@@ -153,6 +153,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
 
+		auth.GET("/sites/:site/orgs/:org/metrics/:metric", []fizz.OperationOption{
+				func(info *openapi.OperationInfo) {
+					info.Description = "Get metrics for a site. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+				}}, tonic.Handler(r.siteMetricHandler, http.StatusOK))
+	
 		auth.GET("/sims/:sim/orgs/:org/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
@@ -267,6 +272,11 @@ func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput
 	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
+func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput)  error {
+	logrus.Infof("Request Site metrics: %+v", in)
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSite(in.Org, in.SiteID))
+}
+
 func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
 	return r.m.List(), nil
 }

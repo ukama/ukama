@@ -110,9 +110,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		}
 	}
 
-	return &pb.RestartSiteResponse{
-		Status: pb.RestartStatus_RESTARTED,
-	}, nil
+	return &pb.RestartSiteResponse{}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
@@ -145,9 +143,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 
 	}
-	return &pb.RestartNodeResponse{
-		Status: pb.RestartStatus_RESTARTED,
-	}, nil
+	return &pb.RestartNodeResponse{}, nil
 }
 
 func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
@@ -219,23 +215,52 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 		}
 	}
 
-	return &pb.RestartNodesResponse{
-		Status: pb.RestartStatus_RESTARTED,
-	}, nil
+	return &pb.RestartNodesResponse{}, nil
 
+}
+func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
+	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
+
+	if req.SiteId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
+	}
+	siteId, err := uuid.FromString(req.GetSiteId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
+	}
+
+	if err := c.registrySystem.ValidateSite(req.SiteId, "", c.orgName); err != nil {
+		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
+	}
+
+	msg := &pb.ToggleInternetSwitchRequest{
+		SiteId: siteId.String(),
+		Status: req.Status,
+		Port:   req.Port,
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "/v1/switch/"+fmt.Sprintf("%d/%t", req.Port, req.Status), data)
+
+	if err != nil {
+		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
+	}
+	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
 func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-
 	msg := &cpb.NodeFeederMessage{
-		Target:     target,
-		HTTPMethod: "POST",
-		Path:       path,
-		Msg:        anyMsg,
+	  Target: target,
+	  HTTPMethod: "POST",
+	  Path: path,
+	  Msg: anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
-
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
-}
+  }
+  

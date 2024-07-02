@@ -28,6 +28,11 @@ type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
+type ToggleInternetSwitchRequest struct {
+	SiteId string   `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
+	Status bool `json:"status" example:"{{Status}}" validate:"required"`
+	Port int32 `json:"port" example:"{{Port}}" validate:"required"`
+}
 
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`

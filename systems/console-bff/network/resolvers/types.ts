@@ -10,24 +10,6 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { NETWORK_STATUS } from "../../common/enums";
 
 @ObjectType()
-export class SiteAPIDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  network_id: string;
-
-  @Field()
-  is_deactivated: string;
-
-  @Field()
-  created_at: string;
-}
-
-@ObjectType()
 export class NetworkStatusDto {
   @Field()
   liveNode: number;
@@ -138,48 +120,6 @@ export class NetworksResDto {
   networks: NetworkDto[];
 }
 
-@ObjectType()
-export class SiteDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  isDeactivated: string;
-
-  @Field()
-  createdAt: string;
-}
-
-@ObjectType()
-export class SitesResDto {
-  @Field()
-  networkId: string;
-
-  @Field(() => [SiteDto])
-  sites: SiteDto[];
-}
-
-@ObjectType()
-export class SiteAPIResDto {
-  @Field(() => SiteAPIDto)
-  site: SiteAPIDto;
-}
-
-@ObjectType()
-export class SitesAPIResDto {
-  @Field()
-  network_id: string;
-
-  @Field(() => [SiteAPIDto])
-  sites: SiteAPIDto[];
-}
-
 @InputType()
 export class AddNetworkInputDto {
   @Field()
@@ -202,10 +142,4 @@ export class AddNetworkInputDto {
 export class SetDefaultNetworkInputDto {
   @Field()
   id: string;
-}
-
-@InputType()
-export class AddSiteInputDto {
-  @Field()
-  site: string;
 }

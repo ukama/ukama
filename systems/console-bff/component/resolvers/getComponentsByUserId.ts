@@ -8,18 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SiteDto } from "./types";
+import { ComponentDto, ComponentsResDto } from "./types";
 
 @Resolver()
-export class GetSiteResolver {
-  @Query(() => SiteDto)
-  async getSite(
-    @Arg("networkId") networkId: string,
-    @Arg("siteId") siteId: string,
+export class GetComponentsByUserResolver {
+  @Query(() => ComponentDto)
+  async getComponentsByUserId(
+    @Arg("category") category: string,
     @Ctx() ctx: Context
-  ): Promise<SiteDto> {
-    const { dataSources, baseURL } = ctx;
-
-    return dataSources.dataSource.getSite(baseURL, networkId, siteId);
+  ): Promise<ComponentsResDto> {
+    const { dataSources, headers } = ctx;
+    return dataSources.dataSource.getComponents(headers, category);
   }
 }
