@@ -313,7 +313,7 @@ func TestRouter_AddSystem(t *testing.T) {
 	sys := "sys"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name/systems/"+sys,
-		strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100}`))
+		strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100, "url":"http://localhost:8080"}`))
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -323,6 +323,7 @@ func TestRouter_AddSystem(t *testing.T) {
 		Certificate: "certs",
 		Ip:          "0.0.0.0",
 		Port:        100,
+		Url:         "http://localhost:8080",
 	}
 
 	m.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)

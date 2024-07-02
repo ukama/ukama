@@ -14,7 +14,7 @@ import { PackagesResDto } from "./types";
 export class GetPackagesResolver {
   @Query(() => PackagesResDto)
   async getPackages(@Ctx() ctx: Context): Promise<PackagesResDto> {
-    const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getPackages(headers);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getPackages(baseURL);
   }
 }

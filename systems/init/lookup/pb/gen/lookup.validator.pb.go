@@ -61,6 +61,25 @@ func (this *GetOrgResponse) Validate() error {
 	}
 	return nil
 }
+func (this *OrgName) Validate() error {
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
+	return nil
+}
+func (this *GetOrgsRequest) Validate() error {
+	return nil
+}
+func (this *GetOrgsResponse) Validate() error {
+	for _, item := range this.Orgs {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Orgs", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *AddNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))

@@ -12,7 +12,7 @@ option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb
 
 import "ukama/roles.proto";
 import "ukama/notification.proto";
-
+import "google/protobuf/timestamp.proto";
 package ukama.notification.eventToNotify.v1;
 
 service EventToNotifyService {
@@ -61,6 +61,7 @@ message Notification {
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
     ukama.common.v1.RoleType forRole = 10 [json_name = "for_role"];
+    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
 }
 
 message Notifications {
@@ -70,6 +71,7 @@ message Notifications {
     string type = 4;
     string scope = 5;
     bool isRead = 6 [json_name = "is_read"];
+    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }
 
 

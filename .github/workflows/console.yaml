@@ -68,7 +68,7 @@ jobs:
         working-directory: ${{ env.working-directory }} 
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v1.6
+        uses: sonarsource/sonarcloud-github-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -94,7 +94,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 18.14.2
+          node-version: 20
 
       # ESLint and Prettier must be in `package.json`
       - name: Install Node.js dependencies

@@ -26,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -89,22 +90,16 @@ func runGrpcServer(gormdb sql.Db) {
 		generated.RegisterInvitationServiceServer(s, invitationServer)
 	})
 
-	go grpcServer.StartServer()
+	go msgBusListener(mbClient)
 
-	waitForExit()
+	grpcServer.StartServer()
 }
 
-func waitForExit() {
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	go func() {
-
-		sig := <-sigs
-		log.Info(sig)
-		done <- true
-	}()
-
-	log.Debug("awaiting terminate/interrrupt signal")
-	<-done
-	log.Infof("exiting service %s", pkg.ServiceName)
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }

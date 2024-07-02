@@ -7,7 +7,8 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
+import { logger } from "../../common/logger";
 import { CBooleanResponse } from "../../common/types";
 import {
   AddMemberInputDto,
@@ -18,18 +19,34 @@ import {
 import { dtoToMemberResDto, dtoToMembersResDto } from "./mapper";
 
 class MemberApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
-  getMembers = async (): Promise<MembersResDto> => {
+  getMembers = async (baseURL: string): Promise<MembersResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/members`).then(res => dtoToMembersResDto(res));
   };
 
-  getMember = async (id: string): Promise<MemberDto> => {
+  getMember = async (baseURL: string, id: string): Promise<MemberDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/members/${id}`).then(res =>
       dtoToMemberResDto(res)
     );
   };
 
-  removeMember = async (id: string): Promise<CBooleanResponse> => {
+  getMemberByUserId = async (
+    baseURL: string,
+    userId: string
+  ): Promise<MemberDto> => {
+    this.baseURL = baseURL;
+    logger.info(`Request Url: ${baseURL}/${VERSION}/members/user/${userId}`);
+    return this.get(`/${VERSION}/members/user/${userId}`).then(res =>
+      dtoToMemberResDto(res)
+    );
+  };
+
+  removeMember = async (
+    baseURL: string,
+    id: string
+  ): Promise<CBooleanResponse> => {
+    this.baseURL = baseURL;
     return this.delete(`/${VERSION}/members/${id}`).then(() => {
       return {
         success: true,
@@ -37,17 +54,23 @@ class MemberApi extends RESTDataSource {
     });
   };
 
-  addMember = async (data: AddMemberInputDto): Promise<MemberDto> => {
+  addMember = async (
+    baseURL: string,
+    data: AddMemberInputDto
+  ): Promise<MemberDto> => {
+    this.baseURL = baseURL;
     return this.post(`/${VERSION}/members`, {
       body: { user_uuid: data.userId, role: data.role },
     }).then(res => dtoToMemberResDto(res));
   };
 
   updateMember = async (
+    baseURL: string,
     memberId: string,
     req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${VERSION}/members/${memberId}`, {
+    this.baseURL = baseURL;
+    return this.patch(`/${VERSION}/members/${memberId}`, {
       body: {
         isDeactivated: req.isDeactivated,
         role: req.role,

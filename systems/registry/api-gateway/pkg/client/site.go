@@ -27,11 +27,8 @@ type SiteRegistry struct {
 }
 
 func NewSiteRegistry(siteHost string, timeout time.Duration) *SiteRegistry {
-	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -62,14 +59,13 @@ func (r *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{ SiteId: siteId})
+	res, err := r.client.Get(ctx, &pb.GetRequest{SiteId: siteId})
 	if err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
-
 
 func (r *SiteRegistry) GetSites(networkId string) (*pb.GetSitesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)

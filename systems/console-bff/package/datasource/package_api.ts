@@ -6,8 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 
-import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
@@ -21,47 +21,63 @@ const VERSION = "v1";
 const PACKAGES = "packages";
 
 class PackageApi extends RESTDataSource {
-  baseURL = DATA_API_GW;
-  getPackage = async (packageId: string): Promise<PackageDto> => {
+  getPackage = async (
+    baseURL: string,
+    packageId: string
+  ): Promise<PackageDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {}).then(res =>
       dtoToPackageDto(res)
     );
   };
 
-  getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(`/${VERSION}/${PACKAGES}/orgs/${headers.orgId}`).then(res =>
+  getPackages = async (baseURL: string): Promise<PackagesResDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
       dtoToPackagesDto(res)
     );
   };
 
   addPackage = async (
+    baseURL: string,
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
+    this.baseURL = baseURL;
+    const baserate = await this.get(`/${VERSION}/baserates/history`);
     return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
-        duration: req.duration,
-        active: true,
+        name: req.name,
         amount: req.amount,
         data_unit: req.dataUnit,
         data_volume: req.dataVolume,
+        duration: req.duration,
+        active: true,
         flat_rate: true,
-        from: "2023-04-01T00:00:00Z",
         markup: 0,
-        name: req.name,
-        org_id: headers.orgId,
-        owner_id: headers.userId,
-        sim_type: "ukama_data",
+        overdraft: 0,
         sms_volume: 0,
-        to: "",
-        type: "prepaid",
-        voice_unit: "seconds",
         voice_volume: 0,
+        traffic_policy: 0,
+        networks: [],
+        type: "prepaid",
+        apn: "ukama.tel",
+        country: "CD",
+        owner_id: headers.userId,
+        sim_type: "operator_data",
+        to: dayjs().add(5, "year").format(),
+        from: dayjs().add(7, "day").format(),
+        voice_unit: "seconds",
+        baserate_id: baserate.rates[0].uuid,
       },
     }).then(res => dtoToPackageDto(res));
   };
 
-  deletePackage = async (packageId: string): Promise<IdResponse> => {
+  deletePackage = async (
+    baseURL: string,
+    packageId: string
+  ): Promise<IdResponse> => {
+    this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`).then(() => {
       return {
         uuid: packageId,
@@ -70,11 +86,16 @@ class PackageApi extends RESTDataSource {
   };
 
   updatePackage = async (
+    baseURL: string,
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
+    this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
-      body: req,
+      body: {
+        name: req.name,
+        active: req.active,
+      },
     }).then(res => dtoToPackageDto(res));
   };
 }

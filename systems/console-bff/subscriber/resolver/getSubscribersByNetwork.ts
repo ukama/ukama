@@ -17,7 +17,10 @@ export class GetSubscribersByNetworkResolver {
     @Arg("networkId") networkId: string,
     @Ctx() ctx: Context
   ): Promise<SubscribersResDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getSubscribersByNetwork(networkId);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getSubscribersByNetwork(
+      baseURL,
+      networkId
+    );
   }
 }

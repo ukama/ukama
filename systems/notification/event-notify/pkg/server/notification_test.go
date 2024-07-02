@@ -43,15 +43,6 @@ var notification = db.Notification{
 	UpdatedAt:   time.Now(),
 }
 
-var un = db.UserNotification{
-	Id:             uuid.NewV4(),
-	NotificationId: uuid.NewV4(),
-	UserId:         testUserId,
-	IsRead:         false,
-	CreatedAt:      time.Now(),
-	UpdatedAt:      time.Now(),
-}
-
 var ns = db.Notifications{
 	Id:          uuid.NewV4(),
 	Title:       "Title1",
@@ -110,7 +101,7 @@ func TestServer_GetAll(t *testing.T) {
 		RoleType: upb.RoleType_ROLE_OWNER,
 	}
 
-	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId).Return([]*db.Users{&user}, nil).Once()
+	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId, mock.Anything).Return([]*db.Users{&user}, nil).Once()
 	unRepo.On("GetNotificationsByUserID", user.UserId).Return([]*db.Notifications{&ns}, nil).Once()
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, nRepo, uRepo, emRepo, unRepo, msgclient)
@@ -139,7 +130,7 @@ func TestServer_UpdateStatus(t *testing.T) {
 		IsRead: true,
 	}
 
-	nRepo.On("Update", notification.Id, req.IsRead).Return(nil).Once()
+	unRepo.On("Update", notification.Id, req.IsRead).Return(nil)
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, nRepo, uRepo, emRepo, unRepo, msgclient)
 

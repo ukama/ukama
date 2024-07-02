@@ -1,0 +1,15 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+*.highcharts-credits {
+  display: none;
+}
+*.highcharts-title {
+  display: none;
+}
+*.highcharts-legend {
+  display: none;
+}

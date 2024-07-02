@@ -75,6 +75,22 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 	return serve(ctx, &serverCfg.Security, addresses...)
 }
 
+func InitDistribution(serverCfg *pkg.DistributionConfig) (casync.Store, casync.Converters, error) {
+	s, err := chunkServerStore(serverCfg)
+	if err != nil {
+		logrus.Errorf("Error configuring distribution server store : %s", err.Error())
+
+		return nil, nil, err
+	}
+
+	var converters casync.Converters
+	if !serverCfg.StoreCfg.Uncompressed {
+		converters = casync.Converters{casync.Compressor{}}
+	}
+
+	return s, converters, nil
+}
+
 // Wrapper for http.HandlerFunc to add logging for requests (and response codes)
 func withLog(h http.Handler, log *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

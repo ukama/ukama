@@ -18,8 +18,8 @@ export class AttachNodeResolver {
     @Arg("data") data: AttachNodeInput,
     @Ctx() context: Context
   ) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.attachNode({
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.attachNode(baseURL, {
       anodel: data.anodel,
       anoder: data.anoder,
       parentNode: data.parentNode,

@@ -254,6 +254,36 @@ func (_m *LookupServiceServer) GetOrg(_a0 context.Context, _a1 *gen.GetOrgReques
 	return r0, r1
 }
 
+// GetOrgs provides a mock function with given fields: _a0, _a1
+func (_m *LookupServiceServer) GetOrgs(_a0 context.Context, _a1 *gen.GetOrgsRequest) (*gen.GetOrgsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOrgs")
+	}
+
+	var r0 *gen.GetOrgsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgsRequest) (*gen.GetOrgsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgsRequest) *gen.GetOrgsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetOrgsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetOrgsRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSystemForOrg provides a mock function with given fields: _a0, _a1
 func (_m *LookupServiceServer) GetSystemForOrg(_a0 context.Context, _a1 *gen.GetSystemRequest) (*gen.GetSystemResponse, error) {
 	ret := _m.Called(_a0, _a1)

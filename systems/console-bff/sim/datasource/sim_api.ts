@@ -6,9 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
-import { SUBSCRIBER_API_GW } from "../../common/configs";
+import { ENCRYPTION_KEY } from "../../common/configs";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
@@ -49,10 +50,12 @@ const SIMPOOL = "simpool";
 const SIM = "sim";
 
 class SimApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW;
-
-  uploadSims = async (req: UploadSimsInputDto): Promise<UploadSimsResDto> => {
-    return this.put(`/upload`, {
+  uploadSims = async (
+    baseURL: string,
+    req: UploadSimsInputDto
+  ): Promise<UploadSimsResDto> => {
+    this.baseURL = baseURL;
+    return this.put(`/${VERSION}/${SIMPOOL}/upload`, {
       body: {
         data: req.data,
         sim_type: req.simType,
@@ -61,8 +64,10 @@ class SimApi extends RESTDataSource {
   };
 
   toggleSimStatus = async (
+    baseURL: string,
     req: ToggleSimStatusInputDto
   ): Promise<SimStatusResDto> => {
+    this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
     })
@@ -74,14 +79,13 @@ class SimApi extends RESTDataSource {
       });
   };
   allocateSim = async (
+    baseURL: string,
     req: AllocateSimInputDto
   ): Promise<AllocateSimAPIDto> => {
+    this.baseURL = baseURL;
     const getToken = (): string | null => {
       if (req.iccid) {
-        const token = generateTokenFromIccid(
-          req.iccid,
-          process.env.ENCRYPTION_KEY ?? ""
-        );
+        const token = generateTokenFromIccid(req.iccid, ENCRYPTION_KEY ?? "");
         return token;
       }
 
@@ -96,28 +100,32 @@ class SimApi extends RESTDataSource {
       body: {
         ...requestBody,
       },
-    })
-      .then(res => {
-        this.toggleSimStatus({ sim_id: res.sim.id, status: "active" });
-        this.getPackagesForSim({ sim_id: res.sim.id })
-          .then((response: any) => {
-            this.setActivePackageForSim({
-              sim_id: res.sim.id,
-              package_id: response.packages[0].id,
-            });
-          })
-          .catch((error: any) => {
-            throw new GraphQLError(error);
-          });
-
-        return dtoToAllocateSimResDto(res);
+    }).then(res => {
+      this.addPackageToSim(baseURL, {
+        package_id: req.package_id,
+        sim_id: res.sim.id,
+        start_date: dayjs().format(),
       })
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+        .then(async (response: any) => {
+          await this.toggleSimStatus(baseURL, {
+            sim_id: res.sim.id,
+            status: "active",
+          });
+          await this.setActivePackageForSim(baseURL, {
+            sim_id: res.sim.id,
+            package_id: response.packages[0].id,
+          });
+        })
+        .catch((error: any) => {
+          throw new GraphQLError(error);
+        });
+
+      return dtoToAllocateSimResDto(res);
+    });
   };
 
-  getSim = async (req: GetSimInputDto): Promise<SimDto> => {
+  getSim = async (baseURL: string, req: GetSimInputDto): Promise<SimDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIM}/${req.simId}`, {
       params: {
         simId: req.simId,
@@ -125,7 +133,8 @@ class SimApi extends RESTDataSource {
     }).then(res => dtoToSimResDto(res));
   };
 
-  getSims = async (type: string): Promise<SimsResDto> => {
+  getSims = async (baseURL: string, type: string): Promise<SimsResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/sims/${type}`)
       .then(res => dtoToSimsDto(res))
       .catch(err => {
@@ -133,7 +142,11 @@ class SimApi extends RESTDataSource {
       });
   };
 
-  getDataUsage = async (simId: string): Promise<SimDataUsage> => {
+  getDataUsage = async (
+    baseURL: string,
+    simId: string
+  ): Promise<SimDataUsage> => {
+    this.baseURL = baseURL;
     //TODO: GET SIM DATA USAGE METRIC HERE
     return {
       usage: `1240-${simId}`,
@@ -141,8 +154,10 @@ class SimApi extends RESTDataSource {
   };
 
   getSimByNetworkId = async (
+    baseURL: string,
     req: GetSimByNetworkInputDto
   ): Promise<SimDetailsDto> => {
+    this.baseURL = baseURL;
     return this.put(``, {
       body: {
         networkId: req.networkId,
@@ -150,7 +165,11 @@ class SimApi extends RESTDataSource {
     }).then(res => dtoToSimDetailsDto(res));
   };
 
-  deleteSim = async (req: DeleteSimInputDto): Promise<DeleteSimResDto> => {
+  deleteSim = async (
+    baseURL: string,
+    req: DeleteSimInputDto
+  ): Promise<DeleteSimResDto> => {
+    this.baseURL = baseURL;
     return this.put(``, {
       body: {
         simId: req.simId,
@@ -159,8 +178,10 @@ class SimApi extends RESTDataSource {
   };
 
   addPackageToSim = async (
+    baseURL: string,
     req: AddPackageToSimInputDto
   ): Promise<AddPackageSimResDto> => {
+    this.baseURL = baseURL;
     return this.put(``, {
       body: {
         ...req,
@@ -169,8 +190,10 @@ class SimApi extends RESTDataSource {
   };
 
   removePackageFromSim = async (
+    baseURL: string,
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
+    this.baseURL = baseURL;
     return this.put(``, {
       body: {
         ...req,
@@ -179,8 +202,10 @@ class SimApi extends RESTDataSource {
   };
 
   getPackagesForSim = async (
+    baseURL: string,
     req: GetPackagesForSimInputDto
   ): Promise<GetSimPackagesDtoAPI> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIM}/packages/${req.sim_id}`)
       .then(res => res)
       .catch(err => {
@@ -189,8 +214,10 @@ class SimApi extends RESTDataSource {
   };
 
   getSimsBySubscriberId = async (
+    baseURL: string,
     req: GetSimBySubscriberIdInputDto
   ): Promise<SubscriberToSimsDto> => {
+    this.baseURL = baseURL;
     return this.get(`/sim/subscriber/${req.subscriberId}`)
       .then(res => res)
       .catch(err => {
@@ -198,13 +225,19 @@ class SimApi extends RESTDataSource {
       });
   };
 
-  getSimPoolStats = async (type: string): Promise<SimPoolStatsDto> => {
-    return this.get(`/stats/${type}`).then(res => res);
+  getSimPoolStats = async (
+    baseURL: string,
+    type: string
+  ): Promise<SimPoolStatsDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
   };
 
   setActivePackageForSim = async (
+    baseURL: string,
     req: SetActivePackageForSimInputDto
   ): Promise<SetActivePackageForSimResDto> => {
+    this.baseURL = baseURL;
     return this.patch(
       `/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`,
       {

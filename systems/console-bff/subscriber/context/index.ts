@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import SubscriberAPI from "../datasource/subscriber_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: SubscriberAPI;
   };

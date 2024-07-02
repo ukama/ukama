@@ -20,7 +20,7 @@ export class DefaultMarkupResolver {
     @Arg("data") data: DefaultMarkupInputDto,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.defaultMarkup(data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.defaultMarkup(baseURL, data);
   }
 }

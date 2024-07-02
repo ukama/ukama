@@ -1,0 +1,144 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+'use client';
+import {
+  SimDto,
+  Sim_Types,
+  useGetSimsQuery,
+  useUploadSimsMutation,
+} from '@/client/graphql/generated';
+import EmptyView from '@/components/EmptyView';
+import FileDropBoxDialog from '@/components/FileDropBoxDialog';
+import LoadingWrapper from '@/components/LoadingWrapper';
+import PageContainerHeader from '@/components/PageContainerHeader';
+import SimpleDataTable from '@/components/SimpleDataTable';
+import { MANAGE_SIM_POOL_COLUMN } from '@/constants';
+import { useAppContext } from '@/context';
+import SimCardIcon from '@mui/icons-material/SimCard';
+import { AlertColor, Box, Paper } from '@mui/material';
+import { useState } from 'react';
+
+const Page = () => {
+  const [data, setData] = useState<SimDto[]>([]);
+  const { setSnackbarMessage } = useAppContext();
+  const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
+
+  const { loading: simsLoading, refetch: refetchSims } = useGetSimsQuery({
+    fetchPolicy: 'cache-and-network',
+    skip: false,
+    variables: {
+      type: Sim_Types.OperatorData,
+    },
+    onCompleted: (data) => {
+      setData(data?.getSims?.sim ?? []);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-pool',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
+    {
+      onCompleted: () => {
+        refetchSims();
+        setSnackbarMessage({
+          id: 'sim-pool-uploaded',
+          message: 'Sims uploaded successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsUploadSims(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    },
+  );
+
+  const handleUploadSimsAction = (
+    action: string,
+    value: string,
+    type: Sim_Types,
+  ) => {
+    if (action === 'error') {
+      setSnackbarMessage({
+        id: 'sim-pool-parsing-error',
+        message: value,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    } else if (action === 'success') {
+      uploadSimPool({
+        variables: {
+          data: {
+            data: value,
+            simType: type,
+          },
+        },
+      });
+    }
+  };
+
+  return (
+    <LoadingWrapper
+      width={'100%'}
+      radius="medium"
+      isLoading={uploadSimsLoading ?? simsLoading}
+      height={'calc(100vh - 400px)'}
+    >
+      <Paper
+        sx={{
+          py: 3,
+          px: 4,
+          width: '100%',
+          overflow: 'scroll',
+          borderRadius: '10px',
+          height: 'calc(100vh - 400px)',
+        }}
+      >
+        <Box sx={{ width: '100%', height: '100%' }}>
+          <PageContainerHeader
+            showSearch={false}
+            title={'My SIM pool'}
+            buttonTitle={'CLAIM SIMS'}
+            subtitle={data.length.toString() ?? '0'}
+            handleButtonAction={() => setIsUploadSims(true)}
+          />
+          <br />
+          {data.length === 0 ? (
+            <EmptyView icon={SimCardIcon} title="No sims in sim pool!" />
+          ) : (
+            <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
+          )}
+        </Box>
+        {isUploadSims && (
+          <FileDropBoxDialog
+            isOpen={isUploadSims}
+            labelSuccessBtn={'Upload'}
+            labelNegativeBtn={'Cancel'}
+            title={'Upload Sims in Sim Pool'}
+            handleSuccessAction={handleUploadSimsAction}
+            handleCloseAction={() => setIsUploadSims(false)}
+          />
+        )}
+      </Paper>
+    </LoadingWrapper>
+  );
+};
+
+export default Page;

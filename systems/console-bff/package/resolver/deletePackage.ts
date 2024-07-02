@@ -17,7 +17,7 @@ export class DeletePackageResolver {
     @Arg("packageId") packageId: string,
     @Ctx() ctx: Context
   ): Promise<IdResponse> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.deletePackage(packageId);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.deletePackage(baseURL, packageId);
   }
 }

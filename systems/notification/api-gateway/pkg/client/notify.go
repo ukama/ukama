@@ -35,10 +35,8 @@ type notify struct {
 }
 
 func NewNotify(host string, timeout time.Duration) (*notify, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 

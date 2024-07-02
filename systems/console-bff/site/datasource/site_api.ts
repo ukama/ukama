@@ -7,25 +7,33 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import { AddSiteInputDto, SiteDto, SitesResDto } from "../resolvers/types";
 import { dtoToSiteDto, dtoToSitesDto } from "./mapper";
 
-class SiteApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
+const SITES = "sites";
 
-  getSites = async (): Promise<SitesResDto> => {
-    return this.get(`/${VERSION}/sites`).then(res => dtoToSitesDto(res));
+class SiteApi extends RESTDataSource {
+  getSites = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<SitesResDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${SITES}/${networkId}`).then(res =>
+      dtoToSitesDto(res)
+    );
   };
 
-  getSite = async (siteId: string): Promise<SiteDto> => {
-    return this.get(`/${VERSION}/sites/${siteId}`).then(res =>
+  getSite = async (baseURL: string, siteId: string): Promise<SiteDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${SITES}/${siteId}`).then(res =>
       dtoToSiteDto(res)
     );
   };
 
-  addSite = async (req: AddSiteInputDto): Promise<SiteDto> => {
-    return this.post(`/${VERSION}/sites`, {
+  addSite = async (baseURL: string, req: AddSiteInputDto): Promise<SiteDto> => {
+    this.baseURL = baseURL;
+    return this.post(`/${VERSION}/${SITES}`, {
       body: req,
     }).then(res => dtoToSiteDto(res));
   };

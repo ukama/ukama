@@ -115,7 +115,7 @@ services:
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
  postgress-data:

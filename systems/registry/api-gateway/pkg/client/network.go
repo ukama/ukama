@@ -30,11 +30,8 @@ type NetworkRegistry struct {
 }
 
 func NewNetworkRegistry(networkHost string, timeout time.Duration) *NetworkRegistry {
-	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -95,6 +92,30 @@ func (r *NetworkRegistry) GetNetwork(netID string) (*netpb.GetResponse, error) {
 	return res, nil
 }
 
+func (r *NetworkRegistry) SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.SetDefault(ctx, &netpb.SetDefaultRequest{NetworkId: netID})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *NetworkRegistry) GetDefault() (*netpb.GetDefaultResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.GetDefault(ctx, &netpb.GetDefaultRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
@@ -110,6 +131,3 @@ func (r *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
 
 	return res, nil
 }
-
-
-

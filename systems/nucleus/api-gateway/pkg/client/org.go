@@ -29,11 +29,8 @@ type OrgRegistry struct {
 }
 
 func NewOrgRegistry(orgHost string, timeout time.Duration) *OrgRegistry {
-	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	orgConn, err := grpc.DialContext(ctx, orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	orgConn, err := grpc.NewClient(orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

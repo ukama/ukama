@@ -17,7 +17,7 @@ export class AllocateSimResolver {
     @Arg("data") data: AllocateSimInputDto,
     @Ctx() ctx: Context
   ): Promise<AllocateSimAPIDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.allocateSim(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.allocateSim(baseURL, data);
   }
 }

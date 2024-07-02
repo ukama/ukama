@@ -15,8 +15,8 @@ import { NodeInput } from "./types";
 export class DetachNodeResolver {
   @Mutation(() => CBooleanResponse)
   async detachhNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
-    const { dataSources } = context;
-    return await dataSources.dataSource.detachhNode({
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.detachhNode(baseURL, {
       id: data.id,
     });
   }

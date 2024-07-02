@@ -48,3 +48,8 @@ const app = async () => {
 };
 
 app();
+
+// "build": "yarn prisma-pre-build && tsc",
+// "all-dev": "concurrently \"yarn notification-dev\" \"yarn init-dev\" \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn subscriber-dev\" \"yarn sim-dev\" \"yarn package-dev\" \"yarn rate-dev\" \"yarn gateway-dev\" \"yarn invitation-dev\" \"yarn member-dev\" \"yarn planning-tool-dev\"",
+// "planning-tool-dev": "prisma generate --schema=./planning-tool/prisma/schema.prisma && nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"ts-node planning-tool/index.ts\"",
+// "all-start": "node  dist/org/index.js & node dist/notification/index.js & node dist/user/index.js & node dist/network/index.js & node dist/node/index.js & node dist/subscriber/index.js & node dist/sim/index.js & node dist/package/index.js & node dist/rate/index.js & node dist/invitation/index.js & node dist/member/index.js & node dist/planning-tool/index.js & node dist/gateway/index.js"

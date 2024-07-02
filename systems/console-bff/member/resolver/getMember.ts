@@ -17,7 +17,7 @@ export class GetMemberResolver {
     @Arg("id") id: string,
     @Ctx() ctx: Context
   ): Promise<MemberDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getMember(id);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getMember(baseURL, id);
   }
 }

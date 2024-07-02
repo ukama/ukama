@@ -16,6 +16,7 @@ import (
 type OrgRepo interface {
 	Add(org *Org) error
 	Update(org *Org) error
+	GetAll() ([]Org, error)
 	GetByName(name string) (*Org, error)
 	GetById(id uuid.UUID) (*Org, error)
 }
@@ -45,6 +46,12 @@ func (r *orgRepo) GetByName(name string) (*Org, error) {
 	org := &Org{}
 	d := r.Db.GetGormDb().Where(&Org{Name: name}).First(&org)
 	return org, d.Error
+}
+
+func (r *orgRepo) GetAll() ([]Org, error) {
+	var orgs []Org
+	d := r.Db.GetGormDb().Find(&orgs)
+	return orgs, d.Error
 }
 
 func (r *orgRepo) GetById(id uuid.UUID) (*Org, error) {

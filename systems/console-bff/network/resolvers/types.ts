@@ -39,13 +39,22 @@ export class NetworkAPIDto {
   name: string;
 
   @Field()
-  org_id: string;
-
-  @Field()
   budget: number;
 
   @Field()
-  is_deactivated: string;
+  is_deactivated: boolean;
+
+  @Field()
+  is_default: boolean;
+
+  @Field()
+  payment_links: boolean;
+
+  @Field()
+  overdraft: number;
+
+  @Field()
+  traffic_policy: number;
 
   @Field()
   created_at: string;
@@ -56,6 +65,7 @@ export class NetworkAPIDto {
   @Field(() => [String])
   allowed_networks: string[];
 }
+
 @ObjectType()
 export class NetworkAPIResDto {
   @Field(() => NetworkAPIDto)
@@ -64,9 +74,6 @@ export class NetworkAPIResDto {
 
 @ObjectType()
 export class NetworksAPIResDto {
-  @Field()
-  org_id: string;
-
   @Field(() => [NetworkAPIDto])
   networks: NetworkAPIDto[];
 }
@@ -80,13 +87,22 @@ export class NetworkDto {
   name: string;
 
   @Field()
-  orgId: string;
+  isDefault: boolean;
 
   @Field()
   budget: number;
 
   @Field()
-  isDeactivated: string;
+  overdraft: number;
+
+  @Field()
+  trafficPolicy: number;
+
+  @Field()
+  isDeactivated: boolean;
+
+  @Field()
+  paymentLinks: boolean;
 
   @Field()
   createdAt: string;
@@ -100,9 +116,6 @@ export class NetworkDto {
 
 @ObjectType()
 export class NetworksResDto {
-  @Field()
-  orgId: string;
-
   @Field(() => [NetworkDto])
   networks: NetworkDto[];
 }
@@ -124,3 +137,18 @@ export class AddNetworkInputDto {
   @Field(() => [String], { nullable: true })
   networks: string[];
 }
+<<<<<<< HEAD
+=======
+
+@InputType()
+export class SetDefaultNetworkInputDto {
+  @Field()
+  id: string;
+}
+
+@InputType()
+export class AddSiteInputDto {
+  @Field()
+  site: string;
+}
+>>>>>>> main

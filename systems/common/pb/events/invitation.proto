@@ -11,6 +11,7 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 import "ukama/roles.proto";
+import "ukama/invitation-status.proto";
 
 package ukama.events.v1;
 
@@ -20,7 +21,7 @@ message EventInvitationCreated {
     string email=3;
     string name = 4;
     ukama.common.v1.RoleType role = 5;
-    string status = 6;
+    ukama.common.v1.InvitationStatus status = 6;
     string userId = 7 [json_name = "user_id"];
     string expiresAt = 8 [json_name = "expires_at"];
 }
@@ -39,7 +40,7 @@ message EventInvitationUpdated {
     string email=3;
     string name = 4;
     ukama.common.v1.RoleType role = 5;
-    string status = 6;
+    ukama.common.v1.InvitationStatus status = 6;
     string userId = 7 [json_name = "user_id"];
     string expiresAt = 8 [json_name = "expires_at"];
 }

@@ -10,11 +10,11 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -62,12 +62,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	log.Infof("Adding subscriber: %v", req)
 
 	var dob string
-	subscriberId := uuid.NewV4()
-	networkId, err := uuid.FromString(req.GetNetworkId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
-	}
+	var err error
 
 	if req.GetDob() != "" {
 		dob, err = validate.ValidateDate(req.GetDob())
@@ -75,31 +70,47 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
 	}
-	remoteOrg, err := s.orgClient.Get(s.orgName)
+	// remoteOrg, err := s.orgClient.Get(s.orgName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	var networkInfo *creg.NetworkInfo
+
+	if req.GetNetworkId() != "" {
+		networkInfo, err = s.networkClient.Get(req.GetNetworkId())
+		if err != nil {
+			return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
+		}
+	} else {
+		networkInfo, err = s.networkClient.GetDefault()
+		if err != nil {
+			return nil, status.Errorf(codes.NotFound, "default network not found: %s", err.Error())
+		}
+		log.Infof("Default network %+v", networkInfo)
+	}
+
+	// if s.orgId != networkInfo.OrgId {
+	// 	log.Error("Missing network.")
+
+	// 	return nil, fmt.Errorf("Network mismatch")
+	// }
+
+	// if remoteOrg.IsDeactivated {
+	// 	return nil, status.Errorf(codes.FailedPrecondition,
+	// 		"org is deactivated: cannot add network to it")
+	// }
+
+	nid, err := uuid.FromString(networkInfo.Id)
 	if err != nil {
-		return nil, err
-	}
-	networkInfo, err := s.networkClient.Get(networkId.String())
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found: %s", err.Error())
-	}
-
-	if s.orgId != networkInfo.OrgId {
-		log.Error("Missing network.")
-
-		return nil, fmt.Errorf("network mismatch")
-	}
-
-	if remoteOrg.IsDeactivated {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"org is deactivated: cannot add network to it")
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
 	}
 
 	subscriber := &db.Subscriber{
-		SubscriberId:          subscriberId,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
-		NetworkId:             networkId,
+		NetworkId:             nid,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
@@ -109,7 +120,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		IdSerial:              req.GetIdSerial(),
 	}
 
-	err = s.subscriberRepo.Add(subscriber)
+	err = s.subscriberRepo.Add(subscriber, func(*db.Subscriber, *gorm.DB) error {
+		subscriber.SubscriberId = uuid.NewV4()
+
+		return nil
+	})
 	if err != nil {
 		log.Error("error while adding subscriber" + err.Error())
 

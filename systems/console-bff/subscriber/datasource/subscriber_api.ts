@@ -6,9 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import dayjs from "dayjs";
 import { GraphQLError } from "graphql";
 
-import { SUBSCRIBER_API_GW } from "../../common/configs";
 import {
   SubscriberDto,
   SubscriberInputDto,
@@ -17,25 +17,44 @@ import {
   UpdateSubscriberInputDto,
 } from "../resolver/types";
 import { CBooleanResponse } from "./../../common/types";
-import { dtoToSubscriberResDto, dtoToSubscribersResDto } from "./mapper";
+import {
+  addSubscriberReqToSubscriberResDto,
+  dtoToSubscriberResDto,
+  dtoToSubscribersResDto,
+} from "./mapper";
 
 const VERSION = "v1";
 const SUBSCRIBER = "subscriber";
 
 class SubscriberApi extends RESTDataSource {
-  baseURL = SUBSCRIBER_API_GW;
-
-  addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
+  addSubscriber = async (
+    baseURL: string,
+    req: SubscriberInputDto
+  ): Promise<SubscriberDto> => {
+    this.baseURL = baseURL;
     this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`);
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
-      body: { ...req },
-    }).then(res => dtoToSubscriberResDto(res));
+      body: {
+        address: "none",
+        email: req.email,
+        phone: req.phone,
+        id_serial: "none",
+        gender: "undefined",
+        last_name: req.last_name,
+        first_name: req.first_name,
+        network_id: req.network_id,
+        proof_of_Identification: "default",
+        dob: dayjs().subtract(10, "year").format(),
+      },
+    }).then(res => addSubscriberReqToSubscriberResDto(res));
   };
 
   updateSubscriber = async (
+    baseURL: string,
     subscriberId: string,
     req: UpdateSubscriberInputDto
   ): Promise<CBooleanResponse> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -47,8 +66,10 @@ class SubscriberApi extends RESTDataSource {
   };
 
   deleteSubscriber = async (
+    baseURL: string,
     subscriberId: string
   ): Promise<CBooleanResponse> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -59,7 +80,11 @@ class SubscriberApi extends RESTDataSource {
     });
   };
 
-  getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
+  getSubscriber = async (
+    baseURL: string,
+    subscriberId: string
+  ): Promise<SubscriberDto> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
@@ -68,7 +93,10 @@ class SubscriberApi extends RESTDataSource {
     );
   };
 
-  getSubMetricsByNetwork = async (): Promise<SubscriberMetricsByNetworkDto> => {
+  getSubMetricsByNetwork = async (
+    baseURL: string
+  ): Promise<SubscriberMetricsByNetworkDto> => {
+    this.baseURL = baseURL;
     return {
       total: 4,
       active: 1,
@@ -78,11 +106,12 @@ class SubscriberApi extends RESTDataSource {
   };
 
   getSubscribersByNetwork = async (
+    baseURL: string,
     networkId: string
   ): Promise<SubscribersResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
       .then(res => dtoToSubscribersResDto(res))
-
       .catch(err => {
         throw new GraphQLError(err);
       });

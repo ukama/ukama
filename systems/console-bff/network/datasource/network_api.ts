@@ -7,7 +7,8 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
+import { TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
   NetworkDto,
@@ -16,9 +17,11 @@ import {
 import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
 class NetworkApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
-
-  getNetworks = async (orgId: string): Promise<NetworksResDto> => {
+  getNetworks = async (
+    baseURL: string,
+    orgId: string
+  ): Promise<NetworksResDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks`, {
       params: {
         org: orgId,
@@ -26,7 +29,11 @@ class NetworkApi extends RESTDataSource {
     }).then(res => dtoToNetworksDto(res));
   };
 
-  getNetwork = async (networkId: string): Promise<NetworkDto> => {
+  getNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<NetworkDto> => {
+    this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks/${networkId}`).then(res =>
       dtoToNetworkDto(res)
     );

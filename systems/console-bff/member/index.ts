@@ -6,32 +6,58 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
+import { createClient } from "redis";
 import "reflect-metadata";
 
-import { parseGatewayHeaders } from "../common/utils";
+import { THeaders } from "../common/types";
+import {
+  findProcessNKill,
+  getBaseURL,
+  parseGatewayHeaders,
+} from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { MEMBER_PORT } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import MemberAPI from "./datasource/member_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const server = await SubGraphServer(resolvers);
-  await startStandaloneServer(server, {
-    context: async ({ req }) => {
-      return {
-        headers: parseGatewayHeaders(req.headers),
-        dataSources: {
-          dataSource: new MemberAPI(),
-        },
-      };
-    },
-    listen: { port: MEMBER_PORT },
-  });
+  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.member.port}`);
+  if (isSuccess) {
+    const server = await SubGraphServer(resolvers);
+    const redisClient = createClient().on("error", error => {
+      logger.error(
+        `Error creating redis for ${SUB_GRAPHS.network.name} service, Error: ${error}`
+      );
+    });
+    const connectPromise = redisClient.connect();
+    await connectPromise;
 
-  logger.info(
-    `🚀 Ukama Member service running at http://localhost:${MEMBER_PORT}/graphql`
-  );
+    await startStandaloneServer(server, {
+      context: async ({ req }) => {
+        const headers: THeaders = parseGatewayHeaders(req.headers);
+        const baseURL = await getBaseURL(
+          SUB_GRAPHS.member.name,
+          headers.orgName,
+          redisClient.isOpen ? redisClient : null
+        );
+        return {
+          headers: headers,
+          baseURL: baseURL.message,
+          dataSources: {
+            dataSource: new MemberAPI(),
+          },
+        };
+      },
+      listen: { port: SUB_GRAPHS.member.port },
+    });
+
+    logger.info(
+      `🚀 Ukama ${SUB_GRAPHS.member.name} service running at http://localhost:${SUB_GRAPHS.member.port}/graphql`
+    );
+  } else {
+    logger.error(`Server failed to start on port ${SUB_GRAPHS.member.port}`);
+  }
 };
 
 runServer();

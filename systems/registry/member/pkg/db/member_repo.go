@@ -20,10 +20,11 @@ type MemberRepo interface {
 
 	/* Members */
 	AddMember(member *Member, orgId string, nestedFunc func(string, string) error) error
-	GetMember(userUUID uuid.UUID) (*Member, error)
+	GetMember(memberId uuid.UUID) (*Member, error)
+	GetMemberByUserId(userId uuid.UUID) (*Member, error)
 	GetMembers() ([]Member, error)
 	UpdateMember(member *Member) error
-	RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error
+	RemoveMember(memberId uuid.UUID, orgId string, nestedFunc func(string, string) error) error
 	GetMemberCount() (int64, int64, error)
 }
 
@@ -57,11 +58,24 @@ func (r *memberRepo) AddMember(member *Member, orgId string, nestedFunc func(str
 	return err
 }
 
-func (r *memberRepo) GetMember(userUUID uuid.UUID) (*Member, error) {
+func (r *memberRepo) GetMember(memberId uuid.UUID) (*Member, error) {
 	var member Member
 
 	result := r.Db.GetGormDb().
-		Where("user_id = ?", userUUID).First(&member)
+		Where("member_id = ?", memberId).First(&member)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &member, nil
+}
+
+func (r *memberRepo) GetMemberByUserId(userId uuid.UUID) (*Member, error) {
+	var member Member
+
+	result := r.Db.GetGormDb().
+		Where("user_id = ?", userId).First(&member)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -83,7 +97,7 @@ func (r *memberRepo) GetMembers() ([]Member, error) {
 
 func (r *memberRepo) UpdateMember(member *Member) error {
 	d := r.Db.GetGormDb().Clauses(clause.Returning{}).
-		Where("user_id = ?", member.UserId).Updates(member)
+		Where("member_id = ?", member.MemberId).Updates(member)
 
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
@@ -92,16 +106,17 @@ func (r *memberRepo) UpdateMember(member *Member) error {
 	return d.Error
 }
 
-func (r *memberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
+func (r *memberRepo) RemoveMember(memberId uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc(orgId, userUUID.String())
-			if nestErr != nil {
-				return nestErr
-			}
-		}
+		//TOTO: Were causing error Orgs relation not found
+		// if nestedFunc != nil {
+		// 	nestErr := nestedFunc(orgId, memberId.String())
+		// 	if nestErr != nil {
+		// 		return nestErr
+		// 	}
+		// }
 
-		d := tx.Where("user_id = ?", userUUID).Delete(&Member{})
+		d := tx.Where("member_id = ?", memberId).Delete(&Member{})
 		if d.Error != nil {
 			return d.Error
 		}

@@ -39,11 +39,11 @@ var n = int_db.Notification{
 	UpdatedAt:   time.Now(),
 }
 
-var evtMsg = int_db.EventMsg{
-	Model: gorm.Model{
-		ID: 1,
-	},
-}
+// var evtMsg = int_db.EventMsg{
+// 	Model: gorm.Model{
+// 		ID: 1,
+// 	},
+// }
 
 // func TestNotificationRepo_Add(t *testing.T) {
 // 	t.Run("Add", func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestNotificationRepo_Update(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewNotificationRepo(&UkamaDbMock{
+		r := int_db.NewUserNotificationRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 

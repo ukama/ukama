@@ -20,9 +20,6 @@ export class SubSimAPIDto {
   network_id: string;
 
   @Field()
-  org_id: string;
-
-  @Field()
   iccid: string;
 
   @Field()
@@ -114,12 +111,6 @@ export class SubscribersAPIResDto {
 
 @InputType()
 export class SubscriberInputDto {
-  @Field({ nullable: true })
-  address?: string;
-
-  @Field({ nullable: true })
-  dob?: string;
-
   @Field()
   @IsEmail()
   email: string;
@@ -130,23 +121,11 @@ export class SubscriberInputDto {
   @Field({ nullable: true })
   last_name?: string;
 
-  @Field({ nullable: true })
-  gender?: string;
-
-  @Field({ nullable: true })
-  id_serial?: string;
-
   @Field()
   network_id: string;
 
-  @Field()
-  org_id: string;
-
   @Field({ nullable: true })
   phone?: string;
-
-  @Field({ nullable: true })
-  proof_of_identification?: string;
 }
 
 @ObjectType()
@@ -159,9 +138,6 @@ export class SubscriberSimDto {
 
   @Field()
   networkId: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   iccid: string;
@@ -227,9 +203,6 @@ export class SubscriberDto {
 
   @Field()
   networkId: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   phone: string;

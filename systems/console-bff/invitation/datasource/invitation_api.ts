@@ -7,54 +7,73 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import {
+  CreateInvitationInputDto,
   DeleteInvitationResDto,
-  GetInvitationByOrgResDto,
   InvitationDto,
-  SendInvitationInputDto,
-  SendInvitationResDto,
+  InvitationsResDto,
   UpateInvitationInputDto,
   UpdateInvitationResDto,
 } from "../resolver/types";
-import { dtoToInvitationResDto } from "./mapper";
+import { dtoToInvitationsResDto, inviteResToInvitationDto } from "./mapper";
 
-const version = "/v1/invitation";
+const INVITATIONS = "invitations";
 
 class InvitationApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW + version;
-
   sendInvitation = async (
-    req: SendInvitationInputDto
-  ): Promise<SendInvitationResDto> => {
-    return this.post(``, {
+    baseURL: string,
+    req: CreateInvitationInputDto
+  ): Promise<InvitationDto> => {
+    this.baseURL = baseURL;
+    return this.post(`/${VERSION}/${INVITATIONS}`, {
       body: { ...req },
-    }).then(res => res);
+    }).then(res => inviteResToInvitationDto(res));
   };
 
-  getInvitation = async (id: string): Promise<InvitationDto> => {
-    return this.get(`/${VERSION}/invitation/${id}`).then(res =>
-      dtoToInvitationResDto(res)
+  getInvitation = async (
+    baseURL: string,
+    id: string
+  ): Promise<InvitationDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${INVITATIONS}/${id}`).then(res =>
+      inviteResToInvitationDto(res)
     );
   };
 
   updateInvitation = async (
-    id: string,
+    baseURL: string,
     req: UpateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
-    return this.put(`/${VERSION}/invitation/${id}`, {
+    this.baseURL = baseURL;
+    return this.patch(`/${VERSION}/${INVITATIONS}/${req.id}`, {
       body: { status: req.status },
     }).then(res => res);
   };
 
-  deleteInvitation = async (id: string): Promise<DeleteInvitationResDto> => {
-    return this.delete(`/${VERSION}/invitation/${id}`).then(res => res);
+  deleteInvitation = async (
+    baseURL: string,
+    id: string
+  ): Promise<DeleteInvitationResDto> => {
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/${INVITATIONS}/${id}`).then(res => res);
   };
 
-  getInvitationsByOrg = async (
-    orgName: string
-  ): Promise<GetInvitationByOrgResDto> => {
-    return this.get(`/${VERSION}/invitation/${orgName}`).then(res => res);
+  getInvitationsByOrg = async (baseURL: string): Promise<InvitationsResDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${INVITATIONS}`).then(res =>
+      dtoToInvitationsResDto(res)
+    );
+  };
+
+  getInvitationsByEmail = async (
+    baseURL: string,
+    email: string
+  ): Promise<InvitationDto> => {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${INVITATIONS}/user/${email}`).then(res =>
+      inviteResToInvitationDto(res)
+    );
   };
 }
 

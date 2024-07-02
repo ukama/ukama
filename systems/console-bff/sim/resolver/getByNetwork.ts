@@ -19,7 +19,7 @@ export class GetSimByNetworkResolver {
     @Arg("data") data: GetSimByNetworkInputDto,
     @Ctx() ctx: Context
   ): Promise<SimDetailsDto> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.getSimByNetworkId(data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.getSimByNetworkId(baseURL, data);
   }
 }

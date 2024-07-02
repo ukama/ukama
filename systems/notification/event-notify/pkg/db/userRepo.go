@@ -21,11 +21,11 @@ const EmptyUUID = "00000000-0000-0000-0000-000000000000"
 
 type UserRepo interface {
 	Add(user *Users) error
-	GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*Users, error)
-	GetAllUsers(orgId string) ([]*Users, error)
 	GetUser(userId string) (*Users, error)
+	GetAllUsers(orgId string) ([]*Users, error)
 	GetSubscriber(subscriberId string) (*Users, error)
 	GetUserWithRoles(orgId string, roles []roles.RoleType) ([]*Users, error)
+	GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error)
 }
 
 type userRepo struct {
@@ -43,7 +43,7 @@ func (r *userRepo) Add(user *Users) (err error) {
 	return d.Error
 }
 
-func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string) ([]*Users, error) {
+func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error) {
 	var users []*Users
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
@@ -53,15 +53,19 @@ func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string,
 	}
 
 	if networkId != "" && networkId != EmptyUUID {
-		tx = tx.Where("network_id = ?", networkId)
+		tx = tx.Or("network_id = ?", networkId)
 	}
 
 	if subscriberId != "" && subscriberId != EmptyUUID {
-		tx = tx.Where("subscriber_id = ?", subscriberId)
+		tx = tx.Or("subscriber_id = ?", subscriberId)
 	}
 
 	if userId != "" && userId != EmptyUUID {
 		tx = tx.Where("user_id = ?", userId)
+	}
+
+	if role != uint8(roles.TYPE_INVALID) {
+		tx = tx.Where("role = ?", role)
 	}
 
 	result := tx.Find(&users)

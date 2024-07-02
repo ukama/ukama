@@ -58,7 +58,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 	// 	Id: member.UserId.String(),
 	// }, nil).Once()
 	msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.create", mock.MatchedBy(func(r *epb.AddMemberEventRequest) bool {
-		return r.UserId == req.UserUuid
+		return r.Role == req.GetRole()
 	})).Return(nil).Once()
 
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
@@ -89,13 +89,13 @@ func TestMemberServer_GetMember(t *testing.T) {
 		Role:   roles.TYPE_USERS,
 	}
 
-	mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
+	mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
 
 	s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 	// Act
 	resp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
-		UserUuid: member.UserId.String(),
+		MemberId: member.MemberId.String(),
 	})
 
 	// Assert
@@ -160,22 +160,23 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 		member := db.Member{
 			Model: gorm.Model{
 				ID: 1},
+			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: true,
 			Role:        roles.TYPE_USERS,
 		}
 
-		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
-		mRepo.On("RemoveMember", member.UserId, orgId.String(), mock.Anything).Return(nil).Once()
+		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
+		mRepo.On("RemoveMember", member.MemberId, orgId.String(), mock.Anything).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
-			return a.UserId == member.UserId.String()
+			return a.MemberId == member.MemberId.String()
 		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
+			MemberId: member.MemberId.String(),
 		})
 
 		// Assert
@@ -195,18 +196,19 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 		member := db.Member{
 			Model: gorm.Model{
 				ID: 1},
+			MemberId:    uuid.NewV4(),
 			UserId:      uuid.NewV4(),
 			Deactivated: false,
 			Role:        roles.TYPE_USERS,
 		}
 
-		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
+		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
 
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, "", orgId)
 
 		// Act
 		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
+			MemberId: member.MemberId.String(),
 		})
 
 		// Assert

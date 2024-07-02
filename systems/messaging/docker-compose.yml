@@ -14,8 +14,8 @@ services:
 
  mesh:
   build:
-    dockerfile: ./Dockerfile
-    context: ./mesh
+   dockerfile: ./Dockerfile
+   context: ./mesh
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_ORG_ID=${ORGID}
@@ -30,10 +30,10 @@ services:
    - ENV_AMQP_PORT=5672
   restart: always
   ports:
-    - "18200:18200"
-    - "4444:4444"
+   - '18200:18200'
+   - '4444:4444'
   networks:
-    - ukama-net
+   - ukama-net
 
  initclient-messaging:
   build:
@@ -156,7 +156,7 @@ services:
 networks:
  ukama-net:
   external: true
-  name: services_dev-net
+  name: services_ukama-net
 
 volumes:
  postgress-data:

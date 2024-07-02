@@ -16,7 +16,7 @@ export class GetDefaultMarkupResolver {
   @Query(() => DefaultMarkupResDto)
   @UseMiddleware(Authentication)
   async getDefaultMarkup(@Ctx() ctx: Context): Promise<DefaultMarkupResDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getDefaultMarkup();
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getDefaultMarkup(baseURL);
   }
 }

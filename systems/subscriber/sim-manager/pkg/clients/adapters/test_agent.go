@@ -24,10 +24,8 @@ type TestAgentAdapter struct {
 }
 
 func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgentAdapter, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	testAgentConn, err := grpc.DialContext(ctx, testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	testAgentConn, err := grpc.NewClient(testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		return nil, err

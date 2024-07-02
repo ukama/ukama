@@ -76,16 +76,28 @@ int main (int argc, char **argv) {
     Agent  *agents = NULL;
     WTasks *tasks  = NULL;
     char   *debug  = DEF_LOG_LEVEL;
-    char   *hubURL = DEF_HUB_URL;
     char   *dbFile = DEF_DB_FILE;
-    
+    char   hubURL[WIMC_MAX_URL_LEN] = {0};
+
     UInst  serviceInst;
     Config serviceConfig = {0};
-  
+
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
 
-    /* Parsing command line args. */
+    if (usys_find_service_port(SERVICE_NAME) == 0) {
+        usys_log_error("Unable to find service port for %s", SERVICE_NAME);
+        usys_exit(1);
+    }
+
+    if (usys_find_service_port(SERVICE_UKAMA) == 0) {
+        usys_log_error("Unable to find service port for %s", SERVICE_UKAMA);
+        usys_exit(1);
+    }
+
+    sprintf(hubURL, "http://localhost:%d",
+            usys_find_service_port(SERVICE_UKAMA));
+
     while (true) {
 
         opt = 0;
@@ -122,8 +134,8 @@ int main (int argc, char **argv) {
             break;
 
         case 'u':
-            hubURL = optarg;
-            if (!hubURL) {
+            strcpy(&hubURL[0], optarg);
+            if (strlen(hubURL) == 0) {
                 usage();
                 usys_exit(0);
             }
@@ -144,7 +156,7 @@ int main (int argc, char **argv) {
         usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
         usys_exit(1);
     }
-    
+
     /* Signal handler */
     signal(SIGINT, handle_sigint);
   
@@ -167,7 +179,7 @@ int main (int argc, char **argv) {
     serviceConfig.tasks = &tasks;
 
     /* Step-1: open the local db */
-    serviceConfig.db = open_db(serviceConfig.dbFile, WIMC_FLAG_CREATE_DB);
+    open_db(&serviceConfig.db, serviceConfig.dbFile, WIMC_FLAG_CREATE_DB);
     if (serviceConfig.db == NULL) {
         usys_log_error("Error creating db at: %s", serviceConfig.dbFile);
         usys_exit(0);

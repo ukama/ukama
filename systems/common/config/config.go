@@ -103,7 +103,8 @@ func (q *Queue) SafeString() string {
 }
 
 type Grpc struct {
-	Port int `default:"9090"`
+	Port       int `default:"9090"`
+	MaxMsgSize int `default:"4194304"`
 }
 
 type GrpcService struct {

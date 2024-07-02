@@ -33,6 +33,7 @@ type Config struct {
 	OwnerId          string
 	OrgId            string
 	OrgName          string
+	MasterOrgName    string
 	Service          *uconf.Service
 	PushGateway      string `default:"http://localhost:9091"`
 }

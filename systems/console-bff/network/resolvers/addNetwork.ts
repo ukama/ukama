@@ -17,7 +17,7 @@ export class AddNetworkResolver {
     @Arg("data") data: AddNetworkInputDto,
     @Ctx() ctx: Context
   ): Promise<NetworkDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.addNetwork(data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.addNetwork(baseURL, data);
   }
 }

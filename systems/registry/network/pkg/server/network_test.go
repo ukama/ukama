@@ -71,7 +71,76 @@ func TestNetworkServer_Add(t *testing.T) {
 		assert.Equal(t, netName, res.Network.Name)
 		netRepo.AssertExpectations(t)
 	})
+}
 
+func TestNetworkServer_SetDefault(t *testing.T) {
+	t.Run("Set default network", func(t *testing.T) {
+		var netId = uuid.NewV4()
+
+		netRepo := &mocks.NetRepo{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
+
+		netRepo.On("SetDefault", netId, true).Return(
+			&db.Network{}, nil).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
+		netResp, err := s.SetDefault(context.TODO(), &pb.SetDefaultRequest{
+			NetworkId: netId.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetDefault(t *testing.T) {
+	t.Run("Get default network", func(t *testing.T) {
+		var netId = uuid.NewV4()
+
+		const netName = "network-1"
+		networks := pq.StringArray{"Verizon"}
+		countries := pq.StringArray{"USA"}
+
+		netRepo := &mocks.NetRepo{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
+
+		netRepo.On("GetDefault").Return(
+			&db.Network{Id: netId,
+				Name:             netName,
+				AllowedCountries: countries,
+				AllowedNetworks:  networks,
+				Deactivated:      false,
+				IsDefault:        true,
+			}, nil).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
+		netResp, err := s.GetDefault(context.TODO(), &pb.GetDefaultRequest{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, netId.String(), netResp.GetNetwork().GetId())
+		assert.Equal(t, true, netResp.GetNetwork().GetIsDefault())
+		assert.Equal(t, netName, netResp.Network.Name)
+		assert.Equal(t, len(networks), len(netResp.Network.AllowedNetworks))
+		assert.Equal(t, len(countries), len(netResp.Network.AllowedCountries))
+		netRepo.AssertExpectations(t)
+	})
+	t.Run("No default network", func(t *testing.T) {
+
+		netRepo := &mocks.NetRepo{}
+		msgcRepo := &cmocks.MsgBusServiceClient{}
+
+		netRepo.On("GetDefault").Return(
+			nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, nil, msgcRepo, "", "", "", "", "")
+		netResp, err := s.GetDefault(context.TODO(), &pb.GetDefaultRequest{})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
 }
 
 func TestNetworkServer_Get(t *testing.T) {

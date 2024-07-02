@@ -53,7 +53,7 @@ func TestEventProcessor_Get(t *testing.T) {
 		assert.Equal(t, &data.Notification, &resp.Notification)
 	}
 
-	nc.AssertExpectations(t)
+	en.AssertExpectations(t)
 }
 
 func TestEventProcessor_GetAll(t *testing.T) {
@@ -89,5 +89,5 @@ func TestEventProcessor_GetAll(t *testing.T) {
 		assert.Equal(t, data.Notifications, resp.Notifications)
 	}
 
-	nc.AssertExpectations(t)
+	en.AssertExpectations(t)
 }

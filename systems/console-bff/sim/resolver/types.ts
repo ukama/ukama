@@ -5,11 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, GraphQLISODateTime, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 import { SIM_TYPES } from "../../common/enums";
-
-// You might need to install this package
 
 @InputType()
 export class AllocateSimInputDto {
@@ -232,8 +230,8 @@ export class AddPackageToSimInputDto {
   @Field()
   package_id: string;
 
-  @Field(() => GraphQLISODateTime) // Use a proper date type
-  start_date: Date; // Change the data type to Date
+  @Field()
+  start_date: string;
 }
 @InputType()
 export class SetActivePackageForSimInputDto {
@@ -271,9 +269,6 @@ export class AllocateSimAPIDto {
 
   @Field()
   network_id: string;
-
-  @Field()
-  org_id: string;
 
   @Field(() => SimAllocatePackageDto)
   package: SimAllocatePackageDto;
@@ -460,6 +455,6 @@ export class UploadSimsInputDto {
   @Field()
   data: string;
 
-  @Field()
+  @Field(() => SIM_TYPES)
   simType: SIM_TYPES;
 }

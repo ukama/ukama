@@ -5,19 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
 import { AddSiteInputDto, SiteDto } from "./types";
 
 @Resolver()
 export class AddSiteResolver {
-  @Query(() => SiteDto)
+  @Mutation(() => SiteDto)
   async addSite(
     @Arg("data") data: AddSiteInputDto,
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.addSite(data);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.addSite(baseURL, data);
   }
 }

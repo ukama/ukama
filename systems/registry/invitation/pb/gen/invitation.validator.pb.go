@@ -8,6 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"

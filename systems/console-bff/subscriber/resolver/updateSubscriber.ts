@@ -19,7 +19,11 @@ export class UpdateSubscriberResolver {
     @Arg("data") data: UpdateSubscriberInputDto,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
-    const { dataSources } = ctx;
-    return await dataSources.dataSource.updateSubscriber(subscriberId, data);
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.dataSource.updateSubscriber(
+      baseURL,
+      subscriberId,
+      data
+    );
   }
 }

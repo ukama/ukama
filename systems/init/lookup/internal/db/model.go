@@ -37,6 +37,7 @@ type System struct {
 	Uuid        string `gorm:"type:uuid;unique"`
 	Certificate string
 	Ip          pgtype.Inet `gorm:"type:inet"`
+	URL         string
 	Port        int32
 	OrgID       uint `gorm:"type:string;index:sys_idx,unique,composite:sys_idx;not null"`
 	Org         Org

@@ -9,6 +9,7 @@ import { THeaders } from "../../common/types";
 import SimAPI from "../datasource/sim_api";
 
 export interface Context {
+  baseURL: string;
   dataSources: {
     dataSource: SimAPI;
   };

@@ -113,7 +113,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg)
+		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.MemberId, jmsg)
 
 		user := &db.Users{
 			Id:           uuid.NewV4(),
@@ -123,7 +123,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			NetworkId:    "",
 			SubscriberId: "",
 		}
-		es.n.storeUser(user)
+
+		err = es.n.storeUser(user)
+		if err != nil {
+			log.Errorf("Error storing user: %v", err)
+		}
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
 		c := evt.EventToEventConfig[evt.EventMemberDelete]
@@ -257,7 +261,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
@@ -601,7 +604,10 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		dn.EventMsgID = id
 	}
 
-	es.n.storeNotification(dn)
+	err = es.n.storeNotification(dn)
+	if err != nil {
+		log.Errorf("failed to store notification: %v", err)
+	}
 
 	return dn
 }

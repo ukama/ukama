@@ -21,15 +21,16 @@ import (
 )
 
 type Network struct {
-	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name             string    `gorm:"uniqueIndex:network_name"` 
-	Deactivated      bool
+	Id               uuid.UUID      `gorm:"primaryKey;type:uuid"`
+	Name             string         `gorm:"uniqueIndex:network_name"`
+	Deactivated      bool           `gorm:"default:false"`
 	AllowedCountries pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_countries"`
 	AllowedNetworks  pq.StringArray `gorm:"type:varchar(64)[]" json:"allowed_networks"`
 	Budget           float64
 	Overdraft        float64
 	TrafficPolicy    uint32
 	PaymentLinks     bool
+	IsDefault        bool   `gorm:"default:false"`
 	Country          string `json:"country"`
 	Language         LanguageType
 	Currency         string `json:"currency"`

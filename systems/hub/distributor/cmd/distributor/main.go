@@ -14,7 +14,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"google.golang.org/grpc"
+
 	"github.com/ukama/ukama/systems/common/config"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
@@ -25,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	generated "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 )
 
 var serviceConfig *pkg.Config
@@ -37,14 +41,6 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	/* Signal Handling */
-	handleSigterm(func() {
-		log.Infof("Cleaning distribution service.")
-		/* Call anything required for clean exit */
-
-		cancel()
-	})
 
 	/* config parsig */
 	initConfig()
@@ -59,7 +55,17 @@ func main() {
 	go startDistributionServer(ctx)
 
 	/* Start the HTTP server for chunking request. */
-	startChunkRequestServer(ctx)
+	g := startChunkRequestServer()
+
+	/* Signal Handling */
+	handleSigterm(func() {
+		log.Infof("Cleaning distribution service.")
+		/* Call anything required for clean exit */
+		g.StopServer()
+
+		cancel()
+	})
+
 }
 
 /* Start HTTP distribution server for distributing chunks */
@@ -72,11 +78,16 @@ func startDistributionServer(ctx context.Context) {
 }
 
 /* Start HTTP server for accepting chinking request from UkamaHub */
-func startChunkRequestServer(ctx context.Context) {
+func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
 		instanceId = uuid.NewV4().String()
+	}
+
+	orgId, err := uuid.FromString(serviceConfig.OrgId)
+	if err != nil {
+		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
@@ -85,14 +96,24 @@ func startChunkRequestServer(ctx context.Context) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	r := server.NewRouter(serviceConfig, serviceConfig.OrgName, mbClient)
+	chunkerServer := server.NewChunkerServer(orgId, serviceConfig.OrgName, serviceConfig,
+		mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
+
+	log.Debugf("Distribution server is %+v and config %+v", chunkerServer, serviceConfig.Grpc)
+
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		generated.RegisterChunkerServiceServer(s, chunkerServer)
+	})
+
+	go grpcServer.StartServer()
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
 	go msgBusListener(mbClient)
 
-	r.Run()
+	return grpcServer
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */
@@ -105,6 +126,7 @@ func initConfig() {
 /* Handles Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting. */
 func handleSigterm(handleExit func()) {
 	c := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
 
@@ -112,8 +134,12 @@ func handleSigterm(handleExit func()) {
 		<-c
 		handleExit()
 		log.Infof("Exiting distribution service.")
-		os.Exit(1)
+		done <- true
 	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {

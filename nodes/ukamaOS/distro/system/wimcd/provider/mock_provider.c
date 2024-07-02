@@ -15,332 +15,298 @@
 #include <jansson.h>
 #include <ulfius.h>
 
-#define EP_CONTAINERS "/content/containers"
+#define FALSE   0
+#define TRUE    1
+#define MAX_ENT 128
 
-#define JSON_PROVIDER_RESPONSE "provider_response"
-#define JSON_AGENT_CB          "agent-cbURL"
-#define JSON_AGENT_METHOD      "method"
-#define JSON_AGENT_URL         "url"
-#define JSON_AGENT_INDEX_URL   "index_url"
-#define JSON_AGENT_STORE_URL   "store_url"
+#define EP_CONTAINERS "/v1/capps/"
 
-#define WIMC_MAX_NAME_LEN 128
-#define WIMC_MAX_TAG_LEN  128
-#define WIMC_MAX_PATH_LEN 1024
-
-#define TRUE 1
-#define FALSE 0
-#define MAX_ENT 256
-
-typedef struct _u_request req_t;
+typedef struct _u_request  req_t;
 typedef struct _u_response resp_t;
 
-/* DB: name, tag, method, CB-URL
- */
-
-typedef struct { 
-  char *name;   /* */
-  char *tag;    /* */
-  int  type;    /* */
-  char *method; /* Mechanisim supported by service at the url. */
-  char *url;    /* callback URL for the agent. */
-  char *iURL;   /* index URL */
-  char *sURL;   /* chunk store URL */
+typedef struct {
+    char *name;
+	char *version;
+	char *type;
+	char *url;
+	char *created_at;
+	int  size_bytes;
+	char *chunk_url;
+	char *chunks_url;
 } dbEntry;
 
 typedef struct {
-  sqlite3 *dbPtr;
-  int     numEnt;
-  dbEntry ent[MAX_ENT];
-} DB;
 
-/* 
- * table_exists -- Check if default table exists in the db. 
- *
- */
+	sqlite3 *dbPtr;
+	int     numEnt;
+	dbEntry ent[MAX_ENT];
+} DB;
 
 int table_exists(sqlite3 *db) {
 
-  int ret;
-  char *sql=NULL, *errMsg=NULL;
-  
-  sql = "SELECT 1 FROM sqlite_master where type='table' and name='Containers'";
+	int ret;
+	char *sql = NULL, *errMsg = NULL;
 
-  ret = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+	sql = "SELECT 1 FROM sqlite_master where type='table' and name='Containers'";
+	ret = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
 
-  if (ret != SQLITE_OK) {
-    fprintf(stdout, "Table does not exit. Query returned error: %s\n", errMsg);
-    sqlite3_free(errMsg);
-    return FALSE;
-  } else {
-    return TRUE;
-  }
+	if (ret != SQLITE_OK) {
+		fprintf(stdout, "Table does not exist. Query returned error: %s\n", errMsg);
+		sqlite3_free(errMsg);
+		return FALSE;
+	} else {
+		return TRUE;
+	}
 }
-
-/*
- * open_db -- Open db. A new db is created and initialized with "containers"
- *            table if it doesn't exist.
- */
 
 static sqlite3 *open_db(char *dbFile) {
 
-  sqlite3 *db=NULL;
-  int ret;
-  
-  ret = sqlite3_open(dbFile, &db);
-  
-  if (ret) {
-    fprintf(stderr, "Error opening the dbFile: %s\n", dbFile);
-    exit(1);
-  } else {
-    fprintf(stdout, "db opened: %s\n", dbFile);
-  }
+	sqlite3 *db = NULL;
+	int ret;
 
-  /* sanity check. Try to query the default table. */
-  if (!table_exists(db)) {
-    sqlite3_close(db);
-    return NULL;
-  } else {
-    fprintf(stdout, "Found right table in db: %s\n", dbFile);
-  }
-  
-  return db;
+	ret = sqlite3_open(dbFile, &db);
+
+	if (ret) {
+		fprintf(stderr, "Error opening the dbFile: %s\n", dbFile);
+		exit(1);
+	} else {
+		fprintf(stdout, "db opened: %s\n", dbFile);
+	}
+
+	if (!table_exists(db)) {
+		sqlite3_close(db);
+		return NULL;
+	} else {
+		fprintf(stdout, "Found right table in db: %s\n", dbFile);
+	}
+
+	return db;
 }
 
-/* Callback function for the web application on /validation url call
- * Lookup db entries, if match found return the method and URL as JSON,
- * otherwise 404
- */
-int callback_get_containers(req_t *request, resp_t *response,
-			    void * user_data) {
-  int resCode=200, i;
-  char *name=NULL, *tag=NULL;
-  char *str=NULL, *response_body=NULL;
-  DB *db;
-  json_t *json, *resp, *agentArray;
+int callback_get_containers(req_t *request, resp_t *response, void *user_data) {
 
-  json = json_object();
-  db   = (DB *)user_data;
+	int resCode = 200, i, j;
+	char *name = NULL, *str = NULL, *response_body = NULL;
+	DB *db;
+	json_t *json, *artifacts, *artifact, *formats, *format;
 
-  json_object_set_new(json, JSON_PROVIDER_RESPONSE, json_object());
-  resp = json_object_get(json, JSON_PROVIDER_RESPONSE);
-  json_object_set_new(resp, JSON_AGENT_CB,  json_array());
+	json = json_object();
+	db = (DB *)user_data;
 
-  agentArray = json_object_get(resp, JSON_AGENT_CB);
+	name = (char *)u_map_get(request->map_url, "name");
 
-  name = (char *)u_map_get(request->map_url, "name");
-  tag  = (char *)u_map_get(request->map_url, "tag");
+	if (!name) {
+		fprintf(stderr, "Invalid name in GET response for EP: %s.\n", EP_CONTAINERS);
+		response_body = strdup("Invalid container name.");
+		resCode = 400;
+		goto reply;
+	}
 
-  if (!name || !tag) {
-    fprintf(stderr, "Invalid name and tage in GET response for EP: %s. \n",
-	    EP_CONTAINERS);
-    response_body = msprintf("Invalid container name and/or tag.");
-    resCode = 400;
-    goto reply;
-  }
+	fprintf(stdout, "Valid GET request for %s name:%s\n", EP_CONTAINERS, name);
 
-  fprintf(stdout, "Valid GET request for %s name:%s tag:%s\n", EP_CONTAINERS,
-	  name, tag);
+	json_object_set_new(json, "name", json_string(name));
+	json_object_set_new(json, "artifacts", json_array());
+	artifacts = json_object_get(json, "artifacts");
 
-  /* Look up db. */
-  for (i=0; i<db->numEnt; i++) {
-    if (strcmp(db->ent[i].name, name) == 0 &&
-	strcmp(db->ent[i].tag, tag) == 0) {
+	for (i = 0; i < db->numEnt; i++) {
+		if (strcmp(db->ent[i].name, name) == 0) {
 
-      /* Add to the JSON array. */
-      json_t *agent = json_object();
-      json_object_set_new(agent, JSON_AGENT_METHOD,
-			  json_string(db->ent[i].method));
-      json_object_set_new(agent, JSON_AGENT_URL,
-			  json_string(db->ent[i].url));
-      if (strcmp(db->ent[i].method, "CHUNK") == 0) {
-	json_object_set_new(agent, JSON_AGENT_INDEX_URL,
-			    json_string(db->ent[i].iURL));
-	json_object_set_new(agent, JSON_AGENT_STORE_URL,
-			    json_string(db->ent[i].sURL));
-      } else {
-	json_object_set_new(agent, JSON_AGENT_INDEX_URL, json_string(""));
-	json_object_set_new(agent, JSON_AGENT_STORE_URL, json_string(""));
-      }
+			int artifact_found = 0;
+			for (j = 0; j < json_array_size(artifacts); j++) {
+				artifact = json_array_get(artifacts, j);
+				if (strcmp(json_string_value(json_object_get(artifact, "version")),
+                           db->ent[i].version) == 0) {
+					formats = json_object_get(artifact, "formats");
+					artifact_found = 1;
+					break;
+				}
+			}
 
-      json_array_append(agentArray, agent);
-    }
-  }
+			if (!artifact_found) {
 
-  str = json_dumps(json, 0);
-  fprintf(stdout, "JSON Object: %s\n", str);
+				artifact = json_object();
+				json_object_set_new(artifact, "version",
+                                    json_string(db->ent[i].version));
+				json_object_set_new(artifact, "formats",
+                                    json_array());
+				formats = json_object_get(artifact, "formats");
+				json_array_append_new(artifacts, artifact);
+			}
 
- reply:
+			format = json_object();
+			json_object_set_new(format, "type", json_string(db->ent[i].type));
+			json_object_set_new(format, "url", json_string(db->ent[i].url));
+			json_object_set_new(format, "created_at", json_string(db->ent[i].created_at));
 
-  if (resCode==200) {
-    ulfius_set_json_body_response(response, resCode, json);
-  } else if (resCode == 400) {
-    ulfius_set_string_body_response(response, 404, response_body);
-  }
+			if (db->ent[i].size_bytes) {
+				json_object_set_new(format, "size_bytes",
+                                    json_integer(db->ent[i].size_bytes));
+			}
 
-  json_decref(agentArray);
-  json_decref(json);
-  o_free(response_body);
+			if (strcmp(db->ent[i].type, "chunk") == 0) {
+				json_t *extra_info = json_object();
+				json_object_set_new(extra_info, "chunks",
+                                    json_string(db->ent[i].chunks_url));
+				json_object_set_new(format, "extra_info", extra_info);
+			}
+			json_array_append_new(formats, format);
+		}
+	}
 
-  return U_CALLBACK_CONTINUE;
-}
+	str = json_dumps(json, 0);
+	fprintf(stdout, "JSON Object: %s\n", str);
+    free(str);
 
-int callback_default_ok(req_t *req, resp_t * resp, void * user_data) {
+reply:
+	if (resCode == 200) {
+		ulfius_set_json_body_response(response, resCode, json);
+	} else if (resCode == 400) {
+		ulfius_set_string_body_response(response, resCode, response_body);
+	}
 
-  DB *db = (DB *)user_data;
+	json_decref(json);
+	free(response_body);
 
-  ulfius_set_string_body_response(resp, 200, "OK\n");
-  return U_CALLBACK_CONTINUE;
+	return U_CALLBACK_CONTINUE;
 }
 
 int read_entries(void *arg, int argc, char **argv, char **colName) {
-  
-  int i, ent;
-  DB *db = (DB *)arg;
-  
-  if (db == NULL) {
-    fprintf(stderr, "Memory failure\n");
-    exit(1);
-  }
 
-  ent = db->numEnt;
-  
-  for(i=0; i<argc; i++){
-    
-    if (strcmp(colName[i], "Name") == 0) {
-      db->ent[ent].name = strdup(argv[i]);
-    } else if (strcmp(colName[i], "Tag") == 0 ) {
-      db->ent[ent].tag = strdup(argv[i]);
-    } else if (strcmp(colName[i], "Type") == 0) {
-      db->ent[ent].type = atoi(argv[i]);
-    } else if (strcmp(colName[i], "Method") == 0) {
-      db->ent[ent].method = strdup(argv[i]);
-    } else if (strcmp(colName[i], "URL") == 0) {
-      db->ent[ent].url = strdup(argv[i]);
-    } else if (strcmp(colName[i], "iURL") == 0) {
-      db->ent[ent].iURL = strdup(argv[i]);
-    } else if (strcmp(colName[i], "sURL") == 0) {
-      db->ent[ent].sURL = strdup(argv[i]);
-    }
-  }
-  
-  if (db->ent[db->numEnt].name)
-    db->numEnt++;
-  
-  return 0;
+	int i, ent;
+	DB *db = (DB *)arg;
+
+	if (db == NULL) {
+		fprintf(stderr, "Memory failure\n");
+		exit(1);
+	}
+
+	ent = db->numEnt;
+
+	for (i = 0; i < argc; i++) {
+		if (strcmp(colName[i], "Name") == 0) {
+			db->ent[ent].name = strdup(argv[i]);
+		} else if (strcmp(colName[i], "Version") == 0) {
+			db->ent[ent].version = strdup(argv[i]);
+		} else if (strcmp(colName[i], "Type") == 0) {
+			db->ent[ent].type = strdup(argv[i]);
+		} else if (strcmp(colName[i], "URL") == 0) {
+			db->ent[ent].url = strdup(argv[i]);
+		} else if (strcmp(colName[i], "CreatedAt") == 0) {
+			db->ent[ent].created_at = strdup(argv[i]);
+		} else if (strcmp(colName[i], "SizeBytes") == 0 && argv[i]) {
+			db->ent[ent].size_bytes = atoi(argv[i]);
+		} else if (strcmp(colName[i], "ChunkURL") == 0) {
+			db->ent[ent].chunk_url = strdup(argv[i]);
+		} else if (strcmp(colName[i], "ChunksURL") == 0) {
+			db->ent[ent].chunks_url = strdup(argv[i]);
+		}
+	}
+
+	if (db->ent[db->numEnt].name)
+		db->numEnt++;
+
+	return 0;
 }
 
 int read_all_db_entries(DB *db) {
-  
-  int val=FALSE;
-  char buf[128];
-  char *err=NULL;
- 
-  /* sanity checks. */
-  if (db == NULL || db->dbPtr == NULL) {
-    return FALSE;
-  }
- 
-  sprintf(buf, "SELECT * FROM Containers;");
 
-  val = sqlite3_exec(db->dbPtr, buf, read_entries, db, &err);
+	int val = FALSE;
+	char buf[128];
+	char *err = NULL;
 
-  if (val != SQLITE_OK) {
-    fprintf(stderr, "SQL read error, query failure: %s\n", err);
-    sqlite3_free(err);
-  } else {
-    fprintf(stdout, " Query: %s\n Response ok\n", buf);
-    val = TRUE;
-  }
-  
-  return val;
-}
+	if (db == NULL || db->dbPtr == NULL) {
+		return FALSE;
+	}
 
-void create_db_entries_endpoint(DB *db, struct _u_instance *inst) {
+	sprintf(buf, "SELECT * FROM Containers;");
 
-  int i;
+	val = sqlite3_exec(db->dbPtr, buf, read_entries, db, &err);
 
-  /* Register all URL to default ok */
-  for (i=0; i<db->numEnt; i++) {
-    ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].url, NULL, 0,
-			       &callback_default_ok, db);
-    ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].iURL, NULL, 0,
-			       &callback_default_ok, db);
-    ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].sURL, NULL, 0,
-			       &callback_default_ok, db);
-  }
+	if (val != SQLITE_OK) {
+		fprintf(stderr, "SQL read error, query failure: %s\n", err);
+		sqlite3_free(err);
+        return FALSE;
+	} else {
+		fprintf(stdout, " Query: %s\n Response ok\n", buf);
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 void free_db_entries(DB *db) {
 
-  int i;
+	int i;
 
-  for (i=0; i<db->numEnt; i++) {
-    free(db->ent[i].name);
-    free(db->ent[i].tag);
-    free(db->ent[i].method);
-    free(db->ent[i].url);
-    free(db->ent[i].iURL);
-    free(db->ent[i].sURL);
-  }
+	for (i = 0; i < db->numEnt; i++) {
+		free(db->ent[i].name);
+		free(db->ent[i].version);
+		free(db->ent[i].type);
+		free(db->ent[i].url);
+		free(db->ent[i].created_at);
+		free(db->ent[i].chunk_url);
+		free(db->ent[i].chunks_url);
+	}
 
-  free(db);
+	free(db);
 }
 
 int main(int argc, char **argv) {
 
-  int port;
-  struct _u_instance inst;
-  DB *db;
+	int port;
+	struct _u_instance inst;
+	DB *db = NULL;
 
-  if (argc<2) {
-    fprintf(stderr, "USAGE: %s port dbFile\n", argv[0]);
-    return 0;
-  }
+	if (argc < 2) {
+		fprintf(stderr, "USAGE: %s port dbFile\n", argv[0]);
+		return 0;
+	}
 
-  db = (DB *)calloc(sizeof(DB), 1);
-  if (!db) {
-    fprintf(stderr, "Memory allocation issue of size: %ld\n", sizeof(DB));
-    exit(1);
-  }
-  
-  port = atoi(argv[1]);
-  db->dbPtr = open_db(argv[2]);
+	db = (DB *)calloc(sizeof(DB), 1);
+	if (!db) {
+		fprintf(stderr, "Memory allocation issue of size: %ld\n", sizeof(DB));
+		exit(1);
+	}
 
-  if (!db->dbPtr) {
-    fprintf(stderr, "Error opening db file: %s\n", argv[2]);
-    return 1;
-  }
+	port      = atoi(argv[1]);
+	db->dbPtr = open_db(argv[2]);
 
-  if (ulfius_init_instance(&inst, port, NULL, NULL) != U_OK) {
-    fprintf(stderr, "Error ulfius_init_instance, abort\n");
-    return 1;
-  }
+	if (!db->dbPtr) {
+		fprintf(stderr, "Error opening db file: %s\n", argv[2]);
+		return 1;
+	}
 
-  /* Endpoint list declaration */
-  ulfius_add_endpoint_by_val(&inst, "GET", EP_CONTAINERS, NULL, 0,
-			     &callback_get_containers, db);
+	if (ulfius_init_instance(&inst, port, NULL, NULL) != U_OK) {
+		fprintf(stderr, "Error ulfius_init_instance, abort\n");
+		return 1;
+	}
 
-  /* Read all db entries and process them. */
-  if (read_all_db_entries(db)) {
-    create_db_entries_endpoint(db, &inst);
-  }
+	ulfius_add_endpoint_by_val(&inst, "GET", "/v1/hub/apps/", ":name", 0,
+                               &callback_get_containers, db);
 
-  /* Start the framework */
-  if (ulfius_start_framework(&inst) == U_OK) {
-    fprintf(stdout, "Famework start on port %d\n", inst.port);
-    getchar();
-  }
-  else {
-    fprintf(stderr, "Error starting framework\n");
-  }
-  
-  fprintf(stdout, "End framework\n");
+	if (read_all_db_entries(db) == FALSE) {
+        fprintf(stderr, "Error reading the db\n");
+        return 1;
+	}
 
-  ulfius_stop_framework(&inst);
-  ulfius_clean_instance(&inst);
+	if (ulfius_start_framework(&inst) == U_OK) {
+		fprintf(stdout, "Framework started on port %d\n", inst.port);
+		getchar();
+	} else {
+		fprintf(stderr, "Error starting framework\n");
+	}
 
-  free_db_entries(db);
-  
-  return 0;
+	fprintf(stdout, "End framework\n");
+
+	ulfius_stop_framework(&inst);
+	ulfius_clean_instance(&inst);
+
+	free_db_entries(db);
+
+	return 0;
 }
+
+
+
+
+

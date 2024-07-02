@@ -8,8 +8,10 @@
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
+import { INVITATION_STATUS } from "../../common/enums";
+
 @InputType()
-export class SendInvitationInputDto {
+export class CreateInvitationInputDto {
   @Field()
   name: string;
 
@@ -22,21 +24,12 @@ export class SendInvitationInputDto {
 }
 
 @ObjectType()
-export class SendInvitationResDto {
-  @Field()
-  id: string;
-
-  @Field()
-  message: string;
-}
-
-@ObjectType()
 export class InvitationDto {
   @Field()
   email: string;
 
   @Field()
-  expiresAt: string;
+  expireAt: string;
 
   @Field()
   id: string;
@@ -53,15 +46,18 @@ export class InvitationDto {
   @Field()
   userId: string;
 
-  @Field()
-  org: string;
-
-  @Field()
-  status: string;
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }
 
 @ObjectType()
-export class InvitationAPIResDto {
+export class InvitationsDto {
+  @Field(() => [InvitationDto])
+  invitations: InvitationDto[];
+}
+
+@ObjectType()
+export class InvitationAPIDto {
   @Field()
   email: string;
 
@@ -69,10 +65,10 @@ export class InvitationAPIResDto {
   name: string;
 
   @Field()
-  expires_at: string;
+  expireAt: string;
 
   @Field()
-  user_id: string;
+  userId: string;
 
   @Field()
   role: string;
@@ -83,15 +79,23 @@ export class InvitationAPIResDto {
   @Field()
   link: string;
 
-  @Field()
-  org: string;
-
-  @Field()
-  status: string;
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }
 
 @ObjectType()
-export class GetInvitationByOrgResDto {
+export class InvitationAPIResDto {
+  @Field(() => InvitationAPIDto)
+  invitation: InvitationAPIDto;
+}
+@ObjectType()
+export class InvitationsAPIResDto {
+  @Field(() => [InvitationAPIDto])
+  invitations: InvitationAPIDto[];
+}
+
+@ObjectType()
+export class InvitationsResDto {
   @Field(() => [InvitationDto])
   invitations: InvitationDto[];
 }
@@ -103,10 +107,7 @@ export class GetInvitationInputDto {
 }
 
 @InputType()
-export class GetInvitationByOrgInputDto {
-  @Field()
-  orgName: string;
-}
+export class GetInvitationByOrgInputDto {}
 
 @ObjectType()
 export class UpdateInvitationResDto {
@@ -123,5 +124,8 @@ export class DeleteInvitationResDto {
 @InputType()
 export class UpateInvitationInputDto {
   @Field()
-  status: string;
+  id: string;
+
+  @Field(() => INVITATION_STATUS)
+  status: INVITATION_STATUS;
 }

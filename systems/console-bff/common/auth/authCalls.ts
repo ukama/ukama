@@ -44,4 +44,14 @@ const getIdentity = async (userId: string, cookie: string) => {
   });
 };
 
-export { getIdentity, updateAttributes };
+const whoami = async (cookie: string) => {
+  return await asyncRestCall({
+    method: API_METHOD_TYPE.GET,
+    url: `${AUTH_URL}/sessions/whoami`,
+    headers: {
+      cookie: cookie,
+    },
+  });
+};
+
+export { getIdentity, updateAttributes, whoami };

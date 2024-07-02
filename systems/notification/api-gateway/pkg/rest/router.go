@@ -235,7 +235,7 @@ func (r *Router) getEventNotification(c *gin.Context, req *GetEventNotificationB
 }
 
 func (r *Router) getEventNotifications(c *gin.Context, req *GetEventNotificationRequest) (*epb.GetAllResponse, error) {
-	return r.clients.e.GetAll(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Role)
+	return r.clients.e.GetAll(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.RoleType)
 }
 
 func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotificationStatusRequest) (*epb.UpdateStatusResponse, error) {

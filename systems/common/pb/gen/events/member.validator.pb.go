@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -19,6 +19,7 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 var _regex_AddMemberEventRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AddMemberEventRequest_MemberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_AddMemberEventRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *AddMemberEventRequest) Validate() error {
@@ -27,6 +28,12 @@ func (this *AddMemberEventRequest) Validate() error {
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if !_regex_AddMemberEventRequest_MemberId.MatchString(this.MemberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.MemberId))
+	}
+	if this.MemberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must not be an empty string`, this.MemberId))
 	}
 	if !_regex_AddMemberEventRequest_UserId.MatchString(this.UserId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserId))
@@ -39,6 +46,7 @@ func (this *AddMemberEventRequest) Validate() error {
 
 var _regex_UpdateMemberEventRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_UpdateMemberEventRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_UpdateMemberEventRequest_MemberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *UpdateMemberEventRequest) Validate() error {
 	if !_regex_UpdateMemberEventRequest_OrgId.MatchString(this.OrgId) {
@@ -53,10 +61,17 @@ func (this *UpdateMemberEventRequest) Validate() error {
 	if this.UserId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must not be an empty string`, this.UserId))
 	}
+	if !_regex_UpdateMemberEventRequest_MemberId.MatchString(this.MemberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.MemberId))
+	}
+	if this.MemberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must not be an empty string`, this.MemberId))
+	}
 	return nil
 }
 
 var _regex_DeleteMemberEventRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DeleteMemberEventRequest_MemberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_DeleteMemberEventRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeleteMemberEventRequest) Validate() error {
@@ -65,6 +80,12 @@ func (this *DeleteMemberEventRequest) Validate() error {
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if !_regex_DeleteMemberEventRequest_MemberId.MatchString(this.MemberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.MemberId))
+	}
+	if this.MemberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("MemberId", fmt.Errorf(`value '%v' must not be an empty string`, this.MemberId))
 	}
 	if !_regex_DeleteMemberEventRequest_UserId.MatchString(this.UserId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserId))
