@@ -150,9 +150,9 @@ create_ukama_build_file
 rm ./ukama_build.json
 
 # copy the created init, kernel and img file
-cp ${REPO_DIR}/builder/script/vmlinuz* ${REPO_DIR}/..
-cp ${REPO_DIR}/builder/script/initrd*  ${REPO_DIR}/..
-cp ${REPO_DIR}/builder/script/*.img    ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/vmlinuz* ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/initrd*  ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/*.img    ${REPO_DIR}/..
 
 echo "All Done."
 
