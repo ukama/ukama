@@ -2,22 +2,19 @@ import { ApolloServer } from "@apollo/server";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
-import { AuthType } from "../../common/types";
+import { parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../user/context";
 import UserApi from "../../user/datasource/user_api";
 import { GetUserResolver } from "../../user/resolver/getUser";
 import { WhoamiResolver } from "../../user/resolver/whoami";
 
-const userId = process.env.USER_ID;
-const orgId = process.env.ORG_ID;
-const orgName = process.env.ORG_NAME;
+const token = process.env.TOKEN;
+const headers = {
+  cookie: "ukama_session=COPY_SESSION_VALUE",
+  token: token,
+};
 
-if (!userId || !orgId || !orgName) {
-  throw new Error(
-    "Environment variables USER_ID, ORG_ID, and ORG_NAME must be set"
-  );
-}
-
+const parsedHeaders = parseGatewayHeaders(headers);
 const userApi = new UserApi();
 
 const createSchema = async () => {
@@ -58,6 +55,7 @@ describe("USER API integration test", () => {
     registeredSince
   }
 }`;
+    const { userId } = parsedHeaders;
     const res = await server.executeOperation(
       {
         query: GET_USER,
@@ -68,13 +66,7 @@ describe("USER API integration test", () => {
           dataSources: {
             dataSource: userApi,
           },
-          headers: {
-            auth: new AuthType(),
-            token: "",
-            orgId: orgId,
-            orgName: orgName,
-            userId: userId,
-          },
+          headers: parsedHeaders,
         },
       }
     );
@@ -129,13 +121,7 @@ describe("USER API integration test", () => {
           dataSources: {
             dataSource: userApi,
           },
-          headers: {
-            auth: new AuthType(),
-            token: userId,
-            orgId: orgId,
-            orgName: orgName,
-            userId: userId,
-          },
+          headers: parsedHeaders,
         },
       }
     );
