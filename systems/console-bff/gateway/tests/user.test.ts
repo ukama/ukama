@@ -10,7 +10,7 @@ import { WhoamiResolver } from "../../user/resolver/whoami";
 
 const token = process.env.TOKEN;
 const headers = {
-  cookie: "ukama_session=COPY_SESSION_VALUE",
+  cookie: "ukama_session=random-session",
   token: token,
 };
 
