@@ -1,38 +1,57 @@
 import { ApolloServer } from "@apollo/server";
+import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
-import { AuthType } from "../../common/types";
+import { SUB_GRAPHS } from "../../common/configs";
+import { logger } from "../../common/logger";
+import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../network/context";
 import NetworkApi from "../../network/datasource/network_api";
 import { AddNetworkResolver } from "../../network/resolvers/addNetwork";
-import { AddSiteResolver } from "../../network/resolvers/addSite";
 import { GetNetworkResolver } from "../../network/resolvers/getNetwork";
 import { GetNetworksResolver } from "../../network/resolvers/getNetworks";
-import { GetSiteResolver } from "../../network/resolvers/getSite";
-import { GetSitesResolver } from "../../network/resolvers/getSites";
+import { SetDefaultNetworkResolver } from "../../network/resolvers/setDefaultNetwork";
 
-const userId = process.env.USER_ID;
-const orgId = process.env.ORG_ID;
-const orgName = process.env.ORG_NAME;
+const token = process.env.TOKEN;
+const headers = {
+  cookie: "ukama_session=random-session",
+  token: token,
+};
+const parsedHeaders = parseGatewayHeaders(headers);
 
-if (!userId || !orgId || !orgName) {
-  throw new Error(
-    "Environment variables USER_ID, ORG_ID, and ORG_NAME must be set"
-  );
-}
+const { orgName } = parsedHeaders;
+const generateRandomName = (length = 10) => {
+  const characters = "abcdefghijklmnopqrstuvwxyz-";
+  return Array.from(
+    { length },
+    () => characters[Math.floor(Math.random() * characters.length)]
+  ).join("");
+};
 
+const testNetwork = {
+  budget: Math.floor(Math.random() * 10),
+  countries: ["Country"],
+  name: generateRandomName(),
+  networks: ["A3"],
+  org: orgName,
+};
+
+let networkId = "";
 const networkApi = new NetworkApi();
+const redisClient = createClient().on("error", error => {
+  logger.error(
+    `Error creating redis for ${SUB_GRAPHS.network.name} service, Error: ${error}`
+  );
+});
 
 const createSchema = async () => {
   return await buildSchema({
     resolvers: [
       AddNetworkResolver,
-      AddSiteResolver,
       GetNetworkResolver,
       GetNetworksResolver,
-      GetSiteResolver,
-      GetSitesResolver,
+      SetDefaultNetworkResolver,
     ],
     validate: true,
   });
@@ -73,13 +92,6 @@ describe("Network API integration test", () => {
     networks
   }
 }`;
-    const testNetwork = {
-      budget: Math.floor(Math.random() * 10),
-      countries: ["Country"],
-      name: "notmynetwork1",
-      networks: ["A3"],
-      org: "ukama-test-org",
-    };
 
     const res = await server.executeOperation(
       {
@@ -89,27 +101,162 @@ describe("Network API integration test", () => {
         },
       },
       {
-        contextValue: {
-          dataSources: {
-            dataSource: networkApi,
-          },
-          headers: {
-            auth: new AuthType(),
-            token: "",
-            orgId: orgId,
-            orgName: orgName,
-            userId: userId,
-          },
-        },
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.network.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: networkApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data).toBeDefined();
+    expect(data.addNetwork).toBeDefined();
+    expect(data.addNetwork).toHaveProperty("id");
+    networkId = data.addNetwork.id;
+    expect(data.addNetwork.name).toEqual(testNetwork.name);
+    expect(data.addNetwork.countries).toEqual(testNetwork.countries);
+    expect(data.addNetwork.budget).toEqual(testNetwork.budget);
+    expect(data.addNetwork.networks).toEqual(testNetwork.networks);
+  });
+  it("should get all networks", async () => {
+    const GET_NETWORKS = `query GetNetworks {
+  getNetworks {
+    networks {
+      id
+      name
+      isDefault
+      budget
+      overdraft
+      trafficPolicy
+      isDeactivated
+      paymentLinks
+      createdAt
+      countries
+      networks
+    }
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: GET_NETWORKS,
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.network.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: networkApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
       }
     );
     const body = JSON.stringify(res.body);
-    const { addNetwork } = JSON.parse(body);
-    expect(addNetwork).toBeDefined();
-    expect(addNetwork).toHaveProperty("id");
-    expect(addNetwork.name).toEqual(testNetwork.name);
-    expect(addNetwork.countries).toEqual(testNetwork.countries);
-    expect(addNetwork.budget).toEqual(testNetwork.budget);
-    expect(addNetwork.networks).toEqual(testNetwork.networks);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNetworks.networks.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should get a network using network-id", async () => {
+    const GET_NETWORK = `query GetNetwork($networkId: String!) {
+  getNetwork(networkId: $networkId) {
+    id
+    name
+    isDefault
+    budget
+    overdraft
+    trafficPolicy
+    isDeactivated
+    paymentLinks
+    createdAt
+    countries
+    networks
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: GET_NETWORK,
+        variables: { networkId },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.network.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: networkApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data).toHaveProperty("getNetwork");
+    expect(data.getNetwork.id).toEqual(networkId);
+    expect(data.getNetwork.name).toEqual(testNetwork.name);
+  });
+  it("should set default network", async () => {
+    const SET_DEFAULT = `mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
+  setDefaultNetwork(data: $data) {
+    success
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: SET_DEFAULT,
+        variables: { data: { id: networkId } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.network.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: networkApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    console.log(JSON.stringify(res));
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.setDefaultNetwork).toHaveProperty("success");
+    expect(data.setDefaultNetwork.success).toBeTruthy();
   });
 });
