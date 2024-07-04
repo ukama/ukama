@@ -10,54 +10,47 @@ import { createClient } from "redis";
 import "reflect-metadata";
 
 import { THeaders } from "../common/types";
-import {
-  findProcessNKill,
-  getBaseURL,
-  parseGatewayHeaders,
-} from "../common/utils";
+import { getBaseURL, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { SUB_GRAPHS } from "./../common/configs";
+import { BFF_REDIS, SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import NodeAPI from "./dataSource/node-api";
 import resolvers from "./resolvers";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.node.port}`);
-  if (isSuccess) {
-    const server = await SubGraphServer(resolvers);
-    const redisClient = createClient().on("error", error => {
-      logger.error(
-        `Error creating redis for ${SUB_GRAPHS.node.name} service, Error: ${error}`
-      );
-    });
-    const connectPromise = redisClient.connect();
-    await connectPromise;
-
-    await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const headers: THeaders = parseGatewayHeaders(req.headers);
-        const baseURL = await getBaseURL(
-          SUB_GRAPHS.node.name,
-          headers.orgName,
-          redisClient.isOpen ? redisClient : null
-        );
-        return {
-          headers: headers,
-          baseURL: baseURL.message,
-          dataSources: {
-            dataSource: new NodeAPI(),
-          },
-        };
-      },
-      listen: { port: SUB_GRAPHS.node.port },
-    });
-
-    logger.info(
-      `🚀 Ukama ${SUB_GRAPHS.node.name} service running at http://localhost:${SUB_GRAPHS.node.port}/graphql`
+  const server = await SubGraphServer(resolvers);
+  const redisClient = createClient({
+    url: BFF_REDIS,
+  }).on("error", error => {
+    logger.error(
+      `Error creating redis for ${SUB_GRAPHS.node.name} service, Error: ${error}`
     );
-  } else {
-    logger.error(`Server failed to start on port ${SUB_GRAPHS.node.port}`);
-  }
+  });
+  const connectPromise = redisClient.connect();
+  await connectPromise;
+
+  await startStandaloneServer(server, {
+    context: async ({ req }) => {
+      const headers: THeaders = parseGatewayHeaders(req.headers);
+      const baseURL = await getBaseURL(
+        SUB_GRAPHS.node.name,
+        headers.orgName,
+        redisClient.isOpen ? redisClient : null
+      );
+      return {
+        headers: headers,
+        baseURL: baseURL.message,
+        dataSources: {
+          dataSource: new NodeAPI(),
+        },
+      };
+    },
+    listen: { port: SUB_GRAPHS.node.port },
+  });
+
+  logger.info(
+    `🚀 Ukama ${SUB_GRAPHS.node.name} service running at http://localhost:${SUB_GRAPHS.node.port}/graphql`
+  );
 };
 
 runServer();

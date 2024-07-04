@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  bff-redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  bff:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - BFF_REDIS=redis://bff-redis:6379
+    depends_on:
+      - bff-redis
