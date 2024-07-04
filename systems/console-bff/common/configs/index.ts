@@ -38,7 +38,7 @@ export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
-export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://192.168.0.83:6379";
+export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://bff-redis:6379";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");
