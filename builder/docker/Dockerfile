@@ -1,4 +1,5 @@
-FROM ubuntu:latest
+# Base setup
+FROM ubuntu:latest as base
 
 LABEL maintainer="hello@ukama.com"
 
@@ -35,7 +36,6 @@ RUN apt-get update && apt-get install -y \
     libvirt-clients \
     bridge-utils \
     debootstrap \
-    extlinux \
     kpartx \
     && rm -rf /var/lib/apt/lists/*
 
@@ -45,4 +45,23 @@ RUN apt-get update && \
     util-linux \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /workspace
+
+# Final stage with platform-specific logic
+FROM base
+
+ARG TARGETPLATFORM
+
+# Install extlinux conditionally
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+        apt-get update && apt-get install -y extlinux; \
+    else \
+        wget http://archive.ubuntu.com/ubuntu/pool/universe/s/syslinux/extlinux_6.04~git20190206.bf6db5b4+dfsg1-2_amd64.deb \
+        && sha256sum extlinux_6.04~git20190206.bf6db5b4+dfsg1-2_amd64.deb \
+        && dpkg -i extlinux_6.04~git20190206.bf6db5b4+dfsg1-2_amd64.deb \
+        && apt-get install -f \
+        && rm extlinux_6.04~git20190206.bf6db5b4+dfsg1-2_amd64.deb; \
+    fi
+
+# Optionally set the working directory again if it was overridden
 WORKDIR /workspace

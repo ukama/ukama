@@ -6,14 +6,23 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-CWD=`pwd`
+CWD=$(pwd)
 BRANCH=$1
 
 set -e
 
+# Determine the platform
+PLATFORM=$(uname -s)
+
+if [ "$PLATFORM" = "Darwin" ]; then
+    TARGETPLATFORM="darwin/amd64"
+else
+    TARGETPLATFORM="linux/amd64"
+fi
+
 # Build docker image using local Dockerfile
 docker image rm --force builder
-docker build -t builder .
+docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} -t builder .
 
 # Run the docker
 docker run --privileged \
