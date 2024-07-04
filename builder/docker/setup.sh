@@ -15,9 +15,9 @@ set -e
 PLATFORM=$(uname -s)
 
 if [ "$PLATFORM" = "Darwin" ]; then
-    TARGETPLATFORM="darwin/amd64"
+    TARGETPLATFORM="amd64/ubuntu:latest"
 else
-    TARGETPLATFORM="linux/amd64"
+    TARGETPLATFORM="ubuntu:latest"
 fi
 
 # Check if the Docker image already exists

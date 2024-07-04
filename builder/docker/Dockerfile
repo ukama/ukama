@@ -1,5 +1,5 @@
-# Base setup
-FROM ubuntu:latest as base
+ARG TARGETPLATFORM
+FROM ${TARGETPLATFORM} as base
 
 LABEL maintainer="hello@ukama.com"
 
@@ -53,7 +53,7 @@ FROM base
 ARG TARGETPLATFORM
 
 # Install extlinux conditionally
-RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+RUN if [ "$TARGETPLATFORM" = "amd64/ubuntu:latest" ]; then \
         apt-get update && apt-get install -y extlinux; \
     else \
         wget http://archive.ubuntu.com/ubuntu/pool/universe/s/syslinux/extlinux_6.04~git20190206.bf6db5b4+dfsg1-2_amd64.deb \
