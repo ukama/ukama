@@ -251,7 +251,6 @@ describe("Network API integration test", () => {
         })(),
       }
     );
-    console.log(JSON.stringify(res));
     const body = JSON.stringify(res.body);
     const { singleResult } = JSON.parse(body);
     expect(singleResult.errors).toBeUndefined();
