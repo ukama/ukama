@@ -20,11 +20,17 @@ else
     TARGETPLATFORM="linux/amd64"
 fi
 
-# Build docker image using local Dockerfile
-docker image rm --force builder
-docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} -t builder .
+# Check if the Docker image already exists
+IMAGE_EXISTS=$(docker images -q builder:latest)
 
-# Run the docker
+if [ -z "$IMAGE_EXISTS" ]; then
+    # Build docker image using local Dockerfile
+    docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} -t builder .
+else
+    echo "Docker image 'builder:latest' already exists. Skipping build."
+fi
+
+# Run the docker to build the UkamaOS
 docker run --privileged \
        -v ${CWD}:/workspace \
        -v /dev:/dev \
