@@ -138,8 +138,10 @@ sort_systems_by_dependency() {
           echo "7 $key"
       elif [ "$key" == "subscriber" ]; then
           echo "8 $key"
-      else
+      elif [ "$key" == "inventory" ]; then
           echo "9 $key"
+      else
+          echo "10 $key"
       fi
     done | sort -n -k1,1 | cut -d' ' -f2-))
 }
