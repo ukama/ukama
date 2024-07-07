@@ -38,6 +38,7 @@ export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
+export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://localhost:6379";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");
@@ -45,7 +46,7 @@ export const SUBSCRIPTIONS_PORT = parseInt(
   process.env.SUBSCRIPTIONS_PORT ?? "8081"
 );
 export const PLANNING_SERVICE_PORT = parseInt(
-  process.env.PLANNING_SERVICE_PORT ?? "5041"
+  process.env.PLANNING_SERVICE_PORT ?? "5042"
 );
 const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5043");
 const USER_PORT = parseInt(process.env.USER_PORT ?? "5044");
@@ -59,10 +60,10 @@ const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
 const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
 const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5055");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5056");
-const NOTIFICATION_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5057");
+const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5057");
 export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5058");
 export const COMPONENT_INVENTORY_PORT = parseInt(
-  process.env.SITE_PORT ?? "5059"
+  process.env.COMPONENT_INVENTORY_PORT ?? "5059"
 );
 export const SUB_GRAPHS = {
   org: {

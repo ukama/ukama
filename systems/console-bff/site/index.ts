@@ -6,31 +6,50 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
+import { createClient } from "redis";
 import "reflect-metadata";
 
 import SubGraphServer from "../common/apollo";
-import { SITE_PORT } from "../common/configs";
+import { BFF_REDIS, SUB_GRAPHS } from "../common/configs";
 import { logger } from "../common/logger";
-import { parseGatewayHeaders } from "../common/utils";
+import { THeaders } from "../common/types";
+import { getBaseURL, parseGatewayHeaders } from "../common/utils";
 import SiteAPI from "./datasource/site_api";
 import resolvers from "./resolvers";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
+  const redisClient = createClient({
+    url: BFF_REDIS,
+  }).on("error", error => {
+    logger.error(
+      `Error creating redis for ${SUB_GRAPHS.site.name} service, Error: ${error}`
+    );
+  });
+  const connectPromise = redisClient.connect();
+  await connectPromise;
+
   await startStandaloneServer(server, {
     context: async ({ req }) => {
+      const headers: THeaders = parseGatewayHeaders(req.headers);
+      const baseURL = await getBaseURL(
+        SUB_GRAPHS.site.name,
+        headers.orgName,
+        redisClient.isOpen ? redisClient : null
+      );
       return {
-        headers: parseGatewayHeaders(req.headers),
+        headers: headers,
+        baseURL: baseURL.message,
         dataSources: {
           dataSource: new SiteAPI(),
         },
       };
     },
-    listen: { port: SITE_PORT },
+    listen: { port: SUB_GRAPHS.site.port },
   });
 
   logger.info(
-    `🚀 Ukama Site service running at http://localhost:${SITE_PORT}/graphql`
+    `🚀 Ukama ${SUB_GRAPHS.site.name} service running at http://localhost:${SUB_GRAPHS.site.port}/graphql`
   );
 };
 

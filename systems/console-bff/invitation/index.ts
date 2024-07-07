@@ -8,7 +8,7 @@
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 
-import { findProcessNKill, parseGatewayHeaders } from "../common/utils";
+import { parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
 import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
@@ -16,29 +16,22 @@ import InvitationAPI from "./datasource/invitation_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
-  const isSuccess = await findProcessNKill(`${SUB_GRAPHS.invitation.port}`);
-  if (isSuccess) {
-    const server = await SubGraphServer(resolvers);
-    await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        return {
-          headers: parseGatewayHeaders(req.headers),
-          dataSources: {
-            dataSource: new InvitationAPI(),
-          },
-        };
-      },
-      listen: { port: SUB_GRAPHS.invitation.port },
-    });
+  const server = await SubGraphServer(resolvers);
+  await startStandaloneServer(server, {
+    context: async ({ req }) => {
+      return {
+        headers: parseGatewayHeaders(req.headers),
+        dataSources: {
+          dataSource: new InvitationAPI(),
+        },
+      };
+    },
+    listen: { port: SUB_GRAPHS.invitation.port },
+  });
 
-    logger.info(
-      `🚀 Ukama ${SUB_GRAPHS.invitation.name} service running at http://localhost:${SUB_GRAPHS.invitation.port}/graphql`
-    );
-  } else {
-    logger.error(
-      `Server failed to start on port ${SUB_GRAPHS.invitation.port}`
-    );
-  }
+  logger.info(
+    `🚀 Ukama ${SUB_GRAPHS.invitation.name} service running at http://localhost:${SUB_GRAPHS.invitation.port}/graphql`
+  );
 };
 
 runServer();
