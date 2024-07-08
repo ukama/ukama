@@ -5,6 +5,8 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+    networks:
+      - ukama-net
 
   bff:
     build: .
@@ -13,5 +15,20 @@ services:
       - "8081:8081"
     environment:
       - BFF_REDIS=redis://bff-redis:6379
+      - AUTH_URL=http://kratos:4433
+      - NUCLEUS_API_GW=http://api-gateway-nucleus:8080
+      - INIT_API_GW=http://api-gateway-init:8080
+      - INVENTORY_API_GW=http://api-gateway-inventory:8080
+      - ENCRYPTION_KEY=the-key-has-to-be-32-bytes-long!
+      - STORAGE_KEY=ukama
+      - CONSOLE_APP_URL=http://console:3000
+      - AUTH_APP_URL=http://app:4455
     depends_on:
       - bff-redis
+    networks:
+      - ukama-net
+
+networks:
+  ukama-net:
+    external: true
+    name: services_ukama-net
