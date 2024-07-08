@@ -41,7 +41,7 @@ const createSchema = async () => {
 
 const redisClient = createClient().on("error", error => {
   logger.error(
-    `Error creating redis for ${SUB_GRAPHS.network.name} service, Error: ${error}`
+    `Error creating redis for ${SUB_GRAPHS.invitation.name} service, Error: ${error}`
   );
 });
 
@@ -94,7 +94,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
@@ -139,7 +139,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
@@ -188,7 +188,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
@@ -233,7 +233,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
@@ -274,7 +274,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
@@ -309,7 +309,7 @@ describe("Invitation API integration test", () => {
       {
         contextValue: await (async () => {
           const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
+            SUB_GRAPHS.invitation.name,
             orgName,
             redisClient.isOpen ? redisClient : null
           );
