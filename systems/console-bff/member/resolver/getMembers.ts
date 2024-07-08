@@ -5,12 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import axios from "axios";
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { NUCLEUS_API_GW } from "../../common/configs";
 import { Context } from "../context";
-import { dtoToUserResDto } from "../datasource/mapper";
+import UserApi from "../datasource/user_api";
 import { MemberDto, MembersResDto } from "./types";
 
 @Resolver()
@@ -20,10 +18,9 @@ export class GetMembersResolver {
     const { dataSources, baseURL } = ctx;
     const members: MemberDto[] = [];
     const res = await dataSources.dataSource.getMembers(baseURL);
+    const userAPI = new UserApi();
     for (const member of res.members) {
-      const user = await axios
-        .get(`${NUCLEUS_API_GW}/v1/users/${member.userId}`)
-        .then(res => dtoToUserResDto(res.data));
+      const user = await userAPI.getUser(member.userId);
 
       members.push({
         role: member.role,
