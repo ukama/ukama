@@ -104,6 +104,12 @@ export class SubscriberAPIResDto {
   Subscriber: SubscriberAPIDto;
 }
 
+@ObjectType()
+export class GetSubscriberAPIResDto {
+  @Field(() => SubscriberAPIDto)
+  subscriber: SubscriberAPIDto;
+}
+
 export class SubscribersAPIResDto {
   @Field(() => [SubscriberAPIDto])
   subscribers: SubscriberAPIDto[];
