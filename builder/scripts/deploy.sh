@@ -203,6 +203,7 @@ if [[ " ${SYSTEMS[@]} " =~ "bff" ]]; then
     SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
     SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
     SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
 else
     SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
     SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
@@ -210,6 +211,7 @@ else
     SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://localhost:8078' WHERE systems."name" = 'subscriber'";
     SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://localhost:8074' WHERE systems."name" = 'dataplan'";
     SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://localhost:8077' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
 fi 
 
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
@@ -219,5 +221,6 @@ psql $DB_URI -c "$SYS_QUERY_3"
 psql $DB_URI -c "$SYS_QUERY_4"
 psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
+psql $DB_URI -c "$SYS_QUERY_7"
 
 echo "$TAG Task done."

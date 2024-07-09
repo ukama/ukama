@@ -5,10 +5,12 @@ dsn: memory
 serve:
   public:
     base_url: http://localhost:4423/
+    host: ""
+    port: 4423
     cors:
       enabled: true
       allowed_origins:
-        - http://localhost:4445
+        - http://localhost:4425
         - http://localhost:3000
         - http://localhost:8080
         - http://localhost:4000
@@ -27,12 +29,14 @@ serve:
         - Content-Type
         - Set-Cookie
   admin:
-    base_url: http://localhost:4423/
+    base_url: http://localhost:4424/
+    host: ""
+    port: 4424
 
 selfservice:
-  default_browser_return_url: http://localhost:4445
+  default_browser_return_url: http://localhost:4425
   allowed_return_urls:
-    - http://localhost:4445
+    - http://localhost:4425
 
   methods:
     password:
@@ -50,33 +54,33 @@ selfservice:
 
   flows:
     error:
-      ui_url:  http://localhost:4445/error
+      ui_url:  http://localhost:4425/error
 
     settings:
-      ui_url: http://localhost:4445/user/settings
+      ui_url: http://localhost:4425/user/settings
       privileged_session_max_age: 15m
 
     recovery:
       enabled: true
-      ui_url: http://localhost:4445/auth/recovery
+      ui_url: http://localhost:4425/auth/recovery
 
     verification:
       enabled: true
-      ui_url: http://localhost:4445/user/verification
+      ui_url: http://localhost:4425/user/verification
       after:
-        default_browser_return_url: http://localhost:4445/
+        default_browser_return_url: http://localhost:4425/
 
     logout:
       after:
-        default_browser_return_url: http://localhost:4445/auth/login
+        default_browser_return_url: http://localhost:4425/auth/login
 
     login:
-      ui_url: http://localhost:4445/auth/login
+      ui_url: http://localhost:4425/auth/login
       lifespan: 72h
 
     registration:
       lifespan: 72h
-      ui_url: http://localhost:4445/auth/registration
+      ui_url: http://localhost:4425/auth/registration
       after:
         oidc:
           hooks:
