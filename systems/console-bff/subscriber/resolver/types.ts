@@ -101,7 +101,7 @@ export class SubscriberAPIDto {
 @ObjectType()
 export class SubscriberAPIResDto {
   @Field(() => SubscriberAPIDto)
-  subscriber: SubscriberAPIDto;
+  Subscriber: SubscriberAPIDto;
 }
 
 export class SubscribersAPIResDto {
