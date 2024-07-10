@@ -35,13 +35,36 @@ def create_mock_endpoints(spec):
 def create_mock_endpoint(endpoint, method, details):
     responses = details.get('responses', {})
 
-    def handler():
-        # Choose the first response code defined in the spec
-        response_code, response_details = next(iter(responses.items()))
-        response_code = int(response_code)
-        response_description = response_details.get('description', 'Mock response')
+    def handler(**kwargs):
+        # Mock response logic based on request data and parameters
+        if 'id' in kwargs:
+            if kwargs['id'] == 'sampleId':
+                response_code = 202
+                response_description = "Accepted - Note: only if {id} matches with the nodeID"
+            else:
+                response_code = 400
+                response_description = "Bad Request - Note: if the {id} is not given or it does not match with the nodeID"
+        elif 'level' in kwargs:
+            if kwargs['level'] == 'sampleLevel':
+                response_code = 403
+                response_description = "Forbidden"
+            else:
+                response_code = 200
+                response_description = "Log level set"
+        elif 'output' in kwargs:
+            if kwargs['output'] == 'sampleOutput':
+                response_code = 403
+                response_description = "Forbidden"
+            else:
+                response_code = 200
+                response_description = "Output set"
+        else:
+            # Choose the first response code defined in the spec
+            response_code, response_details = next(iter(responses.items()))
+            response_code = int(response_code)
+            response_description = response_details.get('description', 'Mock response')
 
-        return jsonify({'message': response_description}), response_code
+        return jsonify({'message': response_description, 'params': kwargs}), response_code
 
     app.add_url_rule(endpoint, endpoint + '_' + method,
                      handler, methods=[method.upper()])

@@ -58,6 +58,12 @@ def generate_test_cases(swagger_spec):
     for path, methods in swagger_spec['paths'].items():
         for method, details in methods.items():
             url = urljoin(base_url, path)
+            # Replace path parameters with sample values
+            url = url.replace('{id}', 'sampleId')
+            url = url.replace('{level}', 'sampleLevel')
+            url = url.replace('{output}', 'sampleOutput')
+            url = url.replace('{space}', 'sampleSpace')
+            url = url.replace('{name}', 'sampleName')
             for status_code, response in details.get('responses', {}).items():
                 if status_code == '404':
                     continue  # Skip 404 responses as these are not applicable for defined endpoints
@@ -102,4 +108,3 @@ def test_endpoints(swagger_spec, test_case):
 
 if __name__ == "__main__":
     pytest.main([__file__])
-
