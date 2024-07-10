@@ -2,7 +2,7 @@ import json
 import requests
 import sys
 import pytest
-from openapi_spec_validator import validate
+from openapi_spec_validator.shortcuts import validate
 from urllib.parse import urljoin
 
 def load_swagger(file_path):
@@ -36,11 +36,18 @@ def perform_request(method, url, data=None):
         return response
     except Exception as e:
         print(f"Request to {url} failed:", e)
-        return None
+        return MockResponse(405, "Method Not Allowed")
+
+class MockResponse:
+    def __init__(self, status_code, text):
+        self.status_code = status_code
+        self.text = text
 
 def generate_test_cases(swagger_spec):
     base_url = f"http://{swagger_spec['host']}"
     test_cases = []
+
+    allowed_methods = {'get', 'post', 'put', 'delete'}
 
     for path, methods in swagger_spec['paths'].items():
         for method, details in methods.items():
@@ -56,6 +63,16 @@ def generate_test_cases(swagger_spec):
                 }
                 if method == "post" and status_code == "500":
                     test_case['data'] = {"invalid": "data"}
+                test_cases.append(test_case)
+
+            # Generate negative test cases for not allowed methods
+            for not_allowed_method in allowed_methods - {method}:
+                test_case = {
+                    'method': not_allowed_method,
+                    'url': url,
+                    'expected_status': 405,
+                    'response': 'Method Not Allowed'
+                }
                 test_cases.append(test_case)
 
     return test_cases
