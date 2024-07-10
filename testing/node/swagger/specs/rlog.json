@@ -1,0 +1,55 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rlog.d API",
+    "version": "1.0.0",
+    "description": "API documentation for the rlog.d application",
+    "contact": {
+      "name": "Ukama Inc.",
+      "url": "http://www.ukama.com",
+      "email": "hello@ukama.com"
+    },
+    "license": {
+      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "host": "localhost:18010",
+  "schemes": ["http"],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "summary": "Ping the server",
+        "description": "Returns OK if the server is running",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/logit": {
+      "post": {
+        "summary": "Create websocket connection",
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  }
+}
+

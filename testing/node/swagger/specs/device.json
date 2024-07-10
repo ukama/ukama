@@ -1,0 +1,61 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "device.d API",
+    "version": "1.0.0",
+    "description": "API documentation for the device.d application",
+    "contact": {
+      "name": "Ukama Inc.",
+      "url": "http://www.ukama.com",
+      "email": "hello@ukama.com"
+    },
+    "license": {
+      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "host": "localhost:18003",
+  "schemes": ["http"],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "summary": "Ping the server",
+        "description": "Returns OK if the server is running",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/reboot/{id}": {
+      "post": {
+        "description": "Reboot the node with id",
+        "responses": {
+          "202": {
+            "description": "Accepted - Note: only if {id} matches with the nodeID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request - Note: if the {id} is not given or it does not match with the nodeID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  }
+}
+
