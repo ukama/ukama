@@ -30,14 +30,10 @@ def create_mock_endpoint(endpoint, method, details):
     responses = details.get('responses', {})
 
     def handler():
-        response_code = 200
-        response_description = "Mock response"
-        if '200' in responses:
-            response_code = 200
-            response_description = responses['200'].get('description', 'OK')
-        elif '404' in responses:
-            response_code = 404
-            response_description = responses['404'].get('description', 'Not Found')
+        # Choose the first response code defined in the spec
+        response_code, response_details = next(iter(responses.items()))
+        response_code = int(response_code)
+        response_description = response_details.get('description', 'Mock response')
 
         return jsonify({'message': response_description}), response_code
 
