@@ -24,6 +24,9 @@ for json_file in "specs"/*.json; do
     # Kill the server process
     kill $server_pid
 
+    # Wait for process to terminate
+    wait $server_pid
+
     echo "Finished processing $json_file."
 done
 
