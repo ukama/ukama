@@ -64,9 +64,6 @@
         "responses": {
           "200": {
             "description": "Log level set"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         }
       }
@@ -87,9 +84,6 @@
         "responses": {
           "200": {
             "description": "Output set"
-          },
-          "403": {
-            "description": "Forbidden"
           }
         }
       }

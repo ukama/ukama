@@ -51,11 +51,19 @@
         }
       }
     },
-    "/v1/reboot": {
+    "/v1/reboot/{id}": {
       "post": {
         "summary": "Reboot the node with id",
         "description": "Reboot the node with the specified id",
-        "responses": {
+         "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+          ],
+          "responses": {
           "202": {
             "description": "Accepted",
             "schema": {

@@ -37,15 +37,17 @@
     "/v1/reboot/{id}": {
       "post": {
         "description": "Reboot the node with id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "responses": {
           "202": {
             "description": "Accepted - Note: only if {id} matches with the nodeID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "400": {
-            "description": "Bad Request - Note: if the {id} is not given or it does not match with the nodeID",
             "schema": {
               "type": "string"
             }
@@ -58,4 +60,5 @@
     }
   }
 }
+
 
