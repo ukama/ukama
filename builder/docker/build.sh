@@ -6,6 +6,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 REPO_DIR=/workspace/ukama
+PLATFORM_DIR=${REPO_DIR}/nodes/ukamaOS/distro/platform
 VENDOR_DIR=${REPO_DIR}/nodes/ukamaOS/distro/vendor
 VENDOR_MAKEFILE=${VENDOR_DIR}/Makefile
 VENDOR_LIBRARIES=
@@ -61,13 +62,39 @@ build_libraries() {
     done
 }
 
+create_ukama_build_file() {
+
+    local original_file="ukama.json"
+    local new_file="ukama_build.json"
+
+    # Use jq to replace paths under the setup section
+    jq '
+        .setup["ukama-repo"] = "/workspace/ukama" |
+        .setup["auth-repo"] = "/workspace/ukama"
+    ' "$original_file" > "$new_file"
+
+    if [[ -f "$new_file" ]]; then
+        echo "New file created: $new_file"
+    else
+        echo "Failed to create the new file."
+        return 1
+    fi
+}
+
+#default branch is main
+BRANCH=${1:-main}
+
 # clone Ukama code and update the submodule
-git clone https://github.com/ukama/ukama
-cd ukama
-git fetch
-git checkout build-update
-git submodule init
-git submodule update
+if [ ! -d "ukama" ]; then
+    git clone https://github.com/ukama/ukama
+    cd ukama
+    if [ "$BRANCH" != "main" ]; then
+        git fetch
+        git checkout "$BRANCH"
+    fi
+    git submodule init
+    git submodule update
+fi
 
 if [ ! -d "$VENDOR_DIR" ]; then
     echo "The specified directory does not exist: ${VENDOR_DIR}"
@@ -111,15 +138,21 @@ wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
 cd ${VENDOR_DIR} && build_libraries
 
 # Build the builder
+export LD_LIBRARY_PATH=${VENDOR_DIR}/build/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${VENDOR_DIR}/build/lib64:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${PLATFORM_DIR}/build:${LD_LIBRARY_PATH}
 cd ${REPO_DIR}/builder && make
 
-# Build the nodes
-./builder nodes build --config-file ./ukama.json
+# Build the node(s)
+export DOCKER_BUILD=true
+create_ukama_build_file
+./builder nodes build --config-file ./ukama_build.json
+rm ./ukama_build.json
 
 # copy the created init, kernel and img file
-cp ${REPO_DIR}/builder/script/vmlinuz* ${REPO_DIR}/..
-cp ${REPO_DIR}/builder/script/initrd*  ${REPO_DIR}/..
-cp ${REPO_DIR}/builder/script/*.img    ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/vmlinuz* ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/initrd*  ${REPO_DIR}/..
+cp ${REPO_DIR}/builder/scripts/*.img    ${REPO_DIR}/..
 
 echo "All Done."
 

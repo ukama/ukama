@@ -43,13 +43,20 @@ BOOTSTRAP_PORT=0
 
 # Step 0: make sure have all the right packages
 apt-get update
-apt-get install -y qemu-kvm qemu virt-manager virt-viewer libvirt-daemon-system \
-      libvirt-clients bridge-utils debootstrap \
-      extlinux kpartx
+apt-get install -y qemu-system \
+        virt-manager \
+        virt-viewer \
+        libvirt-daemon-system \
+        libvirt-clients \
+        bridge-utils \
+        debootstrap \
+        extlinux \
+        kpartx
 
 # Step 1: Download Ubuntu ISO
 echo "Downloading Ubuntu 22.04 (jammy) ISO..."
-wget $UBUNTU_ISO_URL -O $ISO_FILE || { echo "Failed to download ISO"; exit 1; }
+wget --no-check-certificate $UBUNTU_ISO_URL -O $ISO_FILE \
+    || { echo "Failed to download ISO"; exit 1; }
 
 # Step 2: Create a Raw Disk Image, format, parition and mount 
 echo "Creating and partitioning disk image..."
