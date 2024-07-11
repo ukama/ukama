@@ -5,7 +5,11 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
+import {
+  generateNetworkName,
+  getBaseURL,
+  parseGatewayHeaders,
+} from "../../common/utils";
 import { Context } from "../../network/context";
 import NetworkApi from "../../network/datasource/network_api";
 import { AddNetworkResolver } from "../../network/resolvers/addNetwork";
@@ -21,18 +25,10 @@ const headers = {
 const parsedHeaders = parseGatewayHeaders(headers);
 
 const { orgName } = parsedHeaders;
-const generateRandomName = (length = 10) => {
-  const characters = "abcdefghijklmnopqrstuvwxyz-";
-  return Array.from(
-    { length },
-    () => characters[Math.floor(Math.random() * characters.length)]
-  ).join("");
-};
-
 const testNetwork = {
   budget: Math.floor(Math.random() * 10),
   countries: ["Country"],
-  name: generateRandomName(),
+  name: generateNetworkName(),
   networks: ["A3"],
   org: orgName,
 };

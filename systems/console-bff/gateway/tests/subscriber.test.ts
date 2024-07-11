@@ -5,7 +5,11 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
+import {
+  generateNetworkName,
+  getBaseURL,
+  parseGatewayHeaders,
+} from "../../common/utils";
 import NetworkApi from "../../network/datasource/network_api";
 import { Context } from "../../subscriber/context";
 import SubscriberApi from "../../subscriber/datasource/subscriber_api";
@@ -31,14 +35,6 @@ const redisClient = createClient().on("error", error => {
     `Error creating redis for ${SUB_GRAPHS.subscriber.name} service, Error: ${error}`
   );
 });
-
-const generateRandomName = (length = 10) => {
-  const characters = "abcdefghijklmnopqrstuvwxyz-";
-  return Array.from(
-    { length },
-    () => characters[Math.floor(Math.random() * characters.length)]
-  ).join("");
-};
 
 const createSchema = async () => {
   return await buildSchema({
@@ -118,7 +114,7 @@ describe("subscriber API integration tests", () => {
     const network = await networkApi.addNetwork(networkURL.message, {
       budget: Math.floor(Math.random() * 10),
       countries: ["Country"],
-      name: generateRandomName(),
+      name: generateNetworkName(),
       networks: ["A3"],
       org: orgName,
     });

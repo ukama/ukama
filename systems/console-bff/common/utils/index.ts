@@ -197,6 +197,9 @@ const killProcess = (pid: string): Promise<void> => {
 
 const getSystemNameByService = (service: string): string => {
   switch (service) {
+    case "package":
+    case "rate":
+      return "dataplan";
     case "org":
     case "user":
       return "nucleus";
@@ -252,6 +255,13 @@ const getBaseURL = async (
     };
   }
 };
+const generateNetworkName = (length = 10) => {
+  const characters = "abcdefghijklmnopqrstuvwxyz-";
+  return Array.from(
+    { length },
+    () => characters[Math.floor(Math.random() * characters.length)]
+  ).join("");
+};
 
 export {
   findProcessNKill,
@@ -265,4 +275,5 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
+  generateNetworkName,
 };
