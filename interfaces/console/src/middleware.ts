@@ -134,7 +134,7 @@ const middleware = async (request: NextRequest) => {
     userObj = await getUserObject(session.value, cookieToken);
   } catch (error) {
     return NextResponse.rewrite(
-      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL_4SS),
     );
   }
 

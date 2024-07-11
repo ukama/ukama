@@ -23,6 +23,11 @@ services:
       - STORAGE_KEY=ukama
       - CONSOLE_APP_URL=http://console:3000
       - AUTH_APP_URL=http://app:4455
+      - GATEWAY_PORT=8080
+      - SUBSCRIPTIONS_PORT=8081
+      - AUTH_APP_URL=http://localhost:4455
+      - PLAYGROUND_URL=http://localhost:8080
+      - CONSOLE_APP_URL=http://localhost:3000
     depends_on:
       - bff-redis
     networks:

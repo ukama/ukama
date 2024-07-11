@@ -20,9 +20,11 @@ export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 export const INVENTORY_API_GW = process.env.INVENTORY_API_GW ?? "";
 
 // FRONTEND URLS
-export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "";
-export const PLAYGROUND_URL = process.env.PLAYGROUND_URL ?? "";
-export const CONSOLE_APP_URL = process.env.CONSOLE_APP_URL ?? "";
+export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "http://localhost:4455";
+export const PLAYGROUND_URL =
+  process.env.PLAYGROUND_URL ?? "http://localhost:8080";
+export const CONSOLE_APP_URL =
+  process.env.CONSOLE_APP_URL ?? "http://localhost:3000";
 
 // UTILS
 export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";

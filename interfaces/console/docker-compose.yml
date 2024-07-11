@@ -4,24 +4,26 @@ services:
     build:
       context: ./
       args:
-        - NEXT_PUBLIC_NODE_ENV=prod
-        - NEXT_PUBLIC_API_GW=http://bff:8080
+        - NEXT_PUBLIC_NODE_ENV=production
         - NEXT_PUBLIC_APP_URL=http://localhost:3000
         - NEXT_PUBLIC_AUTH_APP_URL=http://localhost:4455
-        - NEXT_PUBLIC_METRIC_URL=http://bff:8081
-        - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://bff:8081
+        - NEXT_PUBLIC_API_GW=http://localhost:8080
+        - NEXT_PUBLIC_METRIC_URL=http://localhost:8081
+        - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://localhost:8081
         - NEXT_PUBLIC_MAP_BOX_TOKEN=${MAP_BOX_TOKEN}
+        - NEXT_PUBLIC_API_GW_4SS=http://bff:8080
       dockerfile: ./Dockerfile
     ports:
       - '3000:8080'
     environment:
-      - NEXT_PUBLIC_NODE_ENV=prod
-      - NEXT_PUBLIC_API_GW=http://bff:8080
+      - NEXT_PUBLIC_NODE_ENV=production
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - NEXT_PUBLIC_AUTH_APP_URL=http://localhost:4455
-      - NEXT_PUBLIC_METRIC_URL=http://bff:8081
-      - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://bff:8081
+      - NEXT_PUBLIC_API_GW=http://localhost:8080
+      - NEXT_PUBLIC_METRIC_URL=http://localhost:8081
+      - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://localhost:8081
       - NEXT_PUBLIC_MAP_BOX_TOKEN=${MAP_BOX_TOKEN}
+      - NEXT_PUBLIC_API_GW_4SS=http://bff:8080
     networks:
       - ukama-net
 

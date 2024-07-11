@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Site } from '@/client/graphql/generated';
 import SearchBar from '@/components/SearchBar';
 import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/theme';
@@ -317,7 +316,7 @@ export const PowerSummary = ({ powerSummary }: any) => (
 );
 
 interface ISiteDetails {
-  site: Site;
+  site: any;
 }
 const SiteDetails = ({ site }: ISiteDetails) => (
   <Stack spacing={2} py={3}>
@@ -361,7 +360,7 @@ const SiteDetails = ({ site }: ISiteDetails) => (
 );
 
 interface ISites {
-  sites: Site[];
+  sites: any[];
   handleDeleteLink: () => void;
 }
 
