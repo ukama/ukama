@@ -33,7 +33,7 @@ const USER_INIT = {
 };
 
 const whoami = async (session: string) => {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_GW}/get-user`, {
+  return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
     cache: 'force-cache',
     credentials: 'include',
@@ -134,7 +134,7 @@ const middleware = async (request: NextRequest) => {
     userObj = await getUserObject(session.value, cookieToken);
   } catch (error) {
     return NextResponse.rewrite(
-      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL_4SS),
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
