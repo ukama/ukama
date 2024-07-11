@@ -409,7 +409,6 @@ describe("subscriber API integration tests", () => {
         })(),
       }
     );
-    console.log(subscriberId);
     const body = JSON.stringify(res.body);
     const { singleResult } = JSON.parse(body);
     expect(singleResult.errors).toBeUndefined();
