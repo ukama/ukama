@@ -1,12 +1,5 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import {
-  SiteAPIResDto,
+  SiteAPIDto,
   SiteDto,
   SitesAPIResDto,
   SitesResDto,
@@ -28,6 +21,7 @@ export const dtoToSitesDto = (res: SitesAPIResDto): SitesResDto => {
       switchId: site.switch_id,
       backhaulId: site.backhaul_id,
       createdAt: site.created_at,
+      location: site.location,
     });
   });
   return {
@@ -35,19 +29,20 @@ export const dtoToSitesDto = (res: SitesAPIResDto): SitesResDto => {
   };
 };
 
-export const dtoToSiteDto = (res: SiteAPIResDto): SiteDto => {
+export const dtoToSiteDto = (res: SiteAPIDto): SiteDto => {
   return {
-    id: res.site.id,
-    name: res.site.name,
-    networkId: res.site.network_id,
-    isDeactivated: res.site.is_deactivated,
-    backhaulId: res.site.backhaul_id,
-    switchId: res.site.switch_id,
-    powerId: res.site.power_id,
-    longitude: res.site.longitude,
-    latitude: res.site.latitude,
-    accessId: res.site.access_id,
-    installDate: res.site.install_date,
-    createdAt: res.site.created_at,
+    id: res.id,
+    name: res.name,
+    networkId: res.network_id,
+    isDeactivated: res.is_deactivated,
+    backhaulId: res.backhaul_id,
+    switchId: res.switch_id,
+    powerId: res.power_id,
+    longitude: res.longitude,
+    latitude: res.latitude,
+    accessId: res.access_id,
+    installDate: res.install_date,
+    createdAt: res.created_at,
+    location: res.location,
   };
 };
