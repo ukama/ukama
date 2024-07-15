@@ -247,7 +247,7 @@ const getBaseURL = async (
     if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
     return {
       status: 200,
-      message: intRes.url,
+      message: intRes.ip ? intRes.ip : intRes.url,
     };
   } else {
     return {
