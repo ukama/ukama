@@ -1,5 +1,4 @@
 import { ApolloServer } from "@apollo/server";
-import { readFile } from "fs";
 import path from "path";
 import { createClient } from "redis";
 import "reflect-metadata";
@@ -9,6 +8,7 @@ import { SUB_GRAPHS } from "../../common/configs";
 import { SIM_TYPES } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
+  csvToBase64,
   generateNetworkName,
   getBaseURL,
   parseGatewayHeaders,
@@ -58,16 +58,6 @@ const createSchema = async () => {
       GetSimsBySubscriberResolver,
     ],
     validate: true,
-  });
-};
-
-const csvToBase64 = (filePath: string) => {
-  readFile(filePath, (err, data) => {
-    if (err) {
-      console.error("Error reading file: ", err);
-      return;
-    }
-    return data.toString("base64");
   });
 };
 

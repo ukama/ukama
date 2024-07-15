@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { exec } from "child_process";
+import { readFile } from "fs";
 
 import InitAPI from "../../init/datasource/init_api";
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
@@ -246,7 +247,7 @@ const getBaseURL = async (
     if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
     return {
       status: 200,
-      message: intRes.ip ? intRes.ip : intRes.url,
+      message: intRes.url,
     };
   } else {
     return {
@@ -262,8 +263,18 @@ const generateNetworkName = (length = 10) => {
     () => characters[Math.floor(Math.random() * characters.length)]
   ).join("");
 };
+const csvToBase64 = (filePath: string) => {
+  readFile(filePath, (err, data) => {
+    if (err) {
+      console.error("Error reading file: ", err);
+      return;
+    }
+    return data.toString("base64");
+  });
+};
 
 export {
+  csvToBase64,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
