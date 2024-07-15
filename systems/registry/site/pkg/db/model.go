@@ -15,6 +15,7 @@ type Site struct {
     Location      string
     NetworkId     uuid.UUID       `gorm:"type:uuid;index:idx_site_network,unique"` // Composite unique index
     BackhaulId    uuid.UUID       `gorm:"type:uuid"`
+    Spectrum      uuid.UUID       `gorm:"type:uuid"`
     PowerId       uuid.UUID       `gorm:"type:uuid"`
     AccessId      uuid.UUID       `gorm:"type:uuid"`
     SwitchId      uuid.UUID       `gorm:"type:uuid"`

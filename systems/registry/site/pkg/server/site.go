@@ -23,6 +23,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/uuid"
 	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -40,11 +41,11 @@ type SiteServer struct {
 	msgbus          mb.MsgBusServiceClient
 	baseRoutingKey  msgbus.RoutingKeyBuilder
 	networkService  providers.NetworkClientProvider
-	inventoryClient providers.InventoryClientProvider
+	inventoryClient cinvent.ComponentClient
 	pushGateway     string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider providers.InventoryClientProvider) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient) *SiteServer {
 	return &SiteServer{
 		orgName:         orgName,
 		siteRepo:        siteRepo,
@@ -95,9 +96,10 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		switchId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
-		if err := s.inventoryClient.ValidateComponent(s.orgName, componentIdStr); err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "component")
-		}
+		_, err := s.inventoryClient.Get(componentIdStr)
+	if err != nil {
+		return nil, err
+	}
 	}
 	svc, err := s.networkService.GetClient()
 	if err != nil {
@@ -240,8 +242,9 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 		accessId.String(),
 		switchId.String(),
 	} {
-		if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "component")
+		_, err := s.inventoryClient.Get(componentIdStr)
+		if err != nil {
+			return nil, err
 		}
 	}
 	site := &db.Site{
