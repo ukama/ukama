@@ -1,0 +1,789 @@
+import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
+import { createClient } from "redis";
+import { buildSchema } from "type-graphql";
+
+import { SUB_GRAPHS } from "../../common/configs";
+import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
+import { logger } from "../../common/logger";
+import {
+  generateNetworkName,
+  getBaseURL,
+  parseGatewayHeaders,
+} from "../../common/utils";
+import NetworkApi from "../../network/datasource/network_api";
+import { Context } from "../../node/context";
+import NodeAPI from "../../node/dataSource/node-api";
+import { AddNodeResolver } from "../../node/resolvers/addNode";
+import { AddNodeToSiteResolver } from "../../node/resolvers/addNodeToSite";
+import { AttachNodeResolver } from "../../node/resolvers/attachNode";
+import { DeleteNodeFromOrgResolver } from "../../node/resolvers/deleteNodeFromOrg";
+import { DetachNodeResolver } from "../../node/resolvers/detachNode";
+import { GetAppsChangeLogResolver } from "../../node/resolvers/getAppsChangeLog";
+import { GetNodeResolver } from "../../node/resolvers/getNode";
+import { GetNodeAppsResolver } from "../../node/resolvers/getNodeApps";
+import { GetNodeLocationResolver } from "../../node/resolvers/getNodeLocation";
+import { GetNodesResolver } from "../../node/resolvers/getNodes";
+import { GetNodesByNetworkResolver } from "../../node/resolvers/getNodesByNetwork";
+import { GetNodesLocationResolver } from "../../node/resolvers/getNodesLocation";
+import { ReleaseNodeFromSiteResolver } from "../../node/resolvers/releaseNodeFromSite";
+import { UpdateNodeResolver } from "../../node/resolvers/updateNode";
+import { UpdateNodeStateResolver } from "../../node/resolvers/updateNodeState";
+import SiteApi from "../../site/datasource/site_api";
+
+const token = process.env.TOKEN;
+const headers = {
+  cookie: "ukama_session=random-session",
+  token: token,
+};
+const parsedHeaders = parseGatewayHeaders(headers);
+
+const { orgName, orgId } = parsedHeaders;
+
+const nodeApi = new NodeAPI();
+const redisClient = createClient().on("error", error => {
+  logger.error(
+    `Error creating redis for ${SUB_GRAPHS.network.name} service, Error: ${error}`
+  );
+});
+const createSchema = async () => {
+  return await buildSchema({
+    resolvers: [
+      AddNodeResolver,
+      AddNodeToSiteResolver,
+      AttachNodeResolver,
+      DeleteNodeFromOrgResolver,
+      DetachNodeResolver,
+      GetAppsChangeLogResolver,
+      GetNodeResolver,
+      GetNodesResolver,
+      GetNodeAppsResolver,
+      GetNodeLocationResolver,
+      GetNodesByNetworkResolver,
+      GetNodesLocationResolver,
+      ReleaseNodeFromSiteResolver,
+      UpdateNodeResolver,
+      UpdateNodeStateResolver,
+    ],
+    validate: true,
+  });
+};
+
+const startServer = async () => {
+  const schema = await createSchema();
+  const server = new ApolloServer<Context>({
+    schema,
+  });
+  await server.start();
+  return server;
+};
+
+describe("Node API integration tests", () => {
+  let server: ApolloServer<Context>;
+
+  beforeAll(async () => {
+    server = await startServer();
+  });
+  afterAll(async () => {
+    await server.stop();
+  });
+  const networkApi = new NetworkApi();
+  const siteApi = new SiteApi();
+  let siteId: string;
+  let networkId: string;
+  let nodeId: string;
+
+  it("should add a node", async () => {
+    const ADD_NODE = `mutation AddNode($data: AddNodeInput!) {
+  addNode(data: $data) {
+    id
+    name
+    orgId
+    type
+    attached {
+      id
+      name
+      orgId
+      type
+    }
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: ADD_NODE,
+        variables: {
+          data: {
+            id: faker.string.toString(),
+            name: faker.number.toString(),
+            orgId: orgId,
+          },
+        },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.addNode.id).toBeDefined();
+    nodeId = data.addNode.id;
+    expect(data.addNode.name).toBeDefined();
+    expect(data.addNode.orgId).toBeDefined();
+    expect(data.addNode.type).toBeDefined();
+    expect(data.addNode.attached).toBeDefined();
+    expect(data.addNode.site).toBeDefined();
+    expect(data.addNode.status).toBeDefined();
+  });
+
+  it("should add node to a site", async () => {
+    const ADD_NODE = `mutation AddNodeToSite($data: AddNodeToSiteInput!) {
+  addNodeToSite(data: $data) {
+    success
+  }
+}`;
+    const networkURL = await getBaseURL(
+      SUB_GRAPHS.network.name,
+      orgName,
+      redisClient.isOpen ? redisClient : null
+    );
+    const network = await networkApi.addNetwork(networkURL.message, {
+      budget: Math.floor(Math.random() * 10),
+      countries: ["Country"],
+      name: generateNetworkName(),
+      networks: ["A3"],
+      org: orgName,
+    });
+    networkId = network.id;
+
+    const siteURL = await getBaseURL(
+      SUB_GRAPHS.site.name,
+      orgName,
+      redisClient.isOpen ? redisClient : null
+    );
+    const site = await siteApi.addSite(siteURL.message, { site: "Site A" });
+    siteId = site.id;
+
+    const res = await server.executeOperation(
+      {
+        query: ADD_NODE,
+        variables: {
+          data: { networkId: networkId, nodeId: nodeId, siteId: siteId },
+        },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.addNodeToSite.success).toBeTruthy();
+  });
+
+  it("should attach a node", async () => {
+    const ATTACH_NODE = `mutation AttachNode($data: AttachNodeInput!) {
+  attachNode(data: $data) {
+    success
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: ATTACH_NODE,
+        variables: {
+          data: { anoder: "anoder", parentNode: nodeId, anodel: "anodel" },
+        },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.attachNode.success).toBeTruthy();
+  });
+
+  it("should get apps change log", async () => {
+    const GET_APPS_CHANGE = `query GetAppsChangeLog($data: NodeAppsChangeLogInput!) {
+  getAppsChangeLog(data: $data) {
+    logs {
+      version
+      date
+    }
+    type
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_APPS_CHANGE,
+        variables: { data: { type: NODE_TYPE.anode } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getAppsChangeLog.logs).toBeDefined();
+    expect(data.getAppsChangeLog.type).toEqual(NODE_TYPE.anode);
+  });
+
+  it("should get node using node id", async () => {
+    const GET_NODE = `query GetNode($data: NodeInput!) {
+  getNode(data: $data) {
+    id
+    name
+    orgId
+    type
+    attached {
+      id
+      name
+      orgId
+      type
+    }
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_NODE,
+        variables: { data: { id: nodeId } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNode.id).toEqual(nodeId);
+  });
+
+  it("should get all free nodes", async () => {
+    const GET_NODES = `query GetNodes($data: GetNodesInput!) {
+  getNodes(data: $data) {
+    nodes {
+      id
+      name
+      orgId
+      type
+      attached {
+        id
+        name
+        orgId
+        type
+      }
+      site {
+        nodeId
+        siteId
+        networkId
+        addedAt
+      }
+      status {
+        connectivity
+        state
+      }
+    }
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_NODES,
+        variables: { data: { isFree: true } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNodes.nodes.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should get node apps", async () => {
+    const GET_NODE_APPS = `query GetNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_NODE_APPS,
+        variables: { data: { type: NODE_TYPE.anode } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNodeApps.apps.length).toBeGreaterThanOrEqual(1);
+    expect(data.getNodeApps.type).toEqual(NODE_TYPE.anode);
+  });
+
+  it("should get node location", async () => {
+    const GET_NODE_LOCATION = `query GetNodeLocation($data: NodeInput!) {
+  getNodeLocation(data: $data) {
+    id
+    lat
+    lng
+    state
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_NODE_LOCATION,
+        variables: { data: { type: NODE_TYPE.anode } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNodeLocation.id).toEqual(nodeId);
+    expect(data.getNodeLocation.lat).toBeDefined();
+    expect(data.getNodeLocation.lng).toBeDefined();
+    expect(data.getNodeLocation.state).toBeDefined();
+  });
+
+  it("should get nodes by network", async () => {
+    const GET_NODES = `query GetNodesByNetwork($networkId: String!) {
+  getNodesByNetwork(networkId: $networkId) {
+    nodes {
+      id
+      name
+      orgId
+      type
+      attached {
+        id
+        name
+        orgId
+        type
+      }
+      site {
+        nodeId
+        siteId
+        networkId
+        addedAt
+      }
+      status {
+        connectivity
+        state
+      }
+    }
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: GET_NODES,
+        variables: { networkId: networkId },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNodesByNetwork.nodes.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should get nodes location", async () => {
+    const GET_NODES = `query GetNodesLocation($data: NodesInput!) {
+  getNodesLocation(data: $data) {
+    networkId
+    nodes {
+      id
+      lat
+      lng
+      state
+    }
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: GET_NODES,
+        variables: {
+          data: { networkId: networkId, nodeFilterState: NODE_STATUS.ACTIVE },
+        },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.getNodesLocation.networkId).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should update node", async () => {
+    const UPDATE_NODE = `mutation UpdateNode($data: UpdateNodeInput!) {
+  updateNode(data: $data) {
+    id
+    name
+    orgId
+    type
+    attached {
+      id
+      name
+      orgId
+      type
+    }
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: UPDATE_NODE,
+        variables: { data: { id: nodeId, name: "updated node" } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.updateNode.id).toEqual(nodeId);
+    expect(data.updateNode.name).toEqual("updated node");
+  });
+
+  it("should update node state", async () => {
+    const UPDAT_NODE_STATE = `mutation UpdateNodeState($data: UpdateNodeStateInput!) {
+  updateNodeState(data: $data) {
+    id
+    name
+    orgId
+    type
+    attached {
+      id
+      name
+      orgId
+      type
+    }
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: UPDAT_NODE_STATE,
+        variables: { data: { id: nodeId, state: NODE_STATUS.FAULTY } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.updateNodeState.id).toEqual(nodeId);
+    expect(data.updateNodeState.status.state).toEqual(NODE_STATUS.FAULTY);
+  });
+
+  it("should detach a node", async () => {
+    const DETACH_NODE = `mutation DetachhNode($data: NodeInput!) {
+  detachhNode(data: $data) {
+    success
+  }
+}`;
+    const res = await server.executeOperation(
+      {
+        query: DETACH_NODE,
+        variables: { data: { id: nodeId } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.detachNode.success).toBeTruthy();
+  });
+
+  it("should delete a node from the org", async () => {
+    const DELETE_NODE = `mutation DeleteNodeFromOrg($data: NodeInput!) {
+  deleteNodeFromOrg(data: $data) {
+    id
+  }
+}`;
+
+    const res = await server.executeOperation(
+      {
+        query: DELETE_NODE,
+        variables: { data: { id: nodeId } },
+      },
+      {
+        contextValue: await (async () => {
+          const baseURL = await getBaseURL(
+            SUB_GRAPHS.node.name,
+            orgName,
+            redisClient.isOpen ? redisClient : null
+          );
+          return {
+            dataSources: {
+              dataSource: nodeApi,
+            },
+            baseURL: baseURL.message,
+            headers: parsedHeaders,
+          };
+        })(),
+      }
+    );
+
+    const body = JSON.stringify(res.body);
+    const { singleResult } = JSON.parse(body);
+    expect(singleResult.errors).toBeUndefined();
+    const { data } = singleResult;
+    expect(data.deleteNodeFromOrg.id).toEqual(nodeId);
+  });
+});
