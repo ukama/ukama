@@ -64,6 +64,16 @@
   "name": "Ukama Auth system",
   "path": "./auth"
  },
+ "bff": {
+  "key": "bff",
+  "name": "Ukama Bff system",
+  "path": "./console-bff"
+ },
+ "console": {
+  "key": "console",
+  "name": "Ukama Console",
+  "path": "../interfaces/console"
+ },
  "auth-services": {
   "key": "auth-services",
   "name": "Ukama Auth Services",

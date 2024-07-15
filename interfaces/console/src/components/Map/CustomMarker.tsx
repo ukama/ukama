@@ -6,35 +6,34 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Link, Site } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import Leaflet, { LatLngLiteral, LatLngTuple, Layer, Polyline } from 'leaflet';
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useState,
-  useCallback,
 } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import SitePopup from '../SitePopup';
 
 interface ICustomMarker {
-  data: Site[];
+  data: any[];
   layer: string;
-  links: Link[];
+  links: any[];
   linkSites: any;
   zoom?: number;
   isAddLink: boolean;
   coverageLoading: boolean;
   center: LatLngLiteral | null;
-  handleAction: (a: Site) => void;
+  handleAction: (a: any) => void;
   selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddLinkToSite: (id: string) => void;
-  handleGenerateAction: (a: string, b: Site) => void;
+  handleGenerateAction: (a: string, b: any) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
@@ -50,7 +49,7 @@ interface ILink {
   latlng: LatLngTuple[];
 }
 
-const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
+const getLatLng = (sites: any[], links: any[]): ILink[] => {
   const data: ILink[] = [];
   if (sites && sites.length > 0) {
     for (let i = 0; i < links.length; i++) {

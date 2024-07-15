@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Site } from '@/client/graphql/generated';
 import { SITE_PLANNING_AP_OPTIONS, SOLAR_UPTIME_OPTIONS } from '@/constants';
 import {
   Button,
@@ -26,11 +25,11 @@ import {
 import { useState } from 'react';
 
 interface ISitePopup {
-  site: Site;
+  site: any;
   coverageLoading: boolean;
-  handleAction: (a: Site) => void;
+  handleAction: (a: any) => void;
   handleDeleteSite: (i: string) => void;
-  handleGenerateAction: (a: string, b: Site) => void;
+  handleGenerateAction: (a: string, b: any) => void;
 }
 
 const SitePopup = ({
@@ -40,7 +39,7 @@ const SitePopup = ({
   handleDeleteSite,
   handleGenerateAction,
 }: ISitePopup) => {
-  const [data, setData] = useState<Site>(site);
+  const [data, setData] = useState<any>(site);
   return (
     <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
       <Stack spacing={1.2}>

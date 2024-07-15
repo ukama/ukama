@@ -14,7 +14,7 @@ import { NetworksResDto } from "./types";
 export class GetNetworksResolver {
   @Query(() => NetworksResDto)
   async getNetworks(@Ctx() ctx: Context): Promise<NetworksResDto> {
-    const { dataSources, headers, baseURL } = ctx;
-    return dataSources.dataSource.getNetworks(baseURL, headers.orgId);
+    const { dataSources, baseURL } = ctx;
+    return dataSources.dataSource.getNetworks(baseURL);
   }
 }

@@ -126,9 +126,6 @@ export class AddNetworkInputDto {
   name: string;
 
   @Field()
-  org: string;
-
-  @Field()
   budget: number;
 
   @Field(() => [String], { nullable: true })
