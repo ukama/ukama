@@ -79,6 +79,7 @@ type AddSiteRequest struct {
 	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
 	AccessId      string  `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
 	SwitchId      string  `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
+	SpectrumId       string  `example:"{{SpectrumUUID}}" json:"spectrum_id" validate:"required"`
 	IsDeactivated bool    `json:"is_deactivated" validate:"required"`
 	Latitude      float64 `json:"latitude" validate:"required"`
 	Longitude     float64 `json:"longitude" validate:"required"`

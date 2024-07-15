@@ -32,11 +32,12 @@ message AddRequest{
     string powerId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
     string accessId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
     string switchId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-    bool isDeactivated = 7 [json_name = "is_deactivated"];
-    double latitude = 8;
-    double longitude = 9;
-    string location = 10 ;
-    string installDate = 11 [json_name = "install_date"];
+    string spectrumId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    double latitude = 9;
+    double longitude = 10;
+    string location = 11 ;
+    string installDate = 12 [json_name = "install_date"];
 }
 
 message AddResponse{
@@ -68,12 +69,13 @@ message Site {
     string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
     string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
     string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-    bool isDeactivated = 8 [json_name = "is_deactivated"];
-    double latitude = 9;
-    double longitude = 10;
-    string installDate = 11 [json_name = "install_date"];
-    string createdAt = 12 [json_name = "created_at"];
-    string location = 13;
+    string spectrumId = 8 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
+    bool isDeactivated = 9 [json_name = "is_deactivated"];
+    double latitude = 10;
+    double longitude = 11;
+    string installDate = 12 [json_name = "install_date"];
+    string createdAt = 13 [json_name = "created_at"];
+    string location = 14;
 }
 
 message UpdateRequest {
@@ -81,12 +83,13 @@ message UpdateRequest {
     string name = 2;
     string backhaulId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
     string powerId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
-    string accessId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
-    string switchId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-    bool isDeactivated = 7 [json_name = "is_deactivated"];
-    double latitude = 8;
-    double longitude = 9;
-    string installDate = 10 [json_name = "install_date"];
+    string spectrum = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
+    string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
+    string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    double latitude = 9;
+    double longitude = 10;
+    string installDate = 11 [json_name = "install_date"];
 }
 
 message UpdateResponse {

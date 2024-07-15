@@ -58,8 +58,11 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 }
 
 func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	log.Infof("Adding site %s", req.Name)
-
+	log.Infof("Adding site %v", req)
+	spectrumId, err := uuid.FromString(req.SpectrumId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
 	backhaulId, err := uuid.FromString(req.BackhaulId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
@@ -94,12 +97,13 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		powerId.String(),
 		accessId.String(),
 		switchId.String(),
+		spectrumId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
 		_, err := s.inventoryClient.Get(componentIdStr)
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 	}
 	svc, err := s.networkService.GetClient()
 	if err != nil {
@@ -122,6 +126,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		PowerId:       powerId,
 		AccessId:      accessId,
 		SwitchId:      switchId,
+		SpectrumId:    spectrumId,
 		IsDeactivated: req.IsDeactivated,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
@@ -300,6 +305,7 @@ func dbSiteToPbSite(site *db.Site) *pb.Site {
 		PowerId:       site.PowerId.String(),
 		AccessId:      site.AccessId.String(),
 		SwitchId:      site.SwitchId.String(),
+		SpectrumId:    site.SpectrumId.String(),
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
 		InstallDate:   site.InstallDate,

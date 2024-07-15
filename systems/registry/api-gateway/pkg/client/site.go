@@ -79,7 +79,7 @@ func (r *SiteRegistry) GetSites(networkId string) (*pb.GetSitesResponse, error) 
 	return res, nil
 }
 
-func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId ,location string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
+func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId ,location ,spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	res, err := r.client.Add(ctx, &pb.AddRequest{
@@ -90,6 +90,7 @@ func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, s
 		PowerId:       powerId,
 		AccessId:      accessId,
 		SwitchId:      switchId,
+		SpectrumId: spectrumId,
 		IsDeactivated: isDeactivated,
 		Latitude:      latitude,
 		Longitude:     longitude,

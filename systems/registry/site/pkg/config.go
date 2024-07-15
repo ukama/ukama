@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	NumberOfSites    = "number_of_sites"
-	GaugeType        = "gauge"
+	NumberOfSites = "number_of_sites"
+	GaugeType     = "gauge"
 )
 
 type Config struct {
@@ -29,10 +29,9 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	OrgName          string
-	Network      	 string `default:"network:9090"`
+	Network          string `default:"network:9090"`
 	PushGateway      string `default:"http://localhost:9091"`
 	InventoryHost    string `default:"http://localhost:8077"`
-
 }
 
 var SiteMetric = []metric.MetricConfig{
