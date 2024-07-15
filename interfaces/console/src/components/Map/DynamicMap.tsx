@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Link, Site } from '@/client/graphql/generated';
 import styles from '@/styles/Map.module.css';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -24,11 +23,11 @@ const ICON = {
   shadowUrl: markerShadow.src,
 };
 interface IMap {
-  data: Site[];
+  data: any[];
   id: string;
   cursor: any;
   layer: string;
-  links?: Link[];
+  links?: any[];
   children: any;
   linkSites: any;
   className?: string;
@@ -36,13 +35,13 @@ interface IMap {
   center: LatLngLiteral;
   coverageLoading: boolean;
   zoom?: number | undefined;
-  handleAction: (a: Site) => void;
+  handleAction: (a: any) => void;
   selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleGenerateAction: (a: string, b: Site) => void;
+  handleGenerateAction: (a: string, b: any) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
 }

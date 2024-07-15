@@ -23,7 +23,6 @@ const runServer = async () => {
       const hedares: THeaders = parseGatewayHeaders(req.headers);
       return {
         headers: hedares,
-
         dataSources: {
           dataSource: new UserAPI(),
         },

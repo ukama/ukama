@@ -33,7 +33,7 @@ const USER_INIT = {
 };
 
 const whoami = async (session: string) => {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_GW}/get-user`, {
+  return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
     cache: 'force-cache',
     credentials: 'include',
@@ -74,7 +74,6 @@ function getUserFromToken(token: string): User {
     const parts = parseToken.split(';');
 
     if (parts.length < 7) {
-      console.error('Token is missing required parts');
       return USER_INIT;
     }
 
@@ -91,7 +90,6 @@ function getUserFromToken(token: string): User {
       isEmailVerified: isEmailVerified === 'true',
     };
   } catch (error) {
-    console.error('Error decoding token:', error);
     return USER_INIT;
   }
 }
@@ -131,7 +129,7 @@ const middleware = async (request: NextRequest) => {
     );
   }
 
-  let userObj: User;
+  let userObj: User = USER_INIT;
   try {
     userObj = await getUserObject(session.value, cookieToken);
   } catch (error) {
@@ -140,7 +138,7 @@ const middleware = async (request: NextRequest) => {
     );
   }
 
-  if (!userObj.isEmailVerified) {
+  if (!userObj?.isEmailVerified) {
     return NextResponse.redirect(
       new URL('/user/verification', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );

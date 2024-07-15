@@ -599,8 +599,8 @@ query getSites($networkId: String!) {
       id
       name
       networkId
-      isDeactivated
       createdAt
+      isDeactivated
     }
   }
 }
@@ -620,134 +620,134 @@ mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
 ### Networks End ###
 
 # PLANNING TOOL GRAPH
-fragment location on Location {
-  id
-  lat
-  lng
-  address
-}
-fragment link on Link {
-  id
-  siteA
-  siteB
-}
-fragment site on Site {
-  id
-  url
-  east
-  name
-  west
-  north
-  south
-  status
-  height
-  apOption
-  isSetlite
-  solarUptime
-  populationUrl
-  populationCovered
-  totalBoxesCovered
-  location {
-    ...location
-  }
-}
-fragment event on Event {
-  id
-  value
-  operation
-  createdAt
-}
-fragment draft on Draft {
-  id
-  name
-  userId
-  lastSaved
-  links {
-    ...link
-  }
-  sites {
-    ...site
-  }
-  events {
-    ...event
-  }
-}
+# fragment location on Location {
+#   id
+#   lat
+#   lng
+#   address
+# }
+# fragment link on Link {
+#   id
+#   siteA
+#   siteB
+# }
+# fragment site on Site {
+#   id
+#   url
+#   east
+#   name
+#   west
+#   north
+#   south
+#   status
+#   height
+#   apOption
+#   isSetlite
+#   solarUptime
+#   populationUrl
+#   populationCovered
+#   totalBoxesCovered
+#   location {
+#     ...location
+#   }
+# }
+# fragment event on Event {
+#   id
+#   value
+#   operation
+#   createdAt
+# }
+# fragment draft on Draft {
+#   id
+#   name
+#   userId
+#   lastSaved
+#   links {
+#     ...link
+#   }
+#   sites {
+#     ...site
+#   }
+#   events {
+#     ...event
+#   }
+# }
 
-mutation AddDraft($data: AddDraftInput!) {
-  addDraft(data: $data) {
-    ...draft
-  }
-}
+# mutation AddDraft($data: AddDraftInput!) {
+#   addDraft(data: $data) {
+#     ...draft
+#   }
+# }
 
-mutation UpdateDraftName($draftId: String!, $name: String!) {
-  updateDraftName(id: $draftId, name: $name) {
-    ...draft
-  }
-}
+# mutation UpdateDraftName($draftId: String!, $name: String!) {
+#   updateDraftName(id: $draftId, name: $name) {
+#     ...draft
+#   }
+# }
 
-query GetDrafts($userId: String!) {
-  getDrafts(userId: $userId) {
-    ...draft
-  }
-}
+# query GetDrafts($userId: String!) {
+#   getDrafts(userId: $userId) {
+#     ...draft
+#   }
+# }
 
-query GetDraft($draftId: String!) {
-  getDraft(id: $draftId) {
-    ...draft
-  }
-}
+# query GetDraft($draftId: String!) {
+#   getDraft(id: $draftId) {
+#     ...draft
+#   }
+# }
 
-mutation addSite($draftId: String!, $data: SiteInput!) {
-  addSite(draftId: $draftId, data: $data) {
-    ...draft
-  }
-}
+# mutation addSite($draftId: String!, $data: SiteInput!) {
+#   addSite(draftId: $draftId, data: $data) {
+#     ...draft
+#   }
+# }
 
-mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
-  updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
-    ...draft
-  }
-}
+# mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
+#   updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
+#     ...draft
+#   }
+# }
 
-mutation UpdateLocation(
-  $draftId: String!
-  $locationId: String!
-  $data: LocationInput!
-) {
-  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
-    ...location
-  }
-}
+# mutation UpdateLocation(
+#   $draftId: String!
+#   $locationId: String!
+#   $data: LocationInput!
+# ) {
+#   updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
+#     ...location
+#   }
+# }
 
-mutation DeleteDraft($draftId: String!) {
-  deleteDraft(id: $draftId) {
-    id
-  }
-}
+# mutation DeleteDraft($draftId: String!) {
+#   deleteDraft(id: $draftId) {
+#     id
+#   }
+# }
 
-mutation DeleteSite($siteId: String!) {
-  deleteSite(id: $siteId) {
-    id
-  }
-}
+# mutation DeleteSite($siteId: String!) {
+#   deleteSite(id: $siteId) {
+#     id
+#   }
+# }
 
-mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
-  deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
-    id
-  }
-}
+# mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
+#   deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
+#     id
+#   }
+# }
 
-mutation AddLink($data: LinkInput!, $draftId: String!) {
-  addLink(data: $data, draftId: $draftId) {
-    ...draft
-  }
-}
+# mutation AddLink($data: LinkInput!, $draftId: String!) {
+#   addLink(data: $data, draftId: $draftId) {
+#     ...draft
+#   }
+# }
 
-mutation Coverage($siteId: String!, $data: CoverageInput!) {
-  coverage(data: $data, siteId: $siteId) {
-    ...site
-  }
-}
+# mutation Coverage($siteId: String!, $data: CoverageInput!) {
+#   coverage(data: $data, siteId: $siteId) {
+#     ...site
+#   }
+# }
 
 ### End Planning Tool ###
 

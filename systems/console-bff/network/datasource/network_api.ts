@@ -17,16 +17,9 @@ import {
 import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
 class NetworkApi extends RESTDataSource {
-  getNetworks = async (
-    baseURL: string,
-    orgId: string
-  ): Promise<NetworksResDto> => {
+  getNetworks = async (baseURL: string): Promise<NetworksResDto> => {
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/networks`, {
-      params: {
-        org: orgId,
-      },
-    }).then(res => dtoToNetworksDto(res));
+    return this.get(`/${VERSION}/networks`).then(res => dtoToNetworksDto(res));
   };
 
   getNetwork = async (
@@ -50,7 +43,6 @@ class NetworkApi extends RESTDataSource {
         allowed_networks: req.networks,
         budget: req.budget,
         network_name: req.name,
-        org: req.org,
         overdraft: 0,
         payment_links: true,
         traffic_policy: 0,
