@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
             configFile = optarg;
             if (!configFile) {
                 usage();
-                usys_exit(0);
+                usys_exit(1);
             }
             break;
 
@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
     if (read_config_file(&config, configFile) != USYS_TRUE) {
         usys_log_error("Unable to read builder's config file: %s",
                        configFile);
-        goto done;
+        usys_exit(1);
     }
 
     if (cmd == CMD_ALL || cmd == CMD_BUILD) {
@@ -248,7 +248,8 @@ int main(int argc, char **argv) {
                                    config->setup->ukamaRepo,
                                    config->setup->authRepo)) {
                 usys_log_error("Build (systems) error. Exiting ...");
-                goto done;
+                free_config(config);
+                usys_exit(1);
             }
         }
 
@@ -262,7 +263,8 @@ int main(int argc, char **argv) {
                                         config->build->initRAMImage,
                                         config->build->diskImage)) {
                     usys_log_error("Unable to fetch img files");
-                    goto done;
+                    free_config(config);
+                    usys_exit(1);
                 }
 
             } else {
@@ -270,13 +272,14 @@ int main(int argc, char **argv) {
                                  config->build->nodesCount,
                                  config->build->nodesIDList)) {
                     usys_log_error("Build (node) error. Exiting ...");
-                    goto done;
+                    free_config(config);
+                    usys_exit(1);
                 }
             }
 
             if (cmd == CMD_BUILD) {
                 free_config(config);
-                return USYS_TRUE;
+                usys_exit(0);
             }
         }
     }
@@ -291,7 +294,8 @@ int main(int argc, char **argv) {
                                     config->setup->ukamaRepo,
                                     config->setup->authRepo)) {
                 usys_log_error("Unable to deploy the system. Exiting ...");
-                goto done;
+                free_config(config);
+                usys_exit(1);
             }
         }
 
@@ -299,13 +303,14 @@ int main(int argc, char **argv) {
             if (!deploy_nodes(config->build->nodesCount,
                               config->build->nodesIDList)) {
                 usys_log_error("Unable to deploy the node. Existing ...");
-                goto done;
+                free_config(config);
+                usys_exit(1);
             }
         }
 
         if (cmd == CMD_DEPLOY) {
             free_config(config);
-            return USYS_TRUE;
+            usys_exit(0);
         }
     }
 
@@ -321,6 +326,8 @@ int main(int argc, char **argv) {
                                 config->deploy->nodesIDList)) {
                 usys_log_error("Node Shutdown FAILED: %s Try manually",
                                config->deploy->nodesIDList);
+                free_config(config);
+                usys_exit(1);
             }
         }
 
@@ -329,12 +336,12 @@ int main(int argc, char **argv) {
                                       config->setup->ukamaRepo,
                                       config->setup->authRepo)) {
                 usys_log_error("Systems Shutdown FAILED");
-                goto done;
+                free_config(config);
+                usys_exit(1);
             }
         }
     }
 
-done:
     free_config(config);
-    return USYS_TRUE;
+    usys_exit(0);
 }

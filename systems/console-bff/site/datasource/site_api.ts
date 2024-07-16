@@ -19,9 +19,11 @@ class SiteApi extends RESTDataSource {
     networkId: string
   ): Promise<SitesResDto> => {
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SITES}/${networkId}`).then(res =>
-      dtoToSitesDto(res)
-    );
+    return this.get(`/${VERSION}/${SITES}`, {
+      params: {
+        network: networkId,
+      },
+    }).then(res => dtoToSitesDto(res));
   };
 
   getSite = async (baseURL: string, siteId: string): Promise<SiteDto> => {

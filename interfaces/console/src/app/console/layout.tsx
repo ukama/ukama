@@ -159,7 +159,6 @@ export default function ConosleLayout({
           name: values.name,
           budget: values.budget,
           networks: values.networks,
-          org: user.orgName,
           countries: values.countries,
         },
       },

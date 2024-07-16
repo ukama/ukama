@@ -210,6 +210,9 @@ const getSystemNameByService = (service: string): string => {
     case "invitation":
     case "node":
       return "registry";
+    case "package":
+    case "rate":
+      return "dataplan";
     case "sim":
     case "subscriber":
       return "subscriber";
@@ -247,7 +250,8 @@ const getBaseURL = async (
     if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
     return {
       status: 200,
-      message: intRes.ip ? intRes.ip : intRes.url,
+      message: intRes.url,
+      // message: intRes.ip ? intRes.ip : intRes.url,
     };
   } else {
     return {

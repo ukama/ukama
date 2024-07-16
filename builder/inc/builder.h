@@ -26,4 +26,7 @@
 #define UKAMA_AUTH  "ukama-auth"
 #define DEF_NODE_ID "uk-sa0001-tnode-a1-1234"
 
+#define ENV_DOCKER_BUILD "DOCKER_BUILD"
+#define ENV_NATIVE_BUILD "NATIVE_BUILD"
+
 #endif /* BUILDER_H_ */

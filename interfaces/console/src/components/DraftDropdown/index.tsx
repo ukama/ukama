@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Draft } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
 import { Edit } from '@mui/icons-material';
@@ -33,7 +32,7 @@ import {
 } from './styles';
 
 interface IDraftDropdown {
-  draft: Draft | undefined;
+  draft: any | undefined;
   drafts: any;
   isLoading: boolean;
   handleAddDraft: Function;
