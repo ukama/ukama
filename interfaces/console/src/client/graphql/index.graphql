@@ -592,19 +592,6 @@ query getNetworks {
   }
 }
 
-query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
-    networkId
-    sites {
-      id
-      name
-      networkId
-      createdAt
-      isDeactivated
-    }
-  }
-}
-
 mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
     ...UNetwork
@@ -614,6 +601,96 @@ mutation AddNetwork($data: AddNetworkInputDto!) {
 mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
   setDefaultNetwork(data: $data) {
     success
+  }
+}
+query getSite($siteId: String!) {
+  getSite(siteId: $siteId) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+mutation addSite($data: AddSiteInputDto!) {
+  addSite(data: $data) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+
+query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    sites {
+      id
+      name
+      networkId
+      backhaulId
+      powerId
+      accessId
+      spectrumId
+      switchId
+      isDeactivated
+      latitude
+      longitude
+      installDate
+      createdAt
+      location
+    }
+  }
+}
+query getComponentById($componentId: String!) {
+  getComponentById(componentId: $componentId) {
+    id
+    inventory
+    type
+    userId
+    description
+    datasheetUrl
+    imageUrl
+    partNumber
+    manufacturer
+    managed
+    warranty
+    specification
+  }
+}
+
+query getComponentsByUserId($category: String!) {
+  getComponentsByUserId(category: $category) {
+    id
+    inventory
+    type
+    userId
+    description
+    datasheetUrl
+    imageUrl
+    partNumber
+    manufacturer
+    managed
+    warranty
+    specification
   }
 }
 

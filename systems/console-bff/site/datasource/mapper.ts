@@ -22,6 +22,7 @@ export const dtoToSitesDto = (res: SitesAPIResDto): SitesResDto => {
       backhaulId: site.backhaul_id,
       createdAt: site.created_at,
       location: site.location,
+      spectrumId: site.spectrum_id,
     });
   });
   return {
@@ -44,5 +45,6 @@ export const dtoToSiteDto = (res: SiteAPIDto): SiteDto => {
     installDate: res.install_date,
     createdAt: res.created_at,
     location: res.location,
+    spectrumId: res.spectrum_id,
   };
 };

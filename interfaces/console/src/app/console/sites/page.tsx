@@ -10,13 +10,19 @@
 import colors from '@/theme/colors';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteCard from '@/components/SiteCard';
-import { Grid, Paper, Typography, Button } from '@mui/material';
+import { Grid, Paper, Typography, Button, AlertColor } from '@mui/material';
 import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
-import { useState } from 'react';
-import { Dummysites } from '@/constants/stubData';
+import { useEffect, useState } from 'react';
+import {
+  useGetSitesLazyQuery,
+  useGetNetworksQuery,
+} from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
 
 const Sites = () => {
   const [open, setOpen] = useState(false);
+  const [sitesList, setSitesList] = useState<any[]>([]);
+  const { setSnackbarMessage, network } = useAppContext();
 
   const handleOpen = () => {
     setOpen(true);
@@ -25,6 +31,41 @@ const Sites = () => {
   const handleClose = () => {
     setOpen(false);
   };
+
+  const { data: networkList } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const [getSites] = useGetSitesLazyQuery({
+    onCompleted: (res) => {
+      if (res.getSites) {
+        setSitesList((prevSites) => [...prevSites, ...res.getSites.sites]);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (networkList?.getNetworks.networks) {
+      const networkIds = networkList.getNetworks.networks.map(
+        (network) => network.id,
+      );
+
+      networkIds.forEach((networkId) => {
+        getSites({
+          variables: {
+            networkId: networkId,
+          },
+        });
+      });
+    }
+  }, [networkList, getSites]);
 
   const handleMenuClick = (siteId: string) => {
     console.log(`Menu clicked for siteId: ${siteId}`);
@@ -67,7 +108,7 @@ const Sites = () => {
             </Grid>
 
             <Grid container spacing={2}>
-              {Dummysites.map((site, index) => (
+              {sitesList.map((site, index) => (
                 <Grid item xs={12} md={4} lg={4} key={index}>
                   <SiteCard
                     siteId={site.siteId}

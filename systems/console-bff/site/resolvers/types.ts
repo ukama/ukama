@@ -21,6 +21,9 @@ export class SiteDto {
   accessId: string;
 
   @Field()
+  spectrumId: string;
+
+  @Field()
   switchId: string;
 
   @Field()
@@ -63,6 +66,9 @@ export class SiteAPIDto {
   backhaul_id: string;
 
   @Field()
+  spectrum_id: string;
+
+  @Field()
   power_id: string;
 
   @Field()
@@ -99,5 +105,35 @@ export class SitesAPIResDto {
 @InputType()
 export class AddSiteInputDto {
   @Field()
-  site: string;
+  name: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  backhaulId: string;
+
+  @Field()
+  powerId: string;
+
+  @Field()
+  accessId: string;
+
+  @Field()
+  spectrumId: string;
+
+  @Field()
+  switchId: string;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+
+  @Field()
+  installDate: string;
+
+  @Field()
+  location: string;
 }
