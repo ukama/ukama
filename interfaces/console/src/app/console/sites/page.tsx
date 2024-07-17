@@ -16,6 +16,7 @@ import { useAppContext } from '@/context';
 const Sites = () => {
   const [open, setOpen] = useState(false);
   const [sitesList, setSitesList] = useState<any[]>([]);
+  const [componentsList, setComponentsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { setSnackbarMessage } = useAppContext();
 
@@ -52,7 +53,7 @@ const Sites = () => {
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
-        console.log(res);
+        setComponentsList(res.getComponentsByUserId.components);
       }
     },
     onError: (error) => {
@@ -166,6 +167,7 @@ const Sites = () => {
         <SiteConfigurationStepperDialog
           open={open}
           handleClose={handleClose}
+          components={componentsList}
           handleFormDataSubmit={handleFormDataSubmit}
         />
       </Grid>

@@ -8,8 +8,7 @@ import {
   Select,
   Stack,
 } from '@mui/material';
-import { Field, ErrorMessage } from 'formik';
-import { SITE_CONFIG_STEPS } from '@/constants';
+import { Formik, Form, Field, ErrorMessage, FormikProps } from 'formik';
 import colors from '@/theme/colors';
 import CustomTextField from '@/components/CustomTextField';
 import dynamic from 'next/dynamic';
@@ -19,6 +18,22 @@ const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   ssr: false,
 });
 
+interface Component {
+  id: string;
+  inventory_id: string;
+  category: string;
+  type: string;
+  user_id: string;
+  description: string;
+  datasheet_url: string;
+  images_url: string;
+  part_number: string;
+  manufacturer: string;
+  managed: string;
+  warranty: number;
+  specification: string;
+}
+
 interface StepContentProps {
   step: number;
   lat: number;
@@ -27,6 +42,11 @@ interface StepContentProps {
   handleLatChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleLngChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAddressChange: (address: string) => void;
+  components: Component[];
+}
+
+interface FormValues {
+  [key: string]: string;
 }
 
 const SiteStepForm: React.FC<StepContentProps> = ({
@@ -37,133 +57,109 @@ const SiteStepForm: React.FC<StepContentProps> = ({
   handleLatChange,
   handleLngChange,
   handleAddressChange,
+  components,
 }) => {
-  switch (step) {
-    case 0:
-      return (
-        <Box
-          component="form"
-          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+  const initialValues: FormValues = components.reduce(
+    (acc: FormValues, component) => {
+      acc[component.type.toLowerCase()] = '';
+      return acc;
+    },
+    {},
+  );
+
+  const renderComponentField = (
+    component: Component,
+    formikProps: FormikProps<FormValues>,
+  ) => {
+    const fieldName = component.type.toLowerCase();
+    return (
+      <FormControl fullWidth key={component.id}>
+        <InputLabel id={`${fieldName}-label`}>{component.category}</InputLabel>
+        <Field
+          as={Select}
+          labelId={`${fieldName}-label`}
+          name={fieldName}
+          label={component.category}
+          value={formikProps.values[fieldName] || ''}
+          onChange={(e: React.ChangeEvent<{ value: unknown }>) =>
+            formikProps.setFieldValue(fieldName, e.target.value as string)
+          }
         >
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <Typography>
-              You have successfully installed your site, and need to configure
-              it. Please note that if your power or backhaul choice is “other”,
-              it can’t be monitored within Ukama’s Console.
-            </Typography>
-          </Box>
-          <FormControl fullWidth>
-            <InputLabel id="switch-label">Switch</InputLabel>
-            <Field
-              as={Select}
-              labelId="switch-label"
-              name="switch"
-              label="Switch"
-            >
-              <MenuItem value="8 port switch">8 port switch</MenuItem>
-              <MenuItem value="16 port switch">16 port switch</MenuItem>
-            </Field>
-            <ErrorMessage name="switch" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="power-label">Power</InputLabel>
-            <Field as={Select} labelId="power-label" name="power" label="Power">
-              <MenuItem value="Battery">Battery</MenuItem>
-              <MenuItem value="AC Power">AC Power</MenuItem>
-            </Field>
-            <ErrorMessage name="power" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="backhaul-label">Backhaul</InputLabel>
-            <Field
-              as={Select}
-              labelId="backhaul-label"
-              name="backhaul"
-              label="Backhaul"
-            >
-              <MenuItem value="ViaSAT">ViaSAT</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
-            </Field>
-            <ErrorMessage name="backhaul" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="spectrumBand-label">Spectrum Band</InputLabel>
-            <Field
-              as={Select}
-              labelId="spectrumBand-label"
-              name="spectrumBand"
-              label="Spectrum Band"
-            >
-              <MenuItem value="Band 40">Band 40</MenuItem>
-              <MenuItem value="Band 41">Band 41</MenuItem>
-            </Field>
-            <ErrorMessage name="spectrumBand" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-        </Box>
-      );
-    case 1:
-      return (
-        <Box
-          component="form"
-          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-        >
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <Typography>
-              Please name your site for your ease of reference, and assign it to
-              a network.
-            </Typography>
-          </Box>
-          <SiteMapComponent
-            posix={[lat, lng]}
-            onAddressChange={handleAddressChange}
-          />
-          <Box>
-            <Stack direction="column" spacing={1} justifyItems={'center'}>
-              <Typography variant="body2" sx={{ color: `${colors.darkGray}` }}>
-                LOCATION
-              </Typography>
-              <Typography variant="body2" color="initial">
-                {location || 'Fetching site location...'}
-              </Typography>
-            </Stack>
-          </Box>
-          <CustomTextField
-            label="Longitude"
-            name="longitude"
-            onChange={handleLngChange}
-          />
-          <CustomTextField
-            label="Latitude"
-            name="latitude"
-            onChange={handleLatChange}
-          />
-          <ErrorMessage name="longitude" component="div">
-            {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-          </ErrorMessage>
-          <ErrorMessage name="latitude" component="div">
-            {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-          </ErrorMessage>
-          <CustomTextField label="Site Name" name="siteName" />
-          <ErrorMessage name="siteName" component="div">
-            {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-          </ErrorMessage>
-          <CustomTextField label="Network" name="network" />
-          <ErrorMessage name="network" component="div">
-            {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-          </ErrorMessage>
-        </Box>
-      );
-    default:
-      return <div>Not Found</div>;
-  }
+          <MenuItem value={component.id}>{component.description}</MenuItem>
+        </Field>
+        <ErrorMessage name={fieldName} component="div">
+          {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
+        </ErrorMessage>
+      </FormControl>
+    );
+  };
+
+  const renderStep0 = (formikProps: FormikProps<FormValues>) => (
+    <>
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <Typography>
+          {`You have successfully installed your site, and need to configure it.
+          Please note that if your power or backhaul choice is "other", it can't
+          be monitored within Ukama's Console.`}
+        </Typography>
+      </Box>
+      {components.map((component) =>
+        renderComponentField(component, formikProps),
+      )}
+    </>
+  );
+
+  const renderStep1 = () => (
+    <>
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <Typography>
+          Please name your site for your ease of reference, and assign it to a
+          network.
+        </Typography>
+      </Box>
+      <SiteMapComponent
+        posix={[lat, lng]}
+        onAddressChange={handleAddressChange}
+      />
+      <Box>
+        <Stack direction="column" spacing={1} justifyItems={'center'}>
+          <Typography variant="body2" sx={{ color: colors.darkGray }}>
+            LOCATION
+          </Typography>
+          <Typography variant="body2" color="initial">
+            {location || 'Fetching site location...'}
+          </Typography>
+        </Stack>
+      </Box>
+      <CustomTextField
+        label="Longitude"
+        name="longitude"
+        onChange={handleLngChange}
+      />
+      <CustomTextField
+        label="Latitude"
+        name="latitude"
+        onChange={handleLatChange}
+      />
+      <CustomTextField label="Site Name" name="siteName" />
+      <CustomTextField label="Network" name="network" />
+    </>
+  );
+
+  return (
+    <Formik<FormValues>
+      initialValues={initialValues}
+      onSubmit={(values: FormValues) => {
+        console.log(values);
+      }}
+    >
+      {(formikProps: FormikProps<FormValues>) => (
+        <Form style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {step === 0 ? renderStep0(formikProps) : renderStep1()}
+        </Form>
+      )}
+    </Formik>
+  );
 };
 
 export default SiteStepForm;
