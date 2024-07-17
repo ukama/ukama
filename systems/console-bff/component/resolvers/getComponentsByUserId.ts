@@ -8,16 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { ComponentDto, ComponentsResDto } from "./types";
+import { ComponentsResDto } from "./types";
 
 @Resolver()
 export class GetComponentsByUserResolver {
-  @Query(() => ComponentDto)
+  @Query(() => ComponentsResDto)
   async getComponentsByUserId(
     @Arg("category") category: string,
     @Ctx() ctx: Context
   ): Promise<ComponentsResDto> {
     const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getComponents(headers, category);
+    return dataSources.dataSource.getComponentsByUserId(headers, category);
   }
 }

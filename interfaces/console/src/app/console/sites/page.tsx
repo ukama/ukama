@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 'use client';
 
 import colors from '@/theme/colors';
@@ -16,13 +9,15 @@ import { useEffect, useState } from 'react';
 import {
   useGetSitesLazyQuery,
   useGetNetworksQuery,
+  useGetComponentsByUserIdLazyQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 
 const Sites = () => {
   const [open, setOpen] = useState(false);
   const [sitesList, setSitesList] = useState<any[]>([]);
-  const { setSnackbarMessage, network } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const { setSnackbarMessage } = useAppContext();
 
   const handleOpen = () => {
     setOpen(true);
@@ -32,7 +27,7 @@ const Sites = () => {
     setOpen(false);
   };
 
-  const { data: networkList } = useGetNetworksQuery({
+  const { data: networkList, loading: networkLoading } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
       setSnackbarMessage({
@@ -43,41 +38,80 @@ const Sites = () => {
       });
     },
   });
+
   const [getSites] = useGetSitesLazyQuery({
-    onCompleted: (res) => {
-      if (res.getSites) {
-        setSitesList((prevSites) => [...prevSites, ...res.getSites.sites]);
-      }
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sites-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
     },
   });
+  const [getComponents] = useGetComponentsByUserIdLazyQuery({
+    onCompleted: (res) => {
+      if (res.getComponentsByUserId) {
+        console.log(res);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'components-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  useEffect(() => {
+    getComponents({ variables: { category: 'switch' } });
+  }, []);
 
   useEffect(() => {
-    if (networkList?.getNetworks.networks) {
-      const networkIds = networkList.getNetworks.networks.map(
-        (network) => network.id,
-      );
+    const fetchAllSites = async () => {
+      if (networkList && networkList.getNetworks.networks) {
+        setIsLoading(true);
+        const allSitesPromises = networkList.getNetworks.networks.map(
+          (network) => getSites({ variables: { networkId: network.id } }),
+        );
 
-      networkIds.forEach((networkId) => {
-        getSites({
-          variables: {
-            networkId: networkId,
-          },
-        });
-      });
-    }
+        try {
+          const results = await Promise.all(allSitesPromises);
+          const allSites = results.flatMap(
+            (result) => result.data?.getSites.sites || [],
+          );
+          setSitesList(allSites);
+        } catch (error) {
+          console.error('Error fetching sites:', error);
+          setSnackbarMessage({
+            id: 'sites-fetch-error',
+            message: 'Error fetching sites',
+            type: 'error' as AlertColor,
+            show: true,
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchAllSites();
   }, [networkList, getSites]);
 
   const handleMenuClick = (siteId: string) => {
     console.log(`Menu clicked for siteId: ${siteId}`);
   };
+
   const handleFormDataSubmit = (formData: any) => {
     console.log('Form data submitted:', formData);
   };
+  console.log('SITES LIST', sitesList);
   return (
     <LoadingWrapper
       radius="small"
       width={'100%'}
-      isLoading={false}
+      isLoading={isLoading || networkLoading}
       cstyle={{
         backgroundColor: false ? colors.white : 'transparent',
       }}
@@ -86,12 +120,13 @@ const Sites = () => {
         <Grid item xs={12}>
           <Paper sx={{ p: 4 }}>
             <Grid container spacing={0} sx={{ mb: 2 }}>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <Typography variant="h6" color="initial">
                   My sites
                 </Typography>
               </Grid>
               <Grid
+                item
                 xs={6}
                 container
                 justifyItems={'center'}
@@ -111,12 +146,17 @@ const Sites = () => {
               {sitesList.map((site, index) => (
                 <Grid item xs={12} md={4} lg={4} key={index}>
                   <SiteCard
-                    siteId={site.siteId}
+                    siteId={site.id}
                     name={site.name}
-                    address={site.address}
-                    users={site.users}
-                    status={site.status}
+                    address={site.location}
+                    users={site.users || ''}
+                    siteStatus={site.isDeactivated}
                     onClickMenu={handleMenuClick}
+                    status={{
+                      online: false,
+                      charging: false,
+                      signal: '',
+                    }}
                   />
                 </Grid>
               ))}
@@ -132,4 +172,5 @@ const Sites = () => {
     </LoadingWrapper>
   );
 };
+
 export default Sites;

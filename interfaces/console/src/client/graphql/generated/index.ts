@@ -137,13 +137,23 @@ export type CBooleanResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+/** Categories for components */
+export enum ComponentCategory {
+  Access = 'ACCESS',
+  All = 'ALL',
+  Backhaul = 'BACKHAUL',
+  Power = 'POWER',
+  Switch = 'SWITCH'
+}
+
 export type ComponentDto = {
   __typename?: 'ComponentDto';
+  category: ComponentCategory;
   datasheetUrl: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   imageUrl: Scalars['String']['output'];
-  inventory: Scalars['String']['output'];
+  inventoryId: Scalars['String']['output'];
   managed: Scalars['String']['output'];
   manufacturer: Scalars['String']['output'];
   partNumber: Scalars['String']['output'];
@@ -151,6 +161,11 @@ export type ComponentDto = {
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
   warranty: Scalars['Float']['output'];
+};
+
+export type ComponentsResDto = {
+  __typename?: 'ComponentsResDto';
+  components: Array<ComponentDto>;
 };
 
 export type CountriesRes = {
@@ -698,7 +713,7 @@ export type Query = {
   __typename?: 'Query';
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
-  getComponentsByUserId: ComponentDto;
+  getComponentsByUserId: ComponentsResDto;
   getCountries: CountriesRes;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
@@ -1558,14 +1573,14 @@ export type GetComponentByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventory: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
+export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
 
 export type GetComponentsByUserIdQueryVariables = Exact<{
   category: Scalars['String']['input'];
 }>;
 
 
-export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentDto', id: string, inventory: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
+export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
 export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
@@ -3894,7 +3909,7 @@ export const GetComponentByIdDocument = gql`
     query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
     id
-    inventory
+    inventoryId
     type
     userId
     description
@@ -3944,18 +3959,20 @@ export type GetComponentByIdQueryResult = Apollo.QueryResult<GetComponentByIdQue
 export const GetComponentsByUserIdDocument = gql`
     query getComponentsByUserId($category: String!) {
   getComponentsByUserId(category: $category) {
-    id
-    inventory
-    type
-    userId
-    description
-    datasheetUrl
-    imageUrl
-    partNumber
-    manufacturer
-    managed
-    warranty
-    specification
+    components {
+      id
+      inventoryId
+      type
+      userId
+      description
+      datasheetUrl
+      imageUrl
+      partNumber
+      manufacturer
+      managed
+      warranty
+      specification
+    }
   }
 }
     `;

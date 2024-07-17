@@ -660,10 +660,11 @@ query getSites($networkId: String!) {
     }
   }
 }
+
 query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
     id
-    inventory
+    inventoryId
     type
     userId
     description
@@ -676,21 +677,22 @@ query getComponentById($componentId: String!) {
     specification
   }
 }
-
 query getComponentsByUserId($category: String!) {
   getComponentsByUserId(category: $category) {
-    id
-    inventory
-    type
-    userId
-    description
-    datasheetUrl
-    imageUrl
-    partNumber
-    manufacturer
-    managed
-    warranty
-    specification
+    components {
+      id
+      inventoryId
+      type
+      userId
+      description
+      datasheetUrl
+      imageUrl
+      partNumber
+      manufacturer
+      managed
+      warranty
+      specification
+    }
   }
 }
 

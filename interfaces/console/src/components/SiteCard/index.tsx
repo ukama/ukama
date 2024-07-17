@@ -29,6 +29,7 @@ interface SiteCardProps {
   name: string;
   address: string;
   users: number;
+  siteStatus: boolean;
   status: {
     online: boolean;
     charging: boolean;
@@ -43,6 +44,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
   address,
   users,
   status,
+  siteStatus,
   onClickMenu,
 }) => {
   const isSmallScreen = useMediaQuery((theme: any) =>
@@ -128,14 +130,16 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          <Box display="flex" alignItems="center" mr={13}>
-            <PeopleIcon />
+          <Box display="flex" alignItems="center" mr={10}>
+            <PeopleIcon sx={{ fontSize: 30 }} />
             <Typography variant="body2" ml={0.5}>
               {users}
             </Typography>
           </Box>
           <Box display="flex" alignItems="center" mr={2}>
-            <RouterIcon sx={{ color: status.online ? 'green' : 'red' }} />
+            <RouterIcon
+              sx={{ color: status.online ? 'green' : 'red', fontSize: 30 }}
+            />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
                 Online
@@ -144,7 +148,8 @@ const SiteCard: React.FC<SiteCardProps> = ({
           </Box>
           <Box display="flex" alignItems="center" mr={2}>
             <BatteryChargingFullIcon
-              sx={{ color: status.charging ? 'green' : 'red' }}
+              fontSize="large"
+              sx={{ color: status.charging ? 'green' : 'red', fontSize: 30 }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
@@ -154,11 +159,15 @@ const SiteCard: React.FC<SiteCardProps> = ({
           </Box>
           <Box display="flex" alignItems="center">
             <CellTowerIcon
-              sx={{ color: status.signal === 'Good' ? 'green' : 'red' }}
+              fontSize="large"
+              sx={{
+                color: siteStatus ? 'green' : 'red',
+                fontSize: 30,
+              }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
-                {status.signal}
+                {siteStatus ? 'Site is set up' : 'Site is deactivated'}
               </Typography>
             )}
           </Box>

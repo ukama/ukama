@@ -1,27 +1,23 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
+import { COMPONENT_CATEGORY } from "../../common/enums";
 import {
-  ComponentAPIResDto,
+  ComponentAPIDto,
   ComponentDto,
   ComponentsAPIResDto,
   ComponentsResDto,
 } from "../resolvers/types";
 
-export const dtoTocomponentsDto = (
+export const dtoToComponentsDto = (
   res: ComponentsAPIResDto
 ): ComponentsResDto => {
   const components: ComponentDto[] = [];
   res.components.forEach(component => {
     components.push({
       id: component.id,
-      inventory: component.inventory,
-      userId: component.user_id,
+      specification: component.specification,
+      inventoryId: component.inventory_id,
+      category: mapCategoryStringToEnum(component.category),
       type: component.type,
+      userId: component.user_id,
       description: component.description,
       datasheetUrl: component.datasheet_url,
       imageUrl: component.images_url,
@@ -29,7 +25,6 @@ export const dtoTocomponentsDto = (
       manufacturer: component.manufacturer,
       managed: component.managed,
       warranty: component.warranty,
-      specification: component.specification,
     });
   });
   return {
@@ -37,19 +32,36 @@ export const dtoTocomponentsDto = (
   };
 };
 
-export const dtoTocomponentDto = (res: ComponentAPIResDto): ComponentDto => {
+export const dtoToComponentDto = (res: ComponentAPIDto): ComponentDto => {
   return {
-    id: res.component.id,
-    inventory: res.component.inventory,
-    userId: res.component.user_id,
-    type: res.component.type,
-    description: res.component.description,
-    datasheetUrl: res.component.datasheet_url,
-    imageUrl: res.component.images_url,
-    partNumber: res.component.part_number,
-    manufacturer: res.component.manufacturer,
-    managed: res.component.managed,
-    warranty: res.component.warranty,
-    specification: res.component.specification,
+    id: res.id,
+    specification: res.specification,
+    inventoryId: res.inventory_id,
+    category: mapCategoryStringToEnum(res.category),
+    type: res.type,
+    userId: res.user_id,
+    description: res.description,
+    datasheetUrl: res.datasheet_url,
+    imageUrl: res.images_url,
+    partNumber: res.part_number,
+    manufacturer: res.manufacturer,
+    managed: res.managed,
+    warranty: res.warranty,
   };
 };
+function mapCategoryStringToEnum(categoryString: string): COMPONENT_CATEGORY {
+  switch (categoryString.toLowerCase()) {
+    case "all":
+      return COMPONENT_CATEGORY.ALL;
+    case "access":
+      return COMPONENT_CATEGORY.ACCESS;
+    case "backhaul":
+      return COMPONENT_CATEGORY.BACKHAUL;
+    case "power":
+      return COMPONENT_CATEGORY.POWER;
+    case "switch":
+      return COMPONENT_CATEGORY.SWITCH;
+    default:
+      throw new Error(`Unknown category: ${categoryString}`);
+  }
+}
