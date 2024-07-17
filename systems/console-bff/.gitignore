@@ -8,3 +8,4 @@ src/.DS_Store
 .env.production
 yarn-error.log
 .env.example
+coverage
