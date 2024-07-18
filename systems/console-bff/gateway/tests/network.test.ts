@@ -17,6 +17,7 @@ import { AddNetworkResolver } from "../../network/resolvers/addNetwork";
 import { GetNetworkResolver } from "../../network/resolvers/getNetwork";
 import { GetNetworksResolver } from "../../network/resolvers/getNetworks";
 import { SetDefaultNetworkResolver } from "../../network/resolvers/setDefaultNetwork";
+import { ADD_NETWORK, GET_NETWORK, GET_NETWORKS, SET_DEFAULT } from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -94,22 +95,6 @@ describe("Network API integration test", () => {
   });
 
   it("should add network", async () => {
-    const ADD_NETWORK = `mutation AddNetwork($data: AddNetworkInputDto!) {
-  addNetwork(data: $data) {
-    id
-    name
-    isDefault
-    budget
-    overdraft
-    trafficPolicy
-    isDeactivated
-    paymentLinks
-    createdAt
-    countries
-    networks
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: ADD_NETWORK,
@@ -136,23 +121,6 @@ describe("Network API integration test", () => {
     expect(data.addNetwork.networks).toEqual(testNetwork.networks);
   });
   it("should get all networks", async () => {
-    const GET_NETWORKS = `query GetNetworks {
-  getNetworks {
-    networks {
-      id
-      name
-      isDefault
-      budget
-      overdraft
-      trafficPolicy
-      isDeactivated
-      paymentLinks
-      createdAt
-      countries
-      networks
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_NETWORKS,
@@ -169,21 +137,6 @@ describe("Network API integration test", () => {
   });
 
   it("should get a network using network-id", async () => {
-    const GET_NETWORK = `query GetNetwork($networkId: String!) {
-  getNetwork(networkId: $networkId) {
-    id
-    name
-    isDefault
-    budget
-    overdraft
-    trafficPolicy
-    isDeactivated
-    paymentLinks
-    createdAt
-    countries
-    networks
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_NETWORK,
@@ -202,11 +155,6 @@ describe("Network API integration test", () => {
     expect(data.getNetwork.name).toEqual(testNetwork.name);
   });
   it("should set default network", async () => {
-    const SET_DEFAULT = `mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
-  setDefaultNetwork(data: $data) {
-    success
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: SET_DEFAULT,

@@ -16,6 +16,14 @@ import { GetMemberByUserIdResolver } from "../../member/resolver/getMemberByUser
 import { GetMembersResolver } from "../../member/resolver/getMembers";
 import { RemoveMemberResolver } from "../../member/resolver/removeMember";
 import { UpdateMemberResolver } from "../../member/resolver/updateMember";
+import {
+  ADD_MEMBER,
+  GET_MEMBER,
+  GET_MEMBERS,
+  GET_MEMBER_BY_ID,
+  REMOVE_MEMBER,
+  UPDATE_MEMBER,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -101,20 +109,6 @@ describe("Member API integration test", () => {
   let memberId = "";
 
   it("should get all members", async () => {
-    const GET_MEMBERS = `query GetMembers {
-  getMembers {
-    members {
-      userId
-      name
-      email
-      memberId
-      isDeactivated
-      role
-      memberSince
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_MEMBERS,
@@ -131,15 +125,6 @@ describe("Member API integration test", () => {
   });
 
   it("should add a member", async () => {
-    const ADD_MEMBER = `mutation AddMember($data: AddMemberInputDto!) {
-  addMember(data: $data) {
-    userId
-    memberId
-    isDeactivated
-    memberSince
-    role
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: ADD_MEMBER,
@@ -161,17 +146,6 @@ describe("Member API integration test", () => {
   });
 
   it("should get member using user id", async () => {
-    const GET_MEMBER = `query GetMemberByUserId($userId: String!) {
-  getMemberByUserId(userId: $userId) {
-    userId
-    name
-    email
-    memberId
-    isDeactivated
-    role
-    memberSince
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_MEMBER,
@@ -189,18 +163,9 @@ describe("Member API integration test", () => {
   });
 
   it("should get member using member id", async () => {
-    const GET_MEMBER = `query GetMember($getMemberId: String!) {
-    getMember(id: $getMemberId) {
-      userId
-      memberId
-      isDeactivated
-      role
-      memberSince
-    }
-  }`;
     const res = await server.executeOperation(
       {
-        query: GET_MEMBER,
+        query: GET_MEMBER_BY_ID,
         variables: { getMemberId: memberId },
       },
       {
@@ -216,11 +181,6 @@ describe("Member API integration test", () => {
   });
 
   it("should be able to update a member", async () => {
-    const UPDATE_MEMBER = `mutation UpdateMember($data: UpdateMemberInputDto!, $memberId: String!) {
-  updateMember(data: $data, memberId: $memberId) {
-    success
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: UPDATE_MEMBER,
@@ -244,12 +204,6 @@ describe("Member API integration test", () => {
   });
 
   it("should remove a member", async () => {
-    const REMOVE_MEMBER = `mutation RemoveMember($removeMemberId: String!) {
-  removeMember(id: $removeMemberId) {
-    success
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: REMOVE_MEMBER,

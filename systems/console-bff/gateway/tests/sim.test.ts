@@ -31,6 +31,17 @@ import { GetSimsResolver } from "../../sim/resolver/getSims";
 import { GetSimsBySubscriberResolver } from "../../sim/resolver/getSimsBySubscriber";
 import SubscriberApi from "../../subscriber/datasource/subscriber_api";
 import UserApi from "../../user/datasource/user_api";
+import {
+  ADD_SIM_PACKAGE,
+  ALLOCATE_SIM,
+  DELETE_SIM,
+  GET_DATA_USAGE,
+  GET_SIM,
+  GET_SIM_PACKAGES,
+  GET_SIM_STATS,
+  GET_SUBSCRIBER_SIM,
+  UPLOAD_SIMS,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -119,11 +130,6 @@ describe("Sim API integration tests", () => {
   let simId: string;
 
   it("should upload sims", async () => {
-    const UPLOAD_SIMS = `mutation UploadSims($data: UploadSimsInputDto!) {
-  uploadSims(data: $data) {
-    iccid
-  }
-}`;
     const simData = csvToBase64(path.join(__dirname, "SimPool.csv"));
 
     const res = await server.executeOperation(
@@ -144,11 +150,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should add a package to sim", async () => {
-    const ADD_PACKAGE = `mutation AddPackageToSim($data: AddPackageToSimInputDto!) {
-  addPackageToSim(data: $data) {
-    packageId
-  }
-}`;
     const packageURL = await getBaseURL(
       SUB_GRAPHS.package.name,
       orgName,
@@ -169,7 +170,7 @@ describe("Sim API integration tests", () => {
 
     const res = await server.executeOperation(
       {
-        query: ADD_PACKAGE,
+        query: ADD_SIM_PACKAGE,
         variables: {
           data: {
             package_id: packageId,
@@ -190,33 +191,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should allocate sim", async () => {
-    const ALLOCATE_SIM = `mutation AllocateSim($data: AllocateSimInputDto!) {
-  allocateSim(data: $data) {
-    id
-    subscriber_id
-    network_id
-    package {
-      id
-      packageId
-      startDate
-      endDate
-      isActive
-    }
-    iccid
-    msisdn
-    imsi
-    type
-    status
-    is_physical
-    traffic_policy
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
-    allocated_at
-    sync_status
-  }
-}`;
     const networkURL = await getBaseURL(
       SUB_GRAPHS.network.name,
       orgName,
@@ -277,20 +251,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should get sim using simId", async () => {
-    const GET_SIM = `query GetSim($data: GetSimInputDto!) {
-  getSim(data: $data) {
-    activationCode
-    createdAt
-    iccid
-    id
-    isAllocated
-    isPhysical
-    msisdn
-    qrCode
-    simType
-    smapAddress
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_SIM,
@@ -309,17 +269,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should get sim pool stats", async () => {
-    const GET_SIM_STATS = `query GetSimPoolStats($type: String!) {
-  getSimPoolStats(type: $type) {
-    total
-    available
-    consumed
-    failed
-    esim
-    physical
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_SIM_STATS,
@@ -337,12 +286,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should get the data usage", async () => {
-    const GET_DATA_USAGE = `query GetDataUsage($simId: String!) {
-  getDataUsage(simId: $simId) {
-    usage
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_DATA_USAGE,
@@ -361,21 +304,9 @@ describe("Sim API integration tests", () => {
   });
 
   it("should get packages for sim", async () => {
-    const GET_PACKAGES = `query GetPackagesForSim($data: GetPackagesForSimInputDto!) {
-  getPackagesForSim(data: $data) {
-    sim_id
-    packages {
-      id
-      package_id
-      start_date
-      end_date
-      is_active
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
-        query: GET_PACKAGES,
+        query: GET_SIM_PACKAGES,
         variables: { data: { simId } },
       },
       {
@@ -391,26 +322,9 @@ describe("Sim API integration tests", () => {
   });
 
   it("should get sims by subscriber", async () => {
-    const GET_SIM = `query GetSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
-  getSimsBySubscriber(data: $data) {
-    subscriber_id
-    sims {
-      activationCode
-      createdAt
-      iccid
-      id
-      isAllocated
-      isPhysical
-      msisdn
-      qrCode
-      simType
-      smapAddress
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
-        query: GET_SIM,
+        query: GET_SUBSCRIBER_SIM,
         variables: { data: { subscriberId } },
       },
       {
@@ -427,12 +341,6 @@ describe("Sim API integration tests", () => {
   });
 
   it("should delete a sim using simId", async () => {
-    const DELETE_SIM = `mutation DeleteSim($data: DeleteSimInputDto!) {
-  deleteSim(data: $data) {
-    simId
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: DELETE_SIM,

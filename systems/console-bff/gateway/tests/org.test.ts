@@ -10,6 +10,7 @@ import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../org/context";
 import OrgApi from "../../org/datasource/org_api";
 import { GetOrgResolver } from "../../org/resolver/getOrg";
+import { GET_ORG, GET_ORGS } from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -73,17 +74,6 @@ describe("Org API integration test", () => {
   });
 
   it("should get an org", async () => {
-    const GET_ORG = `query GetOrg {
-  getOrg {
-    id
-    name
-    owner
-    certificate
-    isDeactivated
-    createdAt
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_ORG,
@@ -102,27 +92,6 @@ describe("Org API integration test", () => {
   });
 
   it("should get all orgs", async () => {
-    const GET_ORGS = `query GetOrgs {
-  getOrgs {
-    user
-    ownerOf {
-      id
-      name
-      owner
-      certificate
-      isDeactivated
-      createdAt
-    }
-    memberOf {
-      id
-      name
-      owner
-      certificate
-      isDeactivated
-      createdAt
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_ORGS,

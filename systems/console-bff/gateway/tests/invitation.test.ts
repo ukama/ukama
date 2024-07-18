@@ -16,6 +16,14 @@ import { GetInvitationResolver } from "../../invitation/resolver/getInvitation";
 import { GetInVitationsByOrgResolver } from "../../invitation/resolver/getInvitationByOrg";
 import { GetInvitationsResolver } from "../../invitation/resolver/getInvitations";
 import { UpdateInvitationResolver } from "../../invitation/resolver/updateInvitation";
+import {
+  CREATE_INVITATION,
+  DELETE_INVITATION,
+  GET_EMAIL_INVITATIONS,
+  GET_INVITATION,
+  GET_ORG_INVITATION,
+  UPDATE_INVITATION,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -94,18 +102,6 @@ describe("Invitation API integration test", () => {
     await server.stop();
   });
   it("should create an invitation", async () => {
-    const CREATE_INVITATION = `mutation CreateInvitation($data: CreateInvitationInputDto!) {
-    createInvitation(data: $data) {
-      email
-      expireAt
-      id
-      name
-      role
-      link
-      userId
-      status
-    }
-  }`;
     const res = await server.executeOperation(
       {
         query: CREATE_INVITATION,
@@ -128,18 +124,6 @@ describe("Invitation API integration test", () => {
   });
 
   it("should get invitation", async () => {
-    const GET_INVITATION = `query GetInvitation($getInvitationId: String!) {
-  getInvitation(id: $getInvitationId) {
-    email
-    expireAt
-    id
-    name
-    role
-    link
-    userId
-    status
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_INVITATION,
@@ -162,21 +146,6 @@ describe("Invitation API integration test", () => {
   });
 
   it("should get invitation by org", async () => {
-    const GET_ORG_INVITATION = `query GetInvitationsByOrg {
-  getInvitationsByOrg {
-    invitations {
-      email
-      expireAt
-      id
-      name
-      role
-      link
-      userId
-      status
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_ORG_INVITATION,
@@ -196,18 +165,6 @@ describe("Invitation API integration test", () => {
   });
 
   it("should get invitation by email", async () => {
-    const GET_EMAIL_INVITATIONS = `query GetInvitations($email: String!) {
-  getInvitations(email: $email) {
-    email
-    expireAt
-    id
-    name
-    role
-    link
-    userId
-    status
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_EMAIL_INVITATIONS,
@@ -225,12 +182,6 @@ describe("Invitation API integration test", () => {
   });
 
   it("should update invitation", async () => {
-    const UPDATE_INVITATION = `mutation UpdateInvitation($data: UpateInvitationInputDto!) {
-  updateInvitation(data: $data) {
-    id
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: UPDATE_INVITATION,
@@ -253,11 +204,6 @@ describe("Invitation API integration test", () => {
   });
 
   it("should delete invation using id", async () => {
-    const DELETE_INVITATION = `mutation DeleteInvitation($deleteInvitationId: String!) {
-    deleteInvitation(id: $deleteInvitationId) {
-      id
-    }
-  }`;
     const res = await server.executeOperation(
       {
         query: DELETE_INVITATION,

@@ -8,6 +8,7 @@ import { Context } from "../../user/context";
 import UserApi from "../../user/datasource/user_api";
 import { GetUserResolver } from "../../user/resolver/getUser";
 import { WhoamiResolver } from "../../user/resolver/whoami";
+import { GET_USER, WHO_AM_I } from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -52,17 +53,6 @@ describe("USER API integration test", () => {
   });
 
   it("should test GetUser Resolver", async () => {
-    const GET_USER = `query GetUser($userId: String!) {
-  getUser(userId: $userId) {
-    name
-    email
-    uuid
-    phone
-    isDeactivated
-    authId
-    registeredSince
-  }
-}`;
     const { userId } = parsedHeaders;
     const res = await server.executeOperation(
       {
@@ -86,35 +76,6 @@ describe("USER API integration test", () => {
     expect(singleResult.errors).toBeUndefined();
   });
   it("should test WhoAmI Resolver", async () => {
-    const WHO_AM_I = `query Whoami {
-  whoami {
-    user {
-      name
-      email
-      uuid
-      phone
-      isDeactivated
-      authId
-      registeredSince
-    }
-    ownerOf {
-      id
-      name
-      owner
-      certificate
-      isDeactivated
-      createdAt
-    }
-    memberOf {
-      id
-      name
-      owner
-      certificate
-      isDeactivated
-      createdAt
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: WHO_AM_I,

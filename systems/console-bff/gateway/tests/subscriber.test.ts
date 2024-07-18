@@ -20,6 +20,13 @@ import { GetSubscriberResolver } from "../../subscriber/resolver/getSubscriber";
 import { GetSubscriberMetricsByNetworkResolver } from "../../subscriber/resolver/getSubscriberMetricsByNetwork";
 import { GetSubscribersByNetworkResolver } from "../../subscriber/resolver/getSubscribersByNetwork";
 import UserApi from "../../user/datasource/user_api";
+import {
+  DELETE_SUBSCRIBER,
+  GET_SUBSCRIBER,
+  GET_SUBSCRIBERS,
+  GET_SUBSCRIBER_METRICS,
+  UPDATE_SUBSCRIBER,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -172,39 +179,6 @@ describe("subscriber API integration tests", () => {
   });
 
   it("should get a subscriber", async () => {
-    const GET_SUBSCRIBER = `query GetSubscriber($subscriberId: String!) {
-    getSubscriber(subscriberId: $subscriberId) {
-      uuid
-      address
-      dob
-      email
-      firstName
-      lastName
-      gender
-      idSerial
-      networkId
-      phone
-      proofOfIdentification
-      sim {
-        id
-        subscriberId
-        networkId
-        iccid
-        msisdn
-        imsi
-        type
-        status
-        firstActivatedOn
-        lastActivatedOn
-        activationsCount
-        deactivationsCount
-        allocatedAt
-        isPhysical
-        package
-      }
-    }
-  }`;
-
     const res = await server.executeOperation(
       {
         query: GET_SUBSCRIBER,
@@ -223,17 +197,9 @@ describe("subscriber API integration tests", () => {
   });
 
   it("should get subscriber metrics by network", async () => {
-    const GET_SUBSCRIBER = `query GetSubscriberMetricsByNetwork($networkId: String!) {
-  getSubscriberMetricsByNetwork(networkId: $networkId) {
-    total
-    active
-    inactive
-    terminated
-  }
-}`;
     const res = await server.executeOperation(
       {
-        query: GET_SUBSCRIBER,
+        query: GET_SUBSCRIBER_METRICS,
         variables: { networkId },
       },
       {
@@ -251,41 +217,6 @@ describe("subscriber API integration tests", () => {
   });
 
   it("should get all subscribers by network", async () => {
-    const GET_SUBSCRIBERS = `query GetSubscribersByNetwork($networkId: String!) {
-  getSubscribersByNetwork(networkId: $networkId) {
-    subscribers {
-      uuid
-      address
-      dob
-      email
-      firstName
-      lastName
-      gender
-      idSerial
-      networkId
-      phone
-      proofOfIdentification
-      sim {
-        id
-        subscriberId
-        networkId
-        iccid
-        msisdn
-        imsi
-        type
-        status
-        firstActivatedOn
-        lastActivatedOn
-        activationsCount
-        deactivationsCount
-        allocatedAt
-        isPhysical
-        package
-      }
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_SUBSCRIBERS,
@@ -306,11 +237,6 @@ describe("subscriber API integration tests", () => {
   });
 
   it("should be able to update a subscriber", async () => {
-    const UPDATE_SUBSCRIBER = `mutation UpdateSubscriber($data: UpdateSubscriberInputDto!, $subscriberId: String!) {
-  updateSubscriber(data: $data, subscriberId: $subscriberId) {
-    success
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: UPDATE_SUBSCRIBER,
@@ -333,11 +259,6 @@ describe("subscriber API integration tests", () => {
   });
 
   it("should delete a subscriber", async () => {
-    const DELETE_SUBSCRIBER = `mutation DeleteSubscriber($subscriberId: String!) {
-  deleteSubscriber(subscriberId: $subscriberId) {
-    success
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: DELETE_SUBSCRIBER,

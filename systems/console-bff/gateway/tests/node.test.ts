@@ -30,6 +30,22 @@ import { ReleaseNodeFromSiteResolver } from "../../node/resolvers/releaseNodeFro
 import { UpdateNodeResolver } from "../../node/resolvers/updateNode";
 import { UpdateNodeStateResolver } from "../../node/resolvers/updateNodeState";
 import SiteApi from "../../site/datasource/site_api";
+import {
+  ADD_NODE,
+  ADD_NODE_TO_SITE,
+  ATTACH_NODE,
+  DELETE_NODE,
+  DETACH_NODE,
+  GET_APPS_CHANGE,
+  GET_NETWORK_NODES,
+  GET_NODE,
+  GET_NODES,
+  GET_NODES_LOCATION,
+  GET_NODE_APPS,
+  GET_NODE_LOCATION,
+  UPDATE_NODE,
+  UPDATE_NODE_STATE,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -109,30 +125,6 @@ describe("Node API integration tests", () => {
   let nodeId: string;
 
   it("should add a node", async () => {
-    const ADD_NODE = `mutation AddNode($data: AddNodeInput!) {
-  addNode(data: $data) {
-    id
-    name
-    orgId
-    type
-    attached {
-      id
-      name
-      orgId
-      type
-    }
-    site {
-      nodeId
-      siteId
-      networkId
-      addedAt
-    }
-    status {
-      connectivity
-      state
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: ADD_NODE,
@@ -164,11 +156,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should add node to a site", async () => {
-    const ADD_NODE = `mutation AddNodeToSite($data: AddNodeToSiteInput!) {
-  addNodeToSite(data: $data) {
-    success
-  }
-}`;
     const networkURL = await getBaseURL(
       SUB_GRAPHS.network.name,
       orgName,
@@ -198,7 +185,7 @@ describe("Node API integration tests", () => {
 
     const res = await server.executeOperation(
       {
-        query: ADD_NODE,
+        query: ADD_NODE_TO_SITE,
         variables: {
           data: { networkId: networkId, nodeId: nodeId, siteId: siteId },
         },
@@ -216,12 +203,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should attach a node", async () => {
-    const ATTACH_NODE = `mutation AttachNode($data: AttachNodeInput!) {
-  attachNode(data: $data) {
-    success
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: ATTACH_NODE,
@@ -241,16 +222,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should get apps change log", async () => {
-    const GET_APPS_CHANGE = `query GetAppsChangeLog($data: NodeAppsChangeLogInput!) {
-  getAppsChangeLog(data: $data) {
-    logs {
-      version
-      date
-    }
-    type
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_APPS_CHANGE,
@@ -269,31 +240,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should get node using node id", async () => {
-    const GET_NODE = `query GetNode($data: NodeInput!) {
-  getNode(data: $data) {
-    id
-    name
-    orgId
-    type
-    attached {
-      id
-      name
-      orgId
-      type
-    }
-    site {
-      nodeId
-      siteId
-      networkId
-      addedAt
-    }
-    status {
-      connectivity
-      state
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_NODE,
@@ -312,33 +258,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should get all free nodes", async () => {
-    const GET_NODES = `query GetNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
-    nodes {
-      id
-      name
-      orgId
-      type
-      attached {
-        id
-        name
-        orgId
-        type
-      }
-      site {
-        nodeId
-        siteId
-        networkId
-        addedAt
-      }
-      status {
-        connectivity
-        state
-      }
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_NODES,
@@ -356,20 +275,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should get node apps", async () => {
-    const GET_NODE_APPS = `query GetNodeApps($data: NodeAppsChangeLogInput!) {
-  getNodeApps(data: $data) {
-    apps {
-      name
-      date
-      version
-      cpu
-      memory
-      notes
-    }
-    type
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_NODE_APPS,
@@ -388,15 +293,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should get node location", async () => {
-    const GET_NODE_LOCATION = `query GetNodeLocation($data: NodeInput!) {
-  getNodeLocation(data: $data) {
-    id
-    lat
-    lng
-    state
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_NODE_LOCATION,
@@ -418,36 +314,9 @@ describe("Node API integration tests", () => {
   });
 
   it("should get nodes by network", async () => {
-    const GET_NODES = `query GetNodesByNetwork($networkId: String!) {
-  getNodesByNetwork(networkId: $networkId) {
-    nodes {
-      id
-      name
-      orgId
-      type
-      attached {
-        id
-        name
-        orgId
-        type
-      }
-      site {
-        nodeId
-        siteId
-        networkId
-        addedAt
-      }
-      status {
-        connectivity
-        state
-      }
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
-        query: GET_NODES,
+        query: GET_NETWORK_NODES,
         variables: { networkId: networkId },
       },
       {
@@ -463,20 +332,9 @@ describe("Node API integration tests", () => {
   });
 
   it("should get nodes location", async () => {
-    const GET_NODES = `query GetNodesLocation($data: NodesInput!) {
-  getNodesLocation(data: $data) {
-    networkId
-    nodes {
-      id
-      lat
-      lng
-      state
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
-        query: GET_NODES,
+        query: GET_NODES_LOCATION,
         variables: {
           data: { networkId: networkId, nodeFilterState: NODE_STATUS.ACTIVE },
         },
@@ -494,31 +352,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should update node", async () => {
-    const UPDATE_NODE = `mutation UpdateNode($data: UpdateNodeInput!) {
-  updateNode(data: $data) {
-    id
-    name
-    orgId
-    type
-    attached {
-      id
-      name
-      orgId
-      type
-    }
-    site {
-      nodeId
-      siteId
-      networkId
-      addedAt
-    }
-    status {
-      connectivity
-      state
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: UPDATE_NODE,
@@ -537,33 +370,9 @@ describe("Node API integration tests", () => {
   });
 
   it("should update node state", async () => {
-    const UPDAT_NODE_STATE = `mutation UpdateNodeState($data: UpdateNodeStateInput!) {
-  updateNodeState(data: $data) {
-    id
-    name
-    orgId
-    type
-    attached {
-      id
-      name
-      orgId
-      type
-    }
-    site {
-      nodeId
-      siteId
-      networkId
-      addedAt
-    }
-    status {
-      connectivity
-      state
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
-        query: UPDAT_NODE_STATE,
+        query: UPDATE_NODE_STATE,
         variables: { data: { id: nodeId, state: NODE_STATUS.FAULTY } },
       },
       {
@@ -580,11 +389,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should detach a node", async () => {
-    const DETACH_NODE = `mutation DetachhNode($data: NodeInput!) {
-  detachhNode(data: $data) {
-    success
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: DETACH_NODE,
@@ -602,12 +406,6 @@ describe("Node API integration tests", () => {
   });
 
   it("should delete a node from the org", async () => {
-    const DELETE_NODE = `mutation DeleteNodeFromOrg($data: NodeInput!) {
-  deleteNodeFromOrg(data: $data) {
-    id
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: DELETE_NODE,

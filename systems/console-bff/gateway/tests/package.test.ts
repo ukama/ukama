@@ -12,6 +12,12 @@ import { AddPackageResolver } from "../../package/resolver/addPackage";
 import { DeletePackageResolver } from "../../package/resolver/deletePackage";
 import { GetPackageResolver } from "../../package/resolver/getPackage";
 import { GetPackagesResolver } from "../../package/resolver/getPackages";
+import {
+  ADD_PACKAGE,
+  DELETE_PACKAGE,
+  GET_PACKAGE,
+  GET_PACKAGES,
+} from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -88,46 +94,6 @@ describe("Package API integration test", () => {
   };
 
   it("should add a package", async () => {
-    const ADD_PACKAGE = `mutation AddPackage($data: AddPackageInputDto!) {
-  addPackage(data: $data) {
-    uuid
-    name
-    active
-    duration
-    simType
-    createdAt
-    deletedAt
-    updatedAt
-    smsVolume
-    dataVolume
-    voiceVolume
-    ulbr
-    dlbr
-    type
-    dataUnit
-    voiceUnit
-    messageUnit
-    flatrate
-    currency
-    from
-    to
-    country
-    provider
-    apn
-    ownerId
-    amount
-    rate {
-      sms_mo
-      sms_mt
-      data
-      amount
-    }
-    markup {
-      baserate
-      markup
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: ADD_PACKAGE,
@@ -148,46 +114,6 @@ describe("Package API integration test", () => {
   });
 
   it("should get a package using packageId", async () => {
-    const GET_PACKAGE = `query GetPackage($packageId: String!) {
-  getPackage(packageId: $packageId) {
-    uuid
-    name
-    active
-    duration
-    simType
-    createdAt
-    deletedAt
-    updatedAt
-    smsVolume
-    dataVolume
-    voiceVolume
-    ulbr
-    dlbr
-    type
-    dataUnit
-    voiceUnit
-    messageUnit
-    flatrate
-    currency
-    from
-    to
-    country
-    provider
-    apn
-    ownerId
-    amount
-    rate {
-      sms_mo
-      sms_mt
-      data
-      amount
-    }
-    markup {
-      baserate
-      markup
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_PACKAGE,
@@ -208,48 +134,6 @@ describe("Package API integration test", () => {
   });
 
   it("should get all packages", async () => {
-    const GET_PACKAGES = `query GetPackages {
-  getPackages {
-    packages {
-      uuid
-      name
-      active
-      duration
-      simType
-      createdAt
-      deletedAt
-      updatedAt
-      smsVolume
-      dataVolume
-      voiceVolume
-      ulbr
-      dlbr
-      type
-      dataUnit
-      voiceUnit
-      messageUnit
-      flatrate
-      currency
-      from
-      to
-      country
-      provider
-      apn
-      ownerId
-      amount
-      rate {
-        sms_mo
-        sms_mt
-        data
-        amount
-      }
-      markup {
-        baserate
-        markup
-      }
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_PACKAGES,
@@ -266,11 +150,6 @@ describe("Package API integration test", () => {
   });
 
   it("should delete a package", async () => {
-    const DELETE_PACKAGE = `mutation DeletePackage($packageId: String!) {
-  deletePackage(packageId: $packageId) {
-    uuid
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: DELETE_PACKAGE,

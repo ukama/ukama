@@ -8,6 +8,7 @@ import { Context } from "../../init/context";
 import InitAPI from "../../init/datasource/init_api";
 import { GetCountriesResolver } from "../../init/resolver/getCountries";
 import { GetTimezonesResolver } from "../../init/resolver/getTimezones";
+import { GET_COUNTRIES, GET_TIMEZONES } from "./graphql";
 
 const token = process.env.TOKEN;
 const headers = {
@@ -49,15 +50,6 @@ describe("Init API integration tests", () => {
   });
 
   it("should get all countries", async () => {
-    const GET_COUNTRIES = `query GetCountries {
-  getCountries {
-    countries {
-      name
-      code
-    }
-  }
-}`;
-
     const res = await server.executeOperation(
       {
         query: GET_COUNTRIES,
@@ -74,18 +66,6 @@ describe("Init API integration tests", () => {
     expect(data.getCountries.countries.length).toBeGreaterThanOrEqual(1);
   });
   it("should get all time zones", async () => {
-    const GET_TIMEZONES = `query GetTimezones {
-  getTimezones {
-    timezones {
-      value
-      abbr
-      offset
-      isdst
-      text
-      utc
-    }
-  }
-}`;
     const res = await server.executeOperation(
       {
         query: GET_TIMEZONES,
