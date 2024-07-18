@@ -80,6 +80,7 @@ type simManager interface {
 
 type subscriber interface {
 	GetSubscriber(sid string) (*subRegPb.GetSubscriberResponse, error)
+	GetSubscriberByEmail(sEmail string) (*subRegPb.GetSubscriberByEmailResponse, error)
 	AddSubscriber(req *subRegPb.AddSubscriberRequest) (*subRegPb.AddSubscriberResponse, error)
 	DeleteSubscriber(sid string) (*subRegPb.DeleteSubscriberResponse, error)
 	UpdateSubscriber(subscriber *subRegPb.UpdateSubscriberRequest) (*subRegPb.UpdateSubscriberResponse, error)
@@ -161,6 +162,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		subscriber := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
 		subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+		subscriber.GET("/email/:subscriber_email", formatDoc("Get subscriber by email", ""), tonic.Handler(r.getSubscriberByEmail, http.StatusOK))
 		subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
 		subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
@@ -252,6 +254,17 @@ func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) 
 		return nil, err
 	}
 	return res, nil
+}
+
+func (r *Router) getSubscriberByEmail(c *gin.Context, req *SubscriberGetReqByEmail) (*subRegPb.GetSubscriberByEmailResponse, error) {
+	subsEmail := req.Email
+
+	pbResp, err := r.clients.sub.GetSubscriberByEmail(subsEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	return pbResp, nil
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*subRegPb.GetSubscriberResponse, error) {

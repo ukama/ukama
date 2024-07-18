@@ -87,6 +87,7 @@ message AddPackageRequest {
     double overdraft = 28;
     uint32 trafficPolicy = 29 [json_name = "traffic_policy"];;
     repeated string networks = 30 [json_name = "networks"];
+    string currency = 31;
 }
 
 message AddPackageResponse {
@@ -108,7 +109,7 @@ message Package {
     int64 voiceVolume = 12 [json_name = "voice_volume"];
     int64 dlbr = 13;
     int64 ulbr = 14;
-    PackageRates rate = 15;
+    PackageRate rate = 15;
     PackageMarkup markup = 16;
     string type = 17;
     string dataUnit = 18 [json_name = "data_unit"];
@@ -129,7 +130,7 @@ message Package {
     string syncStatus = 33 [json_name = "sync_status"];
 }
 
-message PackageRates{ 
+message PackageRate{ 
     double smsMo = 1 [json_name = "sms_mo"];
     double smsMt = 2 [json_name = "sms_mt"];
     double data = 3;

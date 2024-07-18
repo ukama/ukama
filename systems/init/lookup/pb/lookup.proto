@@ -46,8 +46,6 @@ message AddOrgRequest {
     string orgId = 2 [(validator.field) = {uuid_ver:4, string_not_empty: true}];
     string certificate = 3 [(validator.field) = {string_not_empty: true}];
     string ip = 4;
-    string authUrl = 5;
-    string subscriberBffUrl = 6;
 }
 
 message AddOrgResponse {
@@ -55,24 +53,18 @@ message AddOrgResponse {
     string orgId = 2 ;
     string certificate = 3;
     string ip = 4;
-    string authUrl = 5;
-    string subscriberBffUrl = 6;
 }
 
 message UpdateOrgRequest {
     string orgName = 1  [(validator.field) = {string_not_empty: true}];
     string certificate = 2;
     string ip = 3;
-    string authUrl = 4;
-    string subscriberBffUrl = 5;
 }
 
 message UpdateOrgResponse { 
     string orgName = 1  [(validator.field) = {string_not_empty: true}];
     string certificate = 2;
     string ip = 3;
-    string authUrl = 4;
-    string subscriberBffUrl = 5;
 }
 
 message GetOrgRequest {
@@ -83,8 +75,6 @@ message GetOrgResponse {
     string orgName = 1  [(validator.field) = {string_not_empty: true}];
     string certificate = 2;
     string ip = 3;
-    string authUrl = 4;
-    string subscriberBffUrl = 5;
 
 }
 

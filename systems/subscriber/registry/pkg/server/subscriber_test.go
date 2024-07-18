@@ -152,6 +152,31 @@ func TestSubscriberServer_Get(t *testing.T) {
 		subRepo.AssertExpectations(t)
 	})
 
+	// t.Run("SubscriberByEmail", func(t *testing.T) {
+	// 	email := "salman@example.com"
+	// 	networkClient := &cmocks.NetworkClient{}
+
+	// 	expectedSubscriber := &db.Subscriber{
+	// 		SubscriberId: uuid.NewV4(),
+	// 		FirstName:    "John",
+	// 		LastName:     "Doe",
+	// 		Email:        email,
+	// 	}
+
+	// 	subRepo := &mocks.SubscriberRepo{}
+
+	// 	subRepo.On("GetByEmail", email).Return(expectedSubscriber, nil).Once()
+
+	// 	s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+	// 	subResp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
+	// 		Email: email})
+
+	// 	assert.Error(t, err)
+	// 	assert.Nil(t, subResp)
+	// 	assert.Equal(t, subResp.Subscriber.Email, expectedSubscriber.Email)
+	// 	subRepo.AssertExpectations(t)
+	// })
+
 	t.Run("SubscriberUUIDInvalid", func(t *testing.T) {
 		var subscriberId = "1"
 		networkClient := &cmocks.NetworkClient{}

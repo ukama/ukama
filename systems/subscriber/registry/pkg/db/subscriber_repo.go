@@ -17,6 +17,7 @@ import (
 type SubscriberRepo interface {
 	Add(subscriber *Subscriber, nestedFunc func(*Subscriber, *gorm.DB) error) error
 	Get(subscriberId uuid.UUID) (*Subscriber, error)
+	GetByEmail(email string) (*Subscriber, error)
 	Delete(subscriberId uuid.UUID) error
 	Update(subscriberId uuid.UUID, sub Subscriber) error
 	GetByNetwork(networkId uuid.UUID) ([]Subscriber, error)
@@ -66,6 +67,17 @@ func (s *subscriberRepo) Get(subscriberId uuid.UUID) (*Subscriber, error) {
 	var subscriber Subscriber
 
 	err := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).First(&subscriber).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &subscriber, nil
+}
+
+func (s *subscriberRepo) GetByEmail(email string) (*Subscriber, error) {
+	var subscriber Subscriber
+
+	err := s.Db.GetGormDb().Where("email = ?", email).First(&subscriber).Error
 	if err != nil {
 		return nil, err
 	}
