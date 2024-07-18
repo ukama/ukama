@@ -18,7 +18,7 @@ import (
 )
 
 type PackageRepo interface {
-	Add(packageData *Package, packageRate *PackageRate) error
+	Add(dataPackage *Package, packageRate *PackageRate) error
 	Get(uuid uuid.UUID) (*Package, error)
 	GetDetails(uuid.UUID) (*Package, error)
 	Delete(uuid uuid.UUID) error
@@ -36,13 +36,13 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 	}
 }
 
-func (r *packageRepo) Add(packageData *Package, packageRate *PackageRate) error {
+func (r *packageRepo) Add(dataPackage *Package, packageRate *PackageRate) error {
 	tx := r.Db.GetGormDb().Begin()
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	result := tx.Create(packageData)
+	result := tx.Create(dataPackage)
 	if result.Error != nil {
 		tx.Rollback()
 		return result.Error
