@@ -78,11 +78,26 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.node.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+  return {
+    dataSources: { dataSource: nodeApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Node API integration tests", () => {
   let server: ApolloServer<Context>;
+  let contextValue: any;
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -130,20 +145,7 @@ describe("Node API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -172,13 +174,18 @@ describe("Node API integration tests", () => {
       orgName,
       redisClient.isOpen ? redisClient : null
     );
-    const network = await networkApi.addNetwork(networkURL.message, {
+
+    const testNetwork = {
       budget: Math.floor(Math.random() * 10),
       countries: ["Country"],
       name: generateNetworkName(),
       networks: ["A3"],
-      org: orgName,
-    });
+    };
+
+    const network = await networkApi.addNetwork(
+      networkURL.message,
+      testNetwork
+    );
     networkId = network.id;
 
     const siteURL = await getBaseURL(
@@ -197,20 +204,7 @@ describe("Node API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -236,20 +230,7 @@ describe("Node API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -276,20 +257,7 @@ describe("Node API integration tests", () => {
         variables: { data: { type: NODE_TYPE.anode } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -332,20 +300,7 @@ describe("Node API integration tests", () => {
         variables: { data: { id: nodeId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -390,20 +345,7 @@ describe("Node API integration tests", () => {
         variables: { data: { isFree: true } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -434,20 +376,7 @@ describe("Node API integration tests", () => {
         variables: { data: { type: NODE_TYPE.anode } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -474,20 +403,7 @@ describe("Node API integration tests", () => {
         variables: { data: { type: NODE_TYPE.anode } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -535,20 +451,7 @@ describe("Node API integration tests", () => {
         variables: { networkId: networkId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -579,20 +482,7 @@ describe("Node API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -635,20 +525,7 @@ describe("Node API integration tests", () => {
         variables: { data: { id: nodeId, name: "updated node" } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -690,20 +567,7 @@ describe("Node API integration tests", () => {
         variables: { data: { id: nodeId, state: NODE_STATUS.FAULTY } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -727,20 +591,7 @@ describe("Node API integration tests", () => {
         variables: { data: { id: nodeId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -763,20 +614,7 @@ describe("Node API integration tests", () => {
         variables: { data: { id: nodeId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.node.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: nodeApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 

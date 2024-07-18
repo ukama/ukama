@@ -5,6 +5,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../org/context";
 import OrgApi from "../../org/datasource/org_api";
@@ -41,11 +42,31 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.org.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+
+  return {
+    dataSources: { dataSource: orgApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Org API integration test", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: OrgApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -68,20 +89,7 @@ describe("Org API integration test", () => {
         query: GET_ORG,
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.org.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: orgApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -120,20 +128,7 @@ describe("Org API integration test", () => {
         query: GET_ORGS,
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.org.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: orgApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

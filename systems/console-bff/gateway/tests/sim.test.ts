@@ -7,6 +7,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { SIM_TYPES } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import {
   csvToBase64,
   generateNetworkName,
@@ -76,11 +77,31 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.sim.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+
+  return {
+    dataSources: { dataSource: simApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Sim API integration tests", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: SimApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -111,20 +132,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { data: simData, simType: SIM_TYPES.TEST } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -171,20 +179,7 @@ describe("Sim API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -232,7 +227,6 @@ describe("Sim API integration tests", () => {
       countries: ["Country"],
       name: generateNetworkName(),
       networks: ["A3"],
-      org: orgName,
     });
     networkId = testNetwork.id;
 
@@ -270,20 +264,7 @@ describe("Sim API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -316,20 +297,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { simId: simId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -358,20 +326,7 @@ describe("Sim API integration tests", () => {
         variables: { type: SIM_TYPES.TEST },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -394,20 +349,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { simId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -437,20 +379,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { simId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -485,20 +414,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { subscriberId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -523,20 +439,7 @@ describe("Sim API integration tests", () => {
         variables: { data: { simId: simId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.sim.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: simApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

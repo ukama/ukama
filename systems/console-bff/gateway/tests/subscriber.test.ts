@@ -5,6 +5,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import {
   generateNetworkName,
   getBaseURL,
@@ -57,11 +58,31 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.subscriber.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+
+  return {
+    dataSources: { dataSource: subscriberApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("subscriber API integration tests", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: SubscriberApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -116,7 +137,6 @@ describe("subscriber API integration tests", () => {
       countries: ["Country"],
       name: generateNetworkName(),
       networks: ["A3"],
-      org: orgName,
     });
 
     networkId = network.id;
@@ -138,20 +158,7 @@ describe("subscriber API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -204,20 +211,7 @@ describe("subscriber API integration tests", () => {
         variables: { subscriberId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -243,20 +237,7 @@ describe("subscriber API integration tests", () => {
         variables: { networkId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -311,20 +292,7 @@ describe("subscriber API integration tests", () => {
         variables: { networkId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -354,20 +322,7 @@ describe("subscriber API integration tests", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -389,20 +344,7 @@ describe("subscriber API integration tests", () => {
         variables: { subscriberId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.subscriber.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: subscriberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

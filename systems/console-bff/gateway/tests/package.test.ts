@@ -4,6 +4,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../package/context";
 import PackageApi from "../../package/datasource/package_api";
@@ -48,13 +49,31 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.package.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+  return {
+    dataSources: { dataSource: packageApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 let packageId = "";
 
 describe("Package API integration test", () => {
   let server: ApolloServer<Context>;
-
+  let contextValue: {
+    dataSources: { dataSource: PackageApi };
+    baseURL: string;
+    headers: THeaders;
+  };
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -115,20 +134,7 @@ describe("Package API integration test", () => {
         variables: { data: testPackage },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.package.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: packageApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -188,20 +194,7 @@ describe("Package API integration test", () => {
         variables: { packageId: packageId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.package.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: packageApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -262,20 +255,7 @@ describe("Package API integration test", () => {
         query: GET_PACKAGES,
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.package.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: packageApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -297,20 +277,7 @@ describe("Package API integration test", () => {
         variables: { packageId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.package.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: packageApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

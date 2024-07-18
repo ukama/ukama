@@ -6,6 +6,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../member/context";
 import MemberApi from "../../member/datasource/member_api";
@@ -69,11 +70,30 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.member.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+  return {
+    dataSources: { dataSource: memberApi },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Member API integration test", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: MemberApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -94,26 +114,13 @@ describe("Member API integration test", () => {
     }
   }
 }`;
-    const baseURL = await getBaseURL(
-      SUB_GRAPHS.member.name,
-      orgName,
-      redisClient.isOpen ? redisClient : null
-    );
 
     const res = await server.executeOperation(
       {
         query: GET_MEMBERS,
       },
       {
-        contextValue: await (async () => {
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -139,20 +146,7 @@ describe("Member API integration test", () => {
         variables: { data: testMember },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.member.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -184,20 +178,7 @@ describe("Member API integration test", () => {
         variables: { userId: userId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.member.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -223,20 +204,7 @@ describe("Member API integration test", () => {
         variables: { getMemberId: memberId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.member.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -265,20 +233,7 @@ describe("Member API integration test", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.member.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -301,20 +256,7 @@ describe("Member API integration test", () => {
         variables: { removeMemberId: memberId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.member.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: memberApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

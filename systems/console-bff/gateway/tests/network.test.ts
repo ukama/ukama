@@ -5,6 +5,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import {
   generateNetworkName,
   getBaseURL,
@@ -30,7 +31,6 @@ const testNetwork = {
   countries: ["Country"],
   name: generateNetworkName(),
   networks: ["A3"],
-  org: orgName,
 };
 
 let networkId = "";
@@ -62,11 +62,32 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.network.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+  return {
+    dataSources: {
+      dataSource: networkApi,
+    },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Network API integration test", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: NetworkApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -97,20 +118,7 @@ describe("Network API integration test", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: networkApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
 
@@ -150,20 +158,7 @@ describe("Network API integration test", () => {
         query: GET_NETWORKS,
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: networkApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -195,20 +190,7 @@ describe("Network API integration test", () => {
         variables: { networkId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: networkApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -231,20 +213,7 @@ describe("Network API integration test", () => {
         variables: { data: { id: networkId } },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.network.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: networkApi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

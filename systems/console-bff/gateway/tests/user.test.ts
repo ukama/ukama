@@ -2,6 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
+import { THeaders } from "../../common/types";
 import { parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../user/context";
 import UserApi from "../../user/datasource/user_api";
@@ -36,8 +37,15 @@ async function startServer() {
 
 describe("USER API integration test", () => {
   let server: ApolloServer<Context>;
+  let contextValue: { dataSources: { dataSource: UserApi }; headers: THeaders };
   beforeAll(async () => {
     server = await startServer();
+    contextValue = {
+      dataSources: {
+        dataSource: userApi,
+      },
+      headers: parsedHeaders,
+    };
   });
   afterAll(async () => {
     await server.stop();
@@ -62,12 +70,7 @@ describe("USER API integration test", () => {
         variables: { userId },
       },
       {
-        contextValue: {
-          dataSources: {
-            dataSource: userApi,
-          },
-          headers: parsedHeaders,
-        },
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -117,12 +120,7 @@ describe("USER API integration test", () => {
         query: WHO_AM_I,
       },
       {
-        contextValue: {
-          dataSources: {
-            dataSource: userApi,
-          },
-          headers: parsedHeaders,
-        },
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

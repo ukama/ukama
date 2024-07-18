@@ -2,6 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
+import { THeaders } from "../../common/types";
 import { parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../init/context";
 import InitAPI from "../../init/datasource/init_api";
@@ -34,9 +35,14 @@ const startServer = async () => {
 
 describe("Init API integration tests", () => {
   let server: ApolloServer<Context>;
+  let contextValue: { dataSources: { dataSource: InitAPI }; headers: THeaders };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = {
+      dataSources: { dataSource: initApi },
+      headers: parsedHeaders,
+    };
   });
   afterAll(async () => {
     await server.stop();
@@ -57,12 +63,7 @@ describe("Init API integration tests", () => {
         query: GET_COUNTRIES,
       },
       {
-        contextValue: {
-          dataSources: {
-            dataSource: initApi,
-          },
-          headers: parsedHeaders,
-        },
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -90,12 +91,7 @@ describe("Init API integration tests", () => {
         query: GET_TIMEZONES,
       },
       {
-        contextValue: {
-          dataSources: {
-            dataSource: initApi,
-          },
-          headers: parsedHeaders,
-        },
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);

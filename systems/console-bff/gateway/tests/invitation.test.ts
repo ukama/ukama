@@ -6,6 +6,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { INVITATION_STATUS } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../invitation/context";
 import InvitationApi from "../../invitation/datasource/invitation_api";
@@ -62,11 +63,32 @@ const startServer = async () => {
   return server;
 };
 
+const createContextValue = async () => {
+  const baseURL = await getBaseURL(
+    SUB_GRAPHS.invitation.name,
+    orgName,
+    redisClient.isOpen ? redisClient : null
+  );
+  return {
+    dataSources: {
+      dataSource: invitationAPi,
+    },
+    baseURL: baseURL.message,
+    headers: parsedHeaders,
+  };
+};
+
 describe("Invitation API integration test", () => {
   let server: ApolloServer<Context>;
+  let contextValue: {
+    dataSources: { dataSource: InvitationApi };
+    baseURL: string;
+    headers: THeaders;
+  };
 
   beforeAll(async () => {
     server = await startServer();
+    contextValue = await createContextValue();
   });
   afterAll(async () => {
     await server.stop();
@@ -92,20 +114,7 @@ describe("Invitation API integration test", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -137,20 +146,7 @@ describe("Invitation API integration test", () => {
         variables: { getInvitationId: invitationId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -186,20 +182,7 @@ describe("Invitation API integration test", () => {
         query: GET_ORG_INVITATION,
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -231,20 +214,7 @@ describe("Invitation API integration test", () => {
         variables: { email: invitationData.email },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -272,20 +242,7 @@ describe("Invitation API integration test", () => {
         },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
@@ -307,20 +264,7 @@ describe("Invitation API integration test", () => {
         variables: { deleteInvitationId: invitationId },
       },
       {
-        contextValue: await (async () => {
-          const baseURL = await getBaseURL(
-            SUB_GRAPHS.invitation.name,
-            orgName,
-            redisClient.isOpen ? redisClient : null
-          );
-          return {
-            dataSources: {
-              dataSource: invitationAPi,
-            },
-            baseURL: baseURL.message,
-            headers: parsedHeaders,
-          };
-        })(),
+        contextValue: contextValue,
       }
     );
     const body = JSON.stringify(res.body);
