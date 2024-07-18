@@ -32,7 +32,7 @@ const STEPPER_FORM_SCHEMA = [
     switch: Yup.string().required('Switch is required'),
     power: Yup.string().required('Power is required'),
     backhaul: Yup.string().required('Backhaul is required'),
-    spectrumBand: Yup.string().required('Spectrum Band is required'),
+    access: Yup.string().required('Spectrum Band is required'),
   }),
   Yup.object().shape({
     siteName: Yup.string().required('Site Name is required'),

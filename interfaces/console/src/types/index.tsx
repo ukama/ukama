@@ -24,6 +24,16 @@ export type StatsItemType = {
   label: string;
   value: string;
 };
+export interface FormValues {
+  switch: string;
+  power: string;
+  backhaul: string;
+  access: string;
+  siteName: string;
+  network: string;
+  latitude: number;
+  longitude: number;
+}
 
 export type Site = {
   name: string;

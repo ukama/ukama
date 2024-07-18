@@ -11,30 +11,19 @@ import {
   Step,
   StepLabel,
 } from '@mui/material';
-import { Formik, Form, FormikErrors, FormikTouched } from 'formik';
+import { Formik, Form, FormikErrors, FormikTouched, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import CloseIcon from '@mui/icons-material/Close';
 import { SITE_CONFIG_STEPS } from '@/constants';
 import { STEPPER_FORM_SCHEMA } from '@/helpers/formValidators';
 import SiteStepForm from '@/components/SiteStepForm';
+import { FormValues } from '@/types';
 
 interface SiteConfigurationStepperDialogProps {
   open: boolean;
   handleClose: () => void;
-  handleFormDataSubmit: (formData: any) => void;
+  handleFormDataSubmit: (formData: FormValues & { location: string }) => void;
   components: any[];
-}
-
-interface FormValues {
-  switch: string;
-  power: string;
-  backhaul: string;
-  spectrumBand: string;
-  location: string;
-  siteName: string;
-  network: string;
-  latitude: number;
-  longitude: number;
 }
 
 const SiteConfigurationStepperDialog: React.FC<
@@ -44,6 +33,7 @@ const SiteConfigurationStepperDialog: React.FC<
   const [lat, setLat] = useState<number>(0);
   const [lng, setLng] = useState<number>(0);
   const [location, setLocation] = useState('');
+  const [component, setComponent] = useState<any>();
 
   useEffect(() => {
     console.log('Active step changed:', activeStep);
@@ -53,8 +43,7 @@ const SiteConfigurationStepperDialog: React.FC<
     switch: '',
     power: '',
     backhaul: '',
-    spectrumBand: '',
-    location: '',
+    access: '',
     siteName: '',
     network: '',
     latitude: 0,
@@ -72,22 +61,29 @@ const SiteConfigurationStepperDialog: React.FC<
   };
 
   const handleNext = async (values: FormValues, helpers: any) => {
-    console.log('handleNext called', values);
+    console.log('handleNext called', values, activeStep);
     try {
       await STEPPER_FORM_SCHEMA[activeStep].validate(values, {
         abortEarly: false,
       });
       console.log('Validation passed');
       if (activeStep === SITE_CONFIG_STEPS.length - 1) {
-        handleFormDataSubmit({ ...values, location: location });
+        handleFormDataSubmit({ ...values, location });
         handleClose();
+        console.log('DATA:', values);
       } else {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        console.log('Active step updated', activeStep + 1);
+        setActiveStep((prevActiveStep) => {
+          console.log(
+            'Updating activeStep from',
+            prevActiveStep,
+            'to',
+            prevActiveStep + 1,
+          );
+          return prevActiveStep + 1;
+        });
       }
     } catch (error) {
       console.error('Validation error:', error);
-      helpers.setSubmitting(false);
       if (error instanceof Yup.ValidationError) {
         const errorMessages: { [key: string]: string } = {};
         error.inner.forEach((err) => {
@@ -95,9 +91,15 @@ const SiteConfigurationStepperDialog: React.FC<
             errorMessages[err.path] = err.message;
           }
         });
+        console.log('Validation errors:', errorMessages);
         helpers.setErrors(errorMessages);
       }
+      helpers.setSubmitting(false);
     }
+  };
+
+  const getComponentInfos = (form: any) => {
+    setComponent(form.values);
   };
 
   const handleBack = () => {
@@ -133,8 +135,8 @@ const SiteConfigurationStepperDialog: React.FC<
         validationSchema={STEPPER_FORM_SCHEMA[activeStep]}
         onSubmit={(values, helpers) => handleNext(values, helpers)}
       >
-        {({ handleSubmit, errors, touched }) => (
-          <Form onSubmit={handleSubmit}>
+        {(formik: FormikProps<FormValues>) => (
+          <Form onSubmit={formik.handleSubmit}>
             <DialogContent>
               <Stepper activeStep={activeStep} alternativeLabel>
                 {SITE_CONFIG_STEPS.map((label) => (
@@ -151,29 +153,16 @@ const SiteConfigurationStepperDialog: React.FC<
                 handleLatChange={handleLatChange}
                 handleLngChange={handleLngChange}
                 handleAddressChange={handleAddressChange}
+                getComponentInfos={getComponentInfos}
+                formik={formik}
                 components={components}
               />
-              {Object.keys(errors).map((key) => {
-                const touchedKey = key as keyof FormikTouched<FormValues>;
-                const errorKey = key as keyof FormikErrors<FormValues>;
-                return touched[touchedKey] && errors[errorKey] ? (
-                  <Typography key={key} color="error">
-                    {errors[errorKey]}
-                  </Typography>
-                ) : null;
-              })}
             </DialogContent>
             <DialogActions>
-              {activeStep > 0 && (
-                <Button
-                  onClick={handleBack}
-                  variant="contained"
-                  color="primary"
-                >
-                  Back
-                </Button>
-              )}
-              <Button type="submit" variant="contained" color="primary">
+              <Button disabled={activeStep === 0} onClick={handleBack}>
+                Back
+              </Button>
+              <Button type="submit">
                 {activeStep === SITE_CONFIG_STEPS.length - 1
                   ? 'Finish'
                   : 'Next'}

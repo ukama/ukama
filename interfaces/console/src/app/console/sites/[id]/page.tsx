@@ -7,15 +7,16 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import colors from '@/theme/colors';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteOverView from '@/components/SiteOverView';
 import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
 import RestartSiteDialog from '@/components/RestartSiteDialog';
-import { Grid, Paper } from '@mui/material';
+import { AlertColor, Grid, Paper } from '@mui/material';
 import SiteOverallHealth from '@/components/SiteHealth';
-
+import { useGetSiteLazyQuery } from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
 interface SiteDetailsProps {
   params: {
     id: string;
@@ -23,8 +24,10 @@ interface SiteDetailsProps {
 }
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
+  console.log('SITE ID', id);
   const [open, setOpen] = useState(false);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
+  const { setSnackbarMessage } = useAppContext();
 
   const handleClose = () => {
     setOpen(false);
@@ -48,6 +51,21 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     console.log(`Restarting site: ${siteName}`);
     setRestartDialogOpen(false);
   };
+
+  const [getSite] = useGetSiteLazyQuery({
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sites-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  useEffect(() => {
+    getSite({ variables: { siteId: id } });
+  }, []);
+
   return (
     <LoadingWrapper
       radius="small"
@@ -75,6 +93,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         open={open}
         handleClose={handleClose}
         handleFormDataSubmit={handleSiteInstallation}
+        components={[]}
       />
       <RestartSiteDialog
         open={restartDialogOpen}

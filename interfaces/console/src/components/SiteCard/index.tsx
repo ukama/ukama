@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   Menu,
   MenuItem,
+  Skeleton,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import RouterIcon from '@mui/icons-material/Router';
@@ -36,6 +37,7 @@ interface SiteCardProps {
     signal: string;
   };
   onClickMenu?: (siteId: string) => void;
+  loading?: boolean;
 }
 
 const SiteCard: React.FC<SiteCardProps> = ({
@@ -46,6 +48,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
   status,
   siteStatus,
   onClickMenu,
+  loading = false,
 }) => {
   const isSmallScreen = useMediaQuery((theme: any) =>
     theme.breakpoints.down('sm'),
@@ -95,15 +98,19 @@ const SiteCard: React.FC<SiteCardProps> = ({
         >
           <Box mb={isSmallScreen ? 2 : 0}>
             <Typography variant="h6">
-              <a
-                href={`/console/sites/${siteId}`} // Replace with actual link URL
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                {name}
-              </a>
+              {loading ? (
+                <Skeleton width={150} />
+              ) : (
+                <a
+                  href={`/console/sites/${siteId}`} // Replace with actual link URL
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  {name}
+                </a>
+              )}
             </Typography>
             <Typography color="textSecondary" variant="body2">
-              {address}
+              {loading ? <Skeleton width={200} /> : address}
             </Typography>
           </Box>
           <IconButton onClick={handleClick}>
@@ -133,27 +140,33 @@ const SiteCard: React.FC<SiteCardProps> = ({
           <Box display="flex" alignItems="center" mr={10}>
             <PeopleIcon sx={{ fontSize: 30 }} />
             <Typography variant="body2" ml={0.5}>
-              {users}
+              {loading ? <Skeleton width={30} /> : users}
             </Typography>
           </Box>
           <Box display="flex" alignItems="center" mr={2}>
             <RouterIcon
-              sx={{ color: status.online ? 'green' : 'red', fontSize: 30 }}
+              sx={{
+                color: loading ? 'gray' : status.online ? 'green' : 'red',
+                fontSize: 30,
+              }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
-                Online
+                {loading ? <Skeleton width={50} /> : 'Online'}
               </Typography>
             )}
           </Box>
           <Box display="flex" alignItems="center" mr={2}>
             <BatteryChargingFullIcon
               fontSize="large"
-              sx={{ color: status.charging ? 'green' : 'red', fontSize: 30 }}
+              sx={{
+                color: loading ? 'gray' : status.charging ? 'green' : 'red',
+                fontSize: 30,
+              }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
-                Charging
+                {loading ? <Skeleton width={70} /> : 'Charging'}
               </Typography>
             )}
           </Box>
@@ -161,13 +174,19 @@ const SiteCard: React.FC<SiteCardProps> = ({
             <CellTowerIcon
               fontSize="large"
               sx={{
-                color: siteStatus ? 'green' : 'red',
+                color: loading ? 'gray' : siteStatus ? 'green' : 'red',
                 fontSize: 30,
               }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
-                {siteStatus ? 'Site is set up' : 'Site is deactivated'}
+                {loading ? (
+                  <Skeleton width={100} />
+                ) : siteStatus ? (
+                  'Site is set up'
+                ) : (
+                  'Site is deactivated'
+                )}
               </Typography>
             )}
           </Box>
