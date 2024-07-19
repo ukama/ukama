@@ -198,9 +198,6 @@ const killProcess = (pid: string): Promise<void> => {
 
 const getSystemNameByService = (service: string): string => {
   switch (service) {
-    case "package":
-    case "rate":
-      return "dataplan";
     case "org":
     case "user":
       return "nucleus";
@@ -269,7 +266,7 @@ const generateNetworkName = (length = 10) => {
 const csvToBase64 = (filePath: string) => {
   readFile(filePath, (err, data) => {
     if (err) {
-      console.error("Error reading file: ", err);
+      logger.error("Error reading file: ", err);
       return;
     }
     return data.toString("base64");
@@ -279,6 +276,7 @@ const csvToBase64 = (filePath: string) => {
 export {
   csvToBase64,
   findProcessNKill,
+  generateNetworkName,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
@@ -289,5 +287,4 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
-  generateNetworkName,
 };
