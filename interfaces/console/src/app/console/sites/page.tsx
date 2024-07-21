@@ -4,8 +4,8 @@ import colors from '@/theme/colors';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteCard from '@/components/SiteCard';
 import { Grid, Paper, Typography, Button, AlertColor } from '@mui/material';
-import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
-import StepperDialog from '@/components/StepperTest';
+import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import StepperDialog from '@/components/ConfigureSiteDialog';
 
 import { useEffect, useState } from 'react';
 import {
@@ -205,16 +205,16 @@ const Sites = () => {
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { setSnackbarMessage } = useAppContext();
-  const [opens, setSopen] = useState(false);
+  const [openSiteConfig, setOpenSiteConfig] = useState(false);
 
-  const handleOpenTest = () => setSopen(true);
-  const handleCloseTest = () => setSopen(false);
+  const handleOpenTest = () => setOpenSiteConfig(true);
+  const handleCloseTest = () => setOpenSiteConfig(false);
 
-  const handleOpen = () => {
-    setOpen(true);
+  const handleSiteConfigOpen = () => {
+    setOpenSiteConfig(true);
   };
 
-  const handleClose = () => {
+  const handleCloseSiteConfig = () => {
     setOpen(false);
   };
 
@@ -323,7 +323,7 @@ const Sites = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleOpenTest}
+                onClick={handleSiteConfigOpen}
               >
                 ADD SITE
               </Button>
@@ -358,18 +358,11 @@ const Sites = () => {
           </Grid>
         </Paper>
       </Grid>
-      <StepperDialog
-        open={opens}
-        onClose={handleCloseTest}
+      <ConfigureSiteDialog
+        open={openSiteConfig}
+        onClose={handleCloseSiteConfig}
         components={dummysComponents}
         networks={dummyNetworks}
-      />
-
-      <SiteConfigurationStepperDialog
-        open={open}
-        handleClose={handleClose}
-        components={dummyComponents}
-        handleFormDataSubmit={handleFormDataSubmit}
       />
     </Grid>
   );

@@ -73,7 +73,7 @@ interface StepperDialogProps {
   networks: { id: string; name: string }[];
 }
 
-const StepperDialog: React.FC<StepperDialogProps> = ({
+const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
   open,
   onClose,
   components,
@@ -123,7 +123,16 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
   );
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      sx={{
+        '& .MuiDialog-paper': {
+          width: '60%', // Adjust width as needed
+          maxWidth: '40%', // Set a maximum width if needed
+        },
+      }}
+    >
       <DialogTitle>
         Configure site installation ({activeStep + 1}/2)
         <IconButton
@@ -290,6 +299,14 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
                     label="Site Name"
                     error={touched.siteName && Boolean(errors.siteName)}
                     helperText={touched.siteName && errors.siteName}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
                   />
                   <Field
                     as={TextField}
@@ -314,6 +331,9 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
                       touched.selectedNetwork && errors.selectedNetwork
                     }
                   >
+                    <MenuItem value="" disabled>
+                      Choose a network to add your site to
+                    </MenuItem>
                     {networks.map((network) => (
                       <MenuItem key={network.id} value={network.name}>
                         {network.name}
@@ -323,6 +343,7 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
                   <Field
                     as={TextField}
                     fullWidth
+                    required
                     margin="normal"
                     name="latitude"
                     label="Latitude"
@@ -330,10 +351,19 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
                     onChange={handleChange}
                     error={touched.latitude && Boolean(errors.latitude)}
                     helperText={touched.latitude && errors.latitude}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
                   />
                   <Field
                     as={TextField}
                     fullWidth
+                    required
                     margin="normal"
                     name="longitude"
                     label="Longitude"
@@ -341,6 +371,14 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
                     onChange={handleChange}
                     error={touched.longitude && Boolean(errors.longitude)}
                     helperText={touched.longitude && errors.longitude}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
                   />
                 </>
               )}
@@ -365,4 +403,4 @@ const StepperDialog: React.FC<StepperDialogProps> = ({
   );
 };
 
-export default StepperDialog;
+export default ConfigureSiteDialog;

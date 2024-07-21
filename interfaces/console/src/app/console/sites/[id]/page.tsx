@@ -11,7 +11,6 @@ import React, { useState, useEffect } from 'react';
 import colors from '@/theme/colors';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteOverView from '@/components/SiteOverView';
-import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
 import RestartSiteDialog from '@/components/RestartSiteDialog';
 import { AlertColor, Grid, Paper } from '@mui/material';
 import SiteOverallHealth from '@/components/SiteHealth';
@@ -89,12 +88,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           backhaulHealth={'good'}
         />
       </Paper>
-      <SiteConfigurationStepperDialog
-        open={open}
-        handleClose={handleClose}
-        handleFormDataSubmit={handleSiteInstallation}
-        components={[]}
-      />
+
+      {/* <ConfigureSiteDialog
+        open={openSiteConfig}
+        onClose={handleCloseSiteConfig}
+        components={dummysComponents}
+        networks={dummyNetworks}
+      /> */}
       <RestartSiteDialog
         open={restartDialogOpen}
         onClose={handleRestartDialogClose}
