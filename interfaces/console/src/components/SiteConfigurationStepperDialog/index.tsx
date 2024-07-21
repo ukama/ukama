@@ -11,7 +11,7 @@ import {
   Step,
   StepLabel,
 } from '@mui/material';
-import { Formik, Form, FormikErrors, FormikTouched, FormikProps } from 'formik';
+import { Formik, Form, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import CloseIcon from '@mui/icons-material/Close';
 import { SITE_CONFIG_STEPS } from '@/constants';
@@ -33,7 +33,6 @@ const SiteConfigurationStepperDialog: React.FC<
   const [lat, setLat] = useState<number>(0);
   const [lng, setLng] = useState<number>(0);
   const [location, setLocation] = useState('');
-  const [component, setComponent] = useState<any>();
 
   useEffect(() => {
     console.log('Active step changed:', activeStep);
@@ -48,6 +47,7 @@ const SiteConfigurationStepperDialog: React.FC<
     network: '',
     latitude: 0,
     longitude: 0,
+    location: '',
   };
 
   const handleLatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,26 +61,26 @@ const SiteConfigurationStepperDialog: React.FC<
   };
 
   const handleNext = async (values: FormValues, helpers: any) => {
-    console.log('handleNext called', values, activeStep);
+    console.log(
+      'handleNext called with values:',
+      values,
+      'activeStep:',
+      activeStep,
+    );
+
     try {
       await STEPPER_FORM_SCHEMA[activeStep].validate(values, {
         abortEarly: false,
       });
       console.log('Validation passed');
+
       if (activeStep === SITE_CONFIG_STEPS.length - 1) {
+        console.log('Submitting form data on finish:', values);
+        console.log('DATA:', values);
         handleFormDataSubmit({ ...values, location });
         handleClose();
-        console.log('DATA:', values);
       } else {
-        setActiveStep((prevActiveStep) => {
-          console.log(
-            'Updating activeStep from',
-            prevActiveStep,
-            'to',
-            prevActiveStep + 1,
-          );
-          return prevActiveStep + 1;
-        });
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
       }
     } catch (error) {
       console.error('Validation error:', error);
@@ -94,20 +94,20 @@ const SiteConfigurationStepperDialog: React.FC<
         console.log('Validation errors:', errorMessages);
         helpers.setErrors(errorMessages);
       }
+    } finally {
       helpers.setSubmitting(false);
     }
   };
-
-  const getComponentInfos = (form: any) => {
-    setComponent(form.values);
-  };
-
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
   const handleAddressChange = (address: string) => {
     setLocation(address);
+  };
+
+  const onSiteInfoChange = (values: any) => {
+    console.log('DATA FORM :', values);
   };
 
   return (
@@ -119,9 +119,7 @@ const SiteConfigurationStepperDialog: React.FC<
       aria-labelledby="site-config-dialog-title"
     >
       <DialogTitle>
-        <Typography variant="h6" color="initial">
-          Site Configuration
-        </Typography>
+        Site Configuration
         <IconButton
           aria-label="close"
           onClick={handleClose}
@@ -133,7 +131,9 @@ const SiteConfigurationStepperDialog: React.FC<
       <Formik
         initialValues={initialValues}
         validationSchema={STEPPER_FORM_SCHEMA[activeStep]}
-        onSubmit={(values, helpers) => handleNext(values, helpers)}
+        onSubmit={(values, helpers) => {
+          handleNext(values, helpers);
+        }}
       >
         {(formik: FormikProps<FormValues>) => (
           <Form onSubmit={formik.handleSubmit}>
@@ -147,15 +147,13 @@ const SiteConfigurationStepperDialog: React.FC<
               </Stepper>
               <SiteStepForm
                 step={activeStep}
-                lat={lat}
-                lng={lng}
-                location={location}
-                handleLatChange={handleLatChange}
-                handleLngChange={handleLngChange}
+                onSiteInfoChange={onSiteInfoChange}
                 handleAddressChange={handleAddressChange}
-                getComponentInfos={getComponentInfos}
                 formik={formik}
                 components={components}
+                onNameChange={function (name: any): void {
+                  console.log(name);
+                }}
               />
             </DialogContent>
             <DialogActions>

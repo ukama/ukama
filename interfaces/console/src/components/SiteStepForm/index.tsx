@@ -1,17 +1,10 @@
-import React, { useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, TextField, MenuItem, Stack } from '@mui/material';
 import { Field, ErrorMessage, FormikProps } from 'formik';
 import colors from '@/theme/colors';
 import CustomTextField from '@/components/CustomTextField';
 import dynamic from 'next/dynamic';
+import { globalUseStyles } from '@/styles/global';
 
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
@@ -34,7 +27,7 @@ interface Component {
   specification: string;
 }
 
-interface FormValues {
+export interface FormValues {
   switch: string;
   power: string;
   backhaul: string;
@@ -43,32 +36,25 @@ interface FormValues {
   network: string;
   latitude: number;
   longitude: number;
+  location: string;
 }
 
 interface StepContentProps {
   step: number;
-  lat: number;
-  lng: number;
-  location: string;
-  handleLatChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleLngChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAddressChange: (address: string) => void;
   components: Component[];
   formik: FormikProps<FormValues>;
-  getComponentInfos: (components: FormikProps<FormValues>) => void;
+  onSiteInfoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onNameChange: (name: any) => void;
 }
 
 const SiteStepForm: React.FC<StepContentProps> = ({
   step,
-  lat,
-  lng,
-  location,
-  handleLatChange,
-  handleLngChange,
   handleAddressChange,
+  onSiteInfoChange,
+  onNameChange,
   components,
   formik,
-  getComponentInfos,
 }) => {
   const getComponentsByType = (type: string) => {
     return components.filter(
@@ -76,17 +62,12 @@ const SiteStepForm: React.FC<StepContentProps> = ({
     );
   };
 
-  useEffect(() => {
-    getComponentInfos(formik);
-  }, [formik]);
+  const gclasses = globalUseStyles();
 
   switch (step) {
     case 0:
       return (
-        <Box
-          component="form"
-          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-        >
+        <Box style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Box sx={{ mt: 2, mb: 2 }}>
             <Typography>
               {`You have successfully installed your site, and need to configure
@@ -94,86 +75,121 @@ const SiteStepForm: React.FC<StepContentProps> = ({
               it can't be monitored within Ukama's Console.`}
             </Typography>
           </Box>
-          <FormControl fullWidth>
-            <InputLabel id="switch-label">Switch</InputLabel>
-            <Field
-              as={Select}
-              labelId="switch-label"
-              name="switch"
-              label="Switch"
-              value={formik.values.switch}
-              onChange={formik.handleChange}
-            >
-              {getComponentsByType('switch').map((component) => (
-                <MenuItem key={component.id} value={component.description}>
-                  {component.description}
-                </MenuItem>
-              ))}
-            </Field>
-            <ErrorMessage name="switch" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="power-label">Power</InputLabel>
-            <Field
-              as={Select}
-              labelId="power-label"
-              name="power"
-              label="Power"
-              value={formik.values.power}
-              onChange={formik.handleChange}
-            >
-              {getComponentsByType('power').map((component) => (
-                <MenuItem key={component.id} value={component.description}>
-                  {component.description}
-                </MenuItem>
-              ))}
-            </Field>
-            <ErrorMessage name="power" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="backhaul-label">Backhaul</InputLabel>
-            <Field
-              as={Select}
-              labelId="backhaul-label"
-              name="backhaul"
-              label="Backhaul"
-              value={formik.values.backhaul}
-              onChange={formik.handleChange}
-            >
-              {getComponentsByType('backhaul').map((component) => (
-                <MenuItem key={component.id} value={component.description}>
-                  {component.description}
-                </MenuItem>
-              ))}
-            </Field>
-            <ErrorMessage name="backhaul" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="access-label">Access</InputLabel>
-            <Field
-              as={Select}
-              labelId="access-label"
-              name="access"
-              label="Access"
-              value={formik.values.access}
-              onChange={formik.handleChange}
-            >
-              {getComponentsByType('access').map((component) => (
-                <MenuItem key={component.id} value={component.description}>
-                  {component.description}
-                </MenuItem>
-              ))}
-            </Field>
-            <ErrorMessage name="access" component="div">
-              {(msg) => <div style={{ color: colors.red }}>{msg}</div>}
-            </ErrorMessage>
-          </FormControl>
+          <TextField
+            fullWidth
+            label={'SWITCH'}
+            select
+            required
+            name="switch"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onBlur={formik.handleBlur}
+            onChange={formik.handleChange}
+            value={formik.values.switch}
+            helperText={formik.touched.switch && formik.errors.switch}
+            error={formik.touched.switch && Boolean(formik.errors.switch)}
+            id={'switch'}
+            spellCheck={false}
+            InputProps={{
+              classes: {
+                input: gclasses.inputFieldStyle,
+              },
+            }}
+          >
+            {getComponentsByType('switch').map((component) => (
+              <MenuItem key={component.id} value={component.description}>
+                {component.description}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            label={'POWER'}
+            select
+            required
+            name="power"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onBlur={formik.handleBlur}
+            onChange={formik.handleChange}
+            value={formik.values.power}
+            helperText={formik.touched.power && formik.errors.power}
+            error={formik.touched.power && Boolean(formik.errors.power)}
+            id={'power'}
+            spellCheck={false}
+            InputProps={{
+              classes: {
+                input: gclasses.inputFieldStyle,
+              },
+            }}
+          >
+            {getComponentsByType('power').map((component) => (
+              <MenuItem key={component.id} value={component.description}>
+                {component.description}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            label={'BACKHAUL'}
+            select
+            required
+            name="backhaul"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onBlur={formik.handleBlur}
+            onChange={formik.handleChange}
+            value={formik.values.backhaul}
+            helperText={formik.touched.backhaul && formik.errors.backhaul}
+            error={formik.touched.backhaul && Boolean(formik.errors.backhaul)}
+            id={'backhaul'}
+            spellCheck={false}
+            InputProps={{
+              classes: {
+                input: gclasses.inputFieldStyle,
+              },
+            }}
+          >
+            {getComponentsByType('backhaul').map((component) => (
+              <MenuItem key={component.id} value={component.description}>
+                {component.description}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            label={'SPECTRUM BAND'}
+            select
+            required
+            name="access"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onBlur={formik.handleBlur}
+            onChange={formik.handleChange}
+            value={formik.values.access}
+            helperText={formik.touched.access && formik.errors.access}
+            error={formik.touched.access && Boolean(formik.errors.access)}
+            id={'access'}
+            spellCheck={false}
+            InputProps={{
+              classes: {
+                input: gclasses.inputFieldStyle,
+              },
+            }}
+          >
+            {getComponentsByType('access').map((component) => (
+              <MenuItem key={component.id} value={component.description}>
+                {component.description}
+              </MenuItem>
+            ))}
+          </TextField>
         </Box>
       );
     case 1:
@@ -189,8 +205,11 @@ const SiteStepForm: React.FC<StepContentProps> = ({
             </Typography>
           </Box>
           <SiteMapComponent
-            posix={[lat, lng]}
-            onAddressChange={handleAddressChange}
+            posix={[formik.values.latitude, formik.values.longitude]}
+            onAddressChange={(address) => {
+              formik.setFieldValue('location', address);
+              handleAddressChange(address);
+            }}
           />
           <Box>
             <Stack direction="column" spacing={1} justifyItems={'center'}>
@@ -198,14 +217,58 @@ const SiteStepForm: React.FC<StepContentProps> = ({
                 LOCATION
               </Typography>
               <Typography variant="body2" color="initial">
-                {location || 'Fetching site location...'}
+                {formik.values.location || 'Fetching site location...'}
               </Typography>
             </Stack>
           </Box>
-          <CustomTextField label="Location" name="location" />
-          <CustomTextField label="Latitude" name="latitude" />
-          <CustomTextField label="Longitude" name="longitude" />
-          <CustomTextField label="Site Name" name="siteName" />
+          <Field
+            as={TextField}
+            fullWidth
+            label="Location"
+            name="location"
+            InputLabelProps={{ shrink: true }}
+            onChange={formik.handleChange}
+            value={formik.values.location}
+            id="location"
+            spellCheck={false}
+            InputProps={{ classes: { input: gclasses.inputFieldStyle } }}
+          />
+          <Field
+            as={TextField}
+            fullWidth
+            label="Latitude"
+            name="latitude"
+            InputLabelProps={{ shrink: true }}
+            onChange={formik.handleChange}
+            value={formik.values.latitude}
+            id="latitude"
+            spellCheck={false}
+            InputProps={{ classes: { input: gclasses.inputFieldStyle } }}
+          />
+          <Field
+            as={TextField}
+            fullWidth
+            label="Longitude"
+            name="longitude"
+            InputLabelProps={{ shrink: true }}
+            onChange={formik.handleChange}
+            value={formik.values.longitude}
+            id="longitude"
+            spellCheck={false}
+            InputProps={{ classes: { input: gclasses.inputFieldStyle } }}
+          />
+          <Field
+            as={TextField}
+            fullWidth
+            label="Site Name"
+            name="siteName"
+            InputLabelProps={{ shrink: true }}
+            onChange={formik.handleChange}
+            value={formik.values.siteName}
+            id="siteName"
+            spellCheck={false}
+            InputProps={{ classes: { input: gclasses.inputFieldStyle } }}
+          />
         </Box>
       );
     default:

@@ -5,6 +5,8 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteCard from '@/components/SiteCard';
 import { Grid, Paper, Typography, Button, AlertColor } from '@mui/material';
 import SiteConfigurationStepperDialog from '@/components/SiteConfigurationStepperDialog';
+import StepperDialog from '@/components/StepperTest';
+
 import { useEffect, useState } from 'react';
 import {
   useGetSitesLazyQuery,
@@ -134,12 +136,79 @@ const dummyComponents = [
     specification: '5G NR, up to 1Gbps',
   },
 ];
+const dummysComponents = [
+  {
+    id: '123e4567-e89b-12d3-a456-426614175000',
+    inventory_id: '100',
+    category: 'ACCESS',
+    type: 'access',
+    user_id: '3cda3e88-cde2-447c-8b29-a2c931c3fe2f',
+    description: 'A 10k ohm resistor',
+    datasheet_url: 'http://example.com/datasheet1',
+    images_url: 'http://example.com/image1',
+    part_number: 'R-10K',
+    manufacturer: 'Resistors Inc.',
+    managed: 'yes',
+    warranty: 24,
+    specification: '10k ohm, 5% tolerance',
+  },
+  {
+    id: '123e4567-e89b-12d3-a456-426614174002',
+    inventory_id: '200',
+    category: 'BACKHAUL',
+    type: 'backhaul',
+    user_id: '3cda3e88-cde2-447c-8b29-a2c931c3fe2f',
+    description: 'A 100uF capacitor',
+    datasheet_url: 'http://example.com/datasheet2',
+    images_url: 'http://example.com/image2',
+    part_number: 'C-100uF',
+    manufacturer: 'Capacitors Ltd.',
+    managed: 'no',
+    warranty: 12,
+    specification: '100uF, 16V',
+  },
+  {
+    id: '123e4567-e89b-12d3-a456-426614176004',
+    inventory_id: '150',
+    category: 'POWER',
+    type: 'power',
+    user_id: '3cda3e88-cde2-447c-8b29-a2c931c3fe2f',
+    description: 'A 10mH inductor',
+    datasheet_url: 'http://example.com/datasheet3',
+    images_url: 'http://example.com/image3',
+    part_number: 'L-10mH',
+    manufacturer: 'Inductors Co.',
+    managed: 'yes',
+    warranty: 36,
+    specification: '10mH, 10% tolerance',
+  },
+  {
+    id: '123e4567-e89b-12d3-a456-426614174006',
+    inventory_id: '250',
+    category: 'SWITCH',
+    type: 'switch',
+    user_id: '3cda3e88-cde2-447c-8b29-a2c931c3fe2f',
+    description: 'A 1N4007 diode',
+    datasheet_url: 'http://example.com/datasheet4',
+    images_url: 'http://example.com/image4',
+    part_number: 'D-1N4007',
+    manufacturer: 'Diodes Inc.',
+    managed: 'no',
+    warranty: 12,
+    specification: '1N4007, 1A, 1000V',
+  },
+];
+
 const Sites = () => {
   const [open, setOpen] = useState(false);
   const [sitesList, setSitesList] = useState<any[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { setSnackbarMessage } = useAppContext();
+  const [opens, setSopen] = useState(false);
+
+  const handleOpenTest = () => setSopen(true);
+  const handleCloseTest = () => setSopen(false);
 
   const handleOpen = () => {
     setOpen(true);
@@ -189,6 +258,11 @@ const Sites = () => {
   useEffect(() => {
     getComponents({ variables: { category: 'switch' } });
   }, []);
+  const dummyNetworks = [
+    { id: '1', name: 'Network A' },
+    { id: '2', name: 'Network B' },
+    { id: '3', name: 'Network C' },
+  ];
 
   useEffect(() => {
     const fetchAllSites = async () => {
@@ -226,7 +300,7 @@ const Sites = () => {
   };
 
   const handleFormDataSubmit = (formData: any) => {
-    console.log('Form data submitted:', formData);
+    console.log('SUBMIITED');
   };
   console.log('SITES LIST', sitesList);
   return (
@@ -246,7 +320,11 @@ const Sites = () => {
               justifyItems={'center'}
               justifyContent={'flex-end'}
             >
-              <Button variant="contained" color="primary" onClick={handleOpen}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpenTest}
+              >
                 ADD SITE
               </Button>
             </Grid>
@@ -280,6 +358,13 @@ const Sites = () => {
           </Grid>
         </Paper>
       </Grid>
+      <StepperDialog
+        open={opens}
+        onClose={handleCloseTest}
+        components={dummysComponents}
+        networks={dummyNetworks}
+      />
+
       <SiteConfigurationStepperDialog
         open={open}
         handleClose={handleClose}

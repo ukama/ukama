@@ -33,6 +33,7 @@ export interface FormValues {
   network: string;
   latitude: number;
   longitude: number;
+  location: string;
 }
 
 export type Site = {

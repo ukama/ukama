@@ -26,7 +26,7 @@ const SiteMapComponent = ({ posix, onAddressChange }: SiteMapProps) => {
     const fetchAddress = async () => {
       const [lat, lng] = posix as LatLngTuple;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
       );
       const data = await response.json();
       setAddress(data.display_name);
