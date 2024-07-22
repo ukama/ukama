@@ -33,7 +33,6 @@ export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";
 export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
-export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
 export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://localhost:6379";
