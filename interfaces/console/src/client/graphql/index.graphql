@@ -668,6 +668,7 @@ query getComponentById($componentId: String!) {
     type
     userId
     description
+    category
     datasheetUrl
     imageUrl
     partNumber
@@ -677,6 +678,7 @@ query getComponentById($componentId: String!) {
     specification
   }
 }
+
 query getComponentsByUserId($category: String!) {
   getComponentsByUserId(category: $category) {
     components {
@@ -688,6 +690,7 @@ query getComponentsByUserId($category: String!) {
       datasheetUrl
       imageUrl
       partNumber
+      category
       manufacturer
       managed
       warranty

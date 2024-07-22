@@ -61,17 +61,18 @@ export type AddPackageToSimInputDto = {
 };
 
 export type AddSiteInputDto = {
-  accessId: Scalars['String']['input'];
-  backhaulId: Scalars['String']['input'];
-  installDate: Scalars['String']['input'];
+  access_id: Scalars['String']['input'];
+  backhaul_id: Scalars['String']['input'];
+  install_date: Scalars['String']['input'];
+  is_deactivated?: Scalars['Boolean']['input'];
   latitude: Scalars['Float']['input'];
   location: Scalars['String']['input'];
   longitude: Scalars['Float']['input'];
   name: Scalars['String']['input'];
-  networkId: Scalars['String']['input'];
-  powerId: Scalars['String']['input'];
-  spectrumId: Scalars['String']['input'];
-  switchId: Scalars['String']['input'];
+  network_id: Scalars['String']['input'];
+  power_id: Scalars['String']['input'];
+  spectrum_id: Scalars['String']['input'];
+  switch_id: Scalars['String']['input'];
 };
 
 export type AllocateSimApiDto = {
@@ -137,18 +138,9 @@ export type CBooleanResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-/** Categories for components */
-export enum ComponentCategory {
-  Access = 'ACCESS',
-  All = 'ALL',
-  Backhaul = 'BACKHAUL',
-  Power = 'POWER',
-  Switch = 'SWITCH'
-}
-
 export type ComponentDto = {
   __typename?: 'ComponentDto';
-  category: ComponentCategory;
+  category: Scalars['String']['output'];
   datasheetUrl: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
@@ -1573,14 +1565,14 @@ export type GetComponentByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
+export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
 
 export type GetComponentsByUserIdQueryVariables = Exact<{
   category: Scalars['String']['input'];
 }>;
 
 
-export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
+export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, category: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
 export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
@@ -3913,6 +3905,7 @@ export const GetComponentByIdDocument = gql`
     type
     userId
     description
+    category
     datasheetUrl
     imageUrl
     partNumber
@@ -3968,6 +3961,7 @@ export const GetComponentsByUserIdDocument = gql`
       datasheetUrl
       imageUrl
       partNumber
+      category
       manufacturer
       managed
       warranty

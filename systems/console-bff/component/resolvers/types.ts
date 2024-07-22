@@ -1,7 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
 
-import { COMPONENT_CATEGORY } from "../../common/enums";
-
 @ObjectType()
 export class ComponentDto {
   @Field()
@@ -10,8 +8,8 @@ export class ComponentDto {
   @Field()
   inventoryId: string;
 
-  @Field(() => COMPONENT_CATEGORY)
-  category: COMPONENT_CATEGORY;
+  @Field()
+  category: string;
 
   @Field()
   type: string;

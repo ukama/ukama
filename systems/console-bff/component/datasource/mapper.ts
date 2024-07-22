@@ -1,4 +1,3 @@
-import { COMPONENT_CATEGORY } from "../../common/enums";
 import {
   ComponentAPIDto,
   ComponentDto,
@@ -15,7 +14,7 @@ export const dtoToComponentsDto = (
       id: component.id,
       specification: component.specification,
       inventoryId: component.inventory_id,
-      category: mapCategoryStringToEnum(component.category),
+      category: component.category,
       type: component.type,
       userId: component.user_id,
       description: component.description,
@@ -37,7 +36,7 @@ export const dtoToComponentDto = (res: ComponentAPIDto): ComponentDto => {
     id: res.id,
     specification: res.specification,
     inventoryId: res.inventory_id,
-    category: mapCategoryStringToEnum(res.category),
+    category: res.category,
     type: res.type,
     userId: res.user_id,
     description: res.description,
@@ -49,19 +48,3 @@ export const dtoToComponentDto = (res: ComponentAPIDto): ComponentDto => {
     warranty: res.warranty,
   };
 };
-function mapCategoryStringToEnum(categoryString: string): COMPONENT_CATEGORY {
-  switch (categoryString.toLowerCase()) {
-    case "all":
-      return COMPONENT_CATEGORY.ALL;
-    case "access":
-      return COMPONENT_CATEGORY.ACCESS;
-    case "backhaul":
-      return COMPONENT_CATEGORY.BACKHAUL;
-    case "power":
-      return COMPONENT_CATEGORY.POWER;
-    case "switch":
-      return COMPONENT_CATEGORY.SWITCH;
-    default:
-      throw new Error(`Unknown category: ${categoryString}`);
-  }
-}

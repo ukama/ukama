@@ -20,6 +20,8 @@ import { globalUseStyles } from '@/styles/global';
 import dynamic from 'next/dynamic';
 import CloseIcon from '@mui/icons-material/Close';
 import { NetworkDto } from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
+
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
   ssr: false,
@@ -29,6 +31,7 @@ interface FormValues {
   power: string;
   backhaul: string;
   access: string;
+  spectrum: string;
   siteName: string;
   selectedNetwork: string;
 }
@@ -49,13 +52,13 @@ interface Component {
   specification: string;
 }
 
-// Validation schema for both steps
 const validationSchema = [
   Yup.object().shape({
     switch: Yup.string().required('Switch is required'),
     power: Yup.string().required('Power is required'),
     backhaul: Yup.string().required('Backhaul is required'),
     access: Yup.string().required('Access is required'),
+    spectrum: Yup.string().required('Spectrum is required'),
   }),
   Yup.object().shape({
     siteName: Yup.string().required('Site Name is required'),
@@ -69,6 +72,7 @@ interface StepperDialogProps {
   components: Component[];
   networks: NetworkDto[];
   handleSiteConfiguration: (data: any) => void;
+  addSiteLoading: boolean;
 }
 
 interface Coordinates {
@@ -82,12 +86,15 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
   components,
   networks,
   handleSiteConfiguration,
+  addSiteLoading = false,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [location, setLocation] = useState('');
   const gclasses = globalUseStyles();
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
+  const { network } = useAppContext();
+
   const [coordinates, setCoordinates] = useState<Coordinates>({
     lat: null,
     lng: null,
@@ -99,12 +106,13 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
     backhaul: '',
     access: '',
     siteName: '',
-    selectedNetwork: '',
+    selectedNetwork: network.id,
+    spectrum: '',
   };
 
   const handleSubmit = (values: FormValues) => {
     handleSiteConfiguration({ ...values, coordinates, location });
-    // onClose();
+    onClose();
   };
 
   const handleCoordnatedChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -197,10 +205,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     helperText={touched.switch && errors.switch}
                   >
                     {switchComponents.map((component) => (
-                      <MenuItem
-                        key={component.id}
-                        value={component.description}
-                      >
+                      <MenuItem key={component.id} value={component.id}>
                         {component.description}
                       </MenuItem>
                     ))}
@@ -225,10 +230,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     helperText={touched.power && errors.power}
                   >
                     {powerComponents.map((component) => (
-                      <MenuItem
-                        key={component.id}
-                        value={component.description}
-                      >
+                      <MenuItem key={component.id} value={component.id}>
                         {component.description}
                       </MenuItem>
                     ))}
@@ -253,10 +255,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     helperText={touched.backhaul && errors.backhaul}
                   >
                     {backhaulComponents.map((component) => (
-                      <MenuItem
-                        key={component.id}
-                        value={component.description}
-                      >
+                      <MenuItem key={component.id} value={component.id}>
                         {component.description}
                       </MenuItem>
                     ))}
@@ -267,7 +266,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     select
                     required
                     name="access"
-                    label="SPECTRUM BAND"
+                    label="ACCESS"
                     margin="normal"
                     InputLabelProps={{
                       shrink: true,
@@ -281,10 +280,32 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     helperText={touched.access && errors.access}
                   >
                     {accessComponents.map((component) => (
-                      <MenuItem
-                        key={component.id}
-                        value={component.description}
-                      >
+                      <MenuItem key={component.id} value={component.id}>
+                        {component.description}
+                      </MenuItem>
+                    ))}
+                  </Field>
+                  <Field
+                    as={TextField}
+                    fullWidth
+                    select
+                    required
+                    name="spectrum"
+                    label="SPECTRUM BAND"
+                    margin="normal"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
+                    error={touched.spectrum && Boolean(errors.spectrum)}
+                    helperText={touched.spectrum && errors.spectrum}
+                  >
+                    {accessComponents.map((component) => (
+                      <MenuItem key={component.id} value={component.id}>
                         {component.description}
                       </MenuItem>
                     ))}
@@ -346,7 +367,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                       Choose a network to add your site to
                     </MenuItem>
                     {networks.map((network) => (
-                      <MenuItem key={network.id} value={network.name}>
+                      <MenuItem key={network.id} value={network.id}>
                         {network.name}
                       </MenuItem>
                     ))}
@@ -406,7 +427,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                   Next
                 </Button>
               ) : (
-                <Button type="submit" disabled={!isValid}>
+                <Button type="submit" disabled={!isValid || addSiteLoading}>
                   Submit
                 </Button>
               )}

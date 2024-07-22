@@ -66,6 +66,9 @@ export class SiteAPIDto {
   backhaul_id: string;
 
   @Field()
+  category: string;
+
+  @Field()
   spectrum_id: string;
 
   @Field()
@@ -108,22 +111,22 @@ export class AddSiteInputDto {
   name: string;
 
   @Field()
-  networkId: string;
+  network_id: string;
 
   @Field()
-  backhaulId: string;
+  backhaul_id: string;
 
   @Field()
-  powerId: string;
+  power_id: string;
 
   @Field()
-  accessId: string;
+  access_id: string;
 
   @Field()
-  spectrumId: string;
+  spectrum_id: string;
 
   @Field()
-  switchId: string;
+  switch_id: string;
 
   @Field()
   latitude: number;
@@ -132,8 +135,11 @@ export class AddSiteInputDto {
   longitude: number;
 
   @Field()
-  installDate: string;
+  install_date: string;
 
   @Field()
   location: string;
+
+  @Field({ defaultValue: false })
+  is_deactivated?: boolean; // Optional field with a default value of false
 }

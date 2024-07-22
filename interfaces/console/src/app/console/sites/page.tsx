@@ -1,12 +1,8 @@
 'use client';
 
-import colors from '@/theme/colors';
-import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteCard from '@/components/SiteCard';
 import { Grid, Paper, Typography, Button, AlertColor } from '@mui/material';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
-import StepperDialog from '@/components/ConfigureSiteDialog';
-
 import { useEffect, useState } from 'react';
 import {
   useGetSitesLazyQuery,
@@ -49,30 +45,34 @@ const Sites = () => {
       });
     },
   });
-  // const handleSiteConfiguration = (data: any) => {
-  //   console.log('FINAL DATA RES :', data);
-  //   addSite({});
-  // };
-  const handleSiteConfiguration = async (data: any) => {
-    console.log('SUBMITED DATA :', data);
-    await addSite({
-      variables: {
-        data: {
-          accessId: '',
-          backhaulId: '',
-          installDate: '',
-          latitude: 0,
-          location: '',
-          longitude: 0,
-          name: '',
-          networkId: '',
-          powerId: '',
-          spectrumId: '',
-          switchId: '',
-        },
-      },
-    });
+  const getCurrentDateInISOFormat = () => {
+    const date = new Date();
+    return date.toISOString().split('T')[0] + 'T00:00:00Z';
   };
+
+  const handleSiteConfiguration = async (data: any) => {
+    const variables = {
+      access_id: data.access,
+      backhaul_id: data.backhaul,
+      install_date: getCurrentDateInISOFormat(),
+      latitude: data.coordinates.lat,
+      location: data.location,
+      longitude: data.coordinates.lng,
+      name: data.siteName,
+      network_id: data.selectedNetwork,
+      power_id: data.power,
+      spectrum_id: data.spectrumId || '',
+      switch_id: data.switch,
+      is_deactivated: data.is_deactivated || false,
+    };
+
+    try {
+      await addSite({ variables: { data: variables } });
+    } catch (error) {
+      console.error('Error submitting site configuration:', error);
+    }
+  };
+
   const { data: networkList, loading: networkLoading } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
@@ -157,10 +157,6 @@ const Sites = () => {
     fetchAllSites();
   }, [networkList, getSites]);
 
-  const handleMenuClick = (siteId: string) => {
-    console.log(`Menu clicked for siteId: ${siteId}`);
-  };
-
   return (
     <Grid container spacing={0} sx={{ mt: 1 }}>
       <Grid item xs={12}>
@@ -202,7 +198,6 @@ const Sites = () => {
                     address={site.location}
                     users={site.users || ''}
                     siteStatus={site.isDeactivated}
-                    onClickMenu={handleMenuClick}
                     loading={isLoading || networkLoading}
                     status={{
                       online: false,
@@ -222,6 +217,7 @@ const Sites = () => {
         components={componentsList || []}
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
+        addSiteLoading={addSiteLoading}
       />
     </Grid>
   );

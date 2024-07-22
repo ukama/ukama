@@ -30,6 +30,7 @@ class ComponentApi extends RESTDataSource {
     const response = await this.get<ComponentsAPIResDto>(
       `/${VERSION}/components/user/${headers.userId}?category=${category}`
     );
+    console.log("COMPONENTS RES", response);
     return dtoToComponentsDto(response);
   };
 

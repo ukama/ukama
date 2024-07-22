@@ -123,17 +123,26 @@ const middleware = async (request: NextRequest) => {
   const cookieToken = cookieStore.get('token')?.value ?? '';
   const response = NextResponse.next();
 
-  // Skip all authentication and authorization checks
-  const userObj: User = {
-    id: 'dummy-id',
-    role: Role_Type.RoleOwner,
-    name: 'dummy-name',
-    email: 'dummy-email@example.com',
-    orgId: 'dummy-org-id',
-    token: 'dummy-token',
-    orgName: 'dummy-org-name',
-    isEmailVerified: true,
-  };
+  if (!session) {
+    return NextResponse.redirect(
+      new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+    );
+  }
+
+  let userObj: User = USER_INIT;
+  try {
+    userObj = await getUserObject(session.value, cookieToken);
+  } catch (error) {
+    return NextResponse.rewrite(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
+  if (!userObj?.isEmailVerified) {
+    return NextResponse.redirect(
+      new URL('/user/verification', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+    );
+  }
 
   if (userObj.token && !cookieToken) {
     response.cookies.set('token', userObj.token, {
@@ -146,6 +155,10 @@ const middleware = async (request: NextRequest) => {
       secure: process.env.NODE_ENV === 'production',
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
+  } else if (!userObj.token) {
+    return NextResponse.rewrite(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
   }
 
   response.headers.set('role', userObj.role);
