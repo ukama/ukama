@@ -19,7 +19,7 @@ import * as Yup from 'yup';
 import { globalUseStyles } from '@/styles/global';
 import dynamic from 'next/dynamic';
 import CloseIcon from '@mui/icons-material/Close';
-
+import { NetworkDto } from '@/client/graphql/generated';
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
   ssr: false,
@@ -67,7 +67,7 @@ interface StepperDialogProps {
   open: boolean;
   onClose: () => void;
   components: Component[];
-  networks: { id: string; name: string }[];
+  networks: NetworkDto[];
   handleSiteConfiguration: (data: any) => void;
 }
 
