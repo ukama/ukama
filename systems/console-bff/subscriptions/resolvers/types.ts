@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
 import {
@@ -15,26 +14,6 @@ import {
   ROLE_TYPE,
 } from "../../common/enums";
 
-@ObjectType()
-export class LatestMetricRes {
-  @Field()
-  success: boolean;
-
-  @Field()
-  msg: string;
-
-  @Field()
-  orgId: string;
-
-  @Field()
-  nodeId: string;
-
-  @Field()
-  type: string;
-
-  @Field(() => [Number, Number])
-  value: [number, number];
-}
 @ObjectType()
 export class MetricRes {
   @Field()
@@ -63,6 +42,27 @@ export class GetLatestMetricInput {
 
   @Field()
   type: string;
+}
+
+@ObjectType()
+export class LatestMetricRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  orgId: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field(() => [Number, Number])
+  value: [number, number];
 }
 
 @ArgsType()
@@ -163,18 +163,6 @@ export class SubMetricByTabInput {
 
   @Field()
   from: number;
-}
-
-@ObjectType()
-export class StatsMetric {
-  @Field()
-  activeSubscriber: number;
-
-  @Field()
-  averageSignalStrength: number;
-
-  @Field()
-  averageThroughput: number;
 }
 
 @ObjectType()

@@ -63,7 +63,14 @@ export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5058");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5059"
 );
+export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5060");
 export const SUB_GRAPHS = {
+  metric: {
+    name: "metric",
+    port: METRIC_PORT,
+    url: `http://localhost:${METRIC_PORT}`,
+    isPingedSuccess: false,
+  },
   org: {
     name: "org",
     port: ORG_PORT,
