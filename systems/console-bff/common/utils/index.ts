@@ -256,13 +256,6 @@ const getBaseURL = async (
     };
   }
 };
-const generateNetworkName = (length = 10) => {
-  const characters = "abcdefghijklmnopqrstuvwxyz-";
-  return Array.from(
-    { length },
-    () => characters[Math.floor(Math.random() * characters.length)]
-  ).join("");
-};
 const csvToBase64 = (filePath: string) => {
   readFile(filePath, (err, data) => {
     if (err) {
@@ -276,7 +269,6 @@ const csvToBase64 = (filePath: string) => {
 export {
   csvToBase64,
   findProcessNKill,
-  generateNetworkName,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,

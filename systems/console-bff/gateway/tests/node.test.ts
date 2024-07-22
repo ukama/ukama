@@ -6,11 +6,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
-import {
-  generateNetworkName,
-  getBaseURL,
-  parseGatewayHeaders,
-} from "../../common/utils";
+import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import NetworkApi from "../../network/datasource/network_api";
 import { Context } from "../../node/context";
 import NodeAPI from "../../node/dataSource/node-api";
@@ -163,9 +159,9 @@ describe("Node API integration tests", () => {
     );
 
     const testNetwork = {
-      budget: Math.floor(Math.random() * 10),
+      budget: faker.number.float(),
       countries: ["Country"],
-      name: generateNetworkName(),
+      name: faker.person.fullName.toString(),
       networks: ["A3"],
     };
 

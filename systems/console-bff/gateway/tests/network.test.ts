@@ -1,4 +1,5 @@
 import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
 import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -6,11 +7,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
 import { THeaders } from "../../common/types";
-import {
-  generateNetworkName,
-  getBaseURL,
-  parseGatewayHeaders,
-} from "../../common/utils";
+import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../network/context";
 import NetworkApi from "../../network/datasource/network_api";
 import { AddNetworkResolver } from "../../network/resolvers/addNetwork";
@@ -28,9 +25,9 @@ const parsedHeaders = parseGatewayHeaders(headers);
 
 const { orgName } = parsedHeaders;
 const testNetwork = {
-  budget: Math.floor(Math.random() * 10),
+  budget: faker.number.int,
   countries: ["Country"],
-  name: generateNetworkName(),
+  name: faker.person.fullName,
   networks: ["A3"],
 };
 
