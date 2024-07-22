@@ -200,22 +200,21 @@ const dummysComponents = [
 ];
 
 const Sites = () => {
-  const [open, setOpen] = useState(false);
   const [sitesList, setSitesList] = useState<any[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { setSnackbarMessage } = useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
 
-  const handleOpenTest = () => setOpenSiteConfig(true);
-  const handleCloseTest = () => setOpenSiteConfig(false);
-
   const handleSiteConfigOpen = () => {
     setOpenSiteConfig(true);
   };
 
   const handleCloseSiteConfig = () => {
-    setOpen(false);
+    setOpenSiteConfig(false);
+  };
+  const handleSiteConfiguration = (data: any) => {
+    console.log('FINAL DATA RES :', data);
   };
 
   const { data: networkList, loading: networkLoading } = useGetNetworksQuery({
@@ -363,6 +362,7 @@ const Sites = () => {
         onClose={handleCloseSiteConfig}
         components={dummysComponents}
         networks={dummyNetworks}
+        handleSiteConfiguration={handleSiteConfiguration}
       />
     </Grid>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -12,6 +12,7 @@ import {
   MenuItem,
   DialogContentText,
   IconButton,
+  Stack,
 } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -30,8 +31,6 @@ interface FormValues {
   access: string;
   siteName: string;
   selectedNetwork: string;
-  latitude: number;
-  longitude: number;
 }
 
 interface Component {
@@ -61,8 +60,6 @@ const validationSchema = [
   Yup.object().shape({
     siteName: Yup.string().required('Site Name is required'),
     selectedNetwork: Yup.string().required('Network is required'),
-    latitude: Yup.string().required('Latitude is required'),
-    longitude: Yup.string().required('Longitude is required'),
   }),
 ];
 
@@ -71,6 +68,12 @@ interface StepperDialogProps {
   onClose: () => void;
   components: Component[];
   networks: { id: string; name: string }[];
+  handleSiteConfiguration: (data: any) => void;
+}
+
+interface Coordinates {
+  lat: number | null;
+  lng: number | null;
 }
 
 const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
@@ -78,13 +81,17 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
   onClose,
   components,
   networks,
+  handleSiteConfiguration,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [location, setLocation] = useState('');
-
   const gclasses = globalUseStyles();
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
+  const [coordinates, setCoordinates] = useState<Coordinates>({
+    lat: null,
+    lng: null,
+  });
 
   const initialValues: FormValues = {
     switch: '',
@@ -93,14 +100,17 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
     access: '',
     siteName: '',
     selectedNetwork: '',
-    latitude: 0,
-    longitude: 0,
   };
 
   const handleSubmit = (values: FormValues) => {
-    console.log('Form values:', values);
+    handleSiteConfiguration({ ...values, coordinates, location });
     // onClose();
-    // setActiveStep(0);
+  };
+
+  const handleCoordnatedChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    const numValue = value === '' ? null : parseFloat(value);
+    setCoordinates((prev) => ({ ...prev, [name]: numValue }));
   };
 
   const steps = [
@@ -108,7 +118,6 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
     'Enter your site details',
   ];
 
-  // Filter components by category
   const switchComponents = components.filter(
     (comp) => comp.category === 'SWITCH',
   );
@@ -128,8 +137,8 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
       onClose={onClose}
       sx={{
         '& .MuiDialog-paper': {
-          width: '60%', // Adjust width as needed
-          maxWidth: '40%', // Set a maximum width if needed
+          width: '60%',
+          maxWidth: '40%',
         },
       }}
     >
@@ -284,12 +293,14 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
               )}
               {activeStep === 1 && (
                 <>
-                  <SiteMapComponent
-                    posix={[values.latitude, values.longitude]}
-                    onAddressChange={(address) => {
-                      setLocation(address);
-                    }}
-                  />
+                  {coordinates.lat !== null && coordinates.lng !== null && (
+                    <SiteMapComponent
+                      posix={[coordinates.lat, coordinates.lng]}
+                      onAddressChange={(address: string) => {
+                        setLocation(address);
+                      }}
+                    />
+                  )}
                   {location}
                   <Field
                     as={TextField}
@@ -340,46 +351,50 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                       </MenuItem>
                     ))}
                   </Field>
-                  <Field
-                    as={TextField}
-                    fullWidth
-                    required
-                    margin="normal"
-                    name="latitude"
-                    label="Latitude"
-                    value={values.latitude}
-                    onChange={handleChange}
-                    error={touched.latitude && Boolean(errors.latitude)}
-                    helperText={touched.latitude && errors.latitude}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                  />
-                  <Field
-                    as={TextField}
-                    fullWidth
-                    required
-                    margin="normal"
-                    name="longitude"
-                    label="Longitude"
-                    value={values.longitude}
-                    onChange={handleChange}
-                    error={touched.longitude && Boolean(errors.longitude)}
-                    helperText={touched.longitude && errors.longitude}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                  />
+                  <Stack direction="column" spacing={2} sx={{ mt: 2 }}>
+                    <TextField
+                      label="Latitude"
+                      name="lat"
+                      required
+                      value={
+                        coordinates.lat === null
+                          ? ''
+                          : coordinates.lat.toString()
+                      }
+                      onChange={handleCoordnatedChange}
+                      fullWidth
+                      type="number"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                    />
+                    <TextField
+                      label="Longitude"
+                      name="lng"
+                      required
+                      value={
+                        coordinates.lng === null
+                          ? ''
+                          : coordinates.lng.toString()
+                      }
+                      onChange={handleCoordnatedChange}
+                      fullWidth
+                      type="number"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                    />
+                  </Stack>
                 </>
               )}
             </DialogContent>
