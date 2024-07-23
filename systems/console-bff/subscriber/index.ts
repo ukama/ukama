@@ -6,28 +6,27 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
-import { createClient } from "redis";
 import "reflect-metadata";
 
 import { THeaders } from "../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
-import { BFF_REDIS, SUB_GRAPHS } from "./../common/configs";
+import { SUB_GRAPHS } from "./../common/configs";
 import { logger } from "./../common/logger";
 import SubscriberAPI from "./datasource/subscriber_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
-  const redisClient = createClient({
-    url: BFF_REDIS,
-  }).on("error", error => {
-    logger.error(
-      `Error creating redis for ${SUB_GRAPHS.subscriber.name} service, Error: ${error}`
-    );
-  });
-  const connectPromise = redisClient.connect();
-  await connectPromise;
+  // const redisClient = createClient({
+  //   url: BFF_REDIS,
+  // }).on("error", error => {
+  //   logger.error(
+  //     `Error creating redis for ${SUB_GRAPHS.subscriber.name} service, Error: ${error}`
+  //   );
+  // });
+  // const connectPromise = redisClient.connect();
+  // await connectPromise;
 
   await startStandaloneServer(server, {
     context: async ({ req }) => {
@@ -35,7 +34,7 @@ const runServer = async () => {
       const baseURL = await getBaseURL(
         SUB_GRAPHS.subscriber.name,
         headers.orgName,
-        redisClient.isOpen ? redisClient : null
+        null
       );
       return {
         headers: headers,
