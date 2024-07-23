@@ -11,8 +11,6 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/subscriber/registry/pb/gen";
 
 import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 import "ukama/subscriber.proto";
 
 package ukama.subscriber.registry.v1;
@@ -28,6 +26,8 @@ Registry sub-system is responsible of:
 service RegistryService {
 // Get method to retrieve a subscriber by subscriber ID
 rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
+// Get method to retrieve a subscriber by subscriber email
+rpc GetByEmail (GetSubscriberByEmailRequest) returns (GetSubscriberByEmailResponse) {}
 // Add method to add a new subscriber
 rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
 // Update method to update an existing subscriber
@@ -83,6 +83,18 @@ string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: tru
 
 // GetSubscriberResponse message is used to get a subscriber by subscriber ID
 message GetSubscriberResponse{
+// Subscriber field contains the subscriber information
+ukama.common.v1.Subscriber subscriber = 1;
+}
+
+// GetSubscriberByEmailRequest message is used to get a subscriber by subscriber email
+message GetSubscriberByEmailRequest{
+// email field is used to get subscriber by email
+string email = 1 [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+}
+
+// GetSubscriberByEmailResponse message is used to get a subscriber by subscriber email
+message GetSubscriberByEmailResponse{
 // Subscriber field contains the subscriber information
 ukama.common.v1.Subscriber subscriber = 1;
 }

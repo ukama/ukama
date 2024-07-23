@@ -1,4 +1,5 @@
 import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
 import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -6,11 +7,7 @@ import { buildSchema } from "type-graphql";
 import { SUB_GRAPHS } from "../../common/configs";
 import { logger } from "../../common/logger";
 import { THeaders } from "../../common/types";
-import {
-  generateNetworkName,
-  getBaseURL,
-  parseGatewayHeaders,
-} from "../../common/utils";
+import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import NetworkApi from "../../network/datasource/network_api";
 import { Context } from "../../subscriber/context";
 import SubscriberApi from "../../subscriber/datasource/subscriber_api";
@@ -140,9 +137,9 @@ describe("subscriber API integration tests", () => {
       redisClient.isOpen ? redisClient : null
     );
     const network = await networkApi.addNetwork(networkURL.message, {
-      budget: Math.floor(Math.random() * 10),
+      budget: faker.datatype.number({ min: 0, max: 9 }),
       countries: ["Country"],
-      name: generateNetworkName(),
+      name: faker.person.fullName.toString(),
       networks: ["A3"],
     });
 

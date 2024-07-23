@@ -12,8 +12,6 @@
  
  package ukama.events.v1;
  
- import "validator.proto";
- import "google/protobuf/timestamp.proto";
  import "ukama/subscriber.proto";
  
  message AddSubscriber {

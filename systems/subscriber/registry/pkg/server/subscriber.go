@@ -181,6 +181,40 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	return resp, nil
 }
 
+func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberByEmailRequest) (*pb.GetSubscriberByEmailResponse, error) {
+	log.Infof("Getting subscriber with email: %v", req)
+
+	subscriberEmailReq := req.GetEmail()
+
+	subscriber, err := s.subscriberRepo.GetByEmail(subscriberEmailReq)
+	if err != nil {
+		log.Errorf("Error while getting subscriber: %s", err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	smc, err := s.simManagerService.GetSimManagerService()
+	if err != nil {
+		log.Errorf("Error while calling SimManagerServiceClient: %s", err.Error())
+
+		return nil, err
+	}
+
+	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
+		SubscriberId: subscriber.SubscriberId.String()})
+	if err != nil {
+		log.Errorf("Error while getting Sims by subscriber: %s", err.Error())
+
+		return nil, err
+	}
+
+	resp := &pb.GetSubscriberByEmailResponse{
+		Subscriber: dbSubscriberToPbSubscriber(subscriber, pbManagerSimsToPbSubscriberSims(simRep.Sims)),
+	}
+
+	return resp, nil
+}
+
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	log.Infof("List all subscribers")
 

@@ -1,4 +1,5 @@
 import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
 import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -55,18 +56,9 @@ const redisClient = createClient().on("error", error => {
 });
 const memberApi = new MemberApi();
 
-const generateUserId = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c =>
-    (c === "x"
-      ? (Math.random() * 16) | 0
-      : ((Math.random() * 4) | 0) + 8
-    ).toString(16)
-  );
-};
-
 const testMember = {
   role: ROLE_TYPE.ROLE_USER,
-  userId: generateUserId(),
+  userId: faker.string.uuid(),
 };
 
 const startServer = async () => {

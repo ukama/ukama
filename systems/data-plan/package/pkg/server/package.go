@@ -160,8 +160,10 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	pr := db.Package{
-		Uuid:         uuid.NewV4(),
+	pkgUuid := uuid.NewV4()
+
+	pkg := db.Package{
+		Uuid:         pkgUuid,
 		OwnerId:      ownId,
 		Name:         req.GetName(),
 		SimType:      ukama.ParseSimType(req.GetSimType()),
@@ -177,9 +179,6 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		DataUnits:    ukama.ParseDataUnitType(req.DataUnit),
 		Flatrate:     req.Flatrate,
 		Type:         ukama.ParsePackageType(req.Type),
-		PackageRate: db.PackageRate{
-			Amount: req.Amount,
-		},
 		PackageMarkup: db.PackageMarkup{
 			BaseRateId: baserate,
 			Markup:     req.Markup,
@@ -187,10 +186,19 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		PackageDetails: db.PackageDetails{
 			Apn: req.Apn,
 		},
+		Currency:      req.Currency,
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
 		SyncStatus:    ukama.StatusTypePending,
+	}
+
+	pr := db.PackageRate{
+		Amount:    req.Amount,
+		SmsMo:     0.0,
+		SmsMt:     0.0,
+		Data:      0.0,
+		PackageID: pkgUuid,
 	}
 
 	// Request rate
@@ -204,29 +212,27 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid base id. Error %s", err.Error())
 	}
 
-	pr.Country = rate.Rate.Country
-	pr.Provider = rate.Rate.Provider
+	pkg.Country = rate.Rate.Country
+	pkg.Provider = rate.Rate.Provider
 
-	if pr.PackageDetails.Apn == "" {
-		pr.PackageDetails.Apn = rate.Rate.Apn
+	if pkg.PackageDetails.Apn == "" {
+		pkg.PackageDetails.Apn = rate.Rate.Apn
 	}
 
 	/* Only when package is not fixed anount */
-	if !pr.Flatrate {
+	if !pkg.Flatrate {
 		// calculae rate per unit
-		calculateRatePerUnit(&pr.PackageRate, rate.Rate, pr.MessageUnits, pr.DataUnits)
-
-		calculateTotalAmount(&pr)
+		calculateRatePerUnit(&pkg.PackageRate, rate.Rate, pkg.MessageUnits, pkg.DataUnits)
+		calculateTotalAmount(&pkg)
 	}
 
-	err = p.packageRepo.Add(&pr)
+	err = p.packageRepo.Add(&pkg, &pr)
 	if err != nil {
-
 		log.Error("Error while adding a package. " + err.Error())
 		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
 	}
 
-	resp := &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pr)}
+	resp := &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pkg)}
 
 	if p.msgbus != nil {
 		route := p.baseRoutingKey.SetActionCreate().SetObject("package").MustBuild()
@@ -246,9 +252,9 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			DataUnit:        resp.Package.DataUnit,
 			VoiceUnit:       resp.Package.VoiceUnit,
 			Messageunit:     resp.Package.MessageUnit,
-			DataUnitCost:    pr.PackageRate.Data,
-			MessageUnitCost: pr.PackageRate.SmsMo,
-			VoiceUnitCost:   pr.PackageRate.SmsMt,
+			DataUnitCost:    pkg.PackageRate.Data,
+			MessageUnitCost: pkg.PackageRate.SmsMo,
+			VoiceUnitCost:   pkg.PackageRate.SmsMt,
 		}
 		err = p.msgbus.PublishRequest(route, evt)
 		if err != nil {
@@ -351,7 +357,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		CreatedAt:   p.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
 		DeletedAt:   d,
-		Rate: &pb.PackageRates{
+		Rate: &pb.PackageRate{
 			Data:   p.PackageRate.Data,
 			SmsMo:  p.PackageRate.SmsMo,
 			SmsMt:  p.PackageRate.SmsMt,
@@ -361,6 +367,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 			Baserate: p.PackageMarkup.BaseRateId.String(),
 			Markup:   p.PackageMarkup.Markup,
 		},
+		OwnerId:       p.OwnerId.String(),
 		Provider:      p.Provider,
 		Duration:      p.Duration,
 		Amount:        p.PackageRate.Amount,

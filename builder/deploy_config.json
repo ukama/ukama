@@ -1,6 +1,7 @@
 {
  "setup": {
   "email": "salman@ukama.com",
+  "password": "@Pass2021",
   "name": "Salman",
   "org-name": "ukama-test-org",
   "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221"

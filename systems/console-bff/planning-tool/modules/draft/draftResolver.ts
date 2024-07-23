@@ -9,7 +9,7 @@ import "reflect-metadata";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 
 import { asyncRestCall } from "../../../common/axiosClient";
-import { PLANNING_API_URL, PLANNING_BUCKET } from "../../../common/configs";
+import { PLANNING_API_URL } from "../../../common/configs";
 import { API_METHOD_TYPE } from "../../../common/enums";
 import { PrismaContext } from "../../../common/prisma";
 import {
@@ -324,11 +324,13 @@ export class DraftResolver {
       west: res.data.west,
       north: res.data.north,
       south: res.data.south,
-      url: `https://${PLANNING_BUCKET}.s3.amazonaws.com/${res.data.url}`,
+      url: `https://${""}.s3.amazonaws.com/${res.data.url}`,
       populationData: {
         populationCovered: res.data.population_data[index].population_covered,
         totalBoxesCovered: res.data.population_data[index].total_boxes_covered,
-        url: `https://${PLANNING_BUCKET}.s3.amazonaws.com/${res.data.population_data[index].url}`,
+        url: `https://${""}.s3.amazonaws.com/${
+          res.data.population_data[index].url
+        }`,
       },
     };
     const m = await ctx.prisma.site.update({

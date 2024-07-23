@@ -12,7 +12,6 @@
  
  import "validator.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
  package ukama.common.v1;
 
@@ -21,7 +20,7 @@ import "google/protobuf/wrappers.proto";
     string lastName = 3 [json_name = "last_name"];
     string subscriberId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string networkId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string email  = 6;
+    string email  = 6 [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phoneNumber  = 7 [json_name = "phone_number"];
     string address  = 8; 
     string proofOfIdentification =9 [json_name = "proof_of_identification"];

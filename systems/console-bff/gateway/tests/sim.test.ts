@@ -1,4 +1,5 @@
 import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
 import path from "path";
 import { createClient } from "redis";
 import "reflect-metadata";
@@ -10,7 +11,6 @@ import { logger } from "../../common/logger";
 import { THeaders } from "../../common/types";
 import {
   csvToBase64,
-  generateNetworkName,
   getBaseURL,
   parseGatewayHeaders,
 } from "../../common/utils";
@@ -197,9 +197,9 @@ describe("Sim API integration tests", () => {
       redisClient.isOpen ? redisClient : null
     );
     const testNetwork = await networkApi.addNetwork(networkURL.message, {
-      budget: Math.floor(Math.random() * 10),
+      budget: faker.datatype.number({ min: 0, max: 9 }),
       countries: ["Country"],
-      name: generateNetworkName(),
+      name: faker.person.fullName.toString(),
       networks: ["A3"],
     });
     networkId = testNetwork.id;

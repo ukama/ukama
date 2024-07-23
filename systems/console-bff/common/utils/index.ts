@@ -198,9 +198,6 @@ const killProcess = (pid: string): Promise<void> => {
 
 const getSystemNameByService = (service: string): string => {
   switch (service) {
-    case "package":
-    case "rate":
-      return "dataplan";
     case "org":
     case "user":
       return "nucleus";
@@ -250,8 +247,7 @@ const getBaseURL = async (
     if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
     return {
       status: 200,
-      message: intRes.url,
-      // message: intRes.ip ? intRes.ip : intRes.url,
+      message: intRes.url ? intRes.url : intRes.ip,
     };
   } else {
     return {
@@ -260,17 +256,10 @@ const getBaseURL = async (
     };
   }
 };
-const generateNetworkName = (length = 10) => {
-  const characters = "abcdefghijklmnopqrstuvwxyz-";
-  return Array.from(
-    { length },
-    () => characters[Math.floor(Math.random() * characters.length)]
-  ).join("");
-};
 const csvToBase64 = (filePath: string) => {
   readFile(filePath, (err, data) => {
     if (err) {
-      console.error("Error reading file: ", err);
+      logger.error("Error reading file: ", err);
       return;
     }
     return data.toString("base64");
@@ -290,5 +279,4 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
-  generateNetworkName,
 };

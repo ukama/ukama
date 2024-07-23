@@ -12,7 +12,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
-export const SIM_TYPE_OPERATOR = 'operator_data';
+export const SIM_TYPE_ENV = process.env.NEXT_PUBLIC_SIM_TYPE
+  ? process.env.NEXT_PUBLIC_SIM_TYPE
+  : 'operator_data';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
@@ -330,11 +332,11 @@ export {
   BASIC_MENU_ACTIONS,
   BillingTabs,
   COPY_RIGHTS,
-  DRAWER_WIDTH,
   DataTableWithOptionColumns,
+  DRAWER_WIDTH,
   HealtChartsConfigure,
-  IPFY_URL,
   IP_API_BASE_URL,
+  IPFY_URL,
   LANGUAGE_OPTIONS,
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
@@ -345,7 +347,7 @@ export {
   NodeResourcesTabConfigure,
   ROAMING_SELECT,
   SETTING_MENU,
+  SITE_CONFIG_STEPS,
   TIME_FILTER,
   TooltipsText,
-  SITE_CONFIG_STEPS,
 };
