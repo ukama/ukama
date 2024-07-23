@@ -70,8 +70,13 @@ bool build_nodes(char *repo, int count, char **list) {
     int i;
     char runMe[MAX_BUFFER] = {0};
 
-    sprintf(runMe, "cd scripts; sudo %s base-image %s %s; cd -",
-            SCRIPT, repo, BASE_IMAGE_ID);
+    if (getenv(ENV_DOCKER_BUILD)) {
+        sprintf(runMe, "cd scripts; %s base-image %s %s; cd -",
+                SCRIPT, repo, BASE_IMAGE_ID);
+    } else {
+        sprintf(runMe, "cd scripts; sudo %s base-image %s %s; cd -",
+                SCRIPT, repo, BASE_IMAGE_ID);
+    }
     if (system(runMe) < 0) {
         usys_log_error("Unable to create base image via repo: %s", repo);
         return USYS_FALSE;
@@ -79,8 +84,13 @@ bool build_nodes(char *repo, int count, char **list) {
 
     for (i=0; i<count; i++) {
 
-        sprintf(runMe, "cd scripts; sudo %s create-node %s %s %s; cd -",
-                SCRIPT, repo, list[i], BASE_IMAGE_ID);
+        if (getenv(ENV_DOCKER_BUILD)) {
+            sprintf(runMe, "cd scripts; %s create-node %s %s %s; cd -",
+                    SCRIPT, repo, list[i], BASE_IMAGE_ID);
+        } else {
+            sprintf(runMe, "cd scripts; sudo %s create-node %s %s %s; cd -",
+                    SCRIPT, repo, list[i], BASE_IMAGE_ID);
+        }
         if (system(runMe) < 0) {
             usys_log_error("Unable to create node with ID: %s", list[i]);
             continue;

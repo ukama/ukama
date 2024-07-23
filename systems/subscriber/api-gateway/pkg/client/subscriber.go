@@ -60,6 +60,12 @@ func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error
 	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberId: sid})
 }
 
+func (sub *Registry) GetSubscriberByEmail(sEmail string) (*pb.GetSubscriberByEmailResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+	defer cancel()
+	return sub.client.GetByEmail(ctx, &pb.GetSubscriberByEmailRequest{Email: sEmail})
+}
+
 func (sub *Registry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()

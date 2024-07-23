@@ -21,7 +21,6 @@ export class GetMembersResolver {
     const userAPI = new UserApi();
     for (const member of res.members) {
       const user = await userAPI.getUser(member.userId);
-
       members.push({
         role: member.role,
         userId: member.userId,
@@ -32,7 +31,6 @@ export class GetMembersResolver {
         isDeactivated: member.isDeactivated,
       });
     }
-
     return {
       members: members,
     };

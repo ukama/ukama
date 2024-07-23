@@ -36,7 +36,7 @@ import PlanCard from '@/components/PlanCard';
 import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import {
-  SIM_TYPE_OPERATOR,
+  SIM_TYPE_ENV,
   SUBSCRIBER_TABLE_COLUMNS,
   SUBSCRIBER_TABLE_MENU,
 } from '@/constants';
@@ -94,7 +94,7 @@ const Page = () => {
   });
 
   const { data: simPoolData } = useGetSimsQuery({
-    variables: { type: SIM_TYPE_OPERATOR },
+    variables: { type: SIM_TYPE_ENV },
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
@@ -227,7 +227,7 @@ const Page = () => {
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
     variables: {
-      networkId: selectedNetwork ?? network.id,
+      networkId: network.id,
     },
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
@@ -394,20 +394,24 @@ const Page = () => {
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
+        refetchSubscribers().then((data) => {
+          setSubscriber(() => ({
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          }));
+        });
         setSnackbarMessage({
           id: 'add-subscriber-success',
           message: 'Subscriber added successfully!',
           type: 'success' as AlertColor,
           show: true,
         });
-
         allocateSim({
           variables: {
             data: {
               network_id: res.addSubscriber.networkId,
               package_id: addSubscriberData.plan ?? '',
               subscriber_id: res.addSubscriber.uuid,
-              sim_type: SIM_TYPE_OPERATOR,
+              sim_type: SIM_TYPE_ENV,
               iccid: addSubscriberData.iccid,
               traffic_policy: 10,
             },
@@ -425,7 +429,7 @@ const Page = () => {
     });
 
   const { data: simStatData } = useGetSimpoolStatsQuery({
-    variables: { type: SIM_TYPE_OPERATOR },
+    variables: { type: SIM_TYPE_ENV },
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
       setSnackbarMessage({
@@ -746,7 +750,7 @@ const Page = () => {
         open={isAddSubscriberDialogOpen}
         sims={simPoolData?.getSims.sim ?? []}
         pSimCount={simStatData?.getSimPoolStats.physical}
-        eSimCount={simStatData?.getSimPoolStats.physical}
+        eSimCount={simStatData?.getSimPoolStats.esim}
         submitButtonState={
           addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
         }

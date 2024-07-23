@@ -33,7 +33,6 @@ export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";
 export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
-export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
 export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://localhost:6379";
@@ -46,24 +45,31 @@ export const SUBSCRIPTIONS_PORT = parseInt(
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT ?? "5042"
 );
-const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5043");
-const USER_PORT = parseInt(process.env.USER_PORT ?? "5044");
+const ORG_PORT = parseInt(process.env.ORG_PORT ?? "5042");
+const USER_PORT = parseInt(process.env.USER_PORT ?? "5043");
+const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5044");
 const PACKAGE_PORT = parseInt(process.env.PACKAGE_PORT ?? "5045");
 const RATE_PORT = parseInt(process.env.RATE_PORT ?? "5046");
-const ORG_PORT = parseInt(process.env.ORG_PORT ?? "5047");
-const NETWORK_PORT = parseInt(process.env.NETWORK_PORT ?? "5048");
-export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5051");
-const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5052");
-const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5053");
-const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5054");
-const INIT_PORT = parseInt(process.env.INIT_PORT ?? "5055");
-const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5056");
-const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5057");
-export const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5058");
+const NETWORK_PORT = parseInt(process.env.NETWORK_PORT ?? "5047");
+const SITE_PORT = parseInt(process.env.SITE_PORT ?? "5048");
+const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5049");
+const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5050");
+const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
+const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
+const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
+const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
+export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
-  process.env.COMPONENT_INVENTORY_PORT ?? "5059"
+  process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
+export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
 export const SUB_GRAPHS = {
+  metric: {
+    name: "metric",
+    port: METRIC_PORT,
+    url: `http://localhost:${METRIC_PORT}`,
+    isPingedSuccess: false,
+  },
   org: {
     name: "org",
     port: ORG_PORT,

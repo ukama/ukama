@@ -147,7 +147,7 @@ func (this *Package) Validate() error {
 	}
 	return nil
 }
-func (this *PackageRates) Validate() error {
+func (this *PackageRate) Validate() error {
 	return nil
 }
 

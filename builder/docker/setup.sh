@@ -6,15 +6,36 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-CWD=`pwd`
+CWD=$(pwd)
+BRANCH=$1
 
-# Build docker image using local Dockerfile
-docker image rm --force builder
-docker build -t builder .
+set -e
 
-# Run the docker
-docker run -v ${CWD}:/workspace builder \
-       /bin/bash -c "/workspace/build.sh > /workspace/build.log 2>&1"
+# Determine the platform
+PLATFORM=$(uname -s)
+
+if [ "$PLATFORM" = "Darwin" ]; then
+    TARGETPLATFORM="amd64/ubuntu:latest"
+else
+    TARGETPLATFORM="ubuntu:latest"
+fi
+
+# Check if the Docker image already exists
+IMAGE_EXISTS=$(docker images -q builder:latest)
+
+if [ -z "$IMAGE_EXISTS" ]; then
+    # Build docker image using local Dockerfile
+    docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} -t builder .
+else
+    echo "Docker image 'builder:latest' already exists. Skipping build."
+fi
+
+# Run the docker to build the UkamaOS
+docker run --privileged \
+       -v ${CWD}:/workspace \
+       -v /dev:/dev \
+       builder:latest \
+       /bin/bash -c "/workspace/build.sh ${BRANCH} > /workspace/build.log 2>&1"
 
 # clean up
 docker image rm --force builder:latest

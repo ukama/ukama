@@ -1,0 +1,56 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "node.d API",
+    "version": "1.0.0",
+    "description": "API documentation for the node.d application",
+    "contact": {
+      "name": "Ukama Inc.",
+      "url": "http://www.ukama.com",
+      "email": "hello@ukama.com"
+    },
+    "license": {
+      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "host": "localhost:18000",
+  "schemes": ["http"],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "summary": "Ping the server",
+        "description": "Returns OK if the server is running",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/nodeinfo": {
+      "get": {
+        "summary": "Get information about the node",
+        "description": "Returns json structure of the node information",
+        "responses": {
+          "200": {
+            "description": "{\"nodeInfo\":{\"UUID\":\"uk-sa9001-tnode-a1-1234\",\"name\":\"tNode\",\"type\":2,\"partNumber\":\"LTE-BAND-3-0XXXX\",\"skew\":\"UK_TNODE-LTE-0001\",\"mac\":\"10:20:30:20:50:60\",\"prodSwVersion\":{\"major\":1,\"minor\":1},\"swVersion\":{\"major\":0,\"minor\":0},\"assemblyDate\":\"30-07-2020\",\"oemName\":\"SANMINA\",\"moduleCount\":3}}",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  }
+}
+

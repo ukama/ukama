@@ -7,10 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -83,6 +81,23 @@ func (this *GetSubscriberRequest) Validate() error {
 	return nil
 }
 func (this *GetSubscriberResponse) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetSubscriberByEmailRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+
+func (this *GetSubscriberByEmailRequest) Validate() error {
+	if !_regex_GetSubscriberByEmailRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	return nil
+}
+func (this *GetSubscriberByEmailResponse) Validate() error {
 	if this.Subscriber != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)

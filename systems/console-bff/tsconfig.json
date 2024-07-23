@@ -2,6 +2,7 @@
   "include": [
     "planning-tool",
     "node",
+    "metric",
     "gateway",
     "alert",
     "billing",

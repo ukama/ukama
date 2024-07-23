@@ -16,29 +16,17 @@ import {
 } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
 import {
-  GetLatestMetricInput,
   GetMetricRangeInput,
   GetNotificationsInput,
-  LatestMetricRes,
   MetricRes,
   NotificationsRes,
 } from "../resolvers/types";
 import {
-  parseLatestMetricRes,
   parseMetricRes,
   parseNodeMetricRes,
   parseNotificationsRes,
   parsePromethRes,
 } from "./mapper";
-
-const getLatestMetric = async (
-  args: GetLatestMetricInput
-): Promise<LatestMetricRes> => {
-  return await asyncRestCall({
-    method: API_METHOD_TYPE.GET,
-    url: `${METRIC_API_GW}/v1/metrics/${args.type}`,
-  }).then(res => parseLatestMetricRes(res.data, args));
-};
 
 const directCall = async (args: GetMetricRangeInput): Promise<MetricRes> => {
   const { from, to, step = 1 } = args;
@@ -110,10 +98,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export {
-  directCall,
-  getLatestMetric,
-  getMetricRange,
-  getNodeRangeMetric,
-  getNotifications,
-};
+export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };

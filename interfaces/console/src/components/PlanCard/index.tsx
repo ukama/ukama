@@ -58,7 +58,15 @@ const PlanCard = ({
       <Stack spacing={1} width={'100%'}>
         <Grid xs={12} container direction={'row'} textAlign={'center'}>
           <Grid item xs={11} pl={3}>
-            <Typography variant="h5" sx={{ fontWeight: 400 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {name}
             </Typography>
           </Grid>

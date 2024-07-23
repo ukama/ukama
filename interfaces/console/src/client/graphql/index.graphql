@@ -592,6 +592,19 @@ query getNetworks {
   }
 }
 
+query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    networkId
+    sites {
+      id
+      name
+      networkId
+      createdAt
+      isDeactivated
+    }
+  }
+}
+
 mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
     ...UNetwork

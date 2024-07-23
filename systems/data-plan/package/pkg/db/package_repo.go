@@ -18,7 +18,7 @@ import (
 )
 
 type PackageRepo interface {
-	Add(_package *Package) error
+	Add(dataPackage *Package, packageRate *PackageRate) error
 	Get(uuid uuid.UUID) (*Package, error)
 	GetDetails(uuid.UUID) (*Package, error)
 	Delete(uuid uuid.UUID) error
@@ -36,10 +36,25 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 	}
 }
 
-func (r *packageRepo) Add(_package *Package) error {
-	result := r.Db.GetGormDb().Create(_package)
+func (r *packageRepo) Add(dataPackage *Package, packageRate *PackageRate) error {
+	tx := r.Db.GetGormDb().Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
 
-	return result.Error
+	result := tx.Create(dataPackage)
+	if result.Error != nil {
+		tx.Rollback()
+		return result.Error
+	}
+
+	result = tx.Create(packageRate)
+	if result.Error != nil {
+		tx.Rollback()
+		return result.Error
+	}
+
+	return tx.Commit().Error
 }
 
 func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
@@ -75,7 +90,6 @@ func (p *packageRepo) GetAll() ([]Package, error) {
 	}
 	return packages, nil
 }
-
 
 func (r *packageRepo) Delete(uuid uuid.UUID) error {
 	p := &Package{}

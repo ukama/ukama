@@ -100,6 +100,10 @@ type SubscriberAddReq struct {
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
 }
 
+type SubscriberGetReqByEmail struct {
+	Email string `example:"{{SubscriberEmail}}" form:"subscriber_email" json:"subscriber_email" path:"subscriber_email" binding:"required" validate:"required"`
+}
+
 type SubscriberGetReq struct {
 	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }

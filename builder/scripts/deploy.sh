@@ -18,6 +18,7 @@ MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
 BILLINGSYSKEY="billing"
 OWNEREMAIL=$(jq -r '.setup.email' "$1")
+PASSWORD=$(jq -r '.setup.password' "$1")
 OWNERNAME=$(jq -r '.setup.name' "$1")
 ORGNAME=$(jq -r '.setup["org-name"]' "$1")
 ORGID=$(jq -r '.setup["org-id"]' "$1")
@@ -92,7 +93,7 @@ function register_user() {
     --header 'Content-Type: application/json' \
     --data-raw '{
         "method": "password",
-        "password": "@Pass2021",
+        "password": "'$PASSWORD'",
         "traits": {
             "email": "'$OWNEREMAIL'",
             "name": "'$OWNERNAME'",
@@ -166,6 +167,20 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     run_docker_compose "$(echo "$SYSTEM_OBJECT" | jq -r '.path')" "$(echo "$SYSTEM_OBJECT" | jq -r '.name')" "$(echo "$SYSTEM_OBJECT" | jq -r '.key')"
     case $SYSTEM in
     "auth-services")
+        cd app
+        cp .env.example .env.local
+        cd ..
+        echo ".env.local file created and content copied from .env.example for ukama-auth"
+        ;;
+    "console")
+        cp .env.example .env.local
+        echo ".env.local file created and content copied from .env.example for console"
+        ;;
+     "bff")
+        cp .env.example .env
+        echo ".env file created and content copied from .env.example for bff"
+        ;;
+    "auth-services")
         sleep 2
         register_user
         ;;
@@ -198,23 +213,14 @@ sleep 5
 
 echo "$TAG Registering systems URL in lookup db..."
 
-if [[ " ${SYSTEMS[@]} " =~ "bff" ]]; then
-    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-else
-    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
-    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
-    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://localhost:8060' WHERE systems."name" = 'nucleus'";
-    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://localhost:8078' WHERE systems."name" = 'subscriber'";
-    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://localhost:8074' WHERE systems."name" = 'dataplan'";
-    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://localhost:8077' WHERE systems."name" = 'inventory'";
-    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
-fi 
+SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
+SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
+SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
+SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
+SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
+SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
+SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
+
 
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
 psql $DB_URI -c "$SYS_QUERY_1"
