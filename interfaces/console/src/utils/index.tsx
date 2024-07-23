@@ -21,6 +21,7 @@ import {
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import { Typography } from '@mui/material';
+import { LatLngTuple } from 'leaflet';
 import { RoleToNotificationScopes } from './roletoNotificationScope';
 
 const getTitleFromPath = (path: string, id: string) => {
@@ -363,6 +364,32 @@ const inviteStatusEnumToString = (status: Invitation_Status): string => {
   }
 };
 
+function isValidLatitude(latitude: number) {
+  if (typeof latitude !== 'number' || latitude < -90 || latitude > 90) {
+    return false;
+  }
+  return true;
+}
+
+function isValidLongitude(longitude: number) {
+  if (typeof longitude !== 'number' || longitude < -180 || longitude > 180) {
+    return false;
+  }
+  return true;
+}
+
+const isValidLatLng = (position: LatLngTuple): boolean => {
+  const [latitude, longitude] = position || [0, 0];
+  return (
+    latitude !== 0 &&
+    longitude !== 0 &&
+    !isNaN(latitude) &&
+    !isNaN(longitude) &&
+    isValidLatitude(latitude) &&
+    isValidLongitude(longitude)
+  );
+};
+
 export {
   fileToBase64,
   formatBytes,
@@ -379,6 +406,7 @@ export {
   getUnixTime,
   hexToRGB,
   inviteStatusEnumToString,
+  isValidLatLng,
   provideStatusColor,
   roleEnumToString,
   structureNodeSiteDate,

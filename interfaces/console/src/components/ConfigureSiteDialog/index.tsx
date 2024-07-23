@@ -1,40 +1,33 @@
-import React, { ChangeEvent, useState } from 'react';
+import { NetworkDto } from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
+import { AddSiteValidationSchema } from '@/helpers/formValidators';
+import { globalUseStyles } from '@/styles/global';
+import colors from '@/theme/colors';
+import { TSiteForm } from '@/types';
+import { isValidLatLng } from '@/utils';
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
-  Stepper,
+  MenuItem,
+  Stack,
   Step,
   StepLabel,
+  Stepper,
   TextField,
-  MenuItem,
-  DialogContentText,
-  IconButton,
-  Stack,
+  Typography,
 } from '@mui/material';
-import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
-import { globalUseStyles } from '@/styles/global';
+import { Field, Form, Formik } from 'formik';
 import dynamic from 'next/dynamic';
-import CloseIcon from '@mui/icons-material/Close';
-import { NetworkDto } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import React, { useState } from 'react';
 
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
   ssr: false,
 });
-interface FormValues {
-  switch: string;
-  power: string;
-  backhaul: string;
-  access: string;
-  spectrum: string;
-  siteName: string;
-  selectedNetwork: string;
-}
 
 interface Component {
   id: string;
@@ -52,79 +45,65 @@ interface Component {
   specification: string;
 }
 
-const validationSchema = [
-  Yup.object().shape({
-    switch: Yup.string().required('Switch is required'),
-    power: Yup.string().required('Power is required'),
-    backhaul: Yup.string().required('Backhaul is required'),
-    access: Yup.string().required('Access is required'),
-    spectrum: Yup.string().required('Spectrum is required'),
-  }),
-  Yup.object().shape({
-    siteName: Yup.string().required('Site Name is required'),
-    selectedNetwork: Yup.string().required('Network is required'),
-  }),
+interface IConfigureSiteDialog {
+  open: boolean;
+  site: TSiteForm;
+  onClose: () => void;
+  addSiteLoading: boolean;
+  networks: NetworkDto[];
+  components: Component[];
+  handleSiteConfiguration: (values: TSiteForm) => void;
+}
+
+const steps = [
+  'Select Switch, Power, Backhaul, and spectrum band',
+  'Enter your site details',
 ];
 
-interface StepperDialogProps {
-  open: boolean;
-  onClose: () => void;
-  components: Component[];
-  networks: NetworkDto[];
-  handleSiteConfiguration: (data: any) => void;
-  addSiteLoading: boolean;
-}
+const fetchAddress = async (lat: number, lng: number) => {
+  return await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
+    {
+      cache: 'force-cache',
+    },
+  )
+    .then((res) => res.json())
+    .then((data) => data.display_name)
+    .catch(() => 'Location not found');
+};
 
-interface Coordinates {
-  lat: number | null;
-  lng: number | null;
-}
-
-const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
+const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   open,
+  site,
   onClose,
-  components,
   networks,
-  handleSiteConfiguration,
+  components,
   addSiteLoading = false,
+  handleSiteConfiguration,
 }) => {
-  const [activeStep, setActiveStep] = useState(0);
-  const [location, setLocation] = useState('');
+  const { setSnackbarMessage } = useAppContext();
   const gclasses = globalUseStyles();
+  const [activeStep, setActiveStep] = useState(0);
+  const [address, setAddress] = useState('');
+
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
-  const { network } = useAppContext();
 
-  const [coordinates, setCoordinates] = useState<Coordinates>({
-    lat: null,
-    lng: null,
-  });
+  const handleSubmit = (values: TSiteForm) => {
+    if (address && address === 'Location not found') {
+      setSnackbarMessage({
+        id: 'error-fetching-address',
+        type: 'error',
+        show: true,
+        message: 'Error fetching address from coordinates',
+      });
+    }
 
-  const initialValues: FormValues = {
-    switch: '',
-    power: '',
-    backhaul: '',
-    access: '',
-    siteName: '',
-    selectedNetwork: network.id,
-    spectrum: '',
+    handleSiteConfiguration({
+      ...values,
+      address: address,
+    });
   };
-
-  const handleSubmit = (values: FormValues) => {
-    handleSiteConfiguration({ ...values, coordinates, location });
-    onClose();
-  };
-
-  const handleCoordnatedChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    const numValue = value === '' ? null : parseFloat(value);
-    setCoordinates((prev) => ({ ...prev, [name]: numValue }));
-  };
-
-  const steps = [
-    'Select Switch, Power, Backhaul, and spectrum band',
-    'Enter your site details',
-  ];
 
   const switchComponents = components.filter(
     (comp) => comp.category === 'SWITCH',
@@ -139,10 +118,25 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
     (comp) => comp.category === 'ACCESS',
   );
 
+  const handleFetchAddress = async (lat: number, lng: number) => {
+    setSnackbarMessage({
+      id: 'fetching-address',
+      type: 'success',
+      show: true,
+      message: 'Fetching address with coordinates',
+    });
+    await fetchAddress(lat, lng).then((data) => setAddress(data));
+  };
+
+  const handleClose = () => {
+    onClose();
+    setActiveStep(0);
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       sx={{
         '& .MuiDialog-paper': {
           width: '60%',
@@ -152,13 +146,6 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
     >
       <DialogTitle>
         Configure site installation ({activeStep + 1}/2)
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseIcon />
-        </IconButton>
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
@@ -169,11 +156,13 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
       </DialogContent>
 
       <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema[activeStep]}
-        onSubmit={handleSubmit}
+        initialValues={site}
+        onSubmit={async (values) => {
+          handleSubmit(values);
+        }}
+        validationSchema={AddSiteValidationSchema[activeStep]}
       >
-        {({ values, errors, touched, isValid, handleChange }) => (
+        {({ values, errors, touched, isValid, setValues, validateField }) => (
           <Form>
             <DialogContent>
               <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -184,7 +173,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                 ))}
               </Stepper>
               {activeStep === 0 && (
-                <>
+                <Stack>
                   <Field
                     as={TextField}
                     fullWidth
@@ -310,25 +299,33 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                       </MenuItem>
                     ))}
                   </Field>
-                </>
+                </Stack>
               )}
               {activeStep === 1 && (
-                <>
-                  {coordinates.lat !== null && coordinates.lng !== null && (
+                <Stack spacing={2}>
+                  {address && (
                     <SiteMapComponent
-                      posix={[coordinates.lat, coordinates.lng]}
-                      onAddressChange={(address: string) => {
-                        setLocation(address);
-                      }}
+                      posix={[values.latitude, values.longitude]}
+                      address={address}
                     />
                   )}
-                  {location}
+                  <Typography variant="body2" mt={1}>
+                    {Boolean(errors.latitude) || Boolean(errors.longitude) ? (
+                      <span style={{ color: colors.redMatt }}>
+                        Please enter valid coordinates
+                      </span>
+                    ) : (
+                      address
+                    )}
+                  </Typography>
                   <Field
                     as={TextField}
                     fullWidth
+                    required
                     margin="normal"
                     name="siteName"
-                    label="Site Name"
+                    label="Site name"
+                    placeholder="site-name"
                     error={touched.siteName && Boolean(errors.siteName)}
                     helperText={touched.siteName && errors.siteName}
                     InputLabelProps={{
@@ -345,7 +342,7 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                     fullWidth
                     select
                     required
-                    name="selectedNetwork"
+                    name="network"
                     label="Network"
                     margin="normal"
                     InputLabelProps={{
@@ -356,12 +353,8 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                         input: gclasses.inputFieldStyle,
                       },
                     }}
-                    error={
-                      touched.selectedNetwork && Boolean(errors.selectedNetwork)
-                    }
-                    helperText={
-                      touched.selectedNetwork && errors.selectedNetwork
-                    }
+                    error={touched.network && Boolean(errors.network)}
+                    helperText={touched.network && errors.network}
                   >
                     <MenuItem value="" disabled>
                       Choose a network to add your site to
@@ -372,62 +365,91 @@ const ConfigureSiteDialog: React.FC<StepperDialogProps> = ({
                       </MenuItem>
                     ))}
                   </Field>
-                  <Stack direction="column" spacing={2} sx={{ mt: 2 }}>
-                    <TextField
-                      label="Latitude"
-                      name="lat"
-                      required
-                      value={
-                        coordinates.lat === null
-                          ? ''
-                          : coordinates.lat.toString()
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Latitude"
+                    name="latitude"
+                    value={values.latitude}
+                    onBlur={() => {
+                      validateField('latitude');
+                      if (
+                        !errors.latitude &&
+                        !errors.longitude &&
+                        isValidLatLng([values.latitude, values.longitude])
+                      ) {
+                        handleFetchAddress(values.latitude, values.longitude);
+                        values.address = address;
                       }
-                      onChange={handleCoordnatedChange}
-                      fullWidth
-                      type="number"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
-                        },
-                      }}
-                    />
-                    <TextField
-                      label="Longitude"
-                      name="lng"
-                      required
-                      value={
-                        coordinates.lng === null
-                          ? ''
-                          : coordinates.lng.toString()
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
+                    onChange={(e) =>
+                      setValues({
+                        ...values,
+                        latitude: parseFloat(e.target.value),
+                      })
+                    }
+                    error={touched.latitude && Boolean(errors.latitude)}
+                    helperText={touched.latitude && errors.latitude}
+                  />
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Longitude"
+                    name="longitude"
+                    value={values.longitude}
+                    onBlur={() => {
+                      validateField('longitude');
+                      if (
+                        !errors.latitude &&
+                        !errors.longitude &&
+                        isValidLatLng([values.latitude, values.longitude])
+                      ) {
+                        handleFetchAddress(values.latitude, values.longitude);
+                        values.address = address;
                       }
-                      onChange={handleCoordnatedChange}
-                      fullWidth
-                      type="number"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
-                        },
-                      }}
-                    />
-                  </Stack>
-                </>
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      classes: {
+                        input: gclasses.inputFieldStyle,
+                      },
+                    }}
+                    onChange={(e) =>
+                      setValues({
+                        ...values,
+                        longitude: parseFloat(e.target.value),
+                      })
+                    }
+                    error={touched.longitude && Boolean(errors.longitude)}
+                    helperText={touched.longitude && errors.longitude}
+                  />
+                </Stack>
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={handleClose}>Cancel</Button>
               {activeStep > 0 && <Button onClick={handleBack}>Back</Button>}
               {activeStep < steps.length - 1 ? (
                 <Button onClick={handleNext} disabled={!isValid}>
                   Next
                 </Button>
               ) : (
-                <Button type="submit" disabled={!isValid || addSiteLoading}>
+                <Button
+                  type="submit"
+                  disabled={!isValid || addSiteLoading || !address}
+                >
                   Submit
                 </Button>
               )}

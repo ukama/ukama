@@ -36,7 +36,20 @@ class SiteApi extends RESTDataSource {
   addSite = async (baseURL: string, req: AddSiteInputDto): Promise<SiteDto> => {
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${SITES}`, {
-      body: req,
+      body: {
+        access_id: req.access_id,
+        backhaul_id: req.backhaul_id,
+        install_date: req.install_date,
+        is_deactivated: false,
+        latitude: req.latitude,
+        location: req.location,
+        longitude: req.longitude,
+        network_id: req.network_id,
+        power_id: req.power_id,
+        site: req.name,
+        switch_id: req.switch_id,
+        spectrum_id: req.spectrum_id,
+      },
     }).then(res => dtoToSiteDto(res));
   };
 }

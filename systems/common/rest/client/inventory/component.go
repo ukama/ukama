@@ -85,7 +85,7 @@ func (s *componentClient) Get(id string) (*ComponentInfo, error) {
 
 		return nil, fmt.Errorf("GetComponent failure: %w", err)
 	}
-	fmt.Println("DATA RESPONSE : ", resp.Body())
+
 	err = json.Unmarshal(resp.Body(), &component)
 	if err != nil {
 		log.Tracef("Failed to deserialize component info. Error message is: %s", err.Error())

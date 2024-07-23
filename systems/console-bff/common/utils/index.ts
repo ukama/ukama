@@ -278,6 +278,5 @@ export {
   killProcess,
   parseGatewayHeaders,
   parseHeaders,
-  parseToken
+  parseToken,
 };
-

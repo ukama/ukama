@@ -7,23 +7,37 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import colors from '@/theme/colors';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import SiteOverView from '@/components/SiteOverView';
-import RestartSiteDialog from '@/components/RestartSiteDialog';
-import { AlertColor, Grid, Paper } from '@mui/material';
-import SiteOverallHealth from '@/components/SiteHealth';
-import { useGetSiteLazyQuery } from '@/client/graphql/generated';
 import {
-  useGetSitesLazyQuery,
-  useGetNetworksQuery,
-  useGetComponentsByUserIdLazyQuery,
   useAddSiteMutation,
+  useGetComponentsByUserIdLazyQuery,
+  useGetNetworksQuery,
+  useGetSiteLazyQuery,
 } from '@/client/graphql/generated';
+import LoadingWrapper from '@/components/LoadingWrapper';
+import RestartSiteDialog from '@/components/RestartSiteDialog';
+import SiteOverallHealth from '@/components/SiteHealth';
+import SiteOverView from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
+import colors from '@/theme/colors';
+import { AlertColor, Grid, Paper } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import { TSiteForm } from '@/types';
+
+const SITE_INIT = {
+  switch: '',
+  power: '',
+  access: '',
+  backhaul: '',
+  address: '',
+  spectrum: '',
+  siteName: '',
+  latitude: NaN,
+  longitude: NaN,
+  network: '',
+};
+
 interface SiteDetailsProps {
   params: {
     id: string;
@@ -31,6 +45,7 @@ interface SiteDetailsProps {
 }
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
+  const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
   const { setSnackbarMessage } = useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
@@ -53,7 +68,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     setRestartDialogOpen(false);
   };
   const handleConfirmRestart = (siteName: string) => {
-    //console.log(`Restarting site: ${siteName}`);
     setRestartDialogOpen(false);
   };
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
@@ -114,16 +128,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [getSites] = useGetSitesLazyQuery({
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sites-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -139,6 +143,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   const { data: networks } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
 
@@ -156,6 +161,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   }, []);
 
   const [getSite] = useGetSiteLazyQuery({
+    onCompleted: (res) => {
+      setSite({
+        power: res.getSite.powerId,
+        siteName: res.getSite.name,
+        switch: res.getSite.switchId,
+        access: res.getSite.accessId,
+        address: res.getSite.location,
+        latitude: res.getSite.latitude,
+        network: res.getSite.networkId,
+        spectrum: res.getSite.spectrumId,
+        backhaul: res.getSite.backhaulId,
+        longitude: res.getSite.longitude,
+      });
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'sites-msg',
@@ -165,6 +184,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   useEffect(() => {
     getSite({ variables: { siteId: id } });
   }, []);
@@ -197,12 +217,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Paper>
 
       <ConfigureSiteDialog
+        site={site}
         open={openSiteConfig}
+        addSiteLoading={addSiteLoading}
         onClose={handleCloseSiteConfig}
         components={componentsList || []}
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
-        addSiteLoading={addSiteLoading}
       />
       <RestartSiteDialog
         open={restartDialogOpen}

@@ -178,3 +178,21 @@ export type TSnackbarMessage = {
   type: string;
   show: boolean;
 };
+
+export type TSiteForm = {
+  switch: string;
+  power: string;
+  access: string;
+  backhaul: string;
+  address: string;
+  spectrum: string;
+  siteName: string;
+  latitude: number;
+  longitude: number;
+  network: string;
+};
+
+export type TCoordinates = {
+  lat: number | null;
+  lng: number | null;
+};

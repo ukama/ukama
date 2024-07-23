@@ -1,34 +1,70 @@
 'use client';
 
-import SiteCard from '@/components/SiteCard';
-import { Grid, Paper, Typography, Button, AlertColor } from '@mui/material';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
-import { useEffect, useState } from 'react';
 import {
-  useGetSitesLazyQuery,
-  useGetNetworksQuery,
-  useGetComponentsByUserIdLazyQuery,
+  SiteDto,
   useAddSiteMutation,
+  useGetComponentsByUserIdLazyQuery,
+  useGetNetworksQuery,
+  useGetSitesQuery,
 } from '@/client/graphql/generated';
+import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
+import { TSiteForm } from '@/types';
+import {
+  AlertColor,
+  Box,
+  Button,
+  Grid,
+  Paper,
+  Typography,
+} from '@mui/material';
+import { formatISO } from 'date-fns';
+import { useEffect, useState } from 'react';
+
+const SITE_INIT = {
+  switch: '',
+  power: '',
+  access: '',
+  backhaul: '',
+  address: '',
+  spectrum: '',
+  siteName: '',
+  latitude: NaN,
+  longitude: NaN,
+  network: '',
+};
 
 const Sites = () => {
-  const [sitesList, setSitesList] = useState<any[]>([]);
+  const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage, network } = useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
+  const [site, setSite] = useState<TSiteForm>(SITE_INIT);
 
-  const handleSiteConfigOpen = () => {
-    setOpenSiteConfig(true);
-  };
-
-  const handleCloseSiteConfig = () => {
-    setOpenSiteConfig(false);
-  };
+  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
+    skip: !network.id,
+    variables: {
+      networkId: network.id,
+    },
+    onCompleted: (res) => {
+      setSitesList(res.getSites.sites);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'fetching-sites-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
-    onCompleted: (res) => {
+    onCompleted: () => {
+      refetchSites().then((res) => {
+        setSitesList(res.data.getSites.sites);
+      });
       setSnackbarMessage({
         id: 'add-site-success',
         message: 'Site added successfully!',
@@ -45,56 +81,7 @@ const Sites = () => {
       });
     },
   });
-  const getCurrentDateInISOFormat = () => {
-    const date = new Date();
-    return date.toISOString().split('T')[0] + 'T00:00:00Z';
-  };
 
-  const handleSiteConfiguration = async (data: any) => {
-    const variables = {
-      access_id: data.access,
-      backhaul_id: data.backhaul,
-      install_date: getCurrentDateInISOFormat(),
-      latitude: data.coordinates.lat,
-      location: data.location,
-      longitude: data.coordinates.lng,
-      name: data.siteName,
-      network_id: data.selectedNetwork,
-      power_id: data.power,
-      spectrum_id: data.spectrumId || '',
-      switch_id: data.switch,
-      is_deactivated: data.is_deactivated || false,
-    };
-
-    try {
-      await addSite({ variables: { data: variables } });
-    } catch (error) {
-      console.error('Error submitting site configuration:', error);
-    }
-  };
-
-  const { data: networkList, loading: networkLoading } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
-  const [getSites] = useGetSitesLazyQuery({
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sites-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -110,9 +97,19 @@ const Sites = () => {
       });
     },
   });
-  const { data: networks } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
 
+  const { data: networks, loading: networksLoading } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (res) => {
+      if (res.getNetworks.networks.length === 0) {
+        setSnackbarMessage({
+          id: 'no-network-msg',
+          message: 'Please create a network first.',
+          type: 'warning' as AlertColor,
+          show: true,
+        });
+      }
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'networks-msg',
@@ -122,104 +119,101 @@ const Sites = () => {
       });
     },
   });
+
   useEffect(() => {
+    if (!network.id)
+      setSite({
+        ...site,
+        network: network.id,
+      });
     getComponents({ variables: { category: 'switch' } });
   }, []);
 
-  useEffect(() => {
-    const fetchAllSites = async () => {
-      if (networkList && networkList.getNetworks.networks) {
-        setIsLoading(true);
-        const allSitesPromises = networkList.getNetworks.networks.map(
-          (network) => getSites({ variables: { networkId: network.id } }),
-        );
+  const handleSiteConfigOpen = () => {
+    setOpenSiteConfig(true);
+  };
 
-        try {
-          const results = await Promise.all(allSitesPromises);
-          const allSites = results.flatMap(
-            (result) => result.data?.getSites.sites || [],
-          );
-          setSitesList(allSites);
-        } catch (error) {
-          console.error('Error fetching sites:', error);
-          setSnackbarMessage({
-            id: 'sites-fetch-error',
-            message: 'Error fetching sites',
-            type: 'error' as AlertColor,
-            show: true,
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
+  const handleCloseSiteConfig = () => {
+    setSite(SITE_INIT);
+    setOpenSiteConfig(false);
+  };
 
-    fetchAllSites();
-  }, [networkList, getSites]);
+  const handleSiteConfiguration = (values: TSiteForm) => {
+    setSite(values);
+    setOpenSiteConfig(false);
+    addSite({
+      variables: {
+        data: {
+          name: values.siteName,
+          power_id: values.power,
+          location: values.address,
+          access_id: values.access,
+          switch_id: values.switch,
+          latitude: values.latitude,
+          network_id: values.network,
+          longitude: values.longitude,
+          backhaul_id: values.backhaul,
+          spectrum_id: values.spectrum,
+          install_date: formatISO(new Date()),
+        },
+      },
+    });
+  };
 
   return (
-    <Grid container spacing={0} sx={{ mt: 1 }}>
-      <Grid item xs={12}>
-        <Paper sx={{ p: 4 }}>
-          <Grid container spacing={0} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
-              <Typography variant="h6" color="initial">
-                My sites
-              </Typography>
-            </Grid>
-            <Grid
-              item
-              xs={6}
-              container
-              justifyItems={'center'}
-              justifyContent={'flex-end'}
+    <Box mt={2}>
+      <Paper
+        sx={{
+          p: 4,
+          overflow: 'auto',
+          padding: '24px 32px',
+          borderRadius: '10px',
+          height: 'calc(100vh - 228px)',
+        }}
+      >
+        <Grid container rowSpacing={2}>
+          <Grid item xs={6}>
+            <Typography variant="h6" color="initial">
+              My sites
+            </Typography>
+          </Grid>
+          <Grid
+            item
+            xs={6}
+            container
+            justifyItems={'center'}
+            justifyContent={'flex-end'}
+          >
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={handleSiteConfigOpen}
+              disabled={networks?.getNetworks?.networks.length === 0}
             >
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSiteConfigOpen}
-              >
-                ADD SITE
-              </Button>
-            </Grid>
+              ADD SITE
+            </Button>
           </Grid>
 
-          <Grid container spacing={2}>
-            {sitesList.length === 0 ? (
-              <Grid item xs={12} style={{ textAlign: 'center' }}>
-                <Typography variant="body1">No sites available.</Typography>
-              </Grid>
-            ) : (
-              sitesList.map((site, index) => (
-                <Grid item xs={12} md={4} lg={4} key={index}>
-                  <SiteCard
-                    siteId={site.id}
-                    name={site.name}
-                    address={site.location}
-                    users={site.users || ''}
-                    siteStatus={site.isDeactivated}
-                    loading={isLoading || networkLoading}
-                    status={{
-                      online: false,
-                      charging: false,
-                      signal: '',
-                    }}
-                  />
-                </Grid>
-              ))
-            )}
+          <Grid item xs={12} mt={1.5}>
+            {
+              <SitesWrapper
+                loading={sitesLoading || networksLoading}
+                sites={sitesList}
+              />
+            }
           </Grid>
-        </Paper>
-      </Grid>
+        </Grid>
+      </Paper>
       <ConfigureSiteDialog
+        site={site}
         open={openSiteConfig}
+        addSiteLoading={addSiteLoading}
         onClose={handleCloseSiteConfig}
         components={componentsList || []}
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
-        addSiteLoading={addSiteLoading}
       />
-    </Grid>
+    </Box>
   );
 };
 

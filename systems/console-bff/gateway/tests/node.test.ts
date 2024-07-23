@@ -177,7 +177,6 @@ describe("Node API integration tests", () => {
       redisClient.isOpen ? redisClient : null
     );
     const site = await siteApi.addSite(siteURL.message, {
-      is_deactivated: false,
       access_id: "",
       backhaul_id: "",
       install_date: "",

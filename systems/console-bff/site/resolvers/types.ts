@@ -105,6 +105,12 @@ export class SitesAPIResDto {
   sites: SiteAPIDto[];
 }
 
+@ObjectType()
+export class SiteAPIResDto {
+  @Field(() => SiteAPIDto)
+  site: SiteAPIDto;
+}
+
 @InputType()
 export class AddSiteInputDto {
   @Field()
@@ -139,7 +145,4 @@ export class AddSiteInputDto {
 
   @Field()
   location: string;
-
-  @Field({ defaultValue: false })
-  is_deactivated?: boolean; // Optional field with a default value of false
 }

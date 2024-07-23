@@ -62,7 +62,7 @@ type network interface {
 }
 
 type site interface {
-	AddSite(networkId, name, backhaulId, powerId, accessId,switchId, location , spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
+	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
 	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse, error)

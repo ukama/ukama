@@ -62,7 +62,35 @@ const PHYSICAL_SIM_FORM_SCHEMA = Yup.object().shape({
   securityCode: securitycodeValidator,
 });
 
+const AddSiteValidationSchema = [
+  Yup.object().shape({
+    switch: Yup.string().required('Switch is required'),
+    power: Yup.string().required('Power is required'),
+    backhaul: Yup.string().required('Backhaul is required'),
+    access: Yup.string().required('Access is required'),
+    spectrum: Yup.string().required('Spectrum is required'),
+  }),
+  Yup.object().shape({
+    siteName: Yup.string()
+      .required('Site name is required')
+      .matches(
+        /^[a-z0-9-]*$/,
+        'Site name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
+      ),
+    network: Yup.string().required('Network is required'),
+    latitude: Yup.number()
+      .required('Latitude is required')
+      .min(-90, 'Invalid latitude')
+      .max(90, 'Invalid latitude'),
+    longitude: Yup.number()
+      .required('Longitude is required')
+      .min(-180, 'Invalid longitude')
+      .max(180, 'Invalid longitude'),
+  }),
+];
+
 export {
+  AddSiteValidationSchema,
   ESIM_FORM_SCHEMA,
   NETWORK_NAME_SCHEMA_VALIDATOR,
   PHYSICAL_SIM_FORM_SCHEMA,

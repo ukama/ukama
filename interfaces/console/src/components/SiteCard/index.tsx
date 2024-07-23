@@ -5,25 +5,24 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  useMediaQuery,
-  Menu,
-  MenuItem,
-  Skeleton,
-} from '@mui/material';
-import PeopleIcon from '@mui/icons-material/People';
-import RouterIcon from '@mui/icons-material/Router';
+import colors from '@/theme/colors';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import colors from '@/theme/colors';
+import RouterIcon from '@mui/icons-material/Router';
+import {
+  Box,
+  Card,
+  CardContent,
+  IconButton,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 interface SiteCardProps {
   siteId: string;
@@ -137,12 +136,13 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          <Box display="flex" alignItems="center" mr={10}>
+          {/* TODO: Will be implemented in the future */}
+          {/* <Box display="flex" alignItems="center" mr={10}>
             <PeopleIcon sx={{ fontSize: 30 }} />
             <Typography variant="body2" ml={0.5}>
               {loading ? <Skeleton width={30} /> : users}
             </Typography>
-          </Box>
+          </Box> */}
           <Box display="flex" alignItems="center" mr={2}>
             <RouterIcon
               sx={{

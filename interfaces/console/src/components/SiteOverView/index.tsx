@@ -5,22 +5,22 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
+import { CheckCircle } from '@mui/icons-material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
-  Typography,
   Button,
+  Grid,
+  IconButton,
   Menu,
   MenuItem,
-  IconButton,
-  Grid,
   Paper,
   Stack,
+  Typography,
 } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import dynamic from 'next/dynamic';
+import React, { useState } from 'react';
 
 const SiteStatusIcon = React.lazy(() =>
   import('@/../public/svg').then((module) => ({
@@ -171,10 +171,10 @@ const SiteOverView: React.FC<SiteOverViewProps> = ({
         justifyItems={'center'}
         justifyContent={'flex-end'}
       >
-        <SiteMapComponent
+        {/* <SiteMapComponent
           posix={[-2.4906, 28.8428]}
           onAddressChange={handleAddressChange}
-        />
+        /> */}
       </Grid>
     </>
   );
