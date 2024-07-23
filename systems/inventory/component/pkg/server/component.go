@@ -34,24 +34,28 @@ const uuidParsingError = "Error parsing UUID"
 
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
-	orgName        string
-	gitClient      gitClient.GitClient
-	componentRepo  db.ComponentRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	pushGateway    string
-	gitDirPath     string
+	orgName              string
+	gitClient            gitClient.GitClient
+	componentRepo        db.ComponentRepo
+	msgbus               mb.MsgBusServiceClient
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	pushGateway          string
+	gitDirPath           string
+	componentEnvironment string
+	testUserId           string
 }
 
-func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string) *ComponentServer {
+func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string, componentEnvironment string, testUserId string) *ComponentServer {
 	return &ComponentServer{
-		gitClient:      gc,
-		orgName:        orgName,
-		componentRepo:  componentRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		pushGateway:    pushGateway,
-		gitDirPath:     path,
+		gitClient:            gc,
+		gitDirPath:           path,
+		msgbus:               msgBus,
+		orgName:              orgName,
+		testUserId:           testUserId,
+		pushGateway:          pushGateway,
+		componentRepo:        componentRepo,
+		componentEnvironment: componentEnvironment,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -100,14 +104,21 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		return nil, status.Errorf(codes.Internal, "failed to read file. Error %s", err.Error())
 	}
 
-	var enviroment gitClient.Environment
-	err = json.Unmarshal(rootFileContent, &enviroment)
+	var env gitClient.Environment
+	err = json.Unmarshal(rootFileContent, &env)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
 	}
 
 	var components []utils.Component
-	for _, company := range enviroment.Test {
+	var environment []gitClient.Company
+	if c.componentEnvironment == "test" {
+		environment = env.Test
+	} else {
+		environment = env.Production
+	}
+
+	for _, company := range environment {
 		err := c.gitClient.BranchCheckout(company.GitBranchName)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to checkout branch. Error %s", err.Error())
@@ -127,11 +138,23 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 
 			components = append(components, component)
 		}
-		userId, err := uuid.FromString(company.UserId)
+		var userId string
+
+		if c.componentEnvironment == "test" {
+			userId = c.testUserId
+		} else {
+			userId = company.UserId
+		}
+		company.UserId = userId
+		userIdUUID, err := uuid.FromString(userId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		cdb := utilComponentsToDbComponents(components, userId)
+		log.Infof("User ID: %s, %s", userIdUUID, company.UserId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		}
+		cdb := utilComponentsToDbComponents(components, userIdUUID)
 
 		err = c.componentRepo.Delete()
 		if err != nil {
@@ -189,7 +212,7 @@ func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) [
 		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
 			Inventory:     i.InventoryID,
-			Category:      ukama.ParseType(i.Category),  // Use ukama.ParseType here,
+			Category:      ukama.ParseType(i.Category), // Use ukama.ParseType here,
 			UserId:        uId,
 			Type:          i.Type,
 			Description:   i.Description,

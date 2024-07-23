@@ -14,6 +14,11 @@
   "name": "Ukama Nucleus system",
   "path": "./nucleus"
  },
+ "inventory": {
+  "key": "inventory",
+  "name": "Ukama Inventory system",
+  "path": "./inventory"
+ },
  "dataplan": {
   "key": "dataplan",
   "name": "Ukama Dataplan system",

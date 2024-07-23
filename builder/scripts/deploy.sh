@@ -57,7 +57,7 @@ function set_env() {
     export LAGO_API_KEY=$LAGOAPIKEY
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
-    
+    export COMPONENT_ENVIRONMENT=test
 }
 
 function run_docker_compose() {
@@ -139,20 +139,24 @@ sort_systems_by_dependency() {
           echo "7 $key"
       elif [ "$key" == "subscriber" ]; then
           echo "8 $key"
-      elif [ "$key" == "inventory" ]; then
-          echo "9 $key"
       else
-          echo "10 $key"
+          echo "9 $key"
       fi
     done | sort -n -k1,1 | cut -d' ' -f2-))
 }
 
 sort_systems_by_dependency
 
+IS_INVENTORY_SYS=false
+INVENTORY_SYS_KEY="inventory"
+
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do
     cd ~
     cd $root_dir
+    if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
+        IS_INVENTORY_SYS=true
+    fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
     fi
@@ -171,6 +175,8 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         cp .env.example .env.local
         cd ..
         echo ".env.local file created and content copied from .env.example for ukama-auth"
+        sleep 2
+        register_user
         ;;
     "console")
         cp .env.example .env.local
@@ -180,11 +186,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         cp .env.example .env
         echo ".env file created and content copied from .env.example for bff"
         ;;
-    "auth-services")
-        sleep 2
-        register_user
-        ;;
-
     "init")
         sleep 2
         echo  "$TAG Add org in lookup..."
@@ -208,6 +209,14 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     cd ../
 done
 
+sleep 3
+
+if [ "$IS_INVENTORY_SYS" = true ]; then
+    echo "$TAG Syncing up org inventory..."
+    components=$(curl --location --silent --request PUT "http://${LOCAL_HOST_IP}:8077/v1/components/sync")
+    echo "$TAG Org inventory synced up."
+fi
+
 # Update system url in lookup db
 sleep 5
 
@@ -220,7 +229,6 @@ SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080
 SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
 SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
 SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-
 
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
 psql $DB_URI -c "$SYS_QUERY_1"

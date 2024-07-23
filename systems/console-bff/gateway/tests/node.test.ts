@@ -176,7 +176,20 @@ describe("Node API integration tests", () => {
       orgName,
       redisClient.isOpen ? redisClient : null
     );
-    const site = await siteApi.addSite(siteURL.message, { site: "Site A" });
+    const site = await siteApi.addSite(siteURL.message, {
+      is_deactivated: false,
+      access_id: "",
+      backhaul_id: "",
+      install_date: "",
+      latitude: 0,
+      location: "",
+      longitude: 0,
+      name: "",
+      network_id: "",
+      power_id: "",
+      spectrum_id: "",
+      switch_id: "",
+    });
     siteId = site.id;
 
     const res = await server.executeOperation(
