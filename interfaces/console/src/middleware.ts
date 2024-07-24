@@ -33,6 +33,10 @@ const USER_INIT = {
 };
 
 const whoami = async (session: string) => {
+  console.log(
+    'Calling WHOAMI',
+    `${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`,
+  );
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
     cache: 'force-cache',
@@ -117,6 +121,14 @@ const getUserObject = async (session: string, cookieToken: string) => {
 };
 
 const middleware = async (request: NextRequest) => {
+  console.log(process.env.NEXT_PUBLIC_API_GW);
+  console.log(process.env.NEXT_PUBLIC_APP_URL);
+  console.log(process.env.NEXT_PUBLIC_METRIC_URL);
+  console.log(process.env.NEXT_PUBLIC_AUTH_APP_URL);
+  console.log(process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL);
+  console.log(process.env.NEXT_PUBLIC_MAP_BOX_TOKEN);
+  console.log(process.env.NEXT_PUBLIC_API_GW_4SS);
+  console.log(process.env.NEXT_PUBLIC_SIM_TYPE);
   const { pathname } = request.nextUrl;
   const cookieStore = cookies();
   const session = cookieStore.get('ukama_session');
@@ -137,6 +149,8 @@ const middleware = async (request: NextRequest) => {
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
+
+  console.log('User Object: ', userObj);
 
   if (!userObj?.isEmailVerified) {
     return NextResponse.redirect(
