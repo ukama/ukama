@@ -33,10 +33,6 @@ const USER_INIT = {
 };
 
 const whoami = async (session: string) => {
-  console.log(
-    'Calling WHOAMI',
-    `${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`,
-  );
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
     cache: 'force-cache',
@@ -82,7 +78,6 @@ function getUserFromToken(token: string): User {
     }
 
     const [orgId, orgName, id, name, email, role, isEmailVerified] = parts;
-
     return {
       id,
       role,
@@ -91,7 +86,7 @@ function getUserFromToken(token: string): User {
       orgId,
       token,
       orgName,
-      isEmailVerified: isEmailVerified === 'true',
+      isEmailVerified: isEmailVerified.includes('true'),
     };
   } catch (error) {
     return USER_INIT;
@@ -102,15 +97,11 @@ const getUserObject = async (session: string, cookieToken: string) => {
   if (cookieToken) {
     return getUserFromToken(cookieToken);
   } else {
-    const res = await whoami(`ukama_session=${session}`).catch((err) => {
-      console.log('WHOAMI ERROR: ', err);
-      return err;
-    });
+    const res = await whoami(`ukama_session=${session}`);
     if (!res.ok) {
       throw new Error('Unauthorized');
     }
     const jsonRes = await res.json();
-    console.log('JSON RES: ', jsonRes);
     return {
       id: jsonRes.userId,
       role: jsonRes.role,
@@ -125,19 +116,15 @@ const getUserObject = async (session: string, cookieToken: string) => {
 };
 
 const middleware = async (request: NextRequest) => {
-  console.log(process.env.NEXT_PUBLIC_API_GW);
-  console.log(process.env.NEXT_PUBLIC_APP_URL);
-  console.log(process.env.NEXT_PUBLIC_METRIC_URL);
-  console.log(process.env.NEXT_PUBLIC_AUTH_APP_URL);
-  console.log(process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL);
-  console.log(process.env.NEXT_PUBLIC_MAP_BOX_TOKEN);
-  console.log(process.env.NEXT_PUBLIC_API_GW_4SS);
-  console.log(process.env.NEXT_PUBLIC_SIM_TYPE);
+  const response = NextResponse.next();
   const { pathname } = request.nextUrl;
+  if (pathname.includes('/ping')) {
+    return response;
+  }
+
   const cookieStore = cookies();
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
-  const response = NextResponse.next();
 
   if (!session) {
     return NextResponse.redirect(
@@ -153,8 +140,6 @@ const middleware = async (request: NextRequest) => {
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
-
-  console.log('User Object: ', userObj);
 
   if (!userObj?.isEmailVerified) {
     return NextResponse.redirect(
@@ -186,7 +171,10 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
-  if (pathname.includes('/console') && !isUserHaveOrg(userObj)) {
+  if (
+    (pathname.includes('/console') || pathname === '/') &&
+    !isUserHaveOrg(userObj)
+  ) {
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );
