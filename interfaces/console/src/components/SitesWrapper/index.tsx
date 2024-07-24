@@ -48,17 +48,11 @@ const SitesWrapper = ({ loading, sites }: ISitesWrapper) => {
       {sites.map((site) => (
         <Grid item xs={12} md={4} lg={4} key={site.id}>
           <SiteCard
-            users={0}
             siteId={site.id}
             name={site.name}
             loading={loading}
             address={site.location}
             siteStatus={site.isDeactivated}
-            status={{
-              online: false,
-              charging: false,
-              signal: '',
-            }}
           />
         </Grid>
       ))}

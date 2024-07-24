@@ -17,21 +17,34 @@ import {
   MetricRes,
   MetricsRes,
 } from '@/client/graphql/generated/metrics';
-
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
-import { Typography } from '@mui/material';
+import { Typography, Stack } from '@mui/material';
 import { LatLngTuple } from 'leaflet';
 import { RoleToNotificationScopes } from './roletoNotificationScope';
-
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 const getTitleFromPath = (path: string, id: string) => {
-  if (id) return id;
+  if (path.startsWith('/console/sites') && id) {
+    return (
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="h5" sx={{ color: colors.black38 }}>
+          Site
+        </Typography>
+        <ArrowForwardIosIcon sx={{ color: colors.black38 }} />
+        <Typography variant="h5" sx={{ color: colors.black }}>
+          {id}
+        </Typography>
+      </Stack>
+    );
+  }
+
   switch (path) {
     case '/console/home':
       return 'Home';
     case '/settings':
       return 'Settings';
     case '/console/sites':
+      if (id) return `Site -> ${id}`;
       return 'Sites';
     case '/console/nodes':
       return 'Nodes';

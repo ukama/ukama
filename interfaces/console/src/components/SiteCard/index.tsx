@@ -6,10 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import CellTowerIcon from '@mui/icons-material/CellTower';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RouterIcon from '@mui/icons-material/Router';
 import {
   Box,
   Card,
@@ -28,13 +26,7 @@ interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
-  users: number;
   siteStatus: boolean;
-  status: {
-    online: boolean;
-    charging: boolean;
-    signal: string;
-  };
   onClickMenu?: (siteId: string) => void;
   loading?: boolean;
 }
@@ -43,8 +35,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  users,
-  status,
   siteStatus,
   onClickMenu,
   loading = false,
@@ -56,7 +46,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation(); // Stop propagation here
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
   const handleMenuClick = (action: string) => {
@@ -64,8 +54,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
       onClickMenu(siteId);
       if (action === 'edit') {
         /* empty */
-      } else if (action === 'details') {
-        onClickMenu(siteId);
       }
     }
   };
@@ -120,13 +108,10 @@ const SiteCard: React.FC<SiteCardProps> = ({
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleClose}
-            onClick={(e) => e.stopPropagation()} // Stop propagation here
+            onClick={(e) => e.stopPropagation()}
           >
             <MenuItem onClick={() => handleMenuClick('edit')}>
               Edit Name
-            </MenuItem>
-            <MenuItem onClick={() => handleMenuClick('details')}>
-              View Site Details
             </MenuItem>
           </Menu>
         </Box>
@@ -136,42 +121,8 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          {/* TODO: Will be implemented in the future */}
-          {/* <Box display="flex" alignItems="center" mr={10}>
-            <PeopleIcon sx={{ fontSize: 30 }} />
-            <Typography variant="body2" ml={0.5}>
-              {loading ? <Skeleton width={30} /> : users}
-            </Typography>
-          </Box> */}
-          <Box display="flex" alignItems="center" mr={2}>
-            <RouterIcon
-              sx={{
-                color: loading ? 'gray' : status.online ? 'green' : 'red',
-                fontSize: 30,
-              }}
-            />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                {loading ? <Skeleton width={50} /> : 'Online'}
-              </Typography>
-            )}
-          </Box>
-          <Box display="flex" alignItems="center" mr={2}>
-            <BatteryChargingFullIcon
-              fontSize="large"
-              sx={{
-                color: loading ? 'gray' : status.charging ? 'green' : 'red',
-                fontSize: 30,
-              }}
-            />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                {loading ? <Skeleton width={70} /> : 'Charging'}
-              </Typography>
-            )}
-          </Box>
           <Box display="flex" alignItems="center">
-            <CellTowerIcon
+            <CheckCircleIcon
               fontSize="large"
               sx={{
                 color: loading ? 'gray' : siteStatus ? 'green' : 'red',

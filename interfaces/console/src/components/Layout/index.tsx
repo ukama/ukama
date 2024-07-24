@@ -31,13 +31,8 @@ interface ILayoutProps {
 }
 
 const isHaveId = (pathname: string) => {
-  if (
-    pathname.includes('/console/nodes') ??
-    pathname.includes('/console/sites')
-  ) {
-    return pathname.split('/').length > 2;
-  }
-  return false;
+  const parts = pathname.split('/');
+  return pathname.startsWith('/console/') && parts.length > 3;
 };
 
 const AppLayout = ({
@@ -57,6 +52,7 @@ const AppLayout = ({
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
   const theme = useTheme();
   const router = useRouter();
+
   const [open, setOpen] = React.useState(true);
   const matches = useMediaQuery(theme.breakpoints.down('md'));
 
