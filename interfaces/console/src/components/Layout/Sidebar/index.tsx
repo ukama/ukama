@@ -120,7 +120,6 @@ const Sidebar = ({
         <Stack direction="column" spacing={1.5} px={2} py={2}>
           {NavList.map(({ name, path, icon: Icon }) => (
             <BlueTooltip
-              key={path}
               title={
                 <>
                   <Typography variant="subtitle1" fontWeight="bold" mb={1}>
@@ -133,12 +132,14 @@ const Sidebar = ({
                   </Typography>
                 </>
               }
-              placement="right"
               arrow
+              key={path}
+              placement="right"
             >
               <Link
                 href={path}
                 prefetch={true}
+                key={path}
                 style={{
                   borderRadius: 4,
                   textDecoration: 'none',
