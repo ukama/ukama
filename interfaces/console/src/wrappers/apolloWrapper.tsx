@@ -36,6 +36,15 @@ function makeClient() {
 }
 
 export function ApolloWrapper({ children }: Readonly<React.PropsWithChildren>) {
+  console.log(process.env.NEXT_PUBLIC_API_GW);
+  console.log(process.env.NEXT_PUBLIC_APP_URL);
+  console.log(process.env.NEXT_PUBLIC_METRIC_URL);
+  console.log(process.env.NEXT_PUBLIC_AUTH_APP_URL);
+  console.log(process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL);
+  console.log(process.env.NEXT_PUBLIC_MAP_BOX_TOKEN);
+  console.log(process.env.NEXT_PUBLIC_API_GW_4SS);
+  console.log(process.env.NEXT_PUBLIC_SIM_TYPE);
+
   return (
     <ApolloNextAppProvider makeClient={makeClient}>
       {children}
