@@ -18,16 +18,6 @@ import resolvers from "./resolver";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
-  // const redisClient = createClient({
-  //   url: BFF_REDIS,
-  // }).on("error", error => {
-  //   logger.error(
-  //     `Error creating redis for ${SUB_GRAPHS.subscriber.name} service, Error: ${error}`
-  //   );
-  // });
-  // const connectPromise = redisClient.connect();
-  // await connectPromise;
-
   await startStandaloneServer(server, {
     context: async ({ req }) => {
       const headers: THeaders = parseGatewayHeaders(req.headers);
