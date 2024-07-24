@@ -16,7 +16,6 @@ import {
 } from '@apollo/experimental-nextjs-app-support';
 
 function makeClient() {
-  console.log(`Apllo client url: ${process.env.NEXT_PUBLIC_API_GW}/graphql`);
   const httpLink = new HttpLink({
     uri: `${process.env.NEXT_PUBLIC_API_GW}/graphql`,
     credentials: 'include',

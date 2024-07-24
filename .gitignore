@@ -19,7 +19,6 @@
 **/.vscode/*
 **/bin/*
 node_modules
-.env
 
 systems/data-plan/base-rate/cover.
 systems/inventory/component/temp
