@@ -102,11 +102,15 @@ const getUserObject = async (session: string, cookieToken: string) => {
   if (cookieToken) {
     return getUserFromToken(cookieToken);
   } else {
-    const res = await whoami(`ukama_session=${session}`);
+    const res = await whoami(`ukama_session=${session}`).catch((err) => {
+      console.log('WHOAMI ERROR: ', err);
+      return err;
+    });
     if (!res.ok) {
       throw new Error('Unauthorized');
     }
     const jsonRes = await res.json();
+    console.log('JSON RES: ', jsonRes);
     return {
       id: jsonRes.userId,
       role: jsonRes.role,
