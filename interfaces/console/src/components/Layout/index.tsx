@@ -73,7 +73,6 @@ const AppLayout = ({
   const dynamicId = pathname.startsWith('/console/sites/')
     ? selectedDefaultSite
     : id;
-  console.log(' DYNAMIC ID', selectedDefaultSite);
   return (
     <Stack overflow={'hidden'}>
       <Header

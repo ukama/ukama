@@ -5,6 +5,7 @@ import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import { TSiteForm } from '@/types';
 import { isValidLatLng } from '@/utils';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
   Dialog,
@@ -17,6 +18,7 @@ import {
   Step,
   StepLabel,
   Stepper,
+  IconButton,
   TextField,
   Typography,
 } from '@mui/material';
@@ -85,6 +87,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const gclasses = globalUseStyles();
   const [activeStep, setActiveStep] = useState(0);
   const [address, setAddress] = useState('');
+  const [formValues, setFormValues] = useState(site);
 
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
@@ -103,6 +106,11 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       ...values,
       address: address,
     });
+  };
+
+  const handleStepSubmit = (values: Partial<TSiteForm>) => {
+    setFormValues((prev) => ({ ...prev, ...values }));
+    handleNext();
   };
 
   const switchComponents = components.filter(
@@ -131,6 +139,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const handleClose = () => {
     onClose();
     setActiveStep(0);
+    setFormValues(site);
   };
 
   return (
@@ -147,6 +156,18 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       <DialogTitle>
         Configure site installation ({activeStep + 1}/2)
       </DialogTitle>
+      <IconButton
+        aria-label="close"
+        onClick={handleClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
           {`You have successfully installed your site, and need to configure
@@ -155,24 +176,22 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
         </DialogContentText>
       </DialogContent>
 
-      <Formik
-        initialValues={site}
-        onSubmit={async (values) => {
-          handleSubmit(values);
-        }}
-        validationSchema={AddSiteValidationSchema[activeStep]}
-      >
-        {({ values, errors, touched, isValid, setValues, validateField }) => (
-          <Form>
-            <DialogContent>
-              <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              {activeStep === 0 && (
+      <DialogContent>
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        {activeStep === 0 && (
+          <Formik
+            initialValues={formValues}
+            onSubmit={handleStepSubmit}
+            validationSchema={AddSiteValidationSchema[0]}
+          >
+            {({ errors, touched, isValid }) => (
+              <Form>
                 <Stack>
                   <Field
                     as={TextField}
@@ -300,8 +319,31 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                     ))}
                   </Field>
                 </Stack>
-              )}
-              {activeStep === 1 && (
+                <DialogActions>
+                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button type="submit" disabled={!isValid}>
+                    Next
+                  </Button>
+                </DialogActions>
+              </Form>
+            )}
+          </Formik>
+        )}
+        {activeStep === 1 && (
+          <Formik
+            initialValues={formValues}
+            onSubmit={handleSubmit}
+            validationSchema={AddSiteValidationSchema[1]}
+          >
+            {({
+              values,
+              errors,
+              touched,
+              isValid,
+              setValues,
+              validateField,
+            }) => (
+              <Form>
                 <Stack spacing={2}>
                   {address && (
                     <SiteMapComponent
@@ -436,27 +478,21 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                     helperText={touched.longitude && errors.longitude}
                   />
                 </Stack>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              {activeStep > 0 && <Button onClick={handleBack}>Back</Button>}
-              {activeStep < steps.length - 1 ? (
-                <Button onClick={handleNext} disabled={!isValid}>
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={!isValid || addSiteLoading || !address}
-                >
-                  Submit
-                </Button>
-              )}
-            </DialogActions>
-          </Form>
+                <DialogActions>
+                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button onClick={handleBack}>Back</Button>
+                  <Button
+                    type="submit"
+                    disabled={!isValid || addSiteLoading || !address}
+                  >
+                    Submit
+                  </Button>
+                </DialogActions>
+              </Form>
+            )}
+          </Formik>
         )}
-      </Formik>
+      </DialogContent>
     </Dialog>
   );
 };
