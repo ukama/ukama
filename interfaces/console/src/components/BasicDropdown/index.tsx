@@ -32,12 +32,12 @@ const BasicDropdown = ({
   handleOnChange,
   handleAddNetwork,
 }: IBasicDropdown) => (
-  <FormControl sx={{ width: '100%', pt: 1.5, pb: 0.5 }} size="small">
+  <FormControl sx={{ width: '100%' }} size="small">
     {!value && (
       <InputLabel
         sx={{
           fontSize: '16px !important',
-          marginTop: list?.length === 0 ? 2.5 : 0,
+          marginTop: 1.2,
         }}
       >
         {placeholder}
