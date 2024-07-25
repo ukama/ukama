@@ -18,6 +18,7 @@ class MetricAPI extends RESTDataSource {
     baseURL: string,
     args: GetNodeLatestMetricInput
   ): Promise<NodeLatestMetric> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/${METRICS}/${args.type}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
       parseNodeLatestMetricRes(res, args)

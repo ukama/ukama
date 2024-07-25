@@ -13,6 +13,7 @@ services:
         - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://localhost:8081
         - NEXT_PUBLIC_MAP_BOX_TOKEN=${MAP_BOX_TOKEN}
         - NEXT_PUBLIC_API_GW_4SS=http://bff:8080
+        - NEXT_PUBLIC_APP_DOMAIN=localhost
         - NEXT_PUBLIC_SIM_TYPE=test
     ports:
       - '3000:8080'

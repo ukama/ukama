@@ -19,6 +19,7 @@ class NotificationApi extends RESTDataSource {
     baseURL: string,
     id: string
   ): Promise<NotificationResDto> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/event-notification/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/event-notification/${id}`).then(res =>
       dtoToNotificationDto(res)
@@ -29,6 +30,9 @@ class NotificationApi extends RESTDataSource {
     id: string,
     isRead: boolean
   ): Promise<UpdateNotificationResDto> => {
+    this.logger.info(
+      `POST: ${baseURL}/${VERSION}/event-notification/${id}?is_read=${isRead}`
+    );
     this.baseURL = baseURL;
     return this.post(
       `/${VERSION}/event-notification/${id}?is_read=${isRead}`

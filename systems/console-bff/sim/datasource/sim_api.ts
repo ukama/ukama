@@ -54,6 +54,7 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: UploadSimsInputDto
   ): Promise<UploadSimsResDto> => {
+    this.logger.info(`PUT: ${baseURL}/${VERSION}/${SIMPOOL}/upload`);
     this.baseURL = baseURL;
     return this.put(`/${VERSION}/${SIMPOOL}/upload`, {
       body: {
@@ -67,6 +68,7 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: ToggleSimStatusInputDto
   ): Promise<SimStatusResDto> => {
+    this.logger.info(`PATCH: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}`);
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
@@ -82,6 +84,7 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: AllocateSimInputDto
   ): Promise<AllocateSimAPIDto> => {
+    this.logger.info(`POST: ${baseURL}/${VERSION}/${SIM}`);
     this.baseURL = baseURL;
     const getToken = (): string | null => {
       if (req.iccid) {
@@ -125,6 +128,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSim = async (baseURL: string, req: GetSimInputDto): Promise<SimDto> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/${SIM}/${req.simId}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIM}/${req.simId}`, {
       params: {
@@ -134,6 +138,7 @@ class SimApi extends RESTDataSource {
   };
 
   getSims = async (baseURL: string, type: string): Promise<SimsResDto> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/${SIMPOOL}/sims/${type}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/sims/${type}`)
       .then(res => dtoToSimsDto(res))
@@ -205,6 +210,9 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: GetPackagesForSimInputDto
   ): Promise<GetSimPackagesDtoAPI> => {
+    this.logger.info(
+      `GET: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIM}/packages/${req.sim_id}`)
       .then(res => res)
@@ -217,6 +225,9 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: GetSimBySubscriberIdInputDto
   ): Promise<SubscriberToSimsDto> => {
+    this.logger.info(
+      `GET: ${baseURL}/${VERSION}/sim/subscriber/${req.subscriberId}`
+    );
     this.baseURL = baseURL;
     return this.get(`/sim/subscriber/${req.subscriberId}`)
       .then(res => res)
@@ -229,6 +240,7 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     type: string
   ): Promise<SimPoolStatsDto> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/${SIMPOOL}/stats/${type}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
   };
@@ -237,6 +249,9 @@ class SimApi extends RESTDataSource {
     baseURL: string,
     req: SetActivePackageForSimInputDto
   ): Promise<SetActivePackageForSimResDto> => {
+    this.logger.info(
+      `PATCH: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`
+    );
     this.baseURL = baseURL;
     return this.patch(
       `/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`,
