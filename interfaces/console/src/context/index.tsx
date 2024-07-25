@@ -21,6 +21,8 @@ const AppContext = createContext({
   setSkeltonLoading: (loading: boolean) => {},
   isValidSession: false,
   setIsValidSession: (valid: boolean) => {},
+  selectedDefaultSite: '',
+  setSelectedDefaultSite: (siteId: string) => {},
   snackbarMessage: {
     id: 'message-id',
     message: '',
@@ -58,6 +60,7 @@ const AppContextWrapper = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
+  const [selectedDefaultSite, setSelectedDefaultSite] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState<TSnackbarMessage>({
     id: 'message-id',
     message: '',
@@ -88,6 +91,8 @@ const AppContextWrapper = ({
       setIsValidSession,
       snackbarMessage,
       setSnackbarMessage,
+      selectedDefaultSite,
+      setSelectedDefaultSite,
     }),
     [
       isDarkMode,
@@ -106,6 +111,8 @@ const AppContextWrapper = ({
       setIsValidSession,
       snackbarMessage,
       setSnackbarMessage,
+      selectedDefaultSite,
+      setSelectedDefaultSite,
     ],
   );
 

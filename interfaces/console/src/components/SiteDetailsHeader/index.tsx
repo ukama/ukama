@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -11,6 +11,7 @@ import {
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
 
 interface SiteDetailsHeaderProps {
   addSite: () => void;
@@ -73,32 +74,32 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          {isLoading ? (
-            <>
-              <MenuItem>
-                <Skeleton variant="rectangular" height={30} width={200} />
-              </MenuItem>
-              <MenuItem>
-                <Skeleton variant="rectangular" height={30} width={200} />
-              </MenuItem>
-              <MenuItem>
-                <Skeleton variant="rectangular" height={30} width={200} />
-              </MenuItem>
-            </>
-          ) : (
-            <>
-              {siteList.map((site) => (
-                <MenuItem
-                  key={site.id}
-                  onClick={() => handleSiteSelect(site.id)}
-                  selected={selectedSiteId === site.id}
-                >
-                  {site.name}
-                </MenuItem>
-              ))}
-              <MenuItem onClick={addSite}>Add site</MenuItem>
-            </>
-          )}
+          {isLoading
+            ? [
+                <MenuItem key="loading-1">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+                <MenuItem key="loading-2">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+                <MenuItem key="loading-3">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+              ]
+            : [
+                ...siteList.map((site) => (
+                  <MenuItem
+                    key={site.id}
+                    onClick={() => handleSiteSelect(site.id)}
+                    selected={selectedSiteId === site.id}
+                  >
+                    {site.name}
+                  </MenuItem>
+                )),
+                <MenuItem key="add-site" onClick={addSite}>
+                  Add site
+                </MenuItem>,
+              ]}
         </Menu>
       </Box>
     </Grid>
