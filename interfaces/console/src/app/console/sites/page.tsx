@@ -8,6 +8,7 @@ import {
   useGetSitesQuery,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
@@ -41,7 +42,11 @@ const Sites = () => {
   const { setSnackbarMessage, network } = useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
-
+  const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
+  const [currentSite, setCurrentSite] = useState({
+    siteName: '',
+    siteId: '',
+  });
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     variables: {
@@ -159,7 +164,18 @@ const Sites = () => {
       },
     });
   };
-
+  const handleSiteNameUpdate = (siteId: string, siteName: string) => {
+    setCurrentSite((prevState) => ({
+      ...prevState,
+      siteId,
+      siteName: siteName,
+    }));
+    setEditSitedialogOpen(true);
+  };
+  const handleSaveSiteName = () => {};
+  const closeEditSiteDialog = () => {
+    setEditSitedialogOpen(false);
+  };
   return (
     <Box mt={2}>
       <Paper
@@ -199,6 +215,7 @@ const Sites = () => {
               <SitesWrapper
                 loading={sitesLoading || networksLoading}
                 sites={sitesList}
+                handleSiteNameUpdate={handleSiteNameUpdate}
               />
             }
           </Grid>
@@ -212,6 +229,13 @@ const Sites = () => {
         components={componentsList || []}
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
+      />
+      <EditSiteDialog
+        open={editSitedialogOpen}
+        siteId={currentSite.siteId}
+        currentSiteName={currentSite.siteName}
+        onClose={closeEditSiteDialog}
+        onSave={handleSaveSiteName}
       />
     </Box>
   );

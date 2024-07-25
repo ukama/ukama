@@ -321,7 +321,12 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                 </Stack>
                 <DialogActions>
                   <Button onClick={handleClose}>Cancel</Button>
-                  <Button type="submit" disabled={!isValid}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={!isValid}
+                  >
                     Next
                   </Button>
                 </DialogActions>
@@ -483,6 +488,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                   <Button onClick={handleBack}>Back</Button>
                   <Button
                     type="submit"
+                    variant="contained"
+                    color="primary"
                     disabled={!isValid || addSiteLoading || !address}
                   >
                     Submit

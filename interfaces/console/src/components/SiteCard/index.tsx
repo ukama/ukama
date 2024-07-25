@@ -29,6 +29,7 @@ interface SiteCardProps {
   siteStatus: boolean;
   onClickMenu?: (siteId: string) => void;
   loading?: boolean;
+  handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
 }
 
 const SiteCard: React.FC<SiteCardProps> = ({
@@ -37,6 +38,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
   address,
   siteStatus,
   onClickMenu,
+  handleSiteNameUpdate,
   loading = false,
 }) => {
   const isSmallScreen = useMediaQuery((theme: any) =>
@@ -50,11 +52,8 @@ const SiteCard: React.FC<SiteCardProps> = ({
     setAnchorEl(event.currentTarget);
   };
   const handleMenuClick = (action: string) => {
-    if (onClickMenu) {
-      onClickMenu(siteId);
-      if (action === 'edit') {
-        /* empty */
-      }
+    if (handleSiteNameUpdate) {
+      handleSiteNameUpdate(siteId, name);
     }
   };
 
@@ -64,6 +63,15 @@ const SiteCard: React.FC<SiteCardProps> = ({
   const navigateToDetails = () => {
     router.push(`/console/sites/${siteId}`);
   };
+
+  const truncateAddress = (address: string, limit: number) => {
+    const segments = address.split(',');
+    return (
+      segments.slice(0, limit).join(', ') +
+      (segments.length > limit ? '...' : '')
+    );
+  };
+
   return (
     <Card
       sx={{
@@ -89,7 +97,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
                 <Skeleton width={150} />
               ) : (
                 <a
-                  href={`/console/sites/${siteId}`} // Replace with actual link URL
+                  href={`/console/sites/${siteId}`}
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   {name}
@@ -97,7 +105,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
               )}
             </Typography>
             <Typography color="textSecondary" variant="body2">
-              {loading ? <Skeleton width={200} /> : address}
+              {loading ? <Skeleton width={200} /> : truncateAddress(address, 3)}
             </Typography>
           </Box>
           <IconButton onClick={handleClick}>

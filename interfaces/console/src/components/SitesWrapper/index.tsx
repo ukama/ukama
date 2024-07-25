@@ -5,6 +5,7 @@ import SiteCard from '../SiteCard';
 interface ISitesWrapper {
   sites: SiteDto[];
   loading: boolean;
+  handleSiteNameUpdate: any;
 }
 
 const SiteCardSkelton = (
@@ -16,7 +17,11 @@ const SiteCardSkelton = (
   />
 );
 
-const SitesWrapper = ({ loading, sites }: ISitesWrapper) => {
+const SitesWrapper = ({
+  loading,
+  sites,
+  handleSiteNameUpdate,
+}: ISitesWrapper) => {
   if (loading)
     return (
       <Grid container columnSpacing={2}>
@@ -53,6 +58,7 @@ const SitesWrapper = ({ loading, sites }: ISitesWrapper) => {
             loading={loading}
             address={site.location}
             siteStatus={site.isDeactivated}
+            handleSiteNameUpdate={handleSiteNameUpdate}
           />
         </Grid>
       ))}
