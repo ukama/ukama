@@ -36,7 +36,7 @@ const SiteMapComponent = ({ posix, address }: SiteMapProps) => {
       style={{ height: '200px', width: '100%' }}
     >
       <TileLayer
-        url={`https://api.mapbox.com/styles/v1/salman-ukama/clxu9ic7z00ua01qr7hb93d2o/tiles/256/{z}/{x}/{y}@2x?access_token=${MAP_LAYER_TOKEN}`}
+        url={`https://api.mapbox.com/styles/v1/salman-ukama/clxu9ic7z00ua01qr7hb93d2o/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`}
         accessToken={env.MAP_BOX_TOKEN}
         maxNativeZoom={18}
         minZoom={10}
