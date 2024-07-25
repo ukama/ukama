@@ -7,6 +7,7 @@
  */
 
 import { NodesLocation } from '@/client/graphql/generated';
+import { useAppContext } from '@/context';
 import { colors } from '@/theme';
 import Leaflet from 'leaflet';
 import { useEffect } from 'react';
@@ -15,9 +16,9 @@ interface IMapLayer {
   data: NodesLocation | undefined;
 }
 
-const MAP_LAYER_TOKEN = process.env.NEXT_PUBLIC_MAP_BOX_TOKEN;
 const MapLayer = ({ data }: IMapLayer) => {
   const map = ReactLeaflet.useMap();
+  const { env } = useAppContext();
 
   useEffect(() => {
     map.setMaxBounds([
@@ -32,7 +33,7 @@ const MapLayer = ({ data }: IMapLayer) => {
         maxZoom: 20,
         noWrap: true,
         maxNativeZoom: 20,
-        accessToken: MAP_LAYER_TOKEN,
+        accessToken: env.MAP_BOX_TOKEN,
         attribution: '&copy; <a href="https://www.mapbox.com">Mapbox</a> ',
       },
     ).addTo(map);

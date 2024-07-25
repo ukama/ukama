@@ -6,11 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { metricsClient } from '@/client/client';
+import { getMetricsClient } from '@/client/client';
 import {
   Graphs_Type,
   useGetMetricByTabSubSubscription,
 } from '@/client/graphql/generated/metrics';
+import { useAppContext } from '@/context';
 import PubSub from 'pubsub-js';
 
 interface IMetricSubscription {
@@ -19,8 +20,9 @@ interface IMetricSubscription {
 }
 
 const MetricSubscription = ({ from, type }: IMetricSubscription) => {
+  const { env } = useAppContext();
   useGetMetricByTabSubSubscription({
-    client: metricsClient,
+    client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
     variables: {
       from: from,
       type: type,

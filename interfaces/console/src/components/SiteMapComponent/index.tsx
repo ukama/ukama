@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { useAppContext } from '@/context';
 import { isValidLatLng } from '@/utils';
 import { LatLngTuple } from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
@@ -14,13 +15,13 @@ import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 
-const MAP_LAYER_TOKEN = process.env.NEXT_PUBLIC_MAP_BOX_TOKEN;
 interface SiteMapProps {
   posix: LatLngTuple;
   address: string;
 }
 
 const SiteMapComponent = ({ posix, address }: SiteMapProps) => {
+  const { env } = useAppContext();
   return (
     <MapContainer
       zoomControl={false}
@@ -36,7 +37,7 @@ const SiteMapComponent = ({ posix, address }: SiteMapProps) => {
     >
       <TileLayer
         url={`https://api.mapbox.com/styles/v1/salman-ukama/clxu9ic7z00ua01qr7hb93d2o/tiles/256/{z}/{x}/{y}@2x?access_token=${MAP_LAYER_TOKEN}`}
-        accessToken={MAP_LAYER_TOKEN}
+        accessToken={env.MAP_BOX_TOKEN}
         maxNativeZoom={18}
         minZoom={10}
         maxZoom={18}

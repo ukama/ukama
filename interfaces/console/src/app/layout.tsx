@@ -51,9 +51,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ApolloWrapper>
+        <ApolloWrapper baseUrl={process.env.NEXT_PUBLIC_API_GW ?? ''}>
           <AppContextWrapper
             token={tokenStr.value}
+            initEnv={{
+              APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? '',
+              SIM_TYPE: process.env.NEXT_PUBLIC_SIM_TYPE ?? 'operator_data',
+              METRIC_URL: process.env.NEXT_PUBLIC_METRIC_URL ?? '',
+              API_GW_URL: process.env.NEXT_PUBLIC_API_GW ?? '',
+              AUTH_APP_URL: process.env.NEXT_PUBLIC_AUTH_APP_URL ?? '',
+              MAP_BOX_TOKEN: process.env.NEXT_PUBLIC_MAP_BOX_TOKEN ?? '',
+              METRIC_WEBSOCKET_URL:
+                process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL ?? '',
+            }}
             initalUserValues={{
               id: userId ?? '',
               name: name ?? '',

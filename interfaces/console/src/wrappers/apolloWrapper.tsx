@@ -15,9 +15,9 @@ import {
   SSRMultipartLink,
 } from '@apollo/experimental-nextjs-app-support';
 
-function makeClient() {
+function makeClient(baseUrl: string) {
   const httpLink = new HttpLink({
-    uri: `${process.env.NEXT_PUBLIC_API_GW}/graphql`,
+    uri: `${baseUrl}/graphql`,
     credentials: 'include',
   });
 
@@ -35,9 +35,15 @@ function makeClient() {
   });
 }
 
-export function ApolloWrapper({ children }: Readonly<React.PropsWithChildren>) {
+export function ApolloWrapper({
+  baseUrl,
+  children,
+}: {
+  baseUrl: string;
+  children: React.ReactNode;
+}) {
   return (
-    <ApolloNextAppProvider makeClient={makeClient}>
+    <ApolloNextAppProvider makeClient={() => makeClient(baseUrl)}>
       {children}
     </ApolloNextAppProvider>
   );

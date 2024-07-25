@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { useAppContext } from '@/context';
 import { IconStyle } from '@/styles/global';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {
@@ -19,6 +20,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const AccountPopover = () => {
+  const { env } = useAppContext();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -60,7 +62,7 @@ const AccountPopover = () => {
         <Paper sx={{ px: 3, py: 2 }}>
           <Stack spacing={1}>
             <Link
-              href={`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/user/account-settings`}
+              href={`${env.AUTH_APP_URL}/user/account-settings`}
               prefetch={true}
               style={{
                 borderRadius: 4,
@@ -81,7 +83,7 @@ const AccountPopover = () => {
             </Link>
             <Divider />
             <Link
-              href={`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/user/logout`}
+              href={`${env.AUTH_APP_URL}/user/logout`}
               prefetch={true}
               style={{
                 borderRadius: 4,
