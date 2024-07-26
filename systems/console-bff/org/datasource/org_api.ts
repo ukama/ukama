@@ -16,7 +16,7 @@ class OrgApi extends RESTDataSource {
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
     this.logger.info(
-      `GET: ${this.baseURL}/${VERSION}/orgs?user_uuid=${userId}`
+      `GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs?user_uuid=${userId}`
     );
     return this.get(`/${VERSION}/orgs?user_uuid=${userId}`).then(res =>
       dtoToOrgsResDto(res)
@@ -24,7 +24,9 @@ class OrgApi extends RESTDataSource {
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    this.logger.info(`GET: ${this.baseURL}/${VERSION}/orgs/${orgName}`);
+    this.logger.info(
+      `GetOrg [GET]: ${this.baseURL}/${VERSION}/orgs/${orgName}`
+    );
     return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
       dtoToOrgResDto(res)
     );

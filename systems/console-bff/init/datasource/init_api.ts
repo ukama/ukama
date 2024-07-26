@@ -25,6 +25,9 @@ class InitAPI extends RESTDataSource {
     orgName: string,
     systemName: string
   ): Promise<InitSystemAPIResDto> => {
+    this.logger.info(
+      `GetSystem [GET]: ${this.baseURL}/${VERSION}/orgs/${orgName}/systems/${systemName}`
+    );
     return this.get(
       `/${VERSION}/orgs/${orgName}/systems/${systemName}`,
       {}
@@ -32,6 +35,9 @@ class InitAPI extends RESTDataSource {
   };
 
   validateSession = async (cookies: string): Promise<ValidateSessionRes> => {
+    this.logger.info(
+      `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
+    );
     const whoamiRes = await whoami(cookies);
     let aId = "";
     if (whoamiRes?.data) {

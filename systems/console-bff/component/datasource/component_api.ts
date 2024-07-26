@@ -25,7 +25,7 @@ class ComponentApi extends RESTDataSource {
     category: string
   ): Promise<ComponentsResDto> => {
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
+      `GetComponentByUserId [GET]: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
     );
     const response = await this.get<ComponentsAPIResDto>(
       `/${VERSION}/components/user/${headers.userId}?category=${category}`
@@ -35,7 +35,7 @@ class ComponentApi extends RESTDataSource {
 
   getComponentById = async (componentId: string): Promise<ComponentDto> => {
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/components/${componentId}`
+      `GetComponentById [GET]: ${this.baseURL}/${VERSION}/components/${componentId}`
     );
     const response = await this.get<ComponentAPIDto>(
       `/${VERSION}/components/${componentId}`

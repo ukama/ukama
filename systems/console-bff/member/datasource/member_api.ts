@@ -20,13 +20,13 @@ import { dtoToMemberResDto, dtoToMembersResDto } from "./mapper";
 
 class MemberApi extends RESTDataSource {
   getMembers = async (baseURL: string): Promise<MembersResDto> => {
-    this.logger.info(`GET: ${baseURL}/${VERSION}/members`);
+    this.logger.info(`GetMembers [GET]: ${baseURL}/${VERSION}/members`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/members`).then(res => dtoToMembersResDto(res));
   };
 
   getMember = async (baseURL: string, id: string): Promise<MemberDto> => {
-    this.logger.info(`GET: ${baseURL}/${VERSION}/members/${id}`);
+    this.logger.info(`GetMember [GET]: ${baseURL}/${VERSION}/members/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/members/${id}`).then(res =>
       dtoToMemberResDto(res)
@@ -37,7 +37,9 @@ class MemberApi extends RESTDataSource {
     baseURL: string,
     userId: string
   ): Promise<MemberDto> => {
-    this.logger.info(`GET: ${baseURL}/${VERSION}/members/user/${userId}`);
+    this.logger.info(
+      `GetMemberByUserId [GET]: ${baseURL}/${VERSION}/members/user/${userId}`
+    );
     this.baseURL = baseURL;
     logger.info(`Request Url: ${baseURL}/${VERSION}/members/user/${userId}`);
     return this.get(`/${VERSION}/members/user/${userId}`).then(res =>
@@ -49,7 +51,9 @@ class MemberApi extends RESTDataSource {
     baseURL: string,
     id: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(`[DELETE]: ${baseURL}/${VERSION}/members/${id}`);
+    this.logger.info(
+      `RemoveMember [DELETE]: ${baseURL}/${VERSION}/members/${id}`
+    );
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/members/${id}`).then(() => {
       return {
@@ -62,7 +66,7 @@ class MemberApi extends RESTDataSource {
     baseURL: string,
     data: AddMemberInputDto
   ): Promise<MemberDto> => {
-    this.logger.info(`[POST]: ${baseURL}/${VERSION}/members`);
+    this.logger.info(`AddMember [POST]: ${baseURL}/${VERSION}/members`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/members`, {
       body: { user_uuid: data.userId, role: data.role },
@@ -74,7 +78,9 @@ class MemberApi extends RESTDataSource {
     memberId: string,
     req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    this.logger.info(`[PATCH]: ${baseURL}/${VERSION}/members/${memberId}`);
+    this.logger.info(
+      `UpdateMember [PATCH]: ${baseURL}/${VERSION}/members/${memberId}`
+    );
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/members/${memberId}`, {
       body: {

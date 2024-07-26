@@ -24,7 +24,7 @@ class SiteApi extends RESTDataSource {
     networkId: string
   ): Promise<SitesResDto> => {
     this.logger.info(
-      `GetSites GET: ${baseURL}/${VERSION}/${SITES}?network=${networkId}`
+      `GetSites [GET]: ${baseURL}/${VERSION}/${SITES}?network=${networkId}`
     );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SITES}`, {
@@ -35,7 +35,7 @@ class SiteApi extends RESTDataSource {
   };
 
   getSite = async (baseURL: string, siteId: string): Promise<SiteDto> => {
-    this.logger.info(`GetSite GET: ${baseURL}/${VERSION}/${SITES}/${siteId}`);
+    this.logger.info(`GetSite [GET]: ${baseURL}/${VERSION}/${SITES}/${siteId}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SITES}/${siteId}`).then(res =>
       dtoToSiteDto(res)
@@ -43,7 +43,7 @@ class SiteApi extends RESTDataSource {
   };
 
   addSite = async (baseURL: string, req: AddSiteInputDto): Promise<SiteDto> => {
-    this.logger.info(`AddSite POST: ${baseURL}/${VERSION}/${SITES}`);
+    this.logger.info(`AddSite [POST]: ${baseURL}/${VERSION}/${SITES}`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${SITES}`, {
       body: {
@@ -68,6 +68,9 @@ class SiteApi extends RESTDataSource {
     siteId: string,
     req: UpdateSiteInputDto
   ): Promise<SiteDto> => {
+    this.logger.info(
+      `UpdateSite [PATCH]: ${baseURL}/${VERSION}/${SITES}/${siteId}`
+    );
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SITES}/${siteId}`, {
       body: {

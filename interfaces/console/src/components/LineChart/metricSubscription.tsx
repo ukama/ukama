@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { getMetricsClient } from '@/client/client';
 import {
   Graphs_Type,
   useGetMetricByTabSubSubscription,
@@ -22,7 +21,7 @@ interface IMetricSubscription {
 const MetricSubscription = ({ from, type }: IMetricSubscription) => {
   const { env } = useAppContext();
   useGetMetricByTabSubSubscription({
-    client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
+    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
     variables: {
       from: from,
       type: type,

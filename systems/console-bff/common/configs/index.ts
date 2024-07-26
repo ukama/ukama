@@ -43,7 +43,7 @@ export const SUBSCRIPTIONS_PORT = parseInt(
   process.env.SUBSCRIPTIONS_PORT ?? "8081"
 );
 export const PLANNING_SERVICE_PORT = parseInt(
-  process.env.PLANNING_SERVICE_PORT ?? "5042"
+  process.env.PLANNING_SERVICE_PORT ?? "5041"
 );
 const ORG_PORT = parseInt(process.env.ORG_PORT ?? "5042");
 const USER_PORT = parseInt(process.env.USER_PORT ?? "5043");
