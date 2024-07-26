@@ -29,6 +29,8 @@ services:
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
    - REPOURL=${REPOURL}
    - TOKEN=${TOKEN}
+   - COMPONENTENVIRONMENT=${COMPONENT_ENVIRONMENT}
+   - TESTUSERID=${OWNERID}
   restart: always
   networks:
    - ukama-net

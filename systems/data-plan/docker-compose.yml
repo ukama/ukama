@@ -107,9 +107,10 @@ services:
    - postgresd-dataplan
 
  initclient-dataplan:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  # build:
+  #  dockerfile: ./Dockerfile
+  #  context: ../services/initClient
+  image: main-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=dataplan
