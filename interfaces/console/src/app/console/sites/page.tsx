@@ -203,6 +203,12 @@ const Sites = () => {
       },
     });
   };
+  const dummyComponents = [
+    { id: '1', description: 'Switch 1', category: 'SWITCH' },
+    { id: '2', description: 'Power 1', category: 'POWER' },
+    { id: '3', description: 'Backhaul 1', category: 'BACKHAUL' },
+    { id: '4', description: 'Access 1', category: 'ACCESS' },
+  ];
 
   const closeEditSiteDialog = () => {
     setEditSitedialogOpen(false);
@@ -257,7 +263,7 @@ const Sites = () => {
         open={openSiteConfig}
         addSiteLoading={addSiteLoading}
         onClose={handleCloseSiteConfig}
-        components={componentsList || []}
+        components={dummyComponents || []}
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
       />

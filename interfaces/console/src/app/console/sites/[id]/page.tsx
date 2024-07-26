@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import { TSiteForm } from '@/types';
+import { formatISO } from 'date-fns';
 
 const SITE_INIT = {
   switch: '',
@@ -96,10 +97,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
-  const getCurrentDateInISOFormat = () => {
-    const date = new Date();
-    return date.toISOString().split('T')[0] + 'T00:00:00Z';
-  };
+
   const { loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     variables: {
@@ -121,7 +119,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     const variables = {
       access_id: data.access,
       backhaul_id: data.backhaul,
-      install_date: getCurrentDateInISOFormat(),
+      install_date: formatISO(new Date()),
       latitude: data.coordinates.lat,
       location: data.location,
       longitude: data.coordinates.lng,

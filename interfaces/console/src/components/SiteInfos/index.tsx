@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Grid, Paper, Stack, Typography, Skeleton } from '@mui/material';
 import { SiteDto } from '@/client/graphql/generated';
 import dynamic from 'next/dynamic';
 import { useAppContext } from '@/context';
+import { useFetchAddress } from '@/utils/useFetchAddress';
 
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   ssr: false,
@@ -14,37 +15,36 @@ interface SiteInfoProps {
 
 const SiteInfo: React.FC<SiteInfoProps> = ({ selectedSite }) => {
   const { setSnackbarMessage, setSelectedDefaultSite } = useAppContext();
-  const [address, setAddress] = useState('');
-
-  const fetchAddress = async (lat: number, lng: number) => {
-    return await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
-      {
-        cache: 'force-cache',
-      },
-    )
-      .then((res) => res.json())
-      .then((data) => data.display_name)
-      .catch(() => 'Location not found');
-  };
+  const { address, isLoading, error, fetchAddress } = useFetchAddress();
 
   useEffect(() => {
-    const handleFetchAddress = async (lat: number, lng: number) => {
+    const handleFetchAddress = async () => {
       setSnackbarMessage({
         id: 'fetching-address',
-        type: 'success',
+        type: 'info',
         show: true,
         message: 'Fetching address with coordinates',
       });
-      const addressData = await fetchAddress(lat, lng);
-      setAddress(addressData);
+      await fetchAddress(selectedSite.latitude, selectedSite.longitude);
     };
+
     setSelectedDefaultSite(selectedSite.name);
 
     if (selectedSite) {
-      handleFetchAddress(selectedSite.latitude, selectedSite.longitude);
+      handleFetchAddress();
     }
-  }, [selectedSite, setSnackbarMessage]);
+  }, [selectedSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
+
+  useEffect(() => {
+    if (error) {
+      setSnackbarMessage({
+        id: 'error-fetching-address',
+        type: 'error',
+        show: true,
+        message: 'Error fetching address from coordinates',
+      });
+    }
+  }, [error, setSnackbarMessage]);
 
   return (
     <Grid container spacing={2} sx={{ height: '100%' }}>
@@ -63,11 +63,25 @@ const SiteInfo: React.FC<SiteInfoProps> = ({ selectedSite }) => {
               Coordinates: {selectedSite.latitude || 'N/A'},{' '}
               {selectedSite.longitude || 'N/A'}
             </Typography>
+            <Typography variant="subtitle1">
+              Address:{' '}
+              {isLoading
+                ? 'Loading...'
+                : error
+                  ? 'Error fetching address'
+                  : address || 'N/A'}
+            </Typography>
           </Stack>
         </Paper>
       </Grid>
       <Grid item xs={12} md={8} sx={{ display: 'flex', alignItems: 'stretch' }}>
-        {address ? (
+        {isLoading ? (
+          <Skeleton variant="rectangular" height="100%" />
+        ) : error ? (
+          <Typography variant="body1" color="error">
+            Error loading map
+          </Typography>
+        ) : address ? (
           <SiteMapComponent
             posix={[selectedSite.latitude, selectedSite.longitude]}
             address={address}

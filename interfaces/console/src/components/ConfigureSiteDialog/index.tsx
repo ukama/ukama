@@ -24,7 +24,8 @@ import {
 } from '@mui/material';
 import { Field, Form, Formik } from 'formik';
 import dynamic from 'next/dynamic';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useFetchAddress } from '@/utils/useFetchAddress';
 
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
@@ -62,18 +63,6 @@ const steps = [
   'Enter your site details',
 ];
 
-const fetchAddress = async (lat: number, lng: number) => {
-  return await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
-    {
-      cache: 'force-cache',
-    },
-  )
-    .then((res) => res.json())
-    .then((data) => data.display_name)
-    .catch(() => 'Location not found');
-};
-
 const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   open,
   site,
@@ -86,14 +75,14 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const { setSnackbarMessage } = useAppContext();
   const gclasses = globalUseStyles();
   const [activeStep, setActiveStep] = useState(0);
-  const [address, setAddress] = useState('');
   const [formValues, setFormValues] = useState(site);
+  const { address, isLoading, error, fetchAddress } = useFetchAddress();
 
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
 
   const handleSubmit = (values: TSiteForm) => {
-    if (address && address === 'Location not found') {
+    if (address === 'Location not found') {
       setSnackbarMessage({
         id: 'error-fetching-address',
         type: 'error',
@@ -125,6 +114,16 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const accessComponents = components.filter(
     (comp) => comp.category === 'ACCESS',
   );
+  useEffect(() => {
+    if (error) {
+      setSnackbarMessage({
+        id: 'error-fetching-address',
+        type: 'error',
+        show: true,
+        message: 'Error fetching address from coordinates',
+      });
+    }
+  }, [error, setSnackbarMessage]);
 
   const handleFetchAddress = async (lat: number, lng: number) => {
     setSnackbarMessage({
@@ -133,9 +132,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       show: true,
       message: 'Fetching address with coordinates',
     });
-    await fetchAddress(lat, lng).then((data) => setAddress(data));
+    await fetchAddress(lat, lng);
   };
-
   const handleClose = () => {
     onClose();
     setActiveStep(0);
@@ -361,6 +359,12 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                       <span style={{ color: colors.redMatt }}>
                         Please enter valid coordinates
                       </span>
+                    ) : isLoading ? (
+                      'Loading address...'
+                    ) : error ? (
+                      <span style={{ color: colors.redMatt }}>
+                        Error fetching address. Please try again.
+                      </span>
                     ) : (
                       address
                     )}
@@ -490,7 +494,9 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                     type="submit"
                     variant="contained"
                     color="primary"
-                    disabled={!isValid || addSiteLoading || !address}
+                    disabled={
+                      !isValid || addSiteLoading || isLoading || !address
+                    }
                   >
                     Submit
                   </Button>
