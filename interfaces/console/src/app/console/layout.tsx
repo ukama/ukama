@@ -6,8 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-
-import { metricsClient } from '@/client/client';
 import {
   useAddNetworkMutation,
   useGetNetworksQuery,
@@ -35,6 +33,7 @@ export default function ConosleLayout({
   children: React.ReactNode;
 }>) {
   const {
+    env,
     user,
     network,
     pageName,
@@ -97,7 +96,7 @@ export default function ConosleLayout({
   const [updateNotificationCall] = useUpdateNotificationMutation();
 
   useGetNotificationsQuery({
-    client: metricsClient,
+    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
     fetchPolicy: 'cache-first',
 
     variables: {
@@ -116,7 +115,7 @@ export default function ConosleLayout({
   });
 
   useNotificationSubscriptionSubscription({
-    client: metricsClient,
+    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
     variables: {
       networkId: network.id,
       orgId: user.orgId,

@@ -35,11 +35,7 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
 import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
-import {
-  SIM_TYPE_ENV,
-  SUBSCRIBER_TABLE_COLUMNS,
-  SUBSCRIBER_TABLE_MENU,
-} from '@/constants';
+import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
 import { TAddSubscriberData } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -49,7 +45,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network } = useAppContext();
+  const { setSnackbarMessage, network, env } = useAppContext();
   const [addSubscriberData, setAddSubscriberData] =
     useState<TAddSubscriberData>({
       email: '',
@@ -94,7 +90,7 @@ const Page = () => {
   });
 
   const { data: simPoolData } = useGetSimsQuery({
-    variables: { type: SIM_TYPE_ENV },
+    variables: { type: env.SIM_TYPE },
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
@@ -411,7 +407,7 @@ const Page = () => {
               network_id: res.addSubscriber.networkId,
               package_id: addSubscriberData.plan ?? '',
               subscriber_id: res.addSubscriber.uuid,
-              sim_type: SIM_TYPE_ENV,
+              sim_type: env.SIM_TYPE,
               iccid: addSubscriberData.iccid,
               traffic_policy: 10,
             },
@@ -429,7 +425,7 @@ const Page = () => {
     });
 
   const { data: simStatData } = useGetSimpoolStatsQuery({
-    variables: { type: SIM_TYPE_ENV },
+    variables: { type: env.SIM_TYPE },
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
       setSnackbarMessage({

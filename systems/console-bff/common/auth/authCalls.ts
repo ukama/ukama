@@ -46,7 +46,7 @@ const getIdentity = async (userId: string, cookie: string) => {
 };
 
 const whoami = async (cookie: string) => {
-  logger.info(`Calling WHOAMI ${AUTH_URL}/sessions/whoami`);
+  logger.info(`Request Url: ${AUTH_URL}/sessions/whoami`);
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${AUTH_URL}/sessions/whoami`,

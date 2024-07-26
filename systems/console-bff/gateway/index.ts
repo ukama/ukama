@@ -145,7 +145,6 @@ const startServer = async () => {
 
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];
-    logger.info(`Cookies: ${cookies}`);
     const initAPI = new InitAPI();
     if (cookies) {
       const sessionRes = await initAPI.validateSession(cookies);

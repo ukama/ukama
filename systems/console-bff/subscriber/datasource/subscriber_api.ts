@@ -32,7 +32,9 @@ class SubscriberApi extends RESTDataSource {
     req: SubscriberInputDto
   ): Promise<SubscriberDto> => {
     this.baseURL = baseURL;
-    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`);
+    this.logger.info(
+      `AddSubscriber PUT: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`
+    );
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
       body: {
         address: "none",
@@ -56,7 +58,7 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<CBooleanResponse> => {
     this.baseURL = baseURL;
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+      `UpdateSubscriber PATCH: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.patch(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`, {
       body: { ...req },
@@ -71,7 +73,7 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<CBooleanResponse> => {
     this.baseURL = baseURL;
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+      `DeleteSubscriber DELETE: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.delete(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(() => {
       return {
@@ -86,7 +88,7 @@ class SubscriberApi extends RESTDataSource {
   ): Promise<SubscriberDto> => {
     this.baseURL = baseURL;
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
+      `GetSubscriber GET: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.get(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(res =>
       dtoToSubscriberResDto(res)
@@ -109,6 +111,9 @@ class SubscriberApi extends RESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<SubscribersResDto> => {
+    this.logger.info(
+      `GetSubscribersByNetwork GET: ${baseURL}/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
       .then(res => dtoToSubscribersResDto(res))

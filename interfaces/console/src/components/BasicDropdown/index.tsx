@@ -9,14 +9,7 @@
 import colors from '@/theme/colors';
 import { SelectItemType } from '@/types';
 import Add from '@mui/icons-material/Add';
-import {
-  Button,
-  Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-} from '@mui/material';
+import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
 
 interface IBasicDropdown {
   value: string;
@@ -32,25 +25,26 @@ const BasicDropdown = ({
   handleOnChange,
   handleAddNetwork,
 }: IBasicDropdown) => (
-  <FormControl sx={{ width: '100%', pt: 1.5, pb: 0.5 }} size="small">
-    {!value && (
-      <InputLabel
-        sx={{
-          fontSize: '16px !important',
-          marginTop: list?.length === 0 ? 2.5 : 0,
-        }}
-      >
-        {placeholder}
-      </InputLabel>
-    )}
+  <FormControl sx={{ width: '100%' }} size="small">
     <Select
       value={value}
       disableUnderline
       variant="standard"
+      displayEmpty={true}
+      renderValue={(value) =>
+        value?.length
+          ? Array.isArray(value)
+            ? value.join(', ')
+            : value
+          : placeholder
+      }
       onChange={(e) => handleOnChange(e.target.value)}
       sx={{
-        p: 0,
-        color: colors.primaryMain,
+        color: value?.length
+          ? Array.isArray(value)
+            ? value.join(', ')
+            : colors.primaryMain
+          : colors.black38,
       }}
       SelectDisplayProps={{
         style: {

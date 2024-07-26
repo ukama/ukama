@@ -18,6 +18,7 @@ import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
 class NetworkApi extends RESTDataSource {
   getNetworks = async (baseURL: string): Promise<NetworksResDto> => {
+    this.logger.info(`GET: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks`).then(res => dtoToNetworksDto(res));
   };
@@ -26,6 +27,9 @@ class NetworkApi extends RESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<NetworkDto> => {
+    this.logger.info(
+      `GET ${baseURL}/${VERSION}/networks/${networkId} networkId`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks/${networkId}`).then(res =>
       dtoToNetworkDto(res)
@@ -36,6 +40,7 @@ class NetworkApi extends RESTDataSource {
     baseURL: string,
     req: AddNetworkInputDto
   ): Promise<NetworkDto> => {
+    this.logger.info(`POST: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/networks`, {
       body: {
@@ -54,6 +59,9 @@ class NetworkApi extends RESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<TBooleanResponse> => {
+    this.logger.info(
+      `PATCH ${baseURL}/${VERSION}/networks/${networkId} networkId`
+    );
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/networks/${networkId}`)
       .then(() => {

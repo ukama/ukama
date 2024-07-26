@@ -25,6 +25,7 @@ class InvitationApi extends RESTDataSource {
     baseURL: string,
     req: CreateInvitationInputDto
   ): Promise<InvitationDto> => {
+    this.logger.info(`[POST]: ${baseURL}/${VERSION}/${INVITATIONS}`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${INVITATIONS}`, {
       body: { ...req },
@@ -35,6 +36,7 @@ class InvitationApi extends RESTDataSource {
     baseURL: string,
     id: string
   ): Promise<InvitationDto> => {
+    this.logger.info(`[GET]: ${baseURL}/${VERSION}/${INVITATIONS}/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${INVITATIONS}/${id}`).then(res =>
       inviteResToInvitationDto(res)
@@ -45,6 +47,7 @@ class InvitationApi extends RESTDataSource {
     baseURL: string,
     req: UpateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
+    this.logger.info(`[PATCH]: ${baseURL}/${VERSION}/${INVITATIONS}/${req.id}`);
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${INVITATIONS}/${req.id}`, {
       body: { status: req.status },
@@ -55,11 +58,13 @@ class InvitationApi extends RESTDataSource {
     baseURL: string,
     id: string
   ): Promise<DeleteInvitationResDto> => {
+    this.logger.info(`[DELETE]: ${baseURL}/${VERSION}/${INVITATIONS}/${id}`);
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${INVITATIONS}/${id}`).then(res => res);
   };
 
   getInvitationsByOrg = async (baseURL: string): Promise<InvitationsResDto> => {
+    this.logger.info(`[GET]: ${baseURL}/${VERSION}/${INVITATIONS}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${INVITATIONS}`).then(res =>
       dtoToInvitationsResDto(res)
@@ -70,6 +75,9 @@ class InvitationApi extends RESTDataSource {
     baseURL: string,
     email: string
   ): Promise<InvitationDto> => {
+    this.logger.info(
+      `[GET]: ${baseURL}/${VERSION}/${INVITATIONS}/user/${email}`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${INVITATIONS}/user/${email}`).then(res =>
       inviteResToInvitationDto(res)

@@ -48,7 +48,7 @@ const NodeStatsContainer = ({
       <Paper
         sx={{
           padding: '24px 24px 24px 0px',
-          cursor: isCollapsable ?? !isClickable ? 'default' : 'pointer',
+          cursor: (isCollapsable ?? !isClickable) ? 'default' : 'pointer',
           paddingLeft: isAlert && selected !== index ? '16px' : '24px',
           borderLeft: {
             md:

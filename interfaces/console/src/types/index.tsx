@@ -196,3 +196,13 @@ export type TCoordinates = {
   lat: number | null;
   lng: number | null;
 };
+
+export type TEnv = {
+  APP_URL: string;
+  SIM_TYPE: string;
+  METRIC_URL: string;
+  API_GW_URL: string;
+  AUTH_APP_URL: string;
+  MAP_BOX_TOKEN: string;
+  METRIC_WEBSOCKET_URL: string;
+};
