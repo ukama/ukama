@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogActions,
@@ -6,19 +6,11 @@ import {
   DialogTitle,
   TextField,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import { globalUseStyles } from '@/styles/global';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-
-const validationSchema = Yup.object().shape({
-  siteName: Yup.string()
-    .required('Site name is required')
-    .matches(
-      /^[a-z0-9-]*$/,
-      'Site name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
-    ),
-});
+import { UpdateSiteSchema } from '@/helpers/formValidators';
 
 interface EditSiteDialogProps {
   open: boolean;
@@ -26,6 +18,7 @@ interface EditSiteDialogProps {
   currentSiteName: string;
   onClose: () => void;
   onSave: (siteId: string, newSiteName: string) => void;
+  updateSiteLoading: boolean;
 }
 
 const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
@@ -34,10 +27,14 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
   currentSiteName,
   onClose,
   onSave,
+  updateSiteLoading,
 }) => {
-  const handleSubmit = (values: { siteName: string }) => {
-    onSave(siteId, values.siteName);
-    onClose();
+  const handleSubmit = async (values: { siteName: string }) => {
+    try {
+      await onSave(siteId, values.siteName);
+    } finally {
+      onClose();
+    }
   };
 
   return (
@@ -54,7 +51,7 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
       <DialogContent>
         <Formik
           initialValues={{ siteName: currentSiteName }}
-          validationSchema={validationSchema}
+          validationSchema={UpdateSiteSchema}
           onSubmit={handleSubmit}
         >
           {({ touched, errors }) => (
@@ -71,6 +68,9 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
                     InputLabelProps={{ shrink: true }}
                     InputProps={{
                       classes: { input: globalUseStyles().inputFieldStyle },
+                      endAdornment: updateSiteLoading ? (
+                        <CircularProgress size={20} />
+                      ) : null,
                     }}
                     error={touched.siteName && !!errors.siteName}
                     helperText={<ErrorMessage name="siteName" />}
@@ -81,8 +81,13 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
                 <Button type="button" onClick={onClose} color="secondary">
                   Cancel
                 </Button>
-                <Button type="submit" color="primary">
-                  Save
+                <Button
+                  type="submit"
+                  color="primary"
+                  variant="contained"
+                  disabled={updateSiteLoading}
+                >
+                  {updateSiteLoading ? <CircularProgress size={24} /> : 'Save'}
                 </Button>
               </DialogActions>
             </Form>

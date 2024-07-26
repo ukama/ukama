@@ -61,14 +61,6 @@ type GetSitesRequest struct {
 type UpdateSiteRequest struct {
 	SiteId        string  `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
 	Name          string  `json:"name" validate:"required"`
-	BackhaulId    string  `json:"backhaul_id" validate:"required"`
-	PowerId       string  `json:"power_id" validate:"required"`
-	AccessId      string  `json:"access_id" validate:"required"`
-	SwitchId      string  `json:"switch_id" validate:"required"`
-	IsDeactivated bool    `json:"is_deactivated"`
-	Latitude      float64 `json:"latitude"`
-	Longitude     float64 `json:"longitude"`
-	InstallDate   string  `json:"install_date" validate:"required"`
 }
 
 type AddSiteRequest struct {

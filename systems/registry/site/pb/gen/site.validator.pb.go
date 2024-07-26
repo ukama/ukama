@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -171,11 +171,6 @@ func (this *Site) Validate() error {
 }
 
 var _regex_UpdateRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateRequest_BackhaulId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateRequest_PowerId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateRequest_Spectrum = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateRequest_AccessId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateRequest_SwitchId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *UpdateRequest) Validate() error {
 	if !_regex_UpdateRequest_SiteId.MatchString(this.SiteId) {
@@ -183,36 +178,6 @@ func (this *UpdateRequest) Validate() error {
 	}
 	if this.SiteId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
-	}
-	if !_regex_UpdateRequest_BackhaulId.MatchString(this.BackhaulId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("BackhaulId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.BackhaulId))
-	}
-	if this.BackhaulId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("BackhaulId", fmt.Errorf(`value '%v' must not be an empty string`, this.BackhaulId))
-	}
-	if !_regex_UpdateRequest_PowerId.MatchString(this.PowerId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PowerId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PowerId))
-	}
-	if this.PowerId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("PowerId", fmt.Errorf(`value '%v' must not be an empty string`, this.PowerId))
-	}
-	if !_regex_UpdateRequest_Spectrum.MatchString(this.Spectrum) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Spectrum", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Spectrum))
-	}
-	if this.Spectrum == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Spectrum", fmt.Errorf(`value '%v' must not be an empty string`, this.Spectrum))
-	}
-	if !_regex_UpdateRequest_AccessId.MatchString(this.AccessId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("AccessId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.AccessId))
-	}
-	if this.AccessId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("AccessId", fmt.Errorf(`value '%v' must not be an empty string`, this.AccessId))
-	}
-	if !_regex_UpdateRequest_SwitchId.MatchString(this.SwitchId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SwitchId))
-	}
-	if this.SwitchId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SwitchId", fmt.Errorf(`value '%v' must not be an empty string`, this.SwitchId))
 	}
 	return nil
 }

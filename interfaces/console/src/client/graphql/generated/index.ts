@@ -320,6 +320,7 @@ export type Mutation = {
   updateNodeState: Node;
   updateNotification: UpdateNotificationResDto;
   updatePackage: PackageDto;
+  updateSite: SiteDto;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
 };
@@ -480,6 +481,12 @@ export type MutationUpdateNotificationArgs = {
 export type MutationUpdatePackageArgs = {
   data: UpdatePackageInputDto;
   packageId: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateSiteArgs = {
+  data: UpdateSiteInputDto;
+  siteId: Scalars['String']['input'];
 };
 
 
@@ -1154,6 +1161,10 @@ export type UpdatePackageInputDto = {
   name: Scalars['String']['input'];
 };
 
+export type UpdateSiteInputDto = {
+  name: Scalars['String']['input'];
+};
+
 export type UpdateSubscriberInputDto = {
   address?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -1592,6 +1603,14 @@ export type GetSitesQueryVariables = Exact<{
 
 
 export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string }> } };
+
+export type UpdateSiteMutationVariables = Exact<{
+  siteId: Scalars['String']['input'];
+  data: UpdateSiteInputDto;
+}>;
+
+
+export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'SiteDto', name: string } };
 
 export type GetComponentByIdQueryVariables = Exact<{
   componentId: Scalars['String']['input'];
@@ -3930,6 +3949,40 @@ export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
 export type GetSitesLazyQueryHookResult = ReturnType<typeof useGetSitesLazyQuery>;
 export type GetSitesSuspenseQueryHookResult = ReturnType<typeof useGetSitesSuspenseQuery>;
 export type GetSitesQueryResult = Apollo.QueryResult<GetSitesQuery, GetSitesQueryVariables>;
+export const UpdateSiteDocument = gql`
+    mutation updateSite($siteId: String!, $data: UpdateSiteInputDto!) {
+  updateSite(siteId: $siteId, data: $data) {
+    name
+  }
+}
+    `;
+export type UpdateSiteMutationFn = Apollo.MutationFunction<UpdateSiteMutation, UpdateSiteMutationVariables>;
+
+/**
+ * __useUpdateSiteMutation__
+ *
+ * To run a mutation, you first call `useUpdateSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSiteMutation, { data, loading, error }] = useUpdateSiteMutation({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateSiteMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSiteMutation, UpdateSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSiteMutation, UpdateSiteMutationVariables>(UpdateSiteDocument, options);
+      }
+export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutation>;
+export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
+export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
 export const GetComponentByIdDocument = gql`
     query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {

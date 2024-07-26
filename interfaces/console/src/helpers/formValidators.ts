@@ -47,6 +47,14 @@ const STEPPER_FORM_SCHEMA = [
       .max(180, 'Longitude must be between -180 and 180'),
   }),
 ];
+const UpdateSiteSchema = Yup.object().shape({
+  siteName: Yup.string()
+    .required('Site name is required')
+    .matches(
+      /^[a-z0-9-]*$/,
+      'Site name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
+    ),
+});
 
 // Validation schemas
 const ESIM_FORM_SCHEMA = Yup.object().shape({
@@ -95,4 +103,5 @@ export {
   NETWORK_NAME_SCHEMA_VALIDATOR,
   PHYSICAL_SIM_FORM_SCHEMA,
   STEPPER_FORM_SCHEMA,
+  UpdateSiteSchema,
 };

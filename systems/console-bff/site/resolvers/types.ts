@@ -146,3 +146,9 @@ export class AddSiteInputDto {
   @Field()
   location: string;
 }
+
+@InputType()
+export class UpdateSiteInputDto {
+  @Field()
+  name: string;
+}

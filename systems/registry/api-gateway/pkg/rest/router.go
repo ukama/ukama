@@ -65,7 +65,7 @@ type site interface {
 	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
-	UpdateSite(siteId, name, backhaulId, powerId, accessId, switchId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.UpdateResponse, error)
+	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
 }
 
 type invitation interface {
@@ -342,14 +342,6 @@ func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sit
 	return r.clients.Site.UpdateSite(
 		req.SiteId,
 		req.Name,
-		req.BackhaulId,
-		req.PowerId,
-		req.AccessId,
-		req.SwitchId,
-		req.IsDeactivated,
-		req.Latitude,
-		req.Longitude,
-		req.InstallDate,
 	)
 }
 

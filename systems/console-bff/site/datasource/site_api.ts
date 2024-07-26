@@ -8,7 +8,12 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
-import { AddSiteInputDto, SiteDto, SitesResDto } from "../resolvers/types";
+import {
+  AddSiteInputDto,
+  SiteDto,
+  SitesResDto,
+  UpdateSiteInputDto,
+} from "../resolvers/types";
 import { dtoToSiteDto, dtoToSitesDto } from "./mapper";
 
 const SITES = "sites";
@@ -49,6 +54,19 @@ class SiteApi extends RESTDataSource {
         site: req.name,
         switch_id: req.switch_id,
         spectrum_id: req.spectrum_id,
+      },
+    }).then(res => dtoToSiteDto(res));
+  };
+
+  updateSite = async (
+    baseURL: string,
+    siteId: string,
+    req: UpdateSiteInputDto
+  ): Promise<SiteDto> => {
+    this.baseURL = baseURL;
+    return this.patch(`/${VERSION}/${SITES}/${siteId}`, {
+      body: {
+        site: req.name,
       },
     }).then(res => dtoToSiteDto(res));
   };

@@ -6,6 +6,7 @@ import {
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
   useGetSitesQuery,
+  useUpdateSiteMutation,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
@@ -79,14 +80,34 @@ const Sites = () => {
     },
     onError: (error) => {
       setSnackbarMessage({
-        id: 'add-subscriber-error',
+        id: 'add-site-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
       });
     },
   });
-
+  const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
+    onCompleted: () => {
+      refetchSites().then((res) => {
+        setSitesList(res.data.getSites.sites);
+      });
+      setSnackbarMessage({
+        id: 'update-site-success',
+        message: 'Site updated successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'update-site-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -172,7 +193,17 @@ const Sites = () => {
     }));
     setEditSitedialogOpen(true);
   };
-  const handleSaveSiteName = () => {};
+  const handleSaveSiteName = (siteId: string, siteName: string) => {
+    updateSite({
+      variables: {
+        siteId: siteId,
+        data: {
+          name: siteName,
+        },
+      },
+    });
+  };
+
   const closeEditSiteDialog = () => {
     setEditSitedialogOpen(false);
   };
@@ -236,6 +267,7 @@ const Sites = () => {
         currentSiteName={currentSite.siteName}
         onClose={closeEditSiteDialog}
         onSave={handleSaveSiteName}
+        updateSiteLoading={updateSiteLoading}
       />
     </Box>
   );

@@ -661,6 +661,12 @@ query getSites($networkId: String!) {
   }
 }
 
+mutation updateSite($siteId: String!, $data: UpdateSiteInputDto!) {
+  updateSite(siteId: $siteId, data: $data) {
+    name
+  }
+}
+
 query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
     id
