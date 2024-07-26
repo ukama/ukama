@@ -12,9 +12,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
-export const SIM_TYPE_ENV = process.env.NEXT_PUBLIC_SIM_TYPE
-  ? process.env.NEXT_PUBLIC_SIM_TYPE
-  : 'operator_data';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';

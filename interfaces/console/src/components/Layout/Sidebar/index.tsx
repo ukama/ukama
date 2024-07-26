@@ -16,11 +16,11 @@ import {
   Drawer,
   Skeleton,
   Stack,
-  Typography,
   styled,
   Tooltip,
   tooltipClasses,
   TooltipProps,
+  Typography,
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -106,8 +106,8 @@ const Sidebar = ({
       variant="permanent"
       style={{ height: '100%', backgroundColor: 'white' }}
     >
-      <Stack direction={'column'}>
-        <Box mx={2} my={1.5}>
+      <Stack direction={'column'} mt={0.8}>
+        <Box mx={2} my={2}>
           <BasicDropdown
             value={network.id}
             list={getDropDownData()}
@@ -120,7 +120,6 @@ const Sidebar = ({
         <Stack direction="column" spacing={1.5} px={2} py={2}>
           {NavList.map(({ name, path, icon: Icon }) => (
             <BlueTooltip
-              key={path}
               title={
                 <>
                   <Typography variant="subtitle1" fontWeight="bold" mb={1}>
@@ -133,12 +132,14 @@ const Sidebar = ({
                   </Typography>
                 </>
               }
-              placement="right"
               arrow
+              key={path}
+              placement="right"
             >
               <Link
                 href={path}
                 prefetch={true}
+                key={path}
                 style={{
                   borderRadius: 4,
                   textDecoration: 'none',

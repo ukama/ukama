@@ -115,7 +115,10 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
                 color="initial"
                 sx={{ fontWeight: 'bold' }}
               >
-                {renderKpiInfo()}{' '}
+                {renderKpiInfo()}
+              </Typography>
+              <Typography variant="body1" color="initial">
+                {`Site Metrics are coming soon!`}
               </Typography>
             </Box>
           </Grid>

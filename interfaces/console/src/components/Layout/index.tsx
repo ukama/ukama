@@ -15,6 +15,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { useAppContext } from '@/context';
 
 interface ILayoutProps {
   page: string;
@@ -31,13 +32,8 @@ interface ILayoutProps {
 }
 
 const isHaveId = (pathname: string) => {
-  if (
-    pathname.includes('/console/nodes') ??
-    pathname.includes('/console/sites')
-  ) {
-    return pathname.split('/').length > 2;
-  }
-  return false;
+  const parts = pathname.split('/');
+  return pathname.startsWith('/console/') && parts.length > 3;
 };
 
 const AppLayout = ({
@@ -57,6 +53,8 @@ const AppLayout = ({
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
   const theme = useTheme();
   const router = useRouter();
+  const { selectedDefaultSite } = useAppContext();
+
   const [open, setOpen] = React.useState(true);
   const matches = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -72,7 +70,9 @@ const AppLayout = ({
     handlePageChange(name);
     router.push(path);
   };
-
+  const dynamicId = pathname.startsWith('/console/sites/')
+    ? selectedDefaultSite
+    : id;
   return (
     <Stack overflow={'hidden'}>
       <Header
@@ -104,7 +104,7 @@ const AppLayout = ({
           direction={'column'}
         >
           <Typography variant="h5" fontWeight={400} mb={0.8}>
-            {getTitleFromPath(pathname, id)}
+            {getTitleFromPath(pathname, dynamicId)}
           </Typography>
           <Divider sx={{ mb: 1 }} />
           {children}

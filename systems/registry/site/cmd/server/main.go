@@ -28,6 +28,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	generated "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
@@ -71,7 +72,7 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	invSrv := providers.NewInventoryProvider(serviceConfig.InitClientHost, serviceConfig.DebugMode)
+	invClient := cinvent.NewComponentClient(serviceConfig.InventoryHost)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -80,7 +81,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	siteServer := server.NewSiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
-		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network),serviceConfig.PushGateway,invSrv)
+		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network), serviceConfig.PushGateway, invClient)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -90,7 +91,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go grpcServer.StartServer()
 
-	 go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	waitForExit()
 }

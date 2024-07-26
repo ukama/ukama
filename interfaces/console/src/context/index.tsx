@@ -7,7 +7,7 @@
  */
 'use client';
 
-import { TNetwork, TSnackbarMessage, TUser } from '@/types';
+import { TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const AppContext = createContext({
@@ -21,6 +21,8 @@ const AppContext = createContext({
   setSkeltonLoading: (loading: boolean) => {},
   isValidSession: false,
   setIsValidSession: (valid: boolean) => {},
+  selectedDefaultSite: '',
+  setSelectedDefaultSite: (siteId: string) => {},
   snackbarMessage: {
     id: 'message-id',
     message: '',
@@ -32,6 +34,16 @@ const AppContext = createContext({
     id: '',
     name: '',
   },
+  env: {
+    APP_URL: '',
+    SIM_TYPE: '',
+    METRIC_URL: '',
+    API_GW_URL: '',
+    AUTH_APP_URL: '',
+    MAP_BOX_TOKEN: '',
+    METRIC_WEBSOCKET_URL: '',
+  },
+  setEnv: (e: any) => {},
   setNetwork: (n: TNetwork) => {},
   user: {
     id: '',
@@ -45,19 +57,23 @@ const AppContext = createContext({
 });
 
 const AppContextWrapper = ({
+  initEnv,
   children,
   token: _token,
   initalUserValues,
 }: {
+  initEnv: TEnv;
   token: string;
   initalUserValues: TUser;
   children: React.ReactNode;
 }) => {
+  const [env, setEnv] = useState<TEnv>(initEnv);
   const [token, setToken] = useState(_token);
   const [pageName, setPageName] = useState('Home');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
+  const [selectedDefaultSite, setSelectedDefaultSite] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState<TSnackbarMessage>({
     id: 'message-id',
     message: '',
@@ -72,6 +88,8 @@ const AppContextWrapper = ({
 
   const value = useMemo(
     () => ({
+      env,
+      setEnv,
       isDarkMode,
       setIsDarkMode,
       user,
@@ -88,8 +106,12 @@ const AppContextWrapper = ({
       setIsValidSession,
       snackbarMessage,
       setSnackbarMessage,
+      selectedDefaultSite,
+      setSelectedDefaultSite,
     }),
     [
+      env,
+      setEnv,
       isDarkMode,
       setIsDarkMode,
       user,
@@ -106,6 +128,8 @@ const AppContextWrapper = ({
       setIsValidSession,
       snackbarMessage,
       setSnackbarMessage,
+      selectedDefaultSite,
+      setSelectedDefaultSite,
     ],
   );
 

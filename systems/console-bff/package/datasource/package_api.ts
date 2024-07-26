@@ -25,6 +25,9 @@ class PackageApi extends RESTDataSource {
     baseURL: string,
     packageId: string
   ): Promise<PackageDto> => {
+    this.logger.info(
+      `GetPackage [GET]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {}).then(res =>
       dtoToPackageDto(res)
@@ -32,6 +35,7 @@ class PackageApi extends RESTDataSource {
   };
 
   getPackages = async (baseURL: string): Promise<PackagesResDto> => {
+    this.logger.info(`GetPackages [GET]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
       dtoToPackagesDto(res)
@@ -43,6 +47,7 @@ class PackageApi extends RESTDataSource {
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
+    this.logger.info(`AddPackage [POST]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
     const baserate = await this.get(`/${VERSION}/baserates/history`);
     return this.post(`/${VERSION}/${PACKAGES}`, {
@@ -77,6 +82,9 @@ class PackageApi extends RESTDataSource {
     baseURL: string,
     packageId: string
   ): Promise<IdResponse> => {
+    this.logger.info(
+      `DeletePackage [DELETE]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
+    );
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${PACKAGES}/${packageId}`).then(() => {
       return {
@@ -90,6 +98,9 @@ class PackageApi extends RESTDataSource {
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
+    this.logger.info(
+      `UpdatePackage [PATCH]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
+    );
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${PACKAGES}/${packageId}`, {
       body: {

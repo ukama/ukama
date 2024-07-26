@@ -129,6 +129,7 @@ services:
    - SITE_SERVICE_PORT=9090
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
    - NETWORK=network:9090
+   - INVENTORYHOST=http://${LOCAL_HOST_IP}:8077
   restart: always
   networks:
    - ukama-net

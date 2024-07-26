@@ -61,7 +61,17 @@ export type AddPackageToSimInputDto = {
 };
 
 export type AddSiteInputDto = {
-  site: Scalars['String']['input'];
+  access_id: Scalars['String']['input'];
+  backhaul_id: Scalars['String']['input'];
+  install_date: Scalars['String']['input'];
+  latitude: Scalars['Float']['input'];
+  location: Scalars['String']['input'];
+  longitude: Scalars['Float']['input'];
+  name: Scalars['String']['input'];
+  network_id: Scalars['String']['input'];
+  power_id: Scalars['String']['input'];
+  spectrum_id: Scalars['String']['input'];
+  switch_id: Scalars['String']['input'];
 };
 
 export type AllocateSimApiDto = {
@@ -129,11 +139,12 @@ export type CBooleanResponse = {
 
 export type ComponentDto = {
   __typename?: 'ComponentDto';
+  category: Scalars['String']['output'];
   datasheetUrl: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   imageUrl: Scalars['String']['output'];
-  inventory: Scalars['String']['output'];
+  inventoryId: Scalars['String']['output'];
   managed: Scalars['String']['output'];
   manufacturer: Scalars['String']['output'];
   partNumber: Scalars['String']['output'];
@@ -141,6 +152,11 @@ export type ComponentDto = {
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
   warranty: Scalars['Float']['output'];
+};
+
+export type ComponentsResDto = {
+  __typename?: 'ComponentsResDto';
+  components: Array<ComponentDto>;
 };
 
 export type CountriesRes = {
@@ -198,6 +214,11 @@ export type DeleteSimInputDto = {
 export type DeleteSimResDto = {
   __typename?: 'DeleteSimResDto';
   simId?: Maybe<Scalars['String']['output']>;
+};
+
+export type GetNodeLatestMetricInput = {
+  nodeId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
 };
 
 export type GetNodesInput = {
@@ -299,6 +320,7 @@ export type Mutation = {
   updateNodeState: Node;
   updateNotification: UpdateNotificationResDto;
   updatePackage: PackageDto;
+  updateSite: SiteDto;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
 };
@@ -462,6 +484,12 @@ export type MutationUpdatePackageArgs = {
 };
 
 
+export type MutationUpdateSiteArgs = {
+  data: UpdateSiteInputDto;
+  siteId: Scalars['String']['input'];
+};
+
+
 export type MutationUpdateSubscriberArgs = {
   data: UpdateSubscriberInputDto;
   subscriberId: Scalars['String']['input'];
@@ -510,6 +538,13 @@ export type NetworkDto = {
   trafficPolicy: Scalars['Float']['output'];
 };
 
+export type NetworkStats = {
+  __typename?: 'NetworkStats';
+  activeSubscriber: Scalars['Float']['output'];
+  averageSignalStrength: Scalars['Float']['output'];
+  averageThroughput: Scalars['Float']['output'];
+};
+
 export type NetworksResDto = {
   __typename?: 'NetworksResDto';
   networks: Array<NetworkDto>;
@@ -548,6 +583,16 @@ export type NodeAppsChangeLogInput = {
 
 export type NodeInput = {
   id: Scalars['String']['input'];
+};
+
+export type NodeLatestMetric = {
+  __typename?: 'NodeLatestMetric';
+  msg: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  value: Array<Scalars['Float']['output']>;
 };
 
 export type NodeLocation = {
@@ -688,7 +733,7 @@ export type Query = {
   __typename?: 'Query';
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
-  getComponentsByUserId: ComponentDto;
+  getComponentsByUserId: ComponentsResDto;
   getCountries: CountriesRes;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
@@ -700,9 +745,11 @@ export type Query = {
   getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
   getNetwork: NetworkDto;
+  getNetworkStats: NetworkStats;
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodeApps: NodeApps;
+  getNodeLatestMetric: NodeLatestMetric;
   getNodeLocation: NodeLocation;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
@@ -773,6 +820,11 @@ export type QueryGetNetworkArgs = {
 };
 
 
+export type QueryGetNetworkStatsArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
 export type QueryGetNodeArgs = {
   data: NodeInput;
 };
@@ -780,6 +832,11 @@ export type QueryGetNodeArgs = {
 
 export type QueryGetNodeAppsArgs = {
   data: NodeAppsChangeLogInput;
+};
+
+
+export type QueryGetNodeLatestMetricArgs = {
+  data: GetNodeLatestMetricInput;
 };
 
 
@@ -973,10 +1030,12 @@ export type SiteDto = {
   installDate: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
   latitude: Scalars['Float']['output'];
+  location: Scalars['String']['output'];
   longitude: Scalars['Float']['output'];
   name: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   powerId: Scalars['String']['output'];
+  spectrumId: Scalars['String']['output'];
   switchId: Scalars['String']['output'];
 };
 
@@ -1099,6 +1158,10 @@ export type UpdateNotificationResDto = {
 
 export type UpdatePackageInputDto = {
   active: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type UpdateSiteInputDto = {
   name: Scalars['String']['input'];
 };
 
@@ -1519,6 +1582,49 @@ export type SetDefaultNetworkMutationVariables = Exact<{
 
 
 export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type GetSiteQueryVariables = Exact<{
+  siteId: Scalars['String']['input'];
+}>;
+
+
+export type GetSiteQuery = { __typename?: 'Query', getSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string } };
+
+export type AddSiteMutationVariables = Exact<{
+  data: AddSiteInputDto;
+}>;
+
+
+export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string } };
+
+export type GetSitesQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string }> } };
+
+export type UpdateSiteMutationVariables = Exact<{
+  siteId: Scalars['String']['input'];
+  data: UpdateSiteInputDto;
+}>;
+
+
+export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'SiteDto', name: string } };
+
+export type GetComponentByIdQueryVariables = Exact<{
+  componentId: Scalars['String']['input'];
+}>;
+
+
+export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
+
+export type GetComponentsByUserIdQueryVariables = Exact<{
+  category: Scalars['String']['input'];
+}>;
+
+
+export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, category: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
 export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
@@ -3689,6 +3795,300 @@ export function useSetDefaultNetworkMutation(baseOptions?: Apollo.MutationHookOp
 export type SetDefaultNetworkMutationHookResult = ReturnType<typeof useSetDefaultNetworkMutation>;
 export type SetDefaultNetworkMutationResult = Apollo.MutationResult<SetDefaultNetworkMutation>;
 export type SetDefaultNetworkMutationOptions = Apollo.BaseMutationOptions<SetDefaultNetworkMutation, SetDefaultNetworkMutationVariables>;
+export const GetSiteDocument = gql`
+    query getSite($siteId: String!) {
+  getSite(siteId: $siteId) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+    `;
+
+/**
+ * __useGetSiteQuery__
+ *
+ * To run a query within a React component, call `useGetSiteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSiteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSiteQuery({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *   },
+ * });
+ */
+export function useGetSiteQuery(baseOptions: Apollo.QueryHookOptions<GetSiteQuery, GetSiteQueryVariables> & ({ variables: GetSiteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
+      }
+export function useGetSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
+        }
+export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
+        }
+export type GetSiteQueryHookResult = ReturnType<typeof useGetSiteQuery>;
+export type GetSiteLazyQueryHookResult = ReturnType<typeof useGetSiteLazyQuery>;
+export type GetSiteSuspenseQueryHookResult = ReturnType<typeof useGetSiteSuspenseQuery>;
+export type GetSiteQueryResult = Apollo.QueryResult<GetSiteQuery, GetSiteQueryVariables>;
+export const AddSiteDocument = gql`
+    mutation addSite($data: AddSiteInputDto!) {
+  addSite(data: $data) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+    `;
+export type AddSiteMutationFn = Apollo.MutationFunction<AddSiteMutation, AddSiteMutationVariables>;
+
+/**
+ * __useAddSiteMutation__
+ *
+ * To run a mutation, you first call `useAddSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addSiteMutation, { data, loading, error }] = useAddSiteMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddSiteMutation(baseOptions?: Apollo.MutationHookOptions<AddSiteMutation, AddSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddSiteMutation, AddSiteMutationVariables>(AddSiteDocument, options);
+      }
+export type AddSiteMutationHookResult = ReturnType<typeof useAddSiteMutation>;
+export type AddSiteMutationResult = Apollo.MutationResult<AddSiteMutation>;
+export type AddSiteMutationOptions = Apollo.BaseMutationOptions<AddSiteMutation, AddSiteMutationVariables>;
+export const GetSitesDocument = gql`
+    query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    sites {
+      id
+      name
+      networkId
+      backhaulId
+      powerId
+      accessId
+      spectrumId
+      switchId
+      isDeactivated
+      latitude
+      longitude
+      installDate
+      createdAt
+      location
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSitesQuery__
+ *
+ * To run a query within a React component, call `useGetSitesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSitesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSitesQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSitesQuery(baseOptions: Apollo.QueryHookOptions<GetSitesQuery, GetSitesQueryVariables> & ({ variables: GetSitesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
+      }
+export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
+        }
+export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
+        }
+export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
+export type GetSitesLazyQueryHookResult = ReturnType<typeof useGetSitesLazyQuery>;
+export type GetSitesSuspenseQueryHookResult = ReturnType<typeof useGetSitesSuspenseQuery>;
+export type GetSitesQueryResult = Apollo.QueryResult<GetSitesQuery, GetSitesQueryVariables>;
+export const UpdateSiteDocument = gql`
+    mutation updateSite($siteId: String!, $data: UpdateSiteInputDto!) {
+  updateSite(siteId: $siteId, data: $data) {
+    name
+  }
+}
+    `;
+export type UpdateSiteMutationFn = Apollo.MutationFunction<UpdateSiteMutation, UpdateSiteMutationVariables>;
+
+/**
+ * __useUpdateSiteMutation__
+ *
+ * To run a mutation, you first call `useUpdateSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSiteMutation, { data, loading, error }] = useUpdateSiteMutation({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateSiteMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSiteMutation, UpdateSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSiteMutation, UpdateSiteMutationVariables>(UpdateSiteDocument, options);
+      }
+export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutation>;
+export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
+export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
+export const GetComponentByIdDocument = gql`
+    query getComponentById($componentId: String!) {
+  getComponentById(componentId: $componentId) {
+    id
+    inventoryId
+    type
+    userId
+    description
+    category
+    datasheetUrl
+    imageUrl
+    partNumber
+    manufacturer
+    managed
+    warranty
+    specification
+  }
+}
+    `;
+
+/**
+ * __useGetComponentByIdQuery__
+ *
+ * To run a query within a React component, call `useGetComponentByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetComponentByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetComponentByIdQuery({
+ *   variables: {
+ *      componentId: // value for 'componentId'
+ *   },
+ * });
+ */
+export function useGetComponentByIdQuery(baseOptions: Apollo.QueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables> & ({ variables: GetComponentByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
+      }
+export function useGetComponentByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
+        }
+export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
+        }
+export type GetComponentByIdQueryHookResult = ReturnType<typeof useGetComponentByIdQuery>;
+export type GetComponentByIdLazyQueryHookResult = ReturnType<typeof useGetComponentByIdLazyQuery>;
+export type GetComponentByIdSuspenseQueryHookResult = ReturnType<typeof useGetComponentByIdSuspenseQuery>;
+export type GetComponentByIdQueryResult = Apollo.QueryResult<GetComponentByIdQuery, GetComponentByIdQueryVariables>;
+export const GetComponentsByUserIdDocument = gql`
+    query getComponentsByUserId($category: String!) {
+  getComponentsByUserId(category: $category) {
+    components {
+      id
+      inventoryId
+      type
+      userId
+      description
+      datasheetUrl
+      imageUrl
+      partNumber
+      category
+      manufacturer
+      managed
+      warranty
+      specification
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetComponentsByUserIdQuery__
+ *
+ * To run a query within a React component, call `useGetComponentsByUserIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetComponentsByUserIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetComponentsByUserIdQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *   },
+ * });
+ */
+export function useGetComponentsByUserIdQuery(baseOptions: Apollo.QueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables> & ({ variables: GetComponentsByUserIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
+      }
+export function useGetComponentsByUserIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
+        }
+export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
+        }
+export type GetComponentsByUserIdQueryHookResult = ReturnType<typeof useGetComponentsByUserIdQuery>;
+export type GetComponentsByUserIdLazyQueryHookResult = ReturnType<typeof useGetComponentsByUserIdLazyQuery>;
+export type GetComponentsByUserIdSuspenseQueryHookResult = ReturnType<typeof useGetComponentsByUserIdSuspenseQuery>;
+export type GetComponentsByUserIdQueryResult = Apollo.QueryResult<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>;
 export const CreateInvitationDocument = gql`
     mutation CreateInvitation($data: CreateInvitationInputDto!) {
   createInvitation(data: $data) {

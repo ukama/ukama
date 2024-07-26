@@ -5,45 +5,41 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
+import colors from '@/theme/colors';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
+  Box,
   Card,
   CardContent,
-  Typography,
-  Box,
   IconButton,
-  useMediaQuery,
   Menu,
   MenuItem,
+  Skeleton,
+  Typography,
+  useMediaQuery,
 } from '@mui/material';
-import PeopleIcon from '@mui/icons-material/People';
-import RouterIcon from '@mui/icons-material/Router';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import CellTowerIcon from '@mui/icons-material/CellTower';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import colors from '@/theme/colors';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
-  users: number;
-  status: {
-    online: boolean;
-    charging: boolean;
-    signal: string;
-  };
+  siteStatus: boolean;
   onClickMenu?: (siteId: string) => void;
+  loading?: boolean;
+  handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
 }
 
 const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  users,
-  status,
+  siteStatus,
   onClickMenu,
+  handleSiteNameUpdate,
+  loading = false,
 }) => {
   const isSmallScreen = useMediaQuery((theme: any) =>
     theme.breakpoints.down('sm'),
@@ -52,17 +48,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation(); // Stop propagation here
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
   const handleMenuClick = (action: string) => {
-    if (onClickMenu) {
-      onClickMenu(siteId);
-      if (action === 'edit') {
-        /* empty */
-      } else if (action === 'details') {
-        onClickMenu(siteId);
-      }
+    if (handleSiteNameUpdate) {
+      handleSiteNameUpdate(siteId, name);
     }
   };
 
@@ -72,6 +63,15 @@ const SiteCard: React.FC<SiteCardProps> = ({
   const navigateToDetails = () => {
     router.push(`/console/sites/${siteId}`);
   };
+
+  const truncateAddress = (address: string, limit: number) => {
+    const segments = address.split(',');
+    return (
+      segments.slice(0, limit).join(', ') +
+      (segments.length > limit ? '...' : '')
+    );
+  };
+
   return (
     <Card
       sx={{
@@ -93,15 +93,19 @@ const SiteCard: React.FC<SiteCardProps> = ({
         >
           <Box mb={isSmallScreen ? 2 : 0}>
             <Typography variant="h6">
-              <a
-                href={`/console/sites/${siteId}`} // Replace with actual link URL
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                {name}
-              </a>
+              {loading ? (
+                <Skeleton width={150} />
+              ) : (
+                <a
+                  href={`/console/sites/${siteId}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  {name}
+                </a>
+              )}
             </Typography>
             <Typography color="textSecondary" variant="body2">
-              {address}
+              {loading ? <Skeleton width={200} /> : truncateAddress(address, 3)}
             </Typography>
           </Box>
           <IconButton onClick={handleClick}>
@@ -112,13 +116,10 @@ const SiteCard: React.FC<SiteCardProps> = ({
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleClose}
-            onClick={(e) => e.stopPropagation()} // Stop propagation here
+            onClick={(e) => e.stopPropagation()}
           >
             <MenuItem onClick={() => handleMenuClick('edit')}>
               Edit Name
-            </MenuItem>
-            <MenuItem onClick={() => handleMenuClick('details')}>
-              View Site Details
             </MenuItem>
           </Menu>
         </Box>
@@ -128,37 +129,23 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="center"
           mt={2}
         >
-          <Box display="flex" alignItems="center" mr={13}>
-            <PeopleIcon />
-            <Typography variant="body2" ml={0.5}>
-              {users}
-            </Typography>
-          </Box>
-          <Box display="flex" alignItems="center" mr={2}>
-            <RouterIcon sx={{ color: status.online ? 'green' : 'red' }} />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                Online
-              </Typography>
-            )}
-          </Box>
-          <Box display="flex" alignItems="center" mr={2}>
-            <BatteryChargingFullIcon
-              sx={{ color: status.charging ? 'green' : 'red' }}
-            />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                Charging
-              </Typography>
-            )}
-          </Box>
           <Box display="flex" alignItems="center">
-            <CellTowerIcon
-              sx={{ color: status.signal === 'Good' ? 'green' : 'red' }}
+            <CheckCircleIcon
+              fontSize="large"
+              sx={{
+                color: loading ? 'gray' : siteStatus ? 'green' : 'red',
+                fontSize: 30,
+              }}
             />
             {!isSmallScreen && (
               <Typography variant="body2" ml={0.5}>
-                {status.signal}
+                {loading ? (
+                  <Skeleton width={100} />
+                ) : siteStatus ? (
+                  'Site is set up'
+                ) : (
+                  'Site is deactivated'
+                )}
               </Typography>
             )}
           </Box>

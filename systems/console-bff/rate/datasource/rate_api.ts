@@ -23,6 +23,9 @@ class RateApi extends RESTDataSource {
     baseURL: string,
     req: DefaultMarkupInputDto
   ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DefaultMarkup [POST]: ${baseURL}/${VERSION}/${MARKUP}/${req.markup}/default`
+    );
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${MARKUP}/${req.markup}/default`).then(() => {
       return {
@@ -32,6 +35,9 @@ class RateApi extends RESTDataSource {
   };
 
   getDefaultMarkup = async (baseURL: string): Promise<DefaultMarkupResDto> => {
+    this.logger.info(
+      `GetDefaultMarkup [GET]: ${baseURL}/${VERSION}/${MARKUP}/default`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${MARKUP}/default`).then(res =>
       dtoToDefaultMarkupDto(res)
@@ -41,6 +47,9 @@ class RateApi extends RESTDataSource {
   getDefaultMarkupHistory = async (
     baseURL: string
   ): Promise<DefaultMarkupHistoryResDto> => {
+    this.logger.info(
+      `GetDefaultMarkupHistory [GET]: ${baseURL}/${VERSION}/${MARKUP}/default/history`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${MARKUP}/default/history`).then(res =>
       dtoToDefaultMarkupHistoryDto(res)

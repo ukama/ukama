@@ -78,7 +78,6 @@ function getUserFromToken(token: string): User {
     }
 
     const [orgId, orgName, id, name, email, role, isEmailVerified] = parts;
-
     return {
       id,
       role,
@@ -87,7 +86,7 @@ function getUserFromToken(token: string): User {
       orgId,
       token,
       orgName,
-      isEmailVerified: isEmailVerified === 'true',
+      isEmailVerified: isEmailVerified.includes('true'),
     };
   } catch (error) {
     return USER_INIT;
@@ -117,11 +116,24 @@ const getUserObject = async (session: string, cookieToken: string) => {
 };
 
 const middleware = async (request: NextRequest) => {
+  const response = NextResponse.next();
   const { pathname } = request.nextUrl;
+
+  if (pathname.includes('/ping')) {
+    return response;
+  }
+
+  if (request.url.includes('logout')) {
+    const logoutRes = NextResponse.redirect(
+      new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+    );
+    logoutRes.cookies.delete('token');
+    return logoutRes;
+  }
+
   const cookieStore = cookies();
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
-  const response = NextResponse.next();
 
   if (!session) {
     return NextResponse.redirect(
@@ -168,7 +180,10 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
-  if (pathname.includes('/console') && !isUserHaveOrg(userObj)) {
+  if (
+    (pathname.includes('/console') || pathname === '/') &&
+    !isUserHaveOrg(userObj)
+  ) {
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );

@@ -16,19 +16,21 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"3s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
-	Service          *uconf.Service
-	PushGateway      string `default:"http://localhost:9091"`
-	OrgName          string `default:"ukama"`
-	RepoUrl          string `default:""`
-	Username         string `default:"ukama"`
-	Token            string `default:""`
-	RepoPath         string `default:"/temp/git/networks"`
+	uconf.BaseConfig     `mapstructure:",squash"`
+	DB                   *uconf.Database  `default:"{}"`
+	Grpc                 *uconf.Grpc      `default:"{}"`
+	Queue                *uconf.Queue     `default:"{}"`
+	Timeout              time.Duration    `default:"3s"`
+	MsgClient            *uconf.MsgClient `default:"{}"`
+	Service              *uconf.Service
+	PushGateway          string `default:"http://localhost:9091"`
+	OrgName              string `default:"ukama"`
+	RepoUrl              string `default:""`
+	Username             string `default:"ukama"`
+	Token                string `default:""`
+	RepoPath             string `default:"/temp/git/networks"`
+	ComponentEnvironment string `default:"production"`
+	TestUserId           string `default:""`
 }
 
 var NetworkMetric = []metric.MetricConfig{}

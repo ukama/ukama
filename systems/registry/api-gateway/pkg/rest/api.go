@@ -61,25 +61,18 @@ type GetSitesRequest struct {
 type UpdateSiteRequest struct {
 	SiteId        string  `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
 	Name          string  `json:"name" validate:"required"`
-	BackhaulId    string  `json:"backhaul_id" validate:"required"`
-	PowerId       string  `json:"power_id" validate:"required"`
-	AccessId      string  `json:"access_id" validate:"required"`
-	SwitchId      string  `json:"switch_id" validate:"required"`
-	IsDeactivated bool    `json:"is_deactivated"`
-	Latitude      float64 `json:"latitude"`
-	Longitude     float64 `json:"longitude"`
-	InstallDate   string  `json:"install_date" validate:"required"`
 }
 
 type AddSiteRequest struct {
 	NetworkId     string  `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 	Name          string  `example:"s1-site" json:"site" validate:"required"`
-	Location	  string  `example:"location" json:"location" validate:"required"`
+	Location      string  `example:"location" json:"location" validate:"required"`
 	BackhaulId    string  `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
 	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
 	AccessId      string  `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
 	SwitchId      string  `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
-	IsDeactivated bool    `json:"is_deactivated" validate:"required"`
+	SpectrumId    string  `example:"{{SpectrumUUID}}" json:"spectrum_id" validate:"required"`
+	IsDeactivated bool    `json:"is_deactivated"`
 	Latitude      float64 `json:"latitude" validate:"required"`
 	Longitude     float64 `json:"longitude" validate:"required"`
 	InstallDate   string  `json:"install_date"`

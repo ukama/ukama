@@ -22,7 +22,6 @@ import { Box, Container, Paper, Stack, Typography } from '@mui/material';
 
 const Page = () => {
   const { user } = useAppContext();
-
   const { data: invitationsData, refetch: refetchInvitations } =
     useGetInvitationsQuery({
       fetchPolicy: 'network-only',

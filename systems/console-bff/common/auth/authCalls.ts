@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { API_METHOD_TYPE } from "../enums";
+import { logger } from "../logger";
 import { asyncRestCall } from "./../axiosClient";
 import { AUTH_URL } from "./../configs/index";
 
@@ -45,6 +46,7 @@ const getIdentity = async (userId: string, cookie: string) => {
 };
 
 const whoami = async (cookie: string) => {
+  logger.info(`Whoami GET: ${AUTH_URL}/sessions/whoami`);
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${AUTH_URL}/sessions/whoami`,

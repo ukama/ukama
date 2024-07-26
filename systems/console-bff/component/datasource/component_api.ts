@@ -9,31 +9,38 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { INVENTORY_API_GW, VERSION } from "../../common/configs";
 import { THeaders } from "../../common/types";
-import { ComponentDto, ComponentsResDto } from "../resolvers/types";
-import { dtoTocomponentDto, dtoTocomponentsDto } from "./mapper";
+import {
+  ComponentAPIDto,
+  ComponentDto,
+  ComponentsAPIResDto,
+  ComponentsResDto,
+} from "../resolvers/types";
+import { dtoToComponentDto, dtoToComponentsDto } from "./mapper";
 
 class ComponentApi extends RESTDataSource {
   baseURL = INVENTORY_API_GW;
 
-  getComponents = async (
+  getComponentsByUserId = async (
     headers: THeaders,
     category: string
   ): Promise<ComponentsResDto> => {
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
+      `GetComponentByUserId [GET]: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
     );
-    return this.get(
+    const response = await this.get<ComponentsAPIResDto>(
       `/${VERSION}/components/user/${headers.userId}?category=${category}`
-    ).then(res => dtoTocomponentsDto(res));
+    );
+    return dtoToComponentsDto(response);
   };
 
   getComponentById = async (componentId: string): Promise<ComponentDto> => {
     this.logger.info(
-      `Request Url: ${this.baseURL}/${VERSION}/components/${componentId}`
+      `GetComponentById [GET]: ${this.baseURL}/${VERSION}/components/${componentId}`
     );
-    return this.get(`/${VERSION}/components/${componentId}`).then(res =>
-      dtoTocomponentDto(res)
+    const response = await this.get<ComponentAPIDto>(
+      `/${VERSION}/components/${componentId}`
     );
+    return dtoToComponentDto(response);
   };
 }
 

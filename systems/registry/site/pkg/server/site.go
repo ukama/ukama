@@ -23,6 +23,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/uuid"
 	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -40,11 +41,11 @@ type SiteServer struct {
 	msgbus          mb.MsgBusServiceClient
 	baseRoutingKey  msgbus.RoutingKeyBuilder
 	networkService  providers.NetworkClientProvider
-	inventoryClient providers.InventoryClientProvider
+	inventoryClient cinvent.ComponentClient
 	pushGateway     string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider providers.InventoryClientProvider) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient) *SiteServer {
 	return &SiteServer{
 		orgName:         orgName,
 		siteRepo:        siteRepo,
@@ -57,8 +58,11 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 }
 
 func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	log.Infof("Adding site %s", req.Name)
-
+	log.Infof("Adding site %v", req)
+	spectrumId, err := uuid.FromString(req.SpectrumId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
 	backhaulId, err := uuid.FromString(req.BackhaulId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
@@ -93,10 +97,12 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		powerId.String(),
 		accessId.String(),
 		switchId.String(),
+		spectrumId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
-		if err := s.inventoryClient.ValidateComponent(s.orgName, componentIdStr); err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "component")
+		_, err := s.inventoryClient.Get(componentIdStr)
+		if err != nil {
+			return nil, err
 		}
 	}
 	svc, err := s.networkService.GetClient()
@@ -120,6 +126,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		PowerId:       powerId,
 		AccessId:      accessId,
 		SwitchId:      switchId,
+		SpectrumId:    spectrumId,
 		IsDeactivated: req.IsDeactivated,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
@@ -209,52 +216,10 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
-
-	backhaulId, err := uuid.FromString(req.BackhaulId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	accessId, err := uuid.FromString(req.AccessId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	powerId, err := uuid.FromString(req.PowerId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	switchId, err := uuid.FromString(req.SwitchId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	instDate, err := ukama.ValidateDate(req.GetInstallDate())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-	for _, componentIdStr := range []string{
-		backhaulId.String(),
-		powerId.String(),
-		accessId.String(),
-		switchId.String(),
-	} {
-		if err := s.inventoryClient.ValidateComponent(componentIdStr, s.orgName); err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "component")
-		}
-	}
+	
 	site := &db.Site{
 		Id:            siteId,
 		Name:          req.Name,
-		BackhaulId:    backhaulId,
-		PowerId:       powerId,
-		AccessId:      accessId,
-		SwitchId:      switchId,
-		IsDeactivated: req.IsDeactivated,
-		Latitude:      req.Latitude,
-		Longitude:     req.Longitude,
-		InstallDate:   instDate,
 	}
 
 	err = s.siteRepo.Update(site)
@@ -264,14 +229,6 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	evt := &epb.EventUpdateSite{
 		SiteId:        site.Id.String(),
 		Name:          site.Name,
-		IsDeactivated: site.IsDeactivated,
-		BackhaulId:    site.BackhaulId.String(),
-		PowerId:       site.PowerId.String(),
-		AccessId:      site.AccessId.String(),
-		SwitchId:      site.SwitchId.String(),
-		Latitude:      site.Latitude,
-		Longitude:     site.Longitude,
-		InstallDate:   site.InstallDate,
 	}
 
 	route := s.baseRoutingKey.SetAction("update").SetObject("site").MustBuild()
@@ -297,6 +254,7 @@ func dbSiteToPbSite(site *db.Site) *pb.Site {
 		PowerId:       site.PowerId.String(),
 		AccessId:      site.AccessId.String(),
 		SwitchId:      site.SwitchId.String(),
+		SpectrumId:    site.SpectrumId.String(),
 		Latitude:      site.Latitude,
 		Longitude:     site.Longitude,
 		InstallDate:   site.InstallDate,

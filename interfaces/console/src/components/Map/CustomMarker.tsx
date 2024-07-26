@@ -225,7 +225,7 @@ const CustomMarker = ({
         markers.length > 0 &&
         data.map((item) => {
           const color =
-            linkSites.siteA === item.id ?? linkSites.siteB === item.id
+            (linkSites.siteA === item.id ?? linkSites.siteB === item.id)
               ? colors.secondaryMain
               : colors.black38;
           const m = markers.find((m) => m.id === item.location.id);

@@ -592,19 +592,6 @@ query getNetworks {
   }
 }
 
-query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
-    networkId
-    sites {
-      id
-      name
-      networkId
-      createdAt
-      isDeactivated
-    }
-  }
-}
-
 mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
     ...UNetwork
@@ -614,6 +601,107 @@ mutation AddNetwork($data: AddNetworkInputDto!) {
 mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
   setDefaultNetwork(data: $data) {
     success
+  }
+}
+query getSite($siteId: String!) {
+  getSite(siteId: $siteId) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+mutation addSite($data: AddSiteInputDto!) {
+  addSite(data: $data) {
+    id
+    name
+    networkId
+    backhaulId
+    powerId
+    accessId
+    spectrumId
+    switchId
+    isDeactivated
+    latitude
+    longitude
+    installDate
+    createdAt
+    location
+  }
+}
+
+query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    sites {
+      id
+      name
+      networkId
+      backhaulId
+      powerId
+      accessId
+      spectrumId
+      switchId
+      isDeactivated
+      latitude
+      longitude
+      installDate
+      createdAt
+      location
+    }
+  }
+}
+
+mutation updateSite($siteId: String!, $data: UpdateSiteInputDto!) {
+  updateSite(siteId: $siteId, data: $data) {
+    name
+  }
+}
+
+query getComponentById($componentId: String!) {
+  getComponentById(componentId: $componentId) {
+    id
+    inventoryId
+    type
+    userId
+    description
+    category
+    datasheetUrl
+    imageUrl
+    partNumber
+    manufacturer
+    managed
+    warranty
+    specification
+  }
+}
+
+query getComponentsByUserId($category: String!) {
+  getComponentsByUserId(category: $category) {
+    components {
+      id
+      inventoryId
+      type
+      userId
+      description
+      datasheetUrl
+      imageUrl
+      partNumber
+      category
+      manufacturer
+      managed
+      warranty
+      specification
+    }
   }
 }
 

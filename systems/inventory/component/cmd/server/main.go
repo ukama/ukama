@@ -86,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
-		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath)
+		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath, serviceConfig.ComponentEnvironment, serviceConfig.TestUserId)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

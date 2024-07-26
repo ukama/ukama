@@ -24,6 +24,17 @@ export type StatsItemType = {
   label: string;
   value: string;
 };
+export interface FormValues {
+  switch: string;
+  power: string;
+  backhaul: string;
+  access: string;
+  siteName: string;
+  network: string;
+  latitude: number;
+  longitude: number;
+  location: string;
+}
 
 export type Site = {
   name: string;
@@ -166,4 +177,32 @@ export type TSnackbarMessage = {
   message: string;
   type: string;
   show: boolean;
+};
+
+export type TSiteForm = {
+  switch: string;
+  power: string;
+  access: string;
+  backhaul: string;
+  address: string;
+  spectrum: string;
+  siteName: string;
+  latitude: number;
+  longitude: number;
+  network: string;
+};
+
+export type TCoordinates = {
+  lat: number | null;
+  lng: number | null;
+};
+
+export type TEnv = {
+  APP_URL: string;
+  SIM_TYPE: string;
+  METRIC_URL: string;
+  API_GW_URL: string;
+  AUTH_APP_URL: string;
+  MAP_BOX_TOKEN: string;
+  METRIC_WEBSOCKET_URL: string;
 };
