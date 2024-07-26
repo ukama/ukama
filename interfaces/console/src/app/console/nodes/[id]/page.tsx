@@ -7,7 +7,7 @@
  */
 'use client';
 
-import { metricsClient } from '@/client/client';
+import { getMetricsClient } from '@/client/client';
 import {
   Node,
   NodeTypeEnum,
@@ -56,7 +56,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage, env } = useAppContext();
 
   const [
     getNodes,
@@ -89,7 +89,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
     getNodeMetricByTab,
     { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
   ] = useGetMetricByTabLazyQuery({
-    client: metricsClient,
+    client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       setMetrics(data.getMetricByTab);

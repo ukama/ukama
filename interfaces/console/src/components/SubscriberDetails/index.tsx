@@ -214,7 +214,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
         </Box>
       </Box>
       <DialogActions>
-        {onEditName ?? onEditEmail ? (
+        {(onEditName ?? onEditEmail) ? (
           <Button
             variant="contained"
             onClick={handleSaveSubscriber}

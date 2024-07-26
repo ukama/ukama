@@ -15,14 +15,16 @@ class OrgApi extends RESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
-    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/orgs`);
+    this.logger.info(
+      `GET: ${this.baseURL}/${VERSION}/orgs?user_uuid=${userId}`
+    );
     return this.get(`/${VERSION}/orgs?user_uuid=${userId}`).then(res =>
       dtoToOrgsResDto(res)
     );
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/orgs/${orgName}`);
+    this.logger.info(`GET: ${this.baseURL}/${VERSION}/orgs/${orgName}`);
     return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
       dtoToOrgResDto(res)
     );

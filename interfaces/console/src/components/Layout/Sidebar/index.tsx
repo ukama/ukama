@@ -16,11 +16,11 @@ import {
   Drawer,
   Skeleton,
   Stack,
-  Typography,
   styled,
   Tooltip,
   tooltipClasses,
   TooltipProps,
+  Typography,
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -106,8 +106,8 @@ const Sidebar = ({
       variant="permanent"
       style={{ height: '100%', backgroundColor: 'white' }}
     >
-      <Stack direction={'column'}>
-        <Box mx={2} my={1.5}>
+      <Stack direction={'column'} mt={0.8}>
+        <Box mx={2} my={2}>
           <BasicDropdown
             value={network.id}
             list={getDropDownData()}

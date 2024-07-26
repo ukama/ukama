@@ -11,19 +11,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
-const httpLink = () =>
-  new HttpLink({
-    uri: `${process.env.NEXT_PUBLIC_METRIC_URL}/graphql`,
-    credentials: 'include',
-  });
-
-const wsLink = new GraphQLWsLink(
-  createClient({
-    url: `${process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL}/graphql`,
-  }),
-);
-
-export const MetricLink = () => {
+const MetricLink = (baseUrl: string, websocketBaseUrl: string) => {
   return split(
     ({ query }) => {
       const definition = getMainDefinition(query);
@@ -33,13 +21,22 @@ export const MetricLink = () => {
       );
     },
 
-    wsLink,
-    httpLink(),
+    new GraphQLWsLink(
+      createClient({
+        url: `${websocketBaseUrl}/graphql`,
+      }),
+    ),
+    new HttpLink({
+      uri: `${baseUrl}/graphql`,
+      credentials: 'include',
+    }),
   );
 };
 
-export const metricsClient = new ApolloClient({
-  link: MetricLink(),
-  cache: new InMemoryCache(),
-  credentials: 'include',
-});
+export const getMetricsClient = (baseUrl: string, websocketBaseUrl: string) => {
+  return new ApolloClient({
+    link: MetricLink(baseUrl, websocketBaseUrl),
+    cache: new InMemoryCache(),
+    credentials: 'include',
+  });
+};

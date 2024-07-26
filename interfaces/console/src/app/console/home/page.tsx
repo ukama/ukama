@@ -63,7 +63,7 @@ export default function Page() {
   // });
 
   // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
-  //   client: metricsClient,
+  //   client: getMetricClient("", ""),
   //   fetchPolicy: 'cache-and-network',
   // });
 
