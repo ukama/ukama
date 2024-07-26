@@ -142,7 +142,7 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
-    // removeCookie('token');
+    cookieStore.delete('token');
     const logoutRes = NextResponse.redirect(
       new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
