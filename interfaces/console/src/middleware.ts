@@ -118,8 +118,17 @@ const getUserObject = async (session: string, cookieToken: string) => {
 const middleware = async (request: NextRequest) => {
   const response = NextResponse.next();
   const { pathname } = request.nextUrl;
+
   if (pathname.includes('/ping')) {
     return response;
+  }
+
+  if (request.url.includes('logout')) {
+    const logoutRes = NextResponse.redirect(
+      new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+    );
+    logoutRes.cookies.delete('token');
+    return logoutRes;
   }
 
   const cookieStore = cookies();

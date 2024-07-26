@@ -83,7 +83,7 @@ const AccountPopover = () => {
             </Link>
             <Divider />
             <Link
-              href={`${env.AUTH_APP_URL}/user/logout`}
+              href={`/logout`}
               prefetch={true}
               style={{
                 borderRadius: 4,
