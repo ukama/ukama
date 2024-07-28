@@ -6,6 +6,8 @@ on:
       - "testing/node/**"
       - ".github/workflows/testing-node-virtualnode.yaml"
       - "nodes/ukamaOS/distro/system/**"
+      - "nodes/apps/**"
+      - "nodes/ukamaOS/distro/**"
   workflow_dispatch:
 
 jobs:
