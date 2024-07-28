@@ -4,15 +4,17 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-include ../../../../../systems/config.mk
+include ../../ukamaOS/config.mk
+
+UKAMAOS_ROOT = ../../ukamaOS
 
 .PHONY: build deps lint gen clean integration.test test
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
-	export CGO_LDFLAGS="-L../../vendor/build -lsqlite3 -Wl,-rpath=./lib"
-	export CGO_CFLAGS="-I../../vendor/build/include"
-	env CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build  -ldflags ' -s -w -X github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version.Version=$(BIN_VER)' -o bin/pcrf cmd/server/main.go
+	export CGO_LDFLAGS="-L$(UKAMAOS_ROOT)/distro/vendor/build -lsqlite3 -Wl,-rpath=./lib"
+	export CGO_CFLAGS="-I$(UKAMAOS_ROOT)/distro/vendor/build/include"
+	env CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build  -ldflags ' -s -w -X github.com/ukama/ukama/nodes/apps/pcrf/cmd/version.Version=$(BIN_VER)' -o bin/pcrf cmd/server/main.go
 
 test:
 	go test -v ./...
@@ -28,8 +30,8 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	rm mocks/*.go
+	rm -rf mocks/*.go
 
 server:
 	go run cmd/server/main.go
-    
+
