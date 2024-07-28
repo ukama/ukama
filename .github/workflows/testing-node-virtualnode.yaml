@@ -88,7 +88,7 @@ jobs:
         buildah login --username AWS --password-stdin 003664043471.dkr.ecr.us-east-1.amazonaws.com
 
     - name: OCI build and push
-      working-directory: ${{ env.working-directory }}
+      working-directory: ./testing/node
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtual/nodebuilder
       run: |
