@@ -19,7 +19,40 @@ jobs:
     - uses: actions/checkout@v2
      
     - name: Dependencies
-      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf -y
+      run: sudo apt-get update && apt-get install -y \
+            software-properties-common \
+            && add-apt-repository universe \
+            && apt-get update && apt-get install -y \
+            build-essential \
+            git \
+            wget \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libssl-dev \
+            texinfo \
+            cmake \
+            tcl \
+            zlib1g-dev \
+            texlive \
+            texlive-latex-extra \
+            ghostscript \
+            gperf \
+            gtk-doc-tools \
+            libev-dev \
+            bison \
+            jq \
+            qemu-system \
+            virt-manager \
+            virt-viewer \
+            libvirt-daemon-system \
+            libvirt-clients \
+            bridge-utils \
+            debootstrap \
+            kpartx \
+            fdisk \
+            util-linux
 
       # init vars required for tag generation
     - name: Init vars
