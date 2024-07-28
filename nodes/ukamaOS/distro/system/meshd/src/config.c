@@ -21,8 +21,10 @@
 #include "config.h"
 #include "toml.h"
 
-static int parse_config_entries(Config *config, toml_table_t *configData);
-static int read_line(char *buffer, int size, FILE *fp);
+#include "static.h"
+
+STATIC int parse_config_entries(Config *config, toml_table_t *configData);
+STATIC int read_line(char *buffer, int size, FILE *fp);
 
 void print_config(Config *config) {
 
@@ -34,7 +36,7 @@ void print_config(Config *config) {
     usys_log_debug("TLS/SSL cert file: %s",   config->certFile);
 }
 
-static int read_line(char *buffer, int size, FILE *fp) {
+STATIC int read_line(char *buffer, int size, FILE *fp) {
 
 	char *tmp;
 
@@ -52,8 +54,8 @@ static int read_line(char *buffer, int size, FILE *fp) {
 	return TRUE;
 }
 
-static void split_strings(char *input, char **str1, char **str2,
-                          char *delimiter) {
+void split_strings(char *input, char **str1, char **str2,
+                   char *delimiter) {
 
     char *token=NULL;
 
@@ -69,12 +71,16 @@ static void split_strings(char *input, char **str1, char **str2,
     }
 }
 
-static int read_nodeid(char **nodeID) {
+STATIC int read_nodeid(char **nodeID) {
 
     char buffer[MAX_BUFFER] = {0};
     FILE *fp=NULL;
 
+#ifdef UNIT_TEST
+    fp = fopen(".nodeid", "r");
+#else
     fp = fopen("/ukama/nodeid", "r");
+#endif
     if (fp == NULL) {
         usys_log_error("Unable to open /ukama/nodeid file: %s",
                        strerror(errno));
@@ -92,7 +98,7 @@ static int read_nodeid(char **nodeID) {
     return TRUE;
 }
 
-static int read_hostname_and_nodeid(char *fileName,
+STATIC int read_hostname_and_nodeid(char *fileName,
                                     char **hostname,
                                     char **subnetMask) {
 
@@ -131,7 +137,7 @@ static int read_hostname_and_nodeid(char *fileName,
 	return ret;
 }
 
-static int parse_config_entries(Config *config, toml_table_t *configData) {
+STATIC int parse_config_entries(Config *config, toml_table_t *configData) {
 
 	int ret=TRUE;
     int remote=0;
@@ -255,8 +261,8 @@ void clear_config(Config *config) {
 
 	if (!config) return;
 
-	free(config->remoteConnect);
-    free(config->localHostname);
-	free(config->certFile);
-	free(config->keyFile);
+	usys_free(config->remoteConnect);
+    usys_free(config->localHostname);
+	usys_free(config->certFile);
+	usys_free(config->keyFile);
 }

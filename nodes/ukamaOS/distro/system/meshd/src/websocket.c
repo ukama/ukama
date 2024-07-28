@@ -21,6 +21,8 @@
 #include "map.h"
 #include "config.h"
 
+#include "static.h"
+
 extern WorkList *Transmit;
 extern MapTable *ClientTable;
 extern State    *state;
@@ -30,7 +32,7 @@ extern int start_websocket_client(Config *config,
 static 	pthread_mutex_t websocketMutex;
 static	pthread_cond_t  websocketFail;
 
-static void clear_response(MResponse **resp) {
+STATIC void clear_response(MResponse **resp) {
 
 	if (*resp==NULL) return;
 
@@ -43,7 +45,7 @@ static void clear_response(MResponse **resp) {
 	free(*resp);
 }
 
-static int is_websocket_valid(WSManager *manager, char *port) {
+STATIC int is_websocket_valid(WSManager *manager, char *port) {
 
     int status;
 

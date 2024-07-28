@@ -13,6 +13,8 @@
 
 #include "work.h"
 
+#include "static.h"
+
 void init_work_list(WorkList **list) {
 
 	(*list)->first = NULL;
@@ -24,7 +26,7 @@ void init_work_list(WorkList **list) {
 	(*list)->exit = FALSE;
 }
 
-static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
+STATIC WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 								  thread_func_t post, void *postArgs) {
 
 	WorkItem *work=NULL;
