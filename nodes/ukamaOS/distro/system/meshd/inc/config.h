@@ -37,5 +37,6 @@ typedef struct {
 int process_config_file(Config *config, char *fileName);
 void clear_config(Config *config);
 void print_config(Config *config);
+void split_strings(char *input, char **str1, char **str2, char *delimiter);
 
 #endif /* MESH_CONFIG_H */

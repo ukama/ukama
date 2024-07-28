@@ -14,7 +14,9 @@
 #include "mesh.h"
 #include "jserdes.h"
 
-static void add_map_to_request(json_t **json, UMap *map, int mapType) {
+#include "static.h"
+
+STATIC void add_map_to_request(json_t **json, UMap *map, int mapType) {
 
 	json_t *jMap=NULL, *jArray=NULL;
 	int i;
@@ -141,7 +143,7 @@ int serialize_local_service_response(char **response, Message *message,
 	return TRUE;
 }
 
-static void serialize_message_data(URequest *request, char **data) {
+STATIC void serialize_message_data(URequest *request, char **data) {
 
     json_t *json, *jRaw;
 
@@ -251,7 +253,7 @@ int deserialize_node_info(NodeInfo **node, json_t *json) {
 	return TRUE;
 }
 
-static int deserialize_service_info(ServiceInfo **service, json_t *json) {
+STATIC int deserialize_service_info(ServiceInfo **service, json_t *json) {
 
 	json_t *name, *port;
   
@@ -271,7 +273,7 @@ static int deserialize_service_info(ServiceInfo **service, json_t *json) {
 	return TRUE;
 }
 
-static void deserialize_map_array(UMap **map, json_t *json) {
+STATIC void deserialize_map_array(UMap **map, json_t *json) {
 
 	json_t *jArray;
 	json_t *elem, *key, *val, *len;
@@ -300,7 +302,7 @@ static void deserialize_map_array(UMap **map, json_t *json) {
 	}
 }
 
-static void deserialize_map(URequest **request, json_t *json) {
+STATIC void deserialize_map(URequest **request, json_t *json) {
 
 	json_t *obj;
 	char *str;

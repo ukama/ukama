@@ -14,6 +14,8 @@
 #include "map.h"
 #include "mesh.h"
 
+#include "static.h"
+
 void init_map_table(MapTable **table) {
 
 	(*table)->first = NULL;
@@ -22,7 +24,7 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-static MapItem *create_map_item(char *name, char *port) {
+STATIC MapItem *create_map_item(char *name, char *port) {
 
 	MapItem *map;
 

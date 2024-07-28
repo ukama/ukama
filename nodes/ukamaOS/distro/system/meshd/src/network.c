@@ -17,6 +17,8 @@
 #include "websocket.h"
 #include "config.h"
 
+#include "static.h"
+
 #define WEB_SOCKETS 1
 #define WEB_SERVICE 0
 #define FWD_SERVICE 2
@@ -28,7 +30,7 @@ extern void websocket_incoming_message(const URequest *request,
                                        void *data);
 extern void  websocket_onclose(const URequest *request, WSManager *manager, void *data);
 
-static int init_framework(UInst *inst, int port) {
+STATIC int init_framework(UInst *inst, int port) {
 
   if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
     usys_log_error("Error initializing instance for websocket remote port %d", port);
@@ -41,7 +43,7 @@ static int init_framework(UInst *inst, int port) {
   return TRUE;
 }
 
-static void setup_webservice_endpoints(Config *config, UInst *instance) {
+STATIC void setup_webservice_endpoints(Config *config, UInst *instance) {
 
   /* Endpoint list declaration. */
   ulfius_add_endpoint_by_val(instance, "GET", PREFIX_FWDSERVICE, NULL, 0,
@@ -57,7 +59,7 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
   ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
 }
 
-static void setup_websocket_endpoints(Config *config, UInst *instance) {
+STATIC void setup_websocket_endpoints(Config *config, UInst *instance) {
 
   /* Endpoint list declaration. */
   ulfius_add_endpoint_by_val(instance, "GET", PREFIX_WEBSOCKET, NULL, 0,
@@ -73,7 +75,7 @@ static void setup_websocket_endpoints(Config *config, UInst *instance) {
   ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
 }
 
-static int start_framework(Config *config, UInst *instance, int flag) {
+STATIC int start_framework(Config *config, UInst *instance, int flag) {
 
   int ret;
   
