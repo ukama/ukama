@@ -14,8 +14,6 @@ services:
 
  member:
   build: ./member
-  ports:
-   - '9060:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -38,9 +36,7 @@ services:
    - msgclient-registry
 
  network:
-  build:
-   context: ./network
-   dockerfile: ./Dockerfile
+  build: ./network
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -63,11 +59,7 @@ services:
    - msgclient-registry
 
  node:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node
-  ports:
-   - '9072:9090'
+  build: ./node
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -80,6 +72,7 @@ services:
    - NODE_SERVICE_HOST=node
    - NODE_SERVICE_PORT=9090
    - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+   - SITE_HOST=site:9090
   restart: always
   networks:
    - ukama-net
@@ -88,8 +81,6 @@ services:
 
  invitation:
   build: ./invitation
-  ports:
-   - '9073:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -115,8 +106,6 @@ services:
 
  site:
   build: ./site
-  ports:
-   - '9079:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry

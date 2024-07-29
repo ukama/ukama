@@ -25,8 +25,7 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	OrgHost          string `default:"org:9090"`
-	SiteHost      string `default:"site:9090"`
+	SiteHost         string `default:"site:9090"`
 	OrgId            string `default:"org"`
 	OrgName          string
 }
@@ -63,6 +62,7 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
+			// Host:    "msgclient-registry:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
