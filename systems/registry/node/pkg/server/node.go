@@ -31,6 +31,7 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
@@ -83,9 +84,9 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	node := &db.Node{
 		Id: nId.StringLowercase(),
 		Status: db.NodeStatus{
-			NodeId: nId.StringLowercase(),
-			Conn:   db.Unknown,
-			State:  db.Undefined,
+			NodeId:       nId.StringLowercase(),
+			Connectivity: ukama.Unknown,
+			State:        ukama.Undefined,
 		},
 		Type: nId.GetNodeType(),
 		Name: req.Name,
@@ -197,7 +198,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 	log.Infof("Updating node state  %v", req)
 
 	dbNodeState := db.ParseNodeState(req.State)
-	dbConnState := db.ParseConnectivityState(req.Connectivity)
+	dbConnState := ukama.ParseNodeConnectivity(req.Connectivity)
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
@@ -213,7 +214,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 	}
 
 	if req.Connectivity != "" {
-		nodeUpdates.Conn = dbConnState
+		nodeUpdates.Connectivity = dbConnState
 		evt.Status = &epb.EventRegistryNodeStatusUpdate_Connectivity{
 			Connectivity: dbConnState.String(),
 		}
@@ -424,13 +425,11 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 	}
 
 	netID, err := uuid.FromString(req.GetNetworkId())
-
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
 	siteID, err := uuid.FromString(req.GetSiteId())
-
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
 
@@ -610,12 +609,11 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		Id: dbn.Id,
 		Status: &pb.NodeStatus{
-			Connectivity: dbn.Status.Conn.String(),
-			State:        dbn.Status.State.String(),
+			Connectivity: cpb.NodeConnectivity(cpb.NodeConnectivity_value[dbn.Status.Connectivity.String()]),
+			State:        cpb.NodeState(cpb.NodeState_value[dbn.Status.State.String()]),
 		},
-		Type:      dbn.Type,
-		Name:      dbn.Name,
-		CreatedAt: timestamppb.New(dbn.CreatedAt),
+		Type: dbn.Type,
+		Name: dbn.Name,
 	}
 
 	if dbn.Site.NodeId != "" {

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ukama.nodefeeder.v1;
 
-option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
 
 message NodeFeederMessage {
     string Target = 1;
