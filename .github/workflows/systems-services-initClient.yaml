@@ -56,7 +56,8 @@ jobs:
           debootstrap \
           kpartx \
           fdisk \
-          util-linux
+          util-linux \
+          gettext
 
     - name: Checkout submodules
       run: git submodule update --init --recursive
