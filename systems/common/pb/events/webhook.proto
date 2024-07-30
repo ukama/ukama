@@ -13,12 +13,12 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 package ukama.events.v1;
 
 message Webhook {
-    string requestId = 1 [json_name = "request_id"];
+    string id = 1;
     string orgName = 2 [json_name = "org_name"];
     string paylad = 3;
 }
 
 message WebhookDeletedEvent{
-    string requestId = 1 [json_name = "request_id"];
-    string orgName = 2 [json_name = "org_name"];
+    string id = 1;
+    string orgName = 2;
 }
