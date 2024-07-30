@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "systems/services/initClient/**"
+      - "nodes/ukamaOS/distro/vendor/**"
       - ".github/workflows/systems-services-initClient.yaml"
   workflow_dispatch:
 
