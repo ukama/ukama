@@ -154,7 +154,8 @@ jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
 	(mkdir -p $@/$(BUILD_DIR) && cd $@ && \
-	libtoolize && aclocal && autoconf && automake --add-missing --force-missing && autoreconf -i && \
+	libtoolize && aclocal && autoheader && autoconf && \
+	automake --add-missing --force-missing && autoreconf -i && \
 	cd $(BUILD_DIR) && \
 	../configure CC=$(XCC) --host=$(HOST) --enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
