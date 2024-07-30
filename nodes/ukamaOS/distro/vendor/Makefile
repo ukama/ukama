@@ -162,6 +162,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
 	find . -name 'config.log' -exec rm -f {} + && \
 	find . -name 'config.status' -exec rm -f {} + && \
 	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoupdate && \
 	libtoolize --force && aclocal && autoheader && autoconf && automake --add-missing --force-missing && autoreconf -i && \
 	cd $(BUILD_DIR) && \
 	../configure CC=$(XCC) --host=$(HOST) \
