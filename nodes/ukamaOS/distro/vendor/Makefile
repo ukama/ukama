@@ -153,9 +153,10 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@ && autoreconf -i && cd $(BUILD_DIR) && \
-		../configure CC=$(XCC) --host=$(HOST) \
-		--enable-static --prefix=$(DEPDIR) && \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@ && \
+	libtoolize && aclocal && autoconf && automake --add-missing --force-missing && autoreconf -i && \
+	cd $(BUILD_DIR) && \
+	../configure CC=$(XCC) --host=$(HOST) --enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
