@@ -60,27 +60,12 @@ jobs:
           fdisk \
           util-linux
 
-        # Install gettext from source
-        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
-          && tar -xvf gettext-0.21.tar.gz \
-          && cd gettext-0.21 \
-          && ./configure \
-          && make \
-          && sudo make install \
-          && cd .. \
-          && rm -rf gettext-0.21.tar.gz \
-          && rm -rf gettext-0.21
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
 
-        # Install libtool from source
-        wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
-          && tar -xzf libtool-2.4.7.tar.gz \
-          && cd libtool-2.4.7 \
-          && ./configure \
-          && make \
-          && sudo make install \
-          && cd .. \
-          && rm -rf libtool-2.4.7.tar.gz \
-          && rm -rf libtool-2.4.7
+    - name: Granting private modules access
+      run: git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
     - name: Checkout submodules
       run: git submodule update --init --recursive
