@@ -34,7 +34,7 @@ const uuidParsingError = "Error parsing UUID"
 
 type RateServer struct {
 	orgName        string
-	baseRate       client.BaseRateSrvc
+	baseRate       client.BaserateClientProvider
 	markupRepo     db.MarkupsRepo
 	defaultRepo    db.DefaultMarkupRepo
 	msgBus         mb.MsgBusServiceClient
@@ -42,7 +42,7 @@ type RateServer struct {
 	pb.UnimplementedRateServiceServer
 }
 
-func NewRateServer(orgName string, markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkupRepo, baseRate client.BaseRateSrvc, msgBus mb.MsgBusServiceClient) *RateServer {
+func NewRateServer(orgName string, markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkupRepo, baseRate client.BaserateClientProvider, msgBus mb.MsgBusServiceClient) *RateServer {
 
 	return &RateServer{
 		orgName:        orgName,
@@ -231,7 +231,13 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 
 	to := toT.Format(time.RFC3339)
 	from := fromT.Format(time.RFC3339)
-	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesByPeriodRequest{
+
+	baserateSvc, err := r.baseRate.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	baserates, err := baserateSvc.GetBaseRatesForPeriod(ctx, &bpb.GetBaseRatesByPeriodRequest{
 		Country:  req.Country,
 		Provider: req.Provider,
 		To:       to,
@@ -243,13 +249,13 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, grpc.SqlErrorToGrpc(err, "baserates")
 	}
 
-	if rates == nil || len(rates.GetRates()) == 0 {
+	if baserates == nil || len(baserates.GetRates()) == 0 {
 		log.Errorf("no valid base rates found")
 		return nil, grpc.SqlErrorToGrpc(fmt.Errorf("no valid base rates found"), "baserates")
 	}
 
 	rateList := &pb.GetRateResponse{
-		Rates: baseratesToMarkupRates(rates.GetRates(), markup),
+		Rates: baseratesToMarkupRates(baserates.GetRates(), markup),
 	}
 
 	return rateList, nil
@@ -270,7 +276,12 @@ func (r *RateServer) GetRateById(ctx context.Context, req *pb.GetRateByIdRequest
 		return nil, err
 	}
 
-	rates, err := r.baseRate.GetBaseRate(&bpb.GetBaseRatesByIdRequest{
+	baserateSvc, err := r.baseRate.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	rates, err := baserateSvc.GetBaseRatesById(ctx, &bpb.GetBaseRatesByIdRequest{
 		Uuid: req.BaseRate,
 	})
 	if err != nil {

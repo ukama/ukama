@@ -36,6 +36,5 @@ func NewConfig(name string) *Config {
 			Timeout:        5 * time.Second,
 			ListenerRoutes: nil,
 		},
-		BaseRate: "base-rate:9090",
 	}
 }

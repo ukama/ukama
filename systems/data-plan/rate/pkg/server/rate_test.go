@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	splmocks "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen/mocks"
 )
 
 const OrgName = "testorg"
@@ -33,11 +34,11 @@ func TestRateService_GetMarkup(t *testing.T) {
 	t.Run("MarkupforOwnerIdExists", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		markups := &db.Markups{
 			OwnerId: uuid.NewV4(),
@@ -61,11 +62,11 @@ func TestRateService_GetMarkup(t *testing.T) {
 	t.Run("MarkupforOwnerIdDoesn'tExists", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		markups := &db.Markups{
 			OwnerId: uuid.NewV4(),
@@ -100,11 +101,11 @@ func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 	t.Run("UpdateDefaultMarkupSuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		defMarkup := &db.DefaultMarkup{
 			Markup: 5,
@@ -129,11 +130,11 @@ func TestRateService_GetDefaultMarkup(t *testing.T) {
 	t.Run("GetDefaultMarkupSuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		defMarkup := &db.DefaultMarkup{
 			Markup: 5,
@@ -155,11 +156,11 @@ func TestRateService_GetDefaultMarkupHistory(t *testing.T) {
 	t.Run("GetDefaultMarkupHistorySuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 		cTime, err := time.Parse(time.RFC3339, "2021-11-12T11:45:26.371Z")
 		assert.NoError(t, err)
 		uTime, err := time.Parse(time.RFC3339, "2022-10-12T11:45:26.371Z")
@@ -211,11 +212,11 @@ func TestRateService_GetRate(t *testing.T) {
 	t.Run("GetRate_Success", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 		ownerId := uuid.NewV4()
 
 		req := &pb.GetRateRequest{
@@ -257,13 +258,36 @@ func TestRateService_GetRate(t *testing.T) {
 		}
 
 		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
-		baseRate.On("GetBaseRates", &bpb.GetBaseRatesByPeriodRequest{
+		baserateClient := baserateSvc.On("GetClient").
+			Return(&splmocks.BaseRatesServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*splmocks.BaseRatesServiceClient)
+
+		baserateClient.On("GetBaseRatesForPeriod", mock.Anything, &bpb.GetBaseRatesByPeriodRequest{
 			Country:  req.Country,
 			Provider: req.Provider,
 			To:       to.Format(time.RFC3339),
 			From:     from.Format(time.RFC3339),
 			SimType:  req.SimType,
-		}).Return(rates, nil)
+		}).Return(&bpb.GetBaseRatesResponse{
+			Rates: []*bpb.Rate{
+				{
+					X2G:         true,
+					X3G:         true,
+					Apn:         "Manual entry required",
+					Country:     req.Country,
+					Data:        0.0014,
+					EffectiveAt: "2033-04-20T20:31:24+00:00",
+					Imsi:        1,
+					Lte:         true,
+					Provider:    "Multi Tel",
+					SimType:     rates.Rates[0].SimType,
+					SmsMo:       0.0100,
+					SmsMt:       0.0001,
+					Vpmn:        "TTC",
+				},
+			},
+		}, nil).Once()
 
 		rateRes, err := rateService.GetRate(context.Background(), req)
 		assert.NoError(t, err)
@@ -275,7 +299,7 @@ func TestRateService_GetRate(t *testing.T) {
 		}
 
 		markupRepo.AssertExpectations(t)
-		baseRate.AssertExpectations(t)
+		baserateClient.AssertExpectations(t)
 		defMarkupRepo.AssertExpectations(t)
 	})
 }
@@ -285,11 +309,11 @@ func TestRateService_UpdateMarkup(t *testing.T) {
 	t.Run("UpdateMarkupSuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		markup := &db.Markups{
 			OwnerId: uuid.NewV4(),
@@ -316,11 +340,11 @@ func TestRateService_DeleteMarkup(t *testing.T) {
 	t.Run("DeleteMarkupSuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		markup := &db.Markups{
 			OwnerId: uuid.NewV4(),
@@ -346,11 +370,11 @@ func TestRateService_GetMarkupVal(t *testing.T) {
 	t.Run("GetMarkupSuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 
 		markup := &db.Markups{
 			OwnerId: uuid.NewV4(),
@@ -378,11 +402,11 @@ func TestRateService_GetMarkupHistory(t *testing.T) {
 	t.Run("GetMarkupHistorySuccess", func(t *testing.T) {
 		markupRepo := &mocks.MarkupsRepo{}
 		defMarkupRepo := &mocks.DefaultMarkupRepo{}
-		baseRate := &mocks.BaseRateSrvc{}
+		baserateSvc := &mocks.BaserateClientProvider{}
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		OwnerId := uuid.NewV4()
 
-		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
 		cTime, err := time.Parse(time.RFC3339, "2021-11-12T11:45:26.371Z")
 		assert.NoError(t, err)
 		uTime, err := time.Parse(time.RFC3339, "2022-10-12T11:45:26.371Z")
