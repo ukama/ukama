@@ -14,9 +14,9 @@ type PackageRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: packageData, packageRate
-func (_m *PackageRepo) Add(packageData *db.Package, packageRate *db.PackageRate) error {
-	ret := _m.Called(packageData, packageRate)
+// Add provides a mock function with given fields: dataPackage, packageRate
+func (_m *PackageRepo) Add(dataPackage *db.Package, packageRate *db.PackageRate) error {
+	ret := _m.Called(dataPackage, packageRate)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
@@ -24,7 +24,7 @@ func (_m *PackageRepo) Add(packageData *db.Package, packageRate *db.PackageRate)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Package, *db.PackageRate) error); ok {
-		r0 = rf(packageData, packageRate)
+		r0 = rf(dataPackage, packageRate)
 	} else {
 		r0 = ret.Error(0)
 	}

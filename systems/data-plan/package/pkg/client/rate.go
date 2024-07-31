@@ -9,7 +9,7 @@
 package client
 
 import (
-	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
@@ -19,45 +19,35 @@ import (
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
-type Rate struct {
-	conn    *grpc.ClientConn
-	timeout time.Duration
-	client  pb.RateServiceClient
+type RateClientProvider interface {
+	GetClient() (pb.RateServiceClient, error)
 }
 
-type RateService interface {
-	GetRates(req *pb.GetRatesRequest) (*pb.GetRatesResponse, error)
-	GetRateById(req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error)
+type rateClientProvider struct {
+	rateService pb.RateServiceClient
+	rateHost    string
+	timeout     time.Duration
 }
 
-func NewRate(rate string, timeout time.Duration) (*Rate, error) {
+func NewRateClientProvider(rateHost string, timeout time.Duration) RateClientProvider {
+	return &rateClientProvider{rateHost: rateHost, timeout: timeout}
+}
 
-	conn, err := grpc.NewClient(rate, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
-		return nil, err
+func (rt *rateClientProvider) GetClient() (pb.RateServiceClient, error) {
+	if rt.rateService == nil {
+		var conn *grpc.ClientConn
+
+		log.Infoln("Connecting to Rate service ", rt.rateHost)
+
+		conn, err := grpc.NewClient(rt.rateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Errorf("Failed to connect to Rate service %s. Error: %v", rt.rateHost, err)
+
+			return nil, fmt.Errorf("failed to connect to remote Rate service: %w", err)
+		}
+
+		rt.rateService = pb.NewRateServiceClient(conn)
 	}
-	client := pb.NewRateServiceClient(conn)
 
-	return &Rate{
-		conn:    conn,
-		client:  client,
-		timeout: timeout,
-	}, nil
-}
-
-func (c *Rate) Close() {
-	c.conn.Close()
-}
-
-func (c *Rate) GetRates(req *pb.GetRatesRequest) (*pb.GetRatesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-	return c.client.GetRates(ctx, req)
-}
-
-func (c *Rate) GetRateById(req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-	return c.client.GetRateById(ctx, req)
+	return rt.rateService, nil
 }

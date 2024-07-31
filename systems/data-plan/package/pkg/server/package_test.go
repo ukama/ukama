@@ -31,6 +31,7 @@ import (
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
+	splmocks "github.com/ukama/ukama/systems/data-plan/rate/pb/gen/mocks"
 )
 
 const OrgName = "testorg"
@@ -161,12 +162,17 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	baserate := uuid.NewV4().String()
 	packageRepo := &mocks.PackageRepo{}
-	rate := &mocks.RateService{}
+	rate := &mocks.RateClientProvider{}
 	packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
 		return p.Active == true && p.Name == "daily-pack"
 	}), mock.Anything).Return(nil).Once()
 
-	rate.On("GetRateById", &rpb.GetRateByIdRequest{
+	rateClient := rate.On("GetClient").
+		Return(&splmocks.RateServiceClient{}, nil).
+		Once().
+		ReturnArguments.Get(0).(*splmocks.RateServiceClient)
+
+	rateClient.On("GetRateById", &rpb.GetRateByIdRequest{
 		OwnerId:  ownerId,
 		BaseRate: baserate,
 	}).Return(&rpb.GetRateByIdResponse{
@@ -178,6 +184,23 @@ func TestPackageServer_AddPackage(t *testing.T) {
 			Provider: "ukama",
 		},
 	}, nil).Once()
+
+	rateResp := rateClient.On("GetRateById", mock.Anything,
+		&rpb.GetRateByIdRequest{
+			OwnerId:  ownerId,
+			BaseRate: baserate,
+		}).
+		Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{
+				SmsMo:    1,
+				SmsMt:    1,
+				Data:     10,
+				Country:  "USA",
+				Provider: "ukama",
+			},
+		}, nil).Once().
+		ReturnArguments.Get(0).(*rpb.GetRateByIdResponse)
+
 	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
 
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
@@ -186,6 +209,8 @@ func TestPackageServer_AddPackage(t *testing.T) {
 		SimType:    testSim,
 		OwnerId:    ownerId,
 		BaserateId: baserate,
+		Country:    rateResp.Rate.Country,
+		Provider:   rateResp.Rate.Provider,
 		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
 	})
