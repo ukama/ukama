@@ -50,7 +50,7 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: starter.d [options]");
+    usys_puts("Usage: lookout.d [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");

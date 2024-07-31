@@ -30,6 +30,9 @@
 #define DEF_LOG_LEVEL "TRACE"
 #define SERVICE_NAME  SERVICE_BOOTSTRAP
 
+/* web_service.c */
+extern int start_web_services(struct _u_instance *inst);
+
 static void usage() {
 
 	printf("bootstrap: ukama's node bootstrap client \n");
@@ -181,9 +184,12 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-3: connect with the ukama bootstrap server */
-    send_request_to_init_with_exponential_backoff(config->bootstrapRemoteServer,
-                                                  config->bootstrapRemotePort,
-                                                  nodeID, serverInfo);
+    if (send_request_to_init_with_exponential_backoff(config->bootstrapRemoteServer,
+                                                      config->bootstrapRemotePort,
+                                                      nodeID, serverInfo) != TRUE) {
+        usys_log_error("Error sending request to init");
+        goto done;
+    }
 
 	/* Step-4: read mesh config file, update server IP and certs */
 	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {

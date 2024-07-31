@@ -25,6 +25,8 @@
 #include "usys_services.h"
 #include "usys_log.h"
 
+#include "static.h"
+
 typedef struct _response {
 	char *buffer;
 	size_t size;
@@ -34,7 +36,7 @@ extern WorkList *Transmit; /* global */
 extern MapTable *ClientTable;
 
 
-static size_t response_callback(void *contents, size_t size, size_t nmemb,
+STATIC size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
 	size_t realsize = size * nmemb;
@@ -66,7 +68,7 @@ void clear_request(MRequest **data) {
 	free(*data);
 }
 
-static void find_service_name_and_ep(char *input,
+STATIC void find_service_name_and_ep(char *input,
                                      char **name,
                                      char **ep) {
 
@@ -84,7 +86,7 @@ static void find_service_name_and_ep(char *input,
     }
 }
 
-static int send_data_to_local_service(URequest *data,
+STATIC int send_data_to_local_service(URequest *data,
                                       char *hostname,
                                       int *httpStatus,
                                       char **retStr) {

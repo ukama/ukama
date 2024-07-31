@@ -20,6 +20,7 @@ void *usys_malloc(size_t size) {
 void usys_free(void *ptr) {
     if (ptr) {
         free(ptr);
+	ptr = NULL;
     }
 }
 

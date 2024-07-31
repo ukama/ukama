@@ -24,8 +24,10 @@
 #include "jserdes.h"
 #include "map.h"
 #include "httpStatus.h"
+#include "config.h"
 
 #include "version.h"
+#include "static.h"
 
 extern WorkList *Transmit;
 extern MapTable *ClientTable;
@@ -39,8 +41,8 @@ extern void websocket_manager(const URequest *request, WSManager *manager,
 extern void websocket_incoming_message(const URequest *request,
 									   WSManager *manager, WSMessage *message,
 									   void *data);
-extern void  websocket_onclose(const URequest *request, WSManager *manager,
-							   void *data);
+extern void websocket_onclose(const URequest *request, WSManager *manager,
+                              void *data);
 
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
@@ -92,22 +94,6 @@ int callback_not_allowed(const URequest *request,
                                     HttpStatus_Forbidden,
                                     HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
-}
-
-static void split_strings(char *input, char **str1, char **str2, char *delimiter) {
-
-    char *token=NULL;
-
-    token = strtok(input, delimiter);
-
-    if (token != NULL && str1) {
-        *str1 = strdup(token);
-
-        token = strtok(NULL, delimiter);
-        if (token != NULL && str2) {
-            *str2 = strdup(token);
-        }
-    }
 }
 
 int callback_forward_service(const URequest *request,

@@ -36,10 +36,11 @@ typedef struct {
 	char *org;  /* Organization this Node belong's */
 } ServerInfo;
 
-void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
-                                                   int bootstrapPort,
-                                                   char *uuid,
-                                                   ServerInfo *server);
+int send_request_to_init_with_exponential_backoff(char *bootstrapServer,
+                                                  int bootstrapPort,
+                                                  char *uuid,
+                                                  ServerInfo *server);
 void free_server_info(ServerInfo *server);
 void log_debug_server(ServerInfo *server);
+
 #endif /* SERVER_H */

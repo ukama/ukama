@@ -4,3 +4,5 @@
 mprof*
 /*.tar.gz
 mesh.d
+version.h
+static.h

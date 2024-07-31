@@ -19,6 +19,7 @@
 
 #include "httpStatus.h"
 #include "jserdes.h"
+#include "nodeInfo.h"
 #include "server.h"
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
@@ -162,10 +163,10 @@ static int send_request_to_init(char *remoteServer, int remotePort,
 	return ret;
 }
 
-void send_request_to_init_with_exponential_backoff(char *remoteServer,
-                                                   int remotePort,
-                                                   char *uuid,
-                                                   ServerInfo *server) {
+int send_request_to_init_with_exponential_backoff(char *remoteServer,
+                                                  int remotePort,
+                                                  char *uuid,
+                                                  ServerInfo *server) {
 
     int backoffTime=1;
     int maxBackoff, backoffInterval;
@@ -181,7 +182,7 @@ void send_request_to_init_with_exponential_backoff(char *remoteServer,
                                  &responseStr) == TRUE) {
 
             if (responseStr) free(responseStr);
-            return;
+            return FALSE;
         }
 
         // Calculate exponential backoff time
@@ -198,10 +199,6 @@ void send_request_to_init_with_exponential_backoff(char *remoteServer,
     } while (TRUE);
 }
 
-/*
- * clear_server --
- *
- */
 void free_server_info(ServerInfo *server) {
 
 	if (server == NULL) return;
@@ -211,10 +208,6 @@ void free_server_info(ServerInfo *server) {
 	if (server->org)  free(server->org);
 }
 
-/*
- * log_debug_server --
- *
- */
 void log_debug_server(ServerInfo *server) {
 
 	if (server == NULL) return;
