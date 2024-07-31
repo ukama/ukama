@@ -57,7 +57,8 @@ jobs:
           debootstrap \
           kpartx \
           fdisk \
-          util-linux
+          util-linux \
+          libtool
 
         # Install gettext from source
         wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
@@ -70,8 +71,13 @@ jobs:
           && rm -rf gettext-0.21.tar.gz \
           && rm -rf gettext-0.21
 
-        # Install libtool from source
-        wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
+    - name: Build libmicrohttpd using libtool 2.4.7
+      working-directory: nodes/ukamaOS/distro/vendor
+      run: |
+       wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
           && tar -xzf libtool-2.4.7.tar.gz \
           && cd libtool-2.4.7 \
           && ./configure \
@@ -79,12 +85,17 @@ jobs:
           && sudo make install \
           && cd .. \
           && rm -rf libtool-2.4.7.tar.gz \
-          && rm -rf libtool-2.4.7
+          && rm -rf libtool-2.4.7 \
+          && make libmicrohttpd TARGET=linux
 
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
+    - name: Revert libtool to default
+      run: |
+        sudo rm /usr/local/bin/libtool
+        sudo rm /usr/local/bin/libtoolize
+        sudo rm -rf /usr/local/share/libtool
+        sudo apt-get install --reinstall libtool
 
-    - name: Build vendor libs
+    - name: Build vendor libs using default libtool
       working-directory: nodes/ukamaOS/distro/vendor
       run: make TARGET=linux
 
