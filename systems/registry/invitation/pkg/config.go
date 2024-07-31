@@ -22,13 +22,16 @@ type Config struct {
 	Queue                *uconf.Queue      `default:"{}"`
 	Timeout              time.Duration     `default:"3s"`
 	MsgClient            *config.MsgClient `default:"{}"`
-	OrgRegistryHost      string            `default:"http://org:8080"`
 	Service              *uconf.Service
-	InvitationExpiryTime uint   `default:"24"`
-	NotificationHost     string `default:"http://192.168.1.81:8089"`
-	AuthLoginbaseURL     string `default:"http://localhost:4455/auth/login"`
 	OrgName              string
 	TemplateName         string `default:"member-invite"`
+	InvitationExpiryTime uint   `default:"24"`
+	AuthLoginbaseURL     string `default:"http://localhost:4455/auth/login"`
+	Http                 HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `defaut:"localhost:8080"`
 }
 
 func NewConfig(name string) *Config {

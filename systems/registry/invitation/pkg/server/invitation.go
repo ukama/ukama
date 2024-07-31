@@ -43,11 +43,10 @@ type InvitationServer struct {
 	mailerClient         cnotif.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	// unused?
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus         mb.MsgBusServiceClient
-	orgName        string
-	TemplateName   string
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
+	orgName              string
+	TemplateName         string
 }
 
 func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
