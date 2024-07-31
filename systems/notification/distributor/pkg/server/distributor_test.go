@@ -31,9 +31,8 @@ const testOrgName = "test-org"
 
 var testOrgId = uuid.NewV4().String()
 
-func InitClient(n providers.NucleusProvider, r providers.RegistryProvider, s providers.SubscriberProvider) Clients {
+func InitClient(r providers.RegistryProvider, s providers.SubscriberProvider) Clients {
 	return Clients{
-		Nucleus:    n,
 		Registry:   r,
 		Subscriber: s,
 	}
@@ -43,13 +42,12 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	// Arrange
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	eNotify := &mocks.EventNotifyClientProvider{}
-	nucleus := &mocks.NucleusProvider{}
 	registry := &mocks.RegistryProvider{}
 	subscriber := &mocks.SubscriberProvider{}
 	ndb := &mocks.NotifyHandler{}
 	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
 
-	c := InitClient(nucleus, registry, subscriber)
+	c := InitClient(registry, subscriber)
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,

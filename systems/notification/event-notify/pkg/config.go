@@ -27,14 +27,6 @@ type Config struct {
 	OrgId            string
 }
 
-// func newPbEvent(event proto.Message) *anypb.Any {
-// 	pb, err := anypb.New(event)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create protobuf event: %v", err)
-// 	}
-// 	return pb
-// }
-
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{

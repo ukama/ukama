@@ -59,8 +59,6 @@ func runGrpcServer() {
 
 	c := server.Clients{}
 
-	c.Nucleus = providers.NewNucleusProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
-
 	c.Registry = providers.NewRegistryProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
 
 	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
