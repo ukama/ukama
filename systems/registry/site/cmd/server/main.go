@@ -27,6 +27,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	generated "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -41,7 +42,6 @@ func main() {
 	runGrpcServer(siteDb)
 }
 func initConfig() {
-
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -72,7 +72,13 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	invClient := cinvent.NewComponentClient(serviceConfig.InventoryHost)
+
+	invtUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "inventory"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve inventory address: %v", err)
+	}
+
+	invClient := cinvent.NewComponentClient(invtUrl.String())
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
