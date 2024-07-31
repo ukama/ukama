@@ -26,7 +26,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -73,12 +72,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	nuclUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "nucleus"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to resolve nucleus address: %v", err)
-	}
-
-	orgClient := cnucl.NewOrgClient(nuclUrl.String())
+	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

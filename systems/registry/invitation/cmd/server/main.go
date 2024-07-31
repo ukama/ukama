@@ -73,18 +73,14 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	nuclUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "nucleus"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to resolve nucleus address: %v", err)
-	}
 	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to resolve notification address: %v", err)
 	}
 
 	mailerClient := cnotif.NewMailerClient(notifUrl.String())
-	orgClient := cnucl.NewOrgClient(nuclUrl.String())
-	userClient := cnucl.NewUserClient(nuclUrl.String())
+	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
+	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
 		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,

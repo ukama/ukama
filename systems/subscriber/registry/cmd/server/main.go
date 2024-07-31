@@ -83,12 +83,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	networkClient := creg.NewNetworkClient(regUrl.String())
 
-	nucUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "nucleus"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to resolve nucleus address: %v", err)
-	}
-
-	orgClient := cnucl.NewOrgClient(nucUrl.String())
+	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

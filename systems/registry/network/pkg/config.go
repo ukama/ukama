@@ -39,7 +39,8 @@ type Config struct {
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"localhost:8080"`
+	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
+	InitClient    string `defaut:"api-gateway-init:8080"`
 }
 
 var NetworkMetric = []metric.MetricConfig{
