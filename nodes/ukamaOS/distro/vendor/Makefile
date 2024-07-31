@@ -335,6 +335,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 	find . -name 'config.log' -exec rm -f {} + && \
 	find . -name 'config.status' -exec rm -f {} + && \
 	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoupdate && \
 	autoreconf --force --install --verbose && cd -
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
@@ -346,7 +347,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--disable-valgrind-tests --disable-guile --enable-local-libopts \
 		--without-idn --disable-doc --without-p11-kit \
 		--disable-hardware-acceleration \
-        --disable-rsa \
+        	--disable-rsa \
 		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
 	cp ../src/gl/parse-datetime.c ./src/gl/ && \
 	make -j${NPROCS} && make -j${NPROCS} install
