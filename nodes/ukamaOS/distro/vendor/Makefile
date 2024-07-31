@@ -153,8 +153,21 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@ && autoreconf -i && cd $(BUILD_DIR) && \
-		../configure CC=$(XCC) --host=$(HOST) \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@ && \
+	find . -name 'libtool' -exec rm -f {} + && \
+	find . -name 'ltmain.sh' -exec rm -f {} + && \
+	find . -name 'aclocal.m4' -exec rm -f {} + && \
+	find . -name 'autom4te.cache' -exec rm -rf {} + && \
+	find . -name 'configure' -exec rm -f {} + && \
+	find . -name 'config.log' -exec rm -f {} + && \
+	find . -name 'config.status' -exec rm -f {} + && \
+	find . -name 'Makefile.in' -exec rm -f {} + && \
+	autoupdate && \
+	libtoolize --force --copy --automake && \
+	aclocal && autoheader && autoconf && \
+	automake --add-missing --force-missing && autoreconf -i && \
+	cd $(BUILD_DIR) && \
+	../configure CC=$(XCC) --host=$(HOST) \
 		--enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})

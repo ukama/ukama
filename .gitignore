@@ -28,3 +28,4 @@ systems/testing/integration/pkg/user_stories/coverage.out
 systems/console-bff/.cache/*
 dump.rdb
 interfaces/console/pkg
+systems/billing/provider/.env

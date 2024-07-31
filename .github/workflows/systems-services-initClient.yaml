@@ -1,13 +1,15 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+
 name: build-systems-services-initClient
-on:  
-  push:   
+
+on:
+  push:
     paths:
-        - "systems/services/initClient/**"
-        - ".github/workflows/systems-services-initClient.yaml"
- 
+      - "systems/services/initClient/**"
+      - "nodes/ukamaOS/distro/vendor/**"
+      - ".github/workflows/systems-services-initClient.yaml"
   workflow_dispatch:
 
 jobs:
@@ -16,22 +18,78 @@ jobs:
       working-directory: systems/services/initClient
 
     name: build and test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+
+    - name: Dependencies
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository universe
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          build-essential \
+          git \
+          wget \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libssl-dev \
+          texinfo \
+          cmake \
+          tcl \
+          zlib1g-dev \
+          texlive \
+          texlive-latex-extra \
+          ghostscript \
+          gperf \
+          gtk-doc-tools \
+          libev-dev \
+          bison \
+          jq \
+          qemu-system \
+          virt-manager \
+          virt-viewer \
+          libvirt-daemon-system \
+          libvirt-clients \
+          bridge-utils \
+          debootstrap \
+          kpartx \
+          fdisk \
+          util-linux
+
+        # Install gettext from source
+        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
+          && tar -xvf gettext-0.21.tar.gz \
+          && cd gettext-0.21 \
+          && ./configure \
+          && make \
+          && sudo make install \
+          && cd .. \
+          && rm -rf gettext-0.21.tar.gz \
+          && rm -rf gettext-0.21
+
+        # Install libtool from source
+        wget http://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz \
+          && tar -xzf libtool-2.4.7.tar.gz \
+          && cd libtool-2.4.7 \
+          && ./configure \
+          && make \
+          && sudo make install \
+          && cd .. \
+          && rm -rf libtool-2.4.7.tar.gz \
+          && rm -rf libtool-2.4.7
 
     - name: Checkout submodules
       run: git submodule update --init --recursive
 
-    - name: Dependencies
-      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf -y
-
-    - name: build vendor libs
+    - name: Build vendor libs
       working-directory: nodes/ukamaOS/distro/vendor
-      run: |
-        make
-      
-    - name: build app
+      run: make TARGET=linux
+
+    - name: Build app
       uses: ./.github/actions/build-c
       with:
         registry-name: services/initclient
@@ -40,28 +98,28 @@ jobs:
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
         build-listener: false
-            
-  release:
-      name: release
-      needs: [build]
-      if: github.ref == 'refs/heads/main'
-      runs-on: ubuntu-latest
-      env:
-        working-directory: systems/services/initClient
-      steps:
-        - uses: actions/checkout@v3
-        
-        - name: Init vars
-          id: vars_step
-          uses: ./.github/actions/git-vars
 
-        - name: update gitops
-          uses: denispalnitsky/gitops-release@v9
-          with:
-            filename: "releases/services-helmfile.yaml"
-            key: "initClientImageTag"
-            value:  ${{ steps.vars_step.outputs.sha-short }}
-            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-            github-org-and-repo: "ukama/infra-as-code"
-            github-user-mail: "bot@ukama.com"
-            github-username: "ukama-bot"
+  release:
+    name: release
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      working-directory: systems/services/initClient
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
+
+    - name: Update gitops
+      uses: denispalnitsky/gitops-release@v9
+      with:
+        filename: "releases/services-helmfile.yaml"
+        key: "initClientImageTag"
+        value: ${{ steps.vars_step.outputs.sha-short }}
+        github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+        github-org-and-repo: "ukama/infra-as-code"
+        github-user-mail: "bot@ukama.com"
+        github-username: "ukama-bot"

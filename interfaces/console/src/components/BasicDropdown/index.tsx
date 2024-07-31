@@ -35,7 +35,7 @@ const BasicDropdown = ({
         value?.length
           ? Array.isArray(value)
             ? value.join(', ')
-            : value
+            : list?.find((item) => item.value === value)?.label
           : placeholder
       }
       onChange={(e) => handleOnChange(e.target.value)}

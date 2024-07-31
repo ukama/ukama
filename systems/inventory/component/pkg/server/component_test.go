@@ -31,7 +31,7 @@ func TestComponentServer_Get(t *testing.T) {
 		compRepo.On("Get", cId).Return(
 			&db.Component{Id: cId}, nil).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
 		compResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			Id: cId.String()})
 
@@ -49,7 +49,7 @@ func TestComponentServer_Get(t *testing.T) {
 
 		compRepo.On("Get", cId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
 		compResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			Id: cId.String()})
 
@@ -84,7 +84,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 					Specification: "spec",
 				}}, nil).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
 
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{

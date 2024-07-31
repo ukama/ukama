@@ -35,6 +35,9 @@ filter_make_sys() {
             "init")
                 PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway")
                 ;;
+            "inventory")
+                PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
+                ;;
             "services")
                 PATHS+=("services/msgClient")
                 ;;
