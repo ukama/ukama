@@ -1,0 +1,78 @@
+name: build-node-ukamaos
+
+on:
+  push:
+    paths:
+      - ".github/workflows/node-ukamaos.yaml"
+      - "nodes/ukamaOS/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Dependencies
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository universe
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          build-essential \
+          git \
+          wget \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libssl-dev \
+          texinfo \
+          cmake \
+          tcl \
+          zlib1g-dev \
+          texlive \
+          texlive-latex-extra \
+          ghostscript \
+          gperf \
+          gtk-doc-tools \
+          libev-dev \
+          bison \
+          jq \
+          qemu-system \
+          virt-manager \
+          virt-viewer \
+          libvirt-daemon-system \
+          libvirt-clients \
+          bridge-utils \
+          debootstrap \
+          kpartx \
+          fdisk \
+          util-linux
+
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
+
+    - name: Granting private modules access
+      run: git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
+    
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+    
+    - name: Build vendor libraries
+      working-directory: ./nodes/ukamaOS/distro/vendor
+      run: make TARGET=linux
+       
+    - name: Build the builder
+      working-directory: ./builder
+      run: make
+
+    - name: Build ukamaOS using the builder
+      working-directory: ./builder
+      run: ./builder ukamaos build
+
