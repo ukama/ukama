@@ -126,10 +126,8 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	// Log the NodeID
 	r.logger.WithField("node_id", nId).Info("Received log data")
 
-	// Define the log file path
 	logFileName := "log_" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"
 	logFilePath := filepath.Join("logs", logFileName)
 

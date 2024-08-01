@@ -56,6 +56,10 @@ type AttachNodesRequest struct {
 	AmpNodeL string `json:"anodel"`
 	AmpNodeR string `json:"anoder"`
 }
+type GetBySiteResponse struct {
+	SiteId string     `json:"site_id"`
+	Nodes  []*NodeInfo `json:"nodes"`
+}
 
 type AddToSiteRequest struct {
 	// NodeId string `json:"node_id" path:"node_id" validate:"required"`
@@ -69,6 +73,7 @@ type NodeClient interface {
 	GetAll() ([]*NodeInfo, error)
 	Add(AddNodeRequest) (*NodeInfo, error)
 	Attach(string, AttachNodesRequest) error
+	GetBySite(string)([]*NodeInfo, error)
 	Detach(string) error
 	AddToSite(string, AddToSiteRequest) error
 	RemoveFromSite(string) error
@@ -245,4 +250,27 @@ func (n *nodeClient) GetAll() ([]*NodeInfo, error) {
 	}
 
 	return nodes.NodeList, nil
+}
+
+func (n *nodeClient) GetBySite(siteId string) ([]*NodeInfo, error) {
+	log.Debugf("Getting nodes for site: %v", siteId)
+
+	uri := fmt.Sprintf("%s%s/%s", n.u.String(), NodeEndpoint+"/sites", siteId)
+
+	resp, err := n.R.Get(uri)
+	if err != nil {
+		log.Errorf("GetBySite failure. error: %s", err.Error())
+		return nil, fmt.Errorf("GetBySite failure: %w", err)
+	}
+
+	var getBySiteResp GetBySiteResponse
+	err = json.Unmarshal(resp.Body(), &getBySiteResp)
+	if err != nil {
+		log.Tracef("Failed to deserialize GetBySite response. Error message is: %s", err.Error())
+		return nil, fmt.Errorf("GetBySite response deserialization failure: %w", err)
+	}
+
+	log.Infof("GetBySite Response: %+v", getBySiteResp)
+
+	return getBySiteResp.Nodes, nil
 }
