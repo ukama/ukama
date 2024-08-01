@@ -19,16 +19,17 @@ services:
    - DB_HOST=postgresd-nucleus
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - MSGCLIENT_HOST=msgclient-nucleus:9095
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - ORCHESTRATORHOST=http://${LOCAL_HOST_IP}:8050
+   - INITCLIENTHOST=http://api-gateway-init:8080
+   - ORG_SERVICE_HOST=org
+   - ORG_SERVICE_PORT=9090
+   - USERHOST=user:9090
    - OWNERID=${OWNERID}
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-nucleus:9095
-   - ORG_SERVICE_HOST=org
-   - ORG_SERVICE_PORT=9090
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - INITCLIENTHOST=http://initclient-nucleus:8080
-   - ORCHESTRATOR_HOST=http://${LOCAL_HOST_IP}:8050
   restart: always
   networks:
    - ukama-net
@@ -42,22 +43,18 @@ services:
    - DB_HOST=postgresd-nucleus
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - UKAMA_UUID=${ORGID}
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-nucleus:9095
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+   - USER_SERVICE_HOST=user
+   - USER_SERVICE_PORT=9090
+   - ORG=org:9090
    - ORGNAME=${ORGNAME}
    - OWNERID=${OWNERID}
-   - AUTHID=${OWNERAUTHID}
    - OWNERNAME=${OWNERNAME}
    - OWNEREMAIL=${OWNEREMAIL}
    - OWNERPHONE=0123456789
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-nucleus:9095
-   - USER_SERVICE_HOST=user
-   - USER_SERVICE_PORT=9090
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - ORG=org:9090
-   # - HSSHOST=hss:9090
-   # - SIMMANAGER_HOST=simmanager:9090
-   # - SIMMANAGER_TIMEOUT=3s
+   - AUTHID=${OWNERAUTHID}
   restart: always
   networks:
    - ukama-net

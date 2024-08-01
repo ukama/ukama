@@ -32,13 +32,13 @@ type Config struct {
 	Service           *config.Service   `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	Pushgateway       string            `default:"http://localhost:9091"`
 	UserHost          string            `default:"http://user:8080"`
 	OrchestratorHost  string            `default:"http://orchestrator:8080"`
+	InitClientHost    string            `default:"http://ukama.initclient:8080"`
 	OrgName           string            `default:"ukama"`
 	OwnerId           string
 	OrgId             string
-	Pushgateway       string `default:"http://localhost:9091"`
-	InitClientHost    string `default:"http://ukama.initclient:8080"`
 }
 
 var OrgMetrics = []metric.MetricConfig{

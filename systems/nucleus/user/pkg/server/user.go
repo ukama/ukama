@@ -37,22 +37,22 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	orgName         string
-	userRepo        db.UserRepo
-	orgService      pkgP.OrgClientProvider
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	msgbus          mb.MsgBusServiceClient
-	pushGatewayHost string
+	orgName        string
+	userRepo       db.UserRepo
+	orgService     pkgP.OrgClientProvider
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus         mb.MsgBusServiceClient
+	pushGateway    string
 }
 
-func NewUserService(orgName string, userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
+func NewUserService(orgName string, userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *UserService {
 	return &UserService{
-		orgName:         orgName,
-		userRepo:        userRepo,
-		orgService:      orgService,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:          msgBus,
-		pushGatewayHost: pushGatewayHost,
+		orgName:        orgName,
+		userRepo:       userRepo,
+		orgService:     orgService,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:         msgBus,
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -112,12 +112,12 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -335,12 +335,12 @@ func (u *UserService) pushUserCountMetrics() {
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
