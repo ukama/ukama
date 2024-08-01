@@ -34,8 +34,8 @@ message RestartNodesRequest {
 
 message ToggleInternetSwitchRequest {
   string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
-  bool status = 2;  // true for on, false for off
-  int32 port = 3;  // New field to specify the port number
+  bool status = 2;  
+  int32 port = 3;  
 }
 message ToggleInternetSwitchResponse {
 }
@@ -52,8 +52,7 @@ message RestartNodeRequest {
    }
 
 message RestartSiteRequest {
-    string siteName =1 [(validator.field) = {string_not_empty: true}, json_name = "site_name"];
-    string networkId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string siteId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
 }
 
 message RestartNodeResponse {

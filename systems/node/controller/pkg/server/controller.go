@@ -17,7 +17,6 @@ import (
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -27,6 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 )
@@ -36,53 +36,47 @@ type ControllerServer struct {
 	nRepo                db.NodeLogRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
-	registrySystem       providers.RegistryProvider
+	siteClient       creg.SiteClient
+	nodeClient creg.NodeClient
 	debug                bool
 	orgName              string
 }
 
-func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, debug bool) *ControllerServer {
+func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, siteClient creg.SiteClient, nodeClient creg.NodeClient, debug bool) *ControllerServer {
 	return &ControllerServer{
 		nRepo:                nRepo,
 		orgName:              orgName,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
-		registrySystem:       registry,
+		siteClient:       siteClient,
+		nodeClient: nodeClient,
 	}
 }
 
 func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteRequest) (*pb.RestartSiteResponse, error) {
 	log.Infof("Restarting site %v", req)
 
-	if req.SiteName == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "site name cannot be empty")
+	if req.SiteId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "site cannot be empty")
 	}
 
-	if req.NetworkId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "network cannot be empty")
-	}
-
-	netId, err := uuid.FromString(req.GetNetworkId())
+	siteId, err := uuid.FromString(req.GetSiteId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateSite(netId.String(), req.GetSiteName(), c.orgName); err != nil {
-		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
+	if _,err := c.siteClient.ValidateSite(siteId.String()); err != nil {
+		return nil, fmt.Errorf("failed to validate site %s. Error %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateNetwork(netId.String(), c.orgName); err != nil {
-		return nil, fmt.Errorf("failed to validate network with network %s. Error %s", netId.String(), err.Error())
-	}
-
-	nodes, err := c.registrySystem.GetNodesBySite(req.SiteName)
+	nodes, err := c.nodeClient.GetBySite(siteId.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
+		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteId(), err.Error())
 
 	}
-	for _, nodeId := range nodes {
-
+	for _, node := range nodes { 
+		nodeId := node.Id 
 		nId, err := ukama.ValidateNodeId(nodeId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -229,7 +223,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateSite(req.SiteId, "", c.orgName); err != nil {
+	if _,err := c.siteClient.ValidateSite(siteId.String()); err != nil {
 		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
 	}
 

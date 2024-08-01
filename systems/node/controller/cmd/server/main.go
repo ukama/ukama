@@ -23,9 +23,9 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
 
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -75,13 +75,14 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	reg := providers.NewRegistryProvider(svcConf.RegistryHost, svcConf.DebugMode)
+	siteClient := creg.NewSiteClient(svcConf.RegistryHost)
+	nodeClient := creg.NewNodeClient(svcConf.RegistryHost)
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	contServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
-		mbClient, reg, svcConf.DebugMode)
+		mbClient, siteClient,nodeClient, svcConf.DebugMode)
 	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
