@@ -99,3 +99,23 @@ bool build_nodes(char *repo, int count, char **list) {
 
     return USYS_TRUE;
 }
+
+bool build_ukamaos_image(char *repo) {
+
+    char runMe[MAX_BUFFER] = {0};
+
+    if (getenv(ENV_DOCKER_BUILD)) {
+        sprintf(runMe, "cd scripts; %s base-image %s %s; cd -",
+                SCRIPT, repo, BASE_IMAGE_ID);
+    } else {
+        sprintf(runMe, "cd scripts; sudo %s base-image %s %s; cd -",
+                SCRIPT, repo, BASE_IMAGE_ID);
+    }
+
+    if (system(runMe) < 0) {
+        usys_log_error("Unable to create base image via repo: %s", repo);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}

@@ -23,6 +23,8 @@
 /* build.c */
 extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
 extern bool build_nodes(char *repo, int count, char **list);
+extern bool build_ukamaos_image(char *repo);
+
 
 /* deploy.c */
 extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
@@ -39,9 +41,10 @@ extern bool shutdown_nodes(int count, char **nodesIDList);
 #define CMD_ALL    4
 #define CMD_DOWN   5
 
-#define TARGET_ALL     1
-#define TARGET_NODES   2
-#define TARGET_SYSTEMS 3
+#define TARGET_ALL      1
+#define TARGET_NODES    2
+#define TARGET_SYSTEMS  3
+#define TARGET_UKAMA_OS 4
 
 #define IS_S3_PATH(source) (strncmp((source), "s3://", 5) == 0 ? USYS_TRUE : USYS_FALSE)
 
@@ -69,7 +72,7 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: builder [nodes | systems]  "
+    usys_puts("Usage: builder [ukamaos | nodes | systems]  "
               "[build | deploy | status | down] [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
@@ -88,13 +91,16 @@ void processArguments(int argc, char **argv, int *target, int *cmd) {
 
     for (int i = 1; i < argc; i++) {
         if (strcasecmp(argv[i], "nodes") == 0 ||
-            strcasecmp(argv[i], "systems") == 0) {
+            strcasecmp(argv[i], "systems") == 0 ||
+            strcasecmp(argv[i], "ukamaos") == 0) {
 
             if (!isTargetSet) {
                 if (strcasecmp(argv[1], "nodes") == 0) {
                     *target = TARGET_NODES;
                 } else if (strcasecmp(argv[i], "systems") == 0) {
                     *target = TARGET_SYSTEMS;
+                } else if (strcasecmp(argv[i], "ukamaos") == 0) {
+                    *target = TARGET_UKAMA_OS;
                 }
                 isTargetSet = USYS_TRUE;
             }
@@ -239,6 +245,17 @@ int main(int argc, char **argv) {
         usys_log_error("Unable to read builder's config file: %s",
                        configFile);
         usys_exit(1);
+    }
+
+    /* Build ukamaOS image - mainly this is for CI/CD workflows */
+    if (cmd == CMD_BUILD && target == TARGET_UKAMA_OS) {
+        if (!build_ukamaos_image(config->setup->ukamaRepo)) {
+            usys_log_error("Unable to build ukamaOS image");
+            usys_exit(1);
+        }
+
+        free_config(config);
+        usys_exit(0);
     }
 
     if (cmd == CMD_ALL || cmd == CMD_BUILD) {
