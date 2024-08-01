@@ -24,7 +24,6 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
@@ -201,3 +200,63 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		subRepo.AssertExpectations(t)
 	})
 }
+
+// func TestGetByEmail(t *testing.T) {
+//     t.Run("EmailNotFound", func(t *testing.T) {
+// 		email := "johndoe@example.com"
+
+// 		subRepo := &mocks.SubscriberRepo{}
+
+
+// 		subRepo.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
+
+// 		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, nil)
+// 		subResp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
+// 			Email:email,
+// 		})
+
+// 		assert.Error(t, err)
+// 		assert.Nil(t, subResp)
+// 		subRepo.AssertExpectations(t)
+// 	})
+// 	t.Run("EmailFound", func(t *testing.T) {
+//         email := "johndoe@example.com"
+
+//         subRepo := &mocks.SubscriberRepo{}
+//         simManagerClient := &mocks.SimManagerClientProvider{}
+
+//         // Simulate a found subscriber with the given email
+//         subscriber := &db.Subscriber{
+//             Email: email,
+//             SubscriberId:uuid.NewV4() ,
+//         }
+
+//         subRepo.On("GetByEmail", email).Return(subscriber, nil).Once()
+
+//         simManagerService := &mocks.SimManagerClientProvider{}
+//         simManagerClient.On("GetSimManagerService").Return(simManagerService, nil).Once()
+
+//         simManagerService.On("GetSimsBySubscriber", mock.Anything, &simMangerPb.GetSimsBySubscriberRequest{
+//             SubscriberId: subscriber.SubscriberId.String(),
+//         }).Return(&simMangerPb.GetSimsBySubscriberResponse{
+//             Sims: []*simMangerPb.Sim{
+//             },
+//         }, nil).Once()
+
+//         s := NewSubscriberServer(OrgName, subRepo, nil, simManagerClient, OrgId, nil, nil)
+
+//         subResp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
+//             Email: email,
+//         })
+
+//         assert.NoError(t, err)
+//         assert.NotNil(t, subResp)
+//         assert.Equal(t, email, subResp.Subscriber.Email)
+//         // Add more assertions as needed for other fields
+
+//         subRepo.AssertExpectations(t)
+//         simManagerClient.AssertExpectations(t)
+//         simManagerService.AssertExpectations(t)
+//     })
+// }
+
