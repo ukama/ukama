@@ -16,7 +16,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Dependencies
+    - name: Installing Ubuntu packages
       run: |
         sudo apt-get update
         sudo add-apt-repository universe
@@ -53,6 +53,18 @@ jobs:
           kpartx \
           fdisk \
           util-linux
+
+    - name: installing gettext
+      run: |
+        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
+          && tar -xvf gettext-0.21.tar.gz \
+          && cd gettext-0.21 \
+          && ./configure \
+          && make \
+          && sudo make install \
+          && cd .. \
+          && rm -rf gettext-0.21.tar.gz \
+          && rm -rf gettext-0.21
 
     - name: Init vars
       id: vars_step
