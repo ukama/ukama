@@ -81,8 +81,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
 
-	orgClient := cnucl.NewOrgClient(serviceConfig.OrgRegistryHost)
-	userClient := cnucl.NewUserClient(serviceConfig.OrgRegistryHost)
+	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
+	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName,
 		instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,

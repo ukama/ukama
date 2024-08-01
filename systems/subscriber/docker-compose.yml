@@ -14,8 +14,6 @@ services:
 
  simpool:
   build: ./sim-pool
-  ports:
-   - '9090:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -35,20 +33,20 @@ services:
 
  registry:
   build: ./registry
-  ports:
-   - '9096:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - MSGCLIENT_HOST=msgclient:9095
    - REGISTRY_SERVICE_HOST=registry
    - REGISTRY_SERVICE_PORT=9090
-   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - SIMMANAGERHOST=simmanager:9090
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
   restart: always
   networks:
    - ukama-net
@@ -66,16 +64,15 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+   - PUSHMETRICHOST=http://${LOCAL_HOST_IP}:9099
    - KEY=${KEY}
-   - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
+   - ORGNAME=${ORGNAME}
    - MSGCLIENT_HOST=msgclient:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
-   - NOTIFICATIONHOST=http://${LOCAL_HOST_IP}:8058
-   - DATAPLANHOST=http://${LOCAL_HOST_IP}:8074
-   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8075
+   - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    - ukama-net

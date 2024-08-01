@@ -32,20 +32,20 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	PushMetricHost    string            `default:"http://localhost:9091"`
+	SimPool           string            `default:"simpool:9090"`
+	Registry          string            `default:"registry:9090"`
+	TestAgent         string            `default:"testagent:9090"`
+	OperatorAgent     string            `default:"http://operator-agent:8080"`
 	Service           *config.Service
 	Key               string
-	Registry          string `default:"registry:9090"`
-	SimPool           string `default:"simpool:9090"`
-	TestAgent         string `default:"testagent:9090"`
-	OrgId             string `default:"org-id"`
-	PushMetricHost    string `default:"http://localhost:9091"`
-	OperatorAgent     string `default:"http://operator-agent:8080"`
+	OrgId             string
 	OrgName           string
 	Http              HttpServices
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"localhost:8080"`
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {

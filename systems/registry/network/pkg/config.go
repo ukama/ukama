@@ -28,11 +28,11 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	PushGateway      string           `default:"http://localhost:9091"`
+	Country          string           `default:"usa"`
+	Language         string           `default:"en"`
+	Currency         string           `default:"usd"`
 	Service          *uconf.Service
-	PushGateway      string `default:"http://localhost:9091"`
-	Country          string `default:"{}"`
-	Language         string `default:"{}"`
-	Currency         string `default:"{}"`
 	Http             HttpServices
 	OrgName          string
 	OrgId            string
@@ -40,7 +40,6 @@ type Config struct {
 
 type HttpServices struct {
 	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
-	InitClient    string `defaut:"api-gateway-init:8080"`
 }
 
 var NetworkMetric = []metric.MetricConfig{

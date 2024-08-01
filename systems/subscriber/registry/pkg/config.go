@@ -21,8 +21,8 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"10s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	SimManagerHost   string           `default:"simmanager:9090"`
 	Service          *uconf.Service
-	SimManagerHost   string `default:"simmanager:9090"`
 	Http             HttpServices
 	OrgName          string
 	OrgId            string

@@ -17,11 +17,11 @@ type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
+	EventNotifyHost  string          `default:"eventnotify:9090"`
 	Service          *uconf.Service
+	Http             HttpServices
 	OrgName          string
 	OrgId            string
-	EventNotifyHost  string `default:"localhost:9090"`
-	Http             HttpServices
 }
 
 type HttpServices struct {

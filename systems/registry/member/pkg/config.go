@@ -29,13 +29,17 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgRegistryHost  string           `default:"http://org:8080"`
+	PushGateway      string           `default:"http://localhost:9091"`
+	Service          *uconf.Service
+	Http             HttpServices
 	OwnerId          string
 	OrgId            string
 	OrgName          string
 	MasterOrgName    string
-	Service          *uconf.Service
-	PushGateway      string `default:"http://localhost:9091"`
+}
+
+type HttpServices struct {
+	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
 }
 
 var MemberMetric = []metric.MetricConfig{

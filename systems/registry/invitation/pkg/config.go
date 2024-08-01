@@ -22,11 +22,11 @@ type Config struct {
 	Queue                *uconf.Queue      `default:"{}"`
 	Timeout              time.Duration     `default:"3s"`
 	MsgClient            *config.MsgClient `default:"{}"`
-	Service              *uconf.Service
+	AuthLoginbaseURL     string            `default:"http://localhost:4455/auth/login"`
+	TemplateName         string            `default:"member-invite"`
+	InvitationExpiryTime uint              `default:"24"`
 	OrgName              string
-	TemplateName         string `default:"member-invite"`
-	InvitationExpiryTime uint   `default:"24"`
-	AuthLoginbaseURL     string `default:"http://localhost:4455/auth/login"`
+	Service              *uconf.Service
 	Http                 HttpServices
 }
 
