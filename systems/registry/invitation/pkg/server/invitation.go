@@ -32,6 +32,7 @@ import (
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
@@ -43,7 +44,6 @@ type InvitationServer struct {
 	mailerClient         cnotif.MailerClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	// unused?
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	msgbus         mb.MsgBusServiceClient
 	orgName        string
@@ -129,16 +129,14 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		UserId:    userId,
 	}
 
-	err = i.iRepo.Add(invite, func(inv *db.Invitation, tx *gorm.DB) error {
-		log.Infof("Adding invite %s in db", inv.Id)
-		invite = inv
-
+	err = i.iRepo.Add(invite, func(*db.Invitation, *gorm.DB) error {
+		invite.Id = uuid.NewV4()
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
+
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionCreate().SetObject("invitation").MustBuild()
