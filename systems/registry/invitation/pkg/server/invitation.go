@@ -32,6 +32,7 @@ import (
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
@@ -41,10 +42,10 @@ type InvitationServer struct {
 	orgClient            cnucl.OrgClient
 	userClient           cnucl.UserClient
 	mailerClient         cnotif.MailerClient
-	invitationExpiryTime uint
-	authLoginbaseURL     string
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
+	invitationExpiryTime uint
+	authLoginbaseURL     string
 	orgName              string
 	TemplateName         string
 }
@@ -81,31 +82,31 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		return nil, err
 	}
 
-	// orgInfo, err := i.orgClient.Get(i.orgName)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	orgInfo, err := i.orgClient.Get(i.orgName)
+	if err != nil {
+		return nil, err
+	}
 
-	// orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
+	if err != nil {
+		return nil, err
+	}
 
-	// err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
-	// 	To:           []string{req.GetEmail()},
-	// 	TemplateName: i.TemplateName,
-	// 	Values: map[string]interface{}{
-	// 		"INVITATION": invitationId.String(),
-	// 		"LINK":       link,
-	// 		"OWNER":      orgOwnerInfo.Name,
-	// 		"ORG":        orgInfo.Name,
-	// 		"ROLE":       req.GetRole().String(),
-	// 	},
-	// })
+	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
+		To:           []string{req.GetEmail()},
+		TemplateName: i.TemplateName,
+		Values: map[string]interface{}{
+			"INVITATION": invitationId.String(),
+			"LINK":       link,
+			"OWNER":      orgOwnerInfo.Name,
+			"ORG":        orgInfo.Name,
+			"ROLE":       req.GetRole().String(),
+		},
+	})
 
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if err != nil {
+		return nil, err
+	}
 
 	invitedUserInfo, err := i.userClient.GetByEmail(req.GetEmail())
 	if err != nil {
@@ -128,13 +129,10 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		UserId:    userId,
 	}
 
-	err = i.iRepo.Add(invite, func(inv *db.Invitation, tx *gorm.DB) error {
-		log.Infof("Adding invite %s in db", inv.Id)
-		invite = inv
-
+	err = i.iRepo.Add(invite, func(*db.Invitation, *gorm.DB) error {
+		invite.Id = uuid.NewV4()
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}

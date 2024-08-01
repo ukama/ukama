@@ -117,6 +117,7 @@ const getUserObject = async (session: string, cookieToken: string) => {
 
 const middleware = async (request: NextRequest) => {
   const response = NextResponse.next();
+  const cookieStore = cookies();
   const { pathname } = request.nextUrl;
 
   if (pathname.includes('/ping')) {
@@ -124,6 +125,7 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
+    cookieStore.delete('token');
     const logoutRes = NextResponse.redirect(
       new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
@@ -131,7 +133,6 @@ const middleware = async (request: NextRequest) => {
     return logoutRes;
   }
 
-  const cookieStore = cookies();
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
 

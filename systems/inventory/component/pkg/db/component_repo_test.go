@@ -213,7 +213,7 @@ func Test_ComponentRepo_Add(t *testing.T) {
 }
 
 func Test_ComponentRepo_Delete(t *testing.T) {
-	t.Run("DeleteAccount", func(t *testing.T) {
+	t.Run("DeleteComponent", func(t *testing.T) {
 		var db *extsql.DB
 
 		cId := uuid.NewV4()
