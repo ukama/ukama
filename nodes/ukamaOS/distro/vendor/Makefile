@@ -153,14 +153,21 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@ && autoreconf -i && cd $(BUILD_DIR) && \
-		../configure CC=$(XCC) --host=$(HOST) \
-        --enable-static --prefix=$(DEPDIR) && \
+	(mkdir -p $@/$(BUILD_DIR) && \
+	cd $@ && \
+	libtoolize --force --copy && \
+	aclocal --force && \
+	autoheader && \
+	autoconf && \
+	automake --add-missing --copy && \
+	autoreconf --force --install --verbose && \
+	cd $(BUILD_DIR) && \
+	../configure CC=$(XCC) --host=$(HOST) --enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
-	@echo -e '\t'  ${LIGHT_GREEN}Skipping${NO_COLOR}
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
 prometheus-client:
