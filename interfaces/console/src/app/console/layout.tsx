@@ -12,17 +12,12 @@ import {
   useSetDefaultNetworkMutation,
   useUpdateNotificationMutation,
 } from '@/client/graphql/generated';
-import {
-  NotificationsResDto,
-  useGetNotificationsQuery,
-  useNotificationSubscriptionSubscription,
-} from '@/client/graphql/generated/metrics';
+import { NotificationsResDto } from '@/client/graphql/generated/metrics';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
 import { useAppContext } from '@/context';
 import '@/styles/console.css';
-import { getRoleType, getScopesByRole } from '@/utils';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { Box } from '@mui/material';
 import { useState } from 'react';
@@ -95,41 +90,41 @@ export default function ConosleLayout({
 
   const [updateNotificationCall] = useUpdateNotificationMutation();
 
-  useGetNotificationsQuery({
-    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
-    fetchPolicy: 'cache-first',
+  // useGetNotificationsQuery({
+  //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
+  //   fetchPolicy: 'cache-first',
 
-    variables: {
-      data: {
-        orgId: user.orgId,
-        userId: user.id,
-        networkId: network.id,
-        forRole: getRoleType(user.role),
-        scopes: getScopesByRole(user.role),
-      },
-    },
-    onCompleted: (data) => {
-      const alerts = data.getNotifications.notifications;
-      setAlerts(alerts);
-    },
-  });
+  //   variables: {
+  //     data: {
+  //       orgId: user.orgId,
+  //       userId: user.id,
+  //       networkId: network.id,
+  //       forRole: getRoleType(user.role),
+  //       scopes: getScopesByRole(user.role),
+  //     },
+  //   },
+  //   onCompleted: (data) => {
+  //     const alerts = data.getNotifications.notifications;
+  //     setAlerts(alerts);
+  //   },
+  // });
 
-  useNotificationSubscriptionSubscription({
-    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
-    variables: {
-      networkId: network.id,
-      orgId: user.orgId,
-      userId: user.id,
-      forRole: getRoleType(user.role),
-      scopes: getScopesByRole(user.role),
-    },
-    onData: ({ data }) => {
-      const newAlert = data.data?.notificationSubscription;
-      if (newAlert) {
-        setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
-      }
-    },
-  });
+  // useNotificationSubscriptionSubscription({
+  //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
+  //   variables: {
+  //     networkId: network.id,
+  //     orgId: user.orgId,
+  //     userId: user.id,
+  //     forRole: getRoleType(user.role),
+  //     scopes: getScopesByRole(user.role),
+  //   },
+  //   onData: ({ data }) => {
+  //     const newAlert = data.data?.notificationSubscription;
+  //     if (newAlert) {
+  //       setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
+  //     }
+  //   },
+  // });
 
   const handleAlertRead = (index: number) => {
     if (alerts) {
