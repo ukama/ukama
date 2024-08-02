@@ -13,7 +13,7 @@
 UKAMA_OS=`realpath ../ukamaOS`
 SYS_ROOT=${UKAMA_OS}/distro/
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
-BB_ROOT=${UKAMA_OS}/distro/system/busybox
+BB_ROOT=${UKAMA_OS}/distro/vendor/busybox
 BB_CONFIG=ukama_minimal_defconfig
 
 DEF_ROOTFS=_ukama_minimal_rootfs/
