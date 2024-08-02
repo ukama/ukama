@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build UkamaOS and create bootable image
     runs-on: ubuntu-latest
 
     steps:
@@ -79,12 +79,16 @@ jobs:
     - name: Build vendor libraries
       working-directory: ./nodes/ukamaOS/distro/vendor
       run: make TARGET=linux
-       
+
+    - name: Build platform library
+      working-directory: ./nodes/ukamaOS/distro/platform
+      run: make TARGET=linux
+
     - name: Build the builder
       working-directory: ./builder
       run: make
 
-    - name: Build ukamaOS using the builder
+    - name: Build ukamaOS and image using 'builder'
       working-directory: ./builder
       run: ./builder ukamaos build
 
