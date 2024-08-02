@@ -27,7 +27,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	generated "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -73,12 +72,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	invtUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "inventory"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to resolve inventory address: %v", err)
-	}
-
-	invClient := cinvent.NewComponentClient(invtUrl.String())
+	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

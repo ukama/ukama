@@ -35,7 +35,7 @@ type Config struct {
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"localhost:8080"`
+	InventoryClient string `defaut:"localhost:8080"`
 }
 
 var SiteMetric = []metric.MetricConfig{
