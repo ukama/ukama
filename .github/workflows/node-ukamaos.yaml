@@ -90,5 +90,6 @@ jobs:
 
     - name: Build ukamaOS and image using 'builder'
       working-directory: ./builder
+      env:
+        LD_LIBRARY_PATH: ${{ github.workspace }}/nodes/ukamaOS/distro/platform/build:${{ github.workspace }}/nodes/ukamaOS/distro/vendor/build/lib:${{ github.workspace }}/nodes/ukamaOS/distro/vendor/build/lib64
       run: ./builder ukamaos build
-
