@@ -153,27 +153,21 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@ && \
-	find . -name 'libtool' -exec rm -f {} + && \
-	find . -name 'ltmain.sh' -exec rm -f {} + && \
-	find . -name 'aclocal.m4' -exec rm -f {} + && \
-	find . -name 'autom4te.cache' -exec rm -rf {} + && \
-	find . -name 'configure' -exec rm -f {} + && \
-	find . -name 'config.log' -exec rm -f {} + && \
-	find . -name 'config.status' -exec rm -f {} + && \
-	find . -name 'Makefile.in' -exec rm -f {} + && \
-	autoupdate && \
-	libtoolize --force --copy --automake && \
-	aclocal && autoheader && autoconf && \
-	automake --add-missing --force-missing && autoreconf -i && \
+	(mkdir -p $@/$(BUILD_DIR) && \
+	cd $@ && \
+	libtoolize --force --copy && \
+	aclocal --force && \
+	autoheader && \
+	autoconf && \
+	automake --add-missing --copy && \
+	autoreconf --force --install --verbose && \
 	cd $(BUILD_DIR) && \
-	../configure CC=$(XCC) --host=$(HOST) \
-		--enable-static --prefix=$(DEPDIR) && \
+	../configure CC=$(XCC) --host=$(HOST) --enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
-	@echo -e '\t'  ${LIGHT_GREEN}Skipping${NO_COLOR}
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
 prometheus-client:
@@ -326,16 +320,7 @@ endif
 gnutls: openssl nettle gmp
 	$(call print_msg,"gnutls")
 ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
-	cd $@ && \
-	find . -name 'libtool' -exec rm -f {} + && \
-	find . -name 'ltmain.sh' -exec rm -f {} + && \
-	find . -name 'aclocal.m4' -exec rm -f {} + && \
-	find . -name 'autom4te.cache' -exec rm -rf {} + && \
-	find . -name 'configure' -exec rm -f {} + && \
-	find . -name 'config.log' -exec rm -f {} + && \
-	find . -name 'config.status' -exec rm -f {} + && \
-	find . -name 'Makefile.in' -exec rm -f {} + && \
-	autoreconf --force --install --verbose && cd -
+	cd $@ && 	autoreconf --force --install --verbose && cd -
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" ../configure --prefix=${DEPDIR} \
@@ -349,7 +334,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
         --disable-rsa \
 		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
 	cp ../src/gl/parse-datetime.c ./src/gl/ && \
-	make -j${NPROCS} && make -j${NPROCS} install
+	LD_LIBRARY_PATH="${DEPDIR}/lib:${DEPDIR}/lib64" make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
