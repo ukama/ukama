@@ -1,12 +1,12 @@
-# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-ukamaos-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
-# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+# USE ukamaos-workflow-template.yaml.templ FOR MAKING CHANGES IN WORKFLOWS
 name: build-node-ukamaos-noded
 
 on:
   push:
     paths:
-      - ""nodes/ukamaOS/distro/system/noded/**"
+      - "nodes/ukamaOS/distro/system/noded/**"
       - ".github/workflows/nodes-ukamaOS-distro-system-noded.yaml"
 
   workflow_dispatch:
