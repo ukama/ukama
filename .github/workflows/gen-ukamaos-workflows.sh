@@ -3,9 +3,9 @@
 # read the workflow template
 WORKFLOW_TEMPLATE=$(cat ukamaos-workflow-template.yaml.templ)
 
-WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-ukamaos-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
-# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+# USE ukamaos-workflow-template.yaml.templ FOR MAKING CHANGES IN WORKFLOWS
 "
 
 generate(){
