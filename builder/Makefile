@@ -47,7 +47,6 @@ LDFLAGS+=-L$(PLATFORM_LIB)
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
 LIBS = $(ULFIUS_LIB)
-LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lusys
 

@@ -1,0 +1,106 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-ukamaos-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE ukamaos-workflow-template.yaml.templ FOR MAKING CHANGES IN WORKFLOWS
+name: build-node-ukamaos-metricsd
+
+on:
+  push:
+    paths:
+      - "nodes/ukamaOS/distro/system/metricsd/**"
+      - ".github/workflows/nodes-ukamaOS-distro-system-metricsd.yaml"
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      working-directory: nodes/ukamaOS/distro/system/metricsd
+
+    name: Build UkamaOS, vendor lib and app
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Installing Ubuntu packages
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository universe
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          build-essential \
+          git \
+          wget \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libssl-dev \
+          texinfo \
+          cmake \
+          tcl \
+          zlib1g-dev \
+          texlive \
+          texlive-latex-extra \
+          ghostscript \
+          gperf \
+          gtk-doc-tools \
+          libev-dev \
+          bison \
+          jq \
+          qemu-system \
+          virt-manager \
+          virt-viewer \
+          libvirt-daemon-system \
+          libvirt-clients \
+          bridge-utils \
+          debootstrap \
+          kpartx \
+          fdisk \
+          util-linux
+
+    - name: installing gettext
+      run: |
+        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
+          && tar -xvf gettext-0.21.tar.gz \
+          && cd gettext-0.21 \
+          && ./configure \
+          && make \
+          && sudo make install \
+          && cd .. \
+          && rm -rf gettext-0.21.tar.gz \
+          && rm -rf gettext-0.21
+
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
+
+    - name: Granting private modules access
+      run: git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
+    
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+    
+    - name: Build vendor libraries
+      working-directory: ./nodes/ukamaOS/distro/vendor
+      run: make TARGET=linux
+
+    - name: Build platform library
+      working-directory: ./nodes/ukamaOS/distro/platform
+      run: make TARGET=linux
+
+    - name: Build app
+      working-directory: nodes/ukamaOS/distro/system/metricsd
+      run: make
+
+    - name: Build the builder
+      working-directory: ./builder
+      run: make
+
+    - name: Build ukamaOS and image using 'builder'
+      working-directory: ./builder
+      env:
+        LD_LIBRARY_PATH: ${{ github.workspace }}/nodes/ukamaOS/distro/platform/build:${{ github.workspace }}/nodes/ukamaOS/distro/vendor/build/lib:${{ github.workspace }}/nodes/ukamaOS/distro/vendor/build/lib64
+      run: ./builder ukamaos build

@@ -11,7 +11,7 @@
 # Base parameters
 UKAMA_OS=`realpath ../../.`
 SYS_ROOT=${UKAMA_ROOT}/distro/
-BB_ROOT=${UKAMA_OS}/distro/system/busybox
+BB_ROOT=${UKAMA_OS}/distro/vendor/busybox
 BB_CONFIG=ukama_minimal_defconfig
 
 # command line arguments
