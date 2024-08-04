@@ -57,6 +57,7 @@ LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
+LIBS+=-lmicrohttpd
 
 # Source files
 TARGET_CFILES   = $(wildcard ./src/*.c)
