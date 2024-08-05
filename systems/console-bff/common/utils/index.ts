@@ -214,6 +214,7 @@ const getSystemNameByService = (service: string): string => {
     case "subscriber":
       return "subscriber";
     case "notification":
+    case "controller":
       return "notification";
     case "init":
       return "init";

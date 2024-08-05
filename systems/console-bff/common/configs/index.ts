@@ -56,6 +56,7 @@ const INVITATION_PORT = parseInt(process.env.INVITATION_PORT ?? "5049");
 const MEMBER_PORT = parseInt(process.env.MEMBER_PORT ?? "5050");
 const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
@@ -134,6 +135,12 @@ export const SUB_GRAPHS = {
     name: "invitation",
     port: INVITATION_PORT,
     url: `http://localhost:${INVITATION_PORT}`,
+    isPingedSuccess: false,
+  },
+  controller: {
+    name: "controller",
+    port: CONTROLLER_PORT,
+    url: `http://localhost:${CONTROLLER_PORT}`,
     isPingedSuccess: false,
   },
   member: {

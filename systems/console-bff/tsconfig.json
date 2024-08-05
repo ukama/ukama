@@ -19,6 +19,7 @@
     "package",
     "subscriber",
     "subscriptions",
+    "controller",
     "invitation",
     "member",
     "init",
