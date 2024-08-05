@@ -19,7 +19,7 @@ check_run_status() {
 }
 
 # Fetch workflows
-workflows=$(gh workflow list --limit 30 --all | grep "systems-" | awk '{print $1}')
+workflows=$(gh workflow list --limit 300 --all | grep "systems-" | awk '{print $1}')
 
 # Run each workflow and store the run ID
 for workflow_name in $workflows; do
