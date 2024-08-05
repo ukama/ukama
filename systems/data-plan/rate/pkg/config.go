@@ -21,8 +21,8 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	BaseRate         string           `deafult:"baserate:9090"`
 	Service          *uconf.Service
-	BaseRate         string `deafult:"baserate:9090"`
 	OrgName          string
 }
 
@@ -36,6 +36,5 @@ func NewConfig(name string) *Config {
 			Timeout:        5 * time.Second,
 			ListenerRoutes: nil,
 		},
-		BaseRate: "base-rate:9090",
 	}
 }

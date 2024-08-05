@@ -29,6 +29,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
@@ -105,9 +106,24 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient := cdplan.NewPackageClient(serviceConfig.DataPlanHost)
-	netClient := creg.NewNetworkClient(serviceConfig.RegistryHost)
-	notificationClient := cnotif.NewMailerClient(serviceConfig.NotificationHost)
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	dataplanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "dataplan"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve dataplan address: %v", err)
+	}
+
+	notificationUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve notification address: %v", err)
+	}
+
+	netClient := creg.NewNetworkClient(regUrl.String())
+	pckgClient := cdplan.NewPackageClient(dataplanUrl.String())
+	notificationClient := cnotif.NewMailerClient(notificationUrl.String())
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,

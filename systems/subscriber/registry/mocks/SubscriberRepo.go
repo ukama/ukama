@@ -82,9 +82,9 @@ func (_m *SubscriberRepo) Get(subscriberId uuid.UUID) (*db.Subscriber, error) {
 	return r0, r1
 }
 
-// GetByEmail provides a mock function with given fields: subscriberEmail
-func (_m *SubscriberRepo) GetByEmail(subscriberEmail string) (*db.Subscriber, error) {
-	ret := _m.Called(subscriberEmail)
+// GetByEmail provides a mock function with given fields: email
+func (_m *SubscriberRepo) GetByEmail(email string) (*db.Subscriber, error) {
+	ret := _m.Called(email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByEmail")
@@ -93,10 +93,10 @@ func (_m *SubscriberRepo) GetByEmail(subscriberEmail string) (*db.Subscriber, er
 	var r0 *db.Subscriber
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*db.Subscriber, error)); ok {
-		return rf(subscriberEmail)
+		return rf(email)
 	}
 	if rf, ok := ret.Get(0).(func(string) *db.Subscriber); ok {
-		r0 = rf(subscriberEmail)
+		r0 = rf(email)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Subscriber)
@@ -104,7 +104,7 @@ func (_m *SubscriberRepo) GetByEmail(subscriberEmail string) (*db.Subscriber, er
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(subscriberEmail)
+		r1 = rf(email)
 	} else {
 		r1 = ret.Error(1)
 	}

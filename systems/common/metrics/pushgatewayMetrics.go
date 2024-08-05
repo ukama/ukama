@@ -172,7 +172,7 @@ func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName stri
 	}
 }
 
-func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+func CollectAndPushSimMetrics(pushGateway string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
 	var selectedMetrics []MetricConfig
 	var foundSelectedMetric bool
 
@@ -193,7 +193,7 @@ func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConf
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
 
-	PushMetrics(pushGatewayHost, selectedMetrics, systemName)
+	PushMetrics(pushGateway, selectedMetrics, systemName)
 
 	return nil
 }

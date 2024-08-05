@@ -26,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -72,9 +73,14 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mailerClient := cnotif.NewMailerClient(serviceConfig.NotificationHost)
-	orgClient := cnucl.NewOrgClient(serviceConfig.OrgRegistryHost)
-	userClient := cnucl.NewUserClient(serviceConfig.OrgRegistryHost)
+	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve notification address: %v", err)
+	}
+
+	mailerClient := cnotif.NewMailerClient(notifUrl.String())
+	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
+	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
 		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,

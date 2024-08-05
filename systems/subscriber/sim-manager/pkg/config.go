@@ -32,18 +32,20 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	PushMetricHost    string            `default:"http://localhost:9091"`
+	SimPool           string            `default:"simpool:9090"`
+	Registry          string            `default:"registry:9090"`
+	TestAgent         string            `default:"testagent:9090"`
+	OperatorAgent     string            `default:"http://operator-agent:8080"`
 	Service           *config.Service
 	Key               string
-	Registry          string `default:"registry:9090"`
-	SimPool           string `default:"simpool:9090"`
-	TestAgent         string `default:"testagent:9090"`
-	OperatorAgent     string `default:"http://operator-agent:8080"`
-	OrgId             string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
-	RegistryHost      string `default:"http://registry-api-gw:8080"`
-	DataPlanHost      string `default:"http://data-plan:8080"`
-	NotificationHost  string `default:"http://192.168.1.81:8089"`
-	PushMetricHost    string `default:"http://localhost:9091"`
+	OrgId             string
 	OrgName           string
+	Http              HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -52,7 +54,6 @@ func NewConfig(name string) *Config {
 			DbName: name,
 		},
 		Service: config.LoadServiceHostConfig(name),
-
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
 			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"},

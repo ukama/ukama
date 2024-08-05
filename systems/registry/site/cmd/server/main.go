@@ -41,7 +41,6 @@ func main() {
 	runGrpcServer(siteDb)
 }
 func initConfig() {
-
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -72,7 +71,8 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	invClient := cinvent.NewComponentClient(serviceConfig.InventoryHost)
+
+	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

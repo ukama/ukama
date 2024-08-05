@@ -43,7 +43,7 @@ type SystemLookupReq struct {
 	Org    string
 }
 
-const SYSTEM_EP = "/v1/systems"
+const SYSTEM_API_VERSION = "/v1"
 
 func NewInitClient(host string, debug bool) (*InitClient, error) {
 	url, err := url.Parse(host)
@@ -77,7 +77,7 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 
 	resp, err := i.C.R().
 		SetError(errStatus).
-		Get(i.URL.String() + SYSTEM_EP + "?org=" + *org + "&name=" + s.System)
+		Get(i.URL.String() + SYSTEM_API_VERSION + "/orgs/" + *org + "/systems/" + s.System)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to InitClient. Error %s", err.Error())

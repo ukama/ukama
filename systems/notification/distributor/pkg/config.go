@@ -17,18 +17,15 @@ type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
+	EventNotifyHost  string          `default:"eventnotify:9090"`
 	Service          *uconf.Service
+	Http             HttpServices
 	OrgName          string
 	OrgId            string
-	EventNotifyHost  string `default:"localhost:9090"`
-	Http             HttpServices
 }
 
 type HttpServices struct {
-	Nucleus    string `defaut:"localhost:8080"`
-	Registry   string `defaut:"localhost:8080"`
-	Subscriber string `defaut:"localhost:8080"`
-	InitClient string `defaut:"localhost:8080"`
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {

@@ -24,11 +24,10 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	SiteHost         string           `default:"site:9090"`
 	Service          *uconf.Service
-	OrgHost          string `default:"org:9090"`
-	SiteHost      string `default:"site:9090"`
-	OrgId            string `default:"org"`
 	OrgName          string
+	OrgId            string
 }
 
 const (

@@ -27,15 +27,15 @@ type Config struct {
 	Grpc              *config.Grpc      `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	Queue             *config.Queue     `default:"{}"`
+	PushGateway       string            `default:"http://localhost:9091"`
 	Org               string            `default:"org:9090"`
 	OwnerName         string            `default:"Ukama Root"`
-	OwnerEmail        string            `default:"hello@ukama.com"`
 	OwnerPhone        string            `default:"0000000000"`
+	OwnerEmail        string
+	OrgName           string
 	OwnerId           string
 	AuthId            string
-	Queue             *config.Queue `default:"{}"`
-	PushGatewayHost   string        `default:"http://localhost:9091"`
-	OrgName           string
 }
 
 var UserMetric = []metric.MetricConfig{

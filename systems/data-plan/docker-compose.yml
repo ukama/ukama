@@ -19,11 +19,11 @@ services:
    - DB_HOST=postgresd-dataplan
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - RATE_SERVICE_HOST=baserate
    - RATE_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -38,11 +38,12 @@ services:
    - DB_HOST=postgresd-dataplan
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - PACKAGE_SERVICE_HOST=package
    - PACKAGE_SERVICE_PORT=9090
+   - RATE=rate:9090
+   - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   restart: always
   networks:
@@ -58,12 +59,12 @@ services:
    - DB_HOST=postgresd-dataplan
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - RATE_SERVICE_HOST=rate
    - RATE_SERVICE_PORT=9090
    - BASERATE=baserate:9090
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net

@@ -9,55 +9,45 @@
 package client
 
 import (
-	"context"
+	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type BaseRate struct {
-	conn    *grpc.ClientConn
-	timeout time.Duration
-	client  bpb.BaseRatesServiceClient
+type BaserateClientProvider interface {
+	GetClient() (bpb.BaseRatesServiceClient, error)
 }
 
-type BaseRateSrvc interface {
-	GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
-	GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
+type baserateClientProvider struct {
+	baserateService bpb.BaseRatesServiceClient
+	baserateHost    string
+	timeout         time.Duration
 }
 
-func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
+func NewBaseRateClientProvider(baserateHost string, timeout time.Duration) BaserateClientProvider {
+	return &baserateClientProvider{baserateHost: baserateHost, timeout: timeout}
+}
 
-	conn, err := grpc.NewClient(baseRate, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logrus.Errorf("Failed to connect to base rate service at %s. Error %s", baseRate, err.Error())
-		return nil, err
+func (bs *baserateClientProvider) GetClient() (bpb.BaseRatesServiceClient, error) {
+	if bs.baserateService == nil {
+		var conn *grpc.ClientConn
+
+		log.Infoln("Connecting to Rate service ", bs.baserateHost)
+
+		conn, err := grpc.NewClient(bs.baserateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Errorf("Failed to connect to Rate service %s. Error: %v", bs.baserateHost, err)
+
+			return nil, fmt.Errorf("failed to connect to remote Rate service: %w", err)
+		}
+
+		bs.baserateService = bpb.NewBaseRatesServiceClient(conn)
 	}
-	client := bpb.NewBaseRatesServiceClient(conn)
 
-	return &BaseRate{
-		conn:    conn,
-		client:  client,
-		timeout: timeout,
-	}, nil
-}
-
-func (c *BaseRate) Close() {
-	c.conn.Close()
-}
-
-func (c *BaseRate) GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-	return c.client.GetBaseRatesForPeriod(ctx, req)
-}
-
-func (c *BaseRate) GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-	return c.client.GetBaseRatesById(ctx, req)
+	return bs.baserateService, nil
 }

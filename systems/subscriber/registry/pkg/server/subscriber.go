@@ -35,14 +35,14 @@ import (
 
 type SubcriberServer struct {
 	orgName              string
-	subscriberRepo       db.SubscriberRepo
+	orgId                string
 	msgbus               mb.MsgBusServiceClient
+	subscriberRepo       db.SubscriberRepo
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
+	simManagerService    client.SimManagerClientProvider
+	orgClient            cnucl.OrgClient
+	networkClient        creg.NetworkClient
 	pb.UnimplementedRegistryServiceServer
-	simManagerService client.SimManagerClientProvider
-	orgId             string
-	orgClient         cnucl.OrgClient
-	networkClient     creg.NetworkClient
 }
 
 func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubcriberServer {

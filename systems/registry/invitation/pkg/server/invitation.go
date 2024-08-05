@@ -42,12 +42,12 @@ type InvitationServer struct {
 	orgClient            cnucl.OrgClient
 	userClient           cnucl.UserClient
 	mailerClient         cnotif.MailerClient
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus         mb.MsgBusServiceClient
-	orgName        string
-	TemplateName   string
+	orgName              string
+	TemplateName         string
 }
 
 func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
@@ -136,7 +136,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
 	}
-
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionCreate().SetObject("invitation").MustBuild()

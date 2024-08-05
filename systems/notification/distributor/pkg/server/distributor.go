@@ -25,7 +25,6 @@ import (
 )
 
 type Clients struct {
-	Nucleus    providers.NucleusProvider
 	Registry   providers.RegistryProvider
 	Subscriber providers.SubscriberProvider
 }

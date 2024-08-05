@@ -35,14 +35,14 @@ import (
 type PackageServer struct {
 	orgName        string
 	packageRepo    db.PackageRepo
-	rate           client.RateService
+	rate           client.RateClientProvider
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 	orgId string
 }
 
-func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateService, msgBus mb.MsgBusServiceClient, orgId string) *PackageServer {
+func NewPackageServer(orgName string, packageRepo db.PackageRepo, rate client.RateClientProvider, msgBus mb.MsgBusServiceClient, orgId string) *PackageServer {
 	return &PackageServer{
 		orgName:        orgName,
 		packageRepo:    packageRepo,
@@ -201,8 +201,12 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		PackageID: pkgUuid,
 	}
 
-	// Request rate
-	rate, err := p.rate.GetRateById(&rpb.GetRateByIdRequest{
+	rateSvc, err := p.rate.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	rate, err := rateSvc.GetRateById(ctx, &rpb.GetRateByIdRequest{
 		OwnerId:  req.OwnerId,
 		BaseRate: req.BaserateId,
 	})

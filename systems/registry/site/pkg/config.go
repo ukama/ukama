@@ -27,11 +27,15 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	PushGateway      string           `default:"http://localhost:9091"`
+	Network          string           `default:"network:9090"`
 	Service          *uconf.Service
 	OrgName          string
-	Network          string `default:"network:9090"`
-	PushGateway      string `default:"http://localhost:9091"`
-	InventoryHost    string `default:"http://localhost:8077"`
+	Http             HttpServices
+}
+
+type HttpServices struct {
+	InventoryClient string `defaut:"localhost:8080"`
 }
 
 var SiteMetric = []metric.MetricConfig{

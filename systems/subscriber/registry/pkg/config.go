@@ -21,11 +21,16 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"10s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	SimManagerHost   string           `default:"simmanager:9090"`
 	Service          *uconf.Service
-	SimManagerHost   string `default:"simmanager:9090"`
-	RegistryHost     string `default:"http://registry-api-gw:8080"`
+	Http             HttpServices
 	OrgName          string
 	OrgId            string
+}
+
+type HttpServices struct {
+	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
+	InitClient    string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
