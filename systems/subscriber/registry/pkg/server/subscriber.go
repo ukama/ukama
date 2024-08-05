@@ -217,7 +217,7 @@ func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberB
 
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	log.Infof("List all subscribers")
-
+	
 	subscribers, err := s.subscriberRepo.ListSubscribers()
 	if err != nil {
 		log.WithError(err).Error("error while getting all subscribers")
