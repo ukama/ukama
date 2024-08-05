@@ -38,8 +38,9 @@ func NewConfig(name string) *Config {
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.registry.node.notification.sent",
-				"event.cloud.local.{{ .Org}}.node.software.notification.sent",
+				"event.cloud.local.{{ .Org}}.registry.node.node.create",
+				"event.cloud.local.{{ .Org}}.node.software.update",
+				"event.cloud.local.{{ .Org}}.registry.node.update",
 			},
 		},
 	}
