@@ -36,10 +36,8 @@ type invoice struct {
 
 func NewInvoiceClient(invoiceHost string, timeout time.Duration) *invoice {
 	// using same context for three connections
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, invoiceHost,
+	conn, err := grpc.NewClient(invoiceHost,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to invoice host %q.Error: %v", invoiceHost, err)
