@@ -24,7 +24,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 // TODO: We need to think about retry policies for failing interaction between
@@ -117,7 +116,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	// Create customer
 	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
-		msg, err := unmarshalSubscriber(e.Msg)
+		msg, err := unmarshalAddSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +128,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	// Update customer
 	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
-		msg, err := unmarshalSubscriber(e.Msg)
+		msg, err := unmarshalUpdateSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +140,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	// Delete customer
 	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
-		msg, err := unmarshalSubscriber(e.Msg)
+		msg, err := unmarshalRemoveSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -349,7 +348,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	return nil
 }
 
-func handleRegistrySubscriberCreateEvent(key string, subscriber *upb.Subscriber,
+func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -357,11 +356,11 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *upb.Subscriber,
 	defer cancel()
 
 	customer := client.Customer{
-		Id:      subscriber.SubscriberId,
-		Name:    subscriber.FirstName,
-		Email:   subscriber.Email,
-		Address: subscriber.Address,
-		Phone:   subscriber.PhoneNumber,
+		Id:      subscriber.Subscriber.SubscriberId,
+		Name:    subscriber.Subscriber.FirstName,
+		Email:   subscriber.Subscriber.Email,
+		Address: subscriber.Subscriber.Address,
+		Phone:   subscriber.Subscriber.PhoneNumber,
 	}
 
 	log.Infof("Sending subscriber create event %v to billing server", customer)
@@ -372,12 +371,12 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *upb.Subscriber,
 	}
 
 	log.Infof("New billing customer: %q", customerBillingId)
-	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.SubscriberId)
+	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.Subscriber.SubscriberId)
 
 	return nil
 }
 
-func handleRegistrySubscriberUpdateEvent(key string, subscriber *upb.Subscriber,
+func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -385,11 +384,11 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *upb.Subscriber,
 	defer cancel()
 
 	customer := client.Customer{
-		Id:      subscriber.SubscriberId,
-		Name:    subscriber.FirstName,
-		Email:   subscriber.Email,
-		Address: subscriber.Address,
-		Phone:   subscriber.PhoneNumber,
+		Id:      subscriber.Subscriber.SubscriberId,
+		Name:    subscriber.Subscriber.FirstName,
+		Email:   subscriber.Subscriber.Email,
+		Address: subscriber.Subscriber.Address,
+		Phone:   subscriber.Subscriber.PhoneNumber,
 	}
 
 	log.Infof("Sending subscriber update event %v to billing", customer)
@@ -400,19 +399,19 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *upb.Subscriber,
 	}
 
 	log.Infof("Updated billing customer: %q", customerBillingId)
-	log.Infof("Successfuly updated subscriber %q", subscriber.SubscriberId)
+	log.Infof("Successfuly updated subscriber %q", subscriber.Subscriber.SubscriberId)
 
 	return nil
 }
 
-func handleRegistrySubscriberDeleteEvent(key string, subscriber *upb.Subscriber,
+func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.RemoveSubscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.SubscriberId)
+	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.Subscriber.SubscriberId)
 	if err != nil {
 		return fmt.Errorf("fail to delete subscriber: %w", err)
 	}
@@ -529,8 +528,34 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 	return p, nil
 }
 
-func unmarshalSubscriber(msg *anypb.Any) (*upb.Subscriber, error) {
-	p := &upb.Subscriber{}
+func unmarshalAddSubscriber(msg *anypb.Any) (*epb.AddSubscriber, error) {
+	p := &epb.AddSubscriber{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.UpdateSubscriber, error) {
+	p := &epb.UpdateSubscriber{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.RemoveSubscriber, error) {
+	p := &epb.RemoveSubscriber{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
