@@ -35,9 +35,277 @@ const (
 
 	bmId   = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
 	custId = "e231a7cd-03f6-470a-9e8c-e02f54f9b415"
+	planId = "0f8be763-8bd6-406d-9d82-158d7f1a2140"
 )
 
-func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
+func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
+	t.Run("CreateCustomerFaillure", func(t *testing.T) {
+		billingClient := &mocks.BillingClient{}
+
+		billingClient.On("GetCustomer", mock.Anything,
+			OrgId).Return("", errors.New("fail to get customer")).Once()
+
+		billingClient.On("CreateCustomer", mock.Anything,
+			mock.Anything).Return("", errors.New("fail to create customer")).Once()
+
+		_, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		assert.Error(t, err)
+	})
+
+	t.Run("CreateBillableMetricFaillure", func(t *testing.T) {
+		billingClient := &mocks.BillingClient{}
+
+		billingClient.On("GetCustomer", mock.Anything,
+			OrgId).Return("", errors.New("faillure")).Once()
+
+		billingClient.On("CreateCustomer", mock.Anything,
+			mock.Anything).Return(custId, nil).Once()
+
+		billingClient.On("GetBillableMetricId", mock.Anything,
+			server.DefaultBillableMetricCode).Return("", errors.New("faillure")).Once()
+
+		billingClient.On("CreateBillableMetric", mock.Anything,
+			mock.Anything).Return("", errors.New("faillure")).Once()
+
+		_, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		assert.Error(t, err)
+	})
+
+	t.Run("BillableMetricCreated", func(t *testing.T) {
+		billingClient := &mocks.BillingClient{}
+		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.foo.bar.baz.buz")
+
+		billingClient.On("GetCustomer", mock.Anything,
+			OrgId).Return("", errors.New("faillure")).Once()
+
+		billingClient.On("CreateCustomer", mock.Anything,
+			mock.Anything).Return(custId, nil).Once()
+
+		billingClient.On("GetBillableMetricId", mock.Anything,
+			server.DefaultBillableMetricCode).Return("", errors.New("faillure")).Once()
+
+		billingClient.On("CreateBillableMetric", mock.Anything,
+			mock.Anything).Return(bmId, nil).Once()
+
+		s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        nil,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+}
+
+func TestCollectorEventServer_HandleOrgSubscriptionEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync")
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	assert.NoError(t, err)
+
+	t.Run("PlanFoundButSubscriptionNotTerminated", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", nil).Once()
+		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("some unexpected error")).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id: planId,
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("PlanFoundAndNotTerminated", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", nil).Once()
+		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
+			Return("", nil).Once()
+		billingClient.On("TerminatePlan", mock.Anything, mock.Anything).
+			Return("", errors.New("some unexpected error")).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id: planId,
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("OpexFeeNotValid", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", errors.New("Not found")).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id:      planId,
+					OpexFee: "lol",
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("NewPlanNotCreated", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", errors.New("Not found")).Once()
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+			Return("", errors.New("some unexpected error occured")).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id:      planId,
+					Item:    "SAS subscription",
+					OpexFee: "199",
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("NewSubscriptionNotCreated", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", errors.New("Not found")).Once()
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+			Return("", nil).Once()
+
+		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("some unexpected error occured")).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id:      planId,
+					Item:    "SAS subscription",
+					OpexFee: "199",
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("OrgSubscriptionCreated", func(t *testing.T) {
+		billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", errors.New("Not found")).Once()
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything).
+			Return("", nil).Once()
+		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+			Return("", nil).Once()
+
+		userAccountItems := epb.UserAccountingEvent{
+			UserId: OrgId,
+			Accounting: []*epb.UserAccounting{
+				&epb.UserAccounting{
+					Id:      planId,
+					Item:    "SAS subscription",
+					OpexFee: "199",
+				},
+			},
+		}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("OrgSubscriptionEventNotSent", func(t *testing.T) {
+		userAccountItems := epb.Notification{}
+
+		anyE, err := anypb.New(&userAccountItems)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
 
@@ -47,7 +315,9 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
@@ -77,7 +347,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("SimUsageEventNotSent", func(t *testing.T) {
+	t.Run("SimUsageEventNotAdded", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).
 			Return(errors.New("failed to send sim usage")).Once()
 
@@ -95,9 +365,25 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 
 		assert.Error(t, err)
 	})
+
+	t.Run("SimUsageEventNotSent", func(t *testing.T) {
+		simUsage := epb.Notification{}
+
+		anyE, err := anypb.New(&simUsage)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
 }
 
-func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
+func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create")
 
@@ -107,7 +393,9 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("PackageCreateEventSent", func(t *testing.T) {
 		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
@@ -141,11 +429,72 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 		assert.NoError(t, err)
 	})
 
-	t.Run("CreatePackageEventNotSent", func(t *testing.T) {
+	t.Run("DataunintNotValid", func(t *testing.T) {
 		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create package event")).Once()
 
-		pkg := epb.CreatePackageEvent{}
+		pkg := epb.CreatePackageEvent{
+			Uuid:        "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			SimType:     "operator_data",
+			OrgId:       "75ec112a-8745-49f9-ab64-1a37edade794",
+			OwnerId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			SmsVolume:   1000,
+			DataVolume:  5000000,
+			VoiceVolume: 500,
+			Type:        "prepaid",
+			DataUnit:    "lol",
+			Flatrate:    false,
+			Country:     "USA",
+			Provider:    "ukama",
+		}
+
+		anyE, err := anypb.New(&pkg)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("CreatePackageFaillure", func(t *testing.T) {
+		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
+			Return("", errors.New("failed to send create package event")).Once()
+
+		pkg := epb.CreatePackageEvent{
+			Uuid:        "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			SimType:     "operator_data",
+			OrgId:       "75ec112a-8745-49f9-ab64-1a37edade794",
+			OwnerId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			SmsVolume:   1000,
+			DataVolume:  5000000,
+			VoiceVolume: 500,
+			Type:        "prepaid",
+			DataUnit:    "MegaBytes",
+			Flatrate:    false,
+			Country:     "USA",
+			Provider:    "ukama",
+		}
+
+		anyE, err := anypb.New(&pkg)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("CreatePackageEventNotSent", func(t *testing.T) {
+		pkg := epb.Notification{}
 
 		anyE, err := anypb.New(&pkg)
 		assert.NoError(t, err)
@@ -161,7 +510,7 @@ func TestBillingCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing
 	})
 }
 
-func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) {
+func TestCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create")
 
@@ -171,7 +520,9 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("CreateCustomerEventSent", func(t *testing.T) {
 
@@ -203,7 +554,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 		assert.NoError(t, err)
 	})
 
-	t.Run("CreateCustomerEventNotSent", func(t *testing.T) {
+	t.Run("CreateCustomerFaillure", func(t *testing.T) {
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create customer event")).Once()
 
@@ -225,9 +576,25 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 
 		assert.Error(t, err)
 	})
+
+	t.Run("CreateCustomerEventNotSent", func(t *testing.T) {
+		subscriber := epb.Notification{}
+
+		anyE, err := anypb.New(&subscriber)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
 }
 
-func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) {
+func TestCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update")
 
@@ -237,7 +604,9 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("UpdateCustomerEventSent", func(t *testing.T) {
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
@@ -267,7 +636,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		assert.NoError(t, err)
 	})
 
-	t.Run("UpdateCustomerEventNotSent", func(t *testing.T) {
+	t.Run("UpdateCustomerFaillure", func(t *testing.T) {
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send update customer event")).Once()
 
@@ -289,9 +658,25 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 
 		assert.Error(t, err)
 	})
+
+	t.Run("UpdateCustomerEventNotSent", func(t *testing.T) {
+		subscriber := epb.Notification{}
+
+		anyE, err := anypb.New(&subscriber)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
 }
 
-func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *testing.T) {
+func TestCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete")
 
@@ -301,7 +686,9 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("DeleteCustomerEventSent", func(t *testing.T) {
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
@@ -328,8 +715,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		assert.NoError(t, err)
 	})
 
-	t.Run("DeleteCustomerEventNotSent", func(t *testing.T) {
-
+	t.Run("DeleteCustomerFaillure", func(t *testing.T) {
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send delete customer event")).Once()
 
@@ -351,9 +737,25 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 
 		assert.Error(t, err)
 	})
+
+	t.Run("DeleteCustomerEventNotSent", func(t *testing.T) {
+		subscriber := epb.Notification{}
+
+		anyE, err := anypb.New(&subscriber)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
 }
 
-func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testing.T) {
+func TestCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate")
 
@@ -363,7 +765,9 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("AllocateSimEventSent", func(t *testing.T) {
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
@@ -390,7 +794,7 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 		assert.NoError(t, err)
 	})
 
-	t.Run("AllocateSimEventNotSent", func(t *testing.T) {
+	t.Run("AllocateSimInvalidEventSent", func(t *testing.T) {
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create subscription event")).Once()
 
@@ -408,9 +812,28 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 
 		assert.Error(t, err)
 	})
+
+	t.Run("AllocateSimEventNotSent", func(t *testing.T) {
+		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("failed to send create subscription event")).Once()
+
+		sim := epb.Notification{}
+
+		anyE, err := anypb.New(&sim)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
 }
 
-func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *testing.T) {
+func TestCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
 	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage")
 
@@ -420,7 +843,9 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s := server.NewBillingCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+
+	assert.NoError(t, err)
 
 	t.Run("SetActivePackageEventSent", func(t *testing.T) {
 		billingClient.On("TerminateSubscription", mock.Anything, "b20c61f1-1c5a-4559-bfff-cd00f746697d").
@@ -449,13 +874,59 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		assert.NoError(t, err)
 	})
 
-	t.Run("SetActivePackageEventNotSent", func(t *testing.T) {
+	t.Run("TerminateSubscriptionFaillure", func(t *testing.T) {
 		billingClient.On("TerminateSubscription", mock.Anything, "16befbda-250f-4a68-9cb4-31cccce3005e").
 			Return("", errors.New("failed to send terminate subscription event")).Once()
 
 		sim := epb.EventSimActivePackage{
-			Id: "16befbda-250f-4a68-9cb4-31cccce3005e",
+			Id:               "16befbda-250f-4a68-9cb4-31cccce3005e",
+			SubscriberId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			PackageId:        "3c353228-34ce-42ac-8ce4-0d4abb90bd8e",
+			PackageStartDate: timestamppb.New(time.Now()),
 		}
+
+		anyE, err := anypb.New(&sim)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("CreateSubscriptionFaillure", func(t *testing.T) {
+		billingClient.On("TerminateSubscription", mock.Anything, "b20c61f1-1c5a-4559-bfff-cd00f746697d").
+			Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
+
+		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("failed to send create subscription event")).Once()
+
+		sim := epb.EventSimActivePackage{
+			Id:               "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			SubscriberId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			PackageId:        "3c353228-34ce-42ac-8ce4-0d4abb90bd8e",
+			PackageStartDate: timestamppb.New(time.Now()),
+		}
+
+		anyE, err := anypb.New(&sim)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("WrongEventSent", func(t *testing.T) {
+		sim := epb.Notification{}
 
 		anyE, err := anypb.New(&sim)
 		assert.NoError(t, err)

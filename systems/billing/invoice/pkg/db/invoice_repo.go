@@ -39,8 +39,7 @@ func NewInvoiceRepo(db sql.Db) InvoiceRepo {
 func (i *invoiceRepo) Add(invoice *Invoice, nestedFunc func(invoice *Invoice, tx *gorm.DB) error) error {
 	err := i.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
-			nestErr := nestedFunc(invoice, tx)
-			if nestErr != nil {
+			if nestErr := nestedFunc(invoice, tx); nestErr != nil {
 				return nestErr
 			}
 		}
@@ -117,8 +116,7 @@ func (i *invoiceRepo) Delete(invoiceId uuid.UUID, nestedFunc func(uuid.UUID, *go
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(invoiceId, tx)
-			if nestErr != nil {
+			if nestErr := nestedFunc(invoiceId, tx); nestErr != nil {
 				return nestErr
 			}
 		}

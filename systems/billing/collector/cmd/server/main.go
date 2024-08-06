@@ -85,7 +85,10 @@ func runGrpcServer() {
 	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey,
 		serviceConfig.LagoHost, serviceConfig.LagoPort)
 
-	eSrv := server.NewBillingCollectorEventServer(serviceConfig.OrgName, serviceConfig.OrgId, lagoClient)
+	eSrv, err := server.NewCollectorEventServer(serviceConfig.OrgName, serviceConfig.OrgId, lagoClient)
+	if err != nil {
+		log.Fatalf("failed to start billing collector event server: %v", err)
+	}
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
