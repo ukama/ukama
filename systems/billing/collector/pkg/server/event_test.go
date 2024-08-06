@@ -178,12 +178,16 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := upb.Subscriber{
+		subs := &upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			FirstName:    "John Doe",
 			Email:        "john.doe@example.com",
 			Address:      "This is my address",
 			PhoneNumber:  "000111222",
+		}
+
+		subscriber := epb.AddSubscriber{
+			Subscriber: subs,
 		}
 
 		anyE, err := anypb.New(&subscriber)
@@ -203,7 +207,11 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create customer event")).Once()
 
-		subscriber := upb.Subscriber{}
+		subs := &upb.Subscriber{}
+
+		subscriber := epb.AddSubscriber{
+			Subscriber: subs,
+		}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)
@@ -235,11 +243,15 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := upb.Subscriber{
+		subs := &upb.Subscriber{
 			FirstName:   "Fox Doe",
 			Email:       "Fox.doe@example.com",
 			Address:     "This is my address",
 			PhoneNumber: "000111222",
+		}
+
+		subscriber := epb.UpdateSubscriber{
+			Subscriber: subs,
 		}
 
 		anyE, err := anypb.New(&subscriber)
@@ -259,7 +271,11 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send update customer event")).Once()
 
-		subscriber := upb.Subscriber{}
+		subs := &upb.Subscriber{}
+
+		subscriber := epb.UpdateSubscriber{
+			Subscriber: subs,
+		}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)
@@ -291,8 +307,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := upb.Subscriber{
+		subs := &upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
+		}
+
+		subscriber := epb.RemoveSubscriber{
+			Subscriber: subs,
 		}
 
 		anyE, err := anypb.New(&subscriber)
@@ -313,7 +333,11 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send delete customer event")).Once()
 
-		subscriber := upb.Subscriber{}
+		subs := &upb.Subscriber{}
+
+		subscriber := epb.RemoveSubscriber{
+			Subscriber: subs,
+		}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)

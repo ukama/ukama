@@ -37,8 +37,7 @@ type invoice struct {
 func NewInvoiceClient(invoiceHost string, timeout time.Duration) *invoice {
 	// using same context for three connections
 
-	conn, err := grpc.NewClient(invoiceHost,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(invoiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to invoice host %q.Error: %v", invoiceHost, err)
 	}
