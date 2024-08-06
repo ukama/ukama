@@ -56,10 +56,8 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 
 	t := time.Duration(s.GrpcTimeout) * time.Second
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t))
-	defer cancel()
 	log.Info("Connecting to... ", s.ServiceUri)
-	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.NewClient(s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", s.ServiceUri, err.Error())
 	} else {
@@ -167,7 +165,7 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 	log.Infof("Received a message: %+v", e)
 
 	if q.gConn == nil {
-		if err := q.reConnect(ctx); err != nil {
+		if err := q.reConnect(); err != nil {
 			return
 		}
 	}
@@ -186,7 +184,7 @@ func (q *QueueListener) healthCheck() {
 	defer cancel()
 
 	if q.gConn == nil {
-		if err := q.reConnect(ctx); err != nil {
+		if err := q.reConnect(); err != nil {
 			dt := time.Now()
 			q.continuousMiss++
 			log.Errorf("HealthCheck Failed %d time/s for %s service at %s", q.continuousMiss, q.serviceName, dt.Format(time.RFC1123))
@@ -205,9 +203,9 @@ func (q *QueueListener) healthCheck() {
 	}
 }
 
-func (q *QueueListener) reConnect(ctx context.Context) error {
+func (q *QueueListener) reConnect() error {
 
-	conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.NewClient(q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Errorf("Could not connect to %s. Error %s", q.serviceHost, err.Error())
 		return err
