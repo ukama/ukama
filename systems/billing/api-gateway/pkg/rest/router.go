@@ -53,6 +53,7 @@ type Clients struct {
 
 func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
+
 	c.i = client.NewInvoiceClient(grpcEndpoints.Invoice, grpcEndpoints.Timeout)
 	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
 
