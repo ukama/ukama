@@ -22,8 +22,8 @@ import (
 const registryVersion = "/v1/"
 
 type RegistryProvider interface {
-	GetMember(orgName string, uuid string) (*mpb.MemberResponse, error)
 	GetNetwork(orgName string, netID string) (*netpb.GetResponse, error)
+	GetMemberByUserId(orgName string, uuid string) (*mpb.MemberResponse, error)
 }
 
 type registryProvider struct {
@@ -55,7 +55,7 @@ func NewRegistryProvider(icHost string, debug bool) *registryProvider {
 	return r
 }
 
-func (r *registryProvider) GetMember(orgName string, userId string) (*mpb.MemberResponse, error) {
+func (r *registryProvider) GetMemberByUserId(orgName string, userId string) (*mpb.MemberResponse, error) {
 
 	var err error
 
@@ -69,7 +69,7 @@ func (r *registryProvider) GetMember(orgName string, userId string) (*mpb.Member
 
 	resp, err := r.R.C.R().
 		SetError(errStatus).
-		Get(r.R.URL.String() + registryVersion + "members/" + userId)
+		Get(r.R.URL.String() + registryVersion + "members/user/" + userId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())

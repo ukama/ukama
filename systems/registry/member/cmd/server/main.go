@@ -148,7 +148,6 @@ func initMemberDB(d sql.Db, orgClient cnucl.OrgClient, userClient cnucl.UserClie
 				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "OWNERID", err)
 			}
 
-			/* TODO: validate the user from user services */
 			user, err := userClient.GetById(serviceConfig.OwnerId)
 			if err != nil {
 				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
@@ -174,6 +173,7 @@ func initMemberDB(d sql.Db, orgClient cnucl.OrgClient, userClient cnucl.UserClie
 			member := &db.Member{
 				UserId:      OwnerUUID,
 				Deactivated: false,
+				MemberId:    uuid.NewV4(),
 				Role:        roles.RoleType(roles.TYPE_OWNER),
 			}
 			if err := mDB.Transaction(func(tx *gorm.DB) error {

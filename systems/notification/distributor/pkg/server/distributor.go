@@ -65,7 +65,7 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 
 	/* validate member of org or member role */
 	if req.GetUserId() != "" {
-		resp, err := n.clients.Registry.GetMember(n.orgName, req.GetUserId())
+		resp, err := n.clients.Registry.GetMemberByUserId(n.orgName, req.GetUserId())
 		if err != nil {
 			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
@@ -153,51 +153,3 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 EXIT:
 	return nil
 }
-
-// func (n *DistributorServer) GetNotifications(ctx context.Context, req *pb.NotificationsRequest) (*pb.NotificationsResponse, error) {
-// 	log.Infof("Getting notifications %v", req)
-
-// 	var ouuid, nuuid, suuid, uuuid uuid.UUID
-// 	var err error
-
-// 	if req.GetOrgId() != "" {
-// 		ouuid, err = uuid.FromString(req.GetOrgId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of org uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetNetworkId() != "" {
-// 		nuuid, err = uuid.FromString(req.GetNetworkId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of network uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetSubscriberId() != "" {
-// 		suuid, err = uuid.FromString(req.GetSubscriberId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of subscriber uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetUserId() != "" {
-// 		uuuid, err = uuid.FromString(req.GetUserId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of user uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	notifications, err := n.s.GetAll(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
-// 	if err != nil {
-// 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
-// 	}
-
-// 	return &pb.GetAllResponse{
-// 		Notifications: dbNotificationsToPbNotifications(notifications),
-// 	}, nil
-// }

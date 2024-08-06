@@ -61,7 +61,7 @@ type GetEventNotificationRequest struct {
 	NetworkId    string `json:"network_id" form:"network_id" query:"network_id"`
 	SubscriberId string `json:"subscriber_id" form:"subscriber_id" query:"subscriber_id"`
 	UserId       string `json:"user_id" form:"user_id" query:"user_id"`
-	RoleType     string `json:"role" form:"role_type" query:"role" validate:"oneof=OWNER ADMIN VENDOR USERS"`
+	RoleType     string `json:"role" form:"role_type" query:"role" validate:"oneof=ROLE_OWNER ROLE_ADMIN ROLE_VENDOR ROLE_USERS ROLE_NETWORK_OWNER"`
 }
 
 type UpdateEventNotificationStatusRequest struct {

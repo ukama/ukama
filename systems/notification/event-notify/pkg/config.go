@@ -23,8 +23,14 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	Http             HttpServices
 	OrgName          string
 	OrgId            string
+	OwnerId          string
+}
+
+type HttpServices struct {
+	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
 }
 
 func NewConfig(name string) *Config {
