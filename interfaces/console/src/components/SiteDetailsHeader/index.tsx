@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Grid,
@@ -7,11 +7,13 @@ import {
   MenuItem,
   Typography,
   Skeleton,
+  Divider,
+  Button,
 } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import AddIcon from '@mui/icons-material/Add';
 
 interface SiteDetailsHeaderProps {
   addSite: () => void;
@@ -96,9 +98,17 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
                     {site.name}
                   </MenuItem>
                 )),
-                <MenuItem key="add-site" onClick={addSite}>
-                  Add site
-                </MenuItem>,
+                <>
+                  <Divider />
+                  <MenuItem key="add-site" onClick={addSite}>
+                    <Button
+                      startIcon={<AddIcon />}
+                      sx={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      Add site
+                    </Button>
+                  </MenuItem>
+                </>,
               ]}
         </Menu>
       </Box>

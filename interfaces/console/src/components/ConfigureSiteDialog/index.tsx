@@ -394,6 +394,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                       <SiteMapComponent
                         posix={[values.latitude, values.longitude]}
                         address={address}
+                        height={'200px'}
                       />
                     )}
                     <Typography variant="body2" mt={1}>
