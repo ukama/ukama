@@ -22,7 +22,7 @@ const runServer = async () => {
     context: async ({ req }) => {
       const headers: THeaders = parseGatewayHeaders(req.headers);
       const baseURL = await getBaseURL(
-        SUB_GRAPHS.site.name,
+        SUB_GRAPHS.controller.name,
         headers.orgName,
         null
       );
@@ -34,11 +34,11 @@ const runServer = async () => {
         },
       };
     },
-    listen: { port: SUB_GRAPHS.site.port },
+    listen: { port: SUB_GRAPHS.controller.port },
   });
 
   logger.info(
-    `🚀 Ukama ${SUB_GRAPHS.site.name} service running at http://localhost:${SUB_GRAPHS.site.port}/graphql`
+    `🚀 Ukama ${SUB_GRAPHS.controller.name} service running at http://localhost:${SUB_GRAPHS.controller.port}/graphql`
   );
 };
 

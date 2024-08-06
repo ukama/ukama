@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { RestartNodesResDto } from "./types";
+import { emptyResDto } from "./types";
 
 @Resolver()
 export class RestartNodesResolver {

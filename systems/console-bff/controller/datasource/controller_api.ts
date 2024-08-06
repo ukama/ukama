@@ -2,8 +2,8 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
 import {
+  EmptyResDto,
   RestartNodeResDto,
-  RestartNodesResDto,
   RestartSiteResDto,
 } from "../resolvers/types";
 
@@ -24,7 +24,7 @@ class ControllerApi extends RESTDataSource {
   restartNodes = async (
     baseURL: string,
     nodeIds: string[]
-  ): Promise<RestartNodesResDto> => {
+  ): Promise<EmptyResDto> => {
     this.logger.info(
       `RestartNodes [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/restart`
     );
@@ -36,18 +36,6 @@ class ControllerApi extends RESTDataSource {
     });
   };
 
-  /**
-   * Asynchronously restarts a site based on provided URLs and site ID.
-   * @example
-   * functionName('https://example.com', '12345')
-   * { message: 'Site restarted successfully', status: 'success' }
-   * @param {string} baseURL - The base URL of the site endpoint.
-   * @param {string} siteId - The unique identifier of the site to restart.
-   * @returns {Promise<RestartSiteResDto>} Object containing the status and message of the restart operation.
-   * @description
-   *   - Logs the full URL of the restart endpoint before making the request.
-   *   - Updates the baseURL property of the object.
-   */
   restartSite = async (
     baseURL: string,
     siteId: string

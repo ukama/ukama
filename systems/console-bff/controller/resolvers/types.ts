@@ -20,7 +20,4 @@ export class RestartSiteResDto {
 }
 
 @ObjectType()
-export class RestartNodesResDto {
-  @Field(() => [RestartNodeResDto])
-  restartedNodes: RestartNodeResDto[];
-}
+export class EmptyResDto {}
