@@ -7,7 +7,7 @@ import {
   STORAGE_KEY,
 } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
+import { addInStore, openStore, removeFromStore } from "../../common/storage";
 import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
 import {
   getNodeRangeMetric,
@@ -90,7 +90,7 @@ class SubscriptionsResolvers {
           }
         });
         worker.on("exit", (code: any) => {
-          removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+          removeFromStore(openStore(), `${orgId}/${userId}/${type}/${from}`);
           logger.info(
             `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
           );
@@ -137,7 +137,7 @@ class SubscriptionsResolvers {
     });
 
     worker.on("exit", (code: any) => {
-      removeKeyFromStorage(key);
+      removeFromStore(openStore(), key);
       logger.info(
         `WS_THREAD exited with code [${code}] for ${data.orgId}/${data.userId}/${data.networkId}`
       );
@@ -157,7 +157,8 @@ class SubscriptionsResolvers {
     @Root() payload: LatestMetricRes,
     @Args() args: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
-    await storeInStorage(
+    await addInStore(
+      openStore(),
       `${args.orgId}/${args.userId}/${payload.type}/${args.from}`,
       getTimestampCount("0")
     );
@@ -173,7 +174,8 @@ class SubscriptionsResolvers {
     @Root() payload: NotificationsResDto,
     @Args() args: GetNotificationsInput
   ): Promise<NotificationsResDto> {
-    await storeInStorage(
+    await addInStore(
+      openStore(),
       `notification-${args.userId}-${args.orgId}-${args.forRole}-${args.networkId}`,
       getTimestampCount("0")
     );

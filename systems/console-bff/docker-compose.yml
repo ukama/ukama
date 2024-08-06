@@ -1,20 +1,12 @@
 version: "3.7"
 
 services:
-  bff-redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - ukama-net
-
   bff:
     build: .
     ports:
       - "8080:8080"
       - "8081:8081"
     environment:
-      - BFF_REDIS=redis://bff-redis:6379
       - AUTH_URL=http://kratos:4433
       - NUCLEUS_API_GW=http://api-gateway-nucleus:8080
       - INIT_API_GW=http://api-gateway-init:8080
@@ -28,8 +20,6 @@ services:
       - AUTH_APP_URL=http://localhost:4455
       - PLAYGROUND_URL=http://localhost:8080
       - CONSOLE_APP_URL=http://localhost:3000
-    depends_on:
-      - bff-redis
     networks:
       - ukama-net
 

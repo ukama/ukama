@@ -7,11 +7,13 @@
  */
 import { exec } from "child_process";
 import { readFile } from "fs";
+import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
 import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
+import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
 
 const getTimestampCount = (count: string) =>
@@ -229,25 +231,30 @@ const getSystemNameByService = (service: string): string => {
 const getBaseURL = async (
   serviceName: string,
   orgName: string,
-  redisClient: any
+  store: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  if (redisClient) {
-    const redisBaseURL = await redisClient.get(`${sysName}-${orgName}`);
-    if (redisBaseURL)
+  if (store) {
+    const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
+    if (baseURL) {
+      logger.info(
+        `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
+      );
       return {
         status: 200,
-        message: redisBaseURL,
+        message: baseURL,
       };
+    }
   }
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
     const intRes = await initAPI.getSystem(orgName, sysName);
-    if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
+    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
+    if (store) await addInStore(store, `${orgName}-${sysName}`, url);
     return {
       status: 200,
-      message: intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`,
+      message: url,
     };
   } else {
     return {
@@ -256,6 +263,7 @@ const getBaseURL = async (
     };
   }
 };
+
 const csvToBase64 = (filePath: string) => {
   readFile(filePath, (err, data) => {
     if (err) {

@@ -26,6 +26,7 @@ systems/inventory/accounting/temp
 systems/console-bff/.cache/*
 systems/testing/integration/pkg/user_stories/coverage.out
 systems/console-bff/.cache/*
+systems/console-bff/ukama-systems-bff
 dump.rdb
 interfaces/console/pkg
 systems/billing/provider/.env

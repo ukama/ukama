@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
@@ -34,7 +35,10 @@ class InitAPI extends RESTDataSource {
     ).then(res => dtoToSystenResDto(res));
   };
 
-  validateSession = async (cookies: string): Promise<ValidateSessionRes> => {
+  validateSession = async (
+    store: RootDatabase,
+    cookies: string
+  ): Promise<ValidateSessionRes> => {
     this.logger.info(
       `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
     );
@@ -83,7 +87,7 @@ class InitAPI extends RESTDataSource {
           : "";
 
       if (orgId && orgName) {
-        const baseURL = await getBaseURL("member", orgName, null);
+        const baseURL = await getBaseURL("member", orgName, store);
         if (baseURL.status === 200) {
           const member = await memberAPI.getMemberByUserId(
             baseURL.message,

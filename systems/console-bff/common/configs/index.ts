@@ -35,7 +35,6 @@ export const AUTH_URL = process.env.AUTH_URL ?? "";
 export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const STRIP_SK = process.env.STRIP_SK ?? "";
 export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
-export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://localhost:6379";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");

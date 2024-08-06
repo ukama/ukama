@@ -8,6 +8,7 @@
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 
+import { openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
@@ -18,13 +19,14 @@ import resolvers from "./resolver";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
+  const store = openStore();
   await startStandaloneServer(server, {
     context: async ({ req }) => {
       const headers: THeaders = parseGatewayHeaders(req.headers);
       const baseURL = await getBaseURL(
         SUB_GRAPHS.subscriber.name,
         headers.orgName,
-        null
+        store
       );
       return {
         headers: headers,

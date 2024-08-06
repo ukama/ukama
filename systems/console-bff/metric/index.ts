@@ -11,6 +11,7 @@ import "reflect-metadata";
 import SubGraphServer from "../common/apollo";
 import { SUB_GRAPHS } from "../common/configs";
 import { logger } from "../common/logger";
+import { openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../common/utils";
 import MetricAPI from "./datasource/metric_api";
@@ -18,13 +19,14 @@ import resolvers from "./resolver";
 
 const runServer = async () => {
   const server = await SubGraphServer(resolvers);
+  const store = openStore();
   await startStandaloneServer(server, {
     context: async ({ req }) => {
       const headers: THeaders = parseGatewayHeaders(req.headers);
       const baseURL = await getBaseURL(
         SUB_GRAPHS.metric.name,
         headers.orgName,
-        null
+        store
       );
       return {
         headers: headers,
