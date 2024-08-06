@@ -13,7 +13,6 @@
 #include "ulfius.h"
 
 #define EP_BS                           "/"
-#define WEBSERVICE                      "notify"
 #define REST_API_VERSION                "v1"
 
 /* API URL parameters*/
@@ -27,7 +26,7 @@
 #define ENABLE                          "enable"
 #define DISABLE                         "disable"
 
-#define URL_PREFIX                      EP_BS WEBSERVICE EP_BS REST_API_VERSION
+#define URL_PREFIX                      EP_BS REST_API_VERSION
 #define API_RES_EP(RES)                 EP_BS RES
 
 
