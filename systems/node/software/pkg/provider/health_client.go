@@ -9,9 +9,6 @@
 package providers
 
 import (
-	"context"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 
@@ -36,12 +33,9 @@ func (u *healthClientProvider) GetClient() (pb.HealhtServiceClient, error) {
 	if u.healthService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
 		log.Infoln("Connecting to Health service ", u.healthHost)
 
-		conn, err := grpc.DialContext(ctx, u.healthHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(u.healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("Failed to connect to Health service %s. Error: %v", u.healthHost, err)
 		}

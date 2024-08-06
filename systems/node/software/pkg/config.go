@@ -24,7 +24,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 	WimsiHost        string           `default:"http://wimsi:8080"`
-	Health           string           `default:"http://health:9090"`
+	Health           string           `default:"health:9090"`
 }
 
 func NewConfig(name string) *Config {
@@ -36,7 +36,6 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				// "event.cloud.local.{{ .Org}}.node.health.capps.store",
 				"event.cloud.local.{{ .Org}}.hub.distributor.capp",
 			},
 		},

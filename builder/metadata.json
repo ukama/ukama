@@ -39,6 +39,11 @@
   "name": "Ukama Notification system",
   "path": "./notification"
  },
+ "node": {
+  "key": "node",
+  "name": "Ukama Node system",
+  "path": "./node"
+ },
  "metrics": {
   "key": "metrics",
   "name": "Ukama Metrics system",

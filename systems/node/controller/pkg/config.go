@@ -24,7 +24,11 @@ type Config struct {
 	Service          *uconf.Service
 	MsgClient        *config.MsgClient `default:"{}"`
 	OrgName          string            `default:"ukama"`
-	RegistryHost     string            `default:"http://org:8080"`
+	Http             HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {

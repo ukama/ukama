@@ -3,7 +3,7 @@ services:
  postgresd-node:
   image: postgres:13.3
   ports:
-   - '54089:5432'
+   - '5489:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -13,13 +13,11 @@ services:
    - postgress-data:/var/lib/postgresql
 
  controller:
-  build: ./controller
-  ports:
-   - '9089:9090'
+  build:
+   context: ./controller
+   dockerfile: ./Dockerfile
   environment:
    - DEBUGMODE=true
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
    - DB_HOST=postgresd-node
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
@@ -27,8 +25,8 @@ services:
    - MSGCLIENT_HOST=msgclient-node:9095
    - CONTROLLER_SERVICE_HOST=controller
    - CONTROLLER_SERVICE_PORT=9090
-   - OWNERID=${OWNERID}
-   - ORGREGISTRYHOST=http://${LOCAL_HOST_IP}:8060
+   - ORGNAME=${ORGNAME}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    - ukama-net
@@ -49,7 +47,6 @@ services:
    - MSGCLIENT_HOST=msgclient-node:9095
    - HEALTH_SERVICE_HOST=health
    - HEALTH_SERVICE_PORT=9090
-   - ORGHOST=http://${LOCAL_HOST_IP}:8060
    - ORGNAME=${ORGNAME}
   restart: always
   networks:
@@ -129,7 +126,7 @@ services:
   depends_on:
    - postgresd-node
 
- initclient-nucleus:
+ initclient-node:
   build:
    dockerfile: ./Dockerfile
    context: ../services/initClient
@@ -137,7 +134,7 @@ services:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=node
-   - ENV_SYSTEM_DNS=api-gateway-nucleus
+   - ENV_SYSTEM_DNS=api-gateway-node
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
@@ -151,27 +148,25 @@ services:
    - ukama-net
 
  configurator:
-  build: ./configurator
-  ports:
-   - '9040:9090'
+  build:
+   context: ./configurator
+   dockerfile: ./Dockerfile
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-node:9095
    - CONFIGURATOR_SERVICE_HOST=configurator
    - CONFIGURATOR_SERVICE_PORT=9090
-   - OWNERID=${OWNERID}
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-   - REGISTRYHOST=http://${LOCAL_HOST_IP}:8060
-   - LATESTCONFIGHASH=1899b5588b085d7277804d519d976958bb544c15
-   - STOREURL=http://192.168.0.23/ukama/config.git
+   - ORGNAME=${ORGNAME}
+   - LATESTCONFIGHASH=${LATESTCONFIGHASH}
+   - STOREURL=${STOREURL}
    - STOREUSER=root
-   - ACCESSTOKEN=Ukama@123
+   - ACCESSTOKEN=${ACCESSTOKEN}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    - ukama-net

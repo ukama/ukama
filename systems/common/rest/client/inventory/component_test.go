@@ -15,14 +15,14 @@ func TestComponentClient_Get(t *testing.T) {
 	// Mock data
 	componentID, err := uuid.FromString("6006846a-c371-48c6-989c-9e029e144bb5")
 	if err != nil {
-		return 
+		return
 	}
 	mockResponse := Component{
 		ComponentInfo: &ComponentInfo{
 			Id:            componentID,
 			Inventory:     "200",
 			UserId:        "bc082789-bef7-4baf-9cd1-d479fdb3184b",
-			Category:      ukama.ParseType("BACKHAUL"),
+			Category:      uint8(ukama.ParseType("backhaul")),
 			Type:          "backhaul",
 			Description:   "A 100uF capacitor",
 			DatasheetURL:  "http://example.com/datasheet2",
@@ -30,7 +30,7 @@ func TestComponentClient_Get(t *testing.T) {
 			PartNumber:    "C-100uF",
 			Manufacturer:  "Capacitors Ltd.",
 			Managed:       "no",
-			Warranty:      12,
+			Warranty:      uint32(12),
 			Specification: "100uF, 16V",
 		},
 	}

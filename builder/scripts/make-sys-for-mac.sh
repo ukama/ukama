@@ -32,6 +32,9 @@ filter_make_sys() {
             "notification")
                 PATHS+=("notification/distributor" "notification/event-notify" "notification/mailer" "notification/node-gateway" "notification/notify" "notification/api-gateway")
                 ;;
+            "node")
+                PATHS+=("node/configurator" "node/controller" "node/health" "node/node-gateway" "node/software" "node/api-gateway")
+                ;;
             "init")
                 PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway")
                 ;;
@@ -53,7 +56,7 @@ root_dir=$(pwd)
 for path in "${PATHS[@]}"; do
     cd "$root_dir/$path" || { echo "Failed to change directory to $path"; exit 1; }
    
-    go mod tidy && make
+    go mod tidy && make lint && make
 
     if [ $? -eq 0 ]; then
         echo "Make completed successfully in $sys"

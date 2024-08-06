@@ -229,6 +229,7 @@ SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080
 SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
 SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
 SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
+SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
 
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
 psql $DB_URI -c "$SYS_QUERY_1"
@@ -238,5 +239,6 @@ psql $DB_URI -c "$SYS_QUERY_4"
 psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
+psql $DB_URI -c "$SYS_QUERY_8"
 
 echo "$TAG Task done."

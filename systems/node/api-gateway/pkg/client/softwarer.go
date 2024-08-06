@@ -27,10 +27,8 @@ type SoftwareManager struct {
 }
 
 func NewSoftwareManager(softwareManagerHost string, timeout time.Duration) *SoftwareManager {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, softwareManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(softwareManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -63,9 +61,9 @@ func (r *SoftwareManager) UpdateSoftware(space string, name string, tag string, 
 
 	res, err := r.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
 		NodeId: nodeId,
-		Space: space,
-		Name:  name,
-		Tag:   tag,
+		Space:  space,
+		Name:   name,
+		Tag:    tag,
 	})
 	if err != nil {
 		return nil, err

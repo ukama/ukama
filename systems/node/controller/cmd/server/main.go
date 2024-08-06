@@ -23,13 +23,14 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
 
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
@@ -75,13 +76,21 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	reg := providers.NewRegistryProvider(svcConf.RegistryHost, svcConf.DebugMode)
+
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(svcConf.OrgName, "registry"), svcConf.Http.InitClient, &svcConf.OrgName, svcConf.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	cnet := creg.NewNetworkClient(regUrl.String())
+	csite := creg.NewSiteClient(regUrl.String())
+	cnode := creg.NewNodeClient(regUrl.String())
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	contServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
-		mbClient, reg, svcConf.DebugMode)
+		mbClient, cnet, csite, cnode, svcConf.DebugMode)
 	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

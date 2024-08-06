@@ -17,7 +17,6 @@ import (
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/node/controller/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -27,6 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 )
@@ -36,19 +36,23 @@ type ControllerServer struct {
 	nRepo                db.NodeLogRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
-	registrySystem       providers.RegistryProvider
+	networkClient        creg.NetworkClient
+	siteClient           creg.SiteClient
+	nodeClient           creg.NodeClient
 	debug                bool
 	orgName              string
 }
 
-func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, debug bool) *ControllerServer {
+func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, debug bool) *ControllerServer {
 	return &ControllerServer{
 		nRepo:                nRepo,
 		orgName:              orgName,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
-		registrySystem:       registry,
+		networkClient:        cnet,
+		siteClient:           csite,
+		nodeClient:           cnode,
 	}
 }
 
@@ -68,22 +72,26 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateSite(netId.String(), req.GetSiteName(), c.orgName); err != nil {
+	_, err = c.siteClient.Get(req.GetSiteName())
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
 	}
 
-	if err := c.registrySystem.ValidateNetwork(netId.String(), c.orgName); err != nil {
+	_, err = c.networkClient.Get(netId.String())
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to validate network with network %s. Error %s", netId.String(), err.Error())
 	}
 
-	nodes, err := c.registrySystem.GetNodesBySite(req.SiteName)
+	nodes, err := c.nodeClient.GetNodesBySite(req.SiteName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
 
 	}
-	for _, nodeId := range nodes {
+	for _, node := range nodes.Nodes {
 
-		nId, err := ukama.ValidateNodeId(nodeId)
+		nId, err := ukama.ValidateNodeId(node.Id)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid format of node id. Error %s", err.Error())
@@ -229,7 +237,9 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
 	}
 
-	if err := c.registrySystem.ValidateSite(req.SiteId, "", c.orgName); err != nil {
+	_, err = c.siteClient.Get(req.SiteId)
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
 	}
 
@@ -254,13 +264,12 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
-	  Target: target,
-	  HTTPMethod: "POST",
-	  Path: path,
-	  Msg: anyMsg,
+		Target:     target,
+		HTTPMethod: "POST",
+		Path:       path,
+		Msg:        anyMsg,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
-  }
-  
+}

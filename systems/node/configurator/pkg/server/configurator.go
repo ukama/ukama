@@ -20,13 +20,11 @@ import (
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
-	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 )
 
 type ConfiguratorServer struct {
 	pb.UnimplementedConfiguratorServiceServer
 	msgbus                 mb.MsgBusServiceClient
-	registrySystem         providers.RegistryProvider
 	configuratorRoutingKey msgbus.RoutingKeyBuilder
 	debug                  bool
 	orgName                string
@@ -35,13 +33,12 @@ type ConfiguratorServer struct {
 	configRepo             db.ConfigRepo
 }
 
-func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, configStore configstore.ConfigStoreProvider, orgName string, debug bool) *ConfiguratorServer {
+func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, configStore configstore.ConfigStoreProvider, orgName string, debug bool) *ConfiguratorServer {
 
 	log.Infof("Config store created: %+v", configStore)
 	return &ConfiguratorServer{
 		configuratorRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:                 msgBus,
-		registrySystem:         registry,
 		debug:                  pkg.IsDebugMode,
 		orgName:                orgName,
 		configStore:            configStore,

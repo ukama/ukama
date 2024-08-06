@@ -27,10 +27,8 @@ type Controller struct {
 }
 
 func NewController(controllerHost string, timeout time.Duration) *Controller {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -105,14 +103,14 @@ func (r *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.Resta
 	return res, nil
 }
 
-func (r *Controller) ToggleInternetSwitch(status bool, port int32 , siteId string) (*pb.ToggleInternetSwitchResponse, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-    defer cancel()
+func (r *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
 
-    res, err := r.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port:port})
-    if err != nil {
-        return nil, err
-    }
+	res, err := r.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
+	if err != nil {
+		return nil, err
+	}
 
-    return res, nil
+	return res, nil
 }
