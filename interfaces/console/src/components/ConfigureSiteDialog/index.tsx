@@ -9,7 +9,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
@@ -77,7 +76,28 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [formValues, setFormValues] = useState(site);
   const { address, isLoading, error, fetchAddress } = useFetchAddress();
+  const resetForm = () => {
+    setFormValues({
+      switch: '',
+      power: '',
+      backhaul: '',
+      access: '',
+      spectrum: '',
+      siteName: '',
+      network: '',
+      latitude: 0,
+      longitude: 0,
+      address: '',
+    });
+    setActiveStep(0);
+  };
 
+  useEffect(() => {
+    if (open) {
+      resetForm();
+      setFormValues(site);
+    }
+  }, [open, site]);
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
 
@@ -95,6 +115,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       ...values,
       address: address,
     });
+    resetForm();
+    onClose();
   };
 
   const handleStepSubmit = (values: Partial<TSiteForm>) => {
@@ -114,6 +136,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const accessComponents = components.filter(
     (comp) => comp.category === 'ACCESS',
   );
+
   useEffect(() => {
     if (error) {
       setSnackbarMessage({
@@ -135,9 +158,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
     await fetchAddress(lat, lng);
   };
   const handleClose = () => {
+    resetForm();
     onClose();
-    setActiveStep(0);
-    setFormValues(site);
   };
 
   return (
@@ -188,7 +210,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
             onSubmit={handleStepSubmit}
             validationSchema={AddSiteValidationSchema[0]}
           >
-            {({ errors, touched, isValid }) => (
+            {({ errors, touched, isValid, handleReset }) => (
               <Form>
                 <Stack>
                   <Field
@@ -324,7 +346,14 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                   justifyContent={'flex-end'}
                   sx={{ mt: 1 }}
                 >
-                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button
+                    onClick={() => {
+                      handleReset();
+                      handleClose();
+                    }}
+                  >
+                    Cancel
+                  </Button>
                   <Button
                     type="submit"
                     variant="contained"
@@ -351,13 +380,13 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
               isValid,
               setFieldValue,
               validateField,
+              handleReset,
             }) => {
               // New function to update formValues
               const updateFormValues = (field: string, value: any) => {
                 setFormValues((prev) => ({ ...prev, [field]: value }));
                 setFieldValue(field, value);
               };
-
               return (
                 <Form>
                   <Stack spacing={2}>
