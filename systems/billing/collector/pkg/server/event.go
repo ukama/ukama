@@ -44,7 +44,7 @@ type BillableMetric struct {
 	Code string
 }
 
-type BillingCollectorEventServer struct {
+type CollectorEventServer struct {
 	orgName string
 	orgId   string
 	client  client.BillingClient
@@ -52,12 +52,12 @@ type BillingCollectorEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewBillingCollectorEventServer(orgName, orgId string, client client.BillingClient) *BillingCollectorEventServer {
+func NewCollectorEventServer(orgName, orgId string, client client.BillingClient) (*CollectorEventServer, error) {
 	log.Infof("Starting billing collector for org: %s", orgName)
 
 	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId)
 	if err != nil {
-		log.Fatalf("Failed to initialize billable metric: %v", err)
+		return nil, fmt.Errorf("Failed to initialize billable metric: %w", err)
 	}
 
 	bMetric := BillableMetric{
@@ -65,111 +65,111 @@ func NewBillingCollectorEventServer(orgName, orgId string, client client.Billing
 		Code: DefaultBillableMetricCode,
 	}
 
-	return &BillingCollectorEventServer{
+	return &CollectorEventServer{
 		orgName: orgName,
 		orgId:   orgId,
 		client:  client,
 		bMetric: bMetric,
-	}
+	}, nil
 }
 
-func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
 
 	// Update org subscription
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
 		msg, err := unmarshalOrgSubscription(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleOrgSubscriptionEvent(e.RoutingKey, msg, b)
+		err = handleOrgSubscriptionEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// Send usage event
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleSimUsageEvent(e.RoutingKey, msg, b)
+		err = handleSimUsageEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// Create plan
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleDataPlanPackageCreateEvent(e.RoutingKey, msg, b)
+		err = handleDataPlanPackageCreateEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// Create customer
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
 		msg, err := unmarshalAddSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleRegistrySubscriberCreateEvent(e.RoutingKey, msg, b)
+		err = handleRegistrySubscriberCreateEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// Update customer
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
 		msg, err := unmarshalUpdateSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleRegistrySubscriberUpdateEvent(e.RoutingKey, msg, b)
+		err = handleRegistrySubscriberUpdateEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// Delete customer
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
 		msg, err := unmarshalRemoveSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleRegistrySubscriberDeleteEvent(e.RoutingKey, msg, b)
+		err = handleRegistrySubscriberDeleteEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// add subscrition to customer
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
 		msg, err := unmarshalSimAllocation(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleSimManagerAllocateSimEvent(e.RoutingKey, msg, b)
+		err = handleSimManagerAllocateSimEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
 
 	// update subscrition to customer
-	case msgbus.PrepareRoute(b.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleSimManagerSetActivePackageForSimEvent(e.RoutingKey, msg, b)
+		err = handleSimManagerSetActivePackageForSimEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
@@ -180,8 +180,9 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	return &epb.EventResponse{}, nil
 }
+
 func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingEvent,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, usrAccountItems)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -255,13 +256,12 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		log.Infof("New subscription created on billing server:  %q", subscriptionId)
 		log.Infof("Successfuly created new subscription org item from account item: %q", accountItem.Id)
-
 	}
 
 	return nil
 }
 
-func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *BillingCollectorEventServer) error {
+func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -287,7 +287,7 @@ func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *BillingColl
 	return b.client.AddUsageEvent(ctx, event)
 }
 
-func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b *BillingCollectorEventServer) error {
+func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, pkg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -349,7 +349,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 }
 
 func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscriber,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -377,7 +377,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 }
 
 func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubscriber,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -405,7 +405,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 }
 
 func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.RemoveSubscriber,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -422,7 +422,7 @@ func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.RemoveSubsc
 }
 
 func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -453,7 +453,7 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 }
 
 func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimActivePackage,
-	b *BillingCollectorEventServer) error {
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)

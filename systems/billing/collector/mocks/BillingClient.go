@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
+	clients "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -16,7 +16,7 @@ type BillingClient struct {
 }
 
 // AddUsageEvent provides a mock function with given fields: _a0, _a1
-func (_m *BillingClient) AddUsageEvent(_a0 context.Context, _a1 client.Event) error {
+func (_m *BillingClient) AddUsageEvent(_a0 context.Context, _a1 clients.Event) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -24,7 +24,7 @@ func (_m *BillingClient) AddUsageEvent(_a0 context.Context, _a1 client.Event) er
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Event) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Event) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -34,7 +34,7 @@ func (_m *BillingClient) AddUsageEvent(_a0 context.Context, _a1 client.Event) er
 }
 
 // CreateBillableMetric provides a mock function with given fields: _a0, _a1
-func (_m *BillingClient) CreateBillableMetric(_a0 context.Context, _a1 client.BillableMetric) (string, error) {
+func (_m *BillingClient) CreateBillableMetric(_a0 context.Context, _a1 clients.BillableMetric) (string, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -43,16 +43,16 @@ func (_m *BillingClient) CreateBillableMetric(_a0 context.Context, _a1 client.Bi
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.BillableMetric) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.BillableMetric) (string, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.BillableMetric) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.BillableMetric) string); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.BillableMetric) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, clients.BillableMetric) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -62,7 +62,7 @@ func (_m *BillingClient) CreateBillableMetric(_a0 context.Context, _a1 client.Bi
 }
 
 // CreateCustomer provides a mock function with given fields: _a0, _a1
-func (_m *BillingClient) CreateCustomer(_a0 context.Context, _a1 client.Customer) (string, error) {
+func (_m *BillingClient) CreateCustomer(_a0 context.Context, _a1 clients.Customer) (string, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -71,16 +71,16 @@ func (_m *BillingClient) CreateCustomer(_a0 context.Context, _a1 client.Customer
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Customer) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Customer) (string, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.Customer) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Customer) string); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.Customer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Customer) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -90,7 +90,7 @@ func (_m *BillingClient) CreateCustomer(_a0 context.Context, _a1 client.Customer
 }
 
 // CreatePlan provides a mock function with given fields: _a0, _a1, _a2
-func (_m *BillingClient) CreatePlan(_a0 context.Context, _a1 client.Plan, _a2 ...client.PlanCharge) (string, error) {
+func (_m *BillingClient) CreatePlan(_a0 context.Context, _a1 clients.Plan, _a2 ...clients.PlanCharge) (string, error) {
 	_va := make([]interface{}, len(_a2))
 	for _i := range _a2 {
 		_va[_i] = _a2[_i]
@@ -106,16 +106,16 @@ func (_m *BillingClient) CreatePlan(_a0 context.Context, _a1 client.Plan, _a2 ..
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Plan, ...client.PlanCharge) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Plan, ...clients.PlanCharge) (string, error)); ok {
 		return rf(_a0, _a1, _a2...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.Plan, ...client.PlanCharge) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Plan, ...clients.PlanCharge) string); ok {
 		r0 = rf(_a0, _a1, _a2...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.Plan, ...client.PlanCharge) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Plan, ...clients.PlanCharge) error); ok {
 		r1 = rf(_a0, _a1, _a2...)
 	} else {
 		r1 = ret.Error(1)
@@ -125,7 +125,7 @@ func (_m *BillingClient) CreatePlan(_a0 context.Context, _a1 client.Plan, _a2 ..
 }
 
 // CreateSubscription provides a mock function with given fields: _a0, _a1
-func (_m *BillingClient) CreateSubscription(_a0 context.Context, _a1 client.Subscription) (string, error) {
+func (_m *BillingClient) CreateSubscription(_a0 context.Context, _a1 clients.Subscription) (string, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -134,16 +134,16 @@ func (_m *BillingClient) CreateSubscription(_a0 context.Context, _a1 client.Subs
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Subscription) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Subscription) (string, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.Subscription) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Subscription) string); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.Subscription) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Subscription) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -321,7 +321,7 @@ func (_m *BillingClient) TerminateSubscription(_a0 context.Context, _a1 string) 
 }
 
 // UpdateCustomer provides a mock function with given fields: _a0, _a1
-func (_m *BillingClient) UpdateCustomer(_a0 context.Context, _a1 client.Customer) (string, error) {
+func (_m *BillingClient) UpdateCustomer(_a0 context.Context, _a1 clients.Customer) (string, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -330,16 +330,16 @@ func (_m *BillingClient) UpdateCustomer(_a0 context.Context, _a1 client.Customer
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, client.Customer) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Customer) (string, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, client.Customer) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Customer) string); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, client.Customer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Customer) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

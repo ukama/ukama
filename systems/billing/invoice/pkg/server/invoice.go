@@ -62,7 +62,8 @@ func NewInvoiceServer(orgName, org string, invoiceRepo db.InvoiceRepo, subscribe
 		invoiceRepo:      invoiceRepo,
 		subscriberClient: subscriberClient,
 		msgbus:           msgBus,
-		baseRoutingKey:   msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
+			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -105,20 +106,21 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		invoice.InvoiceeType = db.InvoiceeTypeSubscriber
 	}
 
+	rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
+
+	rwInvoiceBytes, err := json.Marshal(rwInvoceStruct)
+	if err != nil {
+		log.Errorf("Failed to marshal RawInvoice struct to RawInvoice JSON %v", err)
+
+		return nil, fmt.Errorf("failed to marshal RawInvoice struct to RawInvoice JSON: %w", err)
+	}
+
+	invoice.RawInvoice = datatypes.JSON(rwInvoiceBytes)
+
 	log.Infof("Adding invoice for invoicee: %s", invoiceeId)
 	err = i.invoiceRepo.Add(invoice, func(*db.Invoice, *gorm.DB) error {
 		invoice.Id = uuid.NewV4()
-		rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
-
-		rwInvoiceBytes, err := json.Marshal(rwInvoceStruct)
-		if err != nil {
-			log.Errorf("Failed to marshal RawInvoice struct to RawInvoice JSON %v", err)
-
-			return fmt.Errorf("failed to marshal RawInvoice struct to RawInvoice JSON: %w", err)
-		}
-
 		invoice.Period = time.Now().UTC()
-		invoice.RawInvoice = datatypes.JSON(rwInvoiceBytes)
 
 		return nil
 	})

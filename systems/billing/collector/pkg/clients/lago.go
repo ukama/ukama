@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package clients
 
 import (
 	"context"
@@ -17,15 +17,33 @@ import (
 )
 
 type lagoClient struct {
-	c *lago.Client
+	b LagoBillableMetric
+	c LagoCustomer
+	e LagoEvent
+	p LagoPlan
+	s LagoSubscription
 }
 
 func NewLagoClient(APIKey, Host string, Port uint) BillingClient {
 	lagoBaseURL := fmt.Sprintf("http://%s:%d", Host, Port)
+	c := lago.New().SetBaseURL(lagoBaseURL).SetApiKey(APIKey).SetDebug(true)
 
 	return &lagoClient{
-		c: lago.New().SetBaseURL(lagoBaseURL).SetApiKey(APIKey).SetDebug(true),
+		b: c.BillableMetric(), c: c.Customer(),
+		e: c.Event(), p: c.Plan(), s: c.Subscription(),
 	}
+}
+
+func NewLagoClientFromClients(b LagoBillableMetric, c LagoCustomer,
+	e LagoEvent, p LagoPlan, s LagoSubscription) BillingClient {
+	return &lagoClient{
+		b: b,
+		c: c,
+		e: e,
+		p: p,
+		s: s,
+	}
+
 }
 
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
@@ -38,8 +56,7 @@ func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 		Properties:             ev.AdditionalProperties,
 	}
 
-	err := l.c.Event().Create(ctx, eventInput)
-
+	err := l.e.Create(ctx, eventInput)
 	if err != nil {
 		return fmt.Errorf("error while sending sim usage event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
@@ -49,7 +66,7 @@ func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 }
 
 func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (string, error) {
-	bm, pErr := l.c.BillableMetric().Get(ctx, code)
+	bm, pErr := l.b.Get(ctx, code)
 	if pErr != nil {
 		return "", fmt.Errorf("error while getting billable metrict Id: %s. code: %d. %w",
 			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
@@ -67,7 +84,7 @@ func (l *lagoClient) CreateBillableMetric(ctx context.Context, bMetric BillableM
 		FieldName:       bMetric.FieldName,
 	}
 
-	bm, pErr := l.c.BillableMetric().Create(ctx, bmInput)
+	bm, pErr := l.b.Create(ctx, bmInput)
 	if pErr != nil {
 		return "", fmt.Errorf("error while creating billable metrict: %s. code: %d. %w",
 			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
@@ -77,7 +94,7 @@ func (l *lagoClient) CreateBillableMetric(ctx context.Context, bMetric BillableM
 }
 
 func (l *lagoClient) GetPlan(ctx context.Context, planCode string) (string, error) {
-	plan, pErr := l.c.Plan().Get(ctx, planCode)
+	plan, pErr := l.p.Get(ctx, planCode)
 	if pErr != nil {
 		return "", fmt.Errorf("error while getting plan with Id %s: %s. code: %d. %w",
 			planCode, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
@@ -121,7 +138,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 		newPlan.Charges = append(newPlan.Charges, newCharge)
 	}
 
-	plan, pErr := l.c.Plan().Create(ctx, newPlan)
+	plan, pErr := l.p.Create(ctx, newPlan)
 	if pErr != nil {
 		return "", fmt.Errorf("error while sending plan creation event: %s. code: %d. %w",
 			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
@@ -131,7 +148,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 }
 
 func (l *lagoClient) TerminatePlan(ctx context.Context, planCode string) (string, error) {
-	plan, err := l.c.Plan().Delete(ctx, planCode)
+	plan, err := l.p.Delete(ctx, planCode)
 
 	if err != nil {
 		return "", fmt.Errorf("error while sending plan delete event: %s. code: %d. %w",
@@ -142,7 +159,7 @@ func (l *lagoClient) TerminatePlan(ctx context.Context, planCode string) (string
 }
 
 func (l *lagoClient) GetCustomer(ctx context.Context, custId string) (string, error) {
-	customer, pErr := l.c.Customer().Get(ctx, custId)
+	customer, pErr := l.c.Get(ctx, custId)
 	if pErr != nil {
 		return "", fmt.Errorf("error while getting customer with Id %s: %s. code: %d. %w",
 			custId, pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
@@ -160,8 +177,7 @@ func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string,
 		Phone:        cust.Phone,
 	}
 
-	customer, err := l.c.Customer().Create(ctx, newCust)
-
+	customer, err := l.c.Create(ctx, newCust)
 	if err != nil {
 		return "", fmt.Errorf("error while sending customer creation event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
@@ -178,8 +194,7 @@ func (l *lagoClient) UpdateCustomer(ctx context.Context, cust Customer) (string,
 		Phone:        cust.Phone,
 	}
 
-	customer, err := l.c.Customer().Update(ctx, newCust)
-
+	customer, err := l.c.Update(ctx, newCust)
 	if err != nil {
 		return "", fmt.Errorf("error while sending customer update event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
@@ -189,8 +204,7 @@ func (l *lagoClient) UpdateCustomer(ctx context.Context, cust Customer) (string,
 }
 
 func (l *lagoClient) DeleteCustomer(ctx context.Context, custId string) (string, error) {
-	customer, err := l.c.Customer().Delete(ctx, custId)
-
+	customer, err := l.c.Delete(ctx, custId)
 	if err != nil {
 		return "", fmt.Errorf("error while sending customer delete event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
@@ -207,8 +221,7 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 		SubscriptionAt:     sub.SubscriptionAt,
 	}
 
-	subscription, err := l.c.Subscription().Create(ctx, newSub)
-
+	subscription, err := l.s.Create(ctx, newSub)
 	if err != nil {
 		return "", fmt.Errorf("error while sending subscription create event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
@@ -218,12 +231,38 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 }
 
 func (l *lagoClient) TerminateSubscription(ctx context.Context, subscritionId string) (string, error) {
-	subscription, err := l.c.Subscription().Terminate(ctx, subscritionId)
-
+	subscription, err := l.s.Terminate(ctx, subscritionId)
 	if err != nil {
 		return "", fmt.Errorf("error while sending subscription termination event: %s. code: %d. %w",
 			err.Msg, err.HTTPStatusCode, err.Err)
 	}
 
 	return subscription.LagoID.String(), nil
+}
+
+type LagoBillableMetric interface {
+	Get(context.Context, string) (*lago.BillableMetric, *lago.Error)
+	Create(context.Context, *lago.BillableMetricInput) (*lago.BillableMetric, *lago.Error)
+}
+
+type LagoCustomer interface {
+	Get(context.Context, string) (*lago.Customer, *lago.Error)
+	Create(context.Context, *lago.CustomerInput) (*lago.Customer, *lago.Error)
+	Update(context.Context, *lago.CustomerInput) (*lago.Customer, *lago.Error)
+	Delete(context.Context, string) (*lago.Customer, *lago.Error)
+}
+
+type LagoEvent interface {
+	Create(context.Context, *lago.EventInput) *lago.Error
+}
+
+type LagoPlan interface {
+	Get(context.Context, string) (*lago.Plan, *lago.Error)
+	Create(context.Context, *lago.PlanInput) (*lago.Plan, *lago.Error)
+	Delete(context.Context, string) (*lago.Plan, *lago.Error)
+}
+
+type LagoSubscription interface {
+	Create(context.Context, *lago.SubscriptionInput) (*lago.Subscription, *lago.Error)
+	Terminate(context.Context, string) (*lago.Subscription, *lago.Error)
 }

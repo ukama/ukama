@@ -88,6 +88,38 @@ func TestInvoiceRepo_Add(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("AddFaillure", func(t *testing.T) {
+		// Arrange
+		invoice := db.Invoice{
+			Id:         uuid.NewV4(),
+			InvoiceeId: uuid.NewV4(),
+		}
+
+		mock, gdb := prepare_db(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(invoice.Id, invoice.InvoiceeId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(sql.ErrNoRows)
+
+		// mock.ExpectCommit()
+
+		r := db.NewInvoiceRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&invoice, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestInvoiceRepo_Get(t *testing.T) {
@@ -209,7 +241,9 @@ func TestInvoiceRepo_List(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("ListSubscriberInvoices", func(t *testing.T) {
+	t.Run("ListSortedSubscriberInvoices", func(t *testing.T) {
+		isSorted := true
+
 		i := &db.Invoice{
 			Id:           uuid.NewV4(),
 			InvoiceeId:   uuid.NewV4(),
@@ -233,7 +267,7 @@ func TestInvoiceRepo_List(t *testing.T) {
 
 		// Act
 		list, err := r.List("", db.InvoiceeTypeSubscriber, "",
-			false, 0, false)
+			false, 0, isSorted)
 
 		// Assert
 		assert.NoError(t, err)
@@ -241,7 +275,9 @@ func TestInvoiceRepo_List(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("ListNetworkInvoices", func(t *testing.T) {
+	t.Run("ListNetworkInvoicesWithCount", func(t *testing.T) {
+		var count uint32 = 1
+
 		i := &db.Invoice{
 			Id:           uuid.NewV4(),
 			InvoiceeId:   uuid.NewV4(),
@@ -256,7 +292,7 @@ func TestInvoiceRepo_List(t *testing.T) {
 			AddRow(i.Id, i.InvoiceeId, i.InvoiceeType, i.NetworkId, i.IsPaid)
 
 		mock.ExpectQuery(`^SELECT.*invoices.*`).
-			WithArgs(i.NetworkId).
+			WithArgs(i.NetworkId, count).
 			WillReturnRows(rows)
 
 		r := db.NewInvoiceRepo(&UkamaDbMock{
@@ -265,7 +301,7 @@ func TestInvoiceRepo_List(t *testing.T) {
 
 		// Act
 		list, err := r.List("", db.InvoiceeTypeUnknown, i.NetworkId.String(),
-			false, 0, false)
+			false, count, false)
 
 		// Assert
 		assert.NoError(t, err)
