@@ -31,12 +31,12 @@ type Config struct {
 	Network          string           `default:"network:9090"`
 	Service          *uconf.Service
 	OrgName          string
-	Http             HttpServices
+	InventoryHost    string `default:"http://localhost:8077"`
 }
 
-type HttpServices struct {
-	InventoryClient string `defaut:"localhost:8080"`
-}
+// type HttpServices struct {
+// 	InventoryClient string `defaut:"localhost:8080"`
+// }
 
 var SiteMetric = []metric.MetricConfig{
 	{
