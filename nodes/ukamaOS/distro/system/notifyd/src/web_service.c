@@ -20,15 +20,8 @@
 
 #include "version.h"
 
-/**
- * @fn      int web_service_cb_ping(const URequest*, UResponse*, void*)
- * @brief   reports ping response to client
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return
- */
+extern ThreadData *gData;
+
 int web_service_cb_ping(const URequest *request, UResponse *response,
                         void *epConfig) {
 
@@ -46,16 +39,6 @@ int web_service_cb_version(const URequest *request, UResponse *response,
     return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_default(const URequest*, UResponse*, void*)
- * @brief   default callback used by REST framework if valid endpoint is not
- *          requested.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
 int web_service_cb_default(const URequest *request, UResponse *response,
                            void *epConfig) {
     
@@ -75,15 +58,6 @@ int web_service_cb_not_allowed(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_post_event(const URequest*, UResponse*, void*)
- * @brief   Receive a new event reported from service.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
 int web_service_cb_post_event(const URequest *request,
                               UResponse *response, void *epConfig) {
 
@@ -101,10 +75,10 @@ int web_service_cb_post_event(const URequest *request,
     }
     usys_log_trace("notify.d:: Received POST for an event from %s.", service);
 
-    ret = notify_process_incoming_notification(service,
-                                               NOTIFICATION_EVENT,
-                                               json,
-                                               (Config *)epConfig);
+    ret = process_incoming_notification(service,
+                                        NOTIFICATION_EVENT,
+                                        json,
+                                        (Config *)epConfig);
     if (ret == STATUS_OK) {
         ulfius_set_empty_body_response(response, HttpStatus_Accepted);
     } else {
@@ -116,15 +90,6 @@ int web_service_cb_post_event(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_post_alert(const URequest*, UResponse*, void*)
- * @brief   Receive a new event reported from service.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
 int web_service_cb_post_alert(const URequest *request,
                               UResponse *response, void *epConfig) {
 
@@ -142,10 +107,10 @@ int web_service_cb_post_alert(const URequest *request,
     }
     usys_log_trace("notify.d:: Received POST for an event from %s.", service);
 
-    ret = notify_process_incoming_notification(service,
-                                               NOTIFICATION_ALERT,
-                                               json,
-                                               (Config *)epConfig);
+    ret = process_incoming_notification(service,
+                                        NOTIFICATION_ALERT,
+                                        json,
+                                        (Config *)epConfig);
     if (ret == STATUS_OK) {
         ulfius_set_empty_body_response(response, HttpStatus_Accepted);
     } else {
@@ -157,8 +122,48 @@ int web_service_cb_post_alert(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_get_output(const URequest *request, UResponse *response,
+                              void *data) {
 
+    char *output = NULL;
 
+    if (gData->output == STDOUT) {
+        output = "stdout";
+    } else if (gData->output == STDERR) {
+        output = "stderr";
+    } else if (gData->output == LOG_FILE) {
+        output = "file";
+    } else if (gData->output == UKAMA_SERVICE) {
+        output = "ukama";
+    }
 
+    ulfius_set_string_body_response(response, HttpStatus_OK, output);
 
+    return U_CALLBACK_CONTINUE;
+}
 
+int web_service_cb_post_output(const URequest *request, UResponse *response,
+                               void *data) {
+
+    const char *output=NULL;
+
+    output = u_map_get(request->map_url, "output");
+    if (output == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    if (strcasecmp(output, "stdout") == 0) {
+        gData->output = STDOUT;
+    } else if (strcasecmp(output, "stderr") == 0) {
+        gData->output = STDERR;
+    } else if (strcasecmp(output, "file") == 0) {
+        gData->output = LOG_FILE;
+    } else if (strcasecmp(output, "ukama") == 0) {
+        gData->output = UKAMA_SERVICE;
+    }
+
+    return U_CALLBACK_CONTINUE;
+}

@@ -22,12 +22,8 @@ typedef struct {
 } NotifyHandler;
 
 
-int notify_process_incoming_notification(const char* service, char* notif,
-                                         JsonObj* json, Config *config);
-
-int notify_process_incoming_generic_notification(JsonObj *json, char *type,
-                                                 Config *config);
-
+int process_incoming_notification(const char* service, char* notif,
+                                  JsonObj* json, Config *config);
 void free_notification(Notification *ptr);
 
 #endif /* INC_NOTIFICATION_H_ */

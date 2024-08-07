@@ -27,6 +27,7 @@ typedef struct {
 
     char  *serviceName;
     int   servicePort;
+    int   adminPort;
     char  *nodedHost;
     int   nodedPort;
     char  *nodedEP;
