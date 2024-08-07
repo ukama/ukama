@@ -108,6 +108,8 @@ function register_user() {
     echo  "$TAG Please verify your email address by visiting ${GREEN}http://localhost:4436${NC}"
 }
 
+SYSTEMS=()
+
 sort_systems_by_dependency() {
     IFS=', ' read -r -a SYSTEMS_ARRAY <<< "$SYS"
 
@@ -122,27 +124,39 @@ sort_systems_by_dependency() {
         exit 1
     fi
 
-    SYSTEMS=($(for key in "${SYSTEMS_ARRAY[@]}"; do
-      if [ "$key" == "services" ]; then
-          echo "1 $key"
-      elif [ "$key" == "auth-services" ]; then
-          echo "2 $key"
-      elif [ "$key" == "init" ]; then
-          echo "3 $key"
-      elif [ "$key" == "notification" ]; then
-          echo "4 $key"
-      elif [ "$key" == "nucleus" ]; then
-          echo "5 $key"
-      elif [ "$key" == "registry" ]; then
-          echo "6 $key"
-      elif [ "$key" == "dataplan" ]; then
-          echo "7 $key"
-      elif [ "$key" == "subscriber" ]; then
-          echo "8 $key"
-      else
-          echo "9 $key"
-      fi
-    done | sort -n -k1,1 | cut -d' ' -f2-))
+    for key in "${SYSTEMS_ARRAY[@]}"; do
+        case "$key" in
+            "services")
+                SYSTEMS+=("1 $key")
+                ;;
+            "auth-services")
+                SYSTEMS+=("2 $key")
+                ;;
+            "init")
+                SYSTEMS+=("3 $key")
+                ;;
+            "nucleus")
+                SYSTEMS+=("4 $key")
+                ;;
+            "inventory")
+                SYSTEMS+=("5 $key")
+                ;;
+            "registry")
+                SYSTEMS+=("6 $key")
+                ;;
+            "dataplan")
+                SYSTEMS+=("7 $key")
+                ;;
+            "subscriber")
+                SYSTEMS+=("8 $key")
+                ;;
+            *)
+                SYSTEMS+=("9 $key")
+                ;;
+        esac
+    done
+
+    SYSTEMS=($(for item in "${SYSTEMS[@]}"; do echo "$item"; done | sort -n -k1,1 | cut -d' ' -f2-))
 }
 
 sort_systems_by_dependency

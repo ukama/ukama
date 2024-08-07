@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/ukama/ukama/systems/common/metrics"
-
 	"github.com/ukama/ukama/systems/node/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg/rest"
@@ -28,7 +27,6 @@ func main() {
 	initConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
-	
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))

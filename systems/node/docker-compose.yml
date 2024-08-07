@@ -75,6 +75,26 @@ services:
   depends_on:
    - msgclient-node
 
+ notify:
+  build:
+   context: ./notify
+   dockerfile: ./Dockerfile
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-node
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-node:9095
+   - NOTIFY_SERVICE_HOST=notify
+   - NOTIFY_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-node
+
  node-gateway-node:
   build:
    dockerfile: ./Dockerfile
@@ -87,8 +107,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   # - CORS_ALLOWALLORIGINS=true
-   # - CORS_ALLOWORIGINS=""
   depends_on:
    - health
    - postgresd-node
@@ -105,8 +123,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   # - CORS_ALLOWALLORIGINS=true
-   # - CORS_ALLOWORIGINS=""
   depends_on:
    - controller
    - postgresd-node

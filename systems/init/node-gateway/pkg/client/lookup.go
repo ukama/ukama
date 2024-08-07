@@ -26,10 +26,8 @@ type Lookup struct {
 }
 
 func Newlookup(host string, timeout time.Duration) *Lookup {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

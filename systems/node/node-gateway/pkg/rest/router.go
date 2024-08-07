@@ -35,6 +35,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ukama/ukama/systems/node/health/pb/gen"
 	healthPb "github.com/ukama/ukama/systems/node/health/pb/gen"
+	npb "github.com/ukama/ukama/systems/node/notify/pb/gen"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -55,17 +56,26 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Health health
+	health Health
+	notify Notify
 }
 
-type health interface {
+type Notify interface {
+	Add(nodeId, severity, ntype, serviceName, description, details string, status, epochTime uint32) (*npb.AddResponse, error)
+	Get(id string) (*npb.GetResponse, error)
+	List(nodeId, serviceName, nType string, count uint32, sort bool) (*npb.ListResponse, error)
+	Delete(id string) (*npb.DeleteResponse, error)
+	Purge(nodeId, serviceName, nType string) (*npb.ListResponse, error)
+}
+
+type Health interface {
 	StoreRunningAppsInfo(req *healthPb.StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error)
 	GetRunningAppsInfo(nodeId string) (*healthPb.GetRunningAppsResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Health = client.NewHealth(endpoints.Health, endpoints.Timeout)
+	c.health = client.NewHealth(endpoints.Health, endpoints.Timeout)
 
 	return c
 }
@@ -81,7 +91,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init() // Remove the authfunc parameter
+	r.init()
 	return r
 }
 
@@ -104,13 +114,20 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
-
 	endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
-	endpoint.POST("/health/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
-	endpoint.GET("/health/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
-	endpoint.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
 
+	health := endpoint.Group("/health", "Health", "Health service for the node")
+	health.POST("/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
+	health.GET("/nodes/:node_id/performance", formatDoc("Get system performance report", "Retrieve system performance information for analysis and monitoring."), tonic.Handler(r.getSystemPerformanceInfoHandler, http.StatusOK))
+	health.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
+
+	notif := endpoint.Group("/notify", "Node Notify", "Notify service for the node")
+	notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
+	notif.GET("", formatDoc("Get Notifications", "Get a list of notifications"), tonic.Handler(r.getNotifications, http.StatusOK))
+	notif.GET("/:notification_id", formatDoc("Get Notification", "Get a specific notification"), tonic.Handler(r.getNotification, http.StatusOK))
+	notif.DELETE("", formatDoc("Delete Notifications", "Delete matching notifications"), tonic.Handler(r.deleteNotifications, http.StatusOK))
+	notif.DELETE("/:notification_id", formatDoc("Delete Notification", "Delete a specific notification"), tonic.Handler(r.deleteNotification, http.StatusOK))
 }
 
 func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error) {
@@ -195,7 +212,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 		genCapps = append(genCapps, genCapp)
 	}
 
-	return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
+	return r.clients.health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
 		NodeId:    req.NodeId,
 		Timestamp: req.Timestamp,
 		System:    genSystems,
@@ -204,7 +221,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 }
 
 func (r *Router) getSystemPerformanceInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
-	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
+	resp, err := r.clients.health.GetRunningAppsInfo(req.NodeId)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -228,4 +245,25 @@ func (r *Router) pingHandler(c *gin.Context) error {
 	c.JSON(http.StatusOK, response)
 
 	return nil
+}
+
+func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
+	return r.clients.notify.Add(req.NodeId, req.Severity,
+		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
+}
+
+func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {
+	return r.clients.notify.Get(req.NotificationId)
+}
+
+func (r *Router) getNotifications(c *gin.Context, req *GetNotificationsReq) (*npb.ListResponse, error) {
+	return r.clients.notify.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
+}
+
+func (r *Router) deleteNotification(c *gin.Context, req *GetNotificationReq) (*npb.DeleteResponse, error) {
+	return r.clients.notify.Delete(req.NotificationId)
+}
+
+func (r *Router) deleteNotifications(c *gin.Context, req *DelNotificationsReq) (*npb.ListResponse, error) {
+	return r.clients.notify.Purge(req.NodeId, req.ServiceName, req.Type)
 }

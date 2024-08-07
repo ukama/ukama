@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -27,8 +28,6 @@ import (
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
 	epb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
-	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
-	"github.com/wI2L/fizz/openapi"
 )
 
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
@@ -47,7 +46,6 @@ type RouterConfig struct {
 
 type Clients struct {
 	m client.Mailer
-	n client.Notify
 	e client.EventNotification
 	d client.Distributor
 }
@@ -67,11 +65,6 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.m, err = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
 	if err != nil {
 		log.Fatalf("failed to create mailer client: %v", err)
-	}
-
-	c.n, err = client.NewNotify(endpoints.Notify, endpoints.Timeout)
-	if err != nil {
-		log.Fatalf("failed to create notify client: %v", err)
 	}
 
 	c.e, err = client.NewEventNotification(endpoints.EventNotification, endpoints.Timeout)
@@ -150,14 +143,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
 		mailer.GET("/:mailer_id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
 
-		// notify routes
-		notif := auth.Group("/notifications", "Notification", "Notifications")
-		notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
-		notif.GET("", formatDoc("Get Notifications", "Get a list of notifications"), tonic.Handler(r.getNotifications, http.StatusOK))
-		notif.GET("/:notification_id", formatDoc("Get Notification", "Get a specific notification"), tonic.Handler(r.getNotification, http.StatusOK))
-		notif.DELETE("", formatDoc("Delete Notifications", "Delete matching notifications"), tonic.Handler(r.deleteNotifications, http.StatusOK))
-		notif.DELETE("/:notification_id", formatDoc("Delete Notification", "Delete a specific notification"), tonic.Handler(r.deleteNotification, http.StatusOK))
-
 		eNotif := auth.Group("/event-notification", "Event Notification", "Event to Notifications")
 		eNotif.GET("", formatDoc("Get Notification By filter", "Get a specific notificationby filter"), tonic.Handler(r.getEventNotifications, http.StatusOK))
 		eNotif.GET("/:id", formatDoc("Get Notification by Id", "Get a notification"), tonic.Handler(r.getEventNotification, http.StatusOK))
@@ -207,27 +192,6 @@ func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mai
 	}
 
 	return res, nil
-}
-
-func (r *Router) postNotification(c *gin.Context, req *AddNodeNotificationReq) (*npb.AddResponse, error) {
-	return r.clients.n.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
-}
-
-func (r *Router) getNotification(c *gin.Context, req *GetNodeNotificationReq) (*npb.GetResponse, error) {
-	return r.clients.n.Get(req.NotificationId)
-}
-
-func (r *Router) getNotifications(c *gin.Context, req *GetNodeNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.n.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
-}
-
-func (r *Router) deleteNotification(c *gin.Context, req *GetNodeNotificationReq) (*npb.DeleteResponse, error) {
-	return r.clients.n.Delete(req.NotificationId)
-}
-
-func (r *Router) deleteNotifications(c *gin.Context, req *DelNodeNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.n.Purge(req.NodeId, req.ServiceName, req.Type)
 }
 
 func (r *Router) getEventNotification(c *gin.Context, req *GetEventNotificationByIdRequest) (*epb.GetResponse, error) {

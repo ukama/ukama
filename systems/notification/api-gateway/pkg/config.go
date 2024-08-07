@@ -51,8 +51,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout:           3 * time.Second,
 			Mailer:            "mailer:9090",
-			Notify:            "notify:9090",
-			EventNotification: "event-notify:9090",
+			EventNotification: "eventnotify:9090",
 			Distributor:       "distributor:9090",
 		},
 

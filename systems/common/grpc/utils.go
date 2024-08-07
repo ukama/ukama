@@ -9,8 +9,6 @@
 package grpc
 
 import (
-	"context"
-
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -44,13 +42,9 @@ func SqlErrorToGrpc(err error, entity string) error {
 func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {
 	var conn *grpc.ClientConn
 
-	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), conf.Timeout)
-	defer cancel()
-
 	logrus.Infoln("Connecting to service ", conf.Host)
 
-	conn, err := grpc.DialContext(ctx, conf.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err := grpc.NewClient(conf.Host, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithConnectParams(
 			grpc.ConnectParams{
 				MinConnectTimeout: conf.Timeout,
