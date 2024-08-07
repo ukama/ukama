@@ -25,6 +25,7 @@ extern "C" {
 #define SERVICE_METRICS       "metrics"
 #define SERVICE_CONFIG        "config"
 #define SERVICE_NOTIFY        "notify"
+#define SERVICE_NOTIFY_ADMIN  "notify-admin"
 #define SERVICE_RLOG          "rlog"
 #define SERVICE_RLOG_ADMIN    "rlog-admin"	
 #define SERVICE_REMOTE        "remote"
