@@ -100,7 +100,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
                   href={`/console/sites/${siteId}`}
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  {name}
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
                 </a>
               )}
             </Typography>

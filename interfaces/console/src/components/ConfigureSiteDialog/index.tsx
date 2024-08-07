@@ -76,18 +76,13 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [formValues, setFormValues] = useState(site);
   const { address, isLoading, error, fetchAddress } = useFetchAddress();
+  const [currentAddress, setCurrentAddress] = useState('');
+
   const resetForm = () => {
     setFormValues({
-      switch: '',
-      power: '',
-      backhaul: '',
-      access: '',
-      spectrum: '',
-      siteName: '',
-      network: '',
+      ...site,
       latitude: 0,
       longitude: 0,
-      address: '',
     });
     setActiveStep(0);
   };
@@ -95,12 +90,29 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   useEffect(() => {
     if (open) {
       resetForm();
-      setFormValues(site);
+      setFormValues({
+        switch: '',
+        power: '',
+        backhaul: '',
+        access: '',
+        spectrum: '',
+        siteName: '',
+        network: '',
+        latitude: 0,
+        longitude: 0,
+        address: '',
+      });
+      setCurrentAddress('');
     }
   }, [open, site]);
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
 
+  useEffect(() => {
+    if (address) {
+      setCurrentAddress(address);
+    }
+  }, [address]);
   const handleSubmit = (values: TSiteForm) => {
     if (address === 'Location not found') {
       setSnackbarMessage({
@@ -160,6 +172,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const handleClose = () => {
     resetForm();
     onClose();
+    setCurrentAddress('');
   };
 
   return (
@@ -380,7 +393,6 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
               isValid,
               setFieldValue,
               validateField,
-              handleReset,
             }) => {
               // New function to update formValues
               const updateFormValues = (field: string, value: any) => {
@@ -390,10 +402,10 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
               return (
                 <Form>
                   <Stack spacing={2}>
-                    {address && (
+                    {currentAddress && (
                       <SiteMapComponent
                         posix={[values.latitude, values.longitude]}
-                        address={address}
+                        address={currentAddress}
                         height={'200px'}
                       />
                     )}
@@ -409,7 +421,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                           Error fetching address. Please try again.
                         </span>
                       ) : (
-                        address
+                        currentAddress
                       )}
                     </Typography>
                     <Field

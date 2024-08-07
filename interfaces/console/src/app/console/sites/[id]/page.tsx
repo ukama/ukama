@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 'use client';
 
 import {
@@ -34,6 +27,7 @@ const SiteMapComponent = dynamic(
     ssr: false,
   },
 );
+
 const SITE_INIT = {
   switch: '',
   power: '',
@@ -46,6 +40,7 @@ const SITE_INIT = {
   longitude: NaN,
   network: '',
 };
+
 const defaultSite: SiteDto = {
   id: '',
   accessId: '',
@@ -62,11 +57,13 @@ const defaultSite: SiteDto = {
   spectrumId: '',
   switchId: '',
 };
+
 interface SiteDetailsProps {
   params: {
     id: string;
   };
 }
+
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
@@ -83,8 +80,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     error,
     fetchAddress,
   } = useFetchAddress();
+  const [isDataReady, setIsDataReady] = useState(false);
 
   const router = useRouter();
+
   const handleSiteConfigOpen = () => {
     setOpenSiteConfig(true);
   };
@@ -129,6 +128,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   const handleSiteConfiguration = async (data: any) => {
     const variables = {
       access_id: data.access,
@@ -170,7 +170,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const { data: networks } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
-
     onError: (error) => {
       setSnackbarMessage({
         id: 'networks-msg',
@@ -180,9 +179,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
-  useEffect(() => {
-    getComponents({ variables: { category: 'switch' } });
-  }, []);
 
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
@@ -214,6 +210,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         spectrumId: res.getSite.spectrumId,
         switchId: res.getSite.switchId,
       });
+      checkDataReadiness();
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -226,15 +223,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   });
 
   useEffect(() => {
+    getComponents({ variables: { category: 'switch' } });
+  }, []);
+
+  useEffect(() => {
     getSite({ variables: { siteId: id } });
   }, []);
+
   useEffect(() => {
     if (id) {
       setSelectedSiteId(id);
     } else if (sitesList.length > 0) {
       setSelectedSiteId(sitesList[0].id);
     }
-  }, [id]);
+  }, [id, sitesList]);
 
   const handleSiteChange = (newSiteId: string) => {
     setSelectedSiteId(newSiteId);
@@ -246,6 +248,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       getSite({ variables: { siteId: selectedSiteId } });
     }
   }, [selectedSiteId]);
+
   useEffect(() => {
     const handleFetchAddress = async () => {
       setSnackbarMessage({
@@ -259,7 +262,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
     setSelectedDefaultSite(activeSite.name);
 
-    if (activeSite) {
+    if (activeSite && activeSite.latitude && activeSite.longitude) {
       handleFetchAddress();
     }
   }, [activeSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
@@ -275,7 +278,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     }
   }, [error, setSnackbarMessage]);
 
-  if (getSiteLoading || CurrentSiteAddressLoading)
+  const checkDataReadiness = () => {
+    if (
+      activeSite.id &&
+      CurrentSiteaddress &&
+      !getSiteLoading &&
+      !CurrentSiteAddressLoading
+    ) {
+      setIsDataReady(true);
+    }
+  };
+
+  useEffect(() => {
+    checkDataReadiness();
+  }, [
+    activeSite,
+    CurrentSiteaddress,
+    getSiteLoading,
+    CurrentSiteAddressLoading,
+  ]);
+
+  if (!isDataReady) {
     return (
       <Grid container columnSpacing={2}>
         {[1, 2].map((item) => (
@@ -290,6 +313,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         ))}
       </Grid>
     );
+  }
+
   return (
     <Box
       sx={{

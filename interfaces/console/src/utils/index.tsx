@@ -19,7 +19,7 @@ import {
 } from '@/client/graphql/generated/metrics';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
-import { Typography, Stack } from '@mui/material';
+import { Typography, Skeleton, Stack } from '@mui/material';
 import { LatLngTuple } from 'leaflet';
 import { RoleToNotificationScopes } from './roletoNotificationScope';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -61,7 +61,7 @@ const getTitleFromPath = (path: string, id: string) => {
     case '/ping':
       return 'Ping';
     default:
-      return '404';
+      return <Skeleton variant="text" width={100} />;
   }
 };
 

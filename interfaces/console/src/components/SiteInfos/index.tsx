@@ -28,7 +28,7 @@ const SiteInfo: React.FC<SiteInfoProps> = ({ selectedSite, address }) => {
         <Stack direction="row" spacing={4} justifyItems={'center'}>
           <Typography variant="subtitle1">Coordinates:</Typography>
           <Typography variant="subtitle1">
-            {selectedSite.latitude} {selectedSite.longitude}
+            ( {selectedSite.latitude}, {selectedSite.longitude} )
           </Typography>
         </Stack>
         <Stack direction="row" spacing={4} justifyItems={'center'}>
