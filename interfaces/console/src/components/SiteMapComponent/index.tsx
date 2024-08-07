@@ -18,9 +18,10 @@ import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 interface SiteMapProps {
   posix: LatLngTuple;
   address: string;
+  height?: string;
 }
 
-const SiteMapComponent = ({ posix, address }: SiteMapProps) => {
+const SiteMapComponent = ({ posix, address, height }: SiteMapProps) => {
   const { env } = useAppContext();
   return (
     <MapContainer
@@ -33,7 +34,11 @@ const SiteMapComponent = ({ posix, address }: SiteMapProps) => {
         [84.67351256610522, -174.0234375],
         [-58.995311187950925, 223.2421875],
       ]}
-      style={{ height: '200px', width: '100%' }}
+      style={{
+        height: height ? `${height} ` : '100%',
+        width: '100%',
+        borderRadius: '5px',
+      }}
     >
       <TileLayer
         url={`https://api.mapbox.com/styles/v1/salman-ukama/clxu9ic7z00ua01qr7hb93d2o/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`}

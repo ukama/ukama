@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import { NetworkDto } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { AddSiteValidationSchema } from '@/helpers/formValidators';
@@ -9,7 +16,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
@@ -77,10 +83,43 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [formValues, setFormValues] = useState(site);
   const { address, isLoading, error, fetchAddress } = useFetchAddress();
+  const [currentAddress, setCurrentAddress] = useState('');
 
+  const resetForm = () => {
+    setFormValues({
+      ...site,
+      latitude: 0,
+      longitude: 0,
+    });
+    setActiveStep(0);
+  };
+
+  useEffect(() => {
+    if (open) {
+      resetForm();
+      setFormValues({
+        switch: '',
+        power: '',
+        backhaul: '',
+        access: '',
+        spectrum: '',
+        siteName: '',
+        network: '',
+        latitude: 0,
+        longitude: 0,
+        address: '',
+      });
+      setCurrentAddress('');
+    }
+  }, [open, site]);
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
 
+  useEffect(() => {
+    if (address) {
+      setCurrentAddress(address);
+    }
+  }, [address]);
   const handleSubmit = (values: TSiteForm) => {
     if (address === 'Location not found') {
       setSnackbarMessage({
@@ -95,6 +134,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       ...values,
       address: address,
     });
+    resetForm();
+    onClose();
   };
 
   const handleStepSubmit = (values: Partial<TSiteForm>) => {
@@ -114,6 +155,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   const accessComponents = components.filter(
     (comp) => comp.category === 'ACCESS',
   );
+
   useEffect(() => {
     if (error) {
       setSnackbarMessage({
@@ -135,9 +177,9 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
     await fetchAddress(lat, lng);
   };
   const handleClose = () => {
+    resetForm();
     onClose();
-    setActiveStep(0);
-    setFormValues(site);
+    setCurrentAddress('');
   };
 
   return (
@@ -188,7 +230,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
             onSubmit={handleStepSubmit}
             validationSchema={AddSiteValidationSchema[0]}
           >
-            {({ errors, touched, isValid }) => (
+            {({ errors, touched, isValid, handleReset }) => (
               <Form>
                 <Stack>
                   <Field
@@ -317,8 +359,21 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                     ))}
                   </Field>
                 </Stack>
-                <DialogActions>
-                  <Button onClick={handleClose}>Cancel</Button>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyItems={'center'}
+                  justifyContent={'flex-end'}
+                  sx={{ mt: 1 }}
+                >
+                  <Button
+                    onClick={() => {
+                      handleReset();
+                      handleClose();
+                    }}
+                  >
+                    Cancel
+                  </Button>
                   <Button
                     type="submit"
                     variant="contained"
@@ -327,7 +382,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                   >
                     Next
                   </Button>
-                </DialogActions>
+                </Stack>
               </Form>
             )}
           </Formik>
@@ -343,166 +398,182 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
               errors,
               touched,
               isValid,
-              setValues,
+              setFieldValue,
               validateField,
-            }) => (
-              <Form>
-                <Stack spacing={2}>
-                  {address && (
-                    <SiteMapComponent
-                      posix={[values.latitude, values.longitude]}
-                      address={address}
-                    />
-                  )}
-                  <Typography variant="body2" mt={1}>
-                    {Boolean(errors.latitude) || Boolean(errors.longitude) ? (
-                      <span style={{ color: colors.redMatt }}>
-                        Please enter valid coordinates
-                      </span>
-                    ) : isLoading ? (
-                      'Loading address...'
-                    ) : error ? (
-                      <span style={{ color: colors.redMatt }}>
-                        Error fetching address. Please try again.
-                      </span>
-                    ) : (
-                      address
+            }) => {
+              // New function to update formValues
+              const updateFormValues = (field: string, value: any) => {
+                setFormValues((prev) => ({ ...prev, [field]: value }));
+                setFieldValue(field, value);
+              };
+              return (
+                <Form>
+                  <Stack spacing={2}>
+                    {currentAddress && (
+                      <SiteMapComponent
+                        posix={[values.latitude, values.longitude]}
+                        address={currentAddress}
+                        height={'200px'}
+                      />
                     )}
-                  </Typography>
-                  <Field
-                    as={TextField}
-                    fullWidth
-                    required
-                    margin="normal"
-                    name="siteName"
-                    label="Site name"
-                    placeholder="site-name"
-                    error={touched.siteName && Boolean(errors.siteName)}
-                    helperText={touched.siteName && errors.siteName}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                  />
-                  <Field
-                    as={TextField}
-                    fullWidth
-                    select
-                    required
-                    name="network"
-                    label="Network"
-                    margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                    error={touched.network && Boolean(errors.network)}
-                    helperText={touched.network && errors.network}
-                  >
-                    <MenuItem value="" disabled>
-                      Choose a network to add your site to
-                    </MenuItem>
-                    {networks.map((network) => (
-                      <MenuItem key={network.id} value={network.id}>
-                        {network.name}
+                    <Typography variant="body2" mt={1}>
+                      {Boolean(errors.latitude) || Boolean(errors.longitude) ? (
+                        <span style={{ color: colors.redMatt }}>
+                          Please enter valid coordinates
+                        </span>
+                      ) : isLoading ? (
+                        'Loading address...'
+                      ) : error ? (
+                        <span style={{ color: colors.redMatt }}>
+                          Error fetching address. Please try again.
+                        </span>
+                      ) : (
+                        currentAddress
+                      )}
+                    </Typography>
+                    <Field
+                      as={TextField}
+                      fullWidth
+                      required
+                      margin="normal"
+                      name="siteName"
+                      label="Site name"
+                      placeholder="site-name"
+                      error={touched.siteName && Boolean(errors.siteName)}
+                      helperText={touched.siteName && errors.siteName}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        updateFormValues('siteName', e.target.value);
+                      }}
+                    />
+                    <Field
+                      as={TextField}
+                      fullWidth
+                      select
+                      required
+                      name="network"
+                      label="Network"
+                      margin="normal"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                      error={touched.network && Boolean(errors.network)}
+                      helperText={touched.network && errors.network}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        updateFormValues('network', e.target.value);
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Choose a network to add your site to
                       </MenuItem>
-                    ))}
-                  </Field>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Latitude"
-                    name="latitude"
-                    value={values.latitude}
-                    onBlur={() => {
-                      validateField('latitude');
-                      if (
-                        !errors.latitude &&
-                        !errors.longitude &&
-                        isValidLatLng([values.latitude, values.longitude])
-                      ) {
-                        handleFetchAddress(values.latitude, values.longitude);
-                        values.address = address;
-                      }
-                    }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                    onChange={(e) =>
-                      setValues({
-                        ...values,
-                        latitude: parseFloat(e.target.value),
-                      })
-                    }
-                    error={touched.latitude && Boolean(errors.latitude)}
-                    helperText={touched.latitude && errors.latitude}
-                  />
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Longitude"
-                    name="longitude"
-                    value={values.longitude}
-                    onBlur={() => {
-                      validateField('longitude');
-                      if (
-                        !errors.latitude &&
-                        !errors.longitude &&
-                        isValidLatLng([values.latitude, values.longitude])
-                      ) {
-                        handleFetchAddress(values.latitude, values.longitude);
-                        values.address = address;
-                      }
-                    }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
-                      },
-                    }}
-                    onChange={(e) =>
-                      setValues({
-                        ...values,
-                        longitude: parseFloat(e.target.value),
-                      })
-                    }
-                    error={touched.longitude && Boolean(errors.longitude)}
-                    helperText={touched.longitude && errors.longitude}
-                  />
-                </Stack>
-                <DialogActions>
-                  <Button onClick={handleClose}>Cancel</Button>
-                  <Button onClick={handleBack}>Back</Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={
-                      !isValid || addSiteLoading || isLoading || !address
-                    }
+                      {networks.map((network) => (
+                        <MenuItem key={network.id} value={network.id}>
+                          {network.name}
+                        </MenuItem>
+                      ))}
+                    </Field>
+                    <TextField
+                      required
+                      fullWidth
+                      type="number"
+                      label="Latitude"
+                      name="latitude"
+                      value={values.latitude}
+                      onBlur={() => {
+                        validateField('latitude');
+                        if (
+                          !errors.latitude &&
+                          !errors.longitude &&
+                          isValidLatLng([values.latitude, values.longitude])
+                        ) {
+                          handleFetchAddress(values.latitude, values.longitude);
+                          updateFormValues('address', address);
+                        }
+                      }}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = parseFloat(e.target.value);
+                        updateFormValues('latitude', value);
+                      }}
+                      error={touched.latitude && Boolean(errors.latitude)}
+                      helperText={touched.latitude && errors.latitude}
+                    />
+                    <TextField
+                      required
+                      fullWidth
+                      type="number"
+                      label="Longitude"
+                      name="longitude"
+                      value={values.longitude}
+                      onBlur={() => {
+                        validateField('longitude');
+                        if (
+                          !errors.latitude &&
+                          !errors.longitude &&
+                          isValidLatLng([values.latitude, values.longitude])
+                        ) {
+                          handleFetchAddress(values.latitude, values.longitude);
+                          updateFormValues('address', address);
+                        }
+                      }}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={{
+                        classes: {
+                          input: gclasses.inputFieldStyle,
+                        },
+                      }}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = parseFloat(e.target.value);
+                        updateFormValues('longitude', value);
+                      }}
+                      error={touched.longitude && Boolean(errors.longitude)}
+                      helperText={touched.longitude && errors.longitude}
+                    />
+                  </Stack>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyItems={'center'}
+                    justifyContent={'flex-end'}
+                    sx={{ mt: 2 }}
                   >
-                    Submit
-                  </Button>
-                </DialogActions>
-              </Form>
-            )}
+                    <Button onClick={handleClose}>Cancel</Button>
+                    <Button onClick={handleBack}>Back</Button>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      disabled={
+                        !isValid || addSiteLoading || isLoading || !address
+                      }
+                    >
+                      Submit
+                    </Button>
+                  </Stack>
+                </Form>
+              );
+            }}
           </Formik>
         )}
       </DialogContent>

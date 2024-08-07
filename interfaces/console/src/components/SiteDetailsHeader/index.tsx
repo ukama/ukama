@@ -1,4 +1,12 @@
-import React, { useEffect, useState } from 'react';
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+import React, { useState } from 'react';
 import {
   Box,
   Grid,
@@ -7,11 +15,13 @@ import {
   MenuItem,
   Typography,
   Skeleton,
+  Divider,
+  Button,
 } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import AddIcon from '@mui/icons-material/Add';
 
 interface SiteDetailsHeaderProps {
   addSite: () => void;
@@ -96,9 +106,17 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
                     {site.name}
                   </MenuItem>
                 )),
-                <MenuItem key="add-site" onClick={addSite}>
-                  Add site
-                </MenuItem>,
+                <>
+                  <Divider />
+                  <MenuItem key="add-site" onClick={addSite}>
+                    <Button
+                      startIcon={<AddIcon />}
+                      sx={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      Add site
+                    </Button>
+                  </MenuItem>
+                </>,
               ]}
         </Menu>
       </Box>

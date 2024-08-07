@@ -15,11 +15,9 @@ import {
   SiteDto,
   useGetSiteLazyQuery,
 } from '@/client/graphql/generated';
-import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
-import colors from '@/theme/colors';
-import { AlertColor, Grid, Paper } from '@mui/material';
+import { AlertColor, Grid, Box, Paper, Skeleton } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import SiteInfo from '@/components/SiteInfos';
 import { useRouter } from 'next/navigation';
@@ -27,6 +25,15 @@ import { useAppContext } from '@/context';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import { TSiteForm } from '@/types';
 import { formatISO } from 'date-fns';
+import { useFetchAddress } from '@/utils/useFetchAddress';
+import dynamic from 'next/dynamic';
+
+const SiteMapComponent = dynamic(
+  () => import('@/components/SiteMapComponent'),
+  {
+    ssr: false,
+  },
+);
 
 const SITE_INIT = {
   switch: '',
@@ -40,6 +47,7 @@ const SITE_INIT = {
   longitude: NaN,
   network: '',
 };
+
 const defaultSite: SiteDto = {
   id: '',
   accessId: '',
@@ -56,11 +64,13 @@ const defaultSite: SiteDto = {
   spectrumId: '',
   switchId: '',
 };
+
 interface SiteDetailsProps {
   params: {
     id: string;
   };
 }
+
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
@@ -69,8 +79,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const { setSnackbarMessage, network } = useAppContext();
+  const { setSnackbarMessage, network, setSelectedDefaultSite } =
+    useAppContext();
+  const {
+    address: CurrentSiteaddress,
+    isLoading: CurrentSiteAddressLoading,
+    error,
+    fetchAddress,
+  } = useFetchAddress();
+  const [isDataReady, setIsDataReady] = useState(false);
+
   const router = useRouter();
+
   const handleSiteConfigOpen = () => {
     setOpenSiteConfig(true);
   };
@@ -115,6 +135,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   const handleSiteConfiguration = async (data: any) => {
     const variables = {
       access_id: data.access,
@@ -156,7 +177,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const { data: networks } = useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
-
     onError: (error) => {
       setSnackbarMessage({
         id: 'networks-msg',
@@ -166,11 +186,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
-  useEffect(() => {
-    getComponents({ variables: { category: 'switch' } });
-  }, []);
 
-  const [getSite] = useGetSiteLazyQuery({
+  const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
       setSite({
         power: res.getSite.powerId,
@@ -200,6 +217,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         spectrumId: res.getSite.spectrumId,
         switchId: res.getSite.switchId,
       });
+      checkDataReadiness();
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -212,15 +230,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   });
 
   useEffect(() => {
+    getComponents({ variables: { category: 'switch' } });
+  }, []);
+
+  useEffect(() => {
     getSite({ variables: { siteId: id } });
   }, []);
+
   useEffect(() => {
     if (id) {
       setSelectedSiteId(id);
     } else if (sitesList.length > 0) {
       setSelectedSiteId(sitesList[0].id);
     }
-  }, [id]);
+  }, [id, sitesList]);
 
   const handleSiteChange = (newSiteId: string) => {
     setSelectedSiteId(newSiteId);
@@ -232,27 +255,101 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       getSite({ variables: { siteId: selectedSiteId } });
     }
   }, [selectedSiteId]);
+
+  useEffect(() => {
+    const handleFetchAddress = async () => {
+      setSnackbarMessage({
+        id: 'fetching-address',
+        type: 'info',
+        show: true,
+        message: 'Fetching address with coordinates',
+      });
+      await fetchAddress(activeSite.latitude, activeSite.longitude);
+    };
+
+    setSelectedDefaultSite(activeSite.name);
+
+    if (activeSite && activeSite.latitude && activeSite.longitude) {
+      handleFetchAddress();
+    }
+  }, [activeSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
+
+  useEffect(() => {
+    if (error) {
+      setSnackbarMessage({
+        id: 'error-fetching-address',
+        type: 'error',
+        show: true,
+        message: 'Error fetching address from coordinates',
+      });
+    }
+  }, [error, setSnackbarMessage]);
+
+  const checkDataReadiness = () => {
+    if (
+      activeSite.id &&
+      CurrentSiteaddress &&
+      !getSiteLoading &&
+      !CurrentSiteAddressLoading
+    ) {
+      setIsDataReady(true);
+    }
+  };
+
+  useEffect(() => {
+    checkDataReadiness();
+  }, [
+    activeSite,
+    CurrentSiteaddress,
+    getSiteLoading,
+    CurrentSiteAddressLoading,
+  ]);
+
+  if (!isDataReady) {
+    return (
+      <Grid container columnSpacing={2}>
+        {[1, 2].map((item) => (
+          <Grid item xs={6} key={item}>
+            <Skeleton
+              variant="rectangular"
+              height={158}
+              width={'100%'}
+              sx={{ borderRadius: '5px' }}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
+
   return (
-    <LoadingWrapper
-      radius="small"
-      width={'100%'}
-      isLoading={false}
-      cstyle={{
-        backgroundColor: false ? colors.white : 'transparent',
+    <Box
+      sx={{
+        overflow: 'auto',
+        borderRadius: '10px',
+        height: 'calc(100vh - 228px)',
       }}
     >
+      <SiteDetailsHeader
+        addSite={handleSiteConfigOpen}
+        siteList={sitesList || []}
+        selectedSiteId={selectedSiteId}
+        onSiteChange={handleSiteChange}
+        isLoading={sitesLoading}
+      />
       <Grid container spacing={2} sx={{ mt: 1 }}>
-        <SiteDetailsHeader
-          addSite={handleSiteConfigOpen}
-          siteList={sitesList || []}
-          selectedSiteId={selectedSiteId}
-          onSiteChange={handleSiteChange}
-          isLoading={sitesLoading}
-        />
+        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
+          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+        </Grid>
+        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
+          <SiteMapComponent
+            posix={[activeSite.latitude, activeSite.longitude]}
+            address={CurrentSiteaddress}
+            height={'100%'}
+          />
+        </Grid>
       </Grid>
-      <Grid container spacing={2} sx={{ mt: 2, pl: 2, mb: 2 }}>
-        <SiteInfo selectedSite={activeSite} />
-      </Grid>
+
       <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
         <SiteOverallHealth
           batteryInfo={[]}
@@ -274,7 +371,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         networks={networks?.getNetworks?.networks || []}
         handleSiteConfiguration={handleSiteConfiguration}
       />
-    </LoadingWrapper>
+    </Box>
   );
 };
 
