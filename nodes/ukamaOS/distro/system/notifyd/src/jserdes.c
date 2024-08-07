@@ -9,7 +9,6 @@
 
 #include "jserdes.h"
 #include "notification.h"
-#include "errorcode.h"
 #include "json_types.h"
 #include "web_service.h"
 #include "notify/notify.h"

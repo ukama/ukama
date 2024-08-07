@@ -62,7 +62,7 @@ int web_service_cb_post_event(const URequest *request,
                               UResponse *response, void *epConfig) {
 
     int ret = STATUS_NOK;
-    char *service=NULL;
+    const char *service=NULL;
     JsonObj *json=NULL;
 
     service = u_map_get(request->map_url, "service");
@@ -94,7 +94,7 @@ int web_service_cb_post_alert(const URequest *request,
                               UResponse *response, void *epConfig) {
 
     int ret = STATUS_NOK;
-    char *service=NULL;
+    const char *service=NULL;
     JsonObj *json=NULL;
 
     service = u_map_get(request->map_url, "service");

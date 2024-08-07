@@ -38,6 +38,10 @@ void handle_sigint(int signum) {
     usys_exit(0);
 }
 
+/* network.c */
+extern int start_admin_web_service(Config *config, UInst *adminInst);
+extern int start_web_services(Config *config, UInst *serviceInst);
+
 static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
     { "noded-host",    required_argument, 0, 'n' },
