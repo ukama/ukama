@@ -39,6 +39,16 @@ int web_service_cb_version(const URequest *request, UResponse *response,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_get_count(const URequest *request, UResponse *response,
+                             void *epConfig) {
+
+    char countStr[12];
+    snprintf(countStr, sizeof(countStr), "%d", gData->count);
+    ulfius_set_string_body_response(response, HttpStatus_OK, countStr);
+
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_default(const URequest *request, UResponse *response,
                            void *epConfig) {
     

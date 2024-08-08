@@ -142,6 +142,12 @@ static void setup_admin_webservice_endpoints(Config *config, UInst *instance) {
     setup_unsupported_methods(instance, "POST",
                               URL_PREFIX, API_RES_EP("output/:output"));
 
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("count"), 0,
+                               &web_service_cb_get_count, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("count"));
+
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 

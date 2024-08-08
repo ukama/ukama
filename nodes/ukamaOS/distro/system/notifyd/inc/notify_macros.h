@@ -51,6 +51,7 @@
 typedef struct {
 
     int             output; /* STDOUT, STDERR, LOG_FILE, UKAMA */
+    int             count;  /* successful notification */
     pthread_mutex_t mutex;
 } ThreadData;
 

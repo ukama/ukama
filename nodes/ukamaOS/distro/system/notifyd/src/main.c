@@ -116,6 +116,7 @@ void init_global_data() {
     }
 
     gData->output = DEF_OUTPUT;
+    gData->count  = 0;
     pthread_mutex_init(&gData->mutex, NULL);
 }
 

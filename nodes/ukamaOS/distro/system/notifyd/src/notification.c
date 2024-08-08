@@ -240,6 +240,11 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
         return STATUS_NOK;
     }
 
+    /* increment counter */
+    pthread_mutex_lock(&gData->mutex);
+    gData->count++;
+    pthread_mutex_unlock(&gData->mutex);
+
     json_free(&jNotify);
     free_notification(notification);
 
