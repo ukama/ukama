@@ -41,10 +41,6 @@ jobs:
       working-directory: systems/billing/invoice
     steps:
       - uses: actions/checkout@v3
-
-      - name: install wkhtmltopdf
-        run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
-
       - name: scan
         uses: ./.github/actions/sonar-go
         with:         
@@ -60,10 +56,6 @@ jobs:
       working-directory: systems/billing/invoice
     steps:
       - uses: actions/checkout@v3
-
-      - name: install wkhtmltopdf
-        run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
-
       - name: lint
         uses: ./.github/actions/lint-go
         with:
@@ -80,9 +72,6 @@ jobs:
         working-directory: systems/billing/invoice
       steps:
         - uses: actions/checkout@v3
-
-        - name: install wkhtmltopdf
-          run: sudo apt-get update && sudo apt-get install xvfb libfontconfig wkhtmltopdf
         
         - name: Init vars
           id: vars_step
