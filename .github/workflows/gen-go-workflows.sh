@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # read the workflow template
 WORKFLOW_TEMPLATE=$(cat workflow-template.yaml.templ)
 PR_RELEASE_TEMPLATE=$(cat pr-release-template.yaml.templ)
@@ -9,6 +11,10 @@ WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 
 generate(){
     for SERVICE in $(ls -l ../../${1} | grep ^d | awk '{print $9}'); do
+        if [ "$SERVICE" = "docs" ]; then
+            echo "skipping docs directory"
+            continue
+        fi
         echo "generating workflow for ${1}/${SERVICE}"
         SANITIZED=$(echo "${SERVICE}" | sed "s#-##g")
         SANITIZED_PATH=$(echo "${1}" | tr / -)
@@ -29,17 +35,21 @@ generate(){
     done
 }
 
-generate "testing/services" "testing"
-generate "systems/init" "init"
-generate "systems/subscriber" "subscriber"
-generate "systems/registry" "registry"
-generate "systems/data-plan" "data-plan"
-generate "systems/services" "services"
-generate "systems/auth" "auth"
-generate "systems/billing" "billing"
+generate "systems/api"          "api"
+generate "systems/auth"         "auth"
+generate "systems/billing"      "billing"
+generate "systems/data-plan"    "data-plan"
+generate "systems/hub"          "hub"
+generate "systems/init"         "init"
+generate "systems/inventory"    "inventory"
+generate "systems/messaging"    "messaging"
+generate "systems/metrics"      "metrics"
+generate "systems/node"         "node"
 generate "systems/notification" "notification"
-generate "systems/hub" "hub"
-generate "systems/api" "api"
-generate "systems/ukama-agent" "ukama-agent"
-generate "systems/inventory" "inventory"
-generate "systems/node" "node"
+generate "systems/nucleus"      "nucleus"
+generate "systems/planner"      "planner"
+generate "systems/registry"     "registry"
+generate "systems/services"     "services"
+generate "systems/subscriber"   "subscriber"
+generate "systems/ukama-agent"  "ukama-agent"
+generate "testing/services"     "testing"
