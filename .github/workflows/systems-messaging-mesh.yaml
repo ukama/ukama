@@ -1,0 +1,140 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-systems-messaging-mesh
+on:  
+  push:   
+    paths:
+        - "systems/messaging/mesh/**"
+        - "nodes/ukamaOS/distro/vendor/**"  
+        - ".github/workflows/systems-messaging-mesh.yaml"
+ 
+  workflow_dispatch:
+
+jobs:  
+  build:
+    env: 
+      working-directory: systems/messaging/mesh
+
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Dependencies
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository universe
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          build-essential \
+          git \
+          wget \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libssl-dev \
+          texinfo \
+          cmake \
+          tcl \
+          zlib1g-dev \
+          texlive \
+          texlive-latex-extra \
+          ghostscript \
+          gperf \
+          gtk-doc-tools \
+          libev-dev \
+          bison \
+          jq \
+          qemu-system \
+          virt-manager \
+          virt-viewer \
+          libvirt-daemon-system \
+          libvirt-clients \
+          bridge-utils \
+          debootstrap \
+          kpartx \
+          fdisk \
+          util-linux
+
+        # Install gettext from source
+        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
+          && tar -xvf gettext-0.21.tar.gz \
+          && cd gettext-0.21 \
+          && ./configure \
+          && make \
+          && sudo make install \
+          && cd .. \
+          && rm -rf gettext-0.21.tar.gz \
+          && rm -rf gettext-0.21
+
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
+    - name: Build vendor libs
+      working-directory: nodes/ukamaOS/distro/vendor
+      run: make TARGET=linux
+
+    - name: Build platform library
+      working-directory: ./nodes/ukamaOS/distro/platform
+      run: make TARGET=linux
+        
+    - name: build mesh app
+      working-directory: systems/messaging/mesh
+      run: make TARGET=linux
+
+  sonar-scan:
+    name: sonar-scan
+    needs: build
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: systems/messaging/mesh
+    steps:
+      - uses: actions/checkout@v3
+      - name: scan
+        uses: ./.github/actions/sonar-go
+        with:         
+          working-directory: ${{ env.working-directory }}
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          project-key: ukama_systems_messaging_mesh
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: systems/messaging/mesh
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: ./.github/actions/lint-go
+        with:
+          working-directory: ${{ env.working-directory }}
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          
+  release:
+      name: release
+      needs: [build, lint]
+      if: github.ref == 'refs/heads/main'
+      runs-on: ubuntu-latest
+      env:
+        working-directory: systems/messaging/mesh
+      steps:
+        - uses: actions/checkout@v3
+        
+        - name: Init vars
+          id: vars_step
+          uses: ./.github/actions/git-vars
+
+        - name: update gitops
+          uses: denispalnitsky/gitops-release@v9
+          with:
+            filename: "releases/messaging-helmfile.yaml"
+            key: "meshImageTag"
+            value:  ${{ steps.vars_step.outputs.sha-short }}
+            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+            github-org-and-repo: "ukama/infra-as-code"
+            github-user-mail: "bot@ukama.com"
+            github-username: "ukama-bot"
