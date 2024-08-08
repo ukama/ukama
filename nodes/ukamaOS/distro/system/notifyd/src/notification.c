@@ -172,7 +172,7 @@ static int notify_send_notification(JsonObj* jNotify, Config *config) {
     } else if (gData->output == LOG_FILE) {
         return write_to_log_file(jNotify);
     } else if (gData->output == UKAMA_SERVICE) {
-        usys_sprintf(urlWithEp, "%s%s", config->remoteServer, DEF_REMOTE_EP);
+        usys_sprintf(urlWithEp, "%s/node/%s", config->remoteServer, DEF_REMOTE_EP);
         return wc_forward_notification(urlWithEp, "POST", jNotify);
     }
 
