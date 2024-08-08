@@ -38,7 +38,6 @@ func TestEventProcessor_Get(t *testing.T) {
 			Type:        upb.NotificationType_NOTIF_INFO,
 			Scope:       upb.NotificationScope_SCOPE_ORG,
 			OrgId:       orgId,
-			ForRole:     upb.RoleType_ROLE_OWNER,
 		},
 	}
 
@@ -62,7 +61,6 @@ func TestEventProcessor_GetAll(t *testing.T) {
 		NetworkId:    nwId,
 		SubscriberId: subId,
 		UserId:       uId,
-		RoleType:     upb.RoleType_ROLE_OWNER,
 	}
 
 	data := &pb.GetAllResponse{
@@ -82,7 +80,7 @@ func TestEventProcessor_GetAll(t *testing.T) {
 
 	c := client.NewEventToNotifyFromClient(en)
 
-	resp, err := c.GetAll(orgId, nwId, subId, uId, upb.RoleType_ROLE_OWNER.String())
+	resp, err := c.GetAll(orgId, nwId, subId, uId)
 	assert.NoError(t, err)
 
 	if assert.NotNil(t, resp) {

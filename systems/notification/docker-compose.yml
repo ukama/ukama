@@ -46,6 +46,9 @@ services:
    - EVENTNOTIFY_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - OWNERID=${OWNERID}
+   - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
+   - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
   restart: always
   networks:
    - ukama-net

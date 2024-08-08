@@ -24,6 +24,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 )
 
@@ -57,17 +60,23 @@ func runGrpcServer() {
 
 	log.Debugf("Distributor config %+v", serviceConfig)
 
-	c := server.Clients{}
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
 
-	c.Registry = providers.NewRegistryProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
-
-	c.Subscriber = providers.NewSubscriberProvider(serviceConfig.Http.InitClient, serviceConfig.DebugMode)
-
+	networkClient := creg.NewNetworkClient(regUrl.String())
+	memberClient := creg.NewMemberClient(regUrl.String())
+	subClient := sreg.NewSubscriberClient(subUrl.String())
 	eventNotifyService := providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost)
 
 	nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
 
-	distributorServer := server.NewDistributorServer(c, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
+	distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

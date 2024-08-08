@@ -29,9 +29,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	generated "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
@@ -84,9 +86,14 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
 
 	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
+	memberClient := creg.NewMemberClient(regUrl.String())
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -94,7 +101,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, db.NewNotificationRepo(gormdb),
+	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, memberClient, db.NewNotificationRepo(gormdb),
 		db.NewUserRepo(gormdb), db.NewEventMsgRepo(gormdb), db.NewUserNotificationRepo(gormdb), mbClient)
 
 	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, serviceConfig.OrgId, eventToNotifyServer)

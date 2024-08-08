@@ -7,9 +7,11 @@
  */
 import { RootDatabase, open } from "lmdb";
 
+import { STORAGE_KEY } from "../configs";
+
 const openStore = (): RootDatabase => {
   return open({
-    path: "ukama-systems-bff",
+    path: STORAGE_KEY,
     compression: true,
   });
 };
