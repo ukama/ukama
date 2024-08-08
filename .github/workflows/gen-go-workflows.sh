@@ -29,12 +29,7 @@ generate(){
     done
 }
 
-generate "services/bootstrap" "bootstrap"
-generate "services/cloud" "ukama"
-generate "services/hub" "hub"
-generate "services/factory" "factory"
 generate "testing/services" "testing"
-generate "services/metrics" "metrics"
 generate "systems/init" "init"
 generate "systems/subscriber" "subscriber"
 generate "systems/registry" "registry"
