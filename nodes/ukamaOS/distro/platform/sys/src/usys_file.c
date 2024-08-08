@@ -413,5 +413,5 @@ void usys_find_ukama_service_address(char **address) {
         return;
     }
 
-    sprintf(*address, "http://%s:%d/", LOOPBACK_ADDRESS, port);
+    sprintf(*address, "http://%s:%d", LOOPBACK_ADDRESS, port);
 }

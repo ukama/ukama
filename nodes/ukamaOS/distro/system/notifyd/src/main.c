@@ -6,10 +6,17 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+
 #include "config.h"
 #include "notify_macros.h"
 #include "service.h"
 #include "web.h"
+#include "web_client.h"
+
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_getopt.h"
@@ -17,21 +24,23 @@
 #include "usys_string.h"
 #include "usys_types.h"
 #include "usys_file.h"
+#include "usys_mem.h"
 #include "usys_services.h"
 
 #include "version.h"
 
-/**
- * @fn      void handle_sigint(int)
- * @brief   Handle terminate signal for Noded
- *
- * @param   signum
- */
+/* Global */
+ThreadData *gData = NULL;
+
 void handle_sigint(int signum) {
     usys_log_debug("Caught terminate signal.\n");
     usys_log_debug("Cleanup complete.\n");
     usys_exit(0);
 }
+
+/* network.c */
+extern int start_admin_web_service(Config *config, UInst *adminInst);
+extern int start_web_services(Config *config, UInst *serviceInst);
 
 static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
@@ -74,12 +83,6 @@ static int readMapFile(Entry* entries, char *fileName) {
     return numEntries;
 }
 
-/**
- * @fn      void set_log_level(char*)
- * @brief   Set the verbosity level for logs.
- *
- * @param   slevel
- */
 void set_log_level(char *slevel) {
     int ilevel = USYS_LOG_TRACE;
     if (!strcmp(slevel, "TRACE")) {
@@ -92,48 +95,88 @@ void set_log_level(char *slevel) {
     usys_log_set_level(ilevel);
 }
 
-
-/**
- * @fn      void usage()
- * @brief   Usage options for the ukamaEDR
- *
- */
 void usage() {
-    usys_puts("Usage: noded [options] \n");
-    usys_puts("Options:\n");
-    usys_puts(
-        "-h, --help                             Help menu.\n");
-    usys_puts(
-        "-l, --logs <TRACE> <DEBUG> <INFO>      Log level for the process.\n");
-    usys_puts(
-        "-n, --noded-host <host>               Host at which noded service"
-                  "will listen.\n");
-    usys_puts(
-        "-e, --noded-ep </node>                API EP at which noded service"
-                       "will enquire for node info.\n");
-    usys_puts(
-        "-f, --map-file <file-name>         Status map file\n");
+    usys_puts("Usage: noded [options]");
+    usys_puts("Options:");
+    usys_puts("-h, --help                           help menu");
+    usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>    log level for the process.\n");
+    usys_puts("-n, --noded-host <host>              noded host");
+    usys_puts("-e, --noded-ep </node>               API EP at which noded service "
+              "will enquire for node info");
+    usys_puts("-f, --map-file <file-name>           status map file");
+    usys_puts("-v, --version                        version.\n");
+}
 
-    usys_puts(
-        "-v, --version                          Software Version.\n");
+void init_global_data() {
+
+    gData = (ThreadData *)malloc(sizeof(ThreadData));
+    if (gData == NULL) {
+        usys_log_error("Unable to allocate memory of size: %d", sizeof(ThreadData));
+        usys_exit(1);
+    }
+
+    gData->output = DEF_OUTPUT;
+    gData->count  = 0;
+    pthread_mutex_init(&gData->mutex, NULL);
+}
+
+void clean_memory_and_exit(int stage, UInst *service, UInst *admin, Config *config) {
+
+    usys_free(gData);
+    usys_free(config->serviceName);
+    usys_free(config->nodedHost);
+    usys_free(config->nodedEP);
+    usys_free(config->remoteServer);
+
+    switch (stage) {
+    case NORMAL_EXIT:
+        ulfius_stop_framework(service);
+        ulfius_clean_instance(service);
+        ulfius_stop_framework(admin);
+        ulfius_stop_framework(admin);
+        usys_free(config->nodeID);
+        usys_exit(0);
+        break;
+
+    case WEB_ADMIN_FAIL:
+        ulfius_stop_framework(service);
+        ulfius_clean_instance(service);
+        usys_free(config->nodeID);
+        usys_exit(1);
+        break;
+
+    case WEB_SERVICE_FAIL:
+        usys_free(config->nodeID);
+        usys_exit(1);
+
+    case NODED_FAIL:
+        usys_exit(1);
+        break;
+
+    case ADDR_FAIL:
+        usys_exit(1);
+        break;
+
+    default:
+        usys_exit(1);
+    }
 }
 
 int main(int argc, char **argv) {
-
-    int ret = USYS_OK;
 
     char *debug        = DEF_LOG_LEVEL;
     char *nodedHost    = DEF_NODED_HOST;
     char *nodedEP      = DEF_NODED_EP;
     char *mapFile      = DEF_MAP_FILE;
     UInst serviceInst;
+    UInst adminInst;
 
     Config serviceConfig = {0};
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
+    init_global_data();
 
-    /* Parsing command line args. */
     while (true) {
         int opt = 0;
         int opdIdx = 0;
@@ -188,26 +231,27 @@ int main(int argc, char **argv) {
     usys_find_ukama_service_address(&serviceConfig.remoteServer);
     if (serviceConfig.remoteServer == NULL) {
         usys_log_error("Ukama not configured in /etc/services");
-        usys_exit(1);
+        clean_memory_and_exit(ADDR_FAIL, &serviceInst, &adminInst, &serviceConfig);
     }
 
     /* Service config update */
-    serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
-    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.serviceName  = usys_strdup(SERVICE_NOTIFY);
+    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.adminPort    = usys_find_service_port(SERVICE_NOTIFY_ADMIN);
     serviceConfig.nodedHost    = usys_strdup(nodedHost);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.nodedEP      = usys_strdup(nodedEP);
     serviceConfig.numEntries   = readMapFile(serviceConfig.entries, mapFile);
 
     if (!serviceConfig.servicePort ||
-        !serviceConfig.nodedPort) {
+        !serviceConfig.nodedPort ||
+        !serviceConfig.adminPort) {
         usys_log_error("Unable to determine the port for services");
-        usys_exit(1);
+        clean_memory_and_exit(ADDR_FAIL, &serviceInst, &adminInst, &serviceConfig);
     }
 
     usys_log_debug("Starting notify.d ...");
 
-    /* Signal handler */
     signal(SIGINT, handle_sigint);
 
     /* Read Node Info from noded */
@@ -217,26 +261,22 @@ int main(int argc, char **argv) {
     } else {
         if (get_nodeid_from_noded(&serviceConfig) == STATUS_NOK) {
             usys_log_error("notify.d: Unable to connect with node.d");
-            goto done;
+            clean_memory_and_exit(NODED_FAIL, &serviceInst, &adminInst, &serviceConfig);
         }
     }
 
     if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");
-        exit(1);
+        clean_memory_and_exit(WEB_SERVICE_FAIL, &serviceInst, &adminInst, &serviceConfig);
+    }
+
+    if (start_admin_web_service(&serviceConfig, &adminInst) != USYS_TRUE) {
+        usys_log_error("Webservice failed to setup for clients. Exiting.");
+        clean_memory_and_exit(WEB_SERVICE_FAIL, &serviceInst, &adminInst, &serviceConfig);
     }
 
     pause();
 
-done:
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
-
-    free(serviceConfig.serviceName);
-    free(serviceConfig.nodedHost);
-    free(serviceConfig.nodedEP);
-    free(serviceConfig.remoteServer);
-
-    usys_log_debug("Exiting notify.d ...");
-    return 1;
+    usys_log_debug("Exiting $s", SERVICE_NAME);
+    clean_memory_and_exit(NORMAL_EXIT, &serviceInst, &adminInst, &serviceConfig);
 }

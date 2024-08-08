@@ -1193,10 +1193,11 @@ wimc       	18006/tcp   wimcd
 metrics     	18007/tcp   metricsd
 config      	18008/tcp   configd
 notify		18009/tcp   notifyd
-rlog            18010/tcp   rlogd
-rlog-admin      18011/tcp   rlogd-admin
-bootstrap       18012/tcp   bootstrap
-wimc-agent-test 18013/tcp   wimc-agent-test
-wimc-agent-chunk 18014/tcp  wimc-agent-chunk
+notify-admin	18010/tcp   notifyd-admin
+rlog 		18011/tcp   rlogd
+rlog-admin      18012/tcp   rlogd-admin
+bootstrap       18013/tcp   bootstrap
+wimc-agent-test 18014/tcp   wimc-agent-test
+wimc-agent-chunk 18015/tcp  wimc-agent-chunk
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote

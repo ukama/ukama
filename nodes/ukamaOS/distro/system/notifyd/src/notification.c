@@ -6,8 +6,12 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-#include "notification.h"
+#include <pthread.h>
+#include <jansson.h>
+#include <string.h>
+#include <stdlib.h>
 
+#include "notification.h"
 #include "notify_macros.h"
 #include "web_client.h"
 
@@ -17,7 +21,20 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-NotifyHandler handler[MAX_SERVICE_COUNT] = {
+extern ThreadData *gData;
+
+/* Mutexs to ensure thread-safe writes for various dest */
+static pthread_mutex_t logFileMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t stdoutMutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t stderrMutex  = PTHREAD_MUTEX_INITIALIZER;
+
+static int write_to_log_file(JsonObj *json);
+static int write_to_stdout(JsonObj *json);
+static int write_to_stderr(JsonObj *json);
+static int notify_process_incoming_generic_notification(JsonObj *json, char *type,
+                                                        Config *config);
+
+static NotifyHandler handler[MAX_SERVICE_COUNT] = {
     { /* First entry is always the default */
         .service = "default",
         .alertHandler = &notify_process_incoming_generic_notification,
@@ -45,7 +62,7 @@ NotifyHandler handler[MAX_SERVICE_COUNT] = {
     },
 };
 
-ServiceHandler find_handler(const char* service, char* type) {
+static ServiceHandler find_handler(const char* service, char* type) {
 
     int idx;
     
@@ -78,32 +95,92 @@ ServiceHandler find_handler(const char* service, char* type) {
     return NULL;
 }
 
-int notify_send_notification(JsonObj* jNotify, Config *config) {
+static int write_to_log_file(JsonObj *jBuffer) {
+
+    FILE *fPtr = NULL;
+    char *str  = NULL;
+
+    if (jBuffer == NULL) return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
+
+    pthread_mutex_lock(&logFileMutex);
+
+    fPtr = fopen(DEF_LOG_FILE, "a+");
+    if (fPtr == NULL) {
+        usys_log_error("Unable to open file: %s error: %s",
+                       DEF_LOG_FILE,
+                       strerror(errno));
+        usys_free(str);
+        return USYS_FALSE;
+    } else {
+        fputs(str, fPtr);
+        fclose(fPtr);
+    }
+
+    pthread_mutex_unlock(&logFileMutex);
+    usys_free(str);
+
+    return USYS_TRUE;
+}
+
+static int write_to_stdout(JsonObj *jBuffer) {
+
+    char *str = NULL;
+
+    if (jBuffer == NULL) return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
+
+    pthread_mutex_lock(&stdoutMutex);
+    fprintf(stdout, "%s\n", str);
+    pthread_mutex_unlock(&stdoutMutex);
+
+    usys_free(str);
+
+    return USYS_TRUE;
+}
+
+static int write_to_stderr(JsonObj *jBuffer) {
+
+    char *str = NULL;
+
+    if (jBuffer == NULL)                      return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
+
+    pthread_mutex_lock(&stderrMutex);
+    fprintf(stderr, "%s\n", str);
+    pthread_mutex_unlock(&stderrMutex);
+
+    usys_free(str);
+
+    return USYS_TRUE;
+}
+
+static int notify_send_notification(JsonObj* jNotify, Config *config) {
     
     char urlWithEp[MAX_URL_LENGTH] = {0};
-    
-    usys_sprintf(urlWithEp, "%s%s", config->remoteServer, DEF_REMOTE_EP);
-    return wc_forward_notification(urlWithEp, "POST", jNotify);
+
+    if (gData->output == STDOUT) {
+        return write_to_stdout(jNotify);
+    } else if (gData->output == STDERR) {
+        return write_to_stderr(jNotify);
+    } else if (gData->output == LOG_FILE) {
+        return write_to_log_file(jNotify);
+    } else if (gData->output == UKAMA_SERVICE) {
+        usys_sprintf(urlWithEp, "%s/node/%s", config->remoteServer, DEF_REMOTE_EP);
+        return wc_forward_notification(urlWithEp, "POST", jNotify);
+    }
+
+    return USYS_FALSE;
 }
 
-void free_notification(Notification *ptr) {
-
-    if (ptr == NULL) return;
-    
-    usys_free(ptr->serviceName);
-    usys_free(ptr->severity);
-    usys_free(ptr->module);
-    usys_free(ptr->device);
-    usys_free(ptr->propertyName);
-    usys_free(ptr->propertyValue);
-    usys_free(ptr->propertyUnit);
-    usys_free(ptr->details);
-
-    usys_free(ptr);
-}
-
-int getCode(const Entry* entries, int numEntries, char *type,
-            Notification *notif) {
+static int getCode(const Entry* entries, int numEntries, char *type,
+                   Notification *notif) {
 
     int code=-1, i;
 
@@ -120,8 +197,8 @@ int getCode(const Entry* entries, int numEntries, char *type,
     return code;
 }
 
-int notify_process_incoming_generic_notification(JsonObj *json, char *type,
-                                                 Config *config) {
+static int notify_process_incoming_generic_notification(JsonObj *json, char *type,
+                                                        Config *config) {
 
     int statusCode=-1;
     JsonObj *jNotify=NULL;
@@ -163,14 +240,19 @@ int notify_process_incoming_generic_notification(JsonObj *json, char *type,
         return STATUS_NOK;
     }
 
+    /* increment counter */
+    pthread_mutex_lock(&gData->mutex);
+    gData->count++;
+    pthread_mutex_unlock(&gData->mutex);
+
     json_free(&jNotify);
     free_notification(notification);
 
     return STATUS_OK;
 }
 
-int notify_process_incoming_notification(const char *service, char *type,
-                                         JsonObj *json, Config *config){
+int process_incoming_notification(const char *service, char *type,
+                                  JsonObj *json, Config *config){
 
     int ret;
     ServiceHandler handler = NULL;
@@ -181,4 +263,20 @@ int notify_process_incoming_notification(const char *service, char *type,
     }
 
     return ret;
+}
+
+void free_notification(Notification *ptr) {
+
+    if (ptr == NULL) return;
+
+    usys_free(ptr->serviceName);
+    usys_free(ptr->severity);
+    usys_free(ptr->module);
+    usys_free(ptr->device);
+    usys_free(ptr->propertyName);
+    usys_free(ptr->propertyValue);
+    usys_free(ptr->propertyUnit);
+    usys_free(ptr->details);
+
+    usys_free(ptr);
 }

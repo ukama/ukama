@@ -116,6 +116,41 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 
+static void setup_admin_webservice_endpoints(Config *config, UInst *instance) {
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ping"), 0,
+                               &web_service_cb_ping, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("ping"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("output"), 0,
+                               &web_service_cb_get_output, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("output"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("output/:output"), 0,
+                               &web_service_cb_post_output, NULL);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("output/:output"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("count"), 0,
+                               &web_service_cb_get_count, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("count"));
+
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+}
+
 int start_web_services(Config *config, UInst *serviceInst) {
 
 	if (init_framework(serviceInst, config->servicePort) != USYS_TRUE){
@@ -137,4 +172,23 @@ int start_web_services(Config *config, UInst *serviceInst) {
 	return USYS_TRUE;
 }
 
+int start_admin_web_service(Config *config, UInst *adminInst) {
 
+	if (init_framework(adminInst, config->adminPort) != USYS_TRUE){
+		usys_log_error("Error initializing admin framework on port: %d",
+                       config->adminPort);
+		return USYS_FALSE;
+	}
+
+	setup_admin_webservice_endpoints(config, adminInst);
+
+	if (!start_framework(config, adminInst)) {
+		usys_log_error("Failed to start webservices for client on port: %d",
+                       config->adminPort);
+		return USYS_FALSE;
+	}
+
+	usys_log_debug("Webservice started on port: %d", config->adminPort);
+
+	return USYS_TRUE;
+}
