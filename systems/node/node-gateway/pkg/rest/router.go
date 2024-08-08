@@ -56,11 +56,11 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	health Health
-	notify Notify
+	Health health
+	Notify notify
 }
 
-type Notify interface {
+type notify interface {
 	Add(nodeId, severity, ntype, serviceName, description, details string, status, epochTime uint32) (*npb.AddResponse, error)
 	Get(id string) (*npb.GetResponse, error)
 	List(nodeId, serviceName, nType string, count uint32, sort bool) (*npb.ListResponse, error)
@@ -68,14 +68,14 @@ type Notify interface {
 	Purge(nodeId, serviceName, nType string) (*npb.ListResponse, error)
 }
 
-type Health interface {
+type health interface {
 	StoreRunningAppsInfo(req *healthPb.StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error)
 	GetRunningAppsInfo(nodeId string) (*healthPb.GetRunningAppsResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.health = client.NewHealth(endpoints.Health, endpoints.Timeout)
+	c.Health = client.NewHealth(endpoints.Health, endpoints.Timeout)
 
 	return c
 }
@@ -212,7 +212,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 		genCapps = append(genCapps, genCapp)
 	}
 
-	return r.clients.health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
+	return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
 		NodeId:    req.NodeId,
 		Timestamp: req.Timestamp,
 		System:    genSystems,
@@ -221,7 +221,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 }
 
 func (r *Router) getSystemPerformanceInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
-	resp, err := r.clients.health.GetRunningAppsInfo(req.NodeId)
+	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -248,22 +248,22 @@ func (r *Router) pingHandler(c *gin.Context) error {
 }
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
-	return r.clients.notify.Add(req.NodeId, req.Severity,
+	return r.clients.Notify.Add(req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
 }
 
 func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {
-	return r.clients.notify.Get(req.NotificationId)
+	return r.clients.Notify.Get(req.NotificationId)
 }
 
 func (r *Router) getNotifications(c *gin.Context, req *GetNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.notify.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
+	return r.clients.Notify.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
 }
 
 func (r *Router) deleteNotification(c *gin.Context, req *GetNotificationReq) (*npb.DeleteResponse, error) {
-	return r.clients.notify.Delete(req.NotificationId)
+	return r.clients.Notify.Delete(req.NotificationId)
 }
 
 func (r *Router) deleteNotifications(c *gin.Context, req *DelNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.notify.Purge(req.NodeId, req.ServiceName, req.Type)
+	return r.clients.Notify.Purge(req.NodeId, req.ServiceName, req.Type)
 }

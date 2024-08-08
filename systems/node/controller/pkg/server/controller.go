@@ -59,7 +59,7 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteRequest) (*pb.RestartSiteResponse, error) {
 	log.Infof("Restarting site %v", req)
 
-	if req.SiteName == "" {
+	if req.SiteId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "site name cannot be empty")
 	}
 
@@ -72,10 +72,10 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
 	}
 
-	_, err = c.siteClient.Get(req.GetSiteName())
+	_, err = c.siteClient.Get(req.GetSiteId())
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
+		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
 	}
 
 	_, err = c.networkClient.Get(netId.String())
@@ -84,9 +84,9 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		return nil, fmt.Errorf("failed to validate network with network %s. Error %s", netId.String(), err.Error())
 	}
 
-	nodes, err := c.nodeClient.GetNodesBySite(req.SiteName)
+	nodes, err := c.nodeClient.GetNodesBySite(req.SiteId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteName(), netId.String(), err.Error())
+		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
 
 	}
 	for _, node := range nodes.Nodes {

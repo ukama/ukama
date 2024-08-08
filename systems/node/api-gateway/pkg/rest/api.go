@@ -20,7 +20,7 @@ type RestartNodeRequest struct {
 }
 
 type RestartSiteRequest struct {
-	SiteName  string `json:"site_name"  example:"site1" validate:"required" path:"site_name"`
+	SiteId    string `json:"site_id"  example:"site-1" validate:"required" path:"site_name"`
 	NetworkId string `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 }
 
@@ -29,9 +29,9 @@ type RestartNodesRequest struct {
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
 type ToggleInternetSwitchRequest struct {
-	SiteId string   `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
-	Status bool `json:"status" example:"{{Status}}" validate:"required"`
-	Port int32 `json:"port" example:"{{Port}}" validate:"required"`
+	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
+	Status bool   `json:"status" example:"{{Status}}" validate:"required"`
+	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
 }
 
 type ApplyConfigRequest struct {

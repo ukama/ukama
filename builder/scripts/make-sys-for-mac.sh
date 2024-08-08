@@ -59,9 +59,9 @@ for path in "${PATHS[@]}"; do
     go mod tidy && make lint && make
 
     if [ $? -eq 0 ]; then
-        echo "Make completed successfully in $sys"
+        echo "Make completed successfully in $path"
     else
-        echo "Make failed in $sys"
+        echo "Make failed in $path"
     fi
 
     cd - >/dev/null

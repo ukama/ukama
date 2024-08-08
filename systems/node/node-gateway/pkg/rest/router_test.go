@@ -64,8 +64,8 @@ func TestPingRoute(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(&Clients{
-		health: client.NewHealthFromClient(h),
-		notify: client.NewNotifyFromClient(n),
+		Health: client.NewHealthFromClient(h),
+		Notify: client.NewNotifyFromClient(n),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -111,7 +111,7 @@ func Test_GetRunningsApps(t *testing.T) {
 
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{
-		health: client.NewHealthFromClient(c),
+		Health: client.NewHealthFromClient(c),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -126,7 +126,7 @@ func Test_StoreRunningApps(t *testing.T) {
 	chealth := &hmocks.HealhtServiceClient{}
 
 	r := NewRouter(&Clients{
-		health: client.NewHealthFromClient(chealth),
+		Health: client.NewHealthFromClient(chealth),
 	}, routerConfig).f.Engine()
 
 	t.Run("storeRunningApps", func(t *testing.T) {
@@ -218,7 +218,7 @@ func TestRouter_Add(t *testing.T) {
 		m.On("Add", mock.Anything, notifyReq).Return(&npb.AddResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -256,7 +256,7 @@ func TestRouter_Add(t *testing.T) {
 			status.Errorf(codes.InvalidArgument, "invalid nodeId"))
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -283,7 +283,7 @@ func TestRouter_Add(t *testing.T) {
 		m := &nmocks.NotifyServiceClient{}
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -321,7 +321,7 @@ func TestRouter_Get(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -343,7 +343,7 @@ func TestRouter_Get(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -365,7 +365,7 @@ func TestRouter_Get(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", notifyApiEndpoint, id), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -390,7 +390,7 @@ func TestRouter_Delete(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -412,7 +412,7 @@ func TestRouter_Delete(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -434,7 +434,7 @@ func TestRouter_Delete(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", notifyApiEndpoint, notificationId), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -475,7 +475,7 @@ func TestRouter_List(t *testing.T) {
 		req, _ := http.NewRequest("GET", notifyApiEndpoint, nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -517,7 +517,7 @@ func TestRouter_List(t *testing.T) {
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -562,7 +562,7 @@ func TestRouter_List(t *testing.T) {
 				notifyApiEndpoint, nt.NodeId, nt.Type, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -605,7 +605,7 @@ func TestRouter_List(t *testing.T) {
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -652,7 +652,7 @@ func TestRouter_List(t *testing.T) {
 				notifyApiEndpoint, nt.ServiceName, nt.Type, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -695,7 +695,7 @@ func TestRouter_Purge(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", notifyApiEndpoint, nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -738,7 +738,7 @@ func TestRouter_Purge(t *testing.T) {
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -783,7 +783,7 @@ func TestRouter_Purge(t *testing.T) {
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
 		r := NewRouter(&Clients{
-			notify: client.NewNotifyFromClient(m),
+			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
 		// act

@@ -55,11 +55,11 @@ func (r *Controller) Close() {
 	r.conn.Close()
 }
 
-func (r *Controller) RestartSite(siteName, networkId string) (*pb.RestartSiteResponse, error) {
+func (r *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteName: siteName, NetworkId: networkId})
+	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
 	if err != nil {
 		return nil, err
 	}
