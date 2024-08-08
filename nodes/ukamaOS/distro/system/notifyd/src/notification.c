@@ -100,8 +100,10 @@ static int write_to_log_file(JsonObj *jBuffer) {
     FILE *fPtr = NULL;
     char *str  = NULL;
 
-    if (jBuffer == NULL)                      return USYS_FALSE;
-    if ((str=json_dumps(jBuffer, 0)) == NULL) return USYS_FALSE;
+    if (jBuffer == NULL) return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&logFileMutex);
 
@@ -127,8 +129,10 @@ static int write_to_stdout(JsonObj *jBuffer) {
 
     char *str = NULL;
 
-    if (jBuffer == NULL)                      return USYS_FALSE;
-    if ((str=json_dumps(jBuffer, 0)) == NULL) return USYS_FALSE;
+    if (jBuffer == NULL) return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&stdoutMutex);
     fprintf(stdout, "%s\n", str);
@@ -144,7 +148,9 @@ static int write_to_stderr(JsonObj *jBuffer) {
     char *str = NULL;
 
     if (jBuffer == NULL)                      return USYS_FALSE;
-    if ((str=json_dumps(jBuffer, 0)) == NULL) return USYS_FALSE;
+
+    str=json_dumps(jBuffer, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    if (str == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&stderrMutex);
     fprintf(stderr, "%s\n", str);
