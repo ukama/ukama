@@ -51,7 +51,7 @@ func (r *Router) Run(close chan error) {
 
 func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNodeRepo) *Router {
 
-	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
+	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode, "")
 
 	r := &Router{fizz: f,
 		port: config.Server.Port,

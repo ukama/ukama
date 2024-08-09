@@ -24,10 +24,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 // TODO: We need to think about retry policies for failing interaction between
+// TODO: We have unmarshal methods in common/pb/gen/events for all the event messages. We should use those.
 // our backend and the upstream billing service provider.
 
 const (
@@ -261,7 +262,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 	return nil
 }
 
-func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollectorEventServer) error {
+func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -348,7 +349,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	return nil
 }
 
-func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscriber,
+func handleRegistrySubscriberCreateEvent(key string, subscriber *upb.Subscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -376,7 +377,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscribe
 	return nil
 }
 
-func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscriber,
+func handleRegistrySubscriberUpdateEvent(key string, subscriber *upb.Subscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -404,7 +405,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscribe
 	return nil
 }
 
-func handleRegistrySubscriberDeleteEvent(key string, subscriber *subpb.Subscriber,
+func handleRegistrySubscriberDeleteEvent(key string, subscriber *upb.Subscriber,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -421,7 +422,7 @@ func handleRegistrySubscriberDeleteEvent(key string, subscriber *subpb.Subscribe
 	return nil
 }
 
-func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
+func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
@@ -452,7 +453,7 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 	return nil
 }
 
-func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActivePackage,
+func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimActivePackage,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
@@ -502,8 +503,8 @@ func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) 
 	return p, nil
 }
 
-func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.SimActivePackage, error) {
-	p := &epb.SimActivePackage{}
+func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.EventSimActivePackage, error) {
+	p := &epb.EventSimActivePackage{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -528,8 +529,8 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 	return p, nil
 }
 
-func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
-	p := &subpb.Subscriber{}
+func unmarshalSubscriber(msg *anypb.Any) (*upb.Subscriber, error) {
+	p := &upb.Subscriber{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -541,8 +542,8 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	return p, nil
 }
 
-func unmarshalSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
-	p := &epb.SimUsage{}
+func unmarshalSimUsage(msg *anypb.Any) (*epb.EventSimUsage, error) {
+	p := &epb.EventSimUsage{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -555,8 +556,8 @@ func unmarshalSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
 	return p, nil
 }
 
-func unmarshalSimAllocation(msg *anypb.Any) (*epb.SimAllocation, error) {
-	p := &epb.SimAllocation{}
+func unmarshalSimAllocation(msg *anypb.Any) (*epb.EventSimAllocation, error) {
+	p := &epb.EventSimAllocation{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {

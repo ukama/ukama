@@ -99,7 +99,6 @@ func TestCient_RegisterNode(t *testing.T) {
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
-			State: state,
 		}, nil).Once()
 
 		nodeInfo, err := n.RegisterNode(nodeId, nodeName, orgId.String(), state)

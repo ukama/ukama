@@ -129,7 +129,7 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 			OrgId: l.Org,
 		}
 
-		nodeInfo.Site = creg.SiteInfo{}
+		nodeInfo.Site = creg.NodeSiteInfo{}
 		nodeInfo.Site.NodeId = msg.GetNodeId()
 		nodeInfo.Site.SiteId = ""
 		nodeInfo.Site.NetworkId = ""

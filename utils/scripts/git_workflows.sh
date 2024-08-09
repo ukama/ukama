@@ -5,10 +5,9 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-# ANSI color codes
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 declare -A workflow_runs
 
@@ -33,6 +32,7 @@ print_last_run_status() {
 
 # Function to run all workflows
 run_all_workflows() {
+    local branch=${1:-main}  # Default to 'main' if no branch is specified
 
     # Fetch all workflows
     workflows=$(gh workflow list --limit 300 --all | grep "build-" | awk 'NR>1 {print $1}')
@@ -41,11 +41,11 @@ run_all_workflows() {
 
     # Run each workflow and store the run ID
     for workflow_name in $workflows; do
-        gh workflow run "$workflow_name" --ref main
+        gh workflow run "$workflow_name" --ref "$branch"
         sleep 2  # Give it a moment to register the run
-        run_id=$(gh run list --workflow="$workflow_name" --branch=main --limit=1 --json databaseId --jq '.[0].databaseId')
+        run_id=$(gh run list --workflow="$workflow_name" --branch="$branch" --limit=1 --json databaseId --jq '.[0].databaseId')
         workflow_runs["$workflow_name"]=$run_id
-        echo "Triggered workflow: $workflow_name, Run ID: $run_id"
+        echo "Triggered workflow: $workflow_name on branch: $branch, Run ID: $run_id"
     done
 
     echo "Waiting for workflows to complete..."
@@ -81,7 +81,7 @@ run_all_workflows() {
 # Main
 
 if [ "$1" == "run" ]; then
-    run_all_workflows
+    run_all_workflows "$2"  # Pass the branch name as an argument
 elif [ "$1" == "last_status" ]; then
     # Fetch all workflows
     workflows=$(gh workflow list --limit 300 --all | grep "build-" | awk 'NR>1 {print $1}')
@@ -94,6 +94,6 @@ elif [ "$1" == "last_status" ]; then
         print_last_run_status "$workflow_name"
     done
 else
-    echo "Usage: $0 {run|last_status}"
+    echo "Usage: $0 {run|last_status} [branch]"
     exit 1
 fi
