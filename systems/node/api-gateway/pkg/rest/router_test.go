@@ -113,8 +113,7 @@ func Test_RestarteNodes(t *testing.T) {
 		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"},
 	}
 
-	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{
-	}, nil)
+	c.On("RestartNodes", mock.Anything, restartNodeReq).Return(&cpb.RestartNodesResponse{}, nil)
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
@@ -151,12 +150,12 @@ func Test_SoftwareUpdate(t *testing.T) {
 func Test_RestarteSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/pamoja/restart", nil)
+	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/site-1/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
 	RestartSiteRequest := &cpb.RestartSiteRequest{
-		SiteName:  "pamoja",
+		SiteId:    "site-1",
 		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
 	}
 

@@ -36,9 +36,8 @@ func TestConfigStore_HandleConfigStoreEvent(t *testing.T) {
 	commitRepo := &mocks.CommitRepo{}
 	configRepo := &mocks.ConfigRepo{}
 	store := &mocks.StoreProvider{}
-	registry := &mocks.RegistryProvider{}
 
-	cS := NewConfigStore(msgbusClient, registry, configRepo, commitRepo, OrgName, store, (10 * time.Second))
+	cS := NewConfigStore(msgbusClient, nil, nil, nil, configRepo, commitRepo, OrgName, store, (10 * time.Second))
 	t.Run("SameVersion", func(t *testing.T) {
 		store.On("GetLatestRemoteConfigs", mock.Anything).Return("000", nil).Once()
 		commitRepo.On("GetLatest").Return(&db.Commit{Hash: "000"}, nil).Once()
@@ -65,14 +64,13 @@ func TestConfigStore_ProcessConfigStoreEvent(t *testing.T) {
 	commitRepo := &mocks.CommitRepo{}
 	configRepo := &mocks.ConfigRepo{}
 	store := &mocks.StoreProvider{}
-	registry := &mocks.RegistryProvider{}
 	cVer := "0.0.0."
 	rVer := "0.0.1"
 	path, err := os.Getwd()
 	assert.NoError(t, err)
 	p := strings.Split(path, Service)
 	dir := p[0] + TestData
-	cS := NewConfigStore(msgbusClient, registry, configRepo, commitRepo, OrgName, store, (10 * time.Second))
+	cS := NewConfigStore(msgbusClient, nil, nil, nil, configRepo, commitRepo, OrgName, store, (10 * time.Second))
 
 	t.Run("DifferentVersionWithChanges", func(t *testing.T) {
 		var node string

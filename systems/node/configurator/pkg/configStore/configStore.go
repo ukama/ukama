@@ -27,12 +27,15 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 type ConfigStore struct {
 	Store                providers.StoreProvider
 	msgbus               mb.MsgBusServiceClient
-	registrySystem       providers.RegistryProvider
+	networkClient        creg.NetworkClient
+	siteClient           creg.SiteClient
+	nodeClient           creg.NodeClient
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	configRepo           db.ConfigRepo
 	commitRepo           db.CommitRepo
@@ -78,11 +81,13 @@ type ConfigMetaData struct {
 const DIR_PREFIX = "/tmp/configstore/"
 const PERM = 0755
 
-func NewConfigStore(msgB mb.MsgBusServiceClient, registry providers.RegistryProvider, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, s providers.StoreProvider, t time.Duration) *ConfigStore {
+func NewConfigStore(msgB mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, orgName string, s providers.StoreProvider, t time.Duration) *ConfigStore {
 
 	return &ConfigStore{
 		Store:                s,
-		registrySystem:       registry,
+		networkClient:        cnet,
+		siteClient:           csite,
+		nodeClient:           cnode,
 		msgbus:               msgB,
 		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
 		OrgName:              orgName,

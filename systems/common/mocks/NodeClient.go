@@ -174,6 +174,36 @@ func (_m *NodeClient) GetAll() ([]*registry.NodeInfo, error) {
 	return r0, r1
 }
 
+// GetNodesBySite provides a mock function with given fields: _a0
+func (_m *NodeClient) GetNodesBySite(_a0 string) (*registry.NodesBySite, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodesBySite")
+	}
+
+	var r0 *registry.NodesBySite
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*registry.NodesBySite, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(string) *registry.NodesBySite); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*registry.NodesBySite)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveFromSite provides a mock function with given fields: _a0
 func (_m *NodeClient) RemoveFromSite(_a0 string) error {
 	ret := _m.Called(_a0)

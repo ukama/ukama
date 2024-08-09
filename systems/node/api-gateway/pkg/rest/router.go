@@ -165,7 +165,7 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 }
 
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
-	return r.clients.Controller.RestartSite(req.SiteName, req.NetworkId)
+	return r.clients.Controller.RestartSite(req.SiteId, req.NetworkId)
 }
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {

@@ -10,6 +10,10 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
+message CappCreatedEvent{
+    string name = 1;
+    string version = 2;
+}
 
 message EventArtifactUploaded{
     string name = 1;

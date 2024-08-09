@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -15,37 +14,19 @@ import (
 const ComponentEndpoint = "/v1/components"
 
 type ComponentInfo struct {
-	Id            uuid.UUID               `json:"id,omitempty"`
-	Inventory     string                  `json:"inventory,omitempty"`
-	UserId        string                  `json:"user_id,omitempty"`
-	Category      ukama.ComponentCategory `json:"category"`
-	Type          string                  `json:"type,omitempty"`
-	Description   string                  `json:"description,omitempty"`
-	DatasheetURL  string                  `json:"datasheet_url,omitempty"`
-	ImagesURL     string                  `json:"images_url,omitempty"`
-	PartNumber    string                  `json:"part_number,omitempty"`
-	Manufacturer  string                  `json:"manufacturer,omitempty"`
-	Managed       string                  `json:"managed,omitempty"`
-	Warranty      uint32                  `json:"warranty,omitempty"`
-	Specification string                  `json:"specification,omitempty"`
-}
-
-func (c *ComponentInfo) UnmarshalJSON(data []byte) error {
-	type Alias ComponentInfo
-	aux := &struct {
-		Category string `json:"category"`
-		*Alias
-	}{
-		Alias: (*Alias)(c),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	c.Category = ukama.ParseType(aux.Category)
-
-	return nil
+	Id            uuid.UUID `json:"id,omitempty"`
+	Inventory     string    `json:"inventory,omitempty"`
+	UserId        string    `json:"user_id,omitempty"`
+	Category      uint8     `json:"category"`
+	Type          string    `json:"type,omitempty"`
+	Description   string    `json:"description,omitempty"`
+	DatasheetURL  string    `json:"datasheet_url,omitempty"`
+	ImagesURL     string    `json:"images_url,omitempty"`
+	PartNumber    string    `json:"part_number,omitempty"`
+	Manufacturer  string    `json:"manufacturer,omitempty"`
+	Managed       string    `json:"managed,omitempty"`
+	Warranty      uint32    `json:"warranty"`
+	Specification string    `json:"specification,omitempty"`
 }
 
 type Component struct {

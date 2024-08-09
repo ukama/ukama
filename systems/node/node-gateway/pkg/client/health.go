@@ -27,10 +27,7 @@ type Health struct {
 }
 
 func NewHealth(healthHost string, timeout time.Duration) *Health {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -79,7 +76,7 @@ func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (
 			}
 		}
 		genCapps[i] = &pb.Capps{
-			Space:    capp.Space,
+			Space:     capp.Space,
 			Name:      capp.Name,
 			Tag:       capp.Tag,
 			Status:    capp.Status,

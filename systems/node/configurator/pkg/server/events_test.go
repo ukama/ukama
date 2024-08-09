@@ -35,9 +35,8 @@ func TestConfiguratorServer_EventNotification(t *testing.T) {
 	commitRepo := &mocks.CommitRepo{}
 	configRepo := &mocks.ConfigRepo{}
 	configStore := &mocks.ConfigStoreProvider{}
-	registry := &mocks.RegistryProvider{}
 
-	s := NewConfiguratorServer(msgbusClient, registry, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode)
+	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode)
 
 	eventServer := NewConfiguratorEventServer(testOrgName, s)
 

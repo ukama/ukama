@@ -17,17 +17,21 @@ import (
 type Config struct {
 	DB               *uconf.Database `default:"{}"`
 	uconf.BaseConfig `mapstructure:",squash"`
-	Grpc             *uconf.Grpc   `default:"{}"`
-	Queue            *uconf.Queue  `default:"{}"`
-	Timeout          time.Duration `default:"20s"`
-	Service          *uconf.Service
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Queue            *uconf.Queue     `default:"{}"`
+	Timeout          time.Duration    `default:"20s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgName          string           `default:"ukama"`
-	RegistryHost     string           `default:"registry"`
+	Service          *uconf.Service
+	OrgName          string
 	LatestConfigHash string
 	StoreUser        string
 	StoreUrl         string
 	AccessToken      string
+	Http             HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
