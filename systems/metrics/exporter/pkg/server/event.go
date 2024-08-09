@@ -58,8 +58,8 @@ func (s *ExporterEventServer) EventNotification(ctx context.Context, e *epb.Even
 	return &epb.EventResponse{}, nil
 }
 
-func unmarshalEventSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
-	p := &epb.SimUsage{}
+func unmarshalEventSimUsage(msg *anypb.Any) (*epb.EventSimUsage, error) {
+	p := &epb.EventSimUsage{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
@@ -68,7 +68,7 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
 	return p, nil
 }
 
-func handleEventSimUsage(key string, msg *epb.SimUsage, s *ExporterEventServer) error {
+func handleEventSimUsage(key string, msg *epb.EventSimUsage, s *ExporterEventServer) error {
 
 	cfgs, err := s.mc.GetConfigForEvent(key)
 	if err != nil {
@@ -96,7 +96,7 @@ func handleEventSimUsage(key string, msg *epb.SimUsage, s *ExporterEventServer) 
 	return nil
 }
 
-func AddSimUsage(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
+func AddSimUsage(msg *epb.EventSimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(ms.Name)
@@ -120,7 +120,7 @@ func AddSimUsage(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema)
 	return nil
 }
 
-func AddSimUsageDuration(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
+func AddSimUsageDuration(msg *epb.EventSimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(ms.Name)
@@ -143,7 +143,7 @@ func AddSimUsageDuration(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.Metri
 	return nil
 }
 
-func SetUpDynamicLabelsForSim(keys []string, msg *epb.SimUsage) prometheus.Labels {
+func SetUpDynamicLabelsForSim(keys []string, msg *epb.EventSimUsage) prometheus.Labels {
 	l := make(prometheus.Labels)
 	for _, k := range keys {
 		switch k {

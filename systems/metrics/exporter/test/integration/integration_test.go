@@ -58,7 +58,7 @@ func Test_FullFlow(t *testing.T) {
 		return
 	}
 
-	simUsage := pb.SimUsage{
+	simUsage := pb.EventSimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 		NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",

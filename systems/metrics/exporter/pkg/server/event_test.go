@@ -116,7 +116,7 @@ func TestEvent_EventNotification(t *testing.T) {
 	tC := InitTestConfig()
 	mc := collector.NewMetricsCollector(OrgName, tC.MetricConfig)
 	s := NewExporterEventServer(OrgName, mc)
-	simUsage := epb.SimUsage{
+	simUsage := epb.EventSimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 		NetworkId:    "9fd07299-2826-4f8b-aea9-69da56440bec",

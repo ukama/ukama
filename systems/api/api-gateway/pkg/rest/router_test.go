@@ -836,7 +836,6 @@ func TestRouter_RegisterNode(t *testing.T) {
 			Id:    nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
-			State: state,
 		}
 
 		body, err := json.Marshal(node)

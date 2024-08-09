@@ -26,7 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 const (
@@ -52,7 +52,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
-		simUsage := epb.SimUsage{
+		simUsage := epb.EventSimUsage{
 			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			NetworkId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
@@ -81,7 +81,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).
 			Return(errors.New("failed to send sim usage")).Once()
 
-		simUsage := epb.SimUsage{}
+		simUsage := epb.EventSimUsage{}
 
 		anyE, err := anypb.New(&simUsage)
 		assert.NoError(t, err)
@@ -178,7 +178,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := subpb.Subscriber{
+		subscriber := upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			FirstName:    "John Doe",
 			Email:        "john.doe@example.com",
@@ -203,7 +203,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create customer event")).Once()
 
-		subscriber := subpb.Subscriber{}
+		subscriber := upb.Subscriber{}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)
@@ -235,7 +235,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := subpb.Subscriber{
+		subscriber := upb.Subscriber{
 			FirstName:   "Fox Doe",
 			Email:       "Fox.doe@example.com",
 			Address:     "This is my address",
@@ -259,7 +259,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send update customer event")).Once()
 
-		subscriber := subpb.Subscriber{}
+		subscriber := upb.Subscriber{}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)
@@ -291,7 +291,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		subscriber := subpb.Subscriber{
+		subscriber := upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 		}
 
@@ -313,7 +313,7 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send delete customer event")).Once()
 
-		subscriber := subpb.Subscriber{}
+		subscriber := upb.Subscriber{}
 
 		anyE, err := anypb.New(&subscriber)
 		assert.NoError(t, err)
@@ -347,7 +347,7 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 
 		planId := "f1ad4204-ab9e-4574-b6bb-bffcc104f8f9"
 
-		sim := epb.SimAllocation{
+		sim := epb.EventSimAllocation{
 			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			DataPlanId:   planId,
@@ -370,7 +370,7 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create subscription event")).Once()
 
-		sim := epb.SimAllocation{}
+		sim := epb.EventSimAllocation{}
 
 		anyE, err := anypb.New(&sim)
 		assert.NoError(t, err)
@@ -405,7 +405,7 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		sim := epb.SimActivePackage{
+		sim := epb.EventSimActivePackage{
 			Id:               "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			PackageId:        "3c353228-34ce-42ac-8ce4-0d4abb90bd8e",
@@ -429,7 +429,7 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		billingClient.On("TerminateSubscription", mock.Anything, "16befbda-250f-4a68-9cb4-31cccce3005e").
 			Return("", errors.New("failed to send terminate subscription event")).Once()
 
-		sim := epb.SimActivePackage{
+		sim := epb.EventSimActivePackage{
 			Id: "16befbda-250f-4a68-9cb4-31cccce3005e",
 		}
 
