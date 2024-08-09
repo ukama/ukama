@@ -307,11 +307,11 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	}
 
 	var lastUpdatedAt uint64 = 0
-	var sessionId uint64 = 0
-	var lastSessionId uint64 = 0
+	var sessionId uint64
+	var lastSessionId uint64
 	tempUsage := db.Usage{}
 	lastCDRNodeId := ou.LastNodeId
-	var nodeChangedFlag bool = false
+	var nodeChangedFlag bool
 	var newSessionFlag bool = false
 
 	//var policy string
@@ -463,7 +463,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 			}
 		}
-		nodeChangedFlag = false
+		// nodeChangedFlag = false
 	}
 
 	err = s.usageRepo.Add(&u)
