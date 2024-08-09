@@ -23,9 +23,7 @@ type nodeIpResolver struct {
 }
 
 func NewNodeIpResolver(netHost string, timeoutSecond int) (*nodeIpResolver, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, netHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.NewClient(netHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		logrus.Errorf("Could not connect to network service: %v", err)

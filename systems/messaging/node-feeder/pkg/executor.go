@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -81,7 +80,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		URL:    u,
 	}
 	logrus.Infof("sending request %+v to %s ", httpReq, u.String())
-	
+
 	resp, err := c.Do(&httpReq)
 	if err != nil {
 		return errors.Wrap(err, "error sending request")
@@ -89,7 +88,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 
 	logrus.Infof("Response status: %d", resp.StatusCode)
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logrus.Warning("error reading response body ", err)
 	} else {

@@ -26,21 +26,20 @@ type Nns struct {
 }
 
 func NewNns(host string, timeout time.Duration) *Nns {
-    conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(), grpc.WithTimeout(timeout))
-    if err != nil {
-        logrus.Fatalf("did not connect: %v", err)
-    }
-    client := pb.NewNnsClient(conn)
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logrus.Fatalf("did not connect: %v", err)
+	}
+	client := pb.NewNnsClient(conn)
 
-    return &Nns{
-        conn:    conn,
-        client:  client,
-        timeout: timeout,
-        host:    host,
-    }
+	return &Nns{
+		conn:    conn,
+		client:  client,
+		timeout: timeout,
+		host:    host,
+	}
 }
 
-    
 func NewNnsFromClient(NnsClient pb.NnsClient) *Nns {
 	return &Nns{
 		host:    "localhost",
