@@ -25,13 +25,23 @@ class NotificationApi extends RESTDataSource {
     orgId: string,
     userId: string
   ): Promise<NotificationsResDto> => {
+    let params = "";
+    if (orgId) {
+      params = params + `&org_id=${orgId}`;
+    }
+    if (userId) {
+      params = params + `&user_id=${userId}`;
+    }
+
+    if (params.length > 0) params = params.substring(1);
+
     this.logger.info(
-      `GetNotifications [GET]: ${baseURL}/${VERSION}/event-notification?org_id=${orgId}&user_id=${userId}`
+      `GetNotifications [GET]: ${baseURL}/${VERSION}/event-notification?${params}`
     );
     this.baseURL = baseURL;
-    return this.get(
-      `/${VERSION}/event-notification?org_id=${orgId}&user_id=${userId}`
-    ).then(res => dtoToNotificationsDto(res));
+    return this.get(`/${VERSION}/event-notification?${params}`).then(res =>
+      dtoToNotificationsDto(res)
+    );
   };
   getNotification = async (
     baseURL: string,

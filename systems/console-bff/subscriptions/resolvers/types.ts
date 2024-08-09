@@ -11,7 +11,6 @@ import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
   NOTIFICATION_TYPE,
-  ROLE_TYPE,
 } from "../../common/enums";
 
 @ObjectType()
@@ -101,6 +100,9 @@ export class GetMetricByTabInput {
 
   @Field()
   orgId?: string;
+
+  @Field()
+  orgName: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;
@@ -228,17 +230,20 @@ export class NotificationsRes {
 @ArgsType()
 @InputType()
 export class GetNotificationsInput {
-  @Field()
+  @Field({ nullable: false })
+  orgName: string;
+
+  @Field({ nullable: false })
   orgId: string;
 
   @Field()
   networkId: string;
 
   @Field()
-  userId: string;
+  subscriberId: string;
 
-  @Field(() => ROLE_TYPE)
-  forRole: ROLE_TYPE;
+  @Field({ nullable: false })
+  userId: string;
 
   @Field(() => [NOTIFICATION_SCOPE])
   scopes: NOTIFICATION_SCOPE[];

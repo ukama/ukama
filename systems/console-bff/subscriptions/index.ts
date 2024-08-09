@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const server = createServer(yoga);
 
-  server.listen(4000, () => {
+  server.listen(SUBSCRIPTIONS_PORT, () => {
     logger.info(
       `Server is running on http://localhost:${SUBSCRIPTIONS_PORT}/graphql`
     );
