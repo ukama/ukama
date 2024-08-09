@@ -395,7 +395,7 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 	}
 
 	// Routing key
-	key := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName).SetEventType().SetObject("virtnode").SetAction("update").MustBuild()
+	key := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetService(internal.ServiceName).SetEventType().SetObject("virtnode").SetAction("update").MustBuild()
 	routingKey := msgbus.RoutingKey(key)
 
 	// Marshal
