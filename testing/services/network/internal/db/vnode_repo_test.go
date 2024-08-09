@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	intDb "github.com/ukama/ukama/testing/services/network/internal/db"
 	"gorm.io/driver/postgres"
@@ -68,7 +69,7 @@ func Test_vNodeRepo_GetNodeInfo(t *testing.T) {
 			AddRow(node.NodeID, node.Status)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(node.NodeID).
+			WithArgs(node.NodeID, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -115,7 +116,7 @@ func Test_VNodeRepo_GetInfoFailure(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`SELECT`).
-			WithArgs("1002").
+			WithArgs("1002", sqlmock.AnyArg()).
 			WillReturnError(fmt.Errorf("no matching id"))
 
 		dialector := postgres.New(postgres.Config{
@@ -137,6 +138,7 @@ func Test_VNodeRepo_GetInfoFailure(t *testing.T) {
 		// Act
 		nodeData, err := r.GetInfo("1002")
 
+		log.Infof("nodeData: %v & error %v", nodeData, err)
 		// Assert
 		if assert.Error(t, err) {
 			assert.Equal(t, fmt.Errorf("no matching id"), err)
