@@ -18,6 +18,7 @@
 **/.idea/*
 **/.vscode/*
 **/bin/*
+<<<<<<< HEAD
 node_modules
 
 systems/data-plan/base-rate/cover.
@@ -32,3 +33,4 @@ dump.rdb
 interfaces/console/pkg
 systems/billing/provider/.env
 builder/scripts/buildSystems.log
+.env
