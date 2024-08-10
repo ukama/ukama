@@ -13,58 +13,74 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-func walkAndParse(dir string) error {
+func walkAndParse(dir string, out io.Writer) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !d.IsDir() && filepath.Ext(path) == ".go" {
-			fmt.Printf("Processing file: %s\n", path)
+			err := parseFile(path, out)
 
-			err := parseFile(path)
 			if err != nil {
 				fmt.Fprintf(os.Stderr,
 					"Error parsing file %s: %v\n", path, err)
 			}
 		}
-
 		return nil
 	})
 }
 
-func parseFile(filename string) error {
+func parseFile(filename string, output io.Writer) error {
 	fset := token.NewFileSet()
+
 	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
 	if err != nil {
 		return err
 	}
 
-	ast.Inspect(node, listen)
+	listen(node, output)
 
 	return nil
 }
 
-func listen(n ast.Node) bool {
-	// Look for function declarations
-	if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == "NewConfig" {
-		// Look for return statements
-		ast.Inspect(fn, func(n ast.Node) bool {
-			if ret, ok := n.(*ast.ReturnStmt); ok {
-				for _, retVal := range ret.Results {
-					if compositeLit, ok := retVal.(*ast.CompositeLit); ok {
-						for _, elt := range compositeLit.Elts {
-							if keyValue, ok := elt.(*ast.KeyValueExpr); ok {
-								if key, ok := keyValue.Key.(*ast.Ident); ok && key.Name == "ListenerRoutes" {
-									if arrayLit, ok := keyValue.Value.(*ast.CompositeLit); ok {
-										for _, route := range arrayLit.Elts {
-											if basicLit, ok := route.(*ast.BasicLit); ok {
-												fmt.Println(basicLit.Value)
+func listen(node *ast.File, output io.Writer) {
+	ast.Inspect(node, func(n ast.Node) bool {
+		if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == "NewConfig" {
+			ast.Inspect(fn, func(n ast.Node) bool {
+				if ret, ok := n.(*ast.ReturnStmt); ok {
+					for _, retVal := range ret.Results {
+						if unaryExpr, ok := retVal.(*ast.UnaryExpr); ok {
+							if compositeLit, ok := unaryExpr.X.(*ast.CompositeLit); ok {
+								for _, elt := range compositeLit.Elts {
+									if keyValue, ok := elt.(*ast.KeyValueExpr); ok {
+										if key, ok := keyValue.Key.(*ast.Ident); ok {
+											if key.Name == "MsgClient" {
+												if unaryExpr2, ok := keyValue.Value.(*ast.UnaryExpr); ok {
+													if compositeLit2, ok := unaryExpr2.X.(*ast.CompositeLit); ok {
+														for _, elt := range compositeLit2.Elts {
+															if keyValue, ok := elt.(*ast.KeyValueExpr); ok {
+																if key, ok := keyValue.Key.(*ast.Ident); ok {
+																	if key.Name == "ListenerRoutes" {
+																		if arrayLit, ok := keyValue.Value.(*ast.CompositeLit); ok {
+																			for _, route := range arrayLit.Elts {
+																				if basicLit, ok := route.(*ast.BasicLit); ok {
+																					fmt.Fprintln(output, basicLit.Value)
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
 											}
 										}
 									}
@@ -73,9 +89,9 @@ func listen(n ast.Node) bool {
 						}
 					}
 				}
-			}
-			return true
-		})
-	}
-	return true
+				return true
+			})
+		}
+		return true
+	})
 }

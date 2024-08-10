@@ -39,11 +39,12 @@ func (p *param) Set(s string) error {
 }
 
 func run(dir string, out io.Writer, cfg *config) error {
-	return walkAndParse(dir)
+	return walkAndParse(dir, out)
 }
 
 func main() {
 	root := flag.String("root", ".", "Root directory to start from")
+	flag.Parse()
 
 	err := run(*root, os.Stdout, &config{})
 	if err != nil {
