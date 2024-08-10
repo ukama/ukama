@@ -27,9 +27,6 @@ typedef struct _response {
 
 extern WorkList *Transmit; /* global */
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
@@ -51,9 +48,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * extract_system_path --
- */
 static int extract_system_path(char *str, char **name, char **path) {
 
     char *ptr=NULL;
@@ -70,10 +64,6 @@ static int extract_system_path(char *str, char **name, char **path) {
     return TRUE;
 }
 
-/*
- * clear_request -- free up memory from MRequest.
- *
- */
 void clear_request(MRequest **data) {
 
 	free((*data)->reqType);
@@ -85,11 +75,8 @@ void clear_request(MRequest **data) {
 	free(*data);
 }
 
-/*
- * send_data_to_system -- Forward recevied data to the system
- *
- */
-static long send_data_to_system(URequest *data, char *ip, char *port,
+static long send_data_to_system(URequest *data, char *ep,
+                                char *ip, int port,
 								int *retCode, char **retStr) {
   
 	int i;
@@ -104,7 +91,7 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 	*retCode = 0;
 
 	/* Sanity check */
-	if (data == NULL && ip == NULL && port == NULL) {
+	if (data == NULL && ip == NULL && !port) {
 		return FALSE;
 	}
 
@@ -122,7 +109,7 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 		}
 	}
 
-	sprintf(url, "http://%s:%s/%s", ip, port, data->http_url);
+	sprintf(url, "http://%s:%d/%s", ip, port, ep);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
@@ -162,10 +149,6 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 	return TRUE;
 }
 
-/*
- * process_incoming_websocket_message --
- *
- */
 int process_incoming_websocket_message(Message *message, char **responseRemote){
 
     /*
@@ -177,7 +160,8 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 	URequest *request;
 	char *responseLocal=NULL, *jStr=NULL;
     char *systemName=NULL, *systemEP=NULL;
-	char *systemHost=NULL, *systemPort=NULL;
+	char *systemHost=NULL;
+    int systemPort=0;
 	json_t *jResp=NULL;
 
     if (strcmp(message->reqType, UKAMA_NODE_REQUEST) != 0) {
@@ -205,13 +189,13 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
         responseLocal = HttpStatusStr(retCode);
 	} else {
     
-        log_debug("Matching server found for system: %s host: %s port: %s",
+        log_debug("Matching server found for system: %s host: %s port: %d",
                   systemName, systemHost, systemPort);
 
-        ret = send_data_to_system(request,
+        ret = send_data_to_system(request, systemEP,
                                   systemHost, systemPort,
                                   &retCode, &responseLocal);
-        log_debug("Return code from system %s:%s: code: %d Response: %s",
+        log_debug("Return code from system %s:%d: code: %d Response: %s",
                   systemHost, systemPort, retCode, responseLocal);
     }
 

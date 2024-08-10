@@ -29,29 +29,29 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 static long send_request_to_initClient(char *url, struct Response *response);
 static int process_response_from_initClient(char *response,
 											char **host,
-                                            char **port);
+                                            int *port);
 
 static char *create_url(char *systemName) {
 
 	char *url=NULL;
-    char *initClientHost=NULL;
-    char *initClientPort=NULL;
+    char *initSystemHost=NULL;
+    char *initSystemPort=NULL;
     char *orgName=NULL;
 
-    initClientHost = getenv(ENV_INIT_CLIENT_ADDR);
-    initClientPort = getenv(ENV_INIT_CLIENT_PORT);
+    initSystemHost = getenv(ENV_INIT_SYSTEM_ADDR);
+    initSystemPort = getenv(ENV_INIT_SYSTEM_PORT);
     orgName        = getenv(ENV_SYSTEM_ORG);
 
-    if (initClientHost == NULL ||
-        initClientPort == NULL ||
+    if (initSystemHost == NULL ||
+        initSystemPort == NULL ||
         orgName        == NULL ||
         systemName     == NULL) return;
 
 	url = (char *)calloc(MAX_URL_LEN, sizeof(char));
 	if (url) {
 		sprintf(url, "http://%s:%s/v1/orgs/%s/systems/%s",
-                initClientHost,
-                initClientPort,
+                initSystemHost,
+                initSystemPort,
                 orgName,
                 systemName);
 	}
@@ -82,7 +82,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 
 static int process_response_from_initClient(char *response,
 											char **host,
-                                            char **port) {
+                                            int *port) {
 
 	int ret=FALSE;
 	json_t *json=NULL;
@@ -105,7 +105,7 @@ static int process_response_from_initClient(char *response,
 	}
 
 	*host = strdup(systemInfo->ip);
-	*port = strdup(systemInfo->port);
+	*port = systemInfo->port;
 	ret = TRUE;
 	
  done:
@@ -160,14 +160,14 @@ static long send_request_to_initClient(char *url, struct Response *response) {
 
 int get_systemInfo_from_initClient(char *systemName,
                                    char **systemHost,
-                                   char **systemPort) {
+                                   int *systemPort) {
 
 	int ret=FALSE;
 	char *url=NULL;
 	struct Response response;
 
-    *systemName = NULL;
-    *systemPort = NULL;
+    *systemHost = NULL;
+    *systemPort = 0;
 
 	if (systemName == NULL) return FALSE;
 
@@ -177,7 +177,7 @@ int get_systemInfo_from_initClient(char *systemName,
 	if (send_request_to_initClient(url, &response) == HttpStatus_OK) {
 		if (process_response_from_initClient(response.buffer,
                                              systemHost, systemPort)) {
-			log_debug("Recevied info from initClient: host %s port %s",
+			log_debug("Recevied info from initClient: host %s port %d",
 					  *systemHost, *systemPort);
 		} else {
 			log_error("Unable to receive info from init");
@@ -204,8 +204,6 @@ void free_system_info(SystemInfo *systemInfo) {
     free(systemInfo->systemId);
     free(systemInfo->certificate);
     free(systemInfo->ip);
-    free(systemInfo->port);
-	free(systemInfo->health);
 
 	free(systemInfo);
 }

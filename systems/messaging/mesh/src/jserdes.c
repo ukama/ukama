@@ -18,10 +18,7 @@
 static void log_json(json_t *json);
 static int get_json_entry(json_t *json, char *key, json_type type,
 						  char **strValue, int *intValue);
-/*
- * log_json --
- *
- */
+
 static void log_json(json_t *json) {
 
 	char *str = NULL;
@@ -33,10 +30,6 @@ static void log_json(json_t *json) {
 	}
 }
 
-/*
- * get_json_entry --
- *
- */
 static int get_json_entry(json_t *json, char *key, json_type type,
 						  char **strValue, int *intValue) {
 
@@ -62,10 +55,6 @@ static int get_json_entry(json_t *json, char *key, json_type type,
 	return TRUE;
 }
 
-/*
- * add_map_to_request --
- *
- */
 static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 
 	json_t *jMap=NULL, *jArray=NULL;
@@ -118,10 +107,6 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 	}
 }
 
-/*
- * serialize_system_response --
- *
- */
 int serialize_system_response(char **response, Message *message,
                               int retCode, int len, char *data) {
 
@@ -243,10 +228,6 @@ int serialize_websocket_message(char **str,
 	return TRUE;
 }
 
-/*
- * deserialize_system_info --
- *
- */
 int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 
 	int ret=TRUE;
@@ -268,10 +249,10 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 						  &(*systemInfo)->certificate, NULL);
 	ret |= get_json_entry(json, JSON_IP, JSON_STRING,
 						  &(*systemInfo)->ip, NULL);
-	ret |= get_json_entry(json, JSON_PORT, JSON_STRING,
-						  &(*systemInfo)->port, NULL);
-	ret |= get_json_entry(json, JSON_HEALTH, JSON_STRING,
-						  &(*systemInfo)->health, NULL);
+	ret |= get_json_entry(json, JSON_PORT, JSON_INTEGER,
+						  NULL, &(*systemInfo)->port);
+	ret |= get_json_entry(json, JSON_HEALTH, JSON_INTEGER,
+						  NULL, &(*systemInfo)->health);
 
 	if (ret == FALSE) {
 		log_error("Error deserializing node info");
