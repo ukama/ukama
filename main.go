@@ -16,6 +16,8 @@ import (
 	"strings"
 )
 
+var oFile = os.Stdout
+
 type config struct {
 }
 
@@ -43,10 +45,21 @@ func run(dir string, out io.Writer, cfg *config) error {
 }
 
 func main() {
-	root := flag.String("root", ".", "Root directory to start from")
+	src := flag.String("src", ".", "Source directory to start from")
+	ofilename := flag.String("f", "", "The name of the file to write to (or stdout)")
 	flag.Parse()
 
-	err := run(*root, os.Stdout, &config{})
+	var err error
+	if *ofilename != "" {
+		oFile, err = os.Create(*ofilename)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		defer oFile.Close()
+	}
+
+	err = run(*src, oFile, &config{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"Error walking through the directory: %v\n", err)
