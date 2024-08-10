@@ -30,7 +30,8 @@ typedef struct systemInfo_ {
 } SystemInfo;
 
 int get_systemInfo_from_initClient(char *systemName,
-                                   char **systemHost, char **systemPort);
+                                   char **systemHost,
+                                   char **systemPort);
 void free_system_info(SystemInfo *systemInfo);
 
 #endif /* NODE_INFO_H */

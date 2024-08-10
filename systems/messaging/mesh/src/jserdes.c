@@ -295,7 +295,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_UUID);
+    jSeq         = json_object_get(json, JSON_SEQ);
     jMessage     = json_object_get(json, JSON_MESSAGE);
     if (jType == NULL || jSeq == NULL || jMessage == NULL) {
         json_decref(json);
