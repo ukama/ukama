@@ -13,13 +13,12 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-func walkAndParse(dir string, out io.Writer) error {
+func walkAndParse(dir string, out *resultSet) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -33,11 +32,12 @@ func walkAndParse(dir string, out io.Writer) error {
 					"Error parsing file %s: %v\n", path, err)
 			}
 		}
+
 		return nil
 	})
 }
 
-func parseFile(filename string, output io.Writer) error {
+func parseFile(filename string, output *resultSet) error {
 	fset := token.NewFileSet()
 
 	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
@@ -50,7 +50,7 @@ func parseFile(filename string, output io.Writer) error {
 	return nil
 }
 
-func listen(node *ast.File, output io.Writer) {
+func listen(node *ast.File, output *resultSet) {
 	ast.Inspect(node, func(n ast.Node) bool {
 		if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == "NewConfig" {
 			ast.Inspect(fn, func(n ast.Node) bool {
@@ -71,7 +71,7 @@ func listen(node *ast.File, output io.Writer) {
 																		if arrayLit, ok := keyValue.Value.(*ast.CompositeLit); ok {
 																			for _, route := range arrayLit.Elts {
 																				if basicLit, ok := route.(*ast.BasicLit); ok {
-																					fmt.Fprintln(output, basicLit.Value)
+																					output.Routes = append(output.Routes, basicLit.Value)
 																				}
 																			}
 																		}

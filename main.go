@@ -9,44 +9,98 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
 )
 
-var oFile = os.Stdout
-
 type config struct {
+	OutputFormat string
+}
+
+type resultSet struct {
+	Routes []string
 }
 
 type param struct {
-	value  string
-	values []string
+	Value  string
+	Values []string
 }
 
 func (p *param) String() string {
-	return string(p.value)
+	return string(p.Value)
 }
 
 func (p *param) Set(s string) error {
-	for _, v := range p.values {
+	for _, v := range p.Values {
 		if strings.ToLower(s) == strings.ToLower(v) {
-			p.value = strings.ToLower(v)
+			p.Value = strings.ToLower(v)
 			return nil
 		}
 	}
-	return fmt.Errorf("must match one of the following: %q", p.values)
+	return fmt.Errorf("must match one of the following: %q", p.Values)
+}
+
+var (
+	oFile        = os.Stdout
+	outputFormat = param{
+		Values: []string{"json", "yaml", "toml"},
+	}
+)
+
+func init() {
+	flag.Var(&outputFormat, "oFormat",
+		fmt.Sprintf("Output format. Must match one of the following: %q (default \"json\" )",
+			outputFormat.Values))
+}
+
+func serialize(data interface{}, format string) (io.Writer, error) {
+	var err error
+	buf := &bytes.Buffer{}
+
+	switch format {
+	case "json":
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "    ")
+		err = enc.Encode(data)
+	case "yaml":
+		enc := yaml.NewEncoder(buf)
+		enc.SetIndent(4)
+		err = enc.Encode(data)
+	case "toml":
+		err = toml.NewEncoder(buf).Encode(data)
+	default:
+		return nil, fmt.Errorf("specified format not supported: %v", format)
+	}
+
+	return buf, err
 }
 
 func run(dir string, out io.Writer, cfg *config) error {
-	return walkAndParse(dir, out)
+	data := &resultSet{}
+
+	walkAndParse(dir, data)
+
+	outputBuf, err := serialize(data, cfg.OutputFormat)
+	if err != nil {
+		return fmt.Errorf("seralization error: %w", err)
+	}
+
+	fmt.Fprint(out, outputBuf)
+
+	return nil
 }
 
 func main() {
 	src := flag.String("src", ".", "Source directory to start from")
-	ofilename := flag.String("f", "", "The name of the file to write to (or stdout)")
+	ofilename := flag.String("out", "", "The name of the file to write to (default \"Stdout\")")
 	flag.Parse()
 
 	var err error
@@ -59,11 +113,17 @@ func main() {
 		defer oFile.Close()
 	}
 
-	err = run(*src, oFile, &config{})
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Error walking through the directory: %v\n", err)
+	if outputFormat.String() == "" {
+		outputFormat.Set("json")
+	}
 
+	cfg := &config{
+		OutputFormat: outputFormat.String(),
+	}
+
+	err = run(*src, oFile, cfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
