@@ -18,15 +18,18 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/ukama/msgcli/util"
 	"gopkg.in/yaml.v3"
+
+	"github.com/ukama/msgcli/internal/action"
+)
+
+const (
+	defaultOutputFormat = "json"
 )
 
 type config struct {
 	OutputFormat string
-}
-
-type resultSet struct {
-	Routes []string
 }
 
 type param struct {
@@ -40,7 +43,7 @@ func (p *param) String() string {
 
 func (p *param) Set(s string) error {
 	for _, v := range p.Values {
-		if strings.ToLower(s) == strings.ToLower(v) {
+		if strings.EqualFold(s, v) {
 			p.Value = strings.ToLower(v)
 			return nil
 		}
@@ -84,13 +87,16 @@ func serialize(data interface{}, format string) (io.Writer, error) {
 }
 
 func run(dir string, out io.Writer, cfg *config) error {
-	data := &resultSet{}
+	data := &util.ResultSet{}
 
-	walkAndParse(dir, data)
+	err := action.WalkAndParse(dir, data)
+	if err != nil {
+		return fmt.Errorf("parse error: %w", err)
+	}
 
 	outputBuf, err := serialize(data, cfg.OutputFormat)
 	if err != nil {
-		return fmt.Errorf("seralization error: %w", err)
+		return fmt.Errorf("error while writiing output: %w", err)
 	}
 
 	fmt.Fprint(out, outputBuf)
@@ -114,7 +120,11 @@ func main() {
 	}
 
 	if outputFormat.String() == "" {
-		outputFormat.Set("json")
+		err = outputFormat.Set(defaultOutputFormat)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 
 	cfg := &config{

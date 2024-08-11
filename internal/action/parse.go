@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package main
+package action
 
 import (
 	"fmt"
@@ -16,9 +16,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/ukama/msgcli/util"
 )
 
-func walkAndParse(dir string, out *resultSet) error {
+func WalkAndParse(dir string, out *util.ResultSet) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -26,7 +28,6 @@ func walkAndParse(dir string, out *resultSet) error {
 
 		if !d.IsDir() && filepath.Ext(path) == ".go" {
 			err := parseFile(path, out)
-
 			if err != nil {
 				fmt.Fprintf(os.Stderr,
 					"Error parsing file %s: %v\n", path, err)
@@ -37,7 +38,7 @@ func walkAndParse(dir string, out *resultSet) error {
 	})
 }
 
-func parseFile(filename string, output *resultSet) error {
+func parseFile(filename string, output *util.ResultSet) error {
 	fset := token.NewFileSet()
 
 	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
@@ -50,7 +51,7 @@ func parseFile(filename string, output *resultSet) error {
 	return nil
 }
 
-func listen(node *ast.File, output *resultSet) {
+func listen(node *ast.File, output *util.ResultSet) {
 	ast.Inspect(node, func(n ast.Node) bool {
 		if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == "NewConfig" {
 			ast.Inspect(fn, func(n ast.Node) bool {
