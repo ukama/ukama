@@ -76,7 +76,7 @@ type health interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Health = client.NewHealth(endpoints.Health, endpoints.Timeout)
-
+	c.Notify = client.NewNotify(endpoints.Notify, endpoints.Timeout)
 	return c
 }
 
