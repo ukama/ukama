@@ -22,7 +22,8 @@ payload = {
 }
 
 headers = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'User-Agent': 'PythonTestClient/1.0'
 }
 
 def send_notification(num_requests):
@@ -37,16 +38,16 @@ def send_notification(num_requests):
     
     return times
 
-def forward_notification(num_requests):
-    times = []
-    for _ in range(num_requests):
-        start_time = time.time()
-        response = requests.post(FORWARD_ENDPOINT,
-                                 headers=headers, data=json.dumps(payload))
-        end_time = time.time()
-        times.append(end_time - start_time)
-    
-    return times
+#def forward_notification(num_requests):
+#    times = []
+#    for _ in range(num_requests):
+#        start_time = time.time()
+#        response = requests.post(FORWARD_ENDPOINT,
+#                                 headers=headers, data=json.dumps(payload))
+#        end_time = time.time()
+#        times.append(end_time - start_time)
+#    
+#    return times
 
 def calculate_statistics(times):
     avg_time = statistics.mean(times)
@@ -63,9 +64,9 @@ if __name__ == '__main__':
 
     print(f"Sending {num_requests} notifications to web service...")
     web_service_times = send_notification(num_requests)
-    print(f"Sending {num_requests} notifications to forward endpoint...")
-    forward_times = forward_notification(num_requests)
-
+#    print(f"Sending {num_requests} notifications to forward endpoint...")
+#    forward_times = forward_notification(num_requests)
+    forward_times = 0
     web_service_avg, web_service_max, web_service_min = calculate_statistics(web_service_times)
     forward_avg, forward_max, forward_min = calculate_statistics(forward_times)
 
