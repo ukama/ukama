@@ -76,7 +76,7 @@ type health interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Health = client.NewHealth(endpoints.Health, endpoints.Timeout)
-
+	c.Notify = client.NewNotify(endpoints.Notify, endpoints.Timeout)
 	return c
 }
 
@@ -248,6 +248,10 @@ func (r *Router) pingHandler(c *gin.Context) error {
 }
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
+	if req.Type != "alert" && req.Type != "event" {
+        r.logger.Error("Invalid notification type")
+        return nil, status.Error(codes.InvalidArgument, "notification type must be either 'alert' or 'event'")
+    }
 	return r.clients.Notify.Add(req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
 }

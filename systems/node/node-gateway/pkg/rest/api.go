@@ -15,13 +15,14 @@ type GetRunningAppsRequest struct {
 type AddNotificationReq struct {
 	NodeId      string `json:"node_id"`
 	Severity    string `json:"severity,omitempty" type:"string"`
-	Type        string `json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
+	Type        string `json:"notification_type,omitempty"`
 	ServiceName string `json:"service_name,omitempty"`
 	Status      uint32 `json:"status,omitempty"`
 	Time        uint32 `json:"time,omitempty"`
 	Description string `json:"description,omitempty"`
 	Details     string `json:"details,omitempty"`
 }
+
 
 type GetNotificationReq struct {
 	NotificationId string `json:"notification_id" path:"notification_id" validate:"required"`

@@ -97,7 +97,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	})
 
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

@@ -39,9 +39,6 @@ func NewConfig(name string) *Config {
 			Host:    "msg-client-notification:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.global.{{ .Org}}.nucleus.org.notification.sent",
-				"event.cloud.global.{{ .Org}}.nucleus.user.notification.sent",
-				"event.cloud.local.{{ .Org}}.registry.network.notification.sent",
 				"event.cloud.local.{{ .Org}}.registry.node.notification.sent",
 			},
 		},
