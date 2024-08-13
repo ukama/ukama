@@ -1,0 +1,25 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+ 
+ package ukama.events.v1;
+ 
+ /* Node state change event */
+ message NodeStateChangeEvent {
+     string node_id = 1;
+     string old_state = 2;
+     string new_state = 3;
+     string old_connectivity = 4;
+     string new_connectivity = 5;
+     int64 last_heartbeat = 6;
+     string type = 7;
+     string version = 8;
+ }
