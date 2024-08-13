@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
@@ -104,7 +103,6 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	// Arrange
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
-	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 	msg := &pb.RestartNodeRequest{
@@ -136,7 +134,6 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartNodes(context.TODO(), &pb.RestartNodesRequest{
-		NetworkId: netId.String(),
 		NodeIds:   []string{nodeId},
 	})
 	// Assert

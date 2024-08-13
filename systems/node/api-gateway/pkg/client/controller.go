@@ -55,11 +55,11 @@ func (r *Controller) Close() {
 	r.conn.Close()
 }
 
-func (r *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {
+func (r *Controller) RestartSite(siteId string) (*pb.RestartSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
+	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId})
 	if err != nil {
 		return nil, err
 	}
@@ -91,11 +91,11 @@ func (r *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	return res, nil
 }
 
-func (r *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.RestartNodesResponse, error) {
+func (r *Controller) RestartNodes( nodeIds []string) (*pb.RestartNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
+	res, err := r.client.RestartNodes(ctx, &pb.RestartNodesRequest{ NodeIds: nodeIds})
 	if err != nil {
 		return nil, err
 	}

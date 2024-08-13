@@ -109,7 +109,6 @@ func Test_RestarteNodes(t *testing.T) {
 	c := &nmocks.ControllerServiceClient{}
 
 	restartNodeReq := &cpb.RestartNodesRequest{
-		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4",
 		NodeIds:   []string{"60285a2a-fe1d-4261-a868-5be480075b8f"},
 	}
 
@@ -155,8 +154,7 @@ func Test_RestarteSite(t *testing.T) {
 	c := &nmocks.ControllerServiceClient{}
 
 	RestartSiteRequest := &cpb.RestartSiteRequest{
-		SiteId:    "site-1",
-		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
+		SiteId:   "083840fd-6d89-45f3-8d9a-69321017835d",
 	}
 
 	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{},
