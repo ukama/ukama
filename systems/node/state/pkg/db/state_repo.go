@@ -69,13 +69,12 @@ func (r *stateRepo) GetByNodeId(nodeId ukama.NodeID) (*State, error) {
 func (r *stateRepo) Update(state *State) error {
 
 	result := r.Db.GetGormDb().Model(state).Updates(state)
-    if result.Error != nil {
-        return result.Error
-    }
+	if result.Error != nil {
+		return result.Error
+	}
 
-    return nil
+	return nil
 }
-
 
 func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	result := r.Db.GetGormDb().Where("id = ?", nodeId).Delete(&State{})
@@ -109,7 +108,6 @@ func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]StateHistory, error)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return history, nil
 }
-
