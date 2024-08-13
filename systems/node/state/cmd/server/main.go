@@ -57,10 +57,11 @@ func initConfig() {
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
+
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.State{}, &db.StateHistory{})
+	err := d.Init(&db.State{},&db.StateHistory{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -77,11 +78,11 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	regServer := server.NewstateServer(svcConf.OrgName, db.NewstateRepo(gormdb),
+	regServer := server.NewstateServer(svcConf.OrgName, db.NewStateRepo(gormdb),
 		mbClient, svcConf.DebugMode)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-		pb.RegisterHealhtServiceServer(s, regServer)
+		pb.RegisterStateServiceServer(s, regServer)
 	})
 
 	go grpcServer.StartServer()
@@ -90,6 +91,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	waitForExit()
 }
+
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 
