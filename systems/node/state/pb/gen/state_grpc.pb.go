@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -34,13 +33,13 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StateServiceClient interface {
-	Create(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*State, error)
-	GetByNodeId(ctx context.Context, in *GetByNodeIdRequest, opts ...grpc.CallOption) (*State, error)
-	Update(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*State, error)
-	Delete(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Create(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*CreateStateResponse, error)
+	GetByNodeId(ctx context.Context, in *GetByNodeIdRequest, opts ...grpc.CallOption) (*GetByNodeIdResponse, error)
+	Update(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*UpdateStateResponse, error)
+	Delete(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*DeleteStateResponse, error)
 	ListAll(ctx context.Context, in *ListAllRequest, opts ...grpc.CallOption) (*ListAllResponse, error)
-	UpdateConnectivity(ctx context.Context, in *UpdateConnectivityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	UpdateCurrentState(ctx context.Context, in *UpdateCurrentStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateConnectivity(ctx context.Context, in *UpdateConnectivityRequest, opts ...grpc.CallOption) (*UpdateConnectivityResponse, error)
+	UpdateCurrentState(ctx context.Context, in *UpdateCurrentStateRequest, opts ...grpc.CallOption) (*UpdateCurrentStateResponse, error)
 	GetStateHistory(ctx context.Context, in *GetStateHistoryRequest, opts ...grpc.CallOption) (*GetStateHistoryResponse, error)
 }
 
@@ -52,8 +51,8 @@ func NewStateServiceClient(cc grpc.ClientConnInterface) StateServiceClient {
 	return &stateServiceClient{cc}
 }
 
-func (c *stateServiceClient) Create(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*State, error) {
-	out := new(State)
+func (c *stateServiceClient) Create(ctx context.Context, in *CreateStateRequest, opts ...grpc.CallOption) (*CreateStateResponse, error) {
+	out := new(CreateStateResponse)
 	err := c.cc.Invoke(ctx, StateService_Create_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -61,8 +60,8 @@ func (c *stateServiceClient) Create(ctx context.Context, in *CreateStateRequest,
 	return out, nil
 }
 
-func (c *stateServiceClient) GetByNodeId(ctx context.Context, in *GetByNodeIdRequest, opts ...grpc.CallOption) (*State, error) {
-	out := new(State)
+func (c *stateServiceClient) GetByNodeId(ctx context.Context, in *GetByNodeIdRequest, opts ...grpc.CallOption) (*GetByNodeIdResponse, error) {
+	out := new(GetByNodeIdResponse)
 	err := c.cc.Invoke(ctx, StateService_GetByNodeId_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,8 +69,8 @@ func (c *stateServiceClient) GetByNodeId(ctx context.Context, in *GetByNodeIdReq
 	return out, nil
 }
 
-func (c *stateServiceClient) Update(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*State, error) {
-	out := new(State)
+func (c *stateServiceClient) Update(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*UpdateStateResponse, error) {
+	out := new(UpdateStateResponse)
 	err := c.cc.Invoke(ctx, StateService_Update_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -79,8 +78,8 @@ func (c *stateServiceClient) Update(ctx context.Context, in *UpdateStateRequest,
 	return out, nil
 }
 
-func (c *stateServiceClient) Delete(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *stateServiceClient) Delete(ctx context.Context, in *DeleteStateRequest, opts ...grpc.CallOption) (*DeleteStateResponse, error) {
+	out := new(DeleteStateResponse)
 	err := c.cc.Invoke(ctx, StateService_Delete_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -97,8 +96,8 @@ func (c *stateServiceClient) ListAll(ctx context.Context, in *ListAllRequest, op
 	return out, nil
 }
 
-func (c *stateServiceClient) UpdateConnectivity(ctx context.Context, in *UpdateConnectivityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *stateServiceClient) UpdateConnectivity(ctx context.Context, in *UpdateConnectivityRequest, opts ...grpc.CallOption) (*UpdateConnectivityResponse, error) {
+	out := new(UpdateConnectivityResponse)
 	err := c.cc.Invoke(ctx, StateService_UpdateConnectivity_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -106,8 +105,8 @@ func (c *stateServiceClient) UpdateConnectivity(ctx context.Context, in *UpdateC
 	return out, nil
 }
 
-func (c *stateServiceClient) UpdateCurrentState(ctx context.Context, in *UpdateCurrentStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *stateServiceClient) UpdateCurrentState(ctx context.Context, in *UpdateCurrentStateRequest, opts ...grpc.CallOption) (*UpdateCurrentStateResponse, error) {
+	out := new(UpdateCurrentStateResponse)
 	err := c.cc.Invoke(ctx, StateService_UpdateCurrentState_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -128,13 +127,13 @@ func (c *stateServiceClient) GetStateHistory(ctx context.Context, in *GetStateHi
 // All implementations must embed UnimplementedStateServiceServer
 // for forward compatibility
 type StateServiceServer interface {
-	Create(context.Context, *CreateStateRequest) (*State, error)
-	GetByNodeId(context.Context, *GetByNodeIdRequest) (*State, error)
-	Update(context.Context, *UpdateStateRequest) (*State, error)
-	Delete(context.Context, *DeleteStateRequest) (*emptypb.Empty, error)
+	Create(context.Context, *CreateStateRequest) (*CreateStateResponse, error)
+	GetByNodeId(context.Context, *GetByNodeIdRequest) (*GetByNodeIdResponse, error)
+	Update(context.Context, *UpdateStateRequest) (*UpdateStateResponse, error)
+	Delete(context.Context, *DeleteStateRequest) (*DeleteStateResponse, error)
 	ListAll(context.Context, *ListAllRequest) (*ListAllResponse, error)
-	UpdateConnectivity(context.Context, *UpdateConnectivityRequest) (*emptypb.Empty, error)
-	UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*emptypb.Empty, error)
+	UpdateConnectivity(context.Context, *UpdateConnectivityRequest) (*UpdateConnectivityResponse, error)
+	UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*UpdateCurrentStateResponse, error)
 	GetStateHistory(context.Context, *GetStateHistoryRequest) (*GetStateHistoryResponse, error)
 	mustEmbedUnimplementedStateServiceServer()
 }
@@ -143,25 +142,25 @@ type StateServiceServer interface {
 type UnimplementedStateServiceServer struct {
 }
 
-func (UnimplementedStateServiceServer) Create(context.Context, *CreateStateRequest) (*State, error) {
+func (UnimplementedStateServiceServer) Create(context.Context, *CreateStateRequest) (*CreateStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (UnimplementedStateServiceServer) GetByNodeId(context.Context, *GetByNodeIdRequest) (*State, error) {
+func (UnimplementedStateServiceServer) GetByNodeId(context.Context, *GetByNodeIdRequest) (*GetByNodeIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByNodeId not implemented")
 }
-func (UnimplementedStateServiceServer) Update(context.Context, *UpdateStateRequest) (*State, error) {
+func (UnimplementedStateServiceServer) Update(context.Context, *UpdateStateRequest) (*UpdateStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedStateServiceServer) Delete(context.Context, *DeleteStateRequest) (*emptypb.Empty, error) {
+func (UnimplementedStateServiceServer) Delete(context.Context, *DeleteStateRequest) (*DeleteStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedStateServiceServer) ListAll(context.Context, *ListAllRequest) (*ListAllResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAll not implemented")
 }
-func (UnimplementedStateServiceServer) UpdateConnectivity(context.Context, *UpdateConnectivityRequest) (*emptypb.Empty, error) {
+func (UnimplementedStateServiceServer) UpdateConnectivity(context.Context, *UpdateConnectivityRequest) (*UpdateConnectivityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateConnectivity not implemented")
 }
-func (UnimplementedStateServiceServer) UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*emptypb.Empty, error) {
+func (UnimplementedStateServiceServer) UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*UpdateCurrentStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCurrentState not implemented")
 }
 func (UnimplementedStateServiceServer) GetStateHistory(context.Context, *GetStateHistoryRequest) (*GetStateHistoryResponse, error) {

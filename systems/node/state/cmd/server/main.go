@@ -57,11 +57,10 @@ func initConfig() {
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
-
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.State{},&db.StateHistory{})
+	err := d.Init(&db.State{}, &db.StateHistory{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -91,7 +90,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	waitForExit()
 }
-
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 

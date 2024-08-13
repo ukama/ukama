@@ -21,6 +21,39 @@ var _ = math.Inf
 func (this *ListAllRequest) Validate() error {
 	return nil
 }
+func (this *DeleteStateResponse) Validate() error {
+	return nil
+}
+func (this *UpdateCurrentStateResponse) Validate() error {
+	return nil
+}
+func (this *UpdateConnectivityResponse) Validate() error {
+	return nil
+}
+func (this *UpdateStateResponse) Validate() error {
+	if this.State != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
+		}
+	}
+	return nil
+}
+func (this *CreateStateResponse) Validate() error {
+	if this.State != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
+		}
+	}
+	return nil
+}
+func (this *GetByNodeIdResponse) Validate() error {
+	if this.State != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
+		}
+	}
+	return nil
+}
 func (this *State) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))

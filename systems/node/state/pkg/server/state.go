@@ -6,7 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -38,7 +37,7 @@ func NewstateServer(orgName string, sRepo db.StateRepo, msgBus mb.MsgBusServiceC
 	}
 }
 
-func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*pb.State, error) {
+func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*pb.CreateStateResponse, error) {
 	log.Infof("Adding node state  %v", req)
 
 	nId, err := ukama.ValidateNodeId(req.State.NodeId)
@@ -62,11 +61,13 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
+	return &pb.CreateStateResponse{
+		State: convertStateToProto(state),
+	}, nil
 
-	return convertStateToProto(state), nil
 }
 
-func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdRequest) (*pb.State, error) {
+func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdRequest) (*pb.GetByNodeIdResponse, error) {
 	log.Infof("Getting node state  %v", req)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
@@ -82,10 +83,10 @@ func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdReques
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	return convertStateToProto(state), nil
+	return &pb.GetByNodeIdResponse{State: convertStateToProto(state)}, nil
 }
 
-func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*pb.State, error) {
+func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*pb.UpdateStateResponse, error) {
 	nId, err := ukama.ValidateNodeId(req.State.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -110,10 +111,10 @@ func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "state")
 	}
 
-	return convertStateToProto(state), nil
+	return &pb.UpdateStateResponse{State: convertStateToProto(state)}, nil
 }
 
-func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*emptypb.Empty, error) {
+func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*pb.DeleteStateResponse, error) {
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -128,7 +129,7 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "state")
 	}
 
-	return &emptypb.Empty{}, nil
+	return &pb.DeleteStateResponse{}, nil
 }
 
 func (s *StateServer) ListAll(ctx context.Context, req *pb.ListAllRequest) (*pb.ListAllResponse, error) {
@@ -148,7 +149,7 @@ func (s *StateServer) ListAll(ctx context.Context, req *pb.ListAllRequest) (*pb.
 	return &pb.ListAllResponse{States: pbStates}, nil
 }
 
-func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConnectivityRequest) (*emptypb.Empty, error) {
+func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConnectivityRequest) (*pb.UpdateConnectivityResponse, error) {
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -159,16 +160,16 @@ func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConn
 		return nil, status.Errorf(codes.Internal, "Failed to update connectivity: %v", err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &pb.UpdateConnectivityResponse{}, nil
 }
 
-func (s *StateServer) UpdateCurrentState(ctx context.Context, req *pb.UpdateCurrentStateRequest) (*emptypb.Empty, error) {
+func (s *StateServer) UpdateCurrentState(ctx context.Context, req *pb.UpdateCurrentStateRequest) (*pb.UpdateCurrentStateResponse, error) {
 	err := s.sRepo.UpdateCurrentState(ukama.NodeID(req.NodeId), db.NodeStateEnum(req.CurrentState))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to update current state: %v", err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &pb.UpdateCurrentStateResponse{}, nil
 }
 
 func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHistoryRequest) (*pb.GetStateHistoryResponse, error) {

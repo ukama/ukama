@@ -37,7 +37,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.registry.node.node.create",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-			    "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 			},
 		},
 	}

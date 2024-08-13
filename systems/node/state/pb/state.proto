@@ -9,17 +9,33 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 service StateService {
-    rpc Create(CreateStateRequest) returns (State);
-    rpc GetByNodeId(GetByNodeIdRequest) returns (State);
-    rpc Update(UpdateStateRequest) returns (State);
-    rpc Delete(DeleteStateRequest) returns (google.protobuf.Empty);
+    rpc Create(CreateStateRequest) returns (CreateStateResponse);
+    rpc GetByNodeId(GetByNodeIdRequest) returns (GetByNodeIdResponse);
+    rpc Update(UpdateStateRequest) returns (UpdateStateResponse);
+    rpc Delete(DeleteStateRequest) returns (DeleteStateResponse);
     rpc ListAll(ListAllRequest) returns (ListAllResponse);
-    rpc UpdateConnectivity(UpdateConnectivityRequest) returns (google.protobuf.Empty);
-    rpc UpdateCurrentState(UpdateCurrentStateRequest) returns (google.protobuf.Empty);
+    rpc UpdateConnectivity(UpdateConnectivityRequest) returns (UpdateConnectivityResponse);
+    rpc UpdateCurrentState(UpdateCurrentStateRequest) returns (UpdateCurrentStateResponse);
     rpc GetStateHistory(GetStateHistoryRequest) returns (GetStateHistoryResponse);
 }
 
 message ListAllRequest{
+
+}
+message DeleteStateResponse{
+
+}
+message UpdateCurrentStateResponse{}
+message UpdateConnectivityResponse{}
+message UpdateStateResponse{
+    State state =1;
+}
+
+message CreateStateResponse{
+    State state =1;
+}
+message GetByNodeIdResponse {
+    State state =1;
 
 }
 message State {
