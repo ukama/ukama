@@ -20,11 +20,11 @@ type RestartNodeRequest struct {
 }
 
 type RestartSiteRequest struct {
-	SiteId    string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_name"`
+	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
 }
 
 type RestartNodesRequest struct {
-	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
+	NodeIds []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
 
 type ToggleInternetSwitchRequest struct {

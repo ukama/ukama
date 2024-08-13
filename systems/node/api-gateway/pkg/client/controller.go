@@ -91,11 +91,11 @@ func (r *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	return res, nil
 }
 
-func (r *Controller) RestartNodes( nodeIds []string) (*pb.RestartNodesResponse, error) {
+func (r *Controller) RestartNodes(nodeIds []string) (*pb.RestartNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartNodes(ctx, &pb.RestartNodesRequest{ NodeIds: nodeIds})
+	res, err := r.client.RestartNodes(ctx, &pb.RestartNodesRequest{NodeIds: nodeIds})
 	if err != nil {
 		return nil, err
 	}
