@@ -6,6 +6,8 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
+#include <ulfius.h>
+
 #include "web_client.h"
 
 #include "jserdes.h"
@@ -55,10 +57,11 @@ URequest* wc_create_http_request(char* url,
     }
 
     ulfius_set_request_properties(httpReq,
-                       U_OPT_HTTP_VERB, method,
-                       U_OPT_HTTP_URL, url,
-                       U_OPT_TIMEOUT, 20,
-                       U_OPT_NONE);
+                                  U_OPT_HTTP_VERB, method,
+                                  U_OPT_HTTP_URL, url,
+                                  U_OPT_HEADER_PARAMETER, "User-Agent", SERVICE_NAME,
+                                  U_OPT_TIMEOUT, 20,
+                                  U_OPT_NONE);
 
     if (body) {
        if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
