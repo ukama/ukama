@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/node/state/pb/gen";
+
+package ukama.node.state.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service StateService {
+    rpc Create(CreateStateRequest) returns (State);
+    rpc GetByNodeId(GetByNodeIdRequest) returns (State);
+    rpc Update(UpdateStateRequest) returns (State);
+    rpc Delete(DeleteStateRequest) returns (google.protobuf.Empty);
+    rpc ListAll(ListAllRequest) returns (ListAllResponse);
+    rpc UpdateConnectivity(UpdateConnectivityRequest) returns (google.protobuf.Empty);
+    rpc UpdateCurrentState(UpdateCurrentStateRequest) returns (google.protobuf.Empty);
+    rpc GetStateHistory(GetStateHistoryRequest) returns (GetStateHistoryResponse);
+}
+
+message ListAllRequest{
+
+}
+message State {
+    string id = 1;
+    string nodeId = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    NodeStateEnum current_state = 3;
+    Connectivity connectivity = 4;
+    google.protobuf.Timestamp last_heartbeat = 5;
+    string type = 6;
+    string version = 7;
+    repeated StateHistory state_history = 8;
+}
+
+enum NodeStateEnum {
+    STATE_UNDEFINED = 0;
+    STATE_ONBOARDED = 1;
+    STATE_CONFIGURED = 2;
+    STATE_ACTIVE = 3;
+    STATE_MAINTENANCE = 4;
+    STATE_FAULTY = 5;
+}
+
+enum Connectivity {
+    CONNECTIVITY_UNKNOWN = 0;
+    CONNECTIVITY_OFFLINE = 1;
+    CONNECTIVITY_ONLINE = 2;
+}
+
+message StateHistory {
+    string id = 1;
+    string nodeStateId = 2;
+    NodeStateEnum  previousState= 3;
+    NodeStateEnum newState = 4;
+    google.protobuf.Timestamp timeStamp = 5;
+}
+
+message CreateStateRequest {
+    State state = 1;
+}
+
+message GetByNodeIdRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+
+}
+
+message UpdateStateRequest {
+    State state = 1;
+}
+
+message DeleteStateRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+
+}
+
+message ListAllResponse {
+    repeated State states = 1;
+}
+
+message UpdateConnectivityRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    Connectivity connectivity = 2;
+}
+
+message UpdateCurrentStateRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    NodeStateEnum currentState = 2;
+}
+
+message GetStateHistoryRequest {
+    string nodeId = 1[(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message GetStateHistoryResponse {
+    repeated StateHistory history = 1;
+}
