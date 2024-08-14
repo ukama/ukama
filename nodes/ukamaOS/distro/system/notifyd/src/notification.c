@@ -161,9 +161,7 @@ static int write_to_stderr(JsonObj *jBuffer) {
     return USYS_TRUE;
 }
 
-static int notify_send_notification(JsonObj* jNotify, Config *config) {
-    
-    char urlWithEp[MAX_URL_LENGTH] = {0};
+static int send_notification(JsonObj* jNotify, Config *config) {
 
     if (gData->output == STDOUT) {
         return write_to_stdout(jNotify);
@@ -172,8 +170,10 @@ static int notify_send_notification(JsonObj* jNotify, Config *config) {
     } else if (gData->output == LOG_FILE) {
         return write_to_log_file(jNotify);
     } else if (gData->output == UKAMA_SERVICE) {
-        usys_sprintf(urlWithEp, "%s/node/%s", config->remoteServer, DEF_REMOTE_EP);
-        return wc_forward_notification(urlWithEp, "POST", jNotify);
+        return wc_forward_notification(config->remoteServer,
+                                       DEF_REMOTE_EP,
+                                       "POST",
+                                       jNotify);
     }
 
     return USYS_FALSE;
@@ -232,7 +232,7 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
     }
     json_log(jNotify);
 
-    if (notify_send_notification(jNotify, config) != STATUS_OK) {
+    if (send_notification(jNotify, config) != STATUS_OK) {
         usys_log_error("Failed to forward notification. Service: %s",
                        notification->serviceName);
         free_notification(notification);

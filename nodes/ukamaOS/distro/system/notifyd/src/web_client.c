@@ -31,24 +31,28 @@ int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
         return STATUS_NOK;
     }
 
-    ret = ulfius_send_http_request(httpReq,
-                    *httpResp);
+    ret = ulfius_send_http_request(httpReq, *httpResp);
     if (ret != STATUS_OK) {
         usys_log_error( "Web client failed to send %s web request to %s",
                         httpReq->http_verb, httpReq->http_url);
     }
+
     return ret;
 }
 
-URequest* wc_create_http_request(char* url,
-                char* method, JsonObj* body) {
+URequest* wc_create_http_request(char* httpURL,
+                                 char *urlPath,
+                                 char* method,
+                                 JsonObj* body) {
 
-    /* Preparing Request */
-    URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
+    char urlWithEp[MAX_URL_LENGTH] = {0};
+    URequest* httpReq;
+
+    httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
     if (!httpReq) {
-      usys_log_error("Error allocating memory of size: %lu for http Request",
-                      sizeof(URequest));
-      return NULL;
+        usys_log_error("Error allocating memory of size: %lu for http Request",
+                       sizeof(URequest));
+        return NULL;
     }
 
     if (ulfius_init_request(httpReq)) {
@@ -56,12 +60,23 @@ URequest* wc_create_http_request(char* url,
         return NULL;
     }
 
+    sprintf(urlWithEp, "%s/%s", httpURL, urlPath);
     ulfius_set_request_properties(httpReq,
                                   U_OPT_HTTP_VERB, method,
-                                  U_OPT_HTTP_URL, url,
+                                  U_OPT_HTTP_URL, urlWithEp,
                                   U_OPT_HEADER_PARAMETER, "User-Agent", SERVICE_NAME,
                                   U_OPT_TIMEOUT, 20,
                                   U_OPT_NONE);
+
+    if (urlPath) {
+        httpReq->url_path = strdup(urlPath);
+        if (httpReq->url_path == NULL) {
+            usys_log_error("Error allocating memory for URL path");
+            ulfius_clean_request(httpReq);
+            usys_free(httpReq);
+            return NULL;
+        }
+    }
 
     if (body) {
        if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
@@ -74,7 +89,7 @@ URequest* wc_create_http_request(char* url,
     return httpReq;
 }
 
-int wc_send_node_info_request(char *url, char *method, char **nodeID) {
+int wc_send_node_info_request(char *httpURL, char *urlPath, char *method, char **nodeID) {
 
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -82,7 +97,7 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
     UResponse *httpResp = NULL;
     URequest *httpReq = NULL;
 
-    httpReq = wc_create_http_request(url, method, NULL);
+    httpReq = wc_create_http_request(httpURL, urlPath, method, NULL);
     if (!httpReq) {
         return ret;
     }
@@ -121,15 +136,18 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
     return ret;
 }
 
-int wc_forward_notification(char* url, char* method,
-                JsonObj* body ) {
+int wc_forward_notification(char* httpURL,
+                            char *URLPath,
+                            char* method,
+                            JsonObj* body ) {
+
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
     JsonErrObj jErr;
 
     UResponse *httpResp = NULL;
 
-    URequest* httpReq = wc_create_http_request(url, method, body);
+    URequest* httpReq = wc_create_http_request(httpURL, URLPath, method, body);
     if (!httpReq) {
         return ret;
     }
@@ -168,14 +186,12 @@ int wc_forward_notification(char* url, char* method,
 }
 
 int wc_read_node_info(Config* config) {
+
     int ret = STATUS_NOK;
-    /* Send HTTP request */
-    char url[128]={0};
+    char httpURL[128]={0};
 
-    sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
-                    config->nodedEP);
-
-    ret = wc_send_node_info_request(url, "GET", &config->nodeID);
+    sprintf(httpURL,"http://%s:%d", config->nodedHost, config->nodedPort);
+    ret = wc_send_node_info_request(httpURL, config->nodedEP, "GET", &config->nodeID);
     if (ret) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
         return ret;

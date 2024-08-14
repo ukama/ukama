@@ -14,7 +14,7 @@
 #include "web.h"
 #include "json_types.h"
 
-int wc_forward_notification(char* url, char* method, JsonObj* body );
+int wc_forward_notification(char* url, char *path, char* method, JsonObj* body );
 int wc_read_node_info(Config* config);
 int web_client_init(char* nodeID, Config* config);
 int get_nodeid_from_noded(Config *config);
