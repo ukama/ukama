@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/nucleus/user/pkg/db"
@@ -65,7 +66,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	}
 
 	user := &db.User{
-		Email:  req.User.Email,
+		Email:  strings.ToLower(req.User.Email),
 		Name:   req.User.Name,
 		Phone:  req.User.Phone,
 		AuthId: authId,
@@ -97,7 +98,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 
 	evt := &epb.EventUserCreate{
 		UserId: user.Id.String(),
-		Email:  req.User.Email,
+		Email:  strings.ToLower(req.User.Email),
 		Name:   req.User.Name,
 		Phone:  req.User.Phone,
 	}

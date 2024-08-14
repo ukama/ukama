@@ -143,7 +143,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		evt := &epb.EventInvitationCreated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
-			Email:     invite.Email,
+			Email:     strings.ToLower(req.GetEmail()),
 			Name:      invite.Name,
 			Role:      uTypes.RoleType(invite.Role),
 			Status:    uTypes.InvitationStatus(invite.Status),
