@@ -5,68 +5,62 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type NodeStateEventServer struct {
-	s               *StateServer
-	orgName         string
-	stateRoutingKey msgbus.RoutingKeyBuilder
-	msgbus          mb.MsgBusServiceClient
-	epb.UnimplementedEventNotificationServiceServer
+    s       *StateServer
+    orgName string
+    epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
-	return &NodeStateEventServer{
-		s:               s,
-		orgName:         orgName,
-		stateRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:          msgBus,
-	}
+func NewControllerEventServer(orgName string, s *StateServer) *NodeStateEventServer {
+    return &NodeStateEventServer{
+        s:       s,
+        orgName: orgName,
+    }
 }
 
 func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
-	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
-		msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-		err = n.handleRegistryNodeAddEvent(e.RoutingKey, msg)
-		if err != nil {
-			return nil, err
-		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
-		msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-		err = n.handleNodeOnlineEvent(e.RoutingKey, msg)
-		if err != nil {
-			return nil, err
-		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
-		msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-		err = n.handleNodeOfflineEvent(e.RoutingKey, msg)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		log.Errorf("No handler for routing key %s", e.RoutingKey)
-	}
+    log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+    switch e.RoutingKey {
+    case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
+        msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
+        if err != nil {
+            return nil, err
+        }
+        err = n.handleRegistryNodeAddEvent(e.RoutingKey, msg)
+        if err != nil {
+            return nil, err
+        }
+    case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
+        msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
+        if err != nil {
+            return nil, err
+        }
+        err = n.handleNodeOnlineEvent(e.RoutingKey, msg)
+        if err != nil {
+            return nil, err
+        }
+    case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
+        msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
+        if err != nil {
+            return nil, err
+        }
+        err = n.handleNodeOfflineEvent(e.RoutingKey, msg)
+        if err != nil {
+            return nil, err
+        }
+    default:
+        log.Errorf("No handler for routing key %s", e.RoutingKey)
+    }
 
-	return &epb.EventResponse{}, nil
+    return &epb.EventResponse{}, nil
 }
 
 func (n *NodeStateEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
@@ -116,106 +110,68 @@ func (n *NodeStateEventServer) handleRegistryNodeAddEvent(key string, msg *epb.N
 }
 
 func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	nId, err := ukama.ValidateNodeId(msg.NodeId)
-	if err != nil {
-		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
-		return err
-	}
-	state, err := n.s.sRepo.GetByNodeId(nId)
-	if err != nil {
-		log.Errorf("Error getting node %s from Nodestate repo. Error: %+v", msg.NodeId, err)
-		return err
-	}
+    log.Infof("Keys %s and Proto is: %+v", key, msg)
+    nId, err := ukama.ValidateNodeId(msg.NodeId)
+    if err != nil {
+        log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
+        return err
+    }
+    state, err := n.s.sRepo.GetByNodeId(nId)
+    if err != nil {
+        log.Errorf("Error getting node %s from Nodestate repo. Error: %+v", msg.NodeId, err)
+        return err
+    }
 
-	if state.Connectivity == db.Online {
-		log.Infof("Node %s is already online. Ignoring event.", msg.NodeId)
-		return nil
-	}
+    if state.Connectivity == db.Online {
+        log.Infof("Node %s is already online. Ignoring event.", msg.NodeId)
+        return nil
+    }
 
-	oldState := state.CurrentState
-	oldConnectivity := state.Connectivity
+    state.Connectivity = db.Online
+    state.LastHeartbeat = time.Now()
 
-	state.Connectivity = db.Online
-	state.LastHeartbeat = time.Now()
+    if state.CurrentState == db.StateFaulty {
+        state.CurrentState = db.StateActive
+    }
 
-	if state.CurrentState == db.StateFaulty {
-		state.CurrentState = db.StateActive
-	}
+    err = n.s.sRepo.Update(state)
+    if err != nil {
+        log.Errorf("Error updating node %s in Nodestate repo. Error: %+v", msg.NodeId, err)
+        return err
+    }
 
-	err = n.s.sRepo.Update(state)
-	if err != nil {
-		log.Errorf("Error updating node %s in Nodestate repo. Error: %+v", msg.NodeId, err)
-		return err
-	}
-
-	// Publish state change event
-	if oldState != state.CurrentState || oldConnectivity != state.Connectivity {
-		n.publishStateChangeEvent(state, oldState, oldConnectivity)
-	}
-
-	return nil
+    return nil
 }
 
 func (n *NodeStateEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	nId, err := ukama.ValidateNodeId(msg.NodeId)
-	if err != nil {
-		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
-		return err
-	}
-	state, err := n.s.sRepo.GetByNodeId(nId)
-	if err != nil {
-		log.Errorf("Error getting node %s from Nodestate repo. Error: %+v", msg.NodeId, err)
-		return err
-	}
+    log.Infof("Keys %s and Proto is: %+v", key, msg)
+    nId, err := ukama.ValidateNodeId(msg.NodeId)
+    if err != nil {
+        log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
+        return err
+    }
+    state, err := n.s.sRepo.GetByNodeId(nId)
+    if err != nil {
+        log.Errorf("Error getting node %s from Nodestate repo. Error: %+v", msg.NodeId, err)
+        return err
+    }
 
-	if state.Connectivity == db.Offline {
-		log.Infof("Node %s is already offline. Ignoring event.", msg.NodeId)
-		return nil
-	}
+    if state.Connectivity == db.Offline {
+        log.Infof("Node %s is already offline. Ignoring event.", msg.NodeId)
+        return nil
+    }
 
-	oldState := state.CurrentState
-	oldConnectivity := state.Connectivity
+    state.Connectivity = db.Offline
 
-	state.Connectivity = db.Offline
+    if state.CurrentState == db.StateActive {
+        state.CurrentState = db.StateFaulty
+    }
 
-	if state.CurrentState == db.StateActive {
-		state.CurrentState = db.StateFaulty
-	}
+    err = n.s.sRepo.Update(state)
+    if err != nil {
+        log.Errorf("Error updating node %s in Nodestate repo. Error: %+v", msg.NodeId, err)
+        return err
+    }
 
-	err = n.s.sRepo.Update(state)
-	if err != nil {
-		log.Errorf("Error updating node %s in Nodestate repo. Error: %+v", msg.NodeId, err)
-		return err
-	}
-
-	// Publish state change event
-	if oldState != state.CurrentState || oldConnectivity != state.Connectivity {
-		n.publishStateChangeEvent(state, oldState, oldConnectivity)
-	}
-
-	return nil
-}
-
-func (n *NodeStateEventServer) publishStateChangeEvent(state *db.State, oldState db.NodeStateEnum, oldConnectivity db.Connectivity) {
-	if n.msgbus != nil {
-		route := n.stateRoutingKey.SetAction("update").SetObject("node").SetObject("state").MustBuild()
-
-		evt := &epb.NodeStateChangeEvent{
-			NodeId:          state.NodeId,
-			OldState:        oldState.String(),
-			NewState:        state.CurrentState.String(),
-			OldConnectivity: oldConnectivity.String(),
-			NewConnectivity: state.Connectivity.String(),
-			LastHeartbeat:   state.LastHeartbeat.Unix(),
-			Type:            state.Type,
-			Version:         state.Version,
-		}
-		err := n.msgbus.PublishRequest(route, evt)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
-				evt, route, err.Error())
-		}
-	}
+    return nil
 }
