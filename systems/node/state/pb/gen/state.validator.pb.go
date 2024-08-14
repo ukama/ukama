@@ -70,6 +70,11 @@ func (this *State) Validate() error {
 			}
 		}
 	}
+	if this.LastStateChange != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.LastStateChange); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("LastStateChange", err)
+		}
+	}
 	return nil
 }
 func (this *StateHistory) Validate() error {

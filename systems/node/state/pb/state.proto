@@ -41,12 +41,14 @@ message GetByNodeIdResponse {
 message State {
     string id = 1;
     string nodeId = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    NodeStateEnum current_state = 3;
+    NodeStateEnum currentState = 3;
     Connectivity connectivity = 4;
-    google.protobuf.Timestamp last_heartbeat = 5;
+    google.protobuf.Timestamp lastHeartbeat = 5;
     string type = 6;
     string version = 7;
-    repeated StateHistory state_history = 8;
+    repeated StateHistory stateHistory = 8;
+    google.protobuf.Timestamp LastStateChange = 9;
+    
 }
 
 enum NodeStateEnum {

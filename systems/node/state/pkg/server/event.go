@@ -13,10 +13,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-const (
-	FaultyThresholdDuration = 5 * time.Minute // Adjust as needed
-)
-
 type NodeStateEventServer struct {
 	s       *StateServer
 	orgName string
@@ -99,11 +95,14 @@ func (n *NodeStateEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.N
 
 func (n *NodeStateEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	now := time.Now()
 	state := &db.State{
-		NodeId:       msg.NodeId,
-		CurrentState: db.StateOnboarded,
-		Connectivity: db.Unknown,
-		Type:         msg.Type,
+		NodeId:          msg.NodeId,
+		CurrentState:    db.StateOnboarded,
+		Connectivity:    db.Unknown,
+		Type:            msg.Type,
+		LastStateChange: now,
+		LastHeartbeat:   now,
 	}
 	err := n.s.sRepo.Create(state, nil)
 	if err != nil {
@@ -126,13 +125,14 @@ func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOn
 		return err
 	}
 
+	now := time.Now()
 	state.Connectivity = db.Online
-	state.LastHeartbeat = time.Now()
+	state.LastHeartbeat = now
 
 	if state.CurrentState == db.StateFaulty {
-		if time.Since(state.LastStateChange) > FaultyThresholdDuration {
+		if now.Sub(state.LastStateChange) > FaultyThresholdDuration {
 			state.CurrentState = db.StateActive
-			state.LastStateChange = time.Now()
+			state.LastStateChange = now
 		}
 	}
 
@@ -144,7 +144,6 @@ func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOn
 
 	return nil
 }
-
 
 func (n *NodeStateEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
@@ -159,12 +158,13 @@ func (n *NodeStateEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeO
 		return err
 	}
 
+	now := time.Now()
 	state.Connectivity = db.Offline
 
 	if state.CurrentState == db.StateActive {
-		if time.Since(state.LastStateChange) > FaultyThresholdDuration {
+		if now.Sub(state.LastStateChange) > FaultyThresholdDuration {
 			state.CurrentState = db.StateFaulty
-			state.LastStateChange = time.Now()
+			state.LastStateChange = now
 		}
 	}
 

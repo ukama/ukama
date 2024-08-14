@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -12,10 +13,13 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
+)
+
+const (
+	FaultyThresholdDuration = 5 * time.Minute // Adjust as needed
 )
 
 type StateServer struct {
@@ -46,25 +50,25 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 			"invalid format of node id. Error %s", err.Error())
 	}
 
+	now := time.Now()
 	state := &db.State{
-		NodeId:        nId.StringLowercase(),
-		CurrentState:  db.NodeStateEnum(req.State.CurrentState),
-		Connectivity:  db.Connectivity(req.State.Connectivity),
-		LastHeartbeat: req.State.LastHeartbeat.AsTime(),
-		Type:          req.State.Type,
-		Version:       req.State.Version,
+		NodeId:          nId.StringLowercase(),
+		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
+		Connectivity:    db.Connectivity(req.State.Connectivity),
+		LastHeartbeat:   now,
+		LastStateChange: now,
+		Type:            req.State.Type,
+		Version:         req.State.Version,
 	}
 
 	err = s.sRepo.Create(state, nil)
 	if err != nil {
 		log.Error("Failed to create state: " + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 	return &pb.CreateStateResponse{
 		State: convertStateToProto(state),
 	}, nil
-
 }
 
 func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdRequest) (*pb.GetByNodeIdResponse, error) {
@@ -79,7 +83,6 @@ func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdReques
 	state, err := s.sRepo.GetByNodeId(nId)
 	if err != nil {
 		log.Error("State not found: " + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
@@ -93,21 +96,31 @@ func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*
 			"invalid format of node id. Error %s", err.Error())
 	}
 
+	existingState, err := s.sRepo.GetByNodeId(nId)
+	if err != nil {
+		log.Error("Failed to get existing state: " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "state")
+	}
+
+	now := time.Now()
 	state := &db.State{
-		Id:            uuid.NewV4(),
-		NodeId:        nId.StringLowercase(),
-		CurrentState:  db.NodeStateEnum(req.State.CurrentState),
-		Connectivity:  db.Connectivity(req.State.Connectivity),
-		LastHeartbeat: req.State.LastHeartbeat.AsTime(),
-		Type:          req.State.Type,
-		Version:       req.State.Version,
+		Id:              existingState.Id,
+		NodeId:          nId.StringLowercase(),
+		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
+		Connectivity:    db.Connectivity(req.State.Connectivity),
+		LastHeartbeat:   now,
+		LastStateChange: existingState.LastStateChange,
+		Type:            req.State.Type,
+		Version:         req.State.Version,
+	}
+
+	if state.CurrentState != existingState.CurrentState {
+		state.LastStateChange = now
 	}
 
 	err = s.sRepo.Update(state)
-
 	if err != nil {
 		log.Error("Failed to update state: " + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "state")
 	}
 
@@ -122,10 +135,8 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 	}
 
 	err = s.sRepo.Delete(ukama.NodeID(nId))
-
 	if err != nil {
 		log.Error("Failed to delete state: " + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "state")
 	}
 
@@ -134,10 +145,8 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 
 func (s *StateServer) ListAll(ctx context.Context, req *pb.ListAllRequest) (*pb.ListAllResponse, error) {
 	states, err := s.sRepo.ListAll()
-
 	if err != nil {
 		log.Error("Failed to list states: " + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "state")
 	}
 
@@ -155,7 +164,32 @@ func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConn
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
 	}
-	err = s.sRepo.UpdateConnectivity(nId, db.Connectivity(req.Connectivity))
+
+	state, err := s.sRepo.GetByNodeId(nId)
+	if err != nil {
+		log.Error("Failed to get existing state: " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "state")
+	}
+
+	newConnectivity := db.Connectivity(req.Connectivity)
+	now := time.Now()
+
+	if state.Connectivity != newConnectivity {
+		if state.CurrentState == db.StateFaulty {
+			if now.Sub(state.LastStateChange) > FaultyThresholdDuration {
+				state.CurrentState = db.StateActive
+				state.LastStateChange = now
+			}
+		} else if state.CurrentState == db.StateActive {
+			state.CurrentState = db.StateFaulty
+			state.LastStateChange = now
+		}
+	}
+
+	state.Connectivity = newConnectivity
+	state.LastHeartbeat = now
+
+	err = s.sRepo.Update(state)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to update connectivity: %v", err)
 	}
@@ -164,7 +198,29 @@ func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConn
 }
 
 func (s *StateServer) UpdateCurrentState(ctx context.Context, req *pb.UpdateCurrentStateRequest) (*pb.UpdateCurrentStateResponse, error) {
-	err := s.sRepo.UpdateCurrentState(ukama.NodeID(req.NodeId), db.NodeStateEnum(req.CurrentState))
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	state, err := s.sRepo.GetByNodeId(nId)
+	if err != nil {
+		log.Error("Failed to get existing state: " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "state")
+	}
+
+	newState := db.NodeStateEnum(req.CurrentState)
+	now := time.Now()
+
+	if state.CurrentState != newState {
+		state.CurrentState = newState
+		state.LastStateChange = now
+	}
+
+	state.LastHeartbeat = now
+
+	err = s.sRepo.Update(state)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to update current state: %v", err)
 	}
@@ -194,12 +250,13 @@ func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHisto
 
 func convertStateToProto(state *db.State) *pb.State {
 	return &pb.State{
-		Id:            state.Id.String(),
-		NodeId:        state.NodeId,
-		CurrentState:  pb.NodeStateEnum(state.CurrentState),
-		Connectivity:  pb.Connectivity(state.Connectivity),
-		LastHeartbeat: timestamppb.New(state.LastHeartbeat),
-		Type:          state.Type,
-		Version:       state.Version,
+		Id:              state.Id.String(),
+		NodeId:          state.NodeId,
+		CurrentState:    pb.NodeStateEnum(state.CurrentState),
+		Connectivity:    pb.Connectivity(state.Connectivity),
+		LastHeartbeat:   timestamppb.New(state.LastHeartbeat),
+		LastStateChange: timestamppb.New(state.LastStateChange),
+		Type:            state.Type,
+		Version:         state.Version,
 	}
 }
