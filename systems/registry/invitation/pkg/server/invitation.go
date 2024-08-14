@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -122,7 +123,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		Id:        invitationId,
 		Name:      req.GetName(),
 		Link:      link,
-		Email:     req.GetEmail(),
+		Email:     strings.ToLower(req.GetEmail()),
 		Role:      roles.RoleType(req.Role),
 		ExpiresAt: expiry,
 		Status:    db.Pending,

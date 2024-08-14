@@ -9,8 +9,8 @@
 import {
   useCreateInvitationMutation,
   useDeleteInvitationMutation,
+  useGetInvitationsQuery,
   useGetMembersQuery,
-  useInvitationsQuery,
   useRemoveMemberMutation,
   useUpdateMemberMutation,
 } from '@/client/graphql/generated';
@@ -44,7 +44,7 @@ import React, { useEffect, useState } from 'react';
 
 const Page = () => {
   const [tabIndex, setTabIndex] = useState(0);
-  const { setSnackbarMessage } = useAppContext();
+  const { user, setSnackbarMessage } = useAppContext();
   const [search, setSearch] = useState<string>('');
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [data, setData] = useState({ members: [], invites: [] });
@@ -103,12 +103,12 @@ const Page = () => {
     data: invitationsData,
     loading: invitationsLoading,
     refetch: refetchInvitations,
-  } = useInvitationsQuery({
+  } = useGetInvitationsQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        invites: data?.getInvitationsByOrg.invitations ?? [],
+        invites: data?.getInvitations.invitations ?? [],
       }));
     },
     onError: (error) => {
@@ -166,11 +166,12 @@ const Page = () => {
         const s = search.toLowerCase();
         if (member.name.toLowerCase().includes(s)) return member;
       });
-      const _invitations =
-        invitationsData?.getInvitationsByOrg.invitations.filter((invite) => {
+      const _invitations = invitationsData?.getInvitations.invitations.filter(
+        (invite) => {
           const s = search.toLowerCase();
           if (invite.name.toLowerCase().includes(s)) return invite;
-        });
+        },
+      );
       setData((prev: any) => ({
         ...prev,
         members: _members,
@@ -179,13 +180,12 @@ const Page = () => {
     } else if (
       data.members.length === 0 &&
       data.members.length !== membersData?.getMembers.members.length &&
-      data.invites.length !==
-        invitationsData?.getInvitationsByOrg.invitations.length
+      data.invites.length !== invitationsData?.getInvitations.invitations.length
     ) {
       setData((prev: any) => ({
         ...prev,
         members: membersData?.getMembers.members ?? [],
-        invites: invitationsData?.getInvitationsByOrg.invitations ?? [],
+        invites: invitationsData?.getInvitations.invitations ?? [],
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +195,7 @@ const Page = () => {
     sendInvitation({
       variables: {
         data: {
-          email: member.email as string,
+          email: (member.email as string).toLowerCase(),
           role: member.role as string,
           name: member.name as string,
         },

@@ -858,14 +858,8 @@ mutation CreateInvitation($data: CreateInvitationInputDto!) {
   }
 }
 
-query GetInvitations($email: String!) {
-  getInvitations(email: $email) {
-    ...Invitation
-  }
-}
-
-query Invitations {
-  getInvitationsByOrg {
+query GetInvitations {
+  getInvitations {
     invitations {
       ...Invitation
     }
@@ -881,6 +875,14 @@ mutation DeleteInvitation($deleteInvitationId: String!) {
 mutation UpdateInvitation($data: UpateInvitationInputDto!) {
   updateInvitation(data: $data) {
     id
+  }
+}
+
+query GetInvitationsByEmail($email: String!) {
+  getInvitationsByEmail(email: $email) {
+    invitations {
+      ...Invitation
+    }
   }
 }
 

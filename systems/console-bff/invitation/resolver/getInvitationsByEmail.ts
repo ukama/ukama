@@ -5,18 +5,21 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { INVITATION_STATUS } from "../../common/enums";
 import { Context } from "../context";
 import { InvitationDto, InvitationsResDto } from "./types";
 
 @Resolver()
-export class GetInVitationsByOrgResolver {
+export class GetInVitationsByEmailResolver {
   @Query(() => InvitationsResDto)
-  async getInvitationsByOrg(@Ctx() ctx: Context): Promise<InvitationsResDto> {
-    const { dataSources, baseURL } = ctx;
-    const res = await dataSources.dataSource.getInvitationsByOrg(baseURL);
+  async getInvitationsByEmail(
+    @Arg("email") email: string,
+    @Ctx() ctx: Context
+  ): Promise<InvitationsResDto> {
+    const { dataSources } = ctx;
+    const res = await dataSources.dataSource.getAllInvitationsByEmail(email);
     const Invitations: InvitationDto[] = [];
     for (const invitation of res.invitations) {
       if (invitation.status !== INVITATION_STATUS.INVITE_ACCEPTED) {

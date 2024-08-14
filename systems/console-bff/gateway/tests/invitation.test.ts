@@ -12,8 +12,8 @@ import InvitationApi from "../../invitation/datasource/invitation_api";
 import { CreateInvitationResolver } from "../../invitation/resolver/createInvitation";
 import { DeleteInvitationResolver } from "../../invitation/resolver/deleteInvitation";
 import { GetInvitationResolver } from "../../invitation/resolver/getInvitation";
-import { GetInVitationsByOrgResolver } from "../../invitation/resolver/getInvitationByOrg";
 import { GetInvitationsResolver } from "../../invitation/resolver/getInvitations";
+import { GetInVitationsByOrgResolver } from "../../invitation/resolver/getInvitationsByEmail";
 import { UpdateInvitationResolver } from "../../invitation/resolver/updateInvitation";
 import {
   CREATE_INVITATION,

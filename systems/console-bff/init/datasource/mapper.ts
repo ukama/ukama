@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { InitSystemAPIResDto } from "../resolver/types";
+import { InitSystemAPIResDto, OrgsNameRes } from "../resolver/types";
 
 export const dtoToSystenResDto = (
   res: InitSystemAPIResDto
@@ -19,5 +19,11 @@ export const dtoToSystenResDto = (
     systemId: res.systemId,
     systemName: res.systemName,
     url: res.url,
+  };
+};
+
+export const dtoToOrgsNameResDto = (res: OrgsNameRes): OrgsNameRes => {
+  return {
+    orgs: res.orgs,
   };
 };

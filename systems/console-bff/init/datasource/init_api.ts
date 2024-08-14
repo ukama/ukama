@@ -16,11 +16,22 @@ import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "../../user/resolver/types";
-import { InitSystemAPIResDto, ValidateSessionRes } from "../resolver/types";
-import { dtoToSystenResDto } from "./mapper";
+import {
+  InitSystemAPIResDto,
+  OrgsNameRes,
+  ValidateSessionRes,
+} from "../resolver/types";
+import { dtoToOrgsNameResDto, dtoToSystenResDto } from "./mapper";
 
 class InitAPI extends RESTDataSource {
   baseURL = INIT_API_GW;
+
+  getOrgs = async (): Promise<OrgsNameRes> => {
+    this.logger.info(`GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs`);
+    return this.get(`/${VERSION}/orgs`, {}).then(res =>
+      dtoToOrgsNameResDto(res)
+    );
+  };
 
   getSystem = async (
     orgName: string,
