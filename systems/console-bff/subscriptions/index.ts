@@ -11,7 +11,6 @@ import { pubSub } from "./resolvers/pubsub";
 async function bootstrap() {
   const schema = await buildSchema({
     resolvers: resolvers,
-    // emitSchemaFile: path.resolve(__dirname, "schema.graphql"),
     pubSub,
   });
 

@@ -155,7 +155,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 			"Invalid arguments: no user found")
 	}
 
-	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].UserId)
+	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].Id.String())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}

@@ -1,0 +1,27 @@
+# Subscriptions
+
+query GetNotifications($data: GetNotificationsInput!) {
+  getNotifications(data: $data) {
+    notifications {
+      id
+      type
+      scope
+      title
+      isRead
+      createdAt
+      description
+    }
+  }
+}
+
+subscription NotificationSubscription($data: GetNotificationsInput!) {
+  notificationSubscription(data: $data) {
+    id
+    type
+    scope
+    title
+    isRead
+    createdAt
+    description
+  }
+}

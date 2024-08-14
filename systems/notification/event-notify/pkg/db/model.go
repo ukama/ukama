@@ -33,8 +33,8 @@ type Notification struct {
 	SubscriberId string
 	UserId       string
 	NodeId       string
-	EventMsgID    uint
-	EventMsg     EventMsg 
+	EventMsgID   uint
+	EventMsg     EventMsg
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -68,7 +68,7 @@ type Notifications struct {
 	Description string
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	IsRead      bool                    `gorm:"type:bool;default:false;"`
+	IsRead      bool                    `gorm:"default:false"`
 	CreatedAt   string
 	UpdatedAt   string
 }
@@ -77,17 +77,3 @@ type EventMsg struct {
 	gorm.Model
 	Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
 }
-
-// // Value Marshal
-// func (j JSONB) Value() (driver.Value, error) {
-// 	return json.Marshal(j)
-// }
-
-// // Scan Unmarshal
-// func (j *JSONB) Scan(value interface{}) error {
-// 	data, ok := value.([]byte)
-// 	if !ok {
-// 		return errors.New("type assertion to []byte failed")
-// 	}
-// 	return json.Unmarshal(data, &j)
-// }

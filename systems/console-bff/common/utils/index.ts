@@ -10,11 +10,17 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
-import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
+import {
+  GRAPHS_TYPE,
+  NODE_TYPE,
+  NOTIFICATION_SCOPE,
+  ROLE_TYPE,
+} from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
 import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
+import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
@@ -276,12 +282,24 @@ const csvToBase64 = (filePath: string) => {
   });
 };
 
+const getRoleType = (userRole: string): ROLE_TYPE => {
+  return Object.values(ROLE_TYPE).includes(userRole as ROLE_TYPE)
+    ? (userRole as ROLE_TYPE)
+    : ROLE_TYPE.ROLE_INVALID;
+};
+
+const getScopesByRole = (userRole: string): Array<NOTIFICATION_SCOPE> => {
+  const roleType = getRoleType(userRole);
+  return RoleToNotificationScopes[roleType] ?? [];
+};
+
 export {
   csvToBase64,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
+  getScopesByRole,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,

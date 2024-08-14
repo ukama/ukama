@@ -115,7 +115,7 @@ func TestServer_GetAll(t *testing.T) {
 	mc.On("GetByUserId", req.UserId).Return(mresp, nil).Once()
 
 	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId, mock.Anything).Return([]*db.Users{&user}, nil).Once()
-	unRepo.On("GetNotificationsByUserID", user.UserId).Return([]*db.Notifications{&ns}, nil).Once()
+	unRepo.On("GetNotificationsByUserID", user.Id.String()).Return([]*db.Notifications{&ns}, nil).Once()
 
 	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
 

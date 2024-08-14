@@ -11,6 +11,7 @@ import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
   NOTIFICATION_TYPE,
+  ROLE_TYPE,
 } from "../../common/enums";
 
 @ObjectType()
@@ -33,7 +34,6 @@ export class MetricRes {
   @Field(() => [[Number, Number]])
   values: [number, number][];
 }
-@ArgsType()
 @InputType()
 export class GetLatestMetricInput {
   @Field()
@@ -64,7 +64,6 @@ export class LatestMetricRes {
   value: [number, number];
 }
 
-@ArgsType()
 @InputType()
 export class GetMetricRangeInput {
   @Field()
@@ -92,7 +91,6 @@ export class GetMetricRangeInput {
   withSubscription?: boolean;
 }
 
-@ArgsType()
 @InputType()
 export class GetMetricByTabInput {
   @Field()
@@ -129,7 +127,6 @@ export class MetricsRes {
   metrics: MetricRes[];
 }
 
-@ArgsType()
 @InputType()
 export class SubMetricRangeInput {
   @Field()
@@ -236,15 +233,18 @@ export class GetNotificationsInput {
   @Field({ nullable: false })
   orgId: string;
 
+  @Field({ nullable: false })
+  userId: string;
+
+  @Field({ nullable: false })
+  startTimestamp: string;
+
   @Field()
   networkId: string;
 
   @Field()
   subscriberId: string;
 
-  @Field({ nullable: false })
-  userId: string;
-
-  @Field(() => [NOTIFICATION_SCOPE])
-  scopes: NOTIFICATION_SCOPE[];
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
 }

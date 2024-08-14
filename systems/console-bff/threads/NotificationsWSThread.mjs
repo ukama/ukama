@@ -10,7 +10,7 @@ import { isMainThread, parentPort, workerData } from "worker_threads";
 import WebSocket from "ws";
 
 const TIMESTAMP_DIVISOR = 1000;
-const MAX_OCCURRENCE = 5;
+const MAX_OCCURRENCE = 1;
 
 const getTimestampCount = count =>
   `${Math.floor(Date.now() / TIMESTAMP_DIVISOR)}-${count}`;
@@ -66,6 +66,11 @@ const runWorker = async () => {
       parentPort.postMessage({ isError: true, message: e.message, data: null });
     });
 
+    ws.close = () => {
+      console.error("WebSocket closed");
+      ws.terminate();
+    };
+
     ws.on("open", async () => {
       console.error("WebSocket opened");
       await addInStore(store, key, getTimestampCount("0"));
@@ -77,11 +82,11 @@ const runWorker = async () => {
       let occurrence = value ? parseInt(value.split("-")[1]) : 0;
       occurrence += 1;
       await addInStore(store, key, getTimestampCount(`${occurrence}`));
-      if (occurrence === MAX_OCCURRENCE) {
+      if (occurrence > MAX_OCCURRENCE) {
         ws.terminate();
         ws.close();
       }
-
+      console.log("Occurrence: ", occurrence);
       parentPort.postMessage({
         isError: false,
         message: "success",

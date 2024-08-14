@@ -11,6 +11,7 @@ import { addInStore, openStore, removeFromStore } from "../../common/storage";
 import {
   getBaseURL,
   getGraphsKeyByType,
+  getScopesByRole,
   getTimestampCount,
 } from "../../common/utils";
 import {
@@ -120,12 +121,20 @@ class SubscriptionsResolvers {
 
   @Query(() => NotificationsRes)
   async getNotifications(@Arg("data") data: GetNotificationsInput) {
-    const store = openStore();
+    const {
+      role,
+      orgId,
+      userId,
+      orgName,
+      networkId,
+      subscriberId,
+      startTimestamp,
+    } = data;
 
-    //Get system base url
+    const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "notification",
-      data.orgName,
+      orgName,
       store
     );
     if (status !== 200) {
@@ -134,31 +143,32 @@ class SubscriptionsResolvers {
     }
 
     let wsUrl = baseURL;
-    if (wsUrl && wsUrl.includes("https://")) {
+    if (wsUrl?.includes("https://")) {
       wsUrl = wsUrl.replace("https://", "wss://");
-    } else if (wsUrl && wsUrl.includes("http://")) {
+    } else if (wsUrl?.startsWith("http://")) {
       wsUrl = wsUrl.replace("http://", "ws://");
     }
 
     // Get Notifications
     const notifications = getNotifications(baseURL, data);
+    const scopesPerRole = getScopesByRole(role);
     let scopes = "";
-    if (data.scopes.length > 0) {
-      for (const scope of data.scopes) {
+    if (scopesPerRole.length > 0) {
+      for (const scope of scopesPerRole) {
         scopes = scopes + `&scope=${scope}`;
       }
       scopes = scopes.substring(1);
     }
 
-    const key = `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}`;
+    const key = `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`;
     const workerData = {
       url: `${wsUrl}/v1/distributor/live`,
       key: key,
+      orgId: orgId,
       scopes: scopes,
-      orgId: data.orgId,
-      userId: data.userId,
-      networkId: data.networkId,
-      subscriberId: data.subscriberId,
+      userId: userId,
+      networkId: networkId,
+      subscriberId: subscriberId,
     };
 
     const worker = new Worker(NOTIFICATION_THREAD, {
@@ -173,8 +183,8 @@ class SubscriptionsResolvers {
             id: res.id,
             isRead: false,
             title: res.title,
+            createdAt: res.createdAt,
             description: res.description,
-            createdAt: new Date().toISOString(),
             type: NotificationTypeEnumValue(res.type),
             scope: NotificationScopeEnumValue(res.scope),
           } as NotificationsResDto);
@@ -187,7 +197,7 @@ class SubscriptionsResolvers {
     worker.on("exit", (code: any) => {
       removeFromStore(store, key);
       logger.info(
-        `WS_THREAD exited with code [${code}] for ${data.orgId}/${data.userId}/${data.networkId}/${data.subscriberId}`
+        `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
     });
     return notifications;
@@ -215,18 +225,19 @@ class SubscriptionsResolvers {
 
   @Subscription(() => NotificationsResDto, {
     topics: ({ args }) => {
-      return `notification-${args.orgId}-${args.userId}-${args.networkId}-${args.subscriberId}`;
+      return `notification-${args.data.orgId}-${args.data.userId}-${args.data.networkId}-${args.data.subscriberId}-${args.data.startTimestamp}`;
     },
   })
   async notificationSubscription(
     @Root() payload: NotificationsResDto,
-    @Args() args: GetNotificationsInput
+    @Arg("data") data: GetNotificationsInput
   ): Promise<NotificationsResDto> {
     await addInStore(
       openStore(),
-      `notification-${args.orgId}-${args.userId}-${args.networkId}-${args.subscriberId}`,
+      `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}-${data.startTimestamp}`,
       getTimestampCount("0")
     );
+    logger.info("Notification payload :", payload);
     return payload;
   }
 }

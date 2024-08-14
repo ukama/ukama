@@ -5,10 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { Role_Type } from './client/graphql/generated';
 
 type User = {
   id: string;

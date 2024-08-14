@@ -1,8 +1,8 @@
 overwrite: true
-schema: http://localhost:5042/graphql
-documents: './src/client/graphql/metrics.graphql'
+schema: http://localhost:8081/graphql
+documents: './src/client/graphql/subscriptions.graphql'
 generates:
-  './src/client/graphql/generated/metrics.ts':
+  './src/client/graphql/generated/subscriptions.ts':
     plugins:
       - 'typescript'
       - 'typescript-operations'

@@ -193,19 +193,19 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     case $SYSTEM in
     "auth-services")
         cd app
-        cp .env.example .env.local
-        cd ..
-        echo ".env.local file created and content copied from .env.example for ukama-auth"
+        cp .env.dev.example .env.local
+        cd ../
+        echo ".env.local file created and content copied from .env.dev.example for ukama-auth"
         sleep 2
         register_user
         ;;
     "console")
-        cp .env.example .env.local
-        echo ".env.local file created and content copied from .env.example for console"
+        cp .env.dev.example .env.local
+        echo ".env.local file created and content copied from .env.dev.example for console"
         ;;
      "bff")
-        cp .env.example .env
-        echo ".env file created and content copied from .env.example for bff"
+        cp .env.dev.example .env
+        echo ".env file created and content copied from .env.dev.example for bff"
         ;;
     "init")
         sleep 2

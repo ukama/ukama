@@ -654,11 +654,30 @@ export type NotificationResDto = {
   __typename?: 'NotificationResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
-  forRole: Role_Type;
   id: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  scope: Notification_Scope;
+  subscriberId: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  type: Notification_Type;
+  userId: Scalars['String']['output'];
+};
+
+export type NotificationsDto = {
+  __typename?: 'NotificationsDto';
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isRead: Scalars['Boolean']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
+};
+
+export type NotificationsResDto = {
+  __typename?: 'NotificationsResDto';
+  notifications: Array<NotificationsDto>;
 };
 
 export type OrgDto = {
@@ -755,6 +774,7 @@ export type Query = {
   getNodesByNetwork: Nodes;
   getNodesLocation: NodesLocation;
   getNotification: NotificationResDto;
+  getNotifications: NotificationsResDto;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -923,15 +943,6 @@ export type QueryGetSubscribersByNetworkArgs = {
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
-
-export enum Role_Type {
-  RoleAdmin = 'ROLE_ADMIN',
-  RoleInvalid = 'ROLE_INVALID',
-  RoleNetworkOwner = 'ROLE_NETWORK_OWNER',
-  RoleOwner = 'ROLE_OWNER',
-  RoleUser = 'ROLE_USER',
-  RoleVendor = 'ROLE_VENDOR'
-}
 
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];

@@ -192,6 +192,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				SubscriberId: res.Notification.SubscriberId,
 				Type:         upb.NotificationType(res.Notification.Type),
 				Scope:        upb.NotificationScope(res.Notification.Scope),
+				CreatedAt:    res.Notification.CreatedAt.AsTime().Format(time.RFC3339),
 			}
 			log.Infof("Notification is %+v", un)
 

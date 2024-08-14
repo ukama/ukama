@@ -206,3 +206,21 @@ export type TEnv = {
   MAP_BOX_TOKEN: string;
   METRIC_WEBSOCKET_URL: string;
 };
+
+interface NotificationSubscription {
+  createdAt: string;
+  description: string;
+  id: string;
+  isRead: boolean;
+  scope: string;
+  title: string;
+  type: string;
+}
+
+interface Data {
+  notificationSubscription: NotificationSubscription;
+}
+
+export interface TNotificationResDto {
+  data: Data;
+}
