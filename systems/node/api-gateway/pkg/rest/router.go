@@ -28,6 +28,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
+	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
+
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 )
@@ -50,6 +52,7 @@ type Clients struct {
 	Controller      controller
 	Configurator    configurator
 	SoftwareManager softwareManager
+	NodeState nodeState
 }
 
 type controller interface {
@@ -60,6 +63,11 @@ type controller interface {
 	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
 }
 
+type nodeState interface {
+	GetByNodeId(nodeId string) (*nspb.GetByNodeIdResponse, error)
+	ListAll() (*nspb.ListAllResponse, error)
+	GetStateHistory(nodeId string) (*nspb.GetStateHistoryResponse, error)
+}
 type configurator interface {
 	ConfigEvent(b []byte) (*cfgPb.ConfigStoreEventResponse, error)
 	ApplyConfig(commit string) (*cfgPb.ApplyConfigResponse, error)
@@ -75,6 +83,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
 	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
+	c.NodeState = client.NewNodeState(endpoints.NodeState,endpoints.Timeout)
 	return c
 }
 
@@ -138,6 +147,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/sites/:site_id/toggle-internet", formatDoc("Toggle internet for a site", "Turn the internet on or off for a specific site"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.postPingNodeHandler, http.StatusAccepted))
 
+		const ns = "/nodestate"
+		nodestate := auth.Group(ns, "NodeState", "Operations on node states")
+		nodestate.GET("/states/:node_id", formatDoc("Get node state", "Get the state of a specific node"), tonic.Handler(r.getStateByNodeIdHandler, http.StatusOK))
+		nodestate.GET("/states", formatDoc("List all states", "Get a list of all node states"), tonic.Handler(r.getAllStatesHandler, http.StatusOK))
+		nodestate.GET("/states/:node_id/history", formatDoc("Get state history", "Get the state history of a specific node"), tonic.Handler(r.getStateHistoryHandler, http.StatusOK))
+
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
 		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
@@ -167,6 +182,17 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 	return r.clients.Controller.RestartSite(req.SiteId)
 }
 
+func (r *Router) getStateByNodeIdHandler(c *gin.Context, req *GetStateByNodeIdRequest) (*nspb.GetByNodeIdResponse, error) {
+    return r.clients.NodeState.GetByNodeId(req.NodeId)
+}
+
+func (r *Router) getAllStatesHandler(c *gin.Context) (*nspb.ListAllResponse, error) {
+    return r.clients.NodeState.ListAll()
+}
+
+func (r *Router) getStateHistoryHandler(c *gin.Context, req *GetStateHistoryRequest) (*nspb.GetStateHistoryResponse, error) {
+    return r.clients.NodeState.GetStateHistory(req.NodeId)
+}
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
 }

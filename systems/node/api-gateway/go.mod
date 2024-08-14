@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/node/controller => ../controller
 
 replace github.com/ukama/ukama/systems/node/configurator => ../configurator
 
+replace github.com/ukama/ukama/systems/node/state => ../state
+
 replace github.com/ukama/ukama/systems/node/software => ../software
 
 replace github.com/ukama/ukama/systems/node/api-gateway => ./
@@ -22,6 +24,7 @@ require (
 	github.com/ukama/ukama/systems/node/configurator v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/controller v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/software v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/node/state v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.65.0
 )

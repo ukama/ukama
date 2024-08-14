@@ -32,7 +32,13 @@ type ToggleInternetSwitchRequest struct {
 	Status bool   `json:"status" example:"{{Status}}" validate:"required"`
 	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
 }
+type GetStateByNodeIdRequest struct {
+    NodeId string `path:"node_id" binding:"required"`
+}
 
+type GetStateHistoryRequest struct {
+    NodeId string `path:"node_id" binding:"required"`
+}
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
 }
