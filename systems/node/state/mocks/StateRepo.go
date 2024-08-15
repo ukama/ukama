@@ -72,32 +72,6 @@ func (_m *StateRepo) GetByNodeId(nodeId ukama.NodeID) (*db.State, error) {
 	return r0, r1
 }
 
-// GetStateHistory provides a mock function with given fields: nodeId
-func (_m *StateRepo) GetStateHistory(nodeId ukama.NodeID) ([]db.StateHistory, error) {
-	ret := _m.Called(nodeId)
-
-	var r0 []db.StateHistory
-	var r1 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) ([]db.StateHistory, error)); ok {
-		return rf(nodeId)
-	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) []db.StateHistory); ok {
-		r0 = rf(nodeId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.StateHistory)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(ukama.NodeID) error); ok {
-		r1 = rf(nodeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetStateHistoryByTimeRange provides a mock function with given fields: nodeId, from, to
 func (_m *StateRepo) GetStateHistoryByTimeRange(nodeId ukama.NodeID, from time.Time, to time.Time) ([]db.StateHistory, error) {
 	ret := _m.Called(nodeId, from, to)
