@@ -8,8 +8,9 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
+import { INVITATION_STATUS } from "../../common/enums";
 import { logger } from "../../common/logger";
-import { openStore } from "../../common/storage";
+import { addInStore, getFromStore, openStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
 import InitAPI from "../../init/datasource/init_api";
 import {
@@ -53,9 +54,10 @@ class InvitationApi extends RESTDataSource {
   };
 
   updateInvitation = async (
-    baseURL: string,
     req: UpateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
+    const store = openStore();
+    const baseURL = await getFromStore(store, `${req.email}/${req.id}`);
     this.logger.info(
       `UpdateInvitation [PATCH]: ${baseURL}/${VERSION}/${INVITATIONS}/${req.id}`
     );
@@ -98,7 +100,8 @@ class InvitationApi extends RESTDataSource {
         if (baseURL.status === 200) {
           const res = await this.getInvitationsByEmail(baseURL.message, email);
           logger.info(`Invitations res: ${JSON.stringify(res)}`);
-          if (res) {
+          if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
+            await addInStore(store, `${email}/${res.id}`, baseURL);
             invitations.invitations.push({
               id: res.id,
               name: res.name,

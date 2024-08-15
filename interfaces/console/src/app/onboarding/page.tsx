@@ -48,6 +48,7 @@ const Page = () => {
         variables: {
           data: {
             id,
+            email: user.email,
             status: Invitation_Status.InviteAccepted,
           },
         },
@@ -57,6 +58,7 @@ const Page = () => {
         variables: {
           data: {
             id,
+            email: user.email,
             status: Invitation_Status.InviteDeclined,
           },
         },

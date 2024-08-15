@@ -70,7 +70,8 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout: 5 * time.Second,
+			Timeout:        5 * time.Second,
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.registry.invitation.invitation.update"},
 		},
 	}
 }

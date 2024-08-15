@@ -1138,6 +1138,7 @@ export type ToggleSimStatusInputDto = {
 };
 
 export type UpateInvitationInputDto = {
+  email: Scalars['String']['input'];
   id: Scalars['String']['input'];
   status: Invitation_Status;
 };
