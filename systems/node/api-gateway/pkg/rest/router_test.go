@@ -32,6 +32,8 @@ import (
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	smocks "github.com/ukama/ukama/systems/node/software/pb/gen/mocks"
+	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
+	nsmocks "github.com/ukama/ukama/systems/node/state/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -98,12 +100,10 @@ func Test_RestarteNode(t *testing.T) {
 }
 
 func Test_RestarteNodes(t *testing.T) {
-	// arrange
 	w := httptest.NewRecorder()
-	// Create a JSON payload with the necessary data.
 	jsonPayload := `{"node_ids":["60285a2a-fe1d-4261-a868-5be480075b8f"]}`
 
-	req, _ := http.NewRequest("POST", "/v1/controller/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/restart", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
@@ -149,12 +149,12 @@ func Test_SoftwareUpdate(t *testing.T) {
 func Test_RestarteSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/site-1/restart", nil)
+	req, _ := http.NewRequest("POST", "/v1/controller/sites/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/restart", nil)
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
 	RestartSiteRequest := &cpb.RestartSiteRequest{
-		SiteId:   "083840fd-6d89-45f3-8d9a-69321017835d",
+		SiteId:   "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
 	}
 
 	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{},
@@ -228,3 +228,57 @@ func Test_getRunningConfigVersionHandler(t *testing.T) {
 	}
 	c.AssertExpectations(t)
 }
+
+func Test_GetStateByNodeId(t *testing.T) {
+	// Arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/nodestate/states/60285a2a-fe1d-4261-a868-5be480075b8f", nil)
+	arc := &providers.AuthRestClient{}
+	ns := &nsmocks.StateServiceClient{}
+
+	ns.On("GetByNodeId", mock.Anything, &nspb.GetByNodeIdRequest{
+		NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f",
+	}).Return(&nspb.GetByNodeIdResponse{
+		State:&nspb.State{
+			NodeId:   "60285a2a-fe1d-4261-a868-5be480075b8f",
+		},
+	}, nil)
+
+	r := NewRouter(&Clients{
+		NodeState: client.NewNodeStateFromClient(ns),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// Act
+	r.ServeHTTP(w, req)
+
+	// Assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	ns.AssertExpectations(t)
+}
+
+func Test_GetAllStates(t *testing.T) {
+	// Arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/nodestate/states", nil)
+	arc := &providers.AuthRestClient{}
+	ns := &nsmocks.StateServiceClient{}
+
+	ns.On("ListAll", mock.Anything, mock.Anything).Return(&nspb.ListAllResponse{
+		States: []*nspb.State{
+			{NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f", CurrentState: nspb.NodeStateEnum_STATE_ACTIVE},
+			{NodeId: "70285a2a-fe1d-4261-a868-5be480075b8g", CurrentState: nspb.NodeStateEnum_STATE_FAULTY},
+		},
+	}, nil)
+
+	r := NewRouter(&Clients{
+		NodeState: client.NewNodeStateFromClient(ns),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// Act
+	r.ServeHTTP(w, req)
+
+	// Assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	ns.AssertExpectations(t)
+}
+

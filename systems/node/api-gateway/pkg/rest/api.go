@@ -37,7 +37,7 @@ type GetStateByNodeIdRequest struct {
 }
 
 type GetStateHistoryByTimeRangeRequest struct {
-    NodeId string `uri:"node_id" binding:"required"`
+    NodeId string `uri:"node_id" binding:"required" path:"node_id" `
     From   string `form:"from" binding:"required"`
     To     string `form:"to" binding:"required"`
 }
