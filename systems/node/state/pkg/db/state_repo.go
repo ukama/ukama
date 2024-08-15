@@ -16,7 +16,6 @@ type StateRepo interface {
 	ListAll() ([]State, error)
 	UpdateConnectivity(nodeId ukama.NodeID, connectivity Connectivity) error
 	UpdateCurrentState(nodeId ukama.NodeID, currentState NodeStateEnum) error
-	GetStateHistory(nodeId ukama.NodeID) ([]StateHistory, error)
 	GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error)
 }
 
@@ -80,34 +79,26 @@ func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	return nil
 }
 
+
 func (r *stateRepo) ListAll() ([]State, error) {
 	var states []State
 	err := r.Db.GetGormDb().Find(&states).Error
 	return states, err
 }
-
 func (r *stateRepo) UpdateConnectivity(nodeId ukama.NodeID, connectivity Connectivity) error {
-	return r.Db.GetGormDb().Model(&State{}).Where("node_id = ?", nodeId).Update("connectivity", connectivity).Error
+	return r.Db.GetGormDb().Model(&State{}).
+		Where("node_id = ?", nodeId.String()).
+		Update("connectivity", connectivity).Error
 }
 
 func (r *stateRepo) UpdateCurrentState(nodeId ukama.NodeID, currentState NodeStateEnum) error {
 	return r.Db.GetGormDb().Model(&State{}).Where("node_id = ?", nodeId).Update("current_state", currentState).Error
 }
 
-func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]StateHistory, error) {
-	var history []StateHistory
-	err := r.Db.GetGormDb().Where("node_state_id = ?", nodeId).Order("timestamp desc").Find(&history).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return history, nil
-}
-
 func (r *stateRepo) GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error) {
 	var history []StateHistory
 	err := r.Db.GetGormDb().
-		Where("node_state_id = ? AND timestamp BETWEEN ? AND ?", nodeId, from, to).
+		Where("node_state_id = ? AND timestamp BETWEEN ? AND ?", nodeId.String(), from, to).
 		Order("timestamp desc").
 		Find(&history).Error
 	if err != nil {
