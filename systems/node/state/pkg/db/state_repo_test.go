@@ -113,8 +113,8 @@ func TestState_GetByNodeId(t *testing.T) {
 		AddRow(expectedState.Id, expectedState.NodeId, expectedState.CurrentState, expectedState.Connectivity)
 
 	mock.ExpectQuery(`^SELECT.*states.*`).
-	WithArgs(nodeId, sqlmock.AnyArg()).
-	WillReturnRows(rows)
+		WithArgs(nodeId, sqlmock.AnyArg()).
+		WillReturnRows(rows)
 	state, err := repo.GetByNodeId(nodeId)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedState.NodeId, state.NodeId)
@@ -148,7 +148,7 @@ func TestState_Update(t *testing.T) {
 		state.NodeId,
 		state.CurrentState,
 		state.Connectivity,
-		sqlmock.AnyArg(), // UpdatedAt
+		sqlmock.AnyArg(), 
 		state.Id,
 	).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
@@ -217,15 +217,12 @@ func TestState_UpdateConnectivity(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 	newConnectivity := db.Offline
 
-	// Expect the transaction to begin
 	mock.ExpectBegin()
 
-	// Expect the UPDATE query with the correct number of arguments
 	mock.ExpectExec(`UPDATE "states" SET "connectivity"=\$1,"updated_at"=\$2 WHERE node_id = \$3 AND "states"."deleted_at" IS NULL`).
 		WithArgs(newConnectivity, sqlmock.AnyArg(), nodeId.String()).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	// Expect the transaction to be committed
 	mock.ExpectCommit()
 
 	err = repo.UpdateConnectivity(nodeId, newConnectivity)

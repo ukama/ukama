@@ -79,7 +79,6 @@ func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	return nil
 }
 
-
 func (r *stateRepo) ListAll() ([]State, error) {
 	var states []State
 	err := r.Db.GetGormDb().Find(&states).Error

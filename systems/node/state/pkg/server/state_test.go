@@ -48,14 +48,14 @@ func TestStateServer_GetByNodeId(t *testing.T) {
 	}
 
 	expectedState := &db.State{
-		Id:           uuid.NewV4(),
-		NodeId:       nodeId,
-		CurrentState: db.StateActive,
-		Connectivity: db.Online,
-		LastHeartbeat: time.Now(),
+		Id:              uuid.NewV4(),
+		NodeId:          nodeId,
+		CurrentState:    db.StateActive,
+		Connectivity:    db.Online,
+		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
-		Type:         "testType",
-		Version:      "1.0",
+		Type:            "testType",
+		Version:         "1.0",
 	}
 
 	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).
@@ -85,14 +85,14 @@ func TestStateServer_Update(t *testing.T) {
 	}
 
 	existingState := &db.State{
-		Id:           uuid.NewV4(),
-		NodeId:       nodeId,
-		CurrentState: db.StateActive,
-		Connectivity: db.Online,
-		LastHeartbeat: time.Now().Add(-1 * time.Hour),
+		Id:              uuid.NewV4(),
+		NodeId:          nodeId,
+		CurrentState:    db.StateActive,
+		Connectivity:    db.Online,
+		LastHeartbeat:   time.Now().Add(-1 * time.Hour),
 		LastStateChange: time.Now().Add(-1 * time.Hour),
-		Type:         "testType",
-		Version:      "1.0",
+		Type:            "testType",
+		Version:         "1.0",
 	}
 
 	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).
@@ -137,24 +137,24 @@ func TestStateServer_ListAll(t *testing.T) {
 
 	expectedStates := []db.State{
 		{
-			Id:           uuid.NewV4(),
-			NodeId:       "UK-SA2433-hnode-V0-000C",
-			CurrentState: db.StateActive,
-			Connectivity: db.Online,
-			LastHeartbeat: time.Now(),
+			Id:              uuid.NewV4(),
+			NodeId:          "UK-SA2433-hnode-V0-000C",
+			CurrentState:    db.StateActive,
+			Connectivity:    db.Online,
+			LastHeartbeat:   time.Now(),
 			LastStateChange: time.Now(),
-			Type:         "testType1",
-			Version:      "1.0",
+			Type:            "testType1",
+			Version:         "1.0",
 		},
 		{
-			Id:           uuid.NewV4(),
-			NodeId:       "UK-SA2433-hnode-V0-000D",
-			CurrentState: db.StateMaintenance,
-			Connectivity: db.Offline,
-			LastHeartbeat: time.Now(),
+			Id:              uuid.NewV4(),
+			NodeId:          "UK-SA2433-hnode-V0-000D",
+			CurrentState:    db.StateMaintenance,
+			Connectivity:    db.Offline,
+			LastHeartbeat:   time.Now(),
 			LastStateChange: time.Now(),
-			Type:         "testType2",
-			Version:      "2.0",
+			Type:            "testType2",
+			Version:         "2.0",
 		},
 	}
 
