@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -81,18 +82,21 @@ import (
 	 return res, nil
  }
  
- func (r *NodeState) GetStateHistory(nodeId string) (*pb.GetStateHistoryResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	 defer cancel()
- 
-	 req := &pb.GetStateHistoryRequest{
-		 NodeId: nodeId,
-	 }
- 
-	 res, err := r.client.GetStateHistory(ctx, req)
-	 if err != nil {
-		 return nil, err
-	 }
- 
-	 return res, nil
- }
+
+ func (r *NodeState) GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*pb.GetStateHistoryByTimeRangeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	req := &pb.GetStateHistoryByTimeRangeRequest{
+		NodeId:   nodeId,
+		From: timestamppb.New(from),
+		To:   timestamppb.New(to),
+	}
+
+	res, err := r.client.GetStateHistoryByTimeRange(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

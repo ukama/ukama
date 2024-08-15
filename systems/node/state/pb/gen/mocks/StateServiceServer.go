@@ -92,24 +92,24 @@ func (_m *StateServiceServer) GetByNodeId(_a0 context.Context, _a1 *gen.GetByNod
 	return r0, r1
 }
 
-// GetStateHistory provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) GetStateHistory(_a0 context.Context, _a1 *gen.GetStateHistoryRequest) (*gen.GetStateHistoryResponse, error) {
+// GetStateHistoryByTimeRange provides a mock function with given fields: _a0, _a1
+func (_m *StateServiceServer) GetStateHistoryByTimeRange(_a0 context.Context, _a1 *gen.GetStateHistoryByTimeRangeRequest) (*gen.GetStateHistoryByTimeRangeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetStateHistoryResponse
+	var r0 *gen.GetStateHistoryByTimeRangeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest) (*gen.GetStateHistoryResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) (*gen.GetStateHistoryByTimeRangeResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest) *gen.GetStateHistoryResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) *gen.GetStateHistoryByTimeRangeResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetStateHistoryResponse)
+			r0 = ret.Get(0).(*gen.GetStateHistoryByTimeRangeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

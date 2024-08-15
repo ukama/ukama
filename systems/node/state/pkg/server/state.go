@@ -228,8 +228,17 @@ func (s *StateServer) UpdateCurrentState(ctx context.Context, req *pb.UpdateCurr
 	return &pb.UpdateCurrentStateResponse{}, nil
 }
 
-func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHistoryRequest) (*pb.GetStateHistoryResponse, error) {
-	history, err := s.sRepo.GetStateHistory(ukama.NodeID(req.NodeId))
+func (s *StateServer) GetStateHistoryByTimeRange(ctx context.Context, req *pb.GetStateHistoryByTimeRangeRequest) (*pb.GetStateHistoryByTimeRangeResponse, error) {
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	fromTime := req.From.AsTime()
+	toTime := req.To.AsTime()
+
+	history, err := s.sRepo.GetStateHistoryByTimeRange(nId, fromTime, toTime)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to get state history: %v", err)
 	}
@@ -245,7 +254,7 @@ func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHisto
 		}
 	}
 
-	return &pb.GetStateHistoryResponse{History: pbHistory}, nil
+	return &pb.GetStateHistoryByTimeRangeResponse{History: pbHistory}, nil
 }
 
 func convertStateToProto(state *db.State) *pb.State {

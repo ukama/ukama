@@ -36,8 +36,10 @@ type GetStateByNodeIdRequest struct {
     NodeId string `path:"node_id" binding:"required"`
 }
 
-type GetStateHistoryRequest struct {
-    NodeId string `path:"node_id" binding:"required"`
+type GetStateHistoryByTimeRangeRequest struct {
+    NodeId string `uri:"node_id" binding:"required"`
+    From   string `form:"from" binding:"required"`
+    To     string `form:"to" binding:"required"`
 }
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`

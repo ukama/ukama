@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -66,7 +67,7 @@ type controller interface {
 type nodeState interface {
 	GetByNodeId(nodeId string) (*nspb.GetByNodeIdResponse, error)
 	ListAll() (*nspb.ListAllResponse, error)
-	GetStateHistory(nodeId string) (*nspb.GetStateHistoryResponse, error)
+	GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*nspb.GetStateHistoryByTimeRangeResponse, error)
 }
 type configurator interface {
 	ConfigEvent(b []byte) (*cfgPb.ConfigStoreEventResponse, error)
@@ -151,7 +152,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodestate := auth.Group(ns, "NodeState", "Operations on node states")
 		nodestate.GET("/states/:node_id", formatDoc("Get node state", "Get the state of a specific node"), tonic.Handler(r.getStateByNodeIdHandler, http.StatusOK))
 		nodestate.GET("/states", formatDoc("List all states", "Get a list of all node states"), tonic.Handler(r.getAllStatesHandler, http.StatusOK))
-		nodestate.GET("/states/:node_id/history", formatDoc("Get state history", "Get the state history of a specific node"), tonic.Handler(r.getStateHistoryHandler, http.StatusOK))
+		nodestate.GET("/states/:node_id/history/range", formatDoc("Get state history by time range", "Get the state history of a specific node within a time range"), tonic.Handler(r.getStateHistoryByTimeRangeHandler, http.StatusOK))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -190,9 +191,7 @@ func (r *Router) getAllStatesHandler(c *gin.Context) (*nspb.ListAllResponse, err
     return r.clients.NodeState.ListAll()
 }
 
-func (r *Router) getStateHistoryHandler(c *gin.Context, req *GetStateHistoryRequest) (*nspb.GetStateHistoryResponse, error) {
-    return r.clients.NodeState.GetStateHistory(req.NodeId)
-}
+
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
 }
@@ -255,9 +254,24 @@ func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInte
 	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
 }
 
+func (r *Router) getStateHistoryByTimeRangeHandler(c *gin.Context, req *GetStateHistoryByTimeRangeRequest) (*nspb.GetStateHistoryByTimeRangeResponse, error) {
+    from, err := time.Parse(time.RFC3339, req.From)
+    if err != nil {
+        return nil, fmt.Errorf("invalid 'from' time format: %v", err)
+    }
+
+    to, err := time.Parse(time.RFC3339, req.To)
+    if err != nil {
+        return nil, fmt.Errorf("invalid 'to' time format: %v", err)
+    }
+
+	return r.clients.NodeState.GetStateHistoryByTimeRange(req.NodeId, from, to)
+
+}
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary
 		info.Description = description
 	}}
 }
+

@@ -1,14 +1,8 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 package db
 
 import (
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
@@ -23,6 +17,7 @@ type StateRepo interface {
 	UpdateConnectivity(nodeId ukama.NodeID, connectivity Connectivity) error
 	UpdateCurrentState(nodeId ukama.NodeID, currentState NodeStateEnum) error
 	GetStateHistory(nodeId ukama.NodeID) ([]StateHistory, error)
+	GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error)
 }
 
 type stateRepo struct {
@@ -36,7 +31,6 @@ func NewStateRepo(db sql.Db) StateRepo {
 }
 
 func (r *stateRepo) Create(state *State, nestedFunc func(state *State, tx *gorm.DB) error) error {
-
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
 			nestErr := nestedFunc(state, tx)
@@ -63,11 +57,9 @@ func (r *stateRepo) GetByNodeId(nodeId ukama.NodeID) (*State, error) {
 		return nil, err
 	}
 	return &state, nil
-
 }
 
 func (r *stateRepo) Update(state *State) error {
-
 	result := r.Db.GetGormDb().Model(state).Updates(state)
 	if result.Error != nil {
 		return result.Error
@@ -105,6 +97,19 @@ func (r *stateRepo) UpdateCurrentState(nodeId ukama.NodeID, currentState NodeSta
 func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]StateHistory, error) {
 	var history []StateHistory
 	err := r.Db.GetGormDb().Where("node_state_id = ?", nodeId).Order("timestamp desc").Find(&history).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return history, nil
+}
+
+func (r *stateRepo) GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error) {
+	var history []StateHistory
+	err := r.Db.GetGormDb().
+		Where("node_state_id = ? AND timestamp BETWEEN ? AND ?", nodeId, from, to).
+		Order("timestamp desc").
+		Find(&history).Error
 	if err != nil {
 		return nil, err
 	}

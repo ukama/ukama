@@ -135,13 +135,23 @@ func (this *UpdateCurrentStateRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetStateHistoryRequest) Validate() error {
+func (this *GetStateHistoryByTimeRangeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	if this.From != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.From); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("From", err)
+		}
+	}
+	if this.To != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.To); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("To", err)
+		}
+	}
 	return nil
 }
-func (this *GetStateHistoryResponse) Validate() error {
+func (this *GetStateHistoryByTimeRangeResponse) Validate() error {
 	for _, item := range this.History {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

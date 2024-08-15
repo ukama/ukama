@@ -115,8 +115,8 @@ func (_m *StateServiceClient) GetByNodeId(ctx context.Context, in *gen.GetByNode
 	return r0, r1
 }
 
-// GetStateHistory provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) GetStateHistory(ctx context.Context, in *gen.GetStateHistoryRequest, opts ...grpc.CallOption) (*gen.GetStateHistoryResponse, error) {
+// GetStateHistoryByTimeRange provides a mock function with given fields: ctx, in, opts
+func (_m *StateServiceClient) GetStateHistoryByTimeRange(ctx context.Context, in *gen.GetStateHistoryByTimeRangeRequest, opts ...grpc.CallOption) (*gen.GetStateHistoryByTimeRangeResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -126,20 +126,20 @@ func (_m *StateServiceClient) GetStateHistory(ctx context.Context, in *gen.GetSt
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetStateHistoryResponse
+	var r0 *gen.GetStateHistoryByTimeRangeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) (*gen.GetStateHistoryResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) (*gen.GetStateHistoryByTimeRangeResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) *gen.GetStateHistoryResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) *gen.GetStateHistoryByTimeRangeResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetStateHistoryResponse)
+			r0 = ret.Get(0).(*gen.GetStateHistoryByTimeRangeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

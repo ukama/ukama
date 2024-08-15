@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	StateService_Create_FullMethodName             = "/ukama.node.state.v1.StateService/Create"
-	StateService_GetByNodeId_FullMethodName        = "/ukama.node.state.v1.StateService/GetByNodeId"
-	StateService_Update_FullMethodName             = "/ukama.node.state.v1.StateService/Update"
-	StateService_Delete_FullMethodName             = "/ukama.node.state.v1.StateService/Delete"
-	StateService_ListAll_FullMethodName            = "/ukama.node.state.v1.StateService/ListAll"
-	StateService_UpdateConnectivity_FullMethodName = "/ukama.node.state.v1.StateService/UpdateConnectivity"
-	StateService_UpdateCurrentState_FullMethodName = "/ukama.node.state.v1.StateService/UpdateCurrentState"
-	StateService_GetStateHistory_FullMethodName    = "/ukama.node.state.v1.StateService/GetStateHistory"
+	StateService_Create_FullMethodName                     = "/ukama.node.state.v1.StateService/Create"
+	StateService_GetByNodeId_FullMethodName                = "/ukama.node.state.v1.StateService/GetByNodeId"
+	StateService_Update_FullMethodName                     = "/ukama.node.state.v1.StateService/Update"
+	StateService_Delete_FullMethodName                     = "/ukama.node.state.v1.StateService/Delete"
+	StateService_ListAll_FullMethodName                    = "/ukama.node.state.v1.StateService/ListAll"
+	StateService_UpdateConnectivity_FullMethodName         = "/ukama.node.state.v1.StateService/UpdateConnectivity"
+	StateService_UpdateCurrentState_FullMethodName         = "/ukama.node.state.v1.StateService/UpdateCurrentState"
+	StateService_GetStateHistoryByTimeRange_FullMethodName = "/ukama.node.state.v1.StateService/GetStateHistoryByTimeRange"
 )
 
 // StateServiceClient is the client API for StateService service.
@@ -40,7 +40,7 @@ type StateServiceClient interface {
 	ListAll(ctx context.Context, in *ListAllRequest, opts ...grpc.CallOption) (*ListAllResponse, error)
 	UpdateConnectivity(ctx context.Context, in *UpdateConnectivityRequest, opts ...grpc.CallOption) (*UpdateConnectivityResponse, error)
 	UpdateCurrentState(ctx context.Context, in *UpdateCurrentStateRequest, opts ...grpc.CallOption) (*UpdateCurrentStateResponse, error)
-	GetStateHistory(ctx context.Context, in *GetStateHistoryRequest, opts ...grpc.CallOption) (*GetStateHistoryResponse, error)
+	GetStateHistoryByTimeRange(ctx context.Context, in *GetStateHistoryByTimeRangeRequest, opts ...grpc.CallOption) (*GetStateHistoryByTimeRangeResponse, error)
 }
 
 type stateServiceClient struct {
@@ -114,9 +114,9 @@ func (c *stateServiceClient) UpdateCurrentState(ctx context.Context, in *UpdateC
 	return out, nil
 }
 
-func (c *stateServiceClient) GetStateHistory(ctx context.Context, in *GetStateHistoryRequest, opts ...grpc.CallOption) (*GetStateHistoryResponse, error) {
-	out := new(GetStateHistoryResponse)
-	err := c.cc.Invoke(ctx, StateService_GetStateHistory_FullMethodName, in, out, opts...)
+func (c *stateServiceClient) GetStateHistoryByTimeRange(ctx context.Context, in *GetStateHistoryByTimeRangeRequest, opts ...grpc.CallOption) (*GetStateHistoryByTimeRangeResponse, error) {
+	out := new(GetStateHistoryByTimeRangeResponse)
+	err := c.cc.Invoke(ctx, StateService_GetStateHistoryByTimeRange_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ type StateServiceServer interface {
 	ListAll(context.Context, *ListAllRequest) (*ListAllResponse, error)
 	UpdateConnectivity(context.Context, *UpdateConnectivityRequest) (*UpdateConnectivityResponse, error)
 	UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*UpdateCurrentStateResponse, error)
-	GetStateHistory(context.Context, *GetStateHistoryRequest) (*GetStateHistoryResponse, error)
+	GetStateHistoryByTimeRange(context.Context, *GetStateHistoryByTimeRangeRequest) (*GetStateHistoryByTimeRangeResponse, error)
 	mustEmbedUnimplementedStateServiceServer()
 }
 
@@ -163,8 +163,8 @@ func (UnimplementedStateServiceServer) UpdateConnectivity(context.Context, *Upda
 func (UnimplementedStateServiceServer) UpdateCurrentState(context.Context, *UpdateCurrentStateRequest) (*UpdateCurrentStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCurrentState not implemented")
 }
-func (UnimplementedStateServiceServer) GetStateHistory(context.Context, *GetStateHistoryRequest) (*GetStateHistoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStateHistory not implemented")
+func (UnimplementedStateServiceServer) GetStateHistoryByTimeRange(context.Context, *GetStateHistoryByTimeRangeRequest) (*GetStateHistoryByTimeRangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStateHistoryByTimeRange not implemented")
 }
 func (UnimplementedStateServiceServer) mustEmbedUnimplementedStateServiceServer() {}
 
@@ -305,20 +305,20 @@ func _StateService_UpdateCurrentState_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StateService_GetStateHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStateHistoryRequest)
+func _StateService_GetStateHistoryByTimeRange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStateHistoryByTimeRangeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StateServiceServer).GetStateHistory(ctx, in)
+		return srv.(StateServiceServer).GetStateHistoryByTimeRange(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StateService_GetStateHistory_FullMethodName,
+		FullMethod: StateService_GetStateHistoryByTimeRange_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StateServiceServer).GetStateHistory(ctx, req.(*GetStateHistoryRequest))
+		return srv.(StateServiceServer).GetStateHistoryByTimeRange(ctx, req.(*GetStateHistoryByTimeRangeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -359,8 +359,8 @@ var StateService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _StateService_UpdateCurrentState_Handler,
 		},
 		{
-			MethodName: "GetStateHistory",
-			Handler:    _StateService_GetStateHistory_Handler,
+			MethodName: "GetStateHistoryByTimeRange",
+			Handler:    _StateService_GetStateHistoryByTimeRange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

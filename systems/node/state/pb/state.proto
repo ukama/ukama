@@ -16,7 +16,7 @@ service StateService {
     rpc ListAll(ListAllRequest) returns (ListAllResponse);
     rpc UpdateConnectivity(UpdateConnectivityRequest) returns (UpdateConnectivityResponse);
     rpc UpdateCurrentState(UpdateCurrentStateRequest) returns (UpdateCurrentStateResponse);
-    rpc GetStateHistory(GetStateHistoryRequest) returns (GetStateHistoryResponse);
+    rpc GetStateHistoryByTimeRange(GetStateHistoryByTimeRangeRequest) returns (GetStateHistoryByTimeRangeResponse);
 }
 
 message ListAllRequest{
@@ -106,10 +106,14 @@ message UpdateCurrentStateRequest {
     NodeStateEnum currentState = 2;
 }
 
-message GetStateHistoryRequest {
+message GetStateHistoryByTimeRangeRequest {
     string nodeId = 1[(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+
+
 }
 
-message GetStateHistoryResponse {
+message GetStateHistoryByTimeRangeResponse {
     repeated StateHistory history = 1;
 }
