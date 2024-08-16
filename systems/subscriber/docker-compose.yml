@@ -126,9 +126,7 @@ services:
    - postgresd
 
  initclient-subscriber:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=subscriber
@@ -184,9 +182,7 @@ services:
    - ukama-net
 
  initclient-subscriber-auth:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=subscriber-auth
