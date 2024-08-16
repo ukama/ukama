@@ -44,6 +44,14 @@ extern void websocket_incoming_message(const URequest *request,
 extern void websocket_onclose(const URequest *request, WSManager *manager,
                               void *data);
 
+static void generate_uuid(char *seqno) {
+
+    uuid_t uuid;
+    uuid_generate(uuid);
+
+    uuid_unparse(uuid, seqno);
+}
+
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
 	int ret;
@@ -101,28 +109,30 @@ int callback_forward_service(const URequest *request,
                              void *data) {
 
 	int ret;
-	char *destHost=NULL, *destPort=NULL, *service=NULL;
-    char *requestStr=NULL, *url=NULL;
+	char *service=NULL;
+    char *requestStr=NULL;
     char ip[INET_ADDRSTRLEN]={0}, sourcePort[MAX_BUFFER]={0};
     struct sockaddr_in *sin=NULL;
     MapItem *map=NULL;
-
+    char idStr[36+1];
+    
     sin = (struct sockaddr_in *)request->client_address;
     inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
     sprintf(sourcePort, "%d",sin->sin_port);
 
-    url      = u_map_get(request->map_header, "Host");
+    /* Who send this request */
     service  = u_map_get(request->map_header, "User-Agent");
-    split_strings(url, &destHost, &destPort, ":");
-    if (destHost == NULL || destPort == NULL) {
+    if (service == NULL) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
-    ret = serialize_websocket_message(&requestStr, request, destHost, destPort,
-                                      service, sourcePort);
+    /* get UUID as seqno */
+    generate_uuid(idStr);
+
+    ret = serialize_websocket_message(&requestStr, request, idStr);
 	if (ret == FALSE && requestStr == NULL) {
 		usys_log_error("Failed to convert request to JSON");
         ulfius_set_string_body_response(response,
@@ -134,7 +144,14 @@ int callback_forward_service(const URequest *request,
 	}
 
     /* map it */
-    map = add_map_to_table(&ClientTable, service, sourcePort);
+    map = add_map_to_table(&ClientTable, service, sourcePort, idStr);
+    if (map == NULL) {
+        usys_log_error("Unable to add service to internal map");
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+	}
 
 	/* Add work for the websocket for transmission. */
     add_work_to_queue(&Transmit, requestStr, NULL, 0, NULL, 0);

@@ -192,8 +192,7 @@ void process_incoming_websocket_response(Message *message, void *data) {
     usys_log_debug("Response to local service Code: %d Data: %s",
               message->code, message->data);
 
-    item = is_existing_item(ClientTable,message->serviceInfo->name,
-                            message->serviceInfo->port);
+    item = is_existing_item(ClientTable, message->seqNo);
     if (item == NULL) {
         usys_log_error("Matching client not found. Port: %s. Ignoring",
                   message->serviceInfo->port);
