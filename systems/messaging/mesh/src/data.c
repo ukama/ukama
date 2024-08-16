@@ -177,6 +177,73 @@ static long send_data_to_system(URequest *data, char *ep,
 	return TRUE;
 }
 
+static URequest* create_http_request(char *jStr) {
+
+    URequest *request;
+	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *obj, *body;
+
+	if (jStr == NULL) return FALSE;
+
+    json = json_loads(jStr, JSON_DECODE_ANY, NULL);
+    if (json == NULL) return FALSE;
+
+    jMethod = json_object_get(json, JSON_METHOD);
+    jURL    = json_object_get(json, JSON_URL);
+    jPath   = json_object_get(json, JSON_PATH);
+	jRaw    = json_object_get(json, JSON_RAW_DATA);
+
+    if (jMethod == NULL || jURL == NULL || jPath == NULL || jRaw == NULL) {
+        log_error("Missing json parameter in recevied requests");
+        json_decref(json);
+        return NULL;
+    }
+
+	request = (URequest *)calloc(1, sizeof(URequest));
+	if (request == NULL) {
+        json_decref(json);
+        log_error("Error allocating memory of size: %lu", sizeof(URequest));
+		return NULL;
+    }
+
+    if (ulfius_init_request(request)) {
+        log_error("Error initializing new http request.");
+        json_decref(json);
+        return NULL;
+    }
+
+    ulfius_set_request_properties(request,
+                                  U_OPT_HTTP_VERB, json_string_value(jMethod),
+                                  U_OPT_HTTP_URL,  json_string_value(jURL),
+                                  U_OPT_HEADER_PARAMETER, "User-Agent", "mesh",
+                                  U_OPT_TIMEOUT, 20,
+                                  U_OPT_NONE);
+    if (jPath) {
+        request->url_path = strdup(json_string_value(jPath));
+        if (request->url_path == NULL) {
+            log_error("Error allocating memory for URL path");
+            ulfius_clean_request(request);
+            free(request);
+            json_decref(json);
+            return NULL;
+        }
+    }
+
+    /* Get the actual data now */
+    body = json_object_get(jRaw, JSON_DATA);
+    if (body) {
+        if (ulfius_set_json_body_request(request, body) == 0) {
+            log_error("Unable to set the json body for the request");
+            json_decref(json);
+            ulfius_clean_request(request);
+            free(request);
+            return NULL;
+        }
+    }
+   
+    json_decref(json);
+	return request;
+}
+
 int process_incoming_websocket_message(Message *message, char **responseRemote){
 
     /*
@@ -192,13 +259,9 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     int systemPort=0;
 	json_t *jResp=NULL;
 
-    if (strcmp(message->reqType, UKAMA_NODE_REQUEST) != 0) {
-        log_error("Invalid request type. ignoring.");
-        retCode = HttpStatus_BadRequest;
-        responseLocal = HttpStatusStr(retCode);
-    }
 
-    if (deserialize_request_info(&request, message->data) == FALSE) {
+    request = create_http_request(message->data);
+    if (request == NULL) {
         log_error("Unable to deser the request on websocket");
         retCode = HttpStatus_BadRequest;
     }
@@ -232,6 +295,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     log_debug("Sending response back: %s", *responseRemote);
 
     ulfius_clean_request(request);
+    if (request)       free(request);
     if (responseLocal) free(responseLocal);
     if (request)       free(request);
     if (systemName)    free(systemName);
