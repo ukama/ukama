@@ -41,8 +41,8 @@
 #define LOG_FORMAT     "%s %s %s %[^:]:%d: %[^\n]"
 
 #define DEF_NODED_HOST "localhost"
-#define DEF_NODED_EP   "/node/v1/nodeinfo"
-#define DEF_REMOTE_EP  "v1/notify"
+#define DEF_NODED_EP   "/v1/nodeinfo"
+#define DEF_REMOTE_EP  "node/v1/notify"
 #define DEF_NODE_ID    "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_MAP_FILE   "status.map"
 

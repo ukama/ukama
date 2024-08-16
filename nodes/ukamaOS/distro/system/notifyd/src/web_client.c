@@ -146,8 +146,9 @@ int wc_forward_notification(char* httpURL,
     JsonErrObj jErr;
 
     UResponse *httpResp = NULL;
+    URequest* httpReq   = NULL;
 
-    URequest* httpReq = wc_create_http_request(httpURL, URLPath, method, body);
+    httpReq = wc_create_http_request(httpURL, URLPath, method, body);
     if (!httpReq) {
         return ret;
     }
@@ -161,8 +162,7 @@ int wc_forward_notification(char* httpURL,
     }
 
 
-    ret = wc_send_http_request(httpReq, &httpResp);
-    if (ret != STATUS_OK) {
+    if (wc_send_http_request(httpReq, &httpResp) != STATUS_OK) {
         usys_log_error("Failed to send http request.");
         goto cleanup;
     }
