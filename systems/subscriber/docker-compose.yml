@@ -3,7 +3,7 @@ services:
  postgresd:
   image: postgres:13.3
   ports:
-   - '5412:5432'
+   - 5412:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -56,8 +56,6 @@ services:
 
  simmanager:
   build: ./sim-manager
-  ports:
-   - '9092:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -101,7 +99,7 @@ services:
  api-gateway-subscriber:
   build: ./api-gateway
   ports:
-   - '8078:8080'
+   - 8078:8080
   restart: always
   environment:
    - BYPASS_AUTH_MODE=true

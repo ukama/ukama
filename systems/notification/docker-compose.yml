@@ -4,7 +4,7 @@ services:
  postgresd-notification:
   image: postgres:13.3
   ports:
-   - '5632:5432'
+   - 5632:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -57,8 +57,6 @@ services:
 
  distributor:
   build: ./distributor
-  ports:
-   - '9070:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification
@@ -82,7 +80,7 @@ services:
    context: ./api-gateway
   restart: always
   ports:
-   - '8058:8080'
+   - 8058:8080
   networks:
    - ukama-net
   environment:
@@ -120,8 +118,6 @@ services:
 
  msgclient-notification:
   build: ../services/msgClient
-  ports:
-   - '9095:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification

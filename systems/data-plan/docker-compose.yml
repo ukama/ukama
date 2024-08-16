@@ -3,7 +3,7 @@ services:
  postgresd-dataplan:
   image: postgres:13.3
   ports:
-   - '5404:5432'
+   - 5404:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -79,7 +79,7 @@ services:
    context: ./api-gateway
   restart: always
   ports:
-   - '8074:8080'
+   - 8074:8080
   networks:
    - ukama-net
   environment:
