@@ -48,16 +48,44 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
+static int get_substring_after_index(char **out,
+                                     const char *str,
+                                     int index,
+                                     char delimiter) {
+    int count = 0;
+
+    while (*str) {
+        if (*str == delimiter) {
+            count++;
+            if (count == index) {
+                *out = strdup(str + 1); // Skip the delimiter itself
+                return 1;
+            }
+        }
+        str++;
+    }
+
+    return 0;
+}
+
 static int extract_system_path(char *str, char **name, char **path) {
 
-    char *ptr=NULL;
-    int len=0;
+    char *ptr = NULL;
+    int len = 0;
+    
+    // Check if the string starts with "http://"
+    if (strncmp(str, "http://", 7) == 0) {
+        // Skip the "http://" part and move past the domain/IP and port
+        str = strchr(str + 7, '/');
+        if (!str) return FALSE; // No path found after domain/IP
+    }
 
+    // Extract the path and name
     if (!get_substring_after_index(&ptr, str, 2, '/')) return FALSE;
 
     len = strlen(str) - strlen(ptr) - 2; /* -2 to skip the /s */
-    *name = (char *)calloc(1, len+1);
-    strncpy(*name, str+1, len);
+    *name = (char *)calloc(1, len + 1);
+    strncpy(*name, str + 1, len);
 
     *path = strdup(ptr);
 
@@ -201,8 +229,13 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 
     serialize_system_response(responseRemote, message, retCode,
                               strlen(responseLocal), responseLocal);
-
     log_debug("Sending response back: %s", *responseRemote);
+
+    ulfius_clean_request(request);
+    if (responseLocal) free(responseLocal);
+    if (request)       free(request);
+    if (systemName)    free(systemName);
+    if (systemEP)      free(systemEP);
 
     return retCode;
 }

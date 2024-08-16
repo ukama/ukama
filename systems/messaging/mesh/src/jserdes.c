@@ -124,22 +124,6 @@ int serialize_system_response(char **response, Message *message,
 	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_NODE_RESPONSE));
     json_object_set_new(json, JSON_SEQ, json_string(message->seqNo));
 
-    /* Add node info. */
-	json_object_set_new(json, JSON_NODE_INFO, json_object());
-	obj = json_object_get(json, JSON_NODE_INFO);
-	json_object_set_new(obj, JSON_NODE_ID,
-                        json_string(message->nodeInfo->nodeID));
-    json_object_set_new(obj, JSON_PORT,
-                        json_string(message->nodeInfo->port));
-
-    /* Add service info. */
-	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
-	obj = json_object_get(json, JSON_SERVICE_INFO);
-	json_object_set_new(obj, JSON_NAME,
-                        json_string(message->serviceInfo->name));
-    json_object_set_new(obj, JSON_PORT,
-                        json_string(message->serviceInfo->port));
-
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	obj = json_object_get(json, JSON_MESSAGE);
@@ -371,10 +355,6 @@ static void deserialize_map(URequest **request, json_t *json) {
 	}
 }
 
-/*
- * deserialize_request_info --
- *
- */
 int deserialize_request_info(URequest **request, char *str) {
 
 	json_t *json, *obj, *jRaw;
@@ -387,6 +367,7 @@ int deserialize_request_info(URequest **request, char *str) {
 
 	*request = (URequest *)calloc(1, sizeof(URequest));
 	if (*request == NULL) {
+        json_decref(json);
         log_error("Error allocating memory of size: %d", sizeof(URequest));
 		return FALSE;
     }
@@ -449,5 +430,6 @@ int deserialize_request_info(URequest **request, char *str) {
 		}
 	}
 
+    json_decref(json);
 	return TRUE;
 }
