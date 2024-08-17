@@ -124,11 +124,6 @@ sort_systems_by_dependency() {
         exit 1
     fi
 
-    if [[ " ${SYSTEMS_ARRAY[@]} " =~ " registry " ]] && ([[ ! " ${SYSTEMS_ARRAY[@]} " =~ " notification " ]] ); then
-        echo "Registry system depend on notification please make sure notification systems added in the deploy_config JSON file."
-        exit 1
-    fi
-
     for key in "${SYSTEMS_ARRAY[@]}"; do
         case "$key" in
             "services")
