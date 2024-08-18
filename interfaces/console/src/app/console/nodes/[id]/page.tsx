@@ -20,7 +20,7 @@ import {
   Graphs_Type,
   MetricsRes,
   useGetMetricByTabLazyQuery,
-} from '@/client/graphql/generated/metrics';
+} from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import NodeNetworkTab from '@/components/NodeNetworkTab';
@@ -89,7 +89,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
     getNodeMetricByTab,
     { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
   ] = useGetMetricByTabLazyQuery({
-    client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
+    client: getMetricsClient(env.METRIC_URL),
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       setMetrics(data.getMetricByTab);
@@ -163,6 +163,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
             type: graphType,
             to: metricFrom + 120,
             withSubscription: true,
+            orgName: 'ukama',
             nodeId: 'uk-test36-hnode-a1-00ff',
           },
         },

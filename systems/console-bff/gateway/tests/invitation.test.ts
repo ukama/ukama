@@ -13,7 +13,7 @@ import { CreateInvitationResolver } from "../../invitation/resolver/createInvita
 import { DeleteInvitationResolver } from "../../invitation/resolver/deleteInvitation";
 import { GetInvitationResolver } from "../../invitation/resolver/getInvitation";
 import { GetInvitationsResolver } from "../../invitation/resolver/getInvitations";
-import { GetInVitationsByOrgResolver } from "../../invitation/resolver/getInvitationsByEmail";
+import { GetInVitationsByEmailResolver } from "../../invitation/resolver/getInvitationsByEmail";
 import { UpdateInvitationResolver } from "../../invitation/resolver/updateInvitation";
 import {
   CREATE_INVITATION,
@@ -40,7 +40,7 @@ const createSchema = async () => {
       DeleteInvitationResolver,
       GetInvitationResolver,
       GetInvitationsResolver,
-      GetInVitationsByOrgResolver,
+      GetInVitationsByEmailResolver,
       UpdateInvitationResolver,
     ],
     validate: true,

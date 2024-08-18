@@ -9,7 +9,7 @@
 import {
   Graphs_Type,
   useGetMetricByTabSubSubscription,
-} from '@/client/graphql/generated/metrics';
+} from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import PubSub from 'pubsub-js';
 

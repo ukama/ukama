@@ -170,6 +170,24 @@ export type NotificationSubscriptionSubscriptionVariables = Exact<{
 
 export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string } };
 
+export type GetMetricByTabQueryVariables = Exact<{
+  data: GetMetricByTabInput;
+}>;
+
+
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
+
+export type GetMetricByTabSubSubscriptionVariables = Exact<{
+  nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
+  from: Scalars['Float']['input'];
+}>;
+
+
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+
 
 export const GetNotificationsDocument = gql`
     query GetNotifications($data: GetNotificationsInput!) {
@@ -255,3 +273,95 @@ export function useNotificationSubscriptionSubscription(baseOptions: Apollo.Subs
       }
 export type NotificationSubscriptionSubscriptionHookResult = ReturnType<typeof useNotificationSubscriptionSubscription>;
 export type NotificationSubscriptionSubscriptionResult = Apollo.SubscriptionResult<NotificationSubscriptionSubscription>;
+export const GetMetricByTabDocument = gql`
+    query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMetricByTabQuery__
+ *
+ * To run a query within a React component, call `useGetMetricByTabQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricByTabQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricByTabQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricByTabQuery(baseOptions: Apollo.QueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables> & ({ variables: GetMetricByTabQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+      }
+export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+        }
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+        }
+export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
+export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
+export type GetMetricByTabSuspenseQueryHookResult = ReturnType<typeof useGetMetricByTabSuspenseQuery>;
+export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
+export const GetMetricByTabSubDocument = gql`
+    subscription GetMetricByTabSub($nodeId: String!, $orgId: String!, $type: GRAPHS_TYPE!, $userId: String!, $from: Float!) {
+  getMetricByTabSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}
+    `;
+
+/**
+ * __useGetMetricByTabSubSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricByTabSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricByTabSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricByTabSubSubscription({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *      orgId: // value for 'orgId'
+ *      type: // value for 'type'
+ *      userId: // value for 'userId'
+ *      from: // value for 'from'
+ *   },
+ * });
+ */
+export function useGetMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables> & ({ variables: GetMetricByTabSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>(GetMetricByTabSubDocument, options);
+      }
+export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
+export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;

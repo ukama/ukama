@@ -7,7 +7,7 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { Graphs_Type } from '@/client/graphql/generated/metrics';
+import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
