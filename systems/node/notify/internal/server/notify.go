@@ -10,6 +10,9 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -194,6 +197,13 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 			"invalid format for notification type. Error %s", err.Error())
 	}
 
+	validDetails, err := stringToSqlSupportedJsonString(details)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format for details. Error %s", err.Error())
+
+	}
+
 	notification := &db.Notification{
 		Id:          uuid.NewV4(),
 		NodeId:      nNodeId.StringLowercase(),
@@ -204,7 +214,7 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 		Status:      nStatus,
 		Time:        epochTime,
 		Description: description,
-		Details:     datatypes.JSON([]byte(details)),
+		Details:     datatypes.JSON([]byte(validDetails)),
 	}
 
 	log.Debugf("New notification is : %+v.", notification)
@@ -265,4 +275,23 @@ func dbNotificationsToPbNotifications(notifs []db.Notification) []*pb.Notificati
 	}
 
 	return res
+}
+
+func isValidJSON(s string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(s), &js) == nil
+}
+
+func stringToSqlSupportedJsonString(s string) (string, error) {
+	if isValidJSON(s) {
+		return s, nil
+	}
+
+	converted := strings.ReplaceAll(s, "'", "\"")
+
+	if isValidJSON(converted) {
+		return converted, nil
+	}
+
+	return "", fmt.Errorf("input string could not be converted to valid JSON")
 }

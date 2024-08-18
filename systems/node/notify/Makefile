@@ -43,3 +43,6 @@ integration.build:
 
 mock: 
 	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/listener.go
+
+server:
+	go run cmd/server/main.go

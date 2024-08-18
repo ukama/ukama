@@ -13,14 +13,14 @@ type GetRunningAppsRequest struct {
 }
 
 type AddNotificationReq struct {
-	NodeId      string `json:"node_id"`
-	Severity    string `json:"severity,omitempty" type:"string"`
-	Type        string `json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
-	ServiceName string `json:"service_name,omitempty"`
-	Status      uint32 `json:"status,omitempty"`
-	Time        uint32 `json:"time,omitempty"`
-	Description string `json:"description,omitempty"`
-	Details     string `json:"details,omitempty"`
+	NodeId      string `form:"node_id" json:"node_id"`
+	Severity    string `form:"severity" json:"severity,omitempty" type:"string"`
+	Type        string `form:"notification_type" json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
+	ServiceName string `form:"service_name" json:"service_name,omitempty"`
+	Status      uint32 `form:"status" json:"status,omitempty"`
+	Time        uint32 `form:"time" json:"time,omitempty"`
+	Description string `form:"description" json:"description,omitempty"`
+	Details     string `form:"details" json:"details,omitempty"`
 }
 
 type GetNotificationReq struct {
