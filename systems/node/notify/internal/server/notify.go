@@ -10,9 +10,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strings"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -23,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -49,8 +45,8 @@ func NewNotifyServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBus
 }
 
 func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName, req.Description,
-		req.Details, req.Status, req.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName,
+		req.Details, req.Status, req.Time, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 
 	if err != nil {
 		return nil, err
@@ -169,7 +165,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
 
-func add(nodeId, severity, nType, serviceName, description, details string, nStatus uint32, epochTime uint32,
+func add(nodeId, severity, nType, serviceName string, details []byte, nStatus uint32, time uint32,
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
 	var nodeType string = ""
@@ -197,13 +193,6 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 			"invalid format for notification type. Error %s", err.Error())
 	}
 
-	validDetails, err := stringToSqlSupportedJsonString(details)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument,
-			"invalid format for details. Error %s", err.Error())
-
-	}
-
 	notification := &db.Notification{
 		Id:          uuid.NewV4(),
 		NodeId:      nNodeId.StringLowercase(),
@@ -212,9 +201,8 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 		Type:        *notificationType,
 		ServiceName: serviceName,
 		Status:      nStatus,
-		Time:        epochTime,
-		Description: description,
-		Details:     datatypes.JSON([]byte(validDetails)),
+		Time:        time,
+		Details:     details,
 	}
 
 	log.Debugf("New notification is : %+v.", notification)
@@ -237,9 +225,8 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 		Type:        notification.Type.String(),
 		ServiceName: notification.ServiceName,
 		Status:      notification.Status,
-		EpochTime:   notification.Time,
-		Description: notification.Description,
-		Details:     notification.Details.String(),
+		Time:        notification.Time,
+		Details:     details,
 	}
 
 	err = msgBus.PublishRequest(route, evt)
@@ -260,9 +247,8 @@ func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 		Type:        notif.Type.String(),
 		ServiceName: notif.ServiceName,
 		Status:      notif.Status,
-		EpochTime:   notif.Time,
-		Description: notif.Description,
-		Details:     notif.Details.String(),
+		Time:        notif.Time,
+		Details:     notif.Details,
 		CreatedAt:   timestamppb.New(notif.CreatedAt),
 	}
 }
@@ -275,23 +261,4 @@ func dbNotificationsToPbNotifications(notifs []db.Notification) []*pb.Notificati
 	}
 
 	return res
-}
-
-func isValidJSON(s string) bool {
-	var js map[string]interface{}
-	return json.Unmarshal([]byte(s), &js) == nil
-}
-
-func stringToSqlSupportedJsonString(s string) (string, error) {
-	if isValidJSON(s) {
-		return s, nil
-	}
-
-	converted := strings.ReplaceAll(s, "'", "\"")
-
-	if isValidJSON(converted) {
-		return converted, nil
-	}
-
-	return "", fmt.Errorf("input string could not be converted to valid JSON")
 }

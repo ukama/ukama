@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,126 +20,124 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/notify/pb/gen"
 )
- 
- 
- type Notify struct {
-	 conn    *grpc.ClientConn
-	 client  pb.NotifyServiceClient
-	 timeout time.Duration
-	 host    string
- }
- 
- func NewNotify(notifyHost string, timeout time.Duration) *Notify  {
- fmt.Println("HOST",notifyHost)
-	 conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	 if err != nil {
-		 log.Fatalf("did not connect: %v", err)
-	 }
-	 client := pb.NewNotifyServiceClient(conn)
- 
-	 return &Notify{
-		 conn:    conn,
-		 client:  client,
-		 timeout: timeout,
-		 host:    notifyHost,
-	 }
- }
- 
- 
- func NewNotifyFromClient(mClient pb.NotifyServiceClient) *Notify {
-	 return &Notify{
-		 host:    "localhost",
-		 timeout: 1 * time.Second,
-		 conn:    nil,
-		 client:  mClient,
-	 }
- }
- 
- 
- func (m *Notify) Close() {
-	 m.conn.Close()
- }
- 
- 
- 
- func (n *Notify) Add(nodeId, severity, ntype, serviceName,
-	 description, details string, status, epochTime uint32) (*pb.AddResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	 defer cancel()
- 
-	 return n.client.Add(ctx,
-		 &pb.AddRequest{
-			 NodeId:      nodeId,
-			 Severity:    severity,
-			 Type:        ntype,
-			 ServiceName: serviceName,
-			 Status:      status,
-			 EpochTime:   epochTime,
-			 Description: description,
-			 Details:     details,
-		 })
- }
- 
- func (n *Notify) Get(id string) (*pb.GetResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	 defer cancel()
-	 res, err := n.client.Get(ctx, &pb.GetRequest{
-		 NotificationId: id,
-	 })
- 
-	 if err != nil {
-		 return nil, err
-	 }
- 
-	 return res, nil
- }
- 
- func (n *Notify) List(nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	 defer cancel()
- 
-		 res, err := n.client.List(ctx, &pb.ListRequest{
-			 NodeId:      nodeId,
-			 Type:        nType,
-			 ServiceName: serviceName,
-			 Count:       count,
-			 Sort:        sort,
-		 })
-	 
-		 if err != nil {
-			 return nil, err
-		 }
-	 
-		 return res, nil
- }
- 
- func (n *Notify) Delete(id string) (*pb.DeleteResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	 defer cancel()
-	 res, err := n.client.Delete(ctx, &pb.GetRequest{
-		 NotificationId:id,
-	 })
- 
-	 if err != nil {
-		 return nil, err
-	 }
- 
-	 return res, nil
- }
- 
- func (n *Notify) Purge(nodeId, serviceName, nType string) (*pb.ListResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	 defer cancel()
-	 res, err := n.client.Purge(ctx, &pb.PurgeRequest{
-		 NodeId:      nodeId,
-			 Type:        nType,
-			 ServiceName: serviceName,
-	 })
- 
-	 if err != nil {
-		 return nil, err
-	 }
- 
-	 return res, nil
-	 
- }
+
+type Notify struct {
+	conn    *grpc.ClientConn
+	client  pb.NotifyServiceClient
+	timeout time.Duration
+	host    string
+}
+
+func NewNotify(notifyHost string, timeout time.Duration) *Notify {
+	fmt.Println("HOST", notifyHost)
+	conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	client := pb.NewNotifyServiceClient(conn)
+
+	return &Notify{
+		conn:    conn,
+		client:  client,
+		timeout: timeout,
+		host:    notifyHost,
+	}
+}
+
+func NewNotifyFromClient(mClient pb.NotifyServiceClient) *Notify {
+	return &Notify{
+		host:    "localhost",
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  mClient,
+	}
+}
+
+func (m *Notify) Close() {
+	m.conn.Close()
+}
+
+func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.RawMessage, status, time uint32) (*pb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	detailBytes, err := details.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return n.client.Add(ctx,
+		&pb.AddRequest{
+			NodeId:      nodeId,
+			Severity:    severity,
+			Type:        ntype,
+			ServiceName: serviceName,
+			Status:      status,
+			Time:        time,
+			Details:     detailBytes,
+		})
+}
+
+func (n *Notify) Get(id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+	res, err := n.client.Get(ctx, &pb.GetRequest{
+		NotificationId: id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (n *Notify) List(nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.List(ctx, &pb.ListRequest{
+		NodeId:      nodeId,
+		Type:        nType,
+		ServiceName: serviceName,
+		Count:       count,
+		Sort:        sort,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (n *Notify) Delete(id string) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+	res, err := n.client.Delete(ctx, &pb.GetRequest{
+		NotificationId: id,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (n *Notify) Purge(nodeId, serviceName, nType string) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+	res, err := n.client.Purge(ctx, &pb.PurgeRequest{
+		NodeId:      nodeId,
+		Type:        nType,
+		ServiceName: serviceName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+
+}

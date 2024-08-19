@@ -48,9 +48,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Type:        nt.Type.String(),
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 
 		anyE, err := anypb.New(evt)
@@ -79,9 +77,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Type:        "bar",
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 
 		anyE, err := anypb.New(evt)

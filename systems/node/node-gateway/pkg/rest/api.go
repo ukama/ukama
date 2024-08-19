@@ -8,19 +8,20 @@
 
 package rest
 
+import "encoding/json"
+
 type GetRunningAppsRequest struct {
 	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
 }
 
 type AddNotificationReq struct {
-	NodeId      string `form:"node_id" json:"node_id"`
-	Severity    string `form:"severity" json:"severity,omitempty" type:"string"`
-	Type        string `form:"notification_type" json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
-	ServiceName string `form:"service_name" json:"service_name,omitempty"`
-	Status      uint32 `form:"status" json:"status,omitempty"`
-	Time        uint32 `form:"time" json:"time,omitempty"`
-	Description string `form:"description" json:"description,omitempty"`
-	Details     string `form:"details" json:"details,omitempty"`
+	NodeId      string          `form:"node_id" json:"node_id"`
+	Severity    string          `form:"severity" json:"severity,omitempty" validate:"eq=fatal|eq=critical|eq=high|eq=medium|eq=low|eq=clean|eq=log|eq=warning|eq=debug|eq=trace"`
+	Type        string          `form:"type" json:"type,omitempty" validate:"eq=alert|eq=event"`
+	ServiceName string          `form:"service_name" json:"service_name,omitempty"`
+	Status      uint32          `form:"status" json:"status,omitempty"`
+	Time        uint32          `form:"time" json:"time,omitempty"`
+	Details     json.RawMessage `form:"details" json:"details,omitempty"`
 }
 
 type GetNotificationReq struct {
@@ -30,7 +31,7 @@ type GetNotificationReq struct {
 type GetNotificationsReq struct {
 	NodeId      string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	ServiceName string `form:"service_name" json:"service_name" query:"service_name" binding:"required"`
-	Type        string `form:"notification_type" json:"notification_type" query:"notification_type" binding:"required"`
+	Type        string `form:"type" json:"type" query:"type" binding:"required"`
 	Count       uint32 `form:"count" json:"count" query:"count" binding:"required"`
 	Sort        bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
 }
@@ -38,7 +39,7 @@ type GetNotificationsReq struct {
 type DelNotificationsReq struct {
 	NodeId      string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	ServiceName string `form:"service_name" json:"service_name" query:"service_name" binding:"required"`
-	Type        string `form:"notification_type" json:"notification_type" query:"notification_type" binding:"required"`
+	Type        string `form:"type" json:"type" query:"type" binding:"required"`
 }
 
 type Logs struct {
