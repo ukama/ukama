@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -52,6 +53,7 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 
 	now := time.Now()
 	state := &db.State{
+		Id:uuid.NewV4(),
 		NodeId:          nId.StringLowercase(),
 		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
 		Connectivity:    db.Connectivity(req.State.Connectivity),
