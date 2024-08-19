@@ -200,6 +200,10 @@ const middleware = async (request: NextRequest) => {
     );
   }
 
+  if (pathname.includes('/welcome') && userObj.role !== Role_Type.RoleOwner) {
+    return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
+  }
+
   if (
     pathname.includes('/manage') &&
     userObj.role !== Role_Type.RoleOwner &&
