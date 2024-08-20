@@ -8,132 +8,148 @@
 
 package client_test
 
-// var nc = &mocks.NotifyServiceClient{}
+import (
+	"testing"
+	"time"
 
-// var notificationId = uuid.NewV4().String()
-// var nodeID = ukama.NewVirtualHomeNodeId().String()
+	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/node-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/node/node-gateway/pkg/rest"
+	pb "github.com/ukama/ukama/systems/node/notify/pb/gen"
+	"github.com/ukama/ukama/systems/node/notify/pb/gen/mocks"
+)
 
-// var req = &rest.AddNotificationReq{
-// 	NodeId:      nodeID,
-// 	Severity:    "high",
-// 	Type:        "alert",
-// 	ServiceName: "noded",
-// 	Status:      8200,
-// 	Time:        uint32(time.Now().Unix()),
-// }
+var nc = &mocks.NotifyServiceClient{}
 
-// func TestNotifyClient_Add(t *testing.T) {
-// 	notifReq := &pb.AddRequest{
-// 		NodeId:      req.NodeId,
-// 		Severity:    req.Severity,
-// 		Type:        req.Type,
-// 		ServiceName: req.ServiceName,
-// 		Status:      req.Status,
-// 		Time:        req.Time,
-// 	}
+var notificationId = uuid.NewV4().String()
+var nodeID = ukama.NewVirtualHomeNodeId().String()
 
-// 	nc.On("Add", mock.Anything, notifReq).Return(&pb.AddResponse{}, nil)
+var req = &rest.AddNotificationReq{
+	NodeId:      nodeID,
+	Severity:    "high",
+	Type:        "alert",
+	ServiceName: "noded",
+	Status:      8200,
+	Time:        uint32(time.Now().Unix()),
+	Details:     []byte(`{"message": "test"}`),
+}
 
-// 	c := client.NewNotifyFromClient(nc)
+func TestNotifyClient_Add(t *testing.T) {
+	notifReq := &pb.AddRequest{
+		NodeId:      req.NodeId,
+		Severity:    req.Severity,
+		Type:        req.Type,
+		ServiceName: req.ServiceName,
+		Status:      req.Status,
+		Time:        req.Time,
+		Details:     req.Details,
+	}
 
-// 	_, err := c.Add(req.NodeId, req.Severity,
-// 		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
+	nc.On("Add", mock.Anything, notifReq).Return(&pb.AddResponse{}, nil)
 
-// 	assert.NoError(t, err)
-// 	nc.AssertExpectations(t)
-// }
+	c := client.NewNotifyFromClient(nc)
 
-// func TestNotifyClient_Get(t *testing.T) {
-// 	notifReq := &pb.GetRequest{NotificationId: notificationId}
+	_, err := c.Add(req.NodeId, req.Severity,
+		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 
-// 	notifResp := &pb.GetResponse{Notification: &pb.Notification{
-// 		Id:          notificationId,
-// 		NodeId:      req.NodeId,
-// 		Severity:    req.Severity,
-// 		Type:        req.Type,
-// 		ServiceName: req.ServiceName,
-// 		Status:      req.Status,
-// 		Time:        req.Time,
-// 	}}
+	assert.NoError(t, err)
+	nc.AssertExpectations(t)
+}
 
-// 	nc.On("Get", mock.Anything, notifReq).Return(notifResp, nil)
+func TestNotifyClient_Get(t *testing.T) {
+	notifReq := &pb.GetRequest{NotificationId: notificationId}
 
-// 	n := client.NewNotifyFromClient(nc)
+	notifResp := &pb.GetResponse{Notification: &pb.Notification{
+		Id:          notificationId,
+		NodeId:      req.NodeId,
+		Severity:    req.Severity,
+		Type:        req.Type,
+		ServiceName: req.ServiceName,
+		Status:      req.Status,
+		Time:        req.Time,
+	}}
 
-// 	resp, err := n.Get(notificationId)
+	nc.On("Get", mock.Anything, notifReq).Return(notifResp, nil)
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, resp.Notification.Id, notificationId)
-// 	nc.AssertExpectations(t)
-// }
+	n := client.NewNotifyFromClient(nc)
 
-// func TestNotifyClient_List(t *testing.T) {
-// 	listReq := &pb.ListRequest{
-// 		NodeId:      req.NodeId,
-// 		Type:        req.Type,
-// 		ServiceName: req.ServiceName,
-// 		Count:       uint32(1),
-// 		Sort:        true}
+	resp, err := n.Get(notificationId)
 
-// 	listResp := &pb.ListResponse{Notifications: []*pb.Notification{
-// 		&pb.Notification{
-// 			Id:          notificationId,
-// 			NodeId:      req.NodeId,
-// 			Severity:    req.Severity,
-// 			Type:        req.Type,
-// 			ServiceName: req.ServiceName,
-// 			Status:      req.Status,
-// 			Time:        req.Time,
-// 		}}}
+	assert.NoError(t, err)
+	assert.Equal(t, resp.Notification.Id, notificationId)
+	nc.AssertExpectations(t)
+}
 
-// 	nc.On("List", mock.Anything, listReq).Return(listResp, nil)
+func TestNotifyClient_List(t *testing.T) {
+	listReq := &pb.ListRequest{
+		NodeId:      req.NodeId,
+		Type:        req.Type,
+		ServiceName: req.ServiceName,
+		Count:       uint32(1),
+		Sort:        true}
 
-// 	n := client.NewNotifyFromClient(nc)
+	listResp := &pb.ListResponse{Notifications: []*pb.Notification{
+		&pb.Notification{
+			Id:          notificationId,
+			NodeId:      req.NodeId,
+			Severity:    req.Severity,
+			Type:        req.Type,
+			ServiceName: req.ServiceName,
+			Status:      req.Status,
+			Time:        req.Time,
+		}}}
 
-// 	resp, err := n.List(req.NodeId, req.ServiceName, req.Type, uint32(1), true)
+	nc.On("List", mock.Anything, listReq).Return(listResp, nil)
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, resp.Notifications[0].Id, notificationId)
-// 	nc.AssertExpectations(t)
-// }
+	n := client.NewNotifyFromClient(nc)
 
-// func TestNotifyClient_Delete(t *testing.T) {
-// 	notifReq := &pb.GetRequest{NotificationId: notificationId}
+	resp, err := n.List(req.NodeId, req.ServiceName, req.Type, uint32(1), true)
 
-// 	nc.On("Delete", mock.Anything, notifReq).Return(&pb.DeleteResponse{}, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, resp.Notifications[0].Id, notificationId)
+	nc.AssertExpectations(t)
+}
 
-// 	n := client.NewNotifyFromClient(nc)
+func TestNotifyClient_Delete(t *testing.T) {
+	notifReq := &pb.GetRequest{NotificationId: notificationId}
 
-// 	_, err := n.Delete(notificationId)
+	nc.On("Delete", mock.Anything, notifReq).Return(&pb.DeleteResponse{}, nil)
 
-// 	assert.NoError(t, err)
-// 	nc.AssertExpectations(t)
-// }
+	n := client.NewNotifyFromClient(nc)
 
-// func TestNotifyClient_Purge(t *testing.T) {
-// 	delReq := &pb.PurgeRequest{
-// 		NodeId:      req.NodeId,
-// 		Type:        req.Type,
-// 		ServiceName: req.ServiceName,
-// 	}
+	_, err := n.Delete(notificationId)
 
-// 	delResp := &pb.ListResponse{Notifications: []*pb.Notification{
-// 		&pb.Notification{
-// 			Id:          notificationId,
-// 			NodeId:      req.NodeId,
-// 			Severity:    req.Severity,
-// 			Type:        req.Type,
-// 			ServiceName: req.ServiceName,
-// 			Time:        req.Time,
-// 		}}}
+	assert.NoError(t, err)
+	nc.AssertExpectations(t)
+}
 
-// 	nc.On("Purge", mock.Anything, delReq).Return(delResp, nil)
+func TestNotifyClient_Purge(t *testing.T) {
+	delReq := &pb.PurgeRequest{
+		NodeId:      req.NodeId,
+		Type:        req.Type,
+		ServiceName: req.ServiceName,
+	}
 
-// 	n := client.NewNotifyFromClient(nc)
+	delResp := &pb.ListResponse{Notifications: []*pb.Notification{
+		&pb.Notification{
+			Id:          notificationId,
+			NodeId:      req.NodeId,
+			Severity:    req.Severity,
+			Type:        req.Type,
+			ServiceName: req.ServiceName,
+			Time:        req.Time,
+		}}}
 
-// 	deletedItems, err := n.Purge(req.NodeId, req.ServiceName, req.Type)
+	nc.On("Purge", mock.Anything, delReq).Return(delResp, nil)
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, deletedItems.Notifications[0].Id, notificationId)
-// 	nc.AssertExpectations(t)
-// }
+	n := client.NewNotifyFromClient(nc)
+
+	deletedItems, err := n.Purge(req.NodeId, req.ServiceName, req.Type)
+
+	assert.NoError(t, err)
+	assert.Equal(t, deletedItems.Notifications[0].Id, notificationId)
+	nc.AssertExpectations(t)
+}

@@ -11,7 +11,6 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
@@ -29,7 +28,6 @@ type Notify struct {
 }
 
 func NewNotify(notifyHost string, timeout time.Duration) *Notify {
-	fmt.Println("HOST", notifyHost)
 	conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
