@@ -12,6 +12,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <string.h>
+#include <jansson.h>
 
 #include "mesh.h"
 #include "work.h"
@@ -103,10 +104,10 @@ void clear_request(MRequest **data) {
 	free(*data);
 }
 
-static long send_data_to_system(URequest *data, char *ep,
-                                char *ip, int port,
-								int *retCode, char **retStr) {
-  
+static int send_data_to_system(URequest *data, char *ep,
+                               char *ip, int port,
+                               int *retCode, char **retStr) {
+
 	int i;
 	long code=0;
 	CURL *curl=NULL;
@@ -115,6 +116,7 @@ static long send_data_to_system(URequest *data, char *ep,
 	char url[MAX_BUFFER] = {0};
 	UMap *map;
 	Response response = {NULL, 0};
+    long responseCode;
 
 	*retCode = 0;
 
@@ -160,7 +162,8 @@ static long send_data_to_system(URequest *data, char *ep,
         *retCode = 0;
 	} else {
 		/* get status code. */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &retCode);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        *retCode = (int)responseCode;
 		if (response.size) {
 			log_debug("Response recevied from server: %s", response.buffer);
 			*retStr = strdup(response.buffer);
@@ -180,7 +183,7 @@ static long send_data_to_system(URequest *data, char *ep,
 static URequest* create_http_request(char *jStr) {
 
     URequest *request;
-	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *obj, *body;
+	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *obj, *jData;
 
 	if (jStr == NULL) return FALSE;
 
@@ -229,18 +232,15 @@ static URequest* create_http_request(char *jStr) {
     }
 
     /* Get the actual data now */
-    body = json_object_get(jRaw, JSON_DATA);
-    if (body) {
-        if (ulfius_set_json_body_request(request, body) == 0) {
-            log_error("Unable to set the json body for the request");
-            json_decref(json);
-            ulfius_clean_request(request);
-            free(request);
-            return NULL;
-        }
+    jData = json_object_get(jRaw, JSON_DATA);
+    if (jData) {
+        char *str;
+        str = json_string_value(jData);
+        request->binary_body        = strdup(str);
+        request->binary_body_length = strlen(str);
+        free(str);
     }
-   
-    json_decref(json);
+
 	return request;
 }
 
@@ -259,6 +259,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     int systemPort=0;
 	json_t *jResp=NULL;
 
+    log_debug("Recevied message from mesh-host: %s", message->data);
 
     request = create_http_request(message->data);
     if (request == NULL) {
@@ -283,9 +284,9 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
         log_debug("Matching server found for system: %s host: %s port: %d",
                   systemName, systemHost, systemPort);
 
-        ret = send_data_to_system(request, systemEP,
-                                  systemHost, systemPort,
-                                  &retCode, &responseLocal);
+        send_data_to_system(request, systemEP,
+                            systemHost, systemPort,
+                            &retCode, &responseLocal);
         log_debug("Return code from system %s:%d: code: %d Response: %s",
                   systemHost, systemPort, retCode, responseLocal);
     }
@@ -297,7 +298,6 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     ulfius_clean_request(request);
     if (request)       free(request);
     if (responseLocal) free(responseLocal);
-    if (request)       free(request);
     if (systemName)    free(systemName);
     if (systemEP)      free(systemEP);
 
