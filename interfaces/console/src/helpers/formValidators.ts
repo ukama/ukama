@@ -97,11 +97,18 @@ const AddSiteValidationSchema = [
   }),
 ];
 
+const SiteConfigureSchema = Yup.object().shape({
+  switch: Yup.string().required('Switch is required'),
+  power: Yup.string().required('Power is required'),
+  backhaul: Yup.string().required('Backhaul is required'),
+});
+
 export {
   AddSiteValidationSchema,
   ESIM_FORM_SCHEMA,
   NETWORK_NAME_SCHEMA_VALIDATOR,
   PHYSICAL_SIM_FORM_SCHEMA,
   STEPPER_FORM_SCHEMA,
+  SiteConfigureSchema,
   UpdateSiteSchema,
 };

@@ -1,6 +1,5 @@
 import colors from '@/theme/colors';
-import GradientWrapper from '@/wrappers/gradiantWrapper';
-import { LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { LinearProgress, Stack, Typography } from '@mui/material';
 import React from 'react';
 
 interface IInstallSiteLoading {
@@ -35,29 +34,27 @@ const InstallSiteLoading = ({ duration, onCompleted }: IInstallSiteLoading) => {
   }, [duration]);
 
   return (
-    <GradientWrapper>
-      <Paper elevation={0} sx={{ px: 4, py: 2 }}>
-        <Typography variant="h6" fontWeight={500}>
-          Install site -{' '}
-          <span style={{ color: colors.black70, fontWeight: 400 }}>
-            <i>optional</i> (2/6)
-          </span>
+    <Stack direction="column">
+      <Typography variant="h6" fontWeight={500}>
+        Install site -{' '}
+        <span style={{ color: colors.black70, fontWeight: 400 }}>
+          <i>optional</i> (2/6)
+        </span>
+      </Typography>
+      <Stack direction={'column'} mt={3} mb={3} spacing={1.5}>
+        <Typography variant="body1" fontWeight={700}>
+          Loading up your site...
         </Typography>
-        <Stack direction={'column'} mt={3} mb={3} spacing={1.5}>
-          <Typography variant="body1" fontWeight={700}>
-            Loading up your site...
-          </Typography>
-          <LinearProgress
-            value={progress}
-            variant="determinate"
-            sx={{ height: '12px', borderRadius: '4px' }}
-          />
-          <Typography variant="body1">
-            About {Math.ceil(remainingTime / 60)} minutes remaining
-          </Typography>
-        </Stack>
-      </Paper>
-    </GradientWrapper>
+        <LinearProgress
+          value={progress}
+          variant="determinate"
+          sx={{ height: '12px', borderRadius: '4px' }}
+        />
+        <Typography variant="body1">
+          About {Math.ceil(remainingTime / 60)} minutes remaining
+        </Typography>
+      </Stack>
+    </Stack>
   );
 };
 

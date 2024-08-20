@@ -28,7 +28,7 @@ const SiteMapComponent = ({ posix, address, height }: SiteMapProps) => {
       zoomControl={false}
       preferCanvas={true}
       scrollWheelZoom={false}
-      zoom={isValidLatLng(posix) ? 13 : 10}
+      zoom={isValidLatLng(posix) ? 15 : 10}
       center={isValidLatLng(posix) ? posix : undefined}
       bounds={[
         [84.67351256610522, -174.0234375],

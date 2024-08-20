@@ -8,7 +8,7 @@ interface IWelcome {
   handleBack: () => void;
 }
 
-const LField = ({ label, value }: { label: string; value: string }) => {
+export const LField = ({ label, value }: { label: string; value: string }) => {
   return (
     <Stack direction="column" spacing={0.5}>
       <Typography
