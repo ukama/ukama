@@ -179,17 +179,23 @@ static int send_notification(JsonObj* jNotify, Config *config) {
     return USYS_FALSE;
 }
 
-static int getCode(const Entry* entries, int numEntries, char *type,
-                   Notification *notif) {
+static int get_code_and_severity(const Entry* entries, int numEntries,
+                                 char *type,
+                                 Notification *notif,
+                                 char **severity,
+                                 int *code) {
 
-    int code=-1, i;
+    int found=USYS_FALSE, i;
 
     for (i = 0; i < numEntries; i++) {
         if (strcmp(notif->serviceName, entries[i].serviceName) == 0 &&
             strcmp(notif->module, entries[i].moduleName) == 0 &&
             strcmp(notif->propertyName, entries[i].propertyName) == 0 &&
             strcmp(type, entries[i].type) == 0) {
-            code = entries[i].code;
+
+            *code     = entries[i].code;
+            *severity = strdup(entries[i].severity);
+            found     = USYS_TRUE;
             break;
         }
     }
@@ -200,7 +206,8 @@ static int getCode(const Entry* entries, int numEntries, char *type,
 static int notify_process_incoming_generic_notification(JsonObj *json, char *type,
                                                         Config *config) {
 
-    int statusCode=-1;
+    int statusCode=0;
+    char *severity=NULL;
     JsonObj *jNotify=NULL;
     Notification *notification=NULL;
 
@@ -209,9 +216,9 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
         return STATUS_NOK;
     }
 
-    statusCode =
-        getCode(config->entries, config->numEntries, type, notification);
-    if (statusCode == -1) {
+    if (get_code_and_severity(config->entries, config->numEntries,
+                              type, notification,
+                              &severity, &statusCode) == USYS_FALSE) {
         usys_log_error("No matching code found for received event/alarm");
         usys_log_error("Unable to process incoming event/alarm. Ignoring.");
         usys_log_error("type: %s service: %s name: %s value: %s",
@@ -223,11 +230,13 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
         return STATUS_NOK;
     }
 
-    if (json_serialize_notification(&jNotify, notification, type,
-                                    config->nodeID, statusCode) == USYS_FALSE) {
+    if (json_serialize_notification(&jNotify, notification,
+                                    type, config->nodeID,
+                                    statusCode, severity) == USYS_FALSE) {
         usys_log_error("Unable to serialize the JSON object");
         free_notification(notification);
         json_free(&jNotify);
+        free(severity);
         return STATUS_NOK;
     }
     json_log(jNotify);
@@ -237,6 +246,7 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
                        notification->serviceName);
         free_notification(notification);
         json_free(&jNotify);
+        free(severity);
         return STATUS_NOK;
     }
 
@@ -247,6 +257,7 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
 
     json_free(&jNotify);
     free_notification(notification);
+    free(severity);
 
     return STATUS_OK;
 }

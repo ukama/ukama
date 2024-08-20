@@ -142,7 +142,8 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 */
 
 bool json_serialize_notification(JsonObj **json, Notification* notification,
-                                 char *type, char *nodeID, int statusCode) {
+                                 char *type, char *nodeID, int statusCode,
+                                 char *severity) {
                                 
     JsonObj *jDetails=NULL;
 
@@ -155,9 +156,10 @@ bool json_serialize_notification(JsonObj **json, Notification* notification,
     json_object_set_new(*json, JTAG_TIME,
                         json_integer(notification->epochTime));
 
-    json_object_set_new(*json, JTAG_STATUS,           json_integer(statusCode));
-    json_object_set_new(*json, JTAG_NOTIFICATON_TYPE, json_string(type));
-    json_object_set_new(*json, JTAG_NODE_ID,          json_string(nodeID));
+    json_object_set_new(*json, JTAG_STATUS,   json_integer(statusCode));
+    json_object_set_new(*json, JTAG_TYPE,     json_string(type));
+    json_object_set_new(*json, JTAG_NODE_ID,  json_string(nodeID));
+    json_object_set_new(*json, JTAG_SEVERITY, json_string(severity));
 
     /* Add details about the event/alarm */
     json_object_set_new(*json, JTAG_DETAILS, json_object());

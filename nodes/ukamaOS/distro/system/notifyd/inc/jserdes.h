@@ -25,7 +25,8 @@
 
 void json_log(json_t *json);
 bool json_serialize_notification(JsonObj **json, Notification* notification,
-                                 char *type, char *nodeID, int statusCode);
+                                 char *type, char *nodeID,
+                                 int statusCode, char *severity);
 bool json_deserialize_notification(JsonObj *json, Notification **ptr);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
 void json_free(JsonObj** json);

@@ -43,7 +43,7 @@ int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 URequest* wc_create_http_request(char* httpURL,
                                  char *urlPath,
                                  char* method,
-                                 JsonObj* body) {
+                                 JsonObj* jBody) {
 
     char urlWithEp[MAX_URL_LENGTH] = {0};
     URequest* httpReq;
@@ -78,8 +78,8 @@ URequest* wc_create_http_request(char* httpURL,
         }
     }
 
-    if (body) {
-       if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
+    if (jBody) {
+       if (STATUS_OK != ulfius_set_json_body_request(httpReq, jBody)) {
            ulfius_clean_request(httpReq);
            usys_free(httpReq);
            httpReq = NULL;
@@ -139,7 +139,7 @@ int wc_send_node_info_request(char *httpURL, char *urlPath, char *method, char *
 int wc_forward_notification(char* httpURL,
                             char *URLPath,
                             char* method,
-                            JsonObj* body ) {
+                            JsonObj* jBody ) {
 
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -148,12 +148,12 @@ int wc_forward_notification(char* httpURL,
     UResponse *httpResp = NULL;
     URequest* httpReq   = NULL;
 
-    httpReq = wc_create_http_request(httpURL, URLPath, method, body);
+    httpReq = wc_create_http_request(httpURL, URLPath, method, jBody);
     if (!httpReq) {
         return ret;
     }
 
-    char *logbody = json_dumps(body,
+    char *logbody = json_dumps(jBody,
                     (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
     if (logbody) {
         usys_log_trace("Body is :\n %s", logbody);
