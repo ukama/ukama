@@ -99,7 +99,6 @@ export default function ConosleLayout({
   const [updateNotificationCall] = useUpdateNotificationMutation({
     onCompleted: () => {
       refetchNotifications().then((res) => {
-        console.log('REFETCH RES: ', res);
         setNotifications(res.data?.getNotifications.notifications);
       });
     },
