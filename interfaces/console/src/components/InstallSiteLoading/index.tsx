@@ -5,9 +5,10 @@ import React from 'react';
 
 interface IInstallSiteLoading {
   duration: number;
+  onCompleted: () => void;
 }
 
-const InstallSiteLoading = ({ duration }: IInstallSiteLoading) => {
+const InstallSiteLoading = ({ duration, onCompleted }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);
 
@@ -23,6 +24,7 @@ const InstallSiteLoading = ({ duration }: IInstallSiteLoading) => {
       setRemainingTime(newRemainingTime);
 
       if (newProgress >= 100) {
+        onCompleted();
         clearInterval(timer);
       }
     }, 1000);

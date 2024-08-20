@@ -30,11 +30,15 @@ const Page = () => {
   const handleOnInstalled = (isChecked: boolean) => {
     setIsChecked(isChecked);
   };
+  const onInstallProgressComplete = () => router.push(`/configure/123`);
 
   return (
     <CenterContainer>
       {checkForInstallation ? (
-        <InstallSiteLoading duration={500} />
+        <InstallSiteLoading
+          duration={10}
+          onCompleted={onInstallProgressComplete}
+        />
       ) : (
         <GradientWrapper>
           <Paper elevation={0} sx={{ px: 4, py: 2 }}>
