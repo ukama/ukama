@@ -8,7 +8,7 @@
 'use client';
 import {
   Invitation_Status,
-  useGetInvitationsQuery,
+  useGetInvitationsByEmailQuery,
   useUpdateInvitationMutation,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
@@ -23,15 +23,15 @@ import { Box, Container, Paper, Stack, Typography } from '@mui/material';
 const Page = () => {
   const { user } = useAppContext();
   const { data: invitationsData, refetch: refetchInvitations } =
-    useGetInvitationsQuery({
+    useGetInvitationsByEmailQuery({
       fetchPolicy: 'network-only',
       variables: {
         email: user.email,
       },
       onCompleted: (data) => {
-        if (data.getInvitations.status === Invitation_Status.InviteAccepted) {
-          // TODO: ON ACCEPT INVITE REDIRECT TO ROOT SO THAT TOKEN CAN BE REFRESHED
-        }
+        // if (data.getInvitationsByEmail.invitations === Invitation_Status.InviteAccepted) {
+        // TODO: ON ACCEPT INVITE REDIRECT TO ROOT SO THAT TOKEN CAN BE REFRESHED
+        // }
       },
     });
 
@@ -48,6 +48,7 @@ const Page = () => {
         variables: {
           data: {
             id,
+            email: user.email,
             status: Invitation_Status.InviteAccepted,
           },
         },
@@ -57,6 +58,7 @@ const Page = () => {
         variables: {
           data: {
             id,
+            email: user.email,
             status: Invitation_Status.InviteDeclined,
           },
         },
@@ -73,7 +75,7 @@ const Page = () => {
             <Typography variant={'body1'}>
               Ukama is currently in beta access. If you do not currently belong
               to an organization partaking in a pilot program with us, but would
-              like to, please contact us at hello@ukama.com.
+              like to, please contact us at <b>hello@ukama.com</b>.
               <br />
               <br />
               If you do belong to an organization, please request that your
@@ -113,8 +115,8 @@ const Page = () => {
               emptyViewLabel={'No invitation yet!'}
               onMenuItemClick={handleInviteAction}
               dataset={
-                invitationsData?.getInvitations
-                  ? [invitationsData?.getInvitations]
+                invitationsData?.getInvitationsByEmail
+                  ? invitationsData?.getInvitationsByEmail.invitations
                   : []
               }
             />

@@ -126,6 +126,9 @@ export class UpateInvitationInputDto {
   @Field()
   id: string;
 
+  @Field()
+  email: string;
+
   @Field(() => INVITATION_STATUS)
   status: INVITATION_STATUS;
 }

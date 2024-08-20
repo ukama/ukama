@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { getMetricsClient } from '@/client/client';
 import { TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
@@ -54,6 +55,8 @@ const AppContext = createContext({
     orgName: '',
   },
   setUser: (u: TUser) => {},
+  subscriptionClient: undefined,
+  setSubscriptionClient: (client: any) => {},
 });
 
 const AppContextWrapper = ({
@@ -67,6 +70,9 @@ const AppContextWrapper = ({
   initalUserValues: TUser;
   children: React.ReactNode;
 }) => {
+  const [subscriptionClient, setSubscriptionClient] = useState<any>(
+    getMetricsClient(initEnv.METRIC_URL),
+  );
   const [env, setEnv] = useState<TEnv>(initEnv);
   const [token, setToken] = useState(_token);
   const [pageName, setPageName] = useState('Home');
@@ -108,6 +114,8 @@ const AppContextWrapper = ({
       setSnackbarMessage,
       selectedDefaultSite,
       setSelectedDefaultSite,
+      subscriptionClient,
+      setSubscriptionClient,
     }),
     [
       env,
@@ -130,6 +138,8 @@ const AppContextWrapper = ({
       setSnackbarMessage,
       selectedDefaultSite,
       setSelectedDefaultSite,
+      subscriptionClient,
+      setSubscriptionClient,
     ],
   );
 

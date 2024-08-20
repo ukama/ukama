@@ -34,7 +34,6 @@ export class MetricRes {
   @Field(() => [[Number, Number]])
   values: [number, number][];
 }
-@ArgsType()
 @InputType()
 export class GetLatestMetricInput {
   @Field()
@@ -65,7 +64,6 @@ export class LatestMetricRes {
   value: [number, number];
 }
 
-@ArgsType()
 @InputType()
 export class GetMetricRangeInput {
   @Field()
@@ -93,7 +91,6 @@ export class GetMetricRangeInput {
   withSubscription?: boolean;
 }
 
-@ArgsType()
 @InputType()
 export class GetMetricByTabInput {
   @Field()
@@ -101,6 +98,9 @@ export class GetMetricByTabInput {
 
   @Field()
   orgId?: string;
+
+  @Field()
+  orgName: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;
@@ -127,7 +127,6 @@ export class MetricsRes {
   metrics: MetricRes[];
 }
 
-@ArgsType()
 @InputType()
 export class SubMetricRangeInput {
   @Field()
@@ -228,18 +227,24 @@ export class NotificationsRes {
 @ArgsType()
 @InputType()
 export class GetNotificationsInput {
-  @Field()
+  @Field({ nullable: false })
+  orgName: string;
+
+  @Field({ nullable: false })
   orgId: string;
+
+  @Field({ nullable: false })
+  userId: string;
+
+  @Field({ nullable: false })
+  startTimestamp: string;
 
   @Field()
   networkId: string;
 
   @Field()
-  userId: string;
+  subscriberId: string;
 
   @Field(() => ROLE_TYPE)
-  forRole: ROLE_TYPE;
-
-  @Field(() => [NOTIFICATION_SCOPE])
-  scopes: NOTIFICATION_SCOPE[];
+  role: ROLE_TYPE;
 }

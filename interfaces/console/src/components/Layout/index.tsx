@@ -7,7 +7,8 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/metrics';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { useAppContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -15,7 +16,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import { useAppContext } from '@/context';
 
 interface ILayoutProps {
   page: string;
@@ -27,8 +27,8 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
-  alerts: NotificationsResDto[] | undefined;
-  handleAlertRead: (index: number) => void;
+  notifications: NotificationsResDto[];
+  handleNotificationRead: (id: string) => void;
 }
 
 const isHaveId = (pathname: string) => {
@@ -46,8 +46,8 @@ const AppLayout = ({
   handlePageChange,
   handleAddNetwork,
   handleNetworkChange,
-  alerts,
-  handleAlertRead,
+  notifications,
+  handleNotificationRead,
 }: ILayoutProps) => {
   const pathname = usePathname();
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
@@ -79,8 +79,8 @@ const AppLayout = ({
         isOpen={open}
         isLoading={isLoading}
         onNavigate={onNavigate}
-        alerts={alerts}
-        handleAlertRead={handleAlertRead}
+        notifications={notifications}
+        handleNotificationRead={handleNotificationRead}
       />
       <Stack direction={'row'}>
         <Sidebar

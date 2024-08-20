@@ -5,7 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Role_Type, Sim_Types } from '@/client/graphql/generated';
+import { Sim_Types } from '@/client/graphql/generated';
+import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';

@@ -79,6 +79,18 @@ export class CountriesRes {
 }
 
 @ObjectType()
+export class OrgsName {
+  @Field()
+  name: string;
+}
+
+@ObjectType()
+export class OrgsNameRes {
+  @Field(() => [OrgsName])
+  orgs: OrgsName[];
+}
+
+@ObjectType()
 export class TimezoneDto {
   @Field()
   value: string;

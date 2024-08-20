@@ -190,19 +190,13 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				NetworkId:    res.Notification.NetworkId,
 				Description:  res.Notification.Description,
 				SubscriberId: res.Notification.SubscriberId,
-				ForRole:      upb.RoleType(res.Notification.ForRole),
 				Type:         upb.NotificationType(res.Notification.Type),
 				Scope:        upb.NotificationScope(res.Notification.Scope),
+				CreatedAt:    res.Notification.CreatedAt.AsTime().Format(time.RFC3339),
 			}
 			log.Infof("Notification is %+v", un)
 
 			h.processNotification(un)
-			/* send notificaton to the registered clients */
-			// err = srv.Send(&un)
-			// if err != nil {
-			// 	log.Errorf("Error sending notification: %v", err)
-			// 	continue
-			// }
 
 		case <-h.done:
 			log.Infof("Stopping Db notify handler routine.")

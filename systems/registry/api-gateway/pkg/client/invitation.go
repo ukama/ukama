@@ -109,12 +109,13 @@ func (r *InvitationRegistry) GetAllInvitations() (*pb.GetAllResponse, error) {
 	return res, nil
 }
 
-func (r *InvitationRegistry) UpdateInvitation(id, status string) (*pb.UpdateStatusResponse, error) {
+func (r *InvitationRegistry) UpdateInvitation(id, status, email string) (*pb.UpdateStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{
 		Id:     id,
+		Email:  email,
 		Status: uType.InvitationStatus(uType.InvitationStatus_value[status]),
 	})
 

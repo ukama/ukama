@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -111,7 +112,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
 		NetworkId:             nid,
-		Email:                 req.GetEmail(),
+		Email:                 strings.ToLower(req.GetEmail()),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),

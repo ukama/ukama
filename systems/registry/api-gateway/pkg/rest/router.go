@@ -71,7 +71,7 @@ type site interface {
 type invitation interface {
 	AddInvitation(name, email, role string) (*invpb.AddResponse, error)
 	GetInvitationById(invitationId string) (*invpb.GetResponse, error)
-	UpdateInvitation(invitationId string, status string) (*invpb.UpdateStatusResponse, error)
+	UpdateInvitation(invitationId string, status string, email string) (*invpb.UpdateStatusResponse, error)
 	RemoveInvitation(invitationId string) (*invpb.DeleteResponse, error)
 	GetAllInvitations() (*invpb.GetAllResponse, error)
 	GetInvitationsByEmail(email string) (*invpb.GetByEmailResponse, error)
@@ -372,7 +372,7 @@ func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest)
 }
 
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateStatusResponse, error) {
-	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status)
+	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status, req.Email)
 }
 
 func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) (*invpb.DeleteResponse, error) {

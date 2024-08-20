@@ -7,12 +7,20 @@
  */
 import { exec } from "child_process";
 import { readFile } from "fs";
+import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
-import { GRAPHS_TYPE, NODE_TYPE } from "../enums";
+import {
+  GRAPHS_TYPE,
+  NODE_TYPE,
+  NOTIFICATION_SCOPE,
+  ROLE_TYPE,
+} from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
+import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
+import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
@@ -219,6 +227,8 @@ const getSystemNameByService = (service: string): string => {
       return "init";
     case "billing":
       return "billing";
+    case "metrics":
+      return "metrics";
     case "planning-tool":
       return "planning";
     default:
@@ -229,25 +239,30 @@ const getSystemNameByService = (service: string): string => {
 const getBaseURL = async (
   serviceName: string,
   orgName: string,
-  redisClient: any
+  store: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  if (redisClient) {
-    const redisBaseURL = await redisClient.get(`${sysName}-${orgName}`);
-    if (redisBaseURL)
+  if (store) {
+    const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
+    if (baseURL) {
+      logger.info(
+        `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
+      );
       return {
         status: 200,
-        message: redisBaseURL,
+        message: baseURL,
       };
+    }
   }
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
     const intRes = await initAPI.getSystem(orgName, sysName);
-    if (redisClient) await redisClient.set(`${sysName}-${orgName}`, intRes.url);
+    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
+    if (store) await addInStore(store, `${orgName}-${sysName}`, url);
     return {
       status: 200,
-      message: intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`,
+      message: url,
     };
   } else {
     return {
@@ -256,6 +271,7 @@ const getBaseURL = async (
     };
   }
 };
+
 const csvToBase64 = (filePath: string) => {
   readFile(filePath, (err, data) => {
     if (err) {
@@ -266,12 +282,24 @@ const csvToBase64 = (filePath: string) => {
   });
 };
 
+const getRoleType = (userRole: string): ROLE_TYPE => {
+  return Object.values(ROLE_TYPE).includes(userRole as ROLE_TYPE)
+    ? (userRole as ROLE_TYPE)
+    : ROLE_TYPE.ROLE_INVALID;
+};
+
+const getScopesByRole = (userRole: string): Array<NOTIFICATION_SCOPE> => {
+  const roleType = getRoleType(userRole);
+  return RoleToNotificationScopes[roleType] ?? [];
+};
+
 export {
   csvToBase64,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
+  getScopesByRole,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,

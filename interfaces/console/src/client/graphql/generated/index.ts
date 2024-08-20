@@ -654,11 +654,30 @@ export type NotificationResDto = {
   __typename?: 'NotificationResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
-  forRole: Role_Type;
   id: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  scope: Notification_Scope;
+  subscriberId: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  type: Notification_Type;
+  userId: Scalars['String']['output'];
+};
+
+export type NotificationsDto = {
+  __typename?: 'NotificationsDto';
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isRead: Scalars['Boolean']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
+};
+
+export type NotificationsResDto = {
+  __typename?: 'NotificationsResDto';
+  notifications: Array<NotificationsDto>;
 };
 
 export type OrgDto = {
@@ -739,8 +758,8 @@ export type Query = {
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getInvitation: InvitationDto;
-  getInvitations: InvitationDto;
-  getInvitationsByOrg: InvitationsResDto;
+  getInvitations: InvitationsResDto;
+  getInvitationsByEmail: InvitationsResDto;
   getMember: MemberDto;
   getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
@@ -755,6 +774,7 @@ export type Query = {
   getNodesByNetwork: Nodes;
   getNodesLocation: NodesLocation;
   getNotification: NotificationResDto;
+  getNotifications: NotificationsResDto;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -800,7 +820,7 @@ export type QueryGetInvitationArgs = {
 };
 
 
-export type QueryGetInvitationsArgs = {
+export type QueryGetInvitationsByEmailArgs = {
   email: Scalars['String']['input'];
 };
 
@@ -923,15 +943,6 @@ export type QueryGetSubscribersByNetworkArgs = {
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
-
-export enum Role_Type {
-  RoleAdmin = 'ROLE_ADMIN',
-  RoleInvalid = 'ROLE_INVALID',
-  RoleNetworkOwner = 'ROLE_NETWORK_OWNER',
-  RoleOwner = 'ROLE_OWNER',
-  RoleUser = 'ROLE_USER',
-  RoleVendor = 'ROLE_VENDOR'
-}
 
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
@@ -1127,6 +1138,7 @@ export type ToggleSimStatusInputDto = {
 };
 
 export type UpateInvitationInputDto = {
+  email: Scalars['String']['input'];
   id: Scalars['String']['input'];
   status: Invitation_Status;
 };
@@ -1635,17 +1647,10 @@ export type CreateInvitationMutationVariables = Exact<{
 
 export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
 
-export type GetInvitationsQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
+export type GetInvitationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
-
-export type InvitationsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
+export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type DeleteInvitationMutationVariables = Exact<{
   deleteInvitationId: Scalars['String']['input'];
@@ -1660,6 +1665,13 @@ export type UpdateInvitationMutationVariables = Exact<{
 
 
 export type UpdateInvitationMutation = { __typename?: 'Mutation', updateInvitation: { __typename?: 'UpdateInvitationResDto', id: string } };
+
+export type GetInvitationsByEmailQueryVariables = Exact<{
+  email: Scalars['String']['input'];
+}>;
+
+
+export type GetInvitationsByEmailQuery = { __typename?: 'Query', getInvitationsByEmail: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type GetCountriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4123,9 +4135,11 @@ export type CreateInvitationMutationHookResult = ReturnType<typeof useCreateInvi
 export type CreateInvitationMutationResult = Apollo.MutationResult<CreateInvitationMutation>;
 export type CreateInvitationMutationOptions = Apollo.BaseMutationOptions<CreateInvitationMutation, CreateInvitationMutationVariables>;
 export const GetInvitationsDocument = gql`
-    query GetInvitations($email: String!) {
-  getInvitations(email: $email) {
-    ...Invitation
+    query GetInvitations {
+  getInvitations {
+    invitations {
+      ...Invitation
+    }
   }
 }
     ${InvitationFragmentDoc}`;
@@ -4142,11 +4156,10 @@ export const GetInvitationsDocument = gql`
  * @example
  * const { data, loading, error } = useGetInvitationsQuery({
  *   variables: {
- *      email: // value for 'email'
  *   },
  * });
  */
-export function useGetInvitationsQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables> & ({ variables: GetInvitationsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetInvitationsQuery(baseOptions?: Apollo.QueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
       }
@@ -4162,47 +4175,6 @@ export type GetInvitationsQueryHookResult = ReturnType<typeof useGetInvitationsQ
 export type GetInvitationsLazyQueryHookResult = ReturnType<typeof useGetInvitationsLazyQuery>;
 export type GetInvitationsSuspenseQueryHookResult = ReturnType<typeof useGetInvitationsSuspenseQuery>;
 export type GetInvitationsQueryResult = Apollo.QueryResult<GetInvitationsQuery, GetInvitationsQueryVariables>;
-export const InvitationsDocument = gql`
-    query Invitations {
-  getInvitationsByOrg {
-    invitations {
-      ...Invitation
-    }
-  }
-}
-    ${InvitationFragmentDoc}`;
-
-/**
- * __useInvitationsQuery__
- *
- * To run a query within a React component, call `useInvitationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useInvitationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useInvitationsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useInvitationsQuery(baseOptions?: Apollo.QueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-      }
-export function useInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-        }
-export function useInvitationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-        }
-export type InvitationsQueryHookResult = ReturnType<typeof useInvitationsQuery>;
-export type InvitationsLazyQueryHookResult = ReturnType<typeof useInvitationsLazyQuery>;
-export type InvitationsSuspenseQueryHookResult = ReturnType<typeof useInvitationsSuspenseQuery>;
-export type InvitationsQueryResult = Apollo.QueryResult<InvitationsQuery, InvitationsQueryVariables>;
 export const DeleteInvitationDocument = gql`
     mutation DeleteInvitation($deleteInvitationId: String!) {
   deleteInvitation(id: $deleteInvitationId) {
@@ -4269,6 +4241,48 @@ export function useUpdateInvitationMutation(baseOptions?: Apollo.MutationHookOpt
 export type UpdateInvitationMutationHookResult = ReturnType<typeof useUpdateInvitationMutation>;
 export type UpdateInvitationMutationResult = Apollo.MutationResult<UpdateInvitationMutation>;
 export type UpdateInvitationMutationOptions = Apollo.BaseMutationOptions<UpdateInvitationMutation, UpdateInvitationMutationVariables>;
+export const GetInvitationsByEmailDocument = gql`
+    query GetInvitationsByEmail($email: String!) {
+  getInvitationsByEmail(email: $email) {
+    invitations {
+      ...Invitation
+    }
+  }
+}
+    ${InvitationFragmentDoc}`;
+
+/**
+ * __useGetInvitationsByEmailQuery__
+ *
+ * To run a query within a React component, call `useGetInvitationsByEmailQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvitationsByEmailQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvitationsByEmailQuery({
+ *   variables: {
+ *      email: // value for 'email'
+ *   },
+ * });
+ */
+export function useGetInvitationsByEmailQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables> & ({ variables: GetInvitationsByEmailQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+      }
+export function useGetInvitationsByEmailLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+        }
+export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+        }
+export type GetInvitationsByEmailQueryHookResult = ReturnType<typeof useGetInvitationsByEmailQuery>;
+export type GetInvitationsByEmailLazyQueryHookResult = ReturnType<typeof useGetInvitationsByEmailLazyQuery>;
+export type GetInvitationsByEmailSuspenseQueryHookResult = ReturnType<typeof useGetInvitationsByEmailSuspenseQuery>;
+export type GetInvitationsByEmailQueryResult = Apollo.QueryResult<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>;
 export const GetCountriesDocument = gql`
     query GetCountries {
   getCountries {

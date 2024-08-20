@@ -1,0 +1,82 @@
+# Subscriptions
+
+query GetNotifications($data: GetNotificationsInput!) {
+  getNotifications(data: $data) {
+    notifications {
+      id
+      type
+      scope
+      title
+      isRead
+      createdAt
+      description
+    }
+  }
+}
+
+subscription NotificationSubscription($data: GetNotificationsInput!) {
+  notificationSubscription(data: $data) {
+    id
+    type
+    scope
+    title
+    isRead
+    createdAt
+    description
+  }
+}
+
+query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      success
+      msg
+      orgId
+      nodeId
+      type
+      values
+    }
+  }
+}
+
+subscription GetMetricByTabSub(
+  $nodeId: String!
+  $orgId: String!
+  $type: GRAPHS_TYPE!
+  $userId: String!
+  $from: Float!
+) {
+  getMetricByTabSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
+    success
+    msg
+    orgId
+    nodeId
+    type
+    value
+  }
+}
+
+# query GetStatsMetric {
+#   getStatsMetric {
+#     activeSubscriber
+#     averageSignalStrength
+#     averageThroughput
+#   }
+# }
+
+# query GetLatestMetric($data: GetLatestMetricInput!) {
+#   getLatestMetric(data: $data) {
+#     success
+#     msg
+#     orgId
+#     nodeId
+#     type
+#     value
+#   }
+# }

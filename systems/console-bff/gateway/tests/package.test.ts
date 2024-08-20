@@ -1,9 +1,8 @@
 import { ApolloServer } from "@apollo/server";
-import { createClient } from "redis";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
-import { logger } from "../../common/logger";
+import { openStore } from "../../common/storage";
 import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../package/context";
@@ -29,11 +28,6 @@ const parsedHeaders = parseGatewayHeaders(headers);
 const { orgName } = parsedHeaders;
 
 const packageApi = new PackageApi();
-const redisClient = createClient().on("error", error => {
-  logger.error(
-    `Error creating redis for ${SUB_GRAPHS.package.name} service, Error: ${error}`
-  );
-});
 
 const createSchema = async () => {
   return await buildSchema({
@@ -56,11 +50,8 @@ const startServer = async () => {
 };
 
 const createContextValue = async () => {
-  const baseURL = await getBaseURL(
-    SUB_GRAPHS.package.name,
-    orgName,
-    redisClient.isOpen ? redisClient : null
-  );
+  const store = openStore();
+  const baseURL = await getBaseURL(SUB_GRAPHS.package.name, orgName, store);
   return {
     dataSources: { dataSource: packageApi },
     baseURL: baseURL.message,

@@ -5,8 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { NotificationsResDto } from '@/client/graphql/generated/metrics';
-import { formatTime } from '@/utils';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
 import { Circle, MoreHoriz } from '@mui/icons-material';
 import {
   Box,
@@ -17,14 +16,15 @@ import {
   Popover,
   Typography,
 } from '@mui/material';
+import { format } from 'date-fns';
 import { useState } from 'react';
 
 interface AlertBoxProps {
   alerts: NotificationsResDto[] | undefined;
-  onAlertRead: (index: number) => void;
+  handleNotificationRead: (id: string) => void;
 }
 
-const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
+const AlertBox = ({ alerts, handleNotificationRead }: AlertBoxProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -54,7 +54,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
       </Box>
       <Divider sx={{ margin: 0 }} />
       <List sx={{ padding: 0, margin: 0 }}>
-        {alerts?.map((alert: NotificationsResDto, index: number) => (
+        {alerts?.map((alert: NotificationsResDto) => (
           <Box key={alert.id} sx={{ margin: 0 }}>
             <ListItem
               alignItems="flex-start"
@@ -64,7 +64,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                 flexDirection: 'column',
                 alignItems: 'flex-start',
               }}
-              onClick={() => onAlertRead(index)}
+              onClick={() => handleNotificationRead(alert.id)}
             >
               <Box display="flex" alignItems="center" width="100%">
                 {!alert.isRead && (
@@ -78,7 +78,7 @@ const AlertBox = ({ alerts, onAlertRead }: AlertBoxProps) => {
                 </Typography>
                 <Box flexGrow={1} />
                 <Typography fontSize="12px" fontWeight="400">
-                  {formatTime(alert.createdAt)}
+                  {format(new Date(alert.createdAt), 'MM/dd hh:mm a')}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" width="100%">

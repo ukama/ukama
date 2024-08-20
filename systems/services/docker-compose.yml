@@ -20,7 +20,7 @@ services:
    PGADMIN_DEFAULT_EMAIL: user@domain.com
    PGADMIN_DEFAULT_PASSWORD: SuperSecret
   ports:
-   - '8090:80'
+   - 8090:80
   networks:
    - ukama-net
 

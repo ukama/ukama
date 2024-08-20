@@ -11,7 +11,6 @@ import { pubSub } from "./resolvers/pubsub";
 async function bootstrap() {
   const schema = await buildSchema({
     resolvers: resolvers,
-    // emitSchemaFile: path.resolve(__dirname, "schema.graphql"),
     pubSub,
   });
 
@@ -19,7 +18,7 @@ async function bootstrap() {
 
   const server = createServer(yoga);
 
-  server.listen(4000, () => {
+  server.listen(SUBSCRIPTIONS_PORT, () => {
     logger.info(
       `Server is running on http://localhost:${SUBSCRIPTIONS_PORT}/graphql`
     );

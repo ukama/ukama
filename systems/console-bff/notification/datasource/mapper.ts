@@ -8,6 +8,8 @@
 import {
   NotificationAPIRes,
   NotificationResDto,
+  NotificationsAPIRes,
+  NotificationsResDto,
   UpdateNotificationResDto,
 } from "../resolvers/types";
 
@@ -20,8 +22,27 @@ export const dtoToNotificationDto = (
     description: res.notification.description,
     type: res.notification.type,
     scope: res.notification.scope,
-    forRole: res.notification.for_role,
     createdAt: res.notification.created_at,
+    orgId: res.notification.org_id,
+    networkId: res.notification.network_id,
+    userId: res.notification.user_id,
+    subscriberId: res.notification.subscriber_id,
+  };
+};
+
+export const dtoToNotificationsDto = (
+  res: NotificationsAPIRes
+): NotificationsResDto => {
+  return {
+    notifications: res.notifications.map(notification => ({
+      id: notification.id,
+      title: notification.title,
+      description: notification.description,
+      type: notification.type,
+      scope: notification.scope,
+      isRead: notification.is_read,
+      createdAt: notification.created_at,
+    })),
   };
 };
 

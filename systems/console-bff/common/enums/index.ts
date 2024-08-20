@@ -160,3 +160,51 @@ export enum INVITATION_STATUS {
 registerEnumType(INVITATION_STATUS, {
   name: "INVITATION_STATUS",
 });
+
+export const NotificationScopeEnumValue = (e: number) => {
+  switch (e) {
+    case 0:
+      return NOTIFICATION_SCOPE.SCOPE_INVALID;
+    case 1:
+      return NOTIFICATION_SCOPE.SCOPE_OWNER;
+    case 2:
+      return NOTIFICATION_SCOPE.SCOPE_ORG;
+    case 3:
+      return NOTIFICATION_SCOPE.SCOPE_NETWORKS;
+    case 4:
+      return NOTIFICATION_SCOPE.SCOPE_NETWORK;
+    case 5:
+      return NOTIFICATION_SCOPE.SCOPE_SITES;
+    case 6:
+      return NOTIFICATION_SCOPE.SCOPE_SITE;
+    case 7:
+      return NOTIFICATION_SCOPE.SCOPE_SUBSCRIBERS;
+    case 8:
+      return NOTIFICATION_SCOPE.SCOPE_SUBSCRIBER;
+    case 9:
+      return NOTIFICATION_SCOPE.SCOPE_USERS;
+    case 10:
+      return NOTIFICATION_SCOPE.SCOPE_USER;
+    case 11:
+      return NOTIFICATION_SCOPE.SCOPE_NODE;
+    default:
+      return NOTIFICATION_SCOPE.SCOPE_INVALID;
+  }
+};
+
+export const NotificationTypeEnumValue = (e: number) => {
+  switch (e) {
+    case 0:
+      return NOTIFICATION_TYPE.NOTIF_INVALID;
+    case 1:
+      return NOTIFICATION_TYPE.NOTIF_INFO;
+    case 2:
+      return NOTIFICATION_TYPE.NOTIF_WARNING;
+    case 3:
+      return NOTIFICATION_TYPE.NOTIF_ERROR;
+    case 4:
+      return NOTIFICATION_TYPE.NOTIF_CRITICAL;
+    default:
+      return NOTIFICATION_TYPE.NOTIF_INVALID;
+  }
+};

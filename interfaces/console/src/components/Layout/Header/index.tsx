@@ -6,8 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Role_Type } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/metrics';
+import {
+  NotificationsResDto,
+  Role_Type,
+} from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -28,8 +30,8 @@ interface IHeaderProps {
   isOpen: boolean;
   isLoading: boolean;
   onNavigate: Function;
-  alerts: NotificationsResDto[] | undefined;
-  handleAlertRead: (index: number) => void;
+  notifications: NotificationsResDto[];
+  handleNotificationRead: (id: string) => void;
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -58,11 +60,11 @@ const AppBar = styled(MuiAppBar, {
 }));
 
 const Header = ({
-  onNavigate,
-  isLoading,
   isOpen,
-  alerts,
-  handleAlertRead,
+  isLoading,
+  onNavigate,
+  notifications,
+  handleNotificationRead,
 }: IHeaderProps) => {
   const { user } = useAppContext();
   const isManager =
@@ -100,7 +102,11 @@ const Header = ({
                 <ManageAccountsIcon />
               </IconButton>
             )}
-            <Alert alerts={alerts} handleAlertRead={handleAlertRead} />
+            {/* <NotificationSubscription /> */}
+            <Alert
+              alerts={notifications}
+              handleNotificationRead={handleNotificationRead}
+            />
             <AccountPopover />
           </Stack>
         </HorizontalContainerJustify>

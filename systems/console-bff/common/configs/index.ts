@@ -11,10 +11,6 @@ export const VERSION = process.env.VERSION ?? "v1";
 
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
-export const METRIC_API_GW = process.env.METRIC_API_GW ?? "";
-export const NOTIFICATION_API_GW = process.env.NOTIFICATION_API_GW ?? "";
-export const NOTIFICATION_API_GW_WS = process.env.NOTIFICATION_API_GW_WS ?? "";
-export const METRIC_API_GW_SOCKET = process.env.METRIC_API_GW_SOCKET ?? "";
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";
 export const INIT_API_GW = process.env.INIT_API_GW ?? "";
 export const INVENTORY_API_GW = process.env.INVENTORY_API_GW ?? "";
@@ -34,8 +30,6 @@ export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";
 export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const STRIP_SK = process.env.STRIP_SK ?? "";
-export const METRIC_PROMETHEUS = process.env.METRIC_PROMETHEUS ?? "";
-export const BFF_REDIS = process.env.BFF_REDIS ?? "redis://localhost:6379";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");

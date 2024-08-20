@@ -1,12 +1,11 @@
 import { ApolloServer } from "@apollo/server";
 import { faker } from "@faker-js/faker";
-import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { ROLE_TYPE } from "../../common/enums";
-import { logger } from "../../common/logger";
+import { openStore } from "../../common/storage";
 import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../member/context";
@@ -49,11 +48,6 @@ const createSchema = async () => {
   });
 };
 
-const redisClient = createClient().on("error", error => {
-  logger.error(
-    `Error creating redis for ${SUB_GRAPHS.member.name} service, Error: ${error}`
-  );
-});
 const memberApi = new MemberApi();
 
 const testMember = {
@@ -71,11 +65,8 @@ const startServer = async () => {
 };
 
 const createContextValue = async () => {
-  const baseURL = await getBaseURL(
-    SUB_GRAPHS.member.name,
-    orgName,
-    redisClient.isOpen ? redisClient : null
-  );
+  const store = openStore();
+  const baseURL = await getBaseURL(SUB_GRAPHS.member.name, orgName, store);
   return {
     dataSources: { dataSource: memberApi },
     baseURL: baseURL.message,

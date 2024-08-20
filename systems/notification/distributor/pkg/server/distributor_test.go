@@ -17,37 +17,28 @@ import (
 	"github.com/ukama/ukama/systems/common/notification"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
-	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/notification/distributor/mocks"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	pmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
-	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
 
 const testOrgName = "test-org"
 
 var testOrgId = uuid.NewV4().String()
 
-func InitClient(r providers.RegistryProvider, s providers.SubscriberProvider) Clients {
-	return Clients{
-		Registry:   r,
-		Subscriber: s,
-	}
-}
-
 func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	// Arrange
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	eNotify := &mocks.EventNotifyClientProvider{}
-	registry := &mocks.RegistryProvider{}
-	subscriber := &mocks.SubscriberProvider{}
+	nc := &cmocks.NetworkClient{}
+	mc := &cmocks.MemberClient{}
+	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
 	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
-
-	c := InitClient(registry, subscriber)
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -55,10 +46,13 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 		Scopes: []string{upb.NotificationScope_SCOPE_ORG.String()},
 	}
 
-	mresp := &mpb.MemberResponse{
-		Member: &mpb.Member{
-			UserId: req.UserId,
-			Role:   upb.RoleType_ROLE_OWNER,
+	mresp := &creg.MemberInfoResponse{
+		Member: creg.MemberInfo{
+			UserId:        req.UserId,
+			Role:          upb.RoleType_ROLE_OWNER.String(),
+			IsDeactivated: false,
+			MemberId:      uuid.NewV4().String(),
+			CreatedAt:     time.Now(),
 		},
 	}
 
@@ -73,7 +67,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 
 	ndb.On("Start").Return(nil).Once()
 
-	registry.On("GetMember", testOrgName, req.UserId).Return(mresp, nil).Once()
+	mc.On("GetByUserId", req.UserId).Return(mresp, nil).Once()
 
 	ndb.On("Register", testOrgId, "", "", req.UserId, []notification.NotificationScope{notification.SCOPE_ORG}).Return(sub.Id.String(), &sub).Once()
 
@@ -81,7 +75,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 
 	sS.On("Context").Return(context.WithTimeout(context.Background(), 10*time.Millisecond))
 
-	s := NewDistributorServer(c, ndb, testOrgName, testOrgId, eNotify)
+	s := NewDistributorServer(nc, mc, sc, ndb, testOrgName, testOrgId, eNotify)
 
 	// Act
 	err := s.GetNotificationStream(req, sS)
@@ -91,6 +85,6 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
 
-	registry.AssertExpectations(t)
+	mc.AssertExpectations(t)
 	ndb.AssertExpectations(t)
 }

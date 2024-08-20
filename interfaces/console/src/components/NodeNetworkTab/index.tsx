@@ -6,7 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type, MetricsRes } from '@/client/graphql/generated/metrics';
+import {
+  Graphs_Type,
+  MetricsRes,
+} from '@/client/graphql/generated/subscriptions';
 import { TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';

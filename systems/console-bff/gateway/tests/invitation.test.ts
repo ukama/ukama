@@ -1,11 +1,10 @@
 import { ApolloServer } from "@apollo/server";
-import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { INVITATION_STATUS } from "../../common/enums";
-import { logger } from "../../common/logger";
+import { openStore } from "../../common/storage";
 import { THeaders } from "../../common/types";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import { Context } from "../../invitation/context";
@@ -13,8 +12,8 @@ import InvitationApi from "../../invitation/datasource/invitation_api";
 import { CreateInvitationResolver } from "../../invitation/resolver/createInvitation";
 import { DeleteInvitationResolver } from "../../invitation/resolver/deleteInvitation";
 import { GetInvitationResolver } from "../../invitation/resolver/getInvitation";
-import { GetInVitationsByOrgResolver } from "../../invitation/resolver/getInvitationByOrg";
 import { GetInvitationsResolver } from "../../invitation/resolver/getInvitations";
+import { GetInVitationsByEmailResolver } from "../../invitation/resolver/getInvitationsByEmail";
 import { UpdateInvitationResolver } from "../../invitation/resolver/updateInvitation";
 import {
   CREATE_INVITATION,
@@ -41,18 +40,12 @@ const createSchema = async () => {
       DeleteInvitationResolver,
       GetInvitationResolver,
       GetInvitationsResolver,
-      GetInVitationsByOrgResolver,
+      GetInVitationsByEmailResolver,
       UpdateInvitationResolver,
     ],
     validate: true,
   });
 };
-
-const redisClient = createClient().on("error", error => {
-  logger.error(
-    `Error creating redis for ${SUB_GRAPHS.invitation.name} service, Error: ${error}`
-  );
-});
 
 const invitationAPi = new InvitationApi();
 let invitationId = "";
@@ -72,11 +65,8 @@ const startServer = async () => {
 };
 
 const createContextValue = async () => {
-  const baseURL = await getBaseURL(
-    SUB_GRAPHS.invitation.name,
-    orgName,
-    redisClient.isOpen ? redisClient : null
-  );
+  const store = openStore();
+  const baseURL = await getBaseURL(SUB_GRAPHS.invitation.name, orgName, store);
   return {
     dataSources: {
       dataSource: invitationAPi,

@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
@@ -15,11 +16,22 @@ import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "../../user/resolver/types";
-import { InitSystemAPIResDto, ValidateSessionRes } from "../resolver/types";
-import { dtoToSystenResDto } from "./mapper";
+import {
+  InitSystemAPIResDto,
+  OrgsNameRes,
+  ValidateSessionRes,
+} from "../resolver/types";
+import { dtoToOrgsNameResDto, dtoToSystenResDto } from "./mapper";
 
 class InitAPI extends RESTDataSource {
   baseURL = INIT_API_GW;
+
+  getOrgs = async (): Promise<OrgsNameRes> => {
+    this.logger.info(`GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs`);
+    return this.get(`/${VERSION}/orgs`, {}).then(res =>
+      dtoToOrgsNameResDto(res)
+    );
+  };
 
   getSystem = async (
     orgName: string,
@@ -34,7 +46,10 @@ class InitAPI extends RESTDataSource {
     ).then(res => dtoToSystenResDto(res));
   };
 
-  validateSession = async (cookies: string): Promise<ValidateSessionRes> => {
+  validateSession = async (
+    store: RootDatabase,
+    cookies: string
+  ): Promise<ValidateSessionRes> => {
     this.logger.info(
       `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
     );
@@ -83,7 +98,7 @@ class InitAPI extends RESTDataSource {
           : "";
 
       if (orgId && orgName) {
-        const baseURL = await getBaseURL("member", orgName, null);
+        const baseURL = await getBaseURL("member", orgName, store);
         if (baseURL.status === 200) {
           const member = await memberAPI.getMemberByUserId(
             baseURL.message,

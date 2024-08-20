@@ -49,7 +49,7 @@ func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notificat
 
 func (r *userNotificationRepo) Update(id uuid.UUID, isRead bool) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&UserNotification{}).Where("id = ?", id).Update("is_read", isRead).Error; err != nil {
+		if err := tx.Model(&UserNotification{}).Where("notification_id = ?", id).Update("is_read", isRead).Error; err != nil {
 			return err
 		}
 

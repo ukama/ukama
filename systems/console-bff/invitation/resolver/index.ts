@@ -10,15 +10,15 @@ import { NonEmptyArray } from "type-graphql";
 import { CreateInvitationResolver } from "./createInvitation";
 import { DeleteInvitationResolver } from "./deleteInvitation";
 import { GetInvitationResolver } from "./getInvitation";
-import { GetInVitationsByOrgResolver } from "./getInvitationByOrg";
 import { GetInvitationsResolver } from "./getInvitations";
+import { GetInVitationsByEmailResolver } from "./getInvitationsByEmail";
 import { UpdateInvitationResolver } from "./updateInvitation";
 
 const resolvers: NonEmptyArray<any> = [
   GetInvitationsResolver,
   CreateInvitationResolver,
   GetInvitationResolver,
-  GetInVitationsByOrgResolver,
+  GetInVitationsByEmailResolver,
   DeleteInvitationResolver,
   UpdateInvitationResolver,
 ];

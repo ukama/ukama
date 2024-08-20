@@ -5,32 +5,34 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { kvsLocalStorage } from "@kvs/node-localstorage";
+import { RootDatabase, open } from "lmdb";
 
 import { STORAGE_KEY } from "../configs";
 
-const storeInStorage = async (key: string, value: any) => {
-  const storageKeyValue = await kvsLocalStorage({
-    name: STORAGE_KEY,
-    version: 1,
+const openStore = (): RootDatabase => {
+  return open({
+    path: STORAGE_KEY,
+    compression: true,
   });
-  await storageKeyValue.set(key, value);
 };
 
-const retriveFromStorage = async (key: string): Promise<any> => {
-  const storageKeyValue = await kvsLocalStorage({
-    name: STORAGE_KEY,
-    version: 1,
-  });
-  return await storageKeyValue.get(key);
+const addInStore = async (
+  store: RootDatabase,
+  key: string,
+  value: any
+): Promise<boolean> => {
+  return await store.put(key, value);
 };
 
-const removeKeyFromStorage = async (key: string) => {
-  const storageKeyValue = await kvsLocalStorage({
-    name: STORAGE_KEY,
-    version: 1,
-  });
-  await storageKeyValue.delete(key);
+const getFromStore = async (store: RootDatabase, key: string) => {
+  return await store.get(key);
 };
 
-export { removeKeyFromStorage, retriveFromStorage, storeInStorage };
+const removeFromStore = async (
+  store: RootDatabase,
+  key: string
+): Promise<boolean> => {
+  return await store.remove(key);
+};
+
+export { addInStore, getFromStore, openStore, removeFromStore };

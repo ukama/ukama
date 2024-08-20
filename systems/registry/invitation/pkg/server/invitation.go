@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -122,7 +123,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		Id:        invitationId,
 		Name:      req.GetName(),
 		Link:      link,
-		Email:     req.GetEmail(),
+		Email:     strings.ToLower(req.GetEmail()),
 		Role:      roles.RoleType(req.Role),
 		ExpiresAt: expiry,
 		Status:    db.Pending,
@@ -142,7 +143,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		evt := &epb.EventInvitationCreated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
-			Email:     invite.Email,
+			Email:     strings.ToLower(req.GetEmail()),
 			Name:      invite.Name,
 			Role:      uTypes.RoleType(invite.Role),
 			Status:    uTypes.InvitationStatus(invite.Status),
@@ -208,6 +209,22 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			"invalid format of invitation uuid. Error %s", err.Error())
 	}
 
+	userInfo, err := i.userClient.GetByEmail(req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	uuuid, err := uuid.FromString(userInfo.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of invitation uuid. Error %s", err.Error())
+	}
+
+	err = i.iRepo.UpdateUserId(iuuid, uuuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invitation")
+	}
+
 	err = i.iRepo.UpdateStatus(iuuid, uint8(req.GetStatus().Number()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invitation")
@@ -220,6 +237,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
+		log.Infof("Route %s", route)
 		evt := &epb.EventInvitationUpdated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
@@ -227,7 +245,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			Name:      invite.Name,
 			Role:      upb.RoleType(invite.Role),
 			Status:    uTypes.InvitationStatus(invite.Status),
-			UserId:    invite.UserId,
+			UserId:    userInfo.Id,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
 		err = i.msgbus.PublishRequest(route, evt)
