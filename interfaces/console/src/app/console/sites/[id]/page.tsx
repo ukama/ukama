@@ -8,25 +8,26 @@
 'use client';
 
 import {
+  Component_Type,
+  SiteDto,
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetSitesQuery,
-  SiteDto,
   useGetSiteLazyQuery,
+  useGetSitesQuery,
 } from '@/client/graphql/generated';
-import SiteOverallHealth from '@/components/SiteHealth';
-import SiteDetailsHeader from '@/components/SiteDetailsHeader';
-import { AlertColor, Grid, Box, Paper, Skeleton } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import SiteInfo from '@/components/SiteInfos';
-import { useRouter } from 'next/navigation';
-import { useAppContext } from '@/context';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import SiteDetailsHeader from '@/components/SiteDetailsHeader';
+import SiteOverallHealth from '@/components/SiteHealth';
+import SiteInfo from '@/components/SiteInfos';
+import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
-import { formatISO } from 'date-fns';
 import { useFetchAddress } from '@/utils/useFetchAddress';
+import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
+import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -230,7 +231,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   });
 
   useEffect(() => {
-    getComponents({ variables: { category: 'switch' } });
+    getComponents({
+      variables: {
+        data: {
+          category: Component_Type.All,
+        },
+      },
+    });
   }, []);
 
   useEffect(() => {

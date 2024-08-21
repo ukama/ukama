@@ -8,6 +8,7 @@
 'use client';
 
 import {
+  Component_Type,
   SiteDto,
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
@@ -159,7 +160,13 @@ const Sites = () => {
         ...site,
         network: network.id,
       });
-    getComponents({ variables: { category: 'switch' } });
+    getComponents({
+      variables: {
+        data: {
+          category: Component_Type.All,
+        },
+      },
+    });
   }, []);
 
   const handleSiteConfigOpen = () => {

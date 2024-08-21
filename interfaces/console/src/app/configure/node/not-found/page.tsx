@@ -9,8 +9,8 @@ const NodeNotFoundPage = () => {
       <Stack direction={'column'} spacing={2}>
         <Typography variant="h6">No new node found!</Typography>
         <Typography variant="body1">
-          Please check that your node is On. If it's On you'll get notification
-          when it get online and ready to configure.
+          Please check that your node is On. If it&#39;s On you&#39;ll get
+          notification when it get online and ready to configure.
         </Typography>
         <Button
           variant="contained"

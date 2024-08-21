@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from "type-graphql";
+
 import { COMPONENT_TYPE } from "../../common/enums";
 
 @ObjectType()
