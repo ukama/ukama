@@ -329,7 +329,10 @@ const Page = ({ params }: IPage) => {
                         alignSelf: 'end',
                         mt: '0px !important',
                       }}
-                      onClick={() => setIsCreateNetwork(!isCreateNetwork)}
+                      onClick={() => {
+                        formik.setFieldValue('name', '');
+                        setIsCreateNetwork(!isCreateNetwork);
+                      }}
                     >
                       {isCreateNetwork
                         ? 'Choose existing network'
