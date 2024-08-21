@@ -161,6 +161,18 @@ registerEnumType(INVITATION_STATUS, {
   name: "INVITATION_STATUS",
 });
 
+export enum COMPONENT_TYPE {
+  ALL = "ALL",
+  ACCESS = "ACCESS",
+  BACKHAUL = "BACKHAUL",
+  POWER = "POWER",
+  SWITCH = "SWITCH",
+  SPECTRUM = "SPECTRUM",
+}
+registerEnumType(COMPONENT_TYPE, {
+  name: "COMPONENT_TYPE",
+});
+
 export const NotificationScopeEnumValue = (e: number) => {
   switch (e) {
     case 0:

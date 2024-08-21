@@ -2,19 +2,17 @@
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
-import { useFetchAddress } from '@/utils/useFetchAddress';
 import {
   Button,
   Divider,
   Paper,
-  Skeleton,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { FormikProvider, FormikValues, useFormik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as Yup from 'yup';
 
 const validationSchema = Yup.object({
@@ -38,7 +36,7 @@ const SiteName = ({ params }: ISiteName) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const address = searchParams.get('address') ?? '';
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -53,25 +51,8 @@ const SiteName = ({ params }: ISiteName) => {
     parseFloat(qpLat),
     parseFloat(qpLng),
   ]);
-  const {
-    address,
-    isLoading: addressLoading,
-    fetchAddress,
-  } = useFetchAddress();
-
-  useEffect(() => {
-    if (latlng[0] !== 0 && latlng[1] !== 0) handleFetchAddress();
-  }, [latlng]);
-
-  useEffect(() => {
-    if (address) setIsLoading(false);
-  }, [address]);
 
   const handleBack = () => router.back();
-
-  const handleFetchAddress = async () => {
-    await fetchAddress(latlng[0], latlng[1]);
-  };
 
   const handleSubmit = (values: FormikValues) => {
     router.push(
@@ -94,15 +75,11 @@ const SiteName = ({ params }: ISiteName) => {
               Please name your recently created site for ease of reference.
             </Typography>
 
-            {isLoading || addressLoading ? (
-              <Skeleton variant="rounded" width={'100%'} height={128} />
-            ) : (
-              <SiteMapComponent
-                posix={[latlng[0], latlng[1]]}
-                address={address}
-                height={'128px'}
-              />
-            )}
+            <SiteMapComponent
+              posix={[latlng[0], latlng[1]]}
+              address={address}
+              height={'128px'}
+            />
 
             <LField label="Site Location" value={address} />
             <Divider sx={{ marginBottom: '8px !important' }} />

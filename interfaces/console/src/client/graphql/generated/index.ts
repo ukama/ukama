@@ -23,8 +23,9 @@ export type AddMemberInputDto = {
 };
 
 export type AddNetworkInputDto = {
-  budget: Scalars['Float']['input'];
+  budget?: InputMaybe<Scalars['Float']['input']>;
   countries?: InputMaybe<Array<Scalars['String']['input']>>;
+  isDefault?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   networks?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -137,6 +138,15 @@ export type CBooleanResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export enum Component_Type {
+  Access = 'ACCESS',
+  All = 'ALL',
+  Backhaul = 'BACKHAUL',
+  Power = 'POWER',
+  Spectrum = 'SPECTRUM',
+  Switch = 'SWITCH'
+}
+
 export type ComponentDto = {
   __typename?: 'ComponentDto';
   category: Scalars['String']['output'];
@@ -152,6 +162,10 @@ export type ComponentDto = {
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
   warranty: Scalars['Float']['output'];
+};
+
+export type ComponentTypeInputDto = {
+  category: Component_Type;
 };
 
 export type ComponentsResDto = {
@@ -806,7 +820,7 @@ export type QueryGetComponentByIdArgs = {
 
 
 export type QueryGetComponentsByUserIdArgs = {
-  category: Scalars['String']['input'];
+  data: ComponentTypeInputDto;
 };
 
 
@@ -1595,6 +1609,8 @@ export type SetDefaultNetworkMutationVariables = Exact<{
 
 export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
 
+export type USiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string };
+
 export type GetSiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
 }>;
@@ -1624,6 +1640,8 @@ export type UpdateSiteMutationVariables = Exact<{
 
 export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'SiteDto', name: string } };
 
+export type UComponentFragment = { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string };
+
 export type GetComponentByIdQueryVariables = Exact<{
   componentId: Scalars['String']['input'];
 }>;
@@ -1632,11 +1650,11 @@ export type GetComponentByIdQueryVariables = Exact<{
 export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
 
 export type GetComponentsByUserIdQueryVariables = Exact<{
-  category: Scalars['String']['input'];
+  data: ComponentTypeInputDto;
 }>;
 
 
-export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, category: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
+export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
 export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
@@ -1911,6 +1929,41 @@ export const UNetworkFragmentDoc = gql`
   createdAt
   countries
   networks
+}
+    `;
+export const USiteFragmentDoc = gql`
+    fragment USite on SiteDto {
+  id
+  name
+  networkId
+  backhaulId
+  powerId
+  accessId
+  spectrumId
+  switchId
+  isDeactivated
+  latitude
+  longitude
+  installDate
+  createdAt
+  location
+}
+    `;
+export const UComponentFragmentDoc = gql`
+    fragment UComponent on ComponentDto {
+  id
+  inventoryId
+  type
+  userId
+  description
+  category
+  datasheetUrl
+  imageUrl
+  partNumber
+  manufacturer
+  managed
+  warranty
+  specification
 }
     `;
 export const InvitationFragmentDoc = gql`
@@ -3810,23 +3863,10 @@ export type SetDefaultNetworkMutationOptions = Apollo.BaseMutationOptions<SetDef
 export const GetSiteDocument = gql`
     query getSite($siteId: String!) {
   getSite(siteId: $siteId) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 
 /**
  * __useGetSiteQuery__
@@ -3863,23 +3903,10 @@ export type GetSiteQueryResult = Apollo.QueryResult<GetSiteQuery, GetSiteQueryVa
 export const AddSiteDocument = gql`
     mutation addSite($data: AddSiteInputDto!) {
   addSite(data: $data) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 export type AddSiteMutationFn = Apollo.MutationFunction<AddSiteMutation, AddSiteMutationVariables>;
 
 /**
@@ -3910,24 +3937,11 @@ export const GetSitesDocument = gql`
     query getSites($networkId: String!) {
   getSites(networkId: $networkId) {
     sites {
-      id
-      name
-      networkId
-      backhaulId
-      powerId
-      accessId
-      spectrumId
-      switchId
-      isDeactivated
-      latitude
-      longitude
-      installDate
-      createdAt
-      location
+      ...USite
     }
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 
 /**
  * __useGetSitesQuery__
@@ -3998,22 +4012,10 @@ export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMut
 export const GetComponentByIdDocument = gql`
     query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
-    id
-    inventoryId
-    type
-    userId
-    description
-    category
-    datasheetUrl
-    imageUrl
-    partNumber
-    manufacturer
-    managed
-    warranty
-    specification
+    ...UComponent
   }
 }
-    `;
+    ${UComponentFragmentDoc}`;
 
 /**
  * __useGetComponentByIdQuery__
@@ -4048,26 +4050,14 @@ export type GetComponentByIdLazyQueryHookResult = ReturnType<typeof useGetCompon
 export type GetComponentByIdSuspenseQueryHookResult = ReturnType<typeof useGetComponentByIdSuspenseQuery>;
 export type GetComponentByIdQueryResult = Apollo.QueryResult<GetComponentByIdQuery, GetComponentByIdQueryVariables>;
 export const GetComponentsByUserIdDocument = gql`
-    query getComponentsByUserId($category: String!) {
-  getComponentsByUserId(category: $category) {
+    query GetComponentsByUserId($data: ComponentTypeInputDto!) {
+  getComponentsByUserId(data: $data) {
     components {
-      id
-      inventoryId
-      type
-      userId
-      description
-      datasheetUrl
-      imageUrl
-      partNumber
-      category
-      manufacturer
-      managed
-      warranty
-      specification
+      ...UComponent
     }
   }
 }
-    `;
+    ${UComponentFragmentDoc}`;
 
 /**
  * __useGetComponentsByUserIdQuery__
@@ -4081,7 +4071,7 @@ export const GetComponentsByUserIdDocument = gql`
  * @example
  * const { data, loading, error } = useGetComponentsByUserIdQuery({
  *   variables: {
- *      category: // value for 'category'
+ *      data: // value for 'data'
  *   },
  * });
  */

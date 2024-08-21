@@ -35,7 +35,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   }, [latlng]);
 
   useEffect(() => {
-    if (address) setIsLoading(false);
+    if (address) {
+      setQueryParam('address', address);
+      setIsLoading(false);
+    }
   }, [address]);
 
   const handleFetchAddress = async () => {
@@ -44,8 +47,17 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
 
   const handleBack = () => router.back();
 
-  const handleNext = () =>
-    router.push(`/configure/node/${id}/site?${searchParams.toString()}`);
+  const setQueryParam = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(key, value);
+    window.history.pushState(null, '', `?${params.toString()}`);
+  };
+
+  const handleNext = () => {
+    if (address) {
+      router.push(`/configure/node/${id}/site?${searchParams.toString()}`);
+    }
+  };
 
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>

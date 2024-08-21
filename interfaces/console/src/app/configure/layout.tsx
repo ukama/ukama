@@ -1,4 +1,5 @@
 'use client';
+import AppSnackbar from '@/components/AppSnackbar/page';
 import { CenterContainer } from '@/styles/global';
 import GradientWrapper from '@/wrappers/gradiantWrapper';
 
@@ -10,6 +11,7 @@ const ConfigureLayout = ({
   return (
     <CenterContainer>
       <GradientWrapper>{children}</GradientWrapper>
+      <AppSnackbar />
     </CenterContainer>
   );
 };

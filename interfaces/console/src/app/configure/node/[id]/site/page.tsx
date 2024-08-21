@@ -1,5 +1,8 @@
 'use client';
-import { useGetComponentsByUserIdQuery } from '@/client/graphql/generated';
+import {
+  Component_Type,
+  useGetComponentsByUserIdQuery,
+} from '@/client/graphql/generated';
 import { LField } from '@/components/Welcome';
 import { useAppContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
@@ -48,7 +51,12 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   const { setSnackbarMessage } = useAppContext();
 
   const { data: componentsData } = useGetComponentsByUserIdQuery({
-    variables: { category: 'switch' },
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        category: Component_Type.All,
+      },
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'components-msg',

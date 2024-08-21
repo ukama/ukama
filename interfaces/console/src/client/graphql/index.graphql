@@ -603,60 +603,42 @@ mutation SetDefaultNetwork($data: SetDefaultNetworkInputDto!) {
     success
   }
 }
+
+### Networks End ###
+
+### Site Start ###
+fragment USite on SiteDto {
+  id
+  name
+  networkId
+  backhaulId
+  powerId
+  accessId
+  spectrumId
+  switchId
+  isDeactivated
+  latitude
+  longitude
+  installDate
+  createdAt
+  location
+}
+
 query getSite($siteId: String!) {
   getSite(siteId: $siteId) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
 mutation addSite($data: AddSiteInputDto!) {
   addSite(data: $data) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
 
 query getSites($networkId: String!) {
   getSites(networkId: $networkId) {
     sites {
-      id
-      name
-      networkId
-      backhaulId
-      powerId
-      accessId
-      spectrumId
-      switchId
-      isDeactivated
-      latitude
-      longitude
-      installDate
-      createdAt
-      location
+      ...USite
     }
   }
 }
@@ -667,45 +649,41 @@ mutation updateSite($siteId: String!, $data: UpdateSiteInputDto!) {
   }
 }
 
+### Site End ###
+
+### Component Start ###
+
+fragment UComponent on ComponentDto {
+  id
+  inventoryId
+  type
+  userId
+  description
+  category
+  datasheetUrl
+  imageUrl
+  partNumber
+  manufacturer
+  managed
+  warranty
+  specification
+}
+
 query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
-    id
-    inventoryId
-    type
-    userId
-    description
-    category
-    datasheetUrl
-    imageUrl
-    partNumber
-    manufacturer
-    managed
-    warranty
-    specification
+    ...UComponent
   }
 }
 
-query getComponentsByUserId($category: String!) {
-  getComponentsByUserId(category: $category) {
+query GetComponentsByUserId($data: ComponentTypeInputDto!) {
+  getComponentsByUserId(data: $data) {
     components {
-      id
-      inventoryId
-      type
-      userId
-      description
-      datasheetUrl
-      imageUrl
-      partNumber
-      category
-      manufacturer
-      managed
-      warranty
-      specification
+      ...UComponent
     }
   }
 }
 
-### Networks End ###
+### Component End ###
 
 # PLANNING TOOL GRAPH
 # fragment location on Location {
