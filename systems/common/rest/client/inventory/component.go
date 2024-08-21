@@ -17,7 +17,7 @@ type ComponentInfo struct {
 	Id            uuid.UUID `json:"id,omitempty"`
 	Inventory     string    `json:"inventory,omitempty"`
 	UserId        string    `json:"user_id,omitempty"`
-	Category      uint8     `json:"category"`
+	Category      string    `json:"category"`
 	Type          string    `json:"type,omitempty"`
 	Description   string    `json:"description,omitempty"`
 	DatasheetURL  string    `json:"datasheet_url,omitempty"`
