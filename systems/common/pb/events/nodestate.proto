@@ -12,14 +12,15 @@
  
  package ukama.events.v1;
  
- /* Node state change event */
- message NodeStateChangeEvent {
+ message EventNodeStateUpdate {
      string node_id = 1;
-     string old_state = 2;
-     string new_state = 3;
-     string old_connectivity = 4;
-     string new_connectivity = 5;
-     int64 last_heartbeat = 6;
-     string type = 7;
-     string version = 8;
+     string current_state = 2;
+     string connectivity = 4;
+     string last_state_change = 5;
+ }
+ 
+ message EventNodeConnectivityUpdate {
+     string node_id = 1;
+     string connectivity = 2;
+     string last_state_change = 5;
  }

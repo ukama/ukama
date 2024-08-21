@@ -135,31 +135,7 @@ func (n *NodeStateEventServer) handleRegistryNodeAddEvent(key string, msg *epb.N
 	return nil
 }
 
-// func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
-// 	log.Infof("Keys %s and Proto is: %+v", key, msg)
-// 	nId, err := ukama.ValidateNodeId(msg.NodeId)
-// 	if err != nil {
-// 		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
-// 		return err
-// 	}
-// 	state, err := n.s.sRepo.GetByNodeId(nId)
-// 	if err != nil {
-// 		log.Errorf("Error getting node %s from Nodestate repo. Error: %+v", msg.NodeId, err)
-// 		return err
-// 	}
 
-// 	now := time.Now()
-// 	state.Connectivity = db.Online
-// 	state.LastHeartbeat = now
-
-// 	err = n.s.sRepo.Update(state)
-// 	if err != nil {
-// 		log.Errorf("Error updating node %s in Nodestate repo. Error: %+v", msg.NodeId, err)
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 func (n *NodeStateEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)

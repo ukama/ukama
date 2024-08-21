@@ -13,6 +13,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
@@ -118,6 +119,36 @@ func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*
 
 	if state.CurrentState != existingState.CurrentState {
 		state.LastStateChange = now
+
+		// Publish event for state change
+		if s.msgbus != nil {
+			route := s.stateRoutingKey.SetActionUpdate().SetObject("state").MustBuild()
+			evt := &epb.EventNodeStateUpdate{
+				NodeId:         state.NodeId,
+				CurrentState:   pb.NodeStateEnum(state.CurrentState).String(),
+				Connectivity:   pb.Connectivity(state.Connectivity).String(),
+				LastStateChange: timestamppb.New(state.LastStateChange).String(),
+			}
+			err = s.msgbus.PublishRequest(route, evt)
+			if err != nil {
+				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			}
+		}
+	}
+
+	if state.Connectivity != existingState.Connectivity {
+		// Publish event for connectivity change
+		if s.msgbus != nil {
+			route := s.stateRoutingKey.SetActionUpdate().SetObject("connectivity").MustBuild()
+			evt := &epb.EventNodeConnectivityUpdate{
+				NodeId:       state.NodeId,
+				Connectivity: pb.Connectivity(state.Connectivity).String(),
+			}
+			err = s.msgbus.PublishRequest(route, evt)
+			if err != nil {
+				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			}
+		}
 	}
 
 	err = s.sRepo.Update(state)
