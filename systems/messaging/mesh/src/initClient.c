@@ -6,58 +6,59 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-/* Functions related to calling initClient */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <jansson.h>
 #include <curl/curl.h>
 
+#include "httpStatus.h"
 #include "initClient.h"
 #include "jserdes.h"
 #include "config.h"
 #include "log.h"
-
-#define EP_SYSTEMS "systems"
-#define QUERY_KEY  "name"
 
 struct Response {
 	char *buffer;
 	size_t size;
 };
 
-/* Function def. */
-static char *create_url(char *host, char *port, char *systemName);
+static char *create_url(char *systemName);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 								void *userp);
 static long send_request_to_initClient(char *url, struct Response *response);
 static int process_response_from_initClient(char *response,
-											char **host, char **port);
+											char **host,
+                                            int *port);
 
-/*
- * create_url --
- *
- */
-static char *create_url(char *host, char *port, char *systemName) {
+static char *create_url(char *systemName) {
 
 	char *url=NULL;
+    char *initSystemHost=NULL;
+    char *initSystemPort=NULL;
+    char *orgName=NULL;
 
-	if (host == NULL || port == NULL || systemName == NULL) return NULL;
+    initSystemHost = getenv(ENV_INIT_SYSTEM_ADDR);
+    initSystemPort = getenv(ENV_INIT_SYSTEM_PORT);
+    orgName        = getenv(ENV_SYSTEM_ORG);
 
-	url = (char *)malloc(MAX_URL_LEN);
+    if (initSystemHost == NULL ||
+        initSystemPort == NULL ||
+        orgName        == NULL ||
+        systemName     == NULL) return;
+
+	url = (char *)calloc(MAX_URL_LEN, sizeof(char));
 	if (url) {
-		sprintf(url, "%s:%s/%s?%s=%s", host, port, EP_SYSTEMS,
-				QUERY_KEY, systemName);
+		sprintf(url, "http://%s:%s/v1/orgs/%s/systems/%s",
+                initSystemHost,
+                initSystemPort,
+                orgName,
+                systemName);
 	}
 
 	return url;
 }
 
-/*
- * response_callback --
- *
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 								void *userp) {
 
@@ -79,12 +80,9 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * process_response_from_initClient --
- *
- */
 static int process_response_from_initClient(char *response,
-											char **host, char **port) {
+											char **host,
+                                            int *port) {
 
 	int ret=FALSE;
 	json_t *json=NULL;
@@ -107,7 +105,7 @@ static int process_response_from_initClient(char *response,
 	}
 
 	*host = strdup(systemInfo->ip);
-	*port = strdup(systemInfo->port);
+	*port = systemInfo->port;
 	ret = TRUE;
 	
  done:
@@ -116,10 +114,6 @@ static int process_response_from_initClient(char *response,
 	return ret;
 }
 
-/*
- * send_request_to_initClient --
- *
- */
 static long send_request_to_initClient(char *url, struct Response *response) {
 
 	long resCode=0;
@@ -164,31 +158,26 @@ static long send_request_to_initClient(char *url, struct Response *response) {
 	return resCode;
 }
 
-/*
- *
- * get_systemInfo_from_initClient --
- *
- */
-int get_systemInfo_from_initClient(char *systemName, char **systemHost,
-                                   char **systemPort) {
+int get_systemInfo_from_initClient(char *systemName,
+                                   char **systemHost,
+                                   int *systemPort) {
 
 	int ret=FALSE;
-	char *url=NULL, *initClientHost=NULL, *initClientPort=NULL;
+	char *url=NULL;
 	struct Response response;
+
+    *systemHost = NULL;
+    *systemPort = 0;
 
 	if (systemName == NULL) return FALSE;
 
-	*systemHost = NULL;
-	*systemPort = NULL;
-    initClientHost = getenv(ENV_INIT_CLIENT_ADDR);
-    initClientPort = getenv(ENV_INIT_CLIENT_PORT);
+    url = create_url(systemName);
+    if (url == NULL) return FALSE;
 
-	url = create_url(initClientHost, initClientPort, systemName);
-
-	if (send_request_to_initClient(url, &response) == 200) {
+	if (send_request_to_initClient(url, &response) == HttpStatus_OK) {
 		if (process_response_from_initClient(response.buffer,
                                              systemHost, systemPort)) {
-			log_debug("Recevied info from initClient: host %s port %s",
+			log_debug("Recevied info from initClient: host %s port %d",
 					  *systemHost, *systemPort);
 		} else {
 			log_error("Unable to receive info from init");
@@ -207,20 +196,14 @@ int get_systemInfo_from_initClient(char *systemName, char **systemHost,
 	return ret;
 }
 
-/*
- * free_system_info --
- *
- */
 void free_system_info(SystemInfo *systemInfo) {
 
 	if (systemInfo == NULL) return;
 
-	if (systemInfo->systemName)  free(systemInfo->systemName);
-	if (systemInfo->systemId)    free(systemInfo->systemId);
-	if (systemInfo->certificate) free(systemInfo->certificate);
-	if (systemInfo->ip)          free(systemInfo->ip);
-	if (systemInfo->port)        free(systemInfo->port);
-	if (systemInfo->health)      free(systemInfo->health);
+	free(systemInfo->systemName);
+    free(systemInfo->systemId);
+    free(systemInfo->certificate);
+    free(systemInfo->ip);
 
 	free(systemInfo);
 }

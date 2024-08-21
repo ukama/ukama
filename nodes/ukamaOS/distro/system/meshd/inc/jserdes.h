@@ -49,11 +49,9 @@
 #define JSON_VALUE "value"
 #define JSON_LEN   "len"
 
-/* Function headers. */
 int serialize_local_service_response(char **response, Message *message,
                                      int code, int len, char *data);
-int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *nodePort, char *agent, char *sourcePort);
+int serialize_websocket_message(char **str, URequest *request, char *uuid);
 int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);
 int deserialize_websocket_message(Message **message, json_t *json);

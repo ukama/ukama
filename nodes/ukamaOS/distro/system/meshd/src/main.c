@@ -141,7 +141,7 @@ int main (int argc, char *argv[]) {
 	struct _websocket_client_handler websocketHandler = {NULL, NULL};
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //    usys_log_remote_init(SERVICE_NAME);
 
     state = (State *)calloc(1, sizeof(State));
     if (state == NULL) {

@@ -23,14 +23,16 @@ typedef struct systemInfo_ {
 
 	char *systemName;
 	char *systemId;
+    char *orgName;
 	char *certificate;
 	char *ip;
-	char *port;
-	char *health;
+	int  port;
+	int  health;
 } SystemInfo;
 
 int get_systemInfo_from_initClient(char *systemName,
-                                   char **systemHost, char **systemPort);
+                                   char **systemHost,
+                                   int *systemPort);
 void free_system_info(SystemInfo *systemInfo);
 
 #endif /* NODE_INFO_H */

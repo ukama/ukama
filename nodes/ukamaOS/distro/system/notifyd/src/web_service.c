@@ -68,8 +68,10 @@ int web_service_cb_not_allowed(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_post_event(const URequest *request,
-                              UResponse *response, void *epConfig) {
+static int web_service_cb_post_event_and_alert(const URequest *request,
+                                               UResponse *response,
+                                               char *type,
+                                               Config *config) {
 
     int ret = STATUS_NOK;
     const char *service=NULL;
@@ -83,12 +85,12 @@ int web_service_cb_post_event(const URequest *request,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
-    usys_log_trace("notify.d:: Received POST for an event from %s.", service);
 
+    usys_log_trace("notify.d:: Received POST for an event from %s.", service);
     ret = process_incoming_notification(service,
-                                        NOTIFICATION_EVENT,
+                                        type,
                                         json,
-                                        (Config *)epConfig);
+                                        config);
     if (ret == STATUS_OK) {
         ulfius_set_empty_body_response(response, HttpStatus_Accepted);
     } else {
@@ -100,36 +102,22 @@ int web_service_cb_post_event(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_post_event(const URequest *request,
+                              UResponse *response, void *epConfig) {
+
+    return web_service_cb_post_event_and_alert(request,
+                                               response,
+                                               NOTIFICATION_EVENT,
+                                               (Config *)epConfig);
+}
+
 int web_service_cb_post_alert(const URequest *request,
                               UResponse *response, void *epConfig) {
 
-    int ret = STATUS_NOK;
-    const char *service=NULL;
-    JsonObj *json=NULL;
-
-    service = u_map_get(request->map_url, "service");
-    json = ulfius_get_json_body_request(request, NULL);
-    if (service == NULL || json == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-    usys_log_trace("notify.d:: Received POST for an event from %s.", service);
-
-    ret = process_incoming_notification(service,
-                                        NOTIFICATION_ALERT,
-                                        json,
-                                        (Config *)epConfig);
-    if (ret == STATUS_OK) {
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-    } else {
-        ulfius_set_empty_body_response(response,
-                                       HttpStatus_InternalServerError);
-    }
-
-    json_free(&json);
-    return U_CALLBACK_CONTINUE;
+    return web_service_cb_post_event_and_alert(request,
+                                               response,
+                                               NOTIFICATION_ALERT,
+                                               (Config *)epConfig);
 }
 
 int web_service_cb_get_output(const URequest *request, UResponse *response,

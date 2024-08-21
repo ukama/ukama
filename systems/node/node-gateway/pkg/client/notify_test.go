@@ -12,15 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg/rest"
-	"github.com/ukama/ukama/systems/node/notify/pb/gen/mocks"
-
 	pb "github.com/ukama/ukama/systems/node/notify/pb/gen"
+	"github.com/ukama/ukama/systems/node/notify/pb/gen/mocks"
 )
 
 var nc = &mocks.NotifyServiceClient{}
@@ -35,8 +34,7 @@ var req = &rest.AddNotificationReq{
 	ServiceName: "noded",
 	Status:      8200,
 	Time:        uint32(time.Now().Unix()),
-	Description: "Some random alert",
-	Details:     `{"reason": "testing", "component":"router_test"}`,
+	Details:     []byte(`{"message": "test"}`),
 }
 
 func TestNotifyClient_Add(t *testing.T) {
@@ -46,8 +44,7 @@ func TestNotifyClient_Add(t *testing.T) {
 		Type:        req.Type,
 		ServiceName: req.ServiceName,
 		Status:      req.Status,
-		EpochTime:   req.Time,
-		Description: req.Description,
+		Time:        req.Time,
 		Details:     req.Details,
 	}
 
@@ -56,7 +53,7 @@ func TestNotifyClient_Add(t *testing.T) {
 	c := client.NewNotifyFromClient(nc)
 
 	_, err := c.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
+		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 
 	assert.NoError(t, err)
 	nc.AssertExpectations(t)
@@ -72,9 +69,7 @@ func TestNotifyClient_Get(t *testing.T) {
 		Type:        req.Type,
 		ServiceName: req.ServiceName,
 		Status:      req.Status,
-		EpochTime:   req.Time,
-		Description: req.Description,
-		Details:     req.Details,
+		Time:        req.Time,
 	}}
 
 	nc.On("Get", mock.Anything, notifReq).Return(notifResp, nil)
@@ -104,9 +99,7 @@ func TestNotifyClient_List(t *testing.T) {
 			Type:        req.Type,
 			ServiceName: req.ServiceName,
 			Status:      req.Status,
-			EpochTime:   req.Time,
-			Description: req.Description,
-			Details:     req.Details,
+			Time:        req.Time,
 		}}}
 
 	nc.On("List", mock.Anything, listReq).Return(listResp, nil)
@@ -147,9 +140,7 @@ func TestNotifyClient_Purge(t *testing.T) {
 			Severity:    req.Severity,
 			Type:        req.Type,
 			ServiceName: req.ServiceName,
-			EpochTime:   req.Time,
-			Description: req.Description,
-			Details:     req.Details,
+			Time:        req.Time,
 		}}}
 
 	nc.On("Purge", mock.Anything, delReq).Return(delResp, nil)

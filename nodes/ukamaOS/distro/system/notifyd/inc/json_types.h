@@ -113,11 +113,12 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_METHOD                     "method"
 #define JTAG_URL_EP                     "endPoint"
 
-#define JTAG_SERVICE_NAME       "serviceName"
+/* Tags for forwarding notification to ukama system */
+#define JTAG_SERVICE_NAME       "service_name"
 #define JTAG_SEVERITY           "severity"
 #define JTAG_TIME               "time"
-#define JTAG_TYPE               "type"
-#define JTAG_NODE_ID            "nodeID"
+#define JTAG_NOTIFICATION_TYPE  "notification_type"
+#define JTAG_NODE_ID            "node_id"
 #define JTAG_SEVERITY           "severity"
 #define JTAG_DETAILS            "details"
 #define JTAG_DESCRIPTION        "description"

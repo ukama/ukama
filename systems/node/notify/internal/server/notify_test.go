@@ -48,9 +48,7 @@ func TestNotifyServer_Add(t *testing.T) {
 			Type:        nt.Type.String(),
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 
 		repo.On("Add", mock.Anything).Return(nil)
@@ -69,9 +67,7 @@ func TestNotifyServer_Add(t *testing.T) {
 			Type:        nt.Type.String(),
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 		resp, err := s.Add(context.TODO(), notif)
 
@@ -87,9 +83,7 @@ func TestNotifyServer_Add(t *testing.T) {
 			Type:        nt.Type.String(),
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 
 		resp, err := s.Add(context.TODO(), notif)
@@ -106,9 +100,7 @@ func TestNotifyServer_Add(t *testing.T) {
 			Type:        "bar",
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
+			Time:        nt.Time,
 		}
 
 		resp, err := s.Add(context.TODO(), notif)
@@ -548,7 +540,6 @@ func NewTestDbNotification(nodeId string, ntype string) db.Notification {
 		ServiceName: "noded",
 		Status:      8200,
 		Time:        uint32(time.Now().Unix()),
-		Description: "Some random alert",
 		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`),
 	}
 }
@@ -562,8 +553,6 @@ func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
 		Type:        db.NotificationType(ntype).String(),
 		ServiceName: "noded",
 		Status:      8200,
-		EpochTime:   uint32(time.Now().Unix()),
-		Description: "Some random alert",
-		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`).String(),
+		Time:        uint32(time.Now().Unix()),
 	}
 }

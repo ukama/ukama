@@ -22,11 +22,6 @@ func (this *AddRequest) Validate() error {
 	return nil
 }
 func (this *AddResponse) Validate() error {
-	if this.Notification != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Notification); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Notification", err)
-		}
-	}
 	return nil
 }
 

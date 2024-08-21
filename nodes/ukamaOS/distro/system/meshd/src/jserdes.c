@@ -115,27 +115,12 @@ int serialize_local_service_response(char **response, Message *message,
 	json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_RESPONSE));
     json_object_set_new(json, JSON_UUID, json_string(message->seqNo));
 
-#if 0
-    /* Add node info. */
-	json_object_set_new(json, JSON_NODE_INFO, json_object());
-	obj = json_object_get(json, JSON_NODE_INFO);
-	json_object_set_new(obj, JSON_NODE_ID,
-                        json_string(message->nodeInfo->nodeID));
-    json_object_set_new(obj, JSON_PORT, json_string(message->nodeInfo->port));
-
-    /* Add service info. */
-	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
-	obj = json_object_get(json, JSON_SERVICE_INFO);
-	json_object_set_new(obj, JSON_NAME,
-                        json_string(message->serviceInfo->name));
-#endif
-    
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	obj = json_object_get(json, JSON_MESSAGE);
-    json_object_set_new(obj, JSON_CODE, json_integer(code));
+    json_object_set_new(obj, JSON_CODE,   json_integer(code));
 	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
-	json_object_set_new(obj, JSON_DATA, json_string(data));
+	json_object_set_new(obj, JSON_DATA,   json_string(data));
 
     *response = json_dumps(json, 0);
     json_decref(json);
@@ -187,8 +172,7 @@ STATIC void serialize_message_data(URequest *request, char **data) {
     json_decref(json);
 }
 
-int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *port, char *agent, char *sourcePort) {
+int serialize_websocket_message(char **str, URequest *request, char *uuid) {
 
     json_t *json=NULL, *jDevice=NULL, *jService=NULL;
 	json_t *jRequest=NULL;
@@ -200,27 +184,14 @@ int serialize_websocket_message(char **str, URequest *request, char *nodeID,
 	}
 
 	json_object_set_new(json, JSON_TYPE, json_string(MESH_NODE_REQUEST));
-	json_object_set_new(json, JSON_SEQ, json_integer(123456));
+	json_object_set_new(json, JSON_SEQ,  json_string(uuid));
 
-	/* Node info */
-	json_object_set_new(json, JSON_NODE_INFO, json_object());
-	jDevice = json_object_get(json, JSON_NODE_INFO);
-	json_object_set_new(jDevice, JSON_NODE_ID, json_string(nodeID));
-    json_object_set_new(jDevice, JSON_PORT, json_string(port));
-
-    /* Service info */
-	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
-	jService = json_object_get(json, JSON_SERVICE_INFO);
-	json_object_set_new(jService, JSON_NAME, json_string(agent));
-    json_object_set_new(jService, JSON_PORT, json_string(sourcePort));
-
-	/* Serialize and add request info */
     serialize_message_data(request, &data);
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	jRequest = json_object_get(json, JSON_MESSAGE);
 	json_object_set_new(jRequest, JSON_LENGTH, json_integer(strlen(data)));
-    json_object_set_new(jRequest, JSON_CODE, json_integer(0));
-	json_object_set_new(jRequest, JSON_DATA, json_string(data));
+    json_object_set_new(jRequest, JSON_CODE,   json_integer(0));
+	json_object_set_new(jRequest, JSON_DATA,   json_string(data));
 
     *str = json_dumps(json, 0);
 
@@ -415,7 +386,7 @@ int deserialize_websocket_message(Message **message, json_t *json) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_UUID);
+    jSeq         = json_object_get(json, JSON_SEQ);
     jMessage     = json_object_get(json, JSON_MESSAGE);
 
     if (jType == NULL || jSeq == NULL || jMessage == NULL) {

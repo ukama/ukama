@@ -83,6 +83,6 @@ func (n *NotifiyEventServer) unmarshalNotificationSentEvent(msg *anypb.Any) (*ep
 }
 
 func (n *NotifiyEventServer) handleNotificationSentEvent(key string, msg *epb.Notification) error {
-	return add(msg.NodeId, msg.Severity, msg.Type, msg.ServiceName, msg.Description,
-		msg.Details, msg.Status, msg.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+	return add(msg.NodeId, msg.Severity, msg.Type, msg.ServiceName,
+		msg.Details, msg.Status, msg.Time, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 }

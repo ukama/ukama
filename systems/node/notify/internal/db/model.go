@@ -47,7 +47,6 @@ type Notification struct {
 	ServiceName string           `json:"serviceName"`
 	Status      uint32           `json:"status"`
 	Time        uint32           `json:"time"`
-	Description string           `json:"description"`
 	Details     datatypes.JSON   `json:"details"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

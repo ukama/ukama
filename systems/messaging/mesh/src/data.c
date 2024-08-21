@@ -12,6 +12,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <string.h>
+#include <jansson.h>
 
 #include "mesh.h"
 #include "work.h"
@@ -27,9 +28,6 @@ typedef struct _response {
 
 extern WorkList *Transmit; /* global */
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
@@ -51,29 +49,50 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 	return realsize;
 }
 
-/*
- * extract_system_path --
- */
+static int get_substring_after_index(char **out,
+                                     const char *str,
+                                     int index,
+                                     char delimiter) {
+    int count = 0;
+
+    while (*str) {
+        if (*str == delimiter) {
+            count++;
+            if (count == index) {
+                *out = strdup(str + 1); // Skip the delimiter itself
+                return 1;
+            }
+        }
+        str++;
+    }
+
+    return 0;
+}
+
 static int extract_system_path(char *str, char **name, char **path) {
 
-    char *ptr=NULL;
-    int len=0;
+    char *ptr = NULL;
+    int len = 0;
+    
+    // Check if the string starts with "http://"
+    if (strncmp(str, "http://", 7) == 0) {
+        // Skip the "http://" part and move past the domain/IP and port
+        str = strchr(str + 7, '/');
+        if (!str) return FALSE; // No path found after domain/IP
+    }
 
+    // Extract the path and name
     if (!get_substring_after_index(&ptr, str, 2, '/')) return FALSE;
 
     len = strlen(str) - strlen(ptr) - 2; /* -2 to skip the /s */
-    *name = (char *)calloc(1, len+1);
-    strncpy(*name, str+1, len);
+    *name = (char *)calloc(1, len + 1);
+    strncpy(*name, str + 1, len);
 
     *path = strdup(ptr);
 
     return TRUE;
 }
 
-/*
- * clear_request -- free up memory from MRequest.
- *
- */
 void clear_request(MRequest **data) {
 
 	free((*data)->reqType);
@@ -85,13 +104,10 @@ void clear_request(MRequest **data) {
 	free(*data);
 }
 
-/*
- * send_data_to_system -- Forward recevied data to the system
- *
- */
-static long send_data_to_system(URequest *data, char *ip, char *port,
-								int *retCode, char **retStr) {
-  
+static int send_data_to_system(URequest *data, char *ep,
+                               char *ip, int port,
+                               int *retCode, char **retStr) {
+
 	int i;
 	long code=0;
 	CURL *curl=NULL;
@@ -100,11 +116,12 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 	char url[MAX_BUFFER] = {0};
 	UMap *map;
 	Response response = {NULL, 0};
+    long responseCode;
 
 	*retCode = 0;
 
 	/* Sanity check */
-	if (data == NULL && ip == NULL && port == NULL) {
+	if (data == NULL && ip == NULL && !port) {
 		return FALSE;
 	}
 
@@ -122,7 +139,7 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 		}
 	}
 
-	sprintf(url, "http://%s:%s/%s", ip, port, data->http_url);
+	sprintf(url, "http://%s:%d/%s", ip, port, ep);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
@@ -145,7 +162,8 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
         *retCode = 0;
 	} else {
 		/* get status code. */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &retCode);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        *retCode = (int)responseCode;
 		if (response.size) {
 			log_debug("Response recevied from server: %s", response.buffer);
 			*retStr = strdup(response.buffer);
@@ -162,10 +180,70 @@ static long send_data_to_system(URequest *data, char *ip, char *port,
 	return TRUE;
 }
 
-/*
- * process_incoming_websocket_message --
- *
- */
+static URequest* create_http_request(char *jStr) {
+
+    URequest *request;
+	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *obj, *jData;
+
+	if (jStr == NULL) return FALSE;
+
+    json = json_loads(jStr, JSON_DECODE_ANY, NULL);
+    if (json == NULL) return FALSE;
+
+    jMethod = json_object_get(json, JSON_METHOD);
+    jURL    = json_object_get(json, JSON_URL);
+    jPath   = json_object_get(json, JSON_PATH);
+	jRaw    = json_object_get(json, JSON_RAW_DATA);
+
+    if (jMethod == NULL || jURL == NULL || jPath == NULL || jRaw == NULL) {
+        log_error("Missing json parameter in recevied requests");
+        json_decref(json);
+        return NULL;
+    }
+
+	request = (URequest *)calloc(1, sizeof(URequest));
+	if (request == NULL) {
+        json_decref(json);
+        log_error("Error allocating memory of size: %lu", sizeof(URequest));
+		return NULL;
+    }
+
+    if (ulfius_init_request(request)) {
+        log_error("Error initializing new http request.");
+        json_decref(json);
+        return NULL;
+    }
+
+    ulfius_set_request_properties(request,
+                                  U_OPT_HTTP_VERB, json_string_value(jMethod),
+                                  U_OPT_HTTP_URL,  json_string_value(jURL),
+                                  U_OPT_HEADER_PARAMETER, "User-Agent", "mesh",
+                                  U_OPT_TIMEOUT, 20,
+                                  U_OPT_NONE);
+    if (jPath) {
+        request->url_path = strdup(json_string_value(jPath));
+        if (request->url_path == NULL) {
+            log_error("Error allocating memory for URL path");
+            ulfius_clean_request(request);
+            free(request);
+            json_decref(json);
+            return NULL;
+        }
+    }
+
+    /* Get the actual data now */
+    jData = json_object_get(jRaw, JSON_DATA);
+    if (jData) {
+        char *str;
+        str = json_string_value(jData);
+        request->binary_body        = strdup(str);
+        request->binary_body_length = strlen(str);
+        free(str);
+    }
+
+	return request;
+}
+
 int process_incoming_websocket_message(Message *message, char **responseRemote){
 
     /*
@@ -177,16 +255,14 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 	URequest *request;
 	char *responseLocal=NULL, *jStr=NULL;
     char *systemName=NULL, *systemEP=NULL;
-	char *systemHost=NULL, *systemPort=NULL;
+	char *systemHost=NULL;
+    int systemPort=0;
 	json_t *jResp=NULL;
 
-    if (strcmp(message->reqType, UKAMA_NODE_REQUEST) != 0) {
-        log_error("Invalid request type. ignoring.");
-        retCode = HttpStatus_BadRequest;
-        responseLocal = HttpStatusStr(retCode);
-    }
+    log_debug("Recevied message from mesh-host: %s", message->data);
 
-    if (deserialize_request_info(&request, message->data) == FALSE) {
+    request = create_http_request(message->data);
+    if (request == NULL) {
         log_error("Unable to deser the request on websocket");
         retCode = HttpStatus_BadRequest;
     }
@@ -205,20 +281,25 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
         responseLocal = HttpStatusStr(retCode);
 	} else {
     
-        log_debug("Matching server found for system: %s host: %s port: %s",
+        log_debug("Matching server found for system: %s host: %s port: %d",
                   systemName, systemHost, systemPort);
 
-        ret = send_data_to_system(request,
-                                  systemHost, systemPort,
-                                  &retCode, &responseLocal);
-        log_debug("Return code from system %s:%s: code: %d Response: %s",
+        send_data_to_system(request, systemEP,
+                            systemHost, systemPort,
+                            &retCode, &responseLocal);
+        log_debug("Return code from system %s:%d: code: %d Response: %s",
                   systemHost, systemPort, retCode, responseLocal);
     }
 
     serialize_system_response(responseRemote, message, retCode,
                               strlen(responseLocal), responseLocal);
-
     log_debug("Sending response back: %s", *responseRemote);
+
+    ulfius_clean_request(request);
+    if (request)       free(request);
+    if (responseLocal) free(responseLocal);
+    if (systemName)    free(systemName);
+    if (systemEP)      free(systemEP);
 
     return retCode;
 }

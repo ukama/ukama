@@ -11,21 +11,22 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
+import "google/protobuf/timestamp.proto";
 
 message Notification {
     string id = 1;
     string nodeId = 2 [json_name = "node_id"];
     string nodeType = 3 [json_name = "node_type"];
-    string description = 4;
-    string severity = 5;
-    string type = 6;
-    string serviceName = 7 [json_name = "service_name"];
-    uint32 status = 8;
-    uint32 epochTime = 9 [json_name = "time"];
-    string details = 10;
+    string severity = 4;
+    string type = 5;
+    string serviceName = 6 [json_name = "service_name"];
+    uint32 status = 7;
+    uint32 time = 8 [json_name = "time"];
+    bytes details = 9;
+    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
 }
 
 message NotificationDeletedEvent{
     string id = 1;
-    string nodeId = 2;
+    string nodeId = 2 [json_name = "node_id"];
 }
