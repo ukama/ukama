@@ -57,6 +57,31 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
         category: Component_Type.All,
       },
     },
+    onCompleted: (data) => {
+      if (data.getComponentsByUserId.components.length > 0) {
+        const switchRecords = data.getComponentsByUserId.components.filter(
+          (comp) => comp.category === 'SWITCH',
+        );
+
+        const powerRecords = data.getComponentsByUserId.components.filter(
+          (comp) => comp.category === 'POWER',
+        );
+
+        const backhaulRecords = data.getComponentsByUserId.components.filter(
+          (comp) => comp.category === 'BACKHAUL',
+        );
+
+        if (switchRecords.length === 1) {
+          formik.setFieldValue('switch', switchRecords[0].id);
+        }
+        if (powerRecords.length === 1) {
+          formik.setFieldValue('power', powerRecords[0].id);
+        }
+        if (backhaulRecords.length === 1) {
+          formik.setFieldValue('backhaul', backhaulRecords[0].id);
+        }
+      }
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'components-msg',
