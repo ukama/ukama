@@ -36,10 +36,10 @@ export const inviteResToInvitationDto = (
 export const dtoToInvitationDto = (res: InvitationAPIDto): InvitationDto => {
   return {
     email: res.email,
-    expireAt: res.expireAt,
+    expireAt: res.expire_at,
     id: res.id,
     link: res.link,
-    userId: res.userId,
+    userId: res.user_id,
     name: res.name,
     role: res.role,
     status: res.status,
