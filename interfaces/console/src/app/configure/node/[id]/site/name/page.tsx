@@ -63,18 +63,19 @@ const SiteName = ({ params }: ISiteName) => {
 
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
-      <Typography variant="h6" fontWeight={500}>
-        {'Name site'}
-        <span
-          style={{
-            fontWeight: 400,
+      <Stack direction={'row'}>
+        <Typography variant="h6">{'Name site'}</Typography>
+        <Typography
+          variant="h6"
+          fontWeight={400}
+          sx={{
             color: colors.black70,
             display: stepTracker !== '1' ? 'none' : 'flex',
           }}
         >
-          <i> - optional</i> (5/6)
-        </span>
-      </Typography>
+          <i>&nbsp;- optional</i>&nbsp;(5/6)
+        </Typography>
+      </Stack>
 
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>

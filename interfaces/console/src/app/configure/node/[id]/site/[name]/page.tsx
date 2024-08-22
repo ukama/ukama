@@ -244,18 +244,20 @@ const Page = ({ params }: IPage) => {
         <SiteLoadingState msg={''} />
       ) : (
         <Box>
-          <Typography variant="h6" fontWeight={500}>
-            {'Name network'}
-            <span
-              style={{
-                fontWeight: 400,
+          <Stack direction={'row'}>
+            <Typography variant="h6">{'Name network'}</Typography>
+            <Typography
+              variant="h6"
+              fontWeight={400}
+              sx={{
                 color: colors.black70,
                 display: stepTracker !== '1' ? 'none' : 'flex',
               }}
             >
-              <i> - optional</i> (6/6)
-            </span>
-          </Typography>
+              <i>&nbsp;- optional</i>&nbsp;(6/6)
+            </Typography>
+          </Stack>
+
           <FormikProvider value={formik}>
             <form onSubmit={formik.handleSubmit}>
               <Stack

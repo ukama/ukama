@@ -112,18 +112,19 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
 
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
-      <Typography variant="h6" fontWeight={500}>
-        {'Configure site installation'}
-        <span
-          style={{
-            fontWeight: 400,
+      <Stack direction={'row'}>
+        <Typography variant="h6">{'Configure site installation'}</Typography>
+        <Typography
+          variant="h6"
+          fontWeight={400}
+          sx={{
             color: colors.black70,
             display: stepTracker !== '1' ? 'none' : 'flex',
           }}
         >
-          <i> - optional</i> (4/6)
-        </span>
-      </Typography>
+          <i>&nbsp;- optional</i>&nbsp;(4/6)
+        </Typography>
+      </Stack>
 
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>

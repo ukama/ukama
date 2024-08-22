@@ -6,7 +6,7 @@ import GradientWrapper from '@/wrappers/gradiantWrapper';
 import { useRouter } from 'next/navigation';
 
 const Page = () => {
-  const { env } = useAppContext();
+  const { env, user } = useAppContext();
   const router = useRouter();
   return (
     <CenterContainer>
@@ -14,7 +14,7 @@ const Page = () => {
         <Welcome
           handleNext={() => router.push('/configure')}
           handleBack={() => router.push(`${env.AUTH_APP_URL}/user/logout`)}
-          orgName={'salman-org'}
+          orgName={user.orgName}
           operatingCountry={'Dominican Republic of Congo'}
         />
       </GradientWrapper>

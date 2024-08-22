@@ -5,9 +5,14 @@ import React from 'react';
 interface IInstallSiteLoading {
   duration: number;
   onCompleted: () => void;
+  isShowStepTracker: boolean;
 }
 
-const InstallSiteLoading = ({ duration, onCompleted }: IInstallSiteLoading) => {
+const InstallSiteLoading = ({
+  duration,
+  isShowStepTracker,
+  onCompleted,
+}: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);
 
@@ -35,12 +40,20 @@ const InstallSiteLoading = ({ duration, onCompleted }: IInstallSiteLoading) => {
 
   return (
     <Stack direction="column">
-      <Typography variant="h6" fontWeight={500}>
-        Install site -{' '}
-        <span style={{ color: colors.black70, fontWeight: 400 }}>
-          <i>optional</i> (2/6)
-        </span>
-      </Typography>
+      <Stack direction={'row'}>
+        <Typography variant="h6"> {'Install site'}</Typography>
+        <Typography
+          variant="h6"
+          fontWeight={400}
+          sx={{
+            color: colors.black70,
+            display: isShowStepTracker ? 'flex' : 'none',
+          }}
+        >
+          <i>&nbsp;- optional</i>&nbsp;(2/6)
+        </Typography>
+      </Stack>
+
       <Stack direction={'column'} mt={3} mb={3} spacing={1.5}>
         <Typography variant="body1" fontWeight={700}>
           Loading up your site...

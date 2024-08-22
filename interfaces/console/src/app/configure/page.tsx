@@ -40,22 +40,24 @@ const Page = () => {
       {checkForInstallation ? (
         <InstallSiteLoading
           duration={10}
+          isShowStepTracker={stepTracker === '1'}
           onCompleted={onInstallProgressComplete}
         />
       ) : (
         <Stack direction="column">
-          <Typography variant="h6" fontWeight={500}>
-            {'Install site'}
-            <span
-              style={{
-                fontWeight: 400,
+          <Stack direction={'row'}>
+            <Typography variant="h6"> {'Install site'}</Typography>
+            <Typography
+              variant="h6"
+              fontWeight={400}
+              sx={{
                 color: colors.black70,
                 display: stepTracker !== '1' ? 'none' : 'flex',
               }}
             >
-              <i> - optional</i> (1/6)
-            </span>
-          </Typography>
+              <i>&nbsp;- optional</i>&nbsp;(1/6)
+            </Typography>
+          </Stack>
 
           <Stack mt={3} mb={3} direction={'column'} alignItems={'center'}>
             <Typography variant="body1" color={colors.vulcan}>
