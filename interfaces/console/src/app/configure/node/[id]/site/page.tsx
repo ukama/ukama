@@ -3,7 +3,6 @@ import {
   Component_Type,
   useGetComponentsByUserIdQuery,
 } from '@/client/graphql/generated';
-import { LField } from '@/components/Welcome';
 import { useAppContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
 import { globalUseStyles } from '@/styles/global';
@@ -139,18 +138,6 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
               options, click “Next”.
             </Typography>
 
-            <LField
-              label="Node"
-              value={
-                'Tower node #12381293891283192 + Amplifier unit #18238192398128931'
-              }
-            />
-            <LField
-              label="SITE LOCATION"
-              value={
-                '10349 Monstera Hills Road, San Ramon, CA 94611, United States'
-              }
-            />
             <Divider sx={{ marginBottom: '8px !important' }} />
             <Field
               as={TextField}

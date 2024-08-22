@@ -1,5 +1,6 @@
 'use client';
 import SiteMapComponent from '@/components/SiteMapComponent';
+import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -100,6 +101,9 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
             height={'128px'}
           />
         )}
+
+        <LField label="Node" value={id} />
+        <LField label="SITE LOCATION" value={address} />
       </Stack>
       <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
         <Button

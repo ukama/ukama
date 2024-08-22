@@ -426,10 +426,9 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
 
         echo  "$TAG Updateing inventory..."
-        SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$2';"
+        SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
-        OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
-        echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
+        psql $DB_URI -t -A -c "$SQL_QUERY"
     fi
 done
 
