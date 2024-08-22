@@ -93,7 +93,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             fi
             sleep 5
             break
-            # Need to figure out how to check if the container is up
+            # Need to figure out a way to verify the container status
             # if docker ps | grep -q $CONTAINER_NAME; then
             #     echo  "$TAG $2 docker container is up"
             # else

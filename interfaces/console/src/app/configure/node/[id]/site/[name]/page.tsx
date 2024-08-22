@@ -362,7 +362,7 @@ const Page = ({ params }: IPage) => {
                   Back
                 </Button>
                 <Button type="submit" variant="contained">
-                  Finish setup
+                  Complete network creation
                 </Button>
               </Stack>
             </form>
