@@ -374,7 +374,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
 
     if [[ "${ORG_TYPE}" =~ "${ORG_COMMUNITY}" ]]; then
         sleep 3
-        if($IS_INVENTORY_SYS); then
+        if ($IS_INVENTORY_SYS); then
             echo "$TAG Syncing up org inventory..."
             components=$(curl --location --silent --request PUT "http://${LOCAL_HOST_IP}:8077/v1/components/sync")
             echo "$TAG Org inventory synced up."
@@ -423,8 +423,13 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
         fi
-        # docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
-        # docker network connect salman-org_ukama-net ukama-bff-1
+        docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
+
+        echo  "$TAG Updateing inventory..."
+        SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$2';"
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
+        OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
+        echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
     fi
 done
 
