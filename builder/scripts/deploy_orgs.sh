@@ -22,6 +22,11 @@ INVENTORY_SYS_KEY="inventory"
 IS_INVENTORY_SYS=false
 METADATA=$(jq -c '.' ../metadata.json)
 JSON_FILE="../deploy_orgs_config.json"
+if [ "$1" == "-d" ]; then
+  ISDEBUGMODE=true
+else
+  ISDEBUGMODE=false
+fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -79,10 +84,13 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         set_env
         echo  "$TAG Running $2 docker compose..."
         cd $1
-
         CONTAINER_NAME=$3
         while true; do
-            docker compose -p $ORGNAME up --build -d > /dev/null 2>&1
+            if [ "$ISDEBUGMODE" = true ]; then
+                docker compose -p $ORGNAME up --build -d
+            else
+                docker compose -p $ORGNAME up --build -d > /dev/null 2>&1
+            fi
             sleep 5
             break
             # Need to figure out how to check if the container is up
@@ -262,6 +270,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             if [[ "$(uname)" == "Darwin" ]]; then
                 sed -i '' "s/build: \.\.\/services\/initClient/image: main-init/g" docker-compose.yml
             fi
+            
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
                 sed -i '' '/ports:/d' docker-compose.yml
                 sed -i '' '/- 8090:80/d' docker-compose.yml
@@ -276,6 +285,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 8058:8080/d' docker-compose.yml
                 sed -i '' '/- 5412:5432/d' docker-compose.yml
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
+                sed -i '' '/- 5404:5432/d' docker-compose.yml
+                sed -i '' '/- 8074:8080/d' docker-compose.yml
             fi
         done
         cd $root_dir
@@ -318,6 +329,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ./start_provider.sh
             cd ../..
         fi
+        if [[ " ${SYSTEM} " == " bff " ]]; then
+           cp .env.dev.example .env
+               echo ".env file created and content copied from .env.dev.example for bff"
+        fi
+        if [[ " ${SYSTEM} " == " console " ]]; then
+           cp .env.dev.example .env.local
+           echo ".env.local file created and content copied from .env.dev.example for console"
+        fi
         
         SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
         export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
@@ -325,19 +344,11 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         case $SYSTEM in
         "auth-services")
             cd app
-            cp .env.dev.example .env.local
+            cp .env.example .env.local
             cd ../
             echo ".env.local file created and content copied from .env.dev.example for ukama-auth"
             sleep 2
             register_user
-            ;;
-        "console")
-            cp .env.dev.example .env.local
-            echo ".env.local file created and content copied from .env.dev.example for console"
-            ;;
-        "bff")
-            cp .env.dev.example .env
-            echo ".env file created and content copied from .env.dev.example for bff"
             ;;
         "init")
             sleep 2
