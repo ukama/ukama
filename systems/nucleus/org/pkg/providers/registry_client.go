@@ -13,39 +13,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ic "github.com/ukama/ukama/systems/common/initclient"
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
 const RegistryVersion = "/v1/"
 const SystemName = "registry"
-
-type RoleType int32
-
-const (
-	RoleType_OWNER    RoleType = 0
-	RoleType_ADMIN    RoleType = 1
-	RoleType_EMPLOYEE RoleType = 2
-	RoleType_VENDOR   RoleType = 3
-	RoleType_USERS    RoleType = 4
-)
-
-// Enum value maps for RoleType.
-var (
-	RoleType_name = map[int32]string{
-		0: "OWNER",
-		1: "ADMIN",
-		2: "EMPLOYEE",
-		3: "VENDOR",
-		4: "USERS",
-	}
-	RoleType_value = map[string]int32{
-		"OWNER":    0,
-		"ADMIN":    1,
-		"EMPLOYEE": 2,
-		"VENDOR":   3,
-		"USERS":    4,
-	}
-)
 
 type RegistryProvider interface {
 	AddMember(orgName string, uuid string) error
@@ -98,7 +71,7 @@ func (r *registryProvider) AddMember(orgName string, uuid string) error {
 	errStatus := &rest.ErrorMessage{}
 	req := OrgMember{
 		UserUuid: uuid,
-		Role:     RoleType_name[4],
+		Role:     ukama.RoleType_ROLE_USER.String(),
 	}
 
 	resp, err := r.R.C.R().
