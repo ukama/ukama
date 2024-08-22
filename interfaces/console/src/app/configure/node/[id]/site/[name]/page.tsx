@@ -68,6 +68,7 @@ const Page = ({ params }: IPage) => {
   const qpAddress = searchParams.get('address') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
   const stepTracker = searchParams.get('step') ?? '1';
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
   const formik = useFormik({
@@ -142,6 +143,7 @@ const Page = ({ params }: IPage) => {
       });
     },
     onError: (error) => {
+      setIsLoading(false);
       setSnackbarMessage({
         id: 'add-networks-error',
         message: error.message,
@@ -162,6 +164,7 @@ const Page = ({ params }: IPage) => {
       router.push('/configure/success');
     },
     onError: (error) => {
+      setIsLoading(false);
       setSnackbarMessage({
         id: 'add-site-error',
         message: error.message,
@@ -191,7 +194,7 @@ const Page = ({ params }: IPage) => {
       });
       return;
     }
-
+    setIsLoading(true);
     if (isCreateNetwork) {
       setLoadingMessage('Creating network...');
       addNetwork({
@@ -240,8 +243,8 @@ const Page = ({ params }: IPage) => {
 
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
-      {networksLoading || addSiteLoading ? (
-        <SiteLoadingState msg={''} />
+      {isLoading ? (
+        <SiteLoadingState msg={loadingMessage} />
       ) : (
         <Box>
           <Stack direction={'row'}>

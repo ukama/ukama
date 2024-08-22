@@ -10,6 +10,10 @@ import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+// async function removeCookie(key: string) {
+//   cookies().delete(key);
+// }
+
 type User = {
   id: string;
   role: string;
@@ -138,7 +142,7 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
-    cookieStore.delete('token');
+    // removeCookie('token');
     const logoutRes = NextResponse.redirect(
       new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
