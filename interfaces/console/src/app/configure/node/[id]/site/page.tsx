@@ -128,7 +128,7 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
 
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>
-          <Stack direction="column" mt={3} mb={3} spacing={2}>
+          <Stack direction="column" my={3} spacing={2.5}>
             <Typography variant="body1" color={colors.vulcan}>
               You have successfully created your site, and now need to configure
               some settings. If the node or site location details are wrong,

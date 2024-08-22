@@ -115,7 +115,7 @@ services:
    - SITE_SERVICE_PORT=9090
    - NETWORK=network:9090
    - ORGNAME=${ORGNAME}
-   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
   restart: always
   networks:
    - ukama-net
