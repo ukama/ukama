@@ -63,10 +63,11 @@ const Page = ({ params }: IPage) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const qpPower = searchParams.get('power') || '';
-  const qpSwitch = searchParams.get('switch') || '';
+  const qpPower = searchParams.get('power') ?? '';
+  const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
-  const qpbackhaul = searchParams.get('backhaul') || '';
+  const qpbackhaul = searchParams.get('backhaul') ?? '';
+  const stepTracker = searchParams.get('step') ?? '1';
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
   const formik = useFormik({
@@ -244,9 +245,15 @@ const Page = ({ params }: IPage) => {
       ) : (
         <Box>
           <Typography variant="h6" fontWeight={500}>
-            Name network -{' '}
-            <span style={{ color: colors.black70, fontWeight: 400 }}>
-              <i>optional</i> (6/6)
+            {'Name network'}
+            <span
+              style={{
+                fontWeight: 400,
+                color: colors.black70,
+                display: stepTracker !== '1' ? 'none' : 'flex',
+              }}
+            >
+              <i> - optional</i> (6/6)
             </span>
           </Typography>
           <FormikProvider value={formik}>

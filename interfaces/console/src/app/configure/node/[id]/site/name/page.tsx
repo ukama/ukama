@@ -37,6 +37,7 @@ const SiteName = ({ params }: ISiteName) => {
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const address = searchParams.get('address') ?? '';
+  const stepTracker = searchParams.get('step') ?? '1';
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -63,11 +64,18 @@ const SiteName = ({ params }: ISiteName) => {
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       <Typography variant="h6" fontWeight={500}>
-        Name site -{' '}
-        <span style={{ color: colors.black70, fontWeight: 400 }}>
-          <i>optional</i> (5/6)
+        {'Name site'}
+        <span
+          style={{
+            fontWeight: 400,
+            color: colors.black70,
+            display: stepTracker !== '1' ? 'none' : 'flex',
+          }}
+        >
+          <i> - optional</i> (5/6)
         </span>
       </Typography>
+
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>
           <Stack direction="column" mt={3} mb={3} spacing={2}>

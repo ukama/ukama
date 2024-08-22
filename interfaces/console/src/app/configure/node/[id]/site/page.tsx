@@ -31,9 +31,10 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   const { id } = params;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const qpPower = searchParams.get('power') || '';
-  const qpSwitch = searchParams.get('switch') || '';
-  const qpbackhaul = searchParams.get('backhaul') || '';
+  const qpPower = searchParams.get('power') ?? '';
+  const qpSwitch = searchParams.get('switch') ?? '';
+  const stepTracker = searchParams.get('step') ?? '1';
+  const qpbackhaul = searchParams.get('backhaul') ?? '';
 
   const formik = useFormik({
     initialValues: {
@@ -72,12 +73,15 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
         );
 
         if (switchRecords.length === 1) {
+          setQueryParam('switch', switchRecords[0].id);
           formik.setFieldValue('switch', switchRecords[0].id);
         }
         if (powerRecords.length === 1) {
+          setQueryParam('power', switchRecords[0].id);
           formik.setFieldValue('power', powerRecords[0].id);
         }
         if (backhaulRecords.length === 1) {
+          setQueryParam('backhaul', switchRecords[0].id);
           formik.setFieldValue('backhaul', backhaulRecords[0].id);
         }
       }
@@ -109,11 +113,18 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       <Typography variant="h6" fontWeight={500}>
-        Configure site installation -{' '}
-        <span style={{ color: colors.black70, fontWeight: 400 }}>
-          <i>optional</i> (4/6)
+        {'Configure site installation'}
+        <span
+          style={{
+            fontWeight: 400,
+            color: colors.black70,
+            display: stepTracker !== '1' ? 'none' : 'flex',
+          }}
+        >
+          <i> - optional</i> (4/6)
         </span>
       </Typography>
+
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>
           <Stack direction="column" mt={3} mb={3} spacing={2}>

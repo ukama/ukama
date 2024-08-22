@@ -11,12 +11,14 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import SiteInfo from '../../../public/svg/SiteInfo';
 
 const Page = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const stepTracker = searchParams.get('step') ?? '1';
   const [isChecked, setIsChecked] = useState(false);
   const [checkForInstallation, setCheckForInstallation] = useState(false);
   const handleNext = () => {
@@ -43,11 +45,18 @@ const Page = () => {
       ) : (
         <Stack direction="column">
           <Typography variant="h6" fontWeight={500}>
-            Install site -{' '}
-            <span style={{ color: colors.black70, fontWeight: 400 }}>
-              <i>optional</i> (1/6)
+            {'Install site'}
+            <span
+              style={{
+                fontWeight: 400,
+                color: colors.black70,
+                display: stepTracker !== '1' ? 'none' : 'flex',
+              }}
+            >
+              <i> - optional</i> (1/6)
             </span>
           </Typography>
+
           <Stack mt={3} mb={3} direction={'column'} alignItems={'center'}>
             <Typography variant="body1" color={colors.vulcan}>
               If you would like to set up your network later, or if someone else
@@ -89,7 +98,7 @@ const Page = () => {
               onClick={handleSkip}
               sx={{ color: colors.black70, p: 0 }}
             >
-              Skip
+              {stepTracker !== '1' ? 'Back' : 'Skip'}
             </Button>
             <Button
               variant="contained"

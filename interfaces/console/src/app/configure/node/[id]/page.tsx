@@ -19,6 +19,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
+  const stepTracker = searchParams.get('step') ?? '1';
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
@@ -62,11 +63,18 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       <Typography variant="h6" fontWeight={500}>
-        Install site -{' '}
-        <span style={{ color: colors.black70, fontWeight: 400 }}>
-          <i>optional</i> (3/6)
+        {'Install site'}
+        <span
+          style={{
+            fontWeight: 400,
+            color: colors.black70,
+            display: stepTracker !== '1' ? 'none' : 'flex',
+          }}
+        >
+          <i> - optional</i> (3/6)
         </span>
       </Typography>
+
       <Stack mt={3} mb={3} direction={'column'} spacing={2}>
         {isLoading ? (
           <Stack direction="row" alignItems={'center'} spacing={1}>
