@@ -136,6 +136,13 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         echo "$TAG User ID: $OWNERID"
     }
 
+    create_org() {
+       echo  "$TAG Register org in nucleus..."
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/org"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE)"
+        psql $DB_URI -c "$QUERY"
+    }
+
     sort_systems_by_dependency() {
         IFS=', ' read -r -a SYSTEMS_ARRAY <<< "$SYS"
         
@@ -269,9 +276,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 8058:8080/d' docker-compose.yml
                 sed -i '' '/- 5412:5432/d' docker-compose.yml
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
-                sed -i '' "s/api-gateway-nucleus:8080/10.2.0.18:8060/g" docker-compose.yml
-                sed -i '' "s/api-gateway-init:8080/10.2.0.11:8071/g" docker-compose.yml
-                sed -i '' "s/api-gateway-inventory:8080/localhost:8077/g" docker-compose.yml
             fi
         done
         cd $root_dir
@@ -285,6 +289,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             register_user
             sleep 5
             get_user_id
+            sleep 5
+            create_org
         fi
     }
 
@@ -374,7 +380,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
         SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
 
-
         echo "$TAG Registering systems URL in lookup db..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
         psql $DB_URI -c "$SYS_QUERY_1"
@@ -385,6 +390,28 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         psql $DB_URI -c "$SYS_QUERY_6"
         psql $DB_URI -c "$SYS_QUERY_7"
         psql $DB_URI -c "$SYS_QUERY_8"
+    fi
+
+    if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
+        echo "${TAG}Connect global services with containers...${NC}"
+        if [[ " ${SYSTEMS[@]} " =~ " registry " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-member-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-network-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-invitation-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-site-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " subscriber " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-registry-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-simmanager-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " notification " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-eventnotify-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-distributor-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " node " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
+        fi
     fi
 done
 
