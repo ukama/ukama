@@ -96,8 +96,7 @@ function register_user() {
         "password": "'$PASSWORD'",
         "traits": {
             "email": "'$OWNEREMAIL'",
-            "name": "'$OWNERNAME'",
-            "firstVisit": true
+            "name": "'$OWNERNAME'"
         }
     }')
     sleep 2

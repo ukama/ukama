@@ -117,8 +117,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             "password": "'$PASSWORD'",
             "traits": {
                 "email": "'$OWNEREMAIL'",
-                "name": "'$OWNERNAME'",
-                "firstVisit": true
+                "name": "'$OWNERNAME'"
             }
         }')
         sleep 2
@@ -141,7 +140,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SQL_QUERY="SELECT PUBLIC.users.id FROM PUBLIC.users WHERE users.auth_id = '$OWNERAUTHID' AND users.deleted_at IS NULL ORDER BY users.id LIMIT 1;"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/users"
         OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
-        echo "$TAG User ID: $OWNERID"
+        echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
     }
 
     create_org() {
