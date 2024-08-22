@@ -1,8 +1,6 @@
 package db
 
 import (
-	"time"
-
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
@@ -11,12 +9,9 @@ import (
 type StateRepo interface {
 	Create(state *State, nestedFunc func(*State, *gorm.DB) error) error
 	GetByNodeId(nodeId ukama.NodeID) (*State, error)
-	Update(state *State) error
 	Delete(nodeId ukama.NodeID) error
 	ListAll() ([]State, error)
-	UpdateConnectivity(nodeId ukama.NodeID, connectivity Connectivity) error
-	UpdateCurrentState(nodeId ukama.NodeID, currentState NodeStateEnum) error
-	GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error)
+	GetStateHistory(nodeId ukama.NodeID) ([]State, error) 
 }
 
 type stateRepo struct {
@@ -51,24 +46,18 @@ func (r *stateRepo) Create(state *State, nestedFunc func(state *State, tx *gorm.
 
 func (r *stateRepo) GetByNodeId(nodeId ukama.NodeID) (*State, error) {
 	var state State
-	err := r.Db.GetGormDb().First(&state, nodeId).Error
+	err := r.Db.GetGormDb().
+		Where("node_id = ?", nodeId.String()).
+		Order("created_at desc").
+		First(&state).Error
 	if err != nil {
 		return nil, err
 	}
 	return &state, nil
 }
 
-func (r *stateRepo) Update(state *State) error {
-	result := r.Db.GetGormDb().Model(state).Updates(state)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
 func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
-	result := r.Db.GetGormDb().Where("id = ?", nodeId).Delete(&State{})
+	result := r.Db.GetGormDb().Where("node_id = ?", nodeId.String()).Delete(&State{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -84,25 +73,15 @@ func (r *stateRepo) ListAll() ([]State, error) {
 	err := r.Db.GetGormDb().Find(&states).Error
 	return states, err
 }
-func (r *stateRepo) UpdateConnectivity(nodeId ukama.NodeID, connectivity Connectivity) error {
-	return r.Db.GetGormDb().Model(&State{}).
-		Where("node_id = ?", nodeId.String()).
-		Update("connectivity", connectivity).Error
-}
 
-func (r *stateRepo) UpdateCurrentState(nodeId ukama.NodeID, currentState NodeStateEnum) error {
-	return r.Db.GetGormDb().Model(&State{}).Where("node_id = ?", nodeId).Update("current_state", currentState).Error
-}
-
-func (r *stateRepo) GetStateHistoryByTimeRange(nodeId ukama.NodeID, from, to time.Time) ([]StateHistory, error) {
-	var history []StateHistory
+func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]State, error) {
+	var states []State
 	err := r.Db.GetGormDb().
-		Where("node_state_id = ? AND timestamp BETWEEN ? AND ?", nodeId.String(), from, to).
-		Order("timestamp desc").
-		Find(&history).Error
+		Where("node_id = ?", nodeId.String()).
+		Order("created_at desc"). 
+		Find(&states).Error
 	if err != nil {
 		return nil, err
 	}
-
-	return history, nil
+	return states, nil
 }

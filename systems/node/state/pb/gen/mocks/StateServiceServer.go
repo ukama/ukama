@@ -92,128 +92,24 @@ func (_m *StateServiceServer) GetByNodeId(_a0 context.Context, _a1 *gen.GetByNod
 	return r0, r1
 }
 
-// GetStateHistoryByTimeRange provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) GetStateHistoryByTimeRange(_a0 context.Context, _a1 *gen.GetStateHistoryByTimeRangeRequest) (*gen.GetStateHistoryByTimeRangeResponse, error) {
+// GetStateHistory provides a mock function with given fields: _a0, _a1
+func (_m *StateServiceServer) GetStateHistory(_a0 context.Context, _a1 *gen.GetStateHistoryRequest) (*gen.GetStateHistoryResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetStateHistoryByTimeRangeResponse
+	var r0 *gen.GetStateHistoryResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) (*gen.GetStateHistoryByTimeRangeResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest) (*gen.GetStateHistoryResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) *gen.GetStateHistoryByTimeRangeResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest) *gen.GetStateHistoryResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetStateHistoryByTimeRangeResponse)
+			r0 = ret.Get(0).(*gen.GetStateHistoryResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ListAll provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) ListAll(_a0 context.Context, _a1 *gen.ListAllRequest) (*gen.ListAllResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.ListAllResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAllRequest) (*gen.ListAllResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAllRequest) *gen.ListAllResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListAllResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAllRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Update provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) Update(_a0 context.Context, _a1 *gen.UpdateStateRequest) (*gen.UpdateStateResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateStateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest) (*gen.UpdateStateResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest) *gen.UpdateStateResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateStateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateStateRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateConnectivity provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) UpdateConnectivity(_a0 context.Context, _a1 *gen.UpdateConnectivityRequest) (*gen.UpdateConnectivityResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateConnectivityResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateConnectivityRequest) (*gen.UpdateConnectivityResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateConnectivityRequest) *gen.UpdateConnectivityResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateConnectivityResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateConnectivityRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateCurrentState provides a mock function with given fields: _a0, _a1
-func (_m *StateServiceServer) UpdateCurrentState(_a0 context.Context, _a1 *gen.UpdateCurrentStateRequest) (*gen.UpdateCurrentStateResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateCurrentStateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateCurrentStateRequest) (*gen.UpdateCurrentStateResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateCurrentStateRequest) *gen.UpdateCurrentStateResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateCurrentStateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateCurrentStateRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

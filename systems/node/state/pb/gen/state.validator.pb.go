@@ -18,24 +18,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *ListAllRequest) Validate() error {
-	return nil
-}
 func (this *DeleteStateResponse) Validate() error {
-	return nil
-}
-func (this *UpdateCurrentStateResponse) Validate() error {
-	return nil
-}
-func (this *UpdateConnectivityResponse) Validate() error {
-	return nil
-}
-func (this *UpdateStateResponse) Validate() error {
-	if this.State != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
-		}
-	}
 	return nil
 }
 func (this *CreateStateResponse) Validate() error {
@@ -63,24 +46,9 @@ func (this *State) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("LastHeartbeat", err)
 		}
 	}
-	for _, item := range this.StateHistory {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("StateHistory", err)
-			}
-		}
-	}
 	if this.LastStateChange != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.LastStateChange); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("LastStateChange", err)
-		}
-	}
-	return nil
-}
-func (this *StateHistory) Validate() error {
-	if this.TimeStamp != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TimeStamp); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("TimeStamp", err)
 		}
 	}
 	return nil
@@ -96,14 +64,6 @@ func (this *CreateStateRequest) Validate() error {
 func (this *GetByNodeIdRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	return nil
-}
-func (this *UpdateStateRequest) Validate() error {
-	if this.State != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
-		}
 	}
 	return nil
 }
@@ -123,39 +83,17 @@ func (this *ListAllResponse) Validate() error {
 	}
 	return nil
 }
-func (this *UpdateConnectivityRequest) Validate() error {
+func (this *GetStateHistoryRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *UpdateCurrentStateRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	return nil
-}
-func (this *GetStateHistoryByTimeRangeRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if this.From != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.From); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("From", err)
-		}
-	}
-	if this.To != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.To); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("To", err)
-		}
-	}
-	return nil
-}
-func (this *GetStateHistoryByTimeRangeResponse) Validate() error {
-	for _, item := range this.History {
+func (this *GetStateHistoryResponse) Validate() error {
+	for _, item := range this.StateHistory {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("History", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("StateHistory", err)
 			}
 		}
 	}

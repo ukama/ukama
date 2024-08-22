@@ -13,7 +13,6 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
@@ -21,7 +20,7 @@ import (
 )
 
 const (
-	FaultyThresholdDuration = 5 * time.Minute // Adjust as needed
+	FaultyThresholdDuration = 5 * time.Minute 
 )
 
 type StateServer struct {
@@ -54,10 +53,9 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 
 	now := time.Now()
 	state := &db.State{
-		Id:uuid.NewV4(),
+		Id: uuid.NewV4(),
 		NodeId:          nId.StringLowercase(),
 		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
-		Connectivity:    db.Connectivity(req.State.Connectivity),
 		LastHeartbeat:   now,
 		LastStateChange: now,
 		Type:            req.State.Type,
@@ -92,74 +90,6 @@ func (s *StateServer) GetByNodeId(ctx context.Context, req *pb.GetByNodeIdReques
 	return &pb.GetByNodeIdResponse{State: convertStateToProto(state)}, nil
 }
 
-func (s *StateServer) Update(ctx context.Context, req *pb.UpdateStateRequest) (*pb.UpdateStateResponse, error) {
-	nId, err := ukama.ValidateNodeId(req.State.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
-
-	existingState, err := s.sRepo.GetByNodeId(nId)
-	if err != nil {
-		log.Error("Failed to get existing state: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "state")
-	}
-
-	now := time.Now()
-	state := &db.State{
-		Id:              existingState.Id,
-		NodeId:          nId.StringLowercase(),
-		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
-		Connectivity:    db.Connectivity(req.State.Connectivity),
-		LastHeartbeat:   now,
-		LastStateChange: existingState.LastStateChange,
-		Type:            req.State.Type,
-		Version:         req.State.Version,
-	}
-
-	if state.CurrentState != existingState.CurrentState {
-		state.LastStateChange = now
-
-		// Publish event for state change
-		if s.msgbus != nil {
-			route := s.stateRoutingKey.SetActionUpdate().SetObject("state").MustBuild()
-			evt := &epb.EventNodeStateUpdate{
-				NodeId:         state.NodeId,
-				CurrentState:   pb.NodeStateEnum(state.CurrentState).String(),
-				Connectivity:   pb.Connectivity(state.Connectivity).String(),
-				LastStateChange: timestamppb.New(state.LastStateChange).String(),
-			}
-			err = s.msgbus.PublishRequest(route, evt)
-			if err != nil {
-				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
-			}
-		}
-	}
-
-	if state.Connectivity != existingState.Connectivity {
-		// Publish event for connectivity change
-		if s.msgbus != nil {
-			route := s.stateRoutingKey.SetActionUpdate().SetObject("connectivity").MustBuild()
-			evt := &epb.EventNodeConnectivityUpdate{
-				NodeId:       state.NodeId,
-				Connectivity: pb.Connectivity(state.Connectivity).String(),
-			}
-			err = s.msgbus.PublishRequest(route, evt)
-			if err != nil {
-				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
-			}
-		}
-	}
-
-	err = s.sRepo.Update(state)
-	if err != nil {
-		log.Error("Failed to update state: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "state")
-	}
-
-	return &pb.UpdateStateResponse{State: convertStateToProto(state)}, nil
-}
-
 func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*pb.DeleteStateResponse, error) {
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -176,11 +106,21 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 	return &pb.DeleteStateResponse{}, nil
 }
 
-func (s *StateServer) ListAll(ctx context.Context, req *pb.ListAllRequest) (*pb.ListAllResponse, error) {
-	states, err := s.sRepo.ListAll()
+
+
+func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHistoryRequest) (*pb.GetStateHistoryResponse, error) {
+	log.Infof("Getting state history for node ID %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		log.Error("Failed to list states: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "state")
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	states, err := s.sRepo.GetStateHistory(ukama.NodeID(nId))
+	if err != nil {
+		log.Error("Failed to get state history: " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	pbStates := make([]*pb.State, len(states))
@@ -188,106 +128,7 @@ func (s *StateServer) ListAll(ctx context.Context, req *pb.ListAllRequest) (*pb.
 		pbStates[i] = convertStateToProto(&state)
 	}
 
-	return &pb.ListAllResponse{States: pbStates}, nil
-}
-
-func (s *StateServer) UpdateConnectivity(ctx context.Context, req *pb.UpdateConnectivityRequest) (*pb.UpdateConnectivityResponse, error) {
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
-
-	state, err := s.sRepo.GetByNodeId(nId)
-	if err != nil {
-		log.Error("Failed to get existing state: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "state")
-	}
-
-	newConnectivity := db.Connectivity(req.Connectivity)
-	now := time.Now()
-
-	if state.Connectivity != newConnectivity {
-		if state.CurrentState == db.StateFaulty {
-			if now.Sub(state.LastStateChange) > FaultyThresholdDuration {
-				state.CurrentState = db.StateActive
-				state.LastStateChange = now
-			}
-		} else if state.CurrentState == db.StateActive {
-			state.CurrentState = db.StateFaulty
-			state.LastStateChange = now
-		}
-	}
-
-	state.Connectivity = newConnectivity
-	state.LastHeartbeat = now
-
-	err = s.sRepo.Update(state)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to update connectivity: %v", err)
-	}
-
-	return &pb.UpdateConnectivityResponse{}, nil
-}
-
-func (s *StateServer) UpdateCurrentState(ctx context.Context, req *pb.UpdateCurrentStateRequest) (*pb.UpdateCurrentStateResponse, error) {
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
-
-	state, err := s.sRepo.GetByNodeId(nId)
-	if err != nil {
-		log.Error("Failed to get existing state: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "state")
-	}
-
-	newState := db.NodeStateEnum(req.CurrentState)
-	now := time.Now()
-
-	if state.CurrentState != newState {
-		state.CurrentState = newState
-		state.LastStateChange = now
-	}
-
-	state.LastHeartbeat = now
-
-	err = s.sRepo.Update(state)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to update current state: %v", err)
-	}
-
-	return &pb.UpdateCurrentStateResponse{}, nil
-}
-
-func (s *StateServer) GetStateHistoryByTimeRange(ctx context.Context, req *pb.GetStateHistoryByTimeRangeRequest) (*pb.GetStateHistoryByTimeRangeResponse, error) {
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
-
-	fromTime := req.From.AsTime()
-	toTime := req.To.AsTime()
-
-	history, err := s.sRepo.GetStateHistoryByTimeRange(nId, fromTime, toTime)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to get state history: %v", err)
-	}
-
-	pbHistory := make([]*pb.StateHistory, len(history))
-	for i, h := range history {
-		pbHistory[i] = &pb.StateHistory{
-			Id:            h.Id.String(),
-			NodeStateId:   h.NodeStateId,
-			PreviousState: pb.NodeStateEnum(h.PreviousState),
-			NewState:      pb.NodeStateEnum(h.NewState),
-			TimeStamp:     timestamppb.New(h.Timestamp),
-		}
-	}
-
-	return &pb.GetStateHistoryByTimeRangeResponse{History: pbHistory}, nil
+	return &pb.GetStateHistoryResponse{StateHistory: pbStates}, nil
 }
 
 func convertStateToProto(state *db.State) *pb.State {
@@ -295,7 +136,6 @@ func convertStateToProto(state *db.State) *pb.State {
 		Id:              state.Id.String(),
 		NodeId:          state.NodeId,
 		CurrentState:    pb.NodeStateEnum(state.CurrentState),
-		Connectivity:    pb.Connectivity(state.Connectivity),
 		LastHeartbeat:   timestamppb.New(state.LastHeartbeat),
 		LastStateChange: timestamppb.New(state.LastStateChange),
 		Type:            state.Type,

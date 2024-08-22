@@ -115,8 +115,8 @@ func (_m *StateServiceClient) GetByNodeId(ctx context.Context, in *gen.GetByNode
 	return r0, r1
 }
 
-// GetStateHistoryByTimeRange provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) GetStateHistoryByTimeRange(ctx context.Context, in *gen.GetStateHistoryByTimeRangeRequest, opts ...grpc.CallOption) (*gen.GetStateHistoryByTimeRangeResponse, error) {
+// GetStateHistory provides a mock function with given fields: ctx, in, opts
+func (_m *StateServiceClient) GetStateHistory(ctx context.Context, in *gen.GetStateHistoryRequest, opts ...grpc.CallOption) (*gen.GetStateHistoryResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -126,152 +126,20 @@ func (_m *StateServiceClient) GetStateHistoryByTimeRange(ctx context.Context, in
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetStateHistoryByTimeRangeResponse
+	var r0 *gen.GetStateHistoryResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) (*gen.GetStateHistoryByTimeRangeResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) (*gen.GetStateHistoryResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) *gen.GetStateHistoryByTimeRangeResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) *gen.GetStateHistoryResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetStateHistoryByTimeRangeResponse)
+			r0 = ret.Get(0).(*gen.GetStateHistoryResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryByTimeRangeRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ListAll provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) ListAll(ctx context.Context, in *gen.ListAllRequest, opts ...grpc.CallOption) (*gen.ListAllResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.ListAllResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAllRequest, ...grpc.CallOption) (*gen.ListAllResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAllRequest, ...grpc.CallOption) *gen.ListAllResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListAllResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAllRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Update provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) Update(ctx context.Context, in *gen.UpdateStateRequest, opts ...grpc.CallOption) (*gen.UpdateStateResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateStateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) (*gen.UpdateStateResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) *gen.UpdateStateResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateStateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateConnectivity provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) UpdateConnectivity(ctx context.Context, in *gen.UpdateConnectivityRequest, opts ...grpc.CallOption) (*gen.UpdateConnectivityResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateConnectivityResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateConnectivityRequest, ...grpc.CallOption) (*gen.UpdateConnectivityResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateConnectivityRequest, ...grpc.CallOption) *gen.UpdateConnectivityResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateConnectivityResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateConnectivityRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateCurrentState provides a mock function with given fields: ctx, in, opts
-func (_m *StateServiceClient) UpdateCurrentState(ctx context.Context, in *gen.UpdateCurrentStateRequest, opts ...grpc.CallOption) (*gen.UpdateCurrentStateResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateCurrentStateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateCurrentStateRequest, ...grpc.CallOption) (*gen.UpdateCurrentStateResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateCurrentStateRequest, ...grpc.CallOption) *gen.UpdateCurrentStateResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateCurrentStateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateCurrentStateRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStateHistoryRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

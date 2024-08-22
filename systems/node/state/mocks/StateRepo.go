@@ -8,8 +8,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	time "time"
-
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
@@ -72,25 +70,25 @@ func (_m *StateRepo) GetByNodeId(nodeId ukama.NodeID) (*db.State, error) {
 	return r0, r1
 }
 
-// GetStateHistoryByTimeRange provides a mock function with given fields: nodeId, from, to
-func (_m *StateRepo) GetStateHistoryByTimeRange(nodeId ukama.NodeID, from time.Time, to time.Time) ([]db.StateHistory, error) {
-	ret := _m.Called(nodeId, from, to)
+// GetStateHistory provides a mock function with given fields: nodeId
+func (_m *StateRepo) GetStateHistory(nodeId ukama.NodeID) ([]db.State, error) {
+	ret := _m.Called(nodeId)
 
-	var r0 []db.StateHistory
+	var r0 []db.State
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, time.Time, time.Time) ([]db.StateHistory, error)); ok {
-		return rf(nodeId, from, to)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) ([]db.State, error)); ok {
+		return rf(nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, time.Time, time.Time) []db.StateHistory); ok {
-		r0 = rf(nodeId, from, to)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) []db.State); ok {
+		r0 = rf(nodeId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.StateHistory)
+			r0 = ret.Get(0).([]db.State)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ukama.NodeID, time.Time, time.Time) error); ok {
-		r1 = rf(nodeId, from, to)
+	if rf, ok := ret.Get(1).(func(ukama.NodeID) error); ok {
+		r1 = rf(nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -122,48 +120,6 @@ func (_m *StateRepo) ListAll() ([]db.State, error) {
 	}
 
 	return r0, r1
-}
-
-// Update provides a mock function with given fields: state
-func (_m *StateRepo) Update(state *db.State) error {
-	ret := _m.Called(state)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.State) error); ok {
-		r0 = rf(state)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateConnectivity provides a mock function with given fields: nodeId, connectivity
-func (_m *StateRepo) UpdateConnectivity(nodeId ukama.NodeID, connectivity db.Connectivity) error {
-	ret := _m.Called(nodeId, connectivity)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, db.Connectivity) error); ok {
-		r0 = rf(nodeId, connectivity)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateCurrentState provides a mock function with given fields: nodeId, currentState
-func (_m *StateRepo) UpdateCurrentState(nodeId ukama.NodeID, currentState db.NodeStateEnum) error {
-	ret := _m.Called(nodeId, currentState)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, db.NodeStateEnum) error); ok {
-		r0 = rf(nodeId, currentState)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // NewStateRepo creates a new instance of StateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
