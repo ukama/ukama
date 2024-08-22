@@ -423,6 +423,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
         fi
+        docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
     fi
 done
 
