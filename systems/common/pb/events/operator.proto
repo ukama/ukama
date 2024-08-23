@@ -1,0 +1,35 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+message EventOperatorCdrReport {
+    string id = 1 [(validator.field) = {string_not_empty: true}];
+    uint64 inventoryId = 2 [json_name = "inventory_id"];
+    string iccid = 3 [(validator.field) = {string_not_empty: true}];
+    string type = 4 [(validator.field) = {string_not_empty: true}];
+    string connectTime = 5 [json_name = "connect_time"];
+    string closeTime = 6 [json_name = "close_time"];
+    uint64 duration = 7;
+    string direction = 8;
+    string calledParty = 9 [json_name = "called_party"];
+    string callingParty = 10 [json_name = "calling_party"];
+    string countryIso3 = 11 [json_name = "country_iso3"];
+    string countryName = 12 [json_name = "country_name"];
+    string mcc = 13;
+    string mnc = 14;
+    uint32 imsiId = 15 [json_name = "imsi_id"];
+    uint64 imsiNo = 16 [json_name = "imsi_no"];
+}
