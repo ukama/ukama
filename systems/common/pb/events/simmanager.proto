@@ -23,9 +23,9 @@ message EventSimUsage {
     string orgId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string type = 6;
     uint64 bytesUsed = 7;
-    string sessionId = 8;
-    int64 startTime = 9;
-    int64 endTime = 10;
+    uint64 sessionId = 8;
+    uint64 startTime = 9;
+    uint64 endTime = 10;
 }
 
 
