@@ -20,8 +20,8 @@ message EventOperatorCdrReport {
     uint64 inventoryId = 2 [json_name = "inventory_id"];
     string iccid = 3 [(validator.field) = {string_not_empty: true}];
     string type = 4 [(validator.field) = {string_not_empty: true}];
-    string connectTime = 5 [json_name = "connect_time"];
-    string closeTime = 6 [json_name = "close_time"];
+    uint64 connectTime = 5 [json_name = "connect_time"];
+    uint64 closeTime = 6 [json_name = "close_time"];
     uint64 duration = 7;
     string direction = 8;
     string calledParty = 9 [json_name = "called_party"];
