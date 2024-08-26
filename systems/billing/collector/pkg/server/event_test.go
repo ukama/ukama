@@ -23,7 +23,6 @@ import (
 	"github.com/ukama/ukama/systems/billing/collector/mocks"
 	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -33,9 +32,10 @@ const (
 	OrgName = "testOrg"
 	OrgId   = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
 
-	bmId   = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
-	custId = "e231a7cd-03f6-470a-9e8c-e02f54f9b415"
-	planId = "0f8be763-8bd6-406d-9d82-158d7f1a2140"
+	sessionId = 22
+	bmId      = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
+	custId    = "e231a7cd-03f6-470a-9e8c-e02f54f9b415"
+	planId    = "0f8be763-8bd6-406d-9d82-158d7f1a2140"
 )
 
 func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
@@ -329,9 +329,9 @@ func TestCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 			OrgId:        "75ec112a-8745-49f9-ab64-1a37edade794",
 			Type:         "test_simple",
 			BytesUsed:    uint64(rand.Int63n(4096000)),
-			SessionId:    uuid.NewV4().String(),
-			StartTime:    time.Now().Unix() - int64(rand.Intn(30000)),
-			EndTime:      time.Now().Unix(),
+			SessionId:    sessionId,
+			StartTime:    uint64(time.Now().Unix() - int64(rand.Intn(30000))),
+			EndTime:      uint64(time.Now().Unix()),
 		}
 
 		anyE, err := anypb.New(&simUsage)
