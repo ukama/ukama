@@ -58,7 +58,7 @@ func TestState_Create(t *testing.T) {
 	state := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          "node1",
-		CurrentState:    db.StateConfigure,
+		State:    db.StateConfigure,
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
 		Type:            "someType",
@@ -71,7 +71,7 @@ func TestState_Create(t *testing.T) {
 	mock.ExpectExec("INSERT INTO \"states\"").WithArgs(
 		state.Id,
 		state.NodeId,
-		state.CurrentState,
+		state.State,
 		state.LastHeartbeat,
 		state.LastStateChange,
 		state.Type,
@@ -103,11 +103,11 @@ func TestState_GetByNodeId(t *testing.T) {
 	expectedState := &db.State{
 		Id:           uuid.NewV4(),
 		NodeId:       nodeId.String(),
-		CurrentState: db.StateOperational,
+		State: db.StateOperational,
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "node_id", "current_state"}).
-		AddRow(expectedState.Id, expectedState.NodeId, expectedState.CurrentState)
+		AddRow(expectedState.Id, expectedState.NodeId, expectedState.State)
 
 	mock.ExpectQuery(`^SELECT.*states.*`).
 		WithArgs(nodeId, sqlmock.AnyArg()).
@@ -115,7 +115,7 @@ func TestState_GetByNodeId(t *testing.T) {
 	state, err := repo.GetByNodeId(nodeId)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedState.NodeId, state.NodeId)
-	assert.Equal(t, expectedState.CurrentState, state.CurrentState)
+	assert.Equal(t, expectedState.State, state.State)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -168,49 +168,3 @@ func TestState_GetByNodeId(t *testing.T) {
 // }
 
 
-func TestState_ListAll(t *testing.T) {
-	sqlDb, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer sqlDb.Close()
-
-	gormDb, err := gorm.Open(postgres.New(postgres.Config{
-		Conn: sqlDb,
-	}), &gorm.Config{})
-	assert.NoError(t, err)
-
-	repo := db.NewStateRepo(&UkamaDbMock{GormDb: gormDb})
-
-	expectedStates := []db.State{
-		{
-			Id:           uuid.NewV4(),
-			NodeId:       ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String(),
-			CurrentState: db.StateConfigure,
-		},
-		{
-			Id:           uuid.NewV4(),
-			NodeId:       ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String(),
-			CurrentState: db.StateOperational,
-		},
-	}
-
-	rows := sqlmock.NewRows([]string{"id", "node_id", "current_state", "last_heartbeat", "last_state_change", "type", "version", "created_at", "updated_at"})
-	for _, state := range expectedStates {
-		rows.AddRow(state.Id, state.NodeId, state.CurrentState, time.Now(), time.Now(), "type", "version", time.Now(), time.Now())
-	}
-
-	// Expect the SELECT query
-	mock.ExpectQuery(`SELECT \* FROM "states" WHERE "states"."deleted_at" IS NULL`).
-		WillReturnRows(rows)
-
-	states, err := repo.ListAll()
-	assert.NoError(t, err)
-	assert.Equal(t, len(expectedStates), len(states))
-	assert.NoError(t, mock.ExpectationsWereMet())
-
-	// Check if the returned states match the expected states
-	for i, state := range states {
-		assert.Equal(t, expectedStates[i].Id, state.Id)
-		assert.Equal(t, expectedStates[i].NodeId, state.NodeId)
-		assert.Equal(t, expectedStates[i].CurrentState, state.CurrentState)
-	}
-}

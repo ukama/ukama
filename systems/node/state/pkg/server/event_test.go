@@ -142,7 +142,7 @@ func TestHandleNodeConfigUpdateEvent(t *testing.T) {
 		Commit: "test-commit",
 	}
 
-	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(&db.State{CurrentState: db.StateOnboarded}, nil)
+	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(&db.State{State: db.StateUnknown}, nil)
 	mockRepo.On("Update", mock.AnythingOfType("*db.State")).Return(nil)
 
 	err := eventServer.handleNodeConfigUpdateEvent("test-key", msg)

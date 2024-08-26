@@ -19,9 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 )
 
-const (
-	FaultyThresholdDuration = 5 * time.Minute 
-)
 
 type StateServer struct {
 	pb.UnimplementedStateServiceServer
@@ -55,7 +52,7 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 	state := &db.State{
 		Id: uuid.NewV4(),
 		NodeId:          nId.StringLowercase(),
-		CurrentState:    db.NodeStateEnum(req.State.CurrentState),
+		State:    db.NodeStateEnum(req.State.State),
 		LastHeartbeat:   now,
 		LastStateChange: now,
 		Type:            req.State.Type,
@@ -135,7 +132,7 @@ func convertStateToProto(state *db.State) *pb.State {
 	return &pb.State{
 		Id:              state.Id.String(),
 		NodeId:          state.NodeId,
-		CurrentState:    pb.NodeStateEnum(state.CurrentState),
+		State:    pb.NodeStateEnum(state.State),
 		LastHeartbeat:   timestamppb.New(state.LastHeartbeat),
 		LastStateChange: timestamppb.New(state.LastStateChange),
 		Type:            state.Type,

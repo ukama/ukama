@@ -96,32 +96,6 @@ func (_m *StateRepo) GetStateHistory(nodeId ukama.NodeID) ([]db.State, error) {
 	return r0, r1
 }
 
-// ListAll provides a mock function with given fields:
-func (_m *StateRepo) ListAll() ([]db.State, error) {
-	ret := _m.Called()
-
-	var r0 []db.State
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]db.State, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []db.State); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.State)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // NewStateRepo creates a new instance of StateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStateRepo(t interface {

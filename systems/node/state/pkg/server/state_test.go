@@ -20,7 +20,7 @@ func TestStateServer_Create(t *testing.T) {
 	req := &pb.CreateStateRequest{
 		State: &pb.State{
 			NodeId:       "uk-sa2433-hnode-v0-000c",
-			CurrentState: pb.NodeStateEnum_STATE_CONFIGURE,
+			State: pb.NodeStateEnum_STATE_CONFIGURE,
 			Type:         "testType",
 			Version:      "1.0",
 		},
@@ -49,7 +49,7 @@ func TestStateServer_GetByNodeId(t *testing.T) {
 	expectedState := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          nodeId,
-		CurrentState:    db.StateConfigure,
+		State:    db.StateConfigure,
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
 		Type:            "testType",

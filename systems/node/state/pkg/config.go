@@ -35,10 +35,8 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.registry.node.node.create",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-				"event.node.local.{{ .Org}}.messaging.mesh.config.create",
 			},
 		},
 	}

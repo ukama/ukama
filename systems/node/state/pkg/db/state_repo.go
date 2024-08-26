@@ -10,7 +10,6 @@ type StateRepo interface {
 	Create(state *State, nestedFunc func(*State, *gorm.DB) error) error
 	GetByNodeId(nodeId ukama.NodeID) (*State, error)
 	Delete(nodeId ukama.NodeID) error
-	ListAll() ([]State, error)
 	GetStateHistory(nodeId ukama.NodeID) ([]State, error) 
 }
 
@@ -66,12 +65,6 @@ func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	}
 
 	return nil
-}
-
-func (r *stateRepo) ListAll() ([]State, error) {
-	var states []State
-	err := r.Db.GetGormDb().Find(&states).Error
-	return states, err
 }
 
 func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]State, error) {

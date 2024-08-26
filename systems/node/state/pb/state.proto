@@ -29,7 +29,7 @@ message GetByNodeIdResponse {
 message State {
     string id = 1;
     string nodeId = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    NodeStateEnum currentState = 3;
+    NodeStateEnum State = 3;
     google.protobuf.Timestamp lastHeartbeat = 5;
     string type = 6;
     string version = 7;
