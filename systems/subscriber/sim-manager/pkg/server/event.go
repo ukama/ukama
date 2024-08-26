@@ -135,13 +135,13 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	// TODO: implement simRepo.List
-	// sim, err := s.simRepo.GetByImsi(cdr.Imsi)
-	sim, err := s.simRepo.GetByIccid(cdr.Imsi)
+	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("no corresponding sim found for given iccid %q: %v",
 			cdr.Imsi, err)
 	}
+
+	sim := sims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),

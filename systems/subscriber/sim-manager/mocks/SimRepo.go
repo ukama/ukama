@@ -8,6 +8,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	ukama "github.com/ukama/ukama/systems/common/ukama"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -219,6 +221,36 @@ func (_m *SimRepo) GetSimMetrics() (int64, int64, int64, int64, error) {
 	}
 
 	return r0, r1, r2, r3, r4
+}
+
+// List provides a mock function with given fields: iccid, imsi, SubscriberId, networkId, simType, status, TrafficPolicy, IsPhysical, count, sort
+func (_m *SimRepo) List(iccid string, imsi string, SubscriberId string, networkId string, simType ukama.SimType, status ukama.SimStatus, TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]db.Sim, error) {
+	ret := _m.Called(iccid, imsi, SubscriberId, networkId, simType, status, TrafficPolicy, IsPhysical, count, sort)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 []db.Sim
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string, ukama.SimType, ukama.SimStatus, uint32, bool, uint32, bool) ([]db.Sim, error)); ok {
+		return rf(iccid, imsi, SubscriberId, networkId, simType, status, TrafficPolicy, IsPhysical, count, sort)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string, ukama.SimType, ukama.SimStatus, uint32, bool, uint32, bool) []db.Sim); ok {
+		r0 = rf(iccid, imsi, SubscriberId, networkId, simType, status, TrafficPolicy, IsPhysical, count, sort)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Sim)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string, ukama.SimType, ukama.SimStatus, uint32, bool, uint32, bool) error); ok {
+		r1 = rf(iccid, imsi, SubscriberId, networkId, simType, status, TrafficPolicy, IsPhysical, count, sort)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Update provides a mock function with given fields: sim, nestedFunc
