@@ -19,7 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 )
 
-
 type StateServer struct {
 	pb.UnimplementedStateServiceServer
 	sRepo           db.StateRepo
@@ -50,9 +49,9 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 
 	now := time.Now()
 	state := &db.State{
-		Id: uuid.NewV4(),
+		Id:              uuid.NewV4(),
 		NodeId:          nId.StringLowercase(),
-		State:    db.NodeStateEnum(req.State.State),
+		State:           db.NodeStateEnum(req.State.State),
 		LastHeartbeat:   now,
 		LastStateChange: now,
 		Type:            req.State.Type,
@@ -103,8 +102,6 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 	return &pb.DeleteStateResponse{}, nil
 }
 
-
-
 func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHistoryRequest) (*pb.GetStateHistoryResponse, error) {
 	log.Infof("Getting state history for node ID %v", req.NodeId)
 
@@ -132,7 +129,7 @@ func convertStateToProto(state *db.State) *pb.State {
 	return &pb.State{
 		Id:              state.Id.String(),
 		NodeId:          state.NodeId,
-		State:    pb.NodeStateEnum(state.State),
+		State:           pb.NodeStateEnum(state.State),
 		LastHeartbeat:   timestamppb.New(state.LastHeartbeat),
 		LastStateChange: timestamppb.New(state.LastStateChange),
 		Type:            state.Type,

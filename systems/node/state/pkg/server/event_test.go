@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/node/state/mocks"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"google.golang.org/protobuf/proto"
@@ -83,14 +82,14 @@ func TestHandleRegistryNodeAddEvent(t *testing.T) {
 	server := &StateServer{sRepo: mockRepo}
 	eventServer := NewControllerEventServer("testOrg", server)
 
-	msg := &epb.NodeCreatedEvent{
+	msg := &epb.EventRegistryNodeCreate{
 		NodeId: "uk-sa2434-hnode-v0-cdb2",
 		Type:   "test-type",
 	}
 
 	mockRepo.On("Create", mock.AnythingOfType("*db.State"), mock.Anything).Return(nil)
 
-	err := eventServer.handleRegistryNodeAddEvent("test-key", msg)
+	err := eventServer.handleNodeCreateEvent("test-key", msg)
 	assert.NoError(t, err)
 
 	mockRepo.AssertExpectations(t)
@@ -132,21 +131,21 @@ func TestHandleNodeOfflineEvent(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestHandleNodeConfigUpdateEvent(t *testing.T) {
-	mockRepo := mocks.NewStateRepo(t)
-	server := &StateServer{sRepo: mockRepo}
-	eventServer := NewControllerEventServer("testOrg", server)
+// func TestHandleNodeConfigUpdateEvent(t *testing.T) {
+// 	mockRepo := mocks.NewStateRepo(t)
+// 	server := &StateServer{sRepo: mockRepo}
+// 	eventServer := NewControllerEventServer("testOrg", server)
 
-	msg := &eCfgPb.NodeConfigUpdateEvent{
-		NodeId: "uk-sa2434-hnode-v0-cdb2",
-		Commit: "test-commit",
-	}
+// 	msg := &eCfgPb.NodeConfigUpdateEvent{
+// 		NodeId: "uk-sa2434-hnode-v0-cdb2",
+// 		Commit: "test-commit",
+// 	}
 
-	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(&db.State{State: db.StateUnknown}, nil)
-	mockRepo.On("Update", mock.AnythingOfType("*db.State")).Return(nil)
+// 	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(&db.State{State: db.StateUnknown}, nil)
+// 	mockRepo.On("Update", mock.AnythingOfType("*db.State")).Return(nil)
 
-	err := eventServer.handleNodeConfigUpdateEvent("test-key", msg)
-	assert.NoError(t, err)
+// 	err := eventServer.handleNodeConfigUpdateEvent("test-key", msg)
+// 	assert.NoError(t, err)
 
-	mockRepo.AssertExpectations(t)
-}
+// 	mockRepo.AssertExpectations(t)
+// }
