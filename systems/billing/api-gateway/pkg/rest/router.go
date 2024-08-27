@@ -26,7 +26,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
-	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
 )
 
 const (
@@ -47,14 +47,14 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	i client.Invoice
+	i client.Report
 	p client.Pdf
 }
 
 func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
 
-	c.i = client.NewInvoiceClient(grpcEndpoints.Invoice, grpcEndpoints.Timeout)
+	c.i = client.NewReportClient(grpcEndpoints.Report, grpcEndpoints.Timeout)
 	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
 
 	return c
@@ -120,33 +120,33 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	auth.Use()
 	{
-		// Invoice routes
-		invoices := auth.Group("invoices", "JSON Invoices", "Operations on Invoices")
-		invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a invoicee"), tonic.Handler(r.GetInvoices, http.StatusOK))
-		invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvoice, http.StatusOK))
-		invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a invoicee"), tonic.Handler(r.PostInvoice, http.StatusCreated))
-		// update invoice
-		invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.RemoveInvoice, http.StatusOK))
+		// Report routes
+		reports := auth.Group("reports", "JSON Reports", "Operations on Reports")
+		reports.GET("", formatDoc("Get Reports", "Get all Reports of a owner"), tonic.Handler(r.GetReports, http.StatusOK))
+		reports.GET("/:report_id", formatDoc("Get Report", "Get a specific report"), tonic.Handler(r.GetReport, http.StatusOK))
+		reports.POST("", formatDoc("Add Report", "Add a new report for a owner"), tonic.Handler(r.PostReport, http.StatusCreated))
+		// update report
+		reports.DELETE("/:report_id", formatDoc("Remove Report", "Remove a specific report"), tonic.Handler(r.RemoveReport, http.StatusOK))
 
 		// pdf file routes
-		pdfs := auth.Group("pdf", "PDF Invoices", "Operations on invoice PDF files")
-		pdfs.GET("/:invoice_id", formatDoc("Get Invoice PDF file", "Get a specific invoice file as PDF"), tonic.Handler(r.Pdf, http.StatusOK))
+		pdfs := auth.Group("pdf", "PDF Reports", "Operations on report PDF files")
+		pdfs.GET("/:report_id", formatDoc("Get Report PDF file", "Get a specific report file as PDF"), tonic.Handler(r.Pdf, http.StatusOK))
 	}
 }
 
-func (r *Router) GetInvoice(c *gin.Context, req *GetInvoiceRequest) (*pb.GetResponse, error) {
-	return r.clients.i.Get(req.InvoiceId, req.AsPdf)
+func (r *Router) GetReport(c *gin.Context, req *GetReportRequest) (*pb.GetResponse, error) {
+	return r.clients.i.Get(req.ReportId, req.AsPdf)
 }
 
-func (r *Router) GetInvoices(c *gin.Context, req *GetInvoicesRequest) (*pb.ListResponse, error) {
-	return r.clients.i.List(req.InvoiceeId, req.InvoiceeType, req.NetworkId, req.IsPaid, req.Count, req.Sort)
+func (r *Router) GetReports(c *gin.Context, req *GetReportsRequest) (*pb.ListResponse, error) {
+	return r.clients.i.List(req.OwnerId, req.OwnerType, req.NetworkId, req.ReortType, req.IsPaid, req.Count, req.Sort)
 }
 
-func (r *Router) RemoveInvoice(c *gin.Context, req *GetInvoiceRequest) error {
-	return r.clients.i.Remove(req.InvoiceId)
+func (r *Router) RemoveReport(c *gin.Context, req *GetReportRequest) error {
+	return r.clients.i.Remove(req.ReportId)
 }
 
-func (r *Router) PostInvoice(c *gin.Context, req *WebHookRequest) error {
+func (r *Router) PostReport(c *gin.Context, req *WebHookRequest) error {
 	log.Infof("Webhook event of type %q for object %q received form billing provider",
 		req.WebhookType, req.ObjectType)
 
@@ -163,14 +163,14 @@ func (r *Router) PostInvoice(c *gin.Context, req *WebHookRequest) error {
 
 	log.Infof("Handling webhook event %q for object %q", req.WebhookType, req.ObjectType)
 
-	rwInvoiceBytes, err := json.Marshal(req.Invoice)
+	rwReportBytes, err := json.Marshal(req.Invoice)
 	if err != nil {
-		log.Errorf("Failed to marshal RawInvoice payload into rawInvoice JSON %v", err)
+		log.Errorf("Failed to marshal RawReport payload into rawReport JSON %v", err)
 
-		return fmt.Errorf("failed to marshal RawInvoice payload into rawInvoice JSON %w", err)
+		return fmt.Errorf("failed to marshal RawReport payload into rawReport JSON %w", err)
 	}
 
-	resp, err := r.clients.i.Add(string(rwInvoiceBytes))
+	resp, err := r.clients.i.Add(string(rwReportBytes))
 	if err == nil {
 		c.JSON(http.StatusCreated, resp)
 	}
@@ -178,8 +178,8 @@ func (r *Router) PostInvoice(c *gin.Context, req *WebHookRequest) error {
 	return err
 }
 
-func (r *Router) Pdf(c *gin.Context, req *GetInvoiceRequest) error {
-	content, err := r.clients.p.GetPdf(req.InvoiceId)
+func (r *Router) Pdf(c *gin.Context, req *GetReportRequest) error {
+	content, err := r.clients.p.GetPdf(req.ReportId)
 	if err != nil {
 		if errors.Is(err, client.ErrInvoicePDFNotFound) {
 			c.Status(http.StatusNotFound)
@@ -188,7 +188,7 @@ func (r *Router) Pdf(c *gin.Context, req *GetInvoiceRequest) error {
 		return err
 	}
 
-	fileName := req.InvoiceId + ".pdf"
+	fileName := req.ReportId + ".pdf"
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Header("Content-Type", "application/pdf")
 	c.Header("Accept-Length", fmt.Sprintf("%d", len(content)))
@@ -199,7 +199,7 @@ func (r *Router) Pdf(c *gin.Context, req *GetInvoiceRequest) error {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"info": "download invoice pdf file successfully",
+		"info": "download report pdf file successfully",
 	})
 
 	return nil
