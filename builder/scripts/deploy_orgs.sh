@@ -131,7 +131,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     register_org_to_init(){
         echo  "$TAG Add ${ORGNAME} org in lookup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\",  \"country\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert', 'CD')"
         psql $DB_URI -c "$QUERY"
     }
 
