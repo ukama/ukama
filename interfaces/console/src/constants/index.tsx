@@ -59,9 +59,9 @@ export const SOLAR_UPTIME_OPTIONS = [
 ];
 export const DATA_UNIT = [
   { id: 1, label: 'Bytes', value: 'Bytes' },
-  { id: 2, label: 'KiloBytes', value: 'KiloBytes' },
-  { id: 3, label: 'MegaBytes', value: 'MegaBytes' },
-  { id: 4, label: 'GigaBytes', value: 'GigaBytes' },
+  { id: 2, label: 'KB', value: 'KiloBytes' },
+  { id: 3, label: 'MB', value: 'MegaBytes' },
+  { id: 4, label: 'GB', value: 'GigaBytes' },
 ];
 export const DATA_DURATION = [
   { id: 1, label: 'Day', value: '1' },
@@ -167,9 +167,7 @@ export const MEMBER_TABLE_MENU: MenuItemType[] = [
 ];
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
-  { id: 'simType', label: 'Type', minWidth: 180 },
-  { id: 'qrCode', label: 'QR Code', minWidth: 140 },
-  { id: 'isPhysical', label: 'Physical', minWidth: 140 },
+  { id: 'isPhysical', label: 'Type', minWidth: 180 },
   { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [

@@ -21,14 +21,7 @@ import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
-import {
-  AlertColor,
-  Box,
-  Button,
-  Grid,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 
@@ -169,10 +162,6 @@ const Sites = () => {
     });
   }, []);
 
-  const handleSiteConfigOpen = () => {
-    setOpenSiteConfig(true);
-  };
-
   const handleCloseSiteConfig = () => {
     setSite(SITE_INIT);
     setOpenSiteConfig(false);
@@ -232,37 +221,16 @@ const Sites = () => {
           height: 'calc(100vh - 228px)',
         }}
       >
-        <Grid container rowSpacing={2}>
-          <Grid item xs={6}>
-            <Typography variant="h6" color="initial">
-              My sites
-            </Typography>
-          </Grid>
-          <Grid
-            item
-            xs={6}
-            container
-            justifyItems={'center'}
-            justifyContent={'flex-end'}
-          >
-            <Button
-              color="primary"
-              variant="contained"
-              onClick={handleSiteConfigOpen}
-              disabled={networks?.getNetworks?.networks.length === 0}
-            >
-              ADD SITE
-            </Button>
-          </Grid>
-
-          <Grid item xs={12} mt={1.5}>
-            <SitesWrapper
-              loading={sitesLoading || networksLoading}
-              sites={sitesList}
-              handleSiteNameUpdate={handleSiteNameUpdate}
-            />
-          </Grid>
-        </Grid>
+        <Stack spacing={2} direction={'column'} height="100%">
+          <Typography variant="h6" color="initial">
+            My sites
+          </Typography>
+          <SitesWrapper
+            loading={sitesLoading || networksLoading}
+            sites={sitesList}
+            handleSiteNameUpdate={handleSiteNameUpdate}
+          />
+        </Stack>
       </Paper>
       <ConfigureSiteDialog
         site={site}

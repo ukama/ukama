@@ -149,18 +149,14 @@ const SimpleTableCell = ({
         />
       ) : column.id === 'isPhysical' ? (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
-          {row[column.id] === 'true' ? 'Yes' : 'No'}
+          {row[column.id] === 'true' ? 'pSIM' : 'eSIM'}
         </Typography>
       ) : (
-        <Typography
-          variant={'body2'}
-          sx={{ padding: '8px' }}
-          color={row[column.id] === 'false' ? 'primary' : ''}
-        >
+        <Typography variant={'body2'} sx={{ padding: '8px' }}>
           {row[column.id] === 'true'
             ? 'Assigned'
             : row[column.id] === 'false'
-              ? 'Unassigned'
+              ? 'N/A'
               : row[column.id]}
         </Typography>
       )}

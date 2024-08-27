@@ -258,9 +258,7 @@ export default function ConosleLayout({
         }}
       >
         <AppLayout
-          page={pageName}
           isDarkMode={isDarkMode}
-          handlePageChange={() => {}}
           isLoading={networksLoading}
           placeholder={'Select Network'}
           handleNotificationRead={handleNotificationRead}

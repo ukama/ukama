@@ -145,7 +145,6 @@ export default function Page() {
               search={search}
               title={'My Nodes'}
               showSearch={true}
-              buttonTitle="Add Nodes"
               onSearchChange={handleSearchChange}
               subtitle={`${nodes.nodes?.length ?? 0}`}
               handleButtonAction={handleClaimNodeAction}

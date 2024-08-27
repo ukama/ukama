@@ -18,11 +18,9 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 
 interface ILayoutProps {
-  page: string;
   isLoading: boolean;
   placeholder: string;
   isDarkMode: boolean;
-  handlePageChange: Function;
   networks: NetworkDto[];
   children: React.ReactNode;
   handleAddNetwork: Function;
@@ -37,13 +35,11 @@ const isHaveId = (pathname: string) => {
 };
 
 const AppLayout = ({
-  page,
   children,
   networks,
   isLoading,
   isDarkMode,
   placeholder,
-  handlePageChange,
   handleAddNetwork,
   handleNetworkChange,
   notifications,
@@ -67,7 +63,6 @@ const AppLayout = ({
   }, [matches]);
 
   const onNavigate = (name: string, path: string) => {
-    handlePageChange(name);
     router.push(path);
   };
   const dynamicId = pathname.startsWith('/console/sites/')
@@ -84,10 +79,7 @@ const AppLayout = ({
       />
       <Stack direction={'row'}>
         <Sidebar
-          page={page}
           isOpen={open}
-          isLoading={isLoading}
-          onNavigate={onNavigate}
           isDarkMode={isDarkMode}
           placeholder={placeholder}
           networks={networks ?? []}

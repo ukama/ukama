@@ -98,14 +98,13 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={uploadSimsLoading ?? simsLoading}
       height={'calc(100vh - 400px)'}
+      isLoading={uploadSimsLoading ?? simsLoading}
     >
       <Paper
         sx={{
           py: 3,
           px: 4,
-          width: '100%',
           overflow: 'scroll',
           borderRadius: '10px',
           height: 'calc(100vh - 400px)',
@@ -129,9 +128,9 @@ const Page = () => {
         {isUploadSims && (
           <FileDropBoxDialog
             isOpen={isUploadSims}
-            labelSuccessBtn={'Upload'}
+            labelSuccessBtn={'Claim'}
             labelNegativeBtn={'Cancel'}
-            title={'Upload Sims in Sim Pool'}
+            title={'Upload SIMs'}
             handleSuccessAction={handleUploadSimsAction}
             handleCloseAction={() => setIsUploadSims(false)}
           />
