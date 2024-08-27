@@ -190,6 +190,13 @@ export type CreateInvitationInputDto = {
   role: Scalars['String']['input'];
 };
 
+export type CurrencyRes = {
+  __typename?: 'CurrencyRes';
+  code: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  symbol: Scalars['String']['output'];
+};
+
 export type DefaultMarkupHistoryDto = {
   __typename?: 'DefaultMarkupHistoryDto';
   Markup: Scalars['Float']['output'];
@@ -768,6 +775,7 @@ export type Query = {
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
   getCountries: CountriesRes;
+  getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
@@ -821,6 +829,11 @@ export type QueryGetComponentByIdArgs = {
 
 export type QueryGetComponentsByUserIdArgs = {
   data: ComponentTypeInputDto;
+};
+
+
+export type QueryGetCurrencySymbolArgs = {
+  code: Scalars['String']['input'];
 };
 
 
@@ -1695,6 +1708,13 @@ export type GetCountriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetCountriesQuery = { __typename?: 'Query', getCountries: { __typename?: 'CountriesRes', countries: Array<{ __typename?: 'CountryDto', name: string, code: string }> } };
+
+export type GetCurrencySymbolQueryVariables = Exact<{
+  code: Scalars['String']['input'];
+}>;
+
+
+export type GetCurrencySymbolQuery = { __typename?: 'Query', getCurrencySymbol: { __typename?: 'CurrencyRes', code: string, symbol: string, image: string } };
 
 export type GetTimezonesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4315,6 +4335,48 @@ export type GetCountriesQueryHookResult = ReturnType<typeof useGetCountriesQuery
 export type GetCountriesLazyQueryHookResult = ReturnType<typeof useGetCountriesLazyQuery>;
 export type GetCountriesSuspenseQueryHookResult = ReturnType<typeof useGetCountriesSuspenseQuery>;
 export type GetCountriesQueryResult = Apollo.QueryResult<GetCountriesQuery, GetCountriesQueryVariables>;
+export const GetCurrencySymbolDocument = gql`
+    query GetCurrencySymbol($code: String!) {
+  getCurrencySymbol(code: $code) {
+    code
+    symbol
+    image
+  }
+}
+    `;
+
+/**
+ * __useGetCurrencySymbolQuery__
+ *
+ * To run a query within a React component, call `useGetCurrencySymbolQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrencySymbolQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrencySymbolQuery({
+ *   variables: {
+ *      code: // value for 'code'
+ *   },
+ * });
+ */
+export function useGetCurrencySymbolQuery(baseOptions: Apollo.QueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables> & ({ variables: GetCurrencySymbolQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+      }
+export function useGetCurrencySymbolLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+        }
+export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+        }
+export type GetCurrencySymbolQueryHookResult = ReturnType<typeof useGetCurrencySymbolQuery>;
+export type GetCurrencySymbolLazyQueryHookResult = ReturnType<typeof useGetCurrencySymbolLazyQuery>;
+export type GetCurrencySymbolSuspenseQueryHookResult = ReturnType<typeof useGetCurrencySymbolSuspenseQuery>;
+export type GetCurrencySymbolQueryResult = Apollo.QueryResult<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>;
 export const GetTimezonesDocument = gql`
     query GetTimezones {
   getTimezones {

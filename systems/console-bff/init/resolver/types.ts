@@ -88,6 +88,18 @@ export class OrgsName {
 }
 
 @ObjectType()
+export class CurrencyRes {
+  @Field()
+  code: string;
+
+  @Field()
+  symbol: string;
+
+  @Field()
+  image: string;
+}
+
+@ObjectType()
 export class OrgsNameRes {
   @Field(() => [OrgsName])
   orgs: OrgsName[];

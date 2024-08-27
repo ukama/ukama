@@ -18,8 +18,10 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
+  OutlinedInput,
   Select,
   Stack,
   TextField,
@@ -32,6 +34,7 @@ interface IDataPlanDialog {
   title: string;
   action: string;
   isOpen: boolean;
+  currencySymbol?: string;
   handleCloseAction: any;
   labelSuccessBtn?: string;
   handleSuccessAction: any;
@@ -42,6 +45,7 @@ const DataPlanDialog = ({
   title,
   isOpen,
   action,
+  currencySymbol,
   data: dataplan,
   setData: setDataplan,
   labelSuccessBtn,
@@ -93,23 +97,28 @@ const DataPlanDialog = ({
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="PRICE"
-                value={dataplan.amount}
-                id={'data-plan-price'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(e) =>
-                  setDataplan({
-                    ...dataplan,
-                    amount: parseInt(e.target.value),
-                  })
-                }
-              />
+              <FormControl fullWidth>
+                <InputLabel htmlFor="package-price">PRICE</InputLabel>
+                <OutlinedInput
+                  id="package-price"
+                  fullWidth
+                  required
+                  type="number"
+                  label="PRICE"
+                  startAdornment={
+                    <InputAdornment position="start">
+                      {currencySymbol}
+                    </InputAdornment>
+                  }
+                  value={dataplan.amount}
+                  onChange={(e) =>
+                    setDataplan({
+                      ...dataplan,
+                      amount: parseInt(e.target.value),
+                    })
+                  }
+                />
+              </FormControl>
             </Grid>
             <Grid item xs={6}>
               <TextField

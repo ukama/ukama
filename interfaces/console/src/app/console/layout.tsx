@@ -21,6 +21,7 @@ import AddNetworkDialog from '@/components/AddNetworkDialog';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
 import { useAppContext } from '@/context';
+import { getMetaInfo } from '@/lib/MetaInfo';
 import ServerNotificationSubscription from '@/lib/NotificationSubscription';
 import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
@@ -37,9 +38,11 @@ export default function ConosleLayout({
   const {
     user,
     network,
+    metaInfo,
     pageName,
     isDarkMode,
     setNetwork,
+    setMetaInfo,
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();
@@ -125,6 +128,12 @@ export default function ConosleLayout({
   });
 
   useEffect(() => {
+    if (metaInfo.ip === '') {
+      fetchInfo();
+    }
+  }, [metaInfo]);
+
+  useEffect(() => {
     if (user.id && network.id && user.orgId && user.orgName) {
       getNotifications({
         client: subscriptionClient,
@@ -147,6 +156,24 @@ export default function ConosleLayout({
       );
     }
   }, [user.id, network.id]);
+
+  const fetchInfo = async () => {
+    const res = await getMetaInfo();
+    setMetaInfo({
+      ip: res.ip,
+      city: res.city,
+      lat: res.lat,
+      lng: res.lng,
+      languages: res.languages,
+      currency: res.currency,
+      timezone: res.timezone,
+      region_code: res.region_code,
+      country_code: res.country_code,
+      country_name: res.country_name,
+      country_calling_code: res.country_calling_code,
+    });
+    localStorage.setItem('metaInfo', JSON.stringify(res));
+  };
 
   const handleNotification = (_: any, data: string) => {
     const parsedData: TNotificationResDto = JSON.parse(data);

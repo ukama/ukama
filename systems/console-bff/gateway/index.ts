@@ -155,12 +155,6 @@ const startServer = async () => {
     }
   });
 
-  app.get("/get-meta", async (req, res) => {
-    const clientIp = req.socket.remoteAddress;
-    logger.info(`Client IP: ${clientIp}`);
-    res.send();
-  });
-
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
 

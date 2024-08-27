@@ -38,6 +38,7 @@ export default function RootLayout({
     name: 'theme',
     value: 'light',
   };
+  const meta = cookieStore.get('app') ? true : false;
   const role = headersList.get('role');
   const name = headersList.get('name');
   const email = headersList.get('email');

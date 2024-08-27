@@ -1,11 +1,13 @@
+import { IP_API_BASE_URL, IPFY_URL } from '@/constants';
+
 const getMetaInfo = async () => {
-  return await fetch('', {
+  return await fetch(IPFY_URL, {
     method: 'GET',
   })
     .then((response) => response.text())
     .then((data) => JSON.parse(data))
     .then((data) =>
-      fetch(`/${data.ip}/json/`, {
+      fetch(`${IP_API_BASE_URL}/${data.ip}/json/`, {
         method: 'GET',
       }),
     )
@@ -16,3 +18,5 @@ const getMetaInfo = async () => {
       return {};
     });
 };
+
+export { getMetaInfo };

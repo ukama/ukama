@@ -58,10 +58,10 @@ export const SOLAR_UPTIME_OPTIONS = [
   { id: 3, label: '99%', value: 99 },
 ];
 export const DATA_UNIT = [
-  { id: 1, label: 'BYTE', value: 'Bytes' },
-  { id: 2, label: 'KB', value: 'KiloBytes' },
-  { id: 3, label: 'MB', value: 'MegaBytes' },
-  { id: 4, label: 'GB', value: 'KiloBGigaBytesytes' },
+  { id: 1, label: 'Bytes', value: 'Bytes' },
+  { id: 2, label: 'KiloBytes', value: 'KiloBytes' },
+  { id: 3, label: 'MegaBytes', value: 'MegaBytes' },
+  { id: 4, label: 'GigaBytes', value: 'GigaBytes' },
 ];
 export const DATA_DURATION = [
   { id: 1, label: 'Day', value: '1' },
