@@ -97,6 +97,25 @@ const DataPlanDialog = ({
                 fullWidth
                 required
                 type="number"
+                label="PRICE"
+                value={dataplan.amount}
+                id={'data-plan-price'}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                onChange={(e) =>
+                  setDataplan({
+                    ...dataplan,
+                    amount: parseInt(e.target.value),
+                  })
+                }
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                required
+                type="number"
                 label="DATA LIMIT"
                 value={dataplan.dataVolume}
                 id={'data-plan-limit'}
@@ -111,33 +130,14 @@ const DataPlanDialog = ({
                 }
               />
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="PACKAGE PRICE"
-                value={dataplan.amount}
-                id={'data-plan-price'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(e) =>
-                  setDataplan({
-                    ...dataplan,
-                    amount: parseInt(e.target.value),
-                  })
-                }
-              />
-            </Grid>
           </Grid>
         )}
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
-            <Grid item xs={4}>
+            <Grid item xs={5}>
               <FormControl fullWidth>
                 <InputLabel id={'data-plan-unit-label'} shrink>
-                  Unit
+                  UNIT*
                 </InputLabel>
                 <Select
                   notched
@@ -162,7 +162,7 @@ const DataPlanDialog = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={8}>
+            <Grid item xs={7}>
               <FormControl fullWidth>
                 <InputLabel
                   id={'data-plan-unit-price-label'}
@@ -173,7 +173,7 @@ const DataPlanDialog = ({
                     },
                   }}
                 >
-                  PRICE PER
+                  DURATION*
                 </InputLabel>
                 <Select
                   notched
