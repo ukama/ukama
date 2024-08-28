@@ -27,6 +27,7 @@ require (
 	github.com/ukama/ukama/systems/node/state v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.65.0
+	google.golang.org/protobuf v1.34.2
 )
 
 require (
@@ -105,7 +106,6 @@ require (
 	golang.org/x/text v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9 // indirect

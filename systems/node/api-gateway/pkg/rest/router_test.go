@@ -256,29 +256,5 @@ func Test_GetStateByNodeId(t *testing.T) {
 	ns.AssertExpectations(t)
 }
 
-func Test_GetAllStates(t *testing.T) {
-	// Arrange
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/nodestate/states", nil)
-	arc := &providers.AuthRestClient{}
-	ns := &nsmocks.StateServiceClient{}
 
-	ns.On("ListAll", mock.Anything, mock.Anything).Return(&nspb.ListAllResponse{
-		States: []*nspb.State{
-			{NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f", CurrentState: nspb.NodeStateEnum_STATE_ACTIVE},
-			{NodeId: "70285a2a-fe1d-4261-a868-5be480075b8g", CurrentState: nspb.NodeStateEnum_STATE_FAULTY},
-		},
-	}, nil)
-
-	r := NewRouter(&Clients{
-		NodeState: client.NewNodeStateFromClient(ns),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-	// Act
-	r.ServeHTTP(w, req)
-
-	// Assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	ns.AssertExpectations(t)
-}
 

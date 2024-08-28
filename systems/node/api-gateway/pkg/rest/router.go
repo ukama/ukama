@@ -66,8 +66,7 @@ type controller interface {
 
 type nodeState interface {
 	GetByNodeId(nodeId string) (*nspb.GetByNodeIdResponse, error)
-	ListAll() (*nspb.ListAllResponse, error)
-	GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*nspb.GetStateHistoryByTimeRangeResponse, error)
+	GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*nspb.GetStateHistoryResponse, error)
 }
 type configurator interface {
 	ConfigEvent(b []byte) (*cfgPb.ConfigStoreEventResponse, error)
@@ -151,7 +150,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const ns = "/nodestate"
 		nodestate := auth.Group(ns, "NodeState", "Operations on node states")
 		nodestate.GET("/states/:node_id", formatDoc("Get node state", "Get the state of a specific node"), tonic.Handler(r.getStateByNodeIdHandler, http.StatusOK))
-		nodestate.GET("/states", formatDoc("List all states", "Get a list of all node states"), tonic.Handler(r.getAllStatesHandler, http.StatusOK))
 		nodestate.GET("/states/:node_id/history/range", formatDoc("Get state history by time range", "Get the state history of a specific node within a time range"), tonic.Handler(r.getStateHistoryByTimeRangeHandler, http.StatusOK))
 
 		const cfg = "/configurator"
@@ -186,11 +184,6 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 func (r *Router) getStateByNodeIdHandler(c *gin.Context, req *GetStateByNodeIdRequest) (*nspb.GetByNodeIdResponse, error) {
     return r.clients.NodeState.GetByNodeId(req.NodeId)
 }
-
-func (r *Router) getAllStatesHandler(c *gin.Context) (*nspb.ListAllResponse, error) {
-    return r.clients.NodeState.ListAll()
-}
-
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
@@ -254,7 +247,7 @@ func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInte
 	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
 }
 
-func (r *Router) getStateHistoryByTimeRangeHandler(c *gin.Context, req *GetStateHistoryByTimeRangeRequest) (*nspb.GetStateHistoryByTimeRangeResponse, error) {
+func (r *Router) getStateHistoryByTimeRangeHandler(c *gin.Context, req *GetStateHistoryByTimeRangeRequest) (*nspb.GetStateHistoryResponse, error) {
     from, err := time.Parse(time.RFC3339, req.From)
     if err != nil {
         return nil, fmt.Errorf("invalid 'from' time format: %v", err)

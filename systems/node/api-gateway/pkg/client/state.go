@@ -68,32 +68,18 @@ import (
  }
 
  
- func (r *NodeState) ListAll() (*pb.ListAllResponse, error) {
-	 ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	 defer cancel()
- 
-	 req := &pb.ListAllRequest{}
- 
-	 res, err := r.client.ListAll(ctx, req)
-	 if err != nil {
-		 return nil, err
-	 }
- 
-	 return res, nil
- }
- 
 
- func (r *NodeState) GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*pb.GetStateHistoryByTimeRangeResponse, error) {
+ func (r *NodeState) GetStateHistoryByTimeRange(nodeId string, from, to time.Time) (*pb.GetStateHistoryResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	req := &pb.GetStateHistoryByTimeRangeRequest{
+	req := &pb.GetStateHistoryRequest{
 		NodeId:   nodeId,
-		From: timestamppb.New(from),
-		To:   timestamppb.New(to),
+		FromTime: timestamppb.New(from),
+		ToTime:   timestamppb.New(to),
 	}
 
-	res, err := r.client.GetStateHistoryByTimeRange(ctx, req)
+	res, err := r.client.GetStateHistory(ctx, req)
 	if err != nil {
 		return nil, err
 	}
