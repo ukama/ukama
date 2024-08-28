@@ -92,10 +92,13 @@ static int web_service_cb_post_event_and_alert(const URequest *request,
                                         json,
                                         config);
     if (ret == STATUS_OK) {
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_Accepted,
+                                        HttpStatusStr(HttpStatus_Accepted));
     } else {
-        ulfius_set_empty_body_response(response,
-                                       HttpStatus_InternalServerError);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(HttpStatus_InternalServerError));
     }
 
     json_free(&json);

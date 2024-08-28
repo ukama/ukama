@@ -89,6 +89,7 @@ static int extract_system_path(char *str, char **name, char **path) {
     strncpy(*name, str + 1, len);
 
     *path = strdup(ptr);
+    free(ptr);
 
     return TRUE;
 }
@@ -234,12 +235,12 @@ static URequest* create_http_request(char *jStr) {
     /* Get the actual data now */
     jData = json_object_get(jRaw, JSON_DATA);
     if (jData) {
-        char *str;
-        str = json_string_value(jData);
+        char *str = json_string_value(jData);
         request->binary_body        = strdup(str);
         request->binary_body_length = strlen(str);
-        free(str);
     }
+
+    json_decref(json);
 
 	return request;
 }
@@ -300,6 +301,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     if (responseLocal) free(responseLocal);
     if (systemName)    free(systemName);
     if (systemEP)      free(systemEP);
+    if (systemHost)    free(systemHost);
 
     return retCode;
 }
