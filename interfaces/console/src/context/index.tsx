@@ -73,20 +73,6 @@ const AppContext = createContext({
   setMetaInfo: (info: any) => {},
 });
 
-const INIT_META_INFO = {
-  ip: '',
-  city: '',
-  lat: 0,
-  lng: 0,
-  languages: '',
-  currency: '',
-  timezone: '',
-  region_code: '',
-  country_code: '',
-  country_name: '',
-  country_calling_code: '',
-};
-
 const AppContextWrapper = ({
   initEnv,
   children,
@@ -98,8 +84,24 @@ const AppContextWrapper = ({
   initalUserValues: TUser;
   children: React.ReactNode;
 }) => {
-  const JInfo = localStorage.getItem('metaInfo');
-  const info = JSON.parse(JInfo || '{}');
+  let info = {
+    ip: '',
+    city: '',
+    lat: 0,
+    lng: 0,
+    languages: '',
+    currency: '',
+    timezone: '',
+    region_code: '',
+    country_code: '',
+    country_name: '',
+    country_calling_code: '',
+  };
+  if (typeof window !== 'undefined') {
+    const JInfo = localStorage.getItem('metaInfo');
+    info = JSON.parse(JInfo || '{}');
+  }
+
   const [subscriptionClient, setSubscriptionClient] = useState<any>(
     getMetricsClient(initEnv.METRIC_URL),
   );
@@ -107,23 +109,7 @@ const AppContextWrapper = ({
   const [token, setToken] = useState(_token);
   const [pageName, setPageName] = useState('Home');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [metaInfo, setMetaInfo] = useState(
-    info.ip
-      ? {
-          ip: info.ip,
-          city: info.city,
-          lat: info.lat,
-          lng: info.lng,
-          languages: info.languages,
-          currency: info.currency,
-          timezone: info.timezone,
-          region_code: info.region_code,
-          country_code: info.country_code,
-          country_name: info.country_name,
-          country_calling_code: info.country_calling_code,
-        }
-      : INIT_META_INFO,
-  );
+  const [metaInfo, setMetaInfo] = useState(info);
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [selectedDefaultSite, setSelectedDefaultSite] = useState('');

@@ -172,7 +172,8 @@ export default function ConosleLayout({
       country_name: res.country_name,
       country_calling_code: res.country_calling_code,
     });
-    localStorage.setItem('metaInfo', JSON.stringify(res));
+    typeof window !== 'undefined' &&
+      localStorage.setItem('metaInfo', JSON.stringify(res));
   };
 
   const handleNotification = (_: any, data: string) => {
