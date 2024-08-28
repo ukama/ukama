@@ -6,11 +6,13 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -21,12 +23,16 @@ type NodeStateEventServer struct {
 	s       *StateServer
 	orgName string
 	epb.UnimplementedEventNotificationServiceServer
+	msgbus          mb.MsgBusServiceClient
+	stateRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewControllerEventServer(orgName string, s *StateServer) *NodeStateEventServer {
+func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
 	return &NodeStateEventServer{
-		s:       s,
-		orgName: orgName,
+		s:               s,
+		orgName:         orgName,
+		stateRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus:          msgBus,
 	}
 }
 
@@ -69,12 +75,73 @@ func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		if err != nil {
 			return nil, err
 		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.notification.store"):
+		msg, err := n.unmarshalNodeHealthSeverityHighEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleNodeHealthSeverityHighEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
+}
+
+func (n *NodeStateEventServer) handleNodeHealthSeverityHighEvent(key string, msg *epb.Notification) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	nId, err := ukama.ValidateNodeId(msg.NodeId)
+	if err != nil {
+		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", msg.NodeId, err)
+		return err
+	}
+
+	currentState, err := n.s.sRepo.GetByNodeId(nId)
+	if err != nil {
+		log.Errorf("Error getting latest state for node %s from Nodestate repo. Error: %+v", nId, err)
+		return err
+	}
+
+	now := time.Now()
+	newState := &db.State{
+		Id:              uuid.NewV4(),
+		NodeId:          nId.String(),
+		State:           ukama.StateFaulty,
+		Type:            currentState.Type,
+		LastStateChange: now,
+		LastHeartbeat:   currentState.LastHeartbeat,
+		Version:         currentState.Version,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+	err = n.s.sRepo.Create(newState, nil)
+	if err != nil {
+		log.Errorf("Error creating new state for node %s in Nodestate repo. Error: %+v", nId, err)
+		return err
+	}
+
+	if n.s.msgbus != nil {
+		route := n.s.stateRoutingKey.SetAction("state").SetObject("node").MustBuild()
+		evt := &epb.EventNodeStateUpdate{
+			NodeId:          newState.NodeId,
+			CurrentState:    newState.State.String(),
+			LastStateChange: newState.LastStateChange.String(),
+		}
+
+		err = n.s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish node state update event: %+v with key %+v. Error: %s", evt, route, err.Error())
+		} else {
+			log.Infof("Published node state update event for node %s", nId.String())
+		}
+	}
+
+	log.Infof("Updated node %s state to Faulty", nId)
+	return nil
 }
 
 func (n *NodeStateEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
@@ -102,7 +169,7 @@ func (n *NodeStateEventServer) handleOnboardingEvent(key string, msg *epb.EventR
 	state := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          msg.NodeId,
-		State:           db.StateUnknown,
+		State:           ukama.StateConfigure,
 		Type:            msg.Type,
 		LastStateChange: now,
 		LastHeartbeat:   now,
@@ -113,6 +180,21 @@ func (n *NodeStateEventServer) handleOnboardingEvent(key string, msg *epb.EventR
 	if err != nil {
 		log.Errorf("Error adding node %s to Nodestate repo. Error: %+v", msg.NodeId, err)
 		return err
+	}
+	if n.s.msgbus != nil {
+		route := n.s.stateRoutingKey.SetAction("state").SetObject("node").MustBuild()
+		evt := &epb.EventNodeStateUpdate{
+			NodeId:          msg.NodeId,
+			CurrentState:    state.State.String(),
+			LastStateChange: state.LastStateChange.String(),
+		}
+
+		err = n.s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish node state update event: %+v with key %+v. Error: %s", evt, route, err.Error())
+		} else {
+			log.Infof("Published node state update event for node %s", msg.NodeId)
+		}
 	}
 	return nil
 }
@@ -133,7 +215,7 @@ func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOn
 			newState := &db.State{
 				Id:              uuid.NewV4(),
 				NodeId:          nId.String(),
-				State:           db.StateUnknown,
+				State:           ukama.StateUnknown,
 				LastStateChange: now,
 				LastHeartbeat:   now,
 				CreatedAt:       now,
@@ -174,7 +256,21 @@ func (n *NodeStateEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOn
 		log.Errorf("Error creating new state for node %s in Nodestate repo. Error: %+v", nId, err)
 		return err
 	}
+	if n.s.msgbus != nil {
+		route := n.s.stateRoutingKey.SetAction("state").SetObject("node").MustBuild()
+		evt := &epb.EventNodeStateUpdate{
+			NodeId:          newState.NodeId,
+			CurrentState:    newState.State.String(),
+			LastStateChange: newState.LastStateChange.String(),
+		}
 
+		err = n.s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish node state update event: %+v with key %+v. Error: %s", evt, route, err.Error())
+		} else {
+			log.Infof("Published node state update event for node %s", nId.String())
+		}
+	}
 	log.Infof("Updated node %s heartbeat", nId)
 	return nil
 }
@@ -195,7 +291,7 @@ func (n *NodeStateEventServer) handleNodeCreateEvent(key string, msg *epb.EventR
 			newState := &db.State{
 				Id:              uuid.NewV4(),
 				NodeId:          nId.String(),
-				State:           db.StateUnknown,
+				State:           ukama.StateUnknown,
 				LastStateChange: now,
 				LastHeartbeat:   now,
 				CreatedAt:       now,
@@ -235,6 +331,21 @@ func (n *NodeStateEventServer) handleNodeCreateEvent(key string, msg *epb.EventR
 	if err != nil {
 		log.Errorf("Error creating new state for node %s in Nodestate repo. Error: %+v", nId, err)
 		return err
+	}
+	if n.s.msgbus != nil {
+		route := n.s.stateRoutingKey.SetAction("state").SetObject("node").MustBuild()
+		evt := &epb.EventNodeStateUpdate{
+			NodeId:          newState.NodeId,
+			CurrentState:    newState.State.String(),
+			LastStateChange: newState.LastStateChange.String(),
+		}
+
+		err = n.s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish node state update event: %+v with key %+v. Error: %s", evt, route, err.Error())
+		} else {
+			log.Infof("Published node state update event for node %s", nId.String())
+		}
 	}
 
 	log.Infof("Updated node %s heartbeat", nId)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/state/mocks"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -49,7 +50,7 @@ func TestStateServer_GetByNodeId(t *testing.T) {
 	expectedState := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          nodeId,
-		State:    db.StateConfigure,
+		State:    ukama.StateConfigure,
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
 		Type:            "testType",

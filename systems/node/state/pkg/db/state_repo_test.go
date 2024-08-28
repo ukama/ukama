@@ -10,6 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"gorm.io/driver/postgres"
+
 	"gorm.io/gorm"
 )
 
@@ -58,7 +59,7 @@ func TestState_Create(t *testing.T) {
 	state := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          "node1",
-		State:    db.StateConfigure,
+		State:    ukama.StateConfigure,
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
 		Type:            "someType",
@@ -103,7 +104,7 @@ func TestState_GetByNodeId(t *testing.T) {
 	expectedState := &db.State{
 		Id:           uuid.NewV4(),
 		NodeId:       nodeId.String(),
-		State: db.StateOperational,
+		State: ukama.StateOperational,
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "node_id", "current_state"}).

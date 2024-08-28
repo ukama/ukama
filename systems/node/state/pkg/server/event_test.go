@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/node/state/mocks"
@@ -17,7 +18,9 @@ import (
 func TestEventNotification(t *testing.T) {
 	mockRepo := mocks.NewStateRepo(t)
 	server := &StateServer{sRepo: mockRepo}
-	eventServer := NewControllerEventServer("testOrg", server)
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	eventServer := NewControllerEventServer("testOrg", server,msgbusClient)
 
 	tests := []struct {
 		name       string
@@ -80,7 +83,8 @@ func TestEventNotification(t *testing.T) {
 func TestHandleRegistryNodeAddEvent(t *testing.T) {
 	mockRepo := mocks.NewStateRepo(t)
 	server := &StateServer{sRepo: mockRepo}
-	eventServer := NewControllerEventServer("testOrg", server)
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	eventServer := NewControllerEventServer("testOrg", server,msgbusClient)
 
 	msg := &epb.EventRegistryNodeCreate{
 		NodeId: "uk-sa2434-hnode-v0-cdb2",
@@ -98,8 +102,8 @@ func TestHandleRegistryNodeAddEvent(t *testing.T) {
 func TestHandleNodeOnlineEvent(t *testing.T) {
 	mockRepo := mocks.NewStateRepo(t)
 	server := &StateServer{sRepo: mockRepo}
-	eventServer := NewControllerEventServer("testOrg", server)
-
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	eventServer := NewControllerEventServer("testOrg", server,msgbusClient)
 	msg := &epb.NodeOnlineEvent{
 		NodeId: "uk-sa2434-hnode-v0-cdb2",
 	}
@@ -116,7 +120,9 @@ func TestHandleNodeOnlineEvent(t *testing.T) {
 func TestHandleNodeOfflineEvent(t *testing.T) {
 	mockRepo := mocks.NewStateRepo(t)
 	server := &StateServer{sRepo: mockRepo}
-	eventServer := NewControllerEventServer("testOrg", server)
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	eventServer := NewControllerEventServer("testOrg", server,msgbusClient)
+
 
 	msg := &epb.NodeOfflineEvent{
 		NodeId: "uk-sa2434-hnode-v0-cdb2",
@@ -131,21 +137,3 @@ func TestHandleNodeOfflineEvent(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-// func TestHandleNodeConfigUpdateEvent(t *testing.T) {
-// 	mockRepo := mocks.NewStateRepo(t)
-// 	server := &StateServer{sRepo: mockRepo}
-// 	eventServer := NewControllerEventServer("testOrg", server)
-
-// 	msg := &eCfgPb.NodeConfigUpdateEvent{
-// 		NodeId: "uk-sa2434-hnode-v0-cdb2",
-// 		Commit: "test-commit",
-// 	}
-
-// 	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(&db.State{State: db.StateUnknown}, nil)
-// 	mockRepo.On("Update", mock.AnythingOfType("*db.State")).Return(nil)
-
-// 	err := eventServer.handleNodeConfigUpdateEvent("test-key", msg)
-// 	assert.NoError(t, err)
-
-// 	mockRepo.AssertExpectations(t)
-// }

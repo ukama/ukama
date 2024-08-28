@@ -51,7 +51,7 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 	state := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          nId.StringLowercase(),
-		State:           db.NodeStateEnum(req.State.State),
+		State:           ukama.NodeStateEnum(req.State.State),
 		LastHeartbeat:   now,
 		LastStateChange: now,
 		Type:            req.State.Type,
