@@ -84,8 +84,8 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		Id: nId.StringLowercase(),
 		Status: db.NodeStatus{
 			NodeId: nId.StringLowercase(),
-			Conn:   db.Unknown,
-			State:  db.Undefined,
+			Conn:   db.ConnectivityUnknown,
+			State:  ukama.StateUnknown,
 		},
 		Type: nId.GetNodeType(),
 		Name: req.Name,
@@ -196,7 +196,7 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node state  %v", req)
 
-	dbNodeState := db.ParseNodeState(req.State)
+	dbNodeState := ukama.ParseNodeStateEnum(req.State)
 	dbConnState := db.ParseConnectivityState(req.Connectivity)
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())

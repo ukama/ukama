@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -33,68 +34,18 @@ type Node struct {
 
 type NodeStatus struct {
 	gorm.Model
-	NodeId string       `gorm:"uniqueIndex:nodestatus_idx,expression:lower(node_id),where:deleted_at is null"`
-	Conn   Connectivity `gorm:"type:uint;not null"`
-	State  NodeState    `gorm:"type:uint;not null"`
+	NodeId string              `gorm:"uniqueIndex:nodestatus_idx,expression:lower(node_id),where:deleted_at is null"`
+	Conn   Connectivity        `gorm:"type:uint;not null"`
+	State  ukama.NodeStateEnum `gorm:"type:uint;not null"`
 }
 
 type Connectivity uint8
-type NodeState uint8
 
 const (
-	Undefined   NodeState = iota
-	Onboarded   NodeState = 1 /* First time when node connctes */
-	Configured  NodeState = 2 /* After initial configuration */
-	Active      NodeState = 3 /* Up and transmitting */
-	Maintenance NodeState = 4 /* Upgardes / Downgrades */
-	Faulty      NodeState = 5 /* Fault reported by node */
+	ConnectivityUnknown Connectivity = iota
+	Offline             Connectivity = 1 /* Not connected */
+	Online              Connectivity = 2 /* Connected */
 )
-
-const (
-	Unknown Connectivity = iota
-	Offline Connectivity = 1 /* Not connected */
-	Online  Connectivity = 2 /* Connected */
-)
-
-func (e *NodeState) Scan(value interface{}) error {
-	*e = NodeState(uint8(value.(int64)))
-
-	return nil
-}
-
-func (e NodeState) Value() (driver.Value, error) {
-	return int64(e), nil
-}
-
-func (e NodeState) String() string {
-	ns := map[NodeState]string{
-		Undefined:   "undefined",
-		Onboarded:   "onboarded",
-		Configured:  "configured",
-		Active:      "active",
-		Maintenance: "maintenance",
-		Faulty:      "faulty",
-	}
-
-	return ns[e]
-}
-
-func ParseNodeState(s string) NodeState {
-	switch strings.ToLower(s) {
-	case "active":
-		return Active
-	case "maintainance":
-		return Maintenance
-	case "faulty":
-		return Faulty
-	case "onboarded":
-		return Onboarded
-	case "configured":
-		return Configured
-	default:
-		return Undefined
-	}
-}
 
 func (c *Connectivity) Scan(value interface{}) error {
 	*c = Connectivity(uint8(value.(int64)))
@@ -108,9 +59,9 @@ func (c Connectivity) Value() (driver.Value, error) {
 
 func (c Connectivity) String() string {
 	cs := map[Connectivity]string{
-		Unknown: "unkown",
-		Offline: "offline",
-		Online:  "online",
+		ConnectivityUnknown: "unkown",
+		Offline:             "offline",
+		Online:              "online",
 	}
 
 	return cs[c]
@@ -123,7 +74,7 @@ func ParseConnectivityState(s string) Connectivity {
 	case "online":
 		return Online
 	default:
-		return Unknown
+		return ConnectivityUnknown
 	}
 }
 
