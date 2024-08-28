@@ -8,6 +8,7 @@ import {
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
+import { NetworkNameSchemaValidation } from '@/helpers/formValidators';
 import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import {
@@ -27,17 +28,7 @@ import { formatISO } from 'date-fns';
 import { Field, FormikProvider, FormikValues, useFormik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import * as Yup from 'yup';
 import NetworkInfo from '../../../../../../../public/svg/NetworkInfo';
-
-const validationSchema = Yup.object({
-  name: Yup.string()
-    .required('Network name is required')
-    .matches(
-      /^[a-z0-9-]*$/,
-      'Network name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
-    ),
-});
 
 const SiteLoadingState = ({ msg }: { msg: string }) => {
   return (
@@ -79,7 +70,7 @@ const Page = ({ params }: IPage) => {
     onSubmit: (values) => {
       handleSubmit(values);
     },
-    validationSchema: validationSchema,
+    validationSchema: NetworkNameSchemaValidation,
   });
 
   const { data: accessComponentsData } = useGetComponentsByUserIdQuery({

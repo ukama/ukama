@@ -1,6 +1,7 @@
 'use client';
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
+import { SiteNameSchemaValidation } from '@/helpers/formValidators';
 import colors from '@/theme/colors';
 import {
   Button,
@@ -13,16 +14,6 @@ import {
 import { FormikProvider, FormikValues, useFormik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import * as Yup from 'yup';
-
-const validationSchema = Yup.object({
-  name: Yup.string()
-    .required('Site name is required')
-    .matches(
-      /^[a-z0-9-]*$/,
-      'Site name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
-    ),
-});
 
 interface ISiteName {
   params: {
@@ -46,7 +37,7 @@ const SiteName = ({ params }: ISiteName) => {
     onSubmit: (values) => {
       handleSubmit(values);
     },
-    validationSchema: validationSchema,
+    validationSchema: SiteNameSchemaValidation,
   });
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),

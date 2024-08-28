@@ -355,7 +355,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ;;
 
         "dataplan")
-            # NEED TO BE FIXED
+            # TODO: NEED TO BE FIXED
             # sleep 2
             # echo  "$TAG Add default baserate in dataplan..."
             # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
