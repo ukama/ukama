@@ -235,11 +235,9 @@ static URequest* create_http_request(char *jStr) {
     /* Get the actual data now */
     jData = json_object_get(jRaw, JSON_DATA);
     if (jData) {
-        char *str;
-        str = json_string_value(jData);
+        char *str = json_string_value(jData);
         request->binary_body        = strdup(str);
         request->binary_body_length = strlen(str);
-        free(str);
     }
 
     json_decref(json);
@@ -304,7 +302,6 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     if (systemName)    free(systemName);
     if (systemEP)      free(systemEP);
     if (systemHost)    free(systemHost);
-    if (systemPort)    free(systemPort);
 
     return retCode;
 }
