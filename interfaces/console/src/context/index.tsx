@@ -99,7 +99,7 @@ const AppContextWrapper = ({
   };
   if (typeof window !== 'undefined') {
     const JInfo = localStorage.getItem('metaInfo');
-    info = JSON.parse(JInfo || '{}');
+    info = JSON.parse(JInfo || JSON.stringify(info));
   }
 
   const [subscriptionClient, setSubscriptionClient] = useState<any>(
