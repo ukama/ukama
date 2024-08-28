@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
@@ -10,7 +12,7 @@ type StateRepo interface {
 	Create(state *State, nestedFunc func(*State, *gorm.DB) error) error
 	GetByNodeId(nodeId ukama.NodeID) (*State, error)
 	Delete(nodeId ukama.NodeID) error
-	GetStateHistory(nodeId ukama.NodeID) ([]State, error)
+	GetStateHistory(nodeId ukama.NodeID, from, to time.Time) ([]State, error)
 }
 
 type stateRepo struct {
@@ -67,10 +69,12 @@ func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	return nil
 }
 
-func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID) ([]State, error) {
+
+func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID, from, to time.Time) ([]State, error) {
 	var states []State
 	err := r.Db.GetGormDb().
 		Where("node_id = ?", nodeId.String()).
+		Where("created_at BETWEEN ? AND ?", from, to).
 		Order("created_at desc").
 		Find(&states).Error
 	if err != nil {

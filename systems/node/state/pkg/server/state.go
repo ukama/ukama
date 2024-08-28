@@ -103,7 +103,7 @@ func (s *StateServer) Delete(ctx context.Context, req *pb.DeleteStateRequest) (*
 }
 
 func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHistoryRequest) (*pb.GetStateHistoryResponse, error) {
-	log.Infof("Getting state history for node ID %v", req.NodeId)
+	log.Infof("Getting state history for node ID %v from %v to %v", req.NodeId, req.FromTime, req.ToTime)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -111,7 +111,15 @@ func (s *StateServer) GetStateHistory(ctx context.Context, req *pb.GetStateHisto
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	states, err := s.sRepo.GetStateHistory(ukama.NodeID(nId))
+	fromTime := req.FromTime.AsTime()
+	toTime := req.ToTime.AsTime()
+
+	if fromTime.After(toTime) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"FromTime must be before ToTime")
+	}
+
+	states, err := s.sRepo.GetStateHistory(ukama.NodeID(nId), fromTime, toTime)
 	if err != nil {
 		log.Error("Failed to get state history: " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "node")

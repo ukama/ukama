@@ -8,6 +8,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	time "time"
+
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
@@ -70,25 +72,25 @@ func (_m *StateRepo) GetByNodeId(nodeId ukama.NodeID) (*db.State, error) {
 	return r0, r1
 }
 
-// GetStateHistory provides a mock function with given fields: nodeId
-func (_m *StateRepo) GetStateHistory(nodeId ukama.NodeID) ([]db.State, error) {
-	ret := _m.Called(nodeId)
+// GetStateHistory provides a mock function with given fields: nodeId, from, to
+func (_m *StateRepo) GetStateHistory(nodeId ukama.NodeID, from time.Time, to time.Time) ([]db.State, error) {
+	ret := _m.Called(nodeId, from, to)
 
 	var r0 []db.State
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) ([]db.State, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, time.Time, time.Time) ([]db.State, error)); ok {
+		return rf(nodeId, from, to)
 	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) []db.State); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, time.Time, time.Time) []db.State); ok {
+		r0 = rf(nodeId, from, to)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.State)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ukama.NodeID) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(ukama.NodeID, time.Time, time.Time) error); ok {
+		r1 = rf(nodeId, from, to)
 	} else {
 		r1 = ret.Error(1)
 	}

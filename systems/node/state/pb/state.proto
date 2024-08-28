@@ -26,6 +26,7 @@ message GetByNodeIdResponse {
     State state =1;
 
 }
+
 message State {
     string id = 1;
     string nodeId = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
@@ -43,7 +44,6 @@ enum NodeStateEnum {
     STATE_FAULTY = 5;
 }
 
-
 message CreateStateRequest {
     State state = 1;
 }
@@ -53,20 +53,17 @@ message GetByNodeIdRequest {
 
 }
 
-
 message DeleteStateRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 
 }
 
-message ListAllResponse {
-    repeated State states = 1;
+message GetStateHistoryResponse {
+    repeated State stateHistory = 1;
 }
 
 message GetStateHistoryRequest {
     string nodeId = 1[(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-}
-
-message GetStateHistoryResponse {
-    repeated State stateHistory = 1;
-}
+    google.protobuf.Timestamp from_time = 2;
+    google.protobuf.Timestamp to_time = 3;
+  }

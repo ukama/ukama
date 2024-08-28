@@ -73,11 +73,11 @@ func (this *DeleteStateRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ListAllResponse) Validate() error {
-	for _, item := range this.States {
+func (this *GetStateHistoryResponse) Validate() error {
+	for _, item := range this.StateHistory {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("States", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("StateHistory", err)
 			}
 		}
 	}
@@ -87,14 +87,14 @@ func (this *GetStateHistoryRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	return nil
-}
-func (this *GetStateHistoryResponse) Validate() error {
-	for _, item := range this.StateHistory {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("StateHistory", err)
-			}
+	if this.FromTime != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.FromTime); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("FromTime", err)
+		}
+	}
+	if this.ToTime != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ToTime); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ToTime", err)
 		}
 	}
 	return nil
