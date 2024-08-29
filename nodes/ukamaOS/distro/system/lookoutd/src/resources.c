@@ -105,10 +105,11 @@ double get_cpu_usage(int pid) {
         return 0;
     }
 
-    fscanf(file, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %ld %llu",
-           &pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags,
-           &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime,
-           &priority, &nice, &num_threads, &itrealvalue, &starttime);
+fscanf(file, "%d %255s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %llu",
+       &pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags,
+       &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime,
+       &priority, &nice, &num_threads, &itrealvalue, &starttime);
+
     fclose(file);
 
     return (double)100.0 * ( utime + stime + cutime + cstime) / sysconf(_SC_CLK_TCK);

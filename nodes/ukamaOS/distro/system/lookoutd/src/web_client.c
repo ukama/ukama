@@ -190,7 +190,7 @@ int get_nodeid_from_noded(Config *config) {
     return ret;
 }
 
-int get_capps_from_starterd(Config *config, CappList **cappList) {
+static int get_capps_from_starterd(Config *config, CappList **cappList) {
 
     int     ret     = STATUS_OK;
     char    *buffer = NULL;
@@ -212,7 +212,7 @@ int get_capps_from_starterd(Config *config, CappList **cappList) {
     json_decref(json);
     usys_free(buffer);
 
-    return STATUS_OK;
+    return ret;
 }
 
 int send_health_report(Config *config) {

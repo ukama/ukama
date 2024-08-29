@@ -10,6 +10,7 @@
 
 #include "lookout.h"
 #include "config.h"
+#include "web_client.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -21,6 +22,9 @@
 #include "usys_services.h"
 
 #include "version.h"
+
+/* network.c */
+extern int start_web_services(Config *config, UInst *serviceInst);
 
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
