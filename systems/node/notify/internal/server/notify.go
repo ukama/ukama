@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -240,6 +241,53 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 
 	return nil
 }
+// PostConfig handles the post-configuration status update from a node device.
+func (n *NotifyServer) PostConfig(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+    log.Infof("Received configuration status from node: %v, status: %v", req.NodeId, req.Description)
+
+    // Validate node ID
+    if req.NodeId == "" {
+        return nil, status.Errorf(codes.InvalidArgument, "node ID is required")
+    }
+
+    nNodeId, err := ukama.ValidateNodeId(req.NodeId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
+    }
+
+    notification := &db.Notification{
+        Id:          uuid.NewV4(),
+        NodeId:      nNodeId.StringLowercase(),
+        NodeType:    nNodeId.GetNodeType(),
+        Severity:    "high",
+        Type:        "config",
+        Status:      1, // Status indicating configuration success
+        Time:        uint32(time.Now().Unix()),
+        Description: "Node configuration completed successfully.",
+    }
+
+    err = n.notifyRepo.Add(notification)
+    if err != nil {
+        log.Errorf("Error adding configuration notification to database: %s", err.Error())
+        return nil, status.Errorf(codes.Internal, "could not save configuration status")
+    }
+
+    // Publish the configuration status event to the message bus
+    route := n.baseRoutingKey.SetAction("config").SetObject("notification").MustBuild()
+    evt := &epb.NotificationNodeConfigReady{
+        NodeId:             notification.NodeId,
+        State: req.Description,
+    }
+
+    err = n.msgbus.PublishRequest(route, evt)
+    if err != nil {
+        log.Errorf("Failed to publish configuration event %+v with key %+v: %s", evt, route, err.Error())
+        return nil, status.Errorf(codes.Internal, "failed to publish configuration event")
+    }
+
+    return &pb.AddResponse{}, nil
+}
+
 
 func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 	return &pb.Notification{
