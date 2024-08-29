@@ -107,7 +107,7 @@ func TestState_GetByNodeId(t *testing.T) {
 		State: ukama.StateOperational,
 	}
 
-	rows := sqlmock.NewRows([]string{"id", "node_id", "current_state"}).
+	rows := sqlmock.NewRows([]string{"id", "node_id", "state"}).
 		AddRow(expectedState.Id, expectedState.NodeId, expectedState.State)
 
 	mock.ExpectQuery(`^SELECT.*states.*`).

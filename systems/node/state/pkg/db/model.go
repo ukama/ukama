@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql/driver"
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -15,6 +17,7 @@ type State struct {
 	State           ukama.NodeStateEnum `gorm:"type:uint;not null"`
 	LastHeartbeat   time.Time
 	LastStateChange time.Time
+	Connectivity   Connectivity `gorm:"type:uint;not null"`
 	Type            string `gorm:"type:string;not null"`
 	Version         string `gorm:"type:string"`
 	CreatedAt       time.Time
@@ -22,3 +25,40 @@ type State struct {
 	DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
 
+
+type Connectivity uint8
+
+const (
+	Unknown Connectivity = iota
+	Offline Connectivity = 1 /* Not connected */
+	Online  Connectivity = 2 /* Connected */
+)
+func (c *Connectivity) Scan(value interface{}) error {
+	*c = Connectivity(uint8(value.(int64)))
+
+	return nil
+}
+
+func (c Connectivity) Value() (driver.Value, error) {
+	return int64(c), nil
+}
+func (c Connectivity) String() string {
+	cs := map[Connectivity]string{
+		Unknown: "unkown",
+		Offline: "offline",
+		Online:  "online",
+	}
+
+	return cs[c]
+}
+
+func ParseConnectivityState(s string) Connectivity {
+	switch strings.ToLower(s) {
+	case "offline":
+		return Offline
+	case "online":
+		return Online
+	default:
+		return Unknown
+	}
+}
