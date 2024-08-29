@@ -15,6 +15,7 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
+#include "usys_file.h"
 
 /* implemented in resources.c */
 extern int    get_memory_usage(int pid);
@@ -65,22 +66,23 @@ URequest* wc_create_http_request(char* url,
     }
 
     ulfius_set_request_properties(httpReq,
-                       U_OPT_HTTP_VERB, method,
-                       U_OPT_HTTP_URL, url,
-                       U_OPT_TIMEOUT, 20,
-                       U_OPT_NONE);
+                                  U_OPT_HTTP_VERB, method,
+                                  U_OPT_HTTP_URL, url,
+                                  U_OPT_HEADER_PARAMETER, "User-Agent", SERVICE_NAME,
+                                  U_OPT_TIMEOUT, 20,
+                                  U_OPT_NONE);
 
     if (body) {
-
         jBody = json_loads(body, JSON_DECODE_ANY, NULL);
-
         if (STATUS_OK != ulfius_set_json_body_request(httpReq, jBody)) {
             ulfius_clean_request(httpReq);
+            json_decref(jBody);
             usys_free(httpReq);
-            httpReq = NULL;
+            return NULL;
         }
     }
 
+    json_decref(jBody);
     return httpReq;
 }
 
@@ -165,7 +167,7 @@ static int wc_read_from_local_service(Config* config,
 
 int get_nodeid_from_noded(Config *config) {
 
-    int     ret     = STATUS_NOK;
+    int     ret     = STATUS_OK;
     char    *buffer = NULL;
     JsonObj *json   = NULL;
 
@@ -175,20 +177,22 @@ int get_nodeid_from_noded(Config *config) {
     }
 
     json = json_loads(buffer, JSON_DECODE_ANY, NULL);
-    ret  = json_deserialize_node_id(&config->nodeID, json);
-    if (!ret) {
+    if (json_deserialize_node_id(&config->nodeID, json) == USYS_FALSE) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
-        return STATUS_NOK;
+        ret = STATUS_NOK;
     }
 
     usys_log_info("lookout.d: Node ID: %s", config->nodeID);
 
-    return STATUS_OK;
+    json_decref(json);
+    usys_free(buffer);
+
+    return ret;
 }
 
 int get_capps_from_starterd(Config *config, CappList **cappList) {
 
-    int     ret     = STATUS_NOK;
+    int     ret     = STATUS_OK;
     char    *buffer = NULL;
     JsonObj *json   = NULL;
 
@@ -200,11 +204,13 @@ int get_capps_from_starterd(Config *config, CappList **cappList) {
     usys_log_debug("%s: capps: %s", SERVICE_NAME, buffer);
 
     json = json_loads(buffer, JSON_DECODE_ANY, NULL);
-    ret  = json_deserialize_capps(cappList, json);
-    if (!ret) {
+    if (json_deserialize_capps(cappList, json) == USYS_FALSE) {
         usys_log_error("Failed to parse capps response from starterd");
-        return STATUS_NOK;
+        ret = STATUS_NOK;
     }
+
+    json_decref(json);
+    usys_free(buffer);
 
     return STATUS_OK;
 }
@@ -216,10 +222,12 @@ int send_health_report(Config *config) {
     CappRuntime *runtime  = NULL;
     JsonObj     *json     = NULL;
 
-    char url[MAX_BUFFER]   = {0};
-    char ukama[MAX_BUFFER] = {0};
+    char url[MAX_BUFFER] = {0};
+    char *ukama  = NULL;
     char *buffer = NULL;
     char *report = NULL;
+
+    int ret = USYS_TRUE;
 
     /* Get capps from starterd; for each get its resource usage */
     if (get_capps_from_starterd(config, &cappList) == STATUS_OK) {
@@ -233,7 +241,6 @@ int send_health_report(Config *config) {
         }
     } else {
         usys_log_error("Unable to get capp status");
-        return USYS_FALSE;
     }
 
     if (!json_serialize_health_report(&json,
@@ -253,8 +260,11 @@ int send_health_report(Config *config) {
 
     if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
         usys_log_error("failed to parse response from local service");
-        return USYS_FALSE;
+        ret = USYS_FALSE;
     }
 
-    return USYS_TRUE;
+    json_decref(json);
+    usys_free(report);
+    usys_free(ukama);
+    return ret;
 }

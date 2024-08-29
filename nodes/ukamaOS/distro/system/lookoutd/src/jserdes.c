@@ -183,8 +183,6 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
     }
 
     count = json_array_size(jArray);
-    if (count == 0) return USYS_FALSE;
-
     for (i=0; i<count; i++) {
         jCapp = json_array_get(jArray, i);
 
@@ -343,7 +341,10 @@ bool json_serialize_health_report(JsonObj **json,
     /* capps */
     json_object_set_new(*json, JTAG_CAPPS, json_array());
     jArray = json_object_get(*json, JTAG_CAPPS);
-    if (jArray == NULL) return USYS_FALSE;
+    if (jArray == NULL) {
+        json_decref(*json);
+        return USYS_FALSE;
+    }
 
     for (ptr = list; ptr; ptr=ptr->next) {
         capp = ptr->capp;
