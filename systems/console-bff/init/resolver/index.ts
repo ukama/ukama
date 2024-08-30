@@ -8,11 +8,13 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { GetCountriesResolver } from "./getCountries";
+import { GetCurrencySymbolResolver } from "./getCurrencySymbol";
 import { GetTimezonesResolver } from "./getTimezones";
 
 const resolvers: NonEmptyArray<any> = [
   GetCountriesResolver,
   GetTimezonesResolver,
+  GetCurrencySymbolResolver,
 ];
 
 export default resolvers;

@@ -10,6 +10,7 @@ import {
   PackageDto,
   useAddPackageMutation,
   useDeletePackageMutation,
+  useGetCurrencySymbolQuery,
   useGetPackagesQuery,
   useUpdatePacakgeMutation,
 } from '@/client/graphql/generated';
@@ -35,9 +36,24 @@ const INIT_DATAPLAN = {
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { setSnackbarMessage } = useAppContext();
+  const { metaInfo, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
+
+  const { data: currencyData } = useGetCurrencySymbolQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      code: metaInfo.currency,
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'currency-info-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const {
     data: packagesData,
@@ -193,7 +209,6 @@ const Page = () => {
         sx={{
           py: 3,
           px: 4,
-          width: '100%',
           overflow: 'scroll',
           borderRadius: '10px',
           bgcolor: colors.white,
@@ -247,6 +262,7 @@ const Page = () => {
             data={dataplan}
             isOpen={isDataPlan}
             setData={setDataplan}
+            currencySymbol={currencyData?.getCurrencySymbol.symbol ?? ''}
             title={'Create data plan'}
             labelNegativeBtn={'Cancel'}
             action={dataplan.id ? 'update' : 'add'}

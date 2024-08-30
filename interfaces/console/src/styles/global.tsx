@@ -10,6 +10,7 @@ import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
 import {
   Box,
+  Container,
   Link,
   Paper,
   Skeleton,
@@ -46,6 +47,24 @@ const globalUseStyles = makeStyles(() => ({
   },
 }));
 
+const RootContainer = styled(Container)((props) => ({
+  height: 'auto',
+  padding: '0px !important',
+  background:
+    props.theme.palette.mode === 'dark' ? colors.darkGreen05 : colors.white,
+  boxShadow:
+    '-4px 0px 4px 4px rgba(0, 0, 0, 0.05), 4px 4px 4px 4px rgba(0, 0, 0, 0.05)',
+  borderRadius: '5px',
+}));
+
+const GradiantBar = styled(Box)({
+  width: '100%',
+  height: '12px',
+  background:
+    'linear-gradient(90deg, #00D3EB 0%, #2190F6 14.06%, #6974F8 44.27%, #6974F8 58.85%, #271452 100%)',
+  borderRadius: '4px 4px 0px 0px',
+});
+
 const HorizontalContainerJustify = styled(Box)((props) => ({
   width: '100%',
   height: 'auto',
@@ -79,7 +98,6 @@ const CenterContainer = styled(Box)({
   width: '100%',
   height: '100%',
   display: 'flex',
-  padding: '18px',
   alignItems: 'center',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -182,17 +200,27 @@ const IconStyle = {
     },
   },
 };
+
+const ComponentContainer = {
+  width: 'auto',
+  height: 'auto',
+  overflow: 'hidden',
+};
+
 export {
   CenterContainer,
+  ComponentContainer,
   ContainerJustifySpaceBtw,
   ContainerMax,
   DarkTooltip,
+  GradiantBar,
   HorizontalContainer,
   HorizontalContainerJustify,
   IconStyle,
   LinkStyle,
   MessageContainer,
   PageContainer,
+  RootContainer,
   RoundedCard,
   SimpleCardWithBorder,
   SkeletonRoundedCard,

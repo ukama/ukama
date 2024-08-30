@@ -65,10 +65,10 @@ export class InvitationAPIDto {
   name: string;
 
   @Field()
-  expireAt: string;
+  expire_at: string;
 
   @Field()
-  userId: string;
+  user_id: string;
 
   @Field()
   role: string;

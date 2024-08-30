@@ -10,9 +10,24 @@ import * as Yup from 'yup';
 
 // Validation rules
 const nameValidationRule = Yup.string().required('Name is required.');
-const networkNameValidationRule = Yup.string().required(
-  'Network name is required.',
-);
+const NetworkNameSchemaValidation = Yup.object({
+  name: Yup.string()
+    .required('Network name is required')
+    .matches(
+      /^[a-z0-9-]*$/,
+      'Network name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
+    ),
+});
+
+const SiteNameSchemaValidation = Yup.object({
+  name: Yup.string()
+    .required('Site name is required')
+    .matches(
+      /^[a-z0-9-]*$/,
+      'Site name must be lowercase alphanumeric and should not contain spaces, "-" are allowed.',
+    ),
+});
+
 const emailValidatonRule = Yup.string()
   .required('Email is required.')
   .email('Please enter a valid email.');
@@ -62,9 +77,6 @@ const ESIM_FORM_SCHEMA = Yup.object().shape({
   name: nameValidationRule,
   simiccid: iccidValidator,
 });
-const NETWORK_NAME_SCHEMA_VALIDATOR = Yup.object().shape({
-  name: networkNameValidationRule,
-});
 const PHYSICAL_SIM_FORM_SCHEMA = Yup.object().shape({
   iccid: iccidValidator,
   securityCode: securitycodeValidator,
@@ -97,11 +109,19 @@ const AddSiteValidationSchema = [
   }),
 ];
 
+const SiteConfigureSchema = Yup.object().shape({
+  switch: Yup.string().required('Switch is required'),
+  power: Yup.string().required('Power is required'),
+  backhaul: Yup.string().required('Backhaul is required'),
+});
+
 export {
   AddSiteValidationSchema,
   ESIM_FORM_SCHEMA,
-  NETWORK_NAME_SCHEMA_VALIDATOR,
+  NetworkNameSchemaValidation,
   PHYSICAL_SIM_FORM_SCHEMA,
   STEPPER_FORM_SCHEMA,
+  SiteConfigureSchema,
+  SiteNameSchemaValidation,
   UpdateSiteSchema,
 };

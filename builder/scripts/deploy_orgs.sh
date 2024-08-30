@@ -22,6 +22,11 @@ INVENTORY_SYS_KEY="inventory"
 IS_INVENTORY_SYS=false
 METADATA=$(jq -c '.' ../metadata.json)
 JSON_FILE="../deploy_orgs_config.json"
+if [ "$1" == "-d" ]; then
+  ISDEBUGMODE=true
+else
+  ISDEBUGMODE=false
+fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -79,13 +84,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         set_env
         echo  "$TAG Running $2 docker compose..."
         cd $1
-
         CONTAINER_NAME=$3
         while true; do
-            docker compose -p $ORGNAME up --build -d > /dev/null 2>&1
+            if [ "$ISDEBUGMODE" = true ]; then
+                docker compose -p $ORGNAME up --build -d
+            else
+                docker compose -p $ORGNAME up --build -d > /dev/null 2>&1
+            fi
             sleep 5
             break
-            # Need to figure out how to check if the container is up
+            # Need to figure out a way to verify the container status
             # if docker ps | grep -q $CONTAINER_NAME; then
             #     echo  "$TAG $2 docker container is up"
             # else
@@ -109,8 +117,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             "password": "'$PASSWORD'",
             "traits": {
                 "email": "'$OWNEREMAIL'",
-                "name": "'$OWNERNAME'",
-                "firstVisit": true
+                "name": "'$OWNERNAME'"
             }
         }')
         sleep 2
@@ -124,7 +131,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     register_org_to_init(){
         echo  "$TAG Add ${ORGNAME} org in lookup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\",  \"country\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert', 'CD')"
         psql $DB_URI -c "$QUERY"
     }
 
@@ -133,7 +140,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SQL_QUERY="SELECT PUBLIC.users.id FROM PUBLIC.users WHERE users.auth_id = '$OWNERAUTHID' AND users.deleted_at IS NULL ORDER BY users.id LIMIT 1;"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/users"
         OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
-        echo "$TAG User ID: $OWNERID"
+        echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
+    }
+
+    create_org() {
+       echo  "$TAG Register org in nucleus..."
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/org"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE)"
+        psql $DB_URI -c "$QUERY"
     }
 
     sort_systems_by_dependency() {
@@ -255,6 +269,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             if [[ "$(uname)" == "Darwin" ]]; then
                 sed -i '' "s/build: \.\.\/services\/initClient/image: main-init/g" docker-compose.yml
             fi
+            
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
                 sed -i '' '/ports:/d' docker-compose.yml
                 sed -i '' '/- 8090:80/d' docker-compose.yml
@@ -269,9 +284,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 8058:8080/d' docker-compose.yml
                 sed -i '' '/- 5412:5432/d' docker-compose.yml
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
-                sed -i '' "s/api-gateway-nucleus:8080/10.2.0.18:8060/g" docker-compose.yml
-                sed -i '' "s/api-gateway-init:8080/10.2.0.11:8071/g" docker-compose.yml
-                sed -i '' "s/api-gateway-inventory:8080/localhost:8077/g" docker-compose.yml
+                sed -i '' '/- 5404:5432/d' docker-compose.yml
+                sed -i '' '/- 8074:8080/d' docker-compose.yml
             fi
         done
         cd $root_dir
@@ -285,6 +299,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             register_user
             sleep 5
             get_user_id
+            sleep 5
+            create_org
         fi
     }
 
@@ -312,6 +328,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ./start_provider.sh
             cd ../..
         fi
+        if [[ " ${SYSTEM} " == " bff " ]]; then
+           cp .env.dev.example .env
+               echo ".env file created and content copied from .env.dev.example for bff"
+        fi
+        if [[ " ${SYSTEM} " == " console " ]]; then
+           cp .env.dev.example .env.local
+           echo ".env.local file created and content copied from .env.dev.example for console"
+        fi
         
         SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
         export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
@@ -319,19 +343,11 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         case $SYSTEM in
         "auth-services")
             cd app
-            cp .env.dev.example .env.local
+            cp .env.example .env.local
             cd ../
             echo ".env.local file created and content copied from .env.dev.example for ukama-auth"
             sleep 2
             register_user
-            ;;
-        "console")
-            cp .env.dev.example .env.local
-            echo ".env.local file created and content copied from .env.dev.example for console"
-            ;;
-        "bff")
-            cp .env.dev.example .env
-            echo ".env file created and content copied from .env.dev.example for bff"
             ;;
         "init")
             sleep 2
@@ -339,16 +355,17 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ;;
 
         "dataplan")
-            sleep 2
-            echo  "$TAG Add default baserate in dataplan..."
-            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
-            QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
-            psql $DB_URI -c "$QUERY1"
+            # TODO: NEED TO BE FIXED
+            # sleep 2
+            # echo  "$TAG Add default baserate in dataplan..."
+            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
+            # QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
+            # psql $DB_URI -c "$QUERY1"
 
-            echo  "$TAG Set default markup..."
-            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
-            QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
-            psql $DB_URI -c "$QUERY2"
+            # echo  "$TAG Set default markup..."
+            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
+            # QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
+            # psql $DB_URI -c "$QUERY2"
         esac
         cd ../
     done
@@ -357,7 +374,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
 
     if [[ "${ORG_TYPE}" =~ "${ORG_COMMUNITY}" ]]; then
         sleep 3
-        if($IS_INVENTORY_SYS); then
+        if ($IS_INVENTORY_SYS); then
             echo "$TAG Syncing up org inventory..."
             components=$(curl --location --silent --request PUT "http://${LOCAL_HOST_IP}:8077/v1/components/sync")
             echo "$TAG Org inventory synced up."
@@ -374,7 +391,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
         SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
 
-
         echo "$TAG Registering systems URL in lookup db..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
         psql $DB_URI -c "$SYS_QUERY_1"
@@ -385,6 +401,34 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         psql $DB_URI -c "$SYS_QUERY_6"
         psql $DB_URI -c "$SYS_QUERY_7"
         psql $DB_URI -c "$SYS_QUERY_8"
+    fi
+
+    if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
+        echo "${TAG}Connect global services with containers...${NC}"
+        if [[ " ${SYSTEMS[@]} " =~ " registry " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-member-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-network-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-invitation-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-site-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " subscriber " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-registry-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-simmanager-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " notification " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-eventnotify-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-distributor-1
+        fi
+        if [[ " ${SYSTEMS[@]} " =~ " node " ]]; then
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
+            docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
+        fi
+        docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
+
+        echo  "$TAG Updateing inventory..."
+        SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
+        psql $DB_URI -t -A -c "$SQL_QUERY"
     fi
 done
 

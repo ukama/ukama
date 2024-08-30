@@ -19,6 +19,7 @@ const BackButton = ({ title }: IBackButton) => {
   const router = useRouter();
   return (
     <Stack
+      width={'fit-content'}
       direction={'row'}
       alignItems={'center'}
       spacing={1.5}

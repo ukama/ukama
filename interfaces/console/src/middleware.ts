@@ -10,6 +10,10 @@ import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+// async function removeCookie(key: string) {
+//   cookies().delete(key);
+// }
+
 type User = {
   id: string;
   role: string;
@@ -18,6 +22,7 @@ type User = {
   orgId: string;
   token: string;
   orgName: string;
+  isShowWelcome: boolean;
   isEmailVerified: boolean;
 };
 
@@ -28,6 +33,7 @@ const USER_INIT = {
   email: '',
   orgId: '',
   orgName: '',
+  isShowWelcome: false,
   isEmailVerified: false,
   role: Role_Type.RoleInvalid,
 };
@@ -73,11 +79,20 @@ function getUserFromToken(token: string): User {
     const parseToken = decodeBase64Token(token);
     const parts = parseToken.split(';');
 
-    if (parts.length < 7) {
+    if (parts.length < 8) {
       return USER_INIT;
     }
 
-    const [orgId, orgName, id, name, email, role, isEmailVerified] = parts;
+    const [
+      orgId,
+      orgName,
+      id,
+      name,
+      email,
+      role,
+      isEmailVerified,
+      isShowWelcome,
+    ] = parts;
     return {
       id,
       role,
@@ -86,6 +101,7 @@ function getUserFromToken(token: string): User {
       orgId,
       token,
       orgName,
+      isShowWelcome: isShowWelcome.includes('true'),
       isEmailVerified: isEmailVerified.includes('true'),
     };
   } catch (error) {
@@ -110,6 +126,7 @@ const getUserObject = async (session: string, cookieToken: string) => {
       orgId: jsonRes.orgId,
       token: jsonRes.token,
       orgName: jsonRes.orgName,
+      isShowWelcome: jsonRes.isShowWelcome,
       isEmailVerified: jsonRes.isEmailVerified,
     };
   }
@@ -125,7 +142,7 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
-    cookieStore.delete('token');
+    // removeCookie('token');
     const logoutRes = NextResponse.redirect(
       new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
@@ -181,6 +198,12 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
+  if (userObj.isShowWelcome) {
+    return NextResponse.redirect(
+      new URL('/welcome', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
   if (
     (pathname.includes('/console') || pathname === '/') &&
     !isUserHaveOrg(userObj)
@@ -198,6 +221,10 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(
       new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
+  }
+
+  if (pathname.includes('/welcome') && userObj.role !== Role_Type.RoleOwner) {
+    return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
   if (

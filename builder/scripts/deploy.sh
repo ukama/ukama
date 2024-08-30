@@ -96,8 +96,7 @@ function register_user() {
         "password": "'$PASSWORD'",
         "traits": {
             "email": "'$OWNEREMAIL'",
-            "name": "'$OWNERNAME'",
-            "firstVisit": true
+            "name": "'$OWNERNAME'"
         }
     }')
     sleep 2
@@ -179,6 +178,10 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
+        cd app
+        cp .env.example .env.local
+        cd ../
+        echo ".env.local file created and content copied from .env.example for ukama-auth"
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
         cd ./billing/provider
@@ -192,10 +195,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     run_docker_compose "$(echo "$SYSTEM_OBJECT" | jq -r '.path')" "$(echo "$SYSTEM_OBJECT" | jq -r '.name')" "$(echo "$SYSTEM_OBJECT" | jq -r '.key')"
     case $SYSTEM in
     "auth-services")
-        cd app
-        cp .env.dev.example .env.local
-        cd ../
-        echo ".env.local file created and content copied from .env.dev.example for ukama-auth"
         sleep 2
         register_user
         ;;

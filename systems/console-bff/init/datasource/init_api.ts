@@ -12,6 +12,7 @@ import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { addInStore, getFromStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
@@ -70,6 +71,7 @@ class InitAPI extends RESTDataSource {
     let userId = "";
     let orgId = "";
     let orgName = "";
+    let isWelcomeEligible = false;
     let role = ROLE_TYPE.ROLE_INVALID;
     let userWhoami: WhoamiDto | null = null;
     if (userRes?.uuid) {
@@ -105,15 +107,26 @@ class InitAPI extends RESTDataSource {
             userWhoami.user.uuid
           );
           role = member.role as ROLE_TYPE;
+          if (role === ROLE_TYPE.ROLE_OWNER) {
+            const isAlreadyWelcomed = await getFromStore(
+              store,
+              `${userWhoami.user.uuid}-welcome`
+            );
+            if (typeof isAlreadyWelcomed !== "boolean") {
+              await addInStore(store, `${userWhoami.user.uuid}-welcome`, true);
+              isWelcomeEligible = true;
+            } else {
+              isWelcomeEligible = false;
+            }
+          }
         } else {
           logger.error(`Error: ${baseURL.message}`);
         }
       }
     }
-
     const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
       whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
-    }`;
+    };${isWelcomeEligible}`;
     const base64Cookie = Buffer.from(cookie).toString("base64");
 
     return {
@@ -126,6 +139,7 @@ class InitAPI extends RESTDataSource {
       token: base64Cookie,
       isEmailVerified:
         whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,
+      isShowWelcome: isWelcomeEligible,
     };
   };
 }

@@ -61,6 +61,9 @@ export class ValidateSessionRes {
 
   @Field()
   isEmailVerified: boolean;
+
+  @Field()
+  isShowWelcome: boolean;
 }
 
 @ObjectType()
@@ -82,6 +85,18 @@ export class CountriesRes {
 export class OrgsName {
   @Field()
   name: string;
+}
+
+@ObjectType()
+export class CurrencyRes {
+  @Field()
+  code: string;
+
+  @Field()
+  symbol: string;
+
+  @Field()
+  image: string;
 }
 
 @ObjectType()

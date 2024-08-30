@@ -64,6 +64,7 @@ func TestOrgRepo_Add(t *testing.T) {
 		Name:        "ukama",
 		Owner:       uuid.NewV4(),
 		Certificate: "ukama_certs",
+		Country:     "US",
 	}
 
 	db, mock, err := sqlmock.New() // mock sql.DB
@@ -87,8 +88,8 @@ func TestOrgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(org.Id, org.Name, org.Owner, org.Certificate,
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(org.Id, org.Name, org.Owner, org.Country,
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Certificate, sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
