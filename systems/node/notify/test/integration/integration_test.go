@@ -38,6 +38,8 @@ type TestConfig struct {
 
 var tConfig *TestConfig
 
+var nuuid = uuid.NewV4().String()
+
 func init() {
 	// load config
 	tConfig = &TestConfig{}
@@ -57,10 +59,8 @@ func Test_FullFlow(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 
 	nodeAlert := NewTestDbNotification(node, "alert")
-	nodeAlertResp := &pb.AddResponse{}
 
 	nodeEvent := NewTestDbNotification(node, "event")
-	nodeEventResp := &pb.AddResponse{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -76,15 +76,13 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("AddAlertNotification", func(t *testing.T) {
 		var err error
 
-		nodeAlertResp, err = c.Add(ctx, &pb.AddRequest{
+		_, err = c.Add(ctx, &pb.AddRequest{
 			NodeId:      nodeAlert.NodeId,
 			Severity:    nodeAlert.Severity.String(),
 			Type:        nodeAlert.Type.String(),
 			ServiceName: nodeAlert.ServiceName,
 			Status:      nodeAlert.Status,
-			EpochTime:   nodeAlert.Time,
-			Description: nodeAlert.Description,
-			Details:     nodeAlert.Details.String(),
+			Time:        nodeAlert.Time,
 		})
 
 		assert.NoError(t, err)
@@ -92,7 +90,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetAlertNotification", func(t *testing.T) {
 		nt, err := c.Get(ctx, &pb.GetRequest{
-			NotificationId: nodeAlertResp.Notification.Id})
+			NotificationId: nuuid})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, nt)
@@ -101,15 +99,13 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("AddEventNotification", func(t *testing.T) {
 		var err error
 
-		nodeEventResp, err = c.Add(ctx, &pb.AddRequest{
+		_, err = c.Add(ctx, &pb.AddRequest{
 			NodeId:      nodeEvent.NodeId,
 			Severity:    nodeEvent.Severity.String(),
 			Type:        nodeEvent.Type.String(),
 			ServiceName: nodeEvent.ServiceName,
 			Status:      nodeEvent.Status,
-			EpochTime:   nodeEvent.Time,
-			Description: nodeEvent.Description,
-			Details:     nodeEvent.Details.String(),
+			Time:        nodeEvent.Time,
 		})
 
 		assert.NoError(t, err)
@@ -117,7 +113,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetEventNotification", func(t *testing.T) {
 		nt, err := c.Get(ctx, &pb.GetRequest{
-			NotificationId: nodeEventResp.Notification.Id})
+			NotificationId: nuuid})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, nt)
@@ -182,7 +178,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("DeleteAlertNotification", func(tt *testing.T) {
 		resp, err := c.Delete(ctx,
-			&pb.GetRequest{NotificationId: nodeAlertResp.Notification.Id})
+			&pb.GetRequest{NotificationId: nuuid})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -190,7 +186,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetAlertNotification", func(t *testing.T) {
 		nt, err := c.Get(ctx, &pb.GetRequest{
-			NotificationId: nodeAlertResp.Notification.Id})
+			NotificationId: nuuid})
 
 		assert.Error(t, err)
 		assert.Nil(t, nt)
@@ -198,7 +194,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("DeleteEventNotification", func(tt *testing.T) {
 		resp, err := c.Delete(ctx,
-			&pb.GetRequest{NotificationId: nodeEventResp.Notification.Id})
+			&pb.GetRequest{NotificationId: nuuid})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -206,7 +202,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetEventNotification", func(t *testing.T) {
 		nt, err := c.Get(ctx, &pb.GetRequest{
-			NotificationId: nodeEventResp.Notification.Id})
+			NotificationId: nuuid})
 
 		assert.Error(t, err)
 		assert.Nil(t, nt)
@@ -239,7 +235,6 @@ func NewTestDbNotification(nodeId string, ntype string) db.Notification {
 		ServiceName: "noded",
 		Status:      8200,
 		Time:        uint32(time.Now().Unix()),
-		Description: "Some random alert",
 		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`),
 	}
 }

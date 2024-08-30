@@ -3,7 +3,7 @@ services:
  postgresd-registry:
   image: postgres:13.3
   ports:
-   - '5405:5432'
+   - 5405:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -14,8 +14,6 @@ services:
 
  member:
   build: ./member
-  ports:
-   - '9060:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -38,9 +36,7 @@ services:
    - msgclient-registry
 
  network:
-  build:
-   context: ./network
-   dockerfile: ./Dockerfile
+  build: ./network
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -64,11 +60,7 @@ services:
    - msgclient-registry
 
  node:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node
-  ports:
-   - '9072:9090'
+  build: ./node
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -89,8 +81,6 @@ services:
 
  invitation:
   build: ./invitation
-  ports:
-   - '9073:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -113,8 +103,6 @@ services:
 
  site:
   build: ./site
-  ports:
-   - '9079:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-registry
@@ -127,7 +115,7 @@ services:
    - SITE_SERVICE_PORT=9090
    - NETWORK=network:9090
    - ORGNAME=${ORGNAME}
-   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
   restart: always
   networks:
    - ukama-net
@@ -140,7 +128,7 @@ services:
    context: ./api-gateway
   restart: always
   ports:
-   - '8075:8080'
+   - 8075:8080
   networks:
    - ukama-net
   environment:
@@ -172,9 +160,7 @@ services:
    - postgresd-registry
 
  initclient-registry:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30

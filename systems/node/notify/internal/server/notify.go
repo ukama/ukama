@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -21,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -47,8 +45,8 @@ func NewNotifyServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBus
 }
 
 func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName, req.Description,
-		req.Details, req.Status, req.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName,
+		req.Details, req.Status, req.Time, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 
 	if err != nil {
 		return nil, err
@@ -167,7 +165,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
 
-func add(nodeId, severity, nType, serviceName, description, details string, nStatus uint32, epochTime uint32,
+func add(nodeId, severity, nType, serviceName string, details []byte, nStatus uint32, time uint32,
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
 	var nodeType string = ""
@@ -203,9 +201,8 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 		Type:        *notificationType,
 		ServiceName: serviceName,
 		Status:      nStatus,
-		Time:        epochTime,
-		Description: description,
-		Details:     datatypes.JSON([]byte(details)),
+		Time:        time,
+		Details:     details,
 	}
 
 	log.Debugf("New notification is : %+v.", notification)
@@ -228,9 +225,8 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 		Type:        notification.Type.String(),
 		ServiceName: notification.ServiceName,
 		Status:      notification.Status,
-		EpochTime:   notification.Time,
-		Description: notification.Description,
-		Details:     notification.Details.String(),
+		Time:        notification.Time,
+		Details:     details,
 	}
 
 	err = msgBus.PublishRequest(route, evt)
@@ -241,53 +237,6 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 
 	return nil
 }
-// PostConfig handles the post-configuration status update from a node device.
-func (n *NotifyServer) PostConfig(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-    log.Infof("Received configuration status from node: %v, status: %v", req.NodeId, req.Description)
-
-    // Validate node ID
-    if req.NodeId == "" {
-        return nil, status.Errorf(codes.InvalidArgument, "node ID is required")
-    }
-
-    nNodeId, err := ukama.ValidateNodeId(req.NodeId)
-    if err != nil {
-        return nil, status.Errorf(codes.InvalidArgument, "invalid node ID format: %s", err.Error())
-    }
-
-    notification := &db.Notification{
-        Id:          uuid.NewV4(),
-        NodeId:      nNodeId.StringLowercase(),
-        NodeType:    nNodeId.GetNodeType(),
-        Severity:    "high",
-        Type:        "config",
-        Status:      1, // Status indicating configuration success
-        Time:        uint32(time.Now().Unix()),
-        Description: "Node configuration completed successfully.",
-    }
-
-    err = n.notifyRepo.Add(notification)
-    if err != nil {
-        log.Errorf("Error adding configuration notification to database: %s", err.Error())
-        return nil, status.Errorf(codes.Internal, "could not save configuration status")
-    }
-
-    // Publish the configuration status event to the message bus
-    route := n.baseRoutingKey.SetAction("config").SetObject("notification").MustBuild()
-    evt := &epb.NotificationNodeConfigReady{
-        NodeId:             notification.NodeId,
-        State: req.Description,
-    }
-
-    err = n.msgbus.PublishRequest(route, evt)
-    if err != nil {
-        log.Errorf("Failed to publish configuration event %+v with key %+v: %s", evt, route, err.Error())
-        return nil, status.Errorf(codes.Internal, "failed to publish configuration event")
-    }
-
-    return &pb.AddResponse{}, nil
-}
-
 
 func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 	return &pb.Notification{
@@ -298,9 +247,8 @@ func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 		Type:        notif.Type.String(),
 		ServiceName: notif.ServiceName,
 		Status:      notif.Status,
-		EpochTime:   notif.Time,
-		Description: notif.Description,
-		Details:     notif.Details.String(),
+		Time:        notif.Time,
+		Details:     notif.Details,
 		CreatedAt:   timestamppb.New(notif.CreatedAt),
 	}
 }

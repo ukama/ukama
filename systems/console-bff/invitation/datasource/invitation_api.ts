@@ -8,10 +8,16 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
+import { INVITATION_STATUS } from "../../common/enums";
+import { logger } from "../../common/logger";
+import { addInStore, getFromStore, openStore } from "../../common/storage";
+import { getBaseURL } from "../../common/utils";
+import InitAPI from "../../init/datasource/init_api";
 import {
   CreateInvitationInputDto,
   DeleteInvitationResDto,
   InvitationDto,
+  InvitationsDto,
   InvitationsResDto,
   UpateInvitationInputDto,
   UpdateInvitationResDto,
@@ -48,9 +54,10 @@ class InvitationApi extends RESTDataSource {
   };
 
   updateInvitation = async (
-    baseURL: string,
     req: UpateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
+    const store = openStore();
+    const baseURL = await getFromStore(store, `${req.email}/${req.id}`);
     this.logger.info(
       `UpdateInvitation [PATCH]: ${baseURL}/${VERSION}/${INVITATIONS}/${req.id}`
     );
@@ -71,7 +78,7 @@ class InvitationApi extends RESTDataSource {
     return this.delete(`/${VERSION}/${INVITATIONS}/${id}`).then(res => res);
   };
 
-  getInvitationsByOrg = async (baseURL: string): Promise<InvitationsResDto> => {
+  getInvitations = async (baseURL: string): Promise<InvitationsResDto> => {
     this.logger.info(
       `GetInvitationByOrg [GET]: ${baseURL}/${VERSION}/${INVITATIONS}`
     );
@@ -79,6 +86,40 @@ class InvitationApi extends RESTDataSource {
     return this.get(`/${VERSION}/${INVITATIONS}`).then(res =>
       dtoToInvitationsResDto(res)
     );
+  };
+
+  getAllInvitationsByEmail = async (email: string): Promise<InvitationsDto> => {
+    const invitations: InvitationsDto = { invitations: [] };
+    const init = new InitAPI();
+    const orgsName = await init.getOrgs();
+    if (orgsName?.orgs?.length > 0) {
+      const store = openStore();
+      for (const element of orgsName.orgs) {
+        const baseURL = await getBaseURL("invitation", element.name, store);
+        logger.info(`BaseURL: ${JSON.stringify(baseURL)}`);
+        if (baseURL.status === 200) {
+          const res = await this.getInvitationsByEmail(baseURL.message, email);
+          logger.info(`Invitations res: ${JSON.stringify(res)}`);
+          if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
+            await addInStore(store, `${email}/${res.id}`, baseURL);
+            invitations.invitations.push({
+              id: res.id,
+              name: res.name,
+              link: res.link,
+              role: res.role,
+              email: res.email,
+              status: res.status,
+              userId: res.userId,
+              expireAt: res.expireAt,
+            });
+          }
+        }
+      }
+    }
+
+    this.logger.info(`Invitations: ${JSON.stringify(invitations)}`);
+
+    return invitations;
   };
 
   getInvitationsByEmail = async (

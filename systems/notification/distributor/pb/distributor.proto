@@ -10,10 +10,7 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
 
-import "google/protobuf/wrappers.proto";
-import "ukama/roles.proto";
 import "ukama/notification.proto";
-
 package ukama.notification.distributor.v1;
 
 service DistributorService {
@@ -26,7 +23,6 @@ message NotificationsRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
-    ukama.common.v1.RoleType forRole = 5 [json_name = "for_role"];
 }
 
 message NotificationsResponse {
@@ -51,6 +47,6 @@ message Notification {
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    ukama.common.v1.RoleType forRole = 10 [json_name = "for_role"];
-    bool isRead = 11 [json_name = "is_read"];
+    bool isRead = 10 [json_name = "is_read"];
+    string createdAt = 11 [json_name = "created_at"];
 }

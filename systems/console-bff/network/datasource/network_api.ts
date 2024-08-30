@@ -44,15 +44,20 @@ class NetworkApi extends RESTDataSource {
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/networks`, {
       body: {
-        allowed_countries: req.countries,
-        allowed_networks: req.networks,
-        budget: req.budget,
+        allowed_countries: [],
+        allowed_networks: [],
+        budget: 0,
         network_name: req.name,
         overdraft: 0,
         payment_links: true,
         traffic_policy: 0,
       },
-    }).then(res => dtoToNetworkDto(res));
+    }).then(async res => {
+      if (req.isDefault) {
+        await this.setDefaultNetwork(baseURL, res.id);
+      }
+      return dtoToNetworkDto(res);
+    });
   };
 
   setDefaultNetwork = async (

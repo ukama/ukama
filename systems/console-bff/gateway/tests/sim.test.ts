@@ -1,13 +1,12 @@
 import { ApolloServer } from "@apollo/server";
 import { faker } from "@faker-js/faker";
 import path from "path";
-import { createClient } from "redis";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { SIM_TYPES } from "../../common/enums";
-import { logger } from "../../common/logger";
+import { openStore } from "../../common/storage";
 import { THeaders } from "../../common/types";
 import {
   csvToBase64,
@@ -73,12 +72,6 @@ const createSchema = async () => {
   });
 };
 
-const redisClient = createClient().on("error", error => {
-  logger.error(
-    `Error creating redis for ${SUB_GRAPHS.sim.name} service, Error: ${error}`
-  );
-});
-
 const startServer = async () => {
   const schema = await createSchema();
   const server = new ApolloServer<Context>({
@@ -89,11 +82,8 @@ const startServer = async () => {
 };
 
 const createContextValue = async () => {
-  const baseURL = await getBaseURL(
-    SUB_GRAPHS.sim.name,
-    orgName,
-    redisClient.isOpen ? redisClient : null
-  );
+  const store = openStore();
+  const baseURL = await getBaseURL(SUB_GRAPHS.sim.name, orgName, store);
 
   return {
     dataSources: { dataSource: simApi },
@@ -150,10 +140,11 @@ describe("Sim API integration tests", () => {
   });
 
   it("should add a package to sim", async () => {
+    const store = openStore();
     const packageURL = await getBaseURL(
       SUB_GRAPHS.package.name,
       orgName,
-      redisClient.isOpen ? redisClient : null
+      store
     );
     const testPackage = await packageApi.addPackage(
       packageURL.message,
@@ -191,10 +182,11 @@ describe("Sim API integration tests", () => {
   });
 
   it("should allocate sim", async () => {
+    const store = openStore();
     const networkURL = await getBaseURL(
       SUB_GRAPHS.network.name,
       orgName,
-      redisClient.isOpen ? redisClient : null
+      store
     );
     const testNetwork = await networkApi.addNetwork(networkURL.message, {
       budget: faker.datatype.number({ min: 0, max: 9 }),
@@ -207,7 +199,7 @@ describe("Sim API integration tests", () => {
     const subscriberURL = await getBaseURL(
       SUB_GRAPHS.subscriber.name,
       orgName,
-      redisClient.isOpen ? redisClient : null
+      store
     );
     const user = await userApi.whoami(userId);
     const { email, phone } = user.user;

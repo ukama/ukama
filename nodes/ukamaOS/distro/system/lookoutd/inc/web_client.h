@@ -12,5 +12,6 @@
 #include "config.h"
 
 int get_nodeid_from_noded(Config *config);
+int send_health_report(Config *config);
 
 #endif /* INC_WEB_CLIENT_H_ */

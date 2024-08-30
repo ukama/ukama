@@ -45,7 +45,6 @@ func TestDIstributor_GetNotificationStream(t *testing.T) {
 			Scope:       upb.NotificationScope_SCOPE_ORG,
 			OrgId:       orgId,
 			IsRead:      false,
-			ForRole:     upb.RoleType_ROLE_OWNER,
 		},
 		{
 			Id:          uuid.NewV4().String(),
@@ -55,7 +54,6 @@ func TestDIstributor_GetNotificationStream(t *testing.T) {
 			Scope:       upb.NotificationScope_SCOPE_ORG,
 			OrgId:       orgId,
 			IsRead:      false,
-			ForRole:     upb.RoleType_ROLE_OWNER,
 		},
 	}
 

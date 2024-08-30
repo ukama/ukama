@@ -107,26 +107,34 @@ const FileDropBoxDialog = ({
           justifyContent="center"
           spacing={2}
         >
-          <FormControl fullWidth>
-            <InputLabel id={'simpool-sim-type-label'} shrink>
-              Sim Type
-            </InputLabel>
-            <Select
-              notched
-              required
-              label="Sim Type"
-              value={simType}
-              id={'simpool-sim-type-select'}
-              labelId="simpool-sim-type-label"
-              onChange={(e) => setSimType(e.target.value as Sim_Types)}
-            >
-              {SIM_TYPES.map(({ id, label, value }) => (
-                <MenuItem key={id} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {file ? (
+            <Typography variant="body1" fontWeight={400}>
+              Upload the SIM CSV file you received so that you can digitally
+              assign SIMs to your subscribers, and authorize them to use your
+              network.
+            </Typography>
+          ) : (
+            <FormControl fullWidth>
+              <InputLabel id={'simpool-sim-type-label'} shrink>
+                Sim Type
+              </InputLabel>
+              <Select
+                notched
+                required
+                label="Sim Type"
+                value={simType}
+                id={'simpool-sim-type-select'}
+                labelId="simpool-sim-type-label"
+                onChange={(e) => setSimType(e.target.value as Sim_Types)}
+              >
+                {SIM_TYPES.map(({ id, label, value }) => (
+                  <MenuItem key={id} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {file ? (
             <Stack direction={'row'} spacing={2} alignItems={'center'}>
@@ -148,6 +156,7 @@ const FileDropBoxDialog = ({
                 width: '100%',
                 display: 'flex',
                 cursor: 'pointer',
+                borderRadius: '4px',
                 justifyContent: 'center',
                 border: '1px dashed grey',
                 backgroundColor: colors.white38,

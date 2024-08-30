@@ -24,12 +24,12 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-STATIC MapItem *create_map_item(char *name, char *port) {
+STATIC MapItem *create_map_item(char *name, char *port, char *uuid) {
 
 	MapItem *map;
 
 	/* Sanity check */
-	if (name == NULL || port == NULL) return NULL;
+	if (name == NULL || port == NULL || uuid == NULL) return NULL;
 
 	map = (MapItem *)malloc(sizeof(MapItem));
 	if (map == NULL) {
@@ -37,17 +37,11 @@ STATIC MapItem *create_map_item(char *name, char *port) {
 		return NULL;
 	}
 
-    map->serviceInfo = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
-    if (map->serviceInfo == NULL) {
-        usys_log_error("Error allocating memory: %d", sizeof(ServiceInfo));
-        free(map);
-        return NULL;
-    }
-
-    map->serviceInfo->name = strdup(name);
-    map->serviceInfo->port = strdup(port);
-    map->transmit = NULL;
-    map->receive  = NULL;
+    map->serviceName = strdup(name);
+    map->servicePort = strdup(port);
+    map->uuid        = strdup(uuid);
+    map->transmit    = NULL;
+    map->receive     = NULL;
 
 	pthread_mutex_init(&map->mutex, NULL);
 	pthread_cond_init(&map->hasResp, NULL);
@@ -59,26 +53,20 @@ STATIC MapItem *create_map_item(char *name, char *port) {
 
 void free_map_item(MapItem *map) {
 
-	if (!map) {
-		return;
-	}
+	if (map == NULL) return;
 
-    if (map->serviceInfo) {
-        free(map->serviceInfo->name);
-        free(map->serviceInfo->port);
-        free(map->serviceInfo);
-    }
+    if (map->serviceName) free(map->serviceName);
+    if (map->servicePort) free(map->servicePort);
+    if (map->uuid)        free(map->uuid);
 
 	free(map);
 }
 
-MapItem *is_existing_item(MapTable *table, char *name, char *port) {
+MapItem *is_existing_item(MapTable *table, char *uuid) {
 
 	MapItem *item=NULL;
 
-	if (table == NULL || name == NULL || port == NULL) {
-		return NULL;
-	}
+	if (table == NULL || uuid  == NULL) return NULL;
 
 	/* is empty */
 	if (table->first == NULL) {
@@ -86,8 +74,7 @@ MapItem *is_existing_item(MapTable *table, char *name, char *port) {
 	}
 
 	for (item = table->first; item; item=item->next) {
-        if (strcmp(item->serviceInfo->name, name) == 0 &&
-            strcmp(item->serviceInfo->port, port) == 0) {
+        if (strcmp(item->uuid, uuid) == 0) {
             return item;
         }
     }
@@ -95,19 +82,22 @@ MapItem *is_existing_item(MapTable *table, char *name, char *port) {
     return NULL;
 }
 
-MapItem *add_map_to_table(MapTable **table, char *name, char *port) {
+MapItem *add_map_to_table(MapTable **table, char *name, char *port, char *uuid) {
 
 	MapItem *map=NULL;
 
-    if (*table == NULL || name == NULL || port == NULL) return NULL;
+    if (*table == NULL ||
+        name == NULL ||
+        port == NULL ||
+        uuid == NULL) return NULL;
 
     /* An existing mapping? */
-    map = is_existing_item(*table, name, port);
+    map = is_existing_item(*table, uuid);
     if (map != NULL) {
         return map;
     }
 
-    map = create_map_item(name, port);
+    map = create_map_item(name, port, uuid);
     if (map == NULL) {
         return NULL;
     }
@@ -130,13 +120,13 @@ MapItem *add_map_to_table(MapTable **table, char *name, char *port) {
     /* Unlock */
     pthread_mutex_unlock(&((*table)->mutex));
 
-    log_debug("Added new mapping entry in the table. Name: %s port: %s",
-              name, port);
+    log_debug("Added new mapping entry in the table. Name: %s port: %s uuid: %s",
+              name, port, uuid);
 
     return map;
 }
 
-void remove_map_item_from_table(MapTable *table, char *name, char *port) {
+void remove_map_item_from_table(MapTable *table, char *uuid) {
 
     MapItem *current=NULL, *previous=NULL;
 
@@ -146,8 +136,7 @@ void remove_map_item_from_table(MapTable *table, char *name, char *port) {
     previous = NULL;
 
     while (current != NULL) {
-        if (strcmp(current->serviceInfo->name, name) == 0 &&
-            strcmp(current->serviceInfo->port, port) == 0) {
+        if (strcmp(current->uuid, uuid) == 0) {
             if (previous != NULL) {
                 previous->next = current->next;
                 if (current == table->last) {

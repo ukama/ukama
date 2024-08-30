@@ -23,99 +23,96 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
-
-func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-	repo := mocks.NotificationRepo{}
-
-	node := ukama.NewVirtualHomeNodeId().String()
-	nt := NewTestDbNotification(node, "alert")
-
-	listenerRoutes := []string{"event.cloud.global.{{ .Org}}.nucleus.org.notification.sent",
-		"event.cloud.local.{{ .Org}}.registry.node.notification.sent"}
-
-	t.Run("NotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
-
-		repo.On("Add", mock.Anything).Return(nil)
-
-		evt := &epb.Notification{
-			Id:          nt.Id.String(),
-			NodeId:      nt.NodeId,
-			NodeType:    nt.NodeType,
-			Severity:    nt.Severity.String(),
-			Type:        nt.Type.String(),
-			ServiceName: nt.ServiceName,
-			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
-		}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
-
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("InvalidNotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
-
-		evt := &epb.Notification{
-			Id:          nt.Id.String(),
-			NodeId:      "foo",
-			NodeType:    nt.NodeType,
-			Severity:    nt.Severity.String(),
-			Type:        "bar",
-			ServiceName: nt.ServiceName,
-			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details.String(),
-		}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
-
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("NotificationEventNotSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
-
-		evt := epb.EventSimUsage{}
-
-		anyE, err := anypb.New(&evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
-
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.NoError(t, err)
-	})
-}
+ 
+const OrgName="test-ukama"
+ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
+	 msgbusClient := &mbmocks.MsgBusServiceClient{}
+	 msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	 repo := mocks.NotificationRepo{}
+ 
+	 node := ukama.NewVirtualHomeNodeId().String()
+	 nt := NewTestDbNotification(node, "alert")
+ 
+	 listenerRoutes := []string{"event.cloud.global.{{ .Org}}.nucleus.org.notification.sent",
+		 "event.cloud.local.{{ .Org}}.registry.node.notification.sent"}
+ 
+	 t.Run("NotificationEventSent", func(t *testing.T) {
+		 routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+ 
+		 repo.On("Add", mock.Anything).Return(nil)
+ 
+		 evt := &epb.Notification{
+			 Id:          nt.Id.String(),
+			 NodeId:      nt.NodeId,
+			 NodeType:    nt.NodeType,
+			 Severity:    nt.Severity.String(),
+			 Type:        nt.Type.String(),
+			 ServiceName: nt.ServiceName,
+			 Status:      nt.Status,
+			 Time:        nt.Time,
+		 }
+ 
+		 anyE, err := anypb.New(evt)
+		 assert.NoError(t, err)
+ 
+		 msg := &epb.Event{
+			 RoutingKey: routingKey,
+			 Msg:        anyE,
+		 }
+ 
+		 s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+ 
+		 _, err = s.EventNotification(context.TODO(), msg)
+ 
+		 assert.NoError(t, err)
+	 })
+ 
+	 t.Run("InvalidNotificationEventSent", func(t *testing.T) {
+		 routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+ 
+		 evt := &epb.Notification{
+			 Id:          nt.Id.String(),
+			 NodeId:      "foo",
+			 NodeType:    nt.NodeType,
+			 Severity:    nt.Severity.String(),
+			 Type:        "bar",
+			 ServiceName: nt.ServiceName,
+			 Status:      nt.Status,
+			 Time:        nt.Time,
+		 }
+ 
+		 anyE, err := anypb.New(evt)
+		 assert.NoError(t, err)
+ 
+		 msg := &epb.Event{
+			 RoutingKey: routingKey,
+			 Msg:        anyE,
+		 }
+ 
+		 s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+ 
+		 _, err = s.EventNotification(context.TODO(), msg)
+ 
+		 assert.Error(t, err)
+	 })
+ 
+	 t.Run("NotificationEventNotSent", func(t *testing.T) {
+		 routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
+ 
+		 evt := epb.EventSimUsage{}
+ 
+		 anyE, err := anypb.New(&evt)
+		 assert.NoError(t, err)
+ 
+		 msg := &epb.Event{
+			 RoutingKey: routingKey,
+			 Msg:        anyE,
+		 }
+ 
+		 s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+ 
+		 _, err = s.EventNotification(context.TODO(), msg)
+ 
+		 assert.NoError(t, err)
+	 })
+ }

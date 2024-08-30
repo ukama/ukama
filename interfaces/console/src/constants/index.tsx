@@ -5,7 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Role_Type, Sim_Types } from '@/client/graphql/generated';
+import { Sim_Types } from '@/client/graphql/generated';
+import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -57,10 +58,10 @@ export const SOLAR_UPTIME_OPTIONS = [
   { id: 3, label: '99%', value: 99 },
 ];
 export const DATA_UNIT = [
-  { id: 1, label: 'BYTE', value: 'Bytes' },
+  { id: 1, label: 'Bytes', value: 'Bytes' },
   { id: 2, label: 'KB', value: 'KiloBytes' },
   { id: 3, label: 'MB', value: 'MegaBytes' },
-  { id: 4, label: 'GB', value: 'KiloBGigaBytesytes' },
+  { id: 4, label: 'GB', value: 'GigaBytes' },
 ];
 export const DATA_DURATION = [
   { id: 1, label: 'Day', value: '1' },
@@ -166,9 +167,7 @@ export const MEMBER_TABLE_MENU: MenuItemType[] = [
 ];
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
-  { id: 'simType', label: 'Type', minWidth: 180 },
-  { id: 'qrCode', label: 'QR Code', minWidth: 140 },
-  { id: 'isPhysical', label: 'Physical', minWidth: 140 },
+  { id: 'isPhysical', label: 'Type', minWidth: 180 },
   { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [

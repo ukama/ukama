@@ -5,19 +5,16 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { InvitationDto } from "./types";
+import { InvitationsResDto } from "./types";
 
 @Resolver()
 export class GetInvitationsResolver {
-  @Query(() => InvitationDto)
-  async getInvitations(
-    @Arg("email") email: string,
-    @Ctx() ctx: Context
-  ): Promise<InvitationDto> {
+  @Query(() => InvitationsResDto)
+  async getInvitations(@Ctx() ctx: Context): Promise<InvitationsResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getInvitationsByEmail(baseURL, email);
+    return await dataSources.dataSource.getInvitations(baseURL);
   }
 }

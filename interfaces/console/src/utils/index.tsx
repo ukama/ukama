@@ -6,23 +6,18 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  Invitation_Status,
-  NodeTypeEnum,
-  Notification_Scope,
-  Role_Type,
-} from '@/client/graphql/generated';
+import { Invitation_Status, NodeTypeEnum } from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
-} from '@/client/graphql/generated/metrics';
+  Role_Type,
+} from '@/client/graphql/generated/subscriptions';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
-import { Typography, Skeleton, Stack } from '@mui/material';
-import { LatLngTuple } from 'leaflet';
-import { RoleToNotificationScopes } from './roletoNotificationScope';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { Skeleton, Stack, Typography } from '@mui/material';
+import { LatLngTuple } from 'leaflet';
 const getTitleFromPath = (path: string, id: string) => {
   if (path.startsWith('/console/sites') && id) {
     return (
@@ -328,17 +323,6 @@ const provideStatusColor = (status: Invitation_Status) => {
   }
 };
 
-const getRoleType = (userRole: string): Role_Type => {
-  return Object.values(Role_Type).includes(userRole as Role_Type)
-    ? (userRole as Role_Type)
-    : Role_Type.RoleInvalid;
-};
-
-const getScopesByRole = (userRole: string): Notification_Scope[] => {
-  const roleType = getRoleType(userRole);
-  return RoleToNotificationScopes[roleType] ?? [];
-};
-
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const day = date.getDate().toString().padStart(2, '0');
@@ -412,8 +396,6 @@ export {
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
-  getRoleType,
-  getScopesByRole,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,

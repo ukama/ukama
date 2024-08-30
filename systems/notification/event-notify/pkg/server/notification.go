@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	notif "github.com/ukama/ukama/systems/common/notification"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
@@ -37,10 +38,11 @@ type EventToNotifyServer struct {
 	userNotificationRepo db.UserNotificationRepo
 	eventMsgRepo         db.EventMsgRepo
 	msgbus               mb.MsgBusServiceClient
+	memberkClient        creg.MemberClient
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
 	return &EventToNotifyServer{
 		orgName:              orgName,
 		orgId:                orgId,
@@ -49,6 +51,7 @@ func NewEventToNotifyServer(orgName string, orgId string, notificationRepo db.No
 		userRepo:             userRepo,
 		eventMsgRepo:         eventMsgRepo,
 		msgbus:               msgBus,
+		memberkClient:        mc,
 		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
@@ -130,7 +133,19 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 			"no user uuid. Error %s", err.Error())
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(req.GetRoleType()))
+	roleType := upb.RoleType_ROLE_INVALID
+
+	/* validate member of org or member role */
+	if req.GetUserId() != "" {
+		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid user id. Error %s", err.Error())
+		}
+		roleType = upb.RoleType(upb.RoleType_value[resp.Member.Role])
+	}
+
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(roleType))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -140,7 +155,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 			"Invalid arguments: no user found")
 	}
 
-	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].UserId)
+	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].Id.String())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}

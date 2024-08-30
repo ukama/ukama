@@ -1,11 +1,10 @@
 import { ApolloServer } from "@apollo/server";
 import { faker } from "@faker-js/faker";
-import { createClient } from "redis";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
 import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
-import { logger } from "../../common/logger";
+import { openStore } from "../../common/storage";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import NetworkApi from "../../network/datasource/network_api";
 import { Context } from "../../node/context";
@@ -53,11 +52,7 @@ const parsedHeaders = parseGatewayHeaders(headers);
 const { orgName, orgId } = parsedHeaders;
 
 const nodeApi = new NodeAPI();
-const redisClient = createClient().on("error", error => {
-  logger.error(
-    `Error creating redis for ${SUB_GRAPHS.network.name} service, Error: ${error}`
-  );
-});
+
 const createSchema = async () => {
   return await buildSchema({
     resolvers: [
@@ -91,11 +86,8 @@ const startServer = async () => {
 };
 
 const createContextValue = async () => {
-  const baseURL = await getBaseURL(
-    SUB_GRAPHS.node.name,
-    orgName,
-    redisClient.isOpen ? redisClient : null
-  );
+  const store = openStore();
+  const baseURL = await getBaseURL(SUB_GRAPHS.node.name, orgName, store);
   return {
     dataSources: { dataSource: nodeApi },
     baseURL: baseURL.message,
@@ -152,11 +144,8 @@ describe("Node API integration tests", () => {
   });
 
   it("should add node to a site", async () => {
-    const networkURL = await getBaseURL(
-      SUB_GRAPHS.network.name,
-      orgName,
-      redisClient.isOpen ? redisClient : null
-    );
+    const store = openStore();
+    const baseURL = await getBaseURL(SUB_GRAPHS.network.name, orgName, store);
 
     const testNetwork = {
       budget: faker.number.float(),
@@ -165,18 +154,10 @@ describe("Node API integration tests", () => {
       networks: ["A3"],
     };
 
-    const network = await networkApi.addNetwork(
-      networkURL.message,
-      testNetwork
-    );
+    const network = await networkApi.addNetwork(baseURL.message, testNetwork);
     networkId = network.id;
 
-    const siteURL = await getBaseURL(
-      SUB_GRAPHS.site.name,
-      orgName,
-      redisClient.isOpen ? redisClient : null
-    );
-    const site = await siteApi.addSite(siteURL.message, {
+    const site = await siteApi.addSite(baseURL.message, {
       access_id: "",
       backhaul_id: "",
       install_date: "",

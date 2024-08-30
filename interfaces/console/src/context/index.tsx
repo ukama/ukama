@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { getMetricsClient } from '@/client/client';
 import { TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
@@ -54,6 +55,22 @@ const AppContext = createContext({
     orgName: '',
   },
   setUser: (u: TUser) => {},
+  subscriptionClient: undefined,
+  setSubscriptionClient: (client: any) => {},
+  metaInfo: {
+    ip: '',
+    city: '',
+    lat: 0,
+    lng: 0,
+    languages: '',
+    currency: '',
+    timezone: '',
+    region_code: '',
+    country_code: '',
+    country_name: '',
+    country_calling_code: '',
+  },
+  setMetaInfo: (info: any) => {},
 });
 
 const AppContextWrapper = ({
@@ -67,10 +84,32 @@ const AppContextWrapper = ({
   initalUserValues: TUser;
   children: React.ReactNode;
 }) => {
+  let info = {
+    ip: '',
+    city: '',
+    lat: 0,
+    lng: 0,
+    currency: '',
+    timezone: '',
+    languages: '',
+    region_code: '',
+    country_code: '',
+    country_name: '',
+    country_calling_code: '',
+  };
+  if (typeof window !== 'undefined') {
+    const JInfo = localStorage.getItem('metaInfo');
+    info = JSON.parse(JInfo || JSON.stringify(info));
+  }
+
+  const [subscriptionClient, setSubscriptionClient] = useState<any>(
+    getMetricsClient(initEnv.METRIC_URL),
+  );
   const [env, setEnv] = useState<TEnv>(initEnv);
   const [token, setToken] = useState(_token);
   const [pageName, setPageName] = useState('Home');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [metaInfo, setMetaInfo] = useState(info);
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [selectedDefaultSite, setSelectedDefaultSite] = useState('');
@@ -108,6 +147,10 @@ const AppContextWrapper = ({
       setSnackbarMessage,
       selectedDefaultSite,
       setSelectedDefaultSite,
+      subscriptionClient,
+      setSubscriptionClient,
+      metaInfo,
+      setMetaInfo,
     }),
     [
       env,
@@ -130,6 +173,10 @@ const AppContextWrapper = ({
       setSnackbarMessage,
       selectedDefaultSite,
       setSelectedDefaultSite,
+      subscriptionClient,
+      setSubscriptionClient,
+      metaInfo,
+      setMetaInfo,
     ],
   );
 

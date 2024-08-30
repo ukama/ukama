@@ -16,7 +16,7 @@ interface IPageContainerHeader {
   search?: string;
   subtitle?: string;
   showSearch?: boolean;
-  buttonTitle: string;
+  buttonTitle?: string;
   onSearchChange?: Function;
   handleButtonAction?: Function;
 }
@@ -25,8 +25,8 @@ const PageContainerHeader = ({
   title,
   search,
   subtitle,
-  buttonTitle,
   onSearchChange,
+  buttonTitle = '',
   showSearch = true,
   handleButtonAction,
 }: IPageContainerHeader) => {
@@ -66,17 +66,19 @@ const PageContainerHeader = ({
             </Grid>
           )}
         </Grid>
-        <Grid item xs={12} md={'auto'}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="medium"
-            sx={{ width: { xs: '100%', md: 'fit-content' } }}
-            onClick={() => handleButtonAction && handleButtonAction()}
-          >
-            {buttonTitle}
-          </Button>
-        </Grid>
+        {buttonTitle && (
+          <Grid item xs={12} md={'auto'}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="medium"
+              sx={{ width: { xs: '100%', md: 'fit-content' } }}
+              onClick={() => handleButtonAction && handleButtonAction()}
+            >
+              {buttonTitle}
+            </Button>
+          </Grid>
+        )}
       </Grid>
     </HorizontalContainerJustify>
   );

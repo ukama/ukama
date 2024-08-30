@@ -29,6 +29,7 @@ import {
 } from "../common/configs";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
+import { openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
 import InitAPI from "../init/datasource/init_api";
@@ -76,9 +77,6 @@ const loadServers = async () => {
             );
             request.http.headers.set("cookie", headers.auth.Cookie);
             request.http.headers.set("token", headers.token);
-            // request.http.headers.set("orgId", headers.orgId);
-            // request.http.headers.set("userId", headers.userId);
-            // request.http.headers.set("orgName", headers.orgName);
           }
         },
       });
@@ -89,6 +87,7 @@ const loadServers = async () => {
 
 const startServer = async () => {
   await delay(10000);
+  const store = openStore();
   const gateway = await loadServers();
   const server = new ApolloServer({
     gateway,
@@ -147,7 +146,7 @@ const startServer = async () => {
     const cookies = req.headers["cookie"];
     const initAPI = new InitAPI();
     if (cookies) {
-      const sessionRes = await initAPI.validateSession(cookies);
+      const sessionRes = await initAPI.validateSession(store, cookies);
       res.setHeader("Content-Type", "application/json");
       res.setHeader("cache-control", "max-age=3600");
       return res.send(sessionRes);

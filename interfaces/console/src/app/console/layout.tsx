@@ -12,15 +12,23 @@ import {
   useSetDefaultNetworkMutation,
   useUpdateNotificationMutation,
 } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/metrics';
+import {
+  NotificationsResDto,
+  Role_Type,
+  useGetNotificationsLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
 import { useAppContext } from '@/context';
+import { getMetaInfo } from '@/lib/MetaInfo';
+import ServerNotificationSubscription from '@/lib/NotificationSubscription';
 import '@/styles/console.css';
+import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import PubSub from 'pubsub-js';
+import { useEffect, useState } from 'react';
 
 export default function ConosleLayout({
   children,
@@ -28,17 +36,20 @@ export default function ConosleLayout({
   children: React.ReactNode;
 }>) {
   const {
-    env,
     user,
     network,
+    metaInfo,
     pageName,
     isDarkMode,
     setNetwork,
+    setMetaInfo,
     setSnackbarMessage,
+    subscriptionClient,
   } = useAppContext();
-  const [alerts, setAlerts] = useState<NotificationsResDto[] | undefined>(
-    undefined,
-  );
+  const [notifications, setNotifications] = useState<
+    NotificationsResDto[] | []
+  >([]);
+  const [startTimeStamp] = useState<string>(new Date().getTime().toString());
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const {
     data: networksData,
@@ -88,58 +99,111 @@ export default function ConosleLayout({
     fetchPolicy: 'network-only',
   });
 
-  const [updateNotificationCall] = useUpdateNotificationMutation();
+  const [updateNotificationCall] = useUpdateNotificationMutation({
+    onCompleted: () => {
+      refetchNotifications().then((res) => {
+        setNotifications(res.data?.getNotifications.notifications);
+      });
+    },
+  });
 
-  // useGetNotificationsQuery({
-  //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
-  //   fetchPolicy: 'cache-first',
+  const [
+    getNotifications,
+    { refetch: refetchNotifications, loading: notificationsLoading },
+  ] = useGetNotificationsLazyQuery({
+    onCompleted: (data) => {
+      if (data.getNotifications.notifications.length > 0) {
+        setNotifications(data.getNotifications.notifications);
+      }
+      ServerNotificationSubscription(
+        `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
+        user.role as Role_Type,
+        user.orgId,
+        user.id,
+        user.orgName,
+        network.id,
+        startTimeStamp,
+      );
+    },
+  });
 
-  //   variables: {
-  //     data: {
-  //       orgId: user.orgId,
-  //       userId: user.id,
-  //       networkId: network.id,
-  //       forRole: getRoleType(user.role),
-  //       scopes: getScopesByRole(user.role),
-  //     },
-  //   },
-  //   onCompleted: (data) => {
-  //     const alerts = data.getNotifications.notifications;
-  //     setAlerts(alerts);
-  //   },
-  // });
+  useEffect(() => {
+    if (metaInfo.ip === '') {
+      fetchInfo();
+    }
+  }, [metaInfo]);
 
-  // useNotificationSubscriptionSubscription({
-  //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
-  //   variables: {
-  //     networkId: network.id,
-  //     orgId: user.orgId,
-  //     userId: user.id,
-  //     forRole: getRoleType(user.role),
-  //     scopes: getScopesByRole(user.role),
-  //   },
-  //   onData: ({ data }) => {
-  //     const newAlert = data.data?.notificationSubscription;
-  //     if (newAlert) {
-  //       setAlerts((prev) => (prev ? [...prev, newAlert] : [newAlert]));
-  //     }
-  //   },
-  // });
-
-  const handleAlertRead = (index: number) => {
-    if (alerts) {
-      let alertId = alerts[index].id;
-      updateNotificationCall({
+  useEffect(() => {
+    if (user.id && network.id && user.orgId && user.orgName) {
+      getNotifications({
+        client: subscriptionClient,
         variables: {
-          updateNotificationId: alertId,
-          isRead: true,
+          data: {
+            userId: user.id,
+            subscriberId: '',
+            orgId: user.orgId,
+            orgName: user.orgName,
+            networkId: network.id,
+            role: user.role as Role_Type,
+            startTimestamp: startTimeStamp,
+          },
         },
       });
-      setAlerts((prev: any) => {
-        if (!prev) return prev;
-        const newAlerts = [...prev];
-        newAlerts[index] = { ...newAlerts[index], isRead: true };
-        return newAlerts;
+
+      PubSub.subscribe(
+        `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
+        handleNotification,
+      );
+    }
+  }, [user.id, network.id]);
+
+  const fetchInfo = async () => {
+    const res = await getMetaInfo();
+    setMetaInfo({
+      ip: res.ip,
+      city: res.city,
+      lat: res.lat,
+      lng: res.lng,
+      languages: res.languages,
+      currency: res.currency,
+      timezone: res.timezone,
+      region_code: res.region_code,
+      country_code: res.country_code,
+      country_name: res.country_name,
+      country_calling_code: res.country_calling_code,
+    });
+    typeof window !== 'undefined' &&
+      localStorage.setItem('metaInfo', JSON.stringify(res));
+  };
+
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TNotificationResDto = JSON.parse(data);
+    const { id, type, scope, title, isRead, description, createdAt } =
+      parsedData.data.notificationSubscription;
+    setNotifications((prev: any) => {
+      if (!prev) return prev;
+      return [
+        {
+          id,
+          type,
+          scope,
+          title,
+          isRead,
+          createdAt,
+          description,
+        },
+        ...prev,
+      ];
+    });
+  };
+
+  const handleNotificationRead = (id: string) => {
+    if (id) {
+      updateNotificationCall({
+        variables: {
+          isRead: true,
+          updateNotificationId: id,
+        },
       });
     }
   };
@@ -195,16 +259,14 @@ export default function ConosleLayout({
         }}
       >
         <AppLayout
-          alerts={[]}
-          page={pageName}
           isDarkMode={isDarkMode}
-          handlePageChange={() => {}}
           isLoading={networksLoading}
           placeholder={'Select Network'}
-          handleAlertRead={handleAlertRead}
+          handleNotificationRead={handleNotificationRead}
           handleAddNetwork={handleAddNetworkAction}
           handleNetworkChange={handleNetworkChange}
           networks={networksData?.getNetworks.networks ?? []}
+          notifications={notifications}
         >
           {children}
         </AppLayout>

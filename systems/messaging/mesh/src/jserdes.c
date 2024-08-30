@@ -18,10 +18,7 @@
 static void log_json(json_t *json);
 static int get_json_entry(json_t *json, char *key, json_type type,
 						  char **strValue, int *intValue);
-/*
- * log_json --
- *
- */
+
 static void log_json(json_t *json) {
 
 	char *str = NULL;
@@ -33,10 +30,6 @@ static void log_json(json_t *json) {
 	}
 }
 
-/*
- * get_json_entry --
- *
- */
 static int get_json_entry(json_t *json, char *key, json_type type,
 						  char **strValue, int *intValue) {
 
@@ -62,10 +55,6 @@ static int get_json_entry(json_t *json, char *key, json_type type,
 	return TRUE;
 }
 
-/*
- * add_map_to_request --
- *
- */
 static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 
 	json_t *jMap=NULL, *jArray=NULL;
@@ -118,10 +107,6 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 	}
 }
 
-/*
- * serialize_system_response --
- *
- */
 int serialize_system_response(char **response, Message *message,
                               int retCode, int len, char *data) {
 
@@ -138,22 +123,6 @@ int serialize_system_response(char **response, Message *message,
 
 	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_NODE_RESPONSE));
     json_object_set_new(json, JSON_SEQ, json_string(message->seqNo));
-
-    /* Add node info. */
-	json_object_set_new(json, JSON_NODE_INFO, json_object());
-	obj = json_object_get(json, JSON_NODE_INFO);
-	json_object_set_new(obj, JSON_NODE_ID,
-                        json_string(message->nodeInfo->nodeID));
-    json_object_set_new(obj, JSON_PORT,
-                        json_string(message->nodeInfo->port));
-
-    /* Add service info. */
-	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
-	obj = json_object_get(json, JSON_SERVICE_INFO);
-	json_object_set_new(obj, JSON_NAME,
-                        json_string(message->serviceInfo->name));
-    json_object_set_new(obj, JSON_PORT,
-                        json_string(message->serviceInfo->port));
 
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
@@ -243,10 +212,6 @@ int serialize_websocket_message(char **str,
 	return TRUE;
 }
 
-/*
- * deserialize_system_info --
- *
- */
 int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 
 	int ret=TRUE;
@@ -268,10 +233,10 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 						  &(*systemInfo)->certificate, NULL);
 	ret |= get_json_entry(json, JSON_IP, JSON_STRING,
 						  &(*systemInfo)->ip, NULL);
-	ret |= get_json_entry(json, JSON_PORT, JSON_STRING,
-						  &(*systemInfo)->port, NULL);
-	ret |= get_json_entry(json, JSON_HEALTH, JSON_STRING,
-						  &(*systemInfo)->health, NULL);
+	ret |= get_json_entry(json, JSON_PORT, JSON_INTEGER,
+						  NULL, &(*systemInfo)->port);
+	ret |= get_json_entry(json, JSON_HEALTH, JSON_INTEGER,
+						  NULL, &(*systemInfo)->health);
 
 	if (ret == FALSE) {
 		log_error("Error deserializing node info");
@@ -295,7 +260,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_UUID);
+    jSeq         = json_object_get(json, JSON_SEQ);
     jMessage     = json_object_get(json, JSON_MESSAGE);
     if (jType == NULL || jSeq == NULL || jMessage == NULL) {
         json_decref(json);
@@ -388,85 +353,4 @@ static void deserialize_map(URequest **request, json_t *json) {
 	} else if (strcasecmp(str, MESH_MAP_TYPE_COOKIE_STR)==0) {
 		deserialize_map_array(&(*request)->map_cookie, json);
 	}
-}
-
-/*
- * deserialize_request_info --
- *
- */
-int deserialize_request_info(URequest **request, char *str) {
-
-	json_t *json, *obj, *jRaw;
-	int size, i;
-
-	if (str == NULL) return FALSE;
-
-    json = json_loads(str, JSON_DECODE_ANY, NULL);
-    if (json == NULL) return FALSE;
-
-	*request = (URequest *)calloc(1, sizeof(URequest));
-	if (*request == NULL) {
-        log_error("Error allocating memory of size: %d", sizeof(URequest));
-		return FALSE;
-    }
-
-	obj = json_object_get(json, JSON_PROTOCOL);
-	if (obj) {
-		(*request)->http_protocol = strdup(json_string_value(obj));
-	} else {
-		(*request)->http_protocol = strdup("");
-	}
-
-	obj = json_object_get(json, JSON_METHOD);
-	if (obj) {
-		(*request)->http_verb = strdup(json_string_value(obj));
-	} else {
-		(*request)->http_verb = strdup("");
-	}
-
-	obj = json_object_get(json, JSON_URL);
-	if (obj) {
-		(*request)->http_url = strdup(json_string_value(obj));
-	} else {
-		(*request)->http_url = strdup("");
-	}
-
-	obj = json_object_get(json, JSON_PATH);
-	if (obj) {
-		(*request)->url_path = strdup(json_string_value(obj));
-	} else {
-		(*request)->url_path = strdup("");
-	}
-
-	/* de-ser the various map. URL, Header, POST, Cookie */
-	for (i=0; i < 4; i++) {
-		obj = json_object_get(json, JSON_MAP);
-		if (obj) {
-			deserialize_map(request, obj);
-		}
-	}
-
-	/* Lastly, de-serialize raw binary data. */
-	jRaw = json_object_get(json, JSON_RAW_DATA);
-	if (jRaw) {
-
-		obj = json_object_get(jRaw, JSON_LENGTH);
-		size = json_integer_value(obj);
-		(*request)->binary_body_length = size;
-
-		/* Get the actual data now */
-		obj = json_object_get(jRaw, JSON_DATA);
-
-		if (obj) {
-
-			(*request)->binary_body = (void *)calloc(1, size);
-			if ((*request)->binary_body == NULL)
-				return FALSE;
-
-			memcpy((*request)->binary_body, (void *)json_string_value(obj),
-				   size);
-		}
-	}
-
-	return TRUE;
 }

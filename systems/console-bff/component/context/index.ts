@@ -9,7 +9,6 @@ import { THeaders } from "../../common/types";
 import componentAPI from "../datasource/component_api";
 
 export interface Context {
-  baseURL: string;
   dataSources: {
     dataSource: componentAPI;
   };

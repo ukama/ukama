@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -22,7 +21,7 @@ func TestComponentClient_Get(t *testing.T) {
 			Id:            componentID,
 			Inventory:     "200",
 			UserId:        "bc082789-bef7-4baf-9cd1-d479fdb3184b",
-			Category:      uint8(ukama.ParseType("backhaul")),
+			Category:      "BACKHAUL",
 			Type:          "backhaul",
 			Description:   "A 100uF capacitor",
 			DatasheetURL:  "http://example.com/datasheet2",

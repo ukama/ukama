@@ -59,8 +59,8 @@ type GetSitesRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" form:"org" json:"network" query:"network" binding:"required" validate:"required"`
 }
 type UpdateSiteRequest struct {
-	SiteId        string  `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
-	Name          string  `json:"name" validate:"required"`
+	SiteId string `example:"{{SiteUUID}}" path:"site_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
 }
 
 type AddSiteRequest struct {
@@ -152,6 +152,7 @@ type GetInvitationRequest struct {
 
 type UpdateInvitationRequest struct {
 	InvitationId string `json:"invitation_id" validate:"required" path:"invitation_id"`
+	Email        string `form:"email" json:"email" validate:"required"`
 	Status       string `form:"status" json:"status" validate:"required"`
 }
 

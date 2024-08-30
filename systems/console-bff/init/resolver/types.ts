@@ -61,6 +61,9 @@ export class ValidateSessionRes {
 
   @Field()
   isEmailVerified: boolean;
+
+  @Field()
+  isShowWelcome: boolean;
 }
 
 @ObjectType()
@@ -76,6 +79,30 @@ export class CountryDto {
 export class CountriesRes {
   @Field(() => [CountryDto])
   countries: CountryDto[];
+}
+
+@ObjectType()
+export class OrgsName {
+  @Field()
+  name: string;
+}
+
+@ObjectType()
+export class CurrencyRes {
+  @Field()
+  code: string;
+
+  @Field()
+  symbol: string;
+
+  @Field()
+  image: string;
+}
+
+@ObjectType()
+export class OrgsNameRes {
+  @Field(() => [OrgsName])
+  orgs: OrgsName[];
 }
 
 @ObjectType()

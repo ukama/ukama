@@ -1,14 +1,19 @@
 import { Arg, Args, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+import { STORAGE_KEY } from "../../common/configs";
 import {
-  METRIC_API_GW_SOCKET,
-  NOTIFICATION_API_GW_WS,
-  STORAGE_KEY,
-} from "../../common/configs";
+  NotificationScopeEnumValue,
+  NotificationTypeEnumValue,
+} from "../../common/enums";
 import { logger } from "../../common/logger";
-import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
-import { getGraphsKeyByType, getTimestampCount } from "../../common/utils";
+import { addInStore, openStore, removeFromStore } from "../../common/storage";
+import {
+  getBaseURL,
+  getGraphsKeyByType,
+  getScopesByRole,
+  getTimestampCount,
+} from "../../common/utils";
 import {
   getNodeRangeMetric,
   getNotifications,
@@ -26,7 +31,7 @@ import {
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.js";
-const NOTIFICATION_THREAD = "./threads/NotificationsWSThread.js";
+const NOTIFICATION_THREAD = "./threads/NotificationsWSThread.mjs";
 
 const getErrorRes = (msg: string) =>
   ({
@@ -42,13 +47,27 @@ const getErrorRes = (msg: string) =>
 class SubscriptionsResolvers {
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
+    //Get system base url
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      data.orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for notification: ${baseURL}`);
+      return { notifications: [] };
+    }
     const { type, orgId, userId, nodeId, withSubscription, from } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
     const metrics: MetricsRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric({ ...data, type: metricsKey[i] });
+        const res = await getNodeRangeMetric(baseURL, {
+          ...data,
+          type: metricsKey[i],
+        });
         metrics.metrics.push(res);
       }
     }
@@ -63,7 +82,7 @@ class SubscriptionsResolvers {
           type: key,
           orgId,
           userId,
-          url: `${METRIC_API_GW_SOCKET}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          url: `${baseURL}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
           key: STORAGE_KEY,
           timestamp: from,
         };
@@ -90,7 +109,7 @@ class SubscriptionsResolvers {
           }
         });
         worker.on("exit", (code: any) => {
-          removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
+          removeFromStore(openStore(), `${orgId}/${userId}/${type}/${from}`);
           logger.info(
             `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
           );
@@ -102,33 +121,72 @@ class SubscriptionsResolvers {
 
   @Query(() => NotificationsRes)
   async getNotifications(@Arg("data") data: GetNotificationsInput) {
-    const notifications = getNotifications(data);
+    const {
+      role,
+      orgId,
+      userId,
+      orgName,
+      networkId,
+      subscriberId,
+      startTimestamp,
+    } = data;
+
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "notification",
+      orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for notification: ${baseURL}`);
+      return { notifications: [] };
+    }
+
+    let wsUrl = baseURL;
+    if (wsUrl?.includes("https://")) {
+      wsUrl = wsUrl.replace("https://", "wss://");
+    } else if (wsUrl?.startsWith("http://")) {
+      wsUrl = wsUrl.replace("http://", "ws://");
+    }
+
+    // Get Notifications
+    const notifications = getNotifications(baseURL, data);
+    const scopesPerRole = getScopesByRole(role);
+    let scopes = "";
+    if (scopesPerRole.length > 0) {
+      for (const scope of scopesPerRole) {
+        scopes = scopes + `&scope=${scope}`;
+      }
+      scopes = scopes.substring(1);
+    }
+
+    const key = `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`;
     const workerData = {
-      url: `${NOTIFICATION_API_GW_WS}/v1/distributor/live`,
-      orgId: data.orgId,
-      scope: data.scopes,
-      userId: data.userId,
-      networkId: data.networkId,
-      key: "UKAMA_NOTIFICATION_STORAGE_KEY",
+      url: `${wsUrl}/v1/distributor/live`,
+      key: key,
+      orgId: orgId,
+      scopes: scopes,
+      userId: userId,
+      networkId: networkId,
+      subscriberId: subscriberId,
     };
 
     const worker = new Worker(NOTIFICATION_THREAD, {
       workerData,
     });
 
-    const key = `notification-${data.userId}-${data.orgId}-${data.forRole}-${data.networkId}`;
     worker.on("message", (_data: any) => {
       if (!_data.isError) {
         const res = JSON.parse(_data.data);
         if (res && res.id) {
           pubSub.publish(key, {
+            id: res.id,
+            isRead: false,
+            title: res.title,
             createdAt: res.createdAt,
             description: res.description,
-            id: res.id,
-            isRead: res.isRead,
-            scope: res.scope,
-            title: res.title,
-            type: res.type,
+            type: NotificationTypeEnumValue(res.type),
+            scope: NotificationScopeEnumValue(res.scope),
           } as NotificationsResDto);
         } else {
           return getErrorRes("No notification data found");
@@ -137,9 +195,9 @@ class SubscriptionsResolvers {
     });
 
     worker.on("exit", (code: any) => {
-      removeKeyFromStorage(key);
+      removeFromStore(store, key);
       logger.info(
-        `WS_THREAD exited with code [${code}] for ${data.orgId}/${data.userId}/${data.networkId}`
+        `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
     });
     return notifications;
@@ -157,7 +215,8 @@ class SubscriptionsResolvers {
     @Root() payload: LatestMetricRes,
     @Args() args: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
-    await storeInStorage(
+    await addInStore(
+      openStore(),
       `${args.orgId}/${args.userId}/${payload.type}/${args.from}`,
       getTimestampCount("0")
     );
@@ -166,17 +225,19 @@ class SubscriptionsResolvers {
 
   @Subscription(() => NotificationsResDto, {
     topics: ({ args }) => {
-      return `notification-${args.userId}-${args.orgId}-${args.forRole}-${args.networkId}`;
+      return `notification-${args.data.orgId}-${args.data.userId}-${args.data.networkId}-${args.data.subscriberId}-${args.data.startTimestamp}`;
     },
   })
   async notificationSubscription(
     @Root() payload: NotificationsResDto,
-    @Args() args: GetNotificationsInput
+    @Arg("data") data: GetNotificationsInput
   ): Promise<NotificationsResDto> {
-    await storeInStorage(
-      `notification-${args.userId}-${args.orgId}-${args.forRole}-${args.networkId}`,
+    await addInStore(
+      openStore(),
+      `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}-${data.startTimestamp}`,
       getTimestampCount("0")
     );
+    logger.info("Notification payload :", payload);
     return payload;
   }
 }

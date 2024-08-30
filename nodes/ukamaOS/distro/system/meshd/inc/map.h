@@ -16,7 +16,9 @@
 
 typedef struct map_item_t {
 
-    ServiceInfo       *serviceInfo;
+    char              *serviceName;
+    char              *servicePort;
+    char              *uuid;
     WorkList          *transmit;
     WorkList          *receive;
     void              *configData;
@@ -42,8 +44,8 @@ typedef struct {
 /* Functions. */
 void init_map_table(MapTable **table);
 void destroy_map_item(MapItem *map);
-MapItem *is_existing_item(MapTable *table, char *name, char *port);
-void remove_map_item_from_table(MapTable *table, char *serviceName, char *port);
-MapItem *add_map_to_table(MapTable **table, char *serviceName, char *port);
+MapItem *is_existing_item(MapTable *table, char *uuid);
+void remove_map_item_from_table(MapTable *table, char *uuid);
+MapItem *add_map_to_table(MapTable **table, char *name, char *port, char *uuid);
 
 #endif /* MESH_MAP_H */

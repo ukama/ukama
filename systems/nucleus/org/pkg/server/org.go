@@ -74,6 +74,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		Name:        req.GetOrg().GetName(),
 		Owner:       owner,
 		Certificate: req.GetOrg().GetCertificate(),
+		Country:     req.GetOrg().GetCountry(),
 	}
 
 	OrgId := uuid.NewV4()

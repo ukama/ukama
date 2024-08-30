@@ -66,7 +66,7 @@ func TestNotificationRepo_Insert(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 		WithArgs(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.Type,
-			nt.ServiceName, nt.Status, nt.Time, nt.Description, nt.Details,
+			nt.ServiceName, nt.Status, nt.Time, nt.Details,
 			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -147,9 +147,9 @@ func TestNotificationRepo_List(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type",
-			"severity", "service_name", "status", "time", "description", "details"}).
+			"severity", "service_name", "status", "time", "details"}).
 			AddRow(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.ServiceName,
-				nt.Status, nt.Time, nt.Description, nt.Details)
+				nt.Status, nt.Time, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
 			WithArgs().
@@ -178,9 +178,9 @@ func TestNotificationRepo_List(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type",
-			"severity", "service_name", "status", "time", "description", "details"}).
+			"severity", "service_name", "status", "time", "details"}).
 			AddRow(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.ServiceName,
-				nt.Status, nt.Time, nt.Description, nt.Details)
+				nt.Status, nt.Time, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
 			WithArgs(nt.ServiceName, string(nt.Type)).
@@ -209,9 +209,9 @@ func TestNotificationRepo_List(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type",
-			"severity", "service_name", "status", "time", "description", "details"}).
+			"severity", "service_name", "status", "time", "details"}).
 			AddRow(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.ServiceName,
-				nt.Status, nt.Time, nt.Description, nt.Details)
+				nt.Status, nt.Time, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
 			WithArgs(nt.NodeId, string(nt.Type)).
@@ -240,9 +240,9 @@ func TestNotificationRepo_List(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type",
-			"severity", "service_name", "status", "time", "description", "details"}).
+			"severity", "service_name", "status", "time", "details"}).
 			AddRow(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.ServiceName,
-				nt.Status, nt.Time, nt.Description, nt.Details)
+				nt.Status, nt.Time, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
 			WithArgs(nt.ServiceName, nt.Type, sqlmock.AnyArg()).
@@ -271,9 +271,9 @@ func TestNotificationRepo_List(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type",
-			"severity", "service_name", "status", "time", "description", "details"}).
+			"severity", "service_name", "status", "time", "details"}).
 			AddRow(nt.Id, nt.NodeId, nt.NodeType, nt.Severity, nt.ServiceName,
-				nt.Status, nt.Time, nt.Description, nt.Details)
+				nt.Status, nt.Time, nt.Details)
 
 		mock.ExpectQuery(`^SELECT.*notifications.*`).
 			WithArgs(nt.NodeId, nt.Type, sqlmock.AnyArg()).
@@ -440,7 +440,6 @@ func NewTestDbNotification(nodeId string, ntype string) intdb.Notification {
 		ServiceName: "noded",
 		Status:      8200,
 		Time:        uint32(time.Now().Unix()),
-		Description: "Some random alert",
 		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`),
 	}
 }

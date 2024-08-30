@@ -7,11 +7,31 @@
  */
 import { Field, ObjectType } from "type-graphql";
 
-import {
-  NOTIFICATION_SCOPE,
-  NOTIFICATION_TYPE,
-  ROLE_TYPE,
-} from "../../common/enums";
+import { NOTIFICATION_SCOPE, NOTIFICATION_TYPE } from "../../common/enums";
+
+@ObjectType()
+export class NotificationsAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  title: string;
+
+  @Field()
+  description: string;
+
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  is_read: boolean;
+
+  @Field()
+  created_at: string;
+}
 
 @ObjectType()
 export class NotificationAPIDto {
@@ -30,17 +50,31 @@ export class NotificationAPIDto {
   @Field(() => NOTIFICATION_SCOPE)
   scope: NOTIFICATION_SCOPE;
 
-  @Field(() => ROLE_TYPE)
-  for_role: ROLE_TYPE;
-
   @Field()
   created_at: string;
+
+  @Field()
+  org_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field()
+  subscriber_id: string;
+
+  @Field()
+  user_id: string;
 }
 
 @ObjectType()
 export class NotificationAPIRes {
   @Field(() => NotificationAPIDto)
   notification: NotificationAPIDto;
+}
+@ObjectType()
+export class NotificationsAPIRes {
+  @Field(() => [NotificationsAPIDto])
+  notifications: NotificationsAPIDto[];
 }
 
 @ObjectType()
@@ -60,8 +94,41 @@ export class NotificationResDto {
   @Field(() => NOTIFICATION_SCOPE)
   scope: NOTIFICATION_SCOPE;
 
-  @Field(() => ROLE_TYPE)
-  forRole: ROLE_TYPE;
+  @Field()
+  orgId: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  createdAt: string;
+}
+
+@ObjectType()
+export class NotificationsDto {
+  @Field()
+  id: string;
+
+  @Field()
+  title: string;
+
+  @Field()
+  description: string;
+
+  @Field(() => NOTIFICATION_TYPE)
+  type: NOTIFICATION_TYPE;
+
+  @Field(() => NOTIFICATION_SCOPE)
+  scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  isRead: boolean;
 
   @Field()
   createdAt: string;
@@ -71,4 +138,10 @@ export class NotificationResDto {
 export class UpdateNotificationResDto {
   @Field()
   id: string;
+}
+
+@ObjectType()
+export class NotificationsResDto {
+  @Field(() => [NotificationsDto])
+  notifications: NotificationsDto[];
 }

@@ -14,6 +14,7 @@ gen:
 
 	mockery --all --recursive --dir ./
 
+gen-unmarshall:
 	python3 pb/generate_unmarshall_func.py
 
 test:

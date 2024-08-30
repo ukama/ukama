@@ -6,7 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { SiteDto } from '@/client/graphql/generated';
-import { Box, Grid, Skeleton, Typography } from '@mui/material';
+import CellTowerIcon from '@mui/icons-material/CellTower';
+import { Grid, Skeleton, Stack, Typography } from '@mui/material';
 import SiteCard from '../SiteCard';
 
 interface ISitesWrapper {
@@ -42,17 +43,15 @@ const SitesWrapper = ({
 
   if (sites.length === 0)
     return (
-      <Box
-        sx={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+      <Stack
+        spacing={1}
+        height="100%"
+        direction={'column'}
+        alignItems={'center'}
       >
-        <Typography variant="body1">No sites available.</Typography>
-      </Box>
+        <CellTowerIcon htmlColor="#9E9E9E" />
+        <Typography variant="body2">No sites available.</Typography>
+      </Stack>
     );
 
   return (

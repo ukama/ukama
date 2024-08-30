@@ -84,8 +84,7 @@ var nt = AddNotificationReq{
 	ServiceName: "noded",
 	Status:      8300,
 	Time:        uint32(time.Now().Unix()),
-	Description: "Some random alert",
-	Details:     `{"reason": "testing", "component":"router_test"}`,
+	Details:     json.RawMessage(`{"reason":"testing","component":"router_test"}`),
 }
 
 func Test_GetRunningsApps(t *testing.T) {
@@ -196,6 +195,7 @@ func TestRouter_Add(t *testing.T) {
 	var m = &nmocks.NotifyServiceClient{}
 
 	t.Run("NotificationIsValid", func(t *testing.T) {
+		// Setup
 		body, err := json.Marshal(nt)
 		if err != nil {
 			t.Errorf("fail to marshal request data: %v. Error: %v", nt, err)
@@ -204,15 +204,16 @@ func TestRouter_Add(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", notifyApiEndpoint, bytes.NewReader(body))
 
+		detailBytes, _ := nt.Details.MarshalJSON()
+
 		notifyReq := &npb.AddRequest{
 			NodeId:      nt.NodeId,
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details,
+			Time:        nt.Time,
+			Details:     detailBytes,
 		}
 
 		m.On("Add", mock.Anything, notifyReq).Return(&npb.AddResponse{}, nil)
@@ -221,10 +222,10 @@ func TestRouter_Add(t *testing.T) {
 			Notify: client.NewNotifyFromClient(m),
 		}, routerConfig).f.Engine()
 
-		// act
+		// Act
 		r.ServeHTTP(w, req)
 
-		// assert
+		// Assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 		m.AssertExpectations(t)
 	})
@@ -241,15 +242,16 @@ func TestRouter_Add(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", notifyApiEndpoint, bytes.NewReader(body))
 
+		detailBytes, _ := nt.Details.MarshalJSON()
+
 		notifyReq := &npb.AddRequest{
 			NodeId:      nt.NodeId,
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details,
+			Time:        nt.Time,
+			Details:     detailBytes,
 		}
 
 		m.On("Add", mock.Anything, notifyReq).Return(nil,
@@ -310,9 +312,7 @@ func TestRouter_Get(t *testing.T) {
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
 			Status:      nt.Status,
-			EpochTime:   nt.Time,
-			Description: nt.Description,
-			Details:     nt.Details,
+			Time:        nt.Time,
 		}}
 
 		m.On("Get", mock.Anything, notifyReq).Return(notifyResp, nil)
@@ -464,8 +464,7 @@ func TestRouter_List(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -504,8 +503,7 @@ func TestRouter_List(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -513,7 +511,7 @@ func TestRouter_List(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
-			fmt.Sprintf("%s?node_id=%s&notification_type=%s",
+			fmt.Sprintf("%s?node_id=%s&type=%s",
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
 		r := NewRouter(&Clients{
@@ -549,8 +547,7 @@ func TestRouter_List(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -558,7 +555,7 @@ func TestRouter_List(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
-			fmt.Sprintf("%s?node_id=%s&notification_type=%s&count=%d&sort=%t",
+			fmt.Sprintf("%s?node_id=%s&type=%s&count=%d&sort=%t",
 				notifyApiEndpoint, nt.NodeId, nt.Type, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
@@ -592,8 +589,7 @@ func TestRouter_List(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -601,7 +597,7 @@ func TestRouter_List(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
-			fmt.Sprintf("%s?service_name=%s&notification_type=%s",
+			fmt.Sprintf("%s?service_name=%s&type=%s",
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
 		r := NewRouter(&Clients{
@@ -639,8 +635,7 @@ func TestRouter_List(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -648,7 +643,7 @@ func TestRouter_List(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
-			fmt.Sprintf("%s?service_name=%s&notification_type=%s&count=%d&sort=%t",
+			fmt.Sprintf("%s?service_name=%s&type=%s&count=%d&sort=%t",
 				notifyApiEndpoint, nt.ServiceName, nt.Type, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
@@ -683,8 +678,7 @@ func TestRouter_Purge(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -724,8 +718,7 @@ func TestRouter_Purge(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			}}}
 
@@ -734,7 +727,7 @@ func TestRouter_Purge(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		req, _ := http.NewRequest("DELETE",
-			fmt.Sprintf("%s?node_id=%s&notification_type=%s",
+			fmt.Sprintf("%s?node_id=%s&type=%s",
 				notifyApiEndpoint, nt.NodeId, nt.Type), nil)
 
 		r := NewRouter(&Clients{
@@ -768,8 +761,7 @@ func TestRouter_Purge(t *testing.T) {
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
 				Status:      nt.Status,
-				EpochTime:   nt.Time,
-				Description: nt.Description,
+				Time:        nt.Time,
 				Details:     nt.Details,
 			},
 		}}
@@ -779,7 +771,7 @@ func TestRouter_Purge(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		req, _ := http.NewRequest("DELETE",
-			fmt.Sprintf("%s?service_name=%s&notification_type=%s",
+			fmt.Sprintf("%s?service_name=%s&type=%s",
 				notifyApiEndpoint, nt.ServiceName, nt.Type), nil)
 
 		r := NewRouter(&Clients{

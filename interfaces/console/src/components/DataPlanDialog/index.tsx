@@ -18,8 +18,10 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
+  OutlinedInput,
   Select,
   Stack,
   TextField,
@@ -32,6 +34,7 @@ interface IDataPlanDialog {
   title: string;
   action: string;
   isOpen: boolean;
+  currencySymbol?: string;
   handleCloseAction: any;
   labelSuccessBtn?: string;
   handleSuccessAction: any;
@@ -42,6 +45,7 @@ const DataPlanDialog = ({
   title,
   isOpen,
   action,
+  currencySymbol,
   data: dataplan,
   setData: setDataplan,
   labelSuccessBtn,
@@ -93,6 +97,30 @@ const DataPlanDialog = ({
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="package-price">PRICE</InputLabel>
+                <OutlinedInput
+                  id="package-price"
+                  fullWidth
+                  required
+                  type="number"
+                  label="PRICE"
+                  startAdornment={
+                    <InputAdornment position="start">
+                      {currencySymbol}
+                    </InputAdornment>
+                  }
+                  value={dataplan.amount}
+                  onChange={(e) =>
+                    setDataplan({
+                      ...dataplan,
+                      amount: parseInt(e.target.value),
+                    })
+                  }
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
               <TextField
                 fullWidth
                 required
@@ -111,33 +139,14 @@ const DataPlanDialog = ({
                 }
               />
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="PACKAGE PRICE"
-                value={dataplan.amount}
-                id={'data-plan-price'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(e) =>
-                  setDataplan({
-                    ...dataplan,
-                    amount: parseInt(e.target.value),
-                  })
-                }
-              />
-            </Grid>
           </Grid>
         )}
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
-            <Grid item xs={4}>
+            <Grid item xs={5}>
               <FormControl fullWidth>
                 <InputLabel id={'data-plan-unit-label'} shrink>
-                  Unit
+                  UNIT*
                 </InputLabel>
                 <Select
                   notched
@@ -162,7 +171,7 @@ const DataPlanDialog = ({
               </FormControl>
             </Grid>
 
-            <Grid item xs={8}>
+            <Grid item xs={7}>
               <FormControl fullWidth>
                 <InputLabel
                   id={'data-plan-unit-price-label'}
@@ -173,7 +182,7 @@ const DataPlanDialog = ({
                     },
                   }}
                 >
-                  PRICE PER
+                  DURATION*
                 </InputLabel>
                 <Select
                   notched

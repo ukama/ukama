@@ -13,5 +13,10 @@ planning-tool/prisma
 yarn-error.log
 Makefile
 Dockerfile
-./dist
+dist
 supervisord.conf
+ukama-bff-store
+gateway/tests/SimPool.csv
+kill_ports.sh
+.env.dev.example
+.env.local.example

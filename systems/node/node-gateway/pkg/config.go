@@ -15,49 +15,49 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 )
-
-type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
-}
-
-type GrpcEndpoints struct {
-	Timeout time.Duration
-	Health  string
-	Notify string
-}
-
-type HttpEndpoints struct {
-	Timeout time.Duration
-}
-
-func NewConfig() *Config {
-	defaultCors := cors.DefaultConfig()
-	defaultCors.AllowWildcard = true
-	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
-
-	return &Config{
-		BaseConfig: config.BaseConfig{
-			DebugMode: false,
-		},
-
-		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
-			Health:  "health:9090",
-			Notify: "notify:9090",
-		},
-		HttpServices: HttpEndpoints{
-			Timeout: 3 * time.Second,
-		},
-
-		Server: rest.HttpConfig{
-			Port: 8080,
-			Cors: defaultCors,
-		},
-		Metrics: *config.DefaultMetrics(),
-	}
-}
+ 
+ type Config struct {
+	 config.BaseConfig `mapstructure:",squash"`
+	 Server            rest.HttpConfig
+	 Services          GrpcEndpoints  `mapstructure:"services"`
+	 HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	 Metrics           config.Metrics `mapstructure:"metrics"`
+	 Auth              *config.Auth   `mapstructure:"auth"`
+ }
+ 
+ type GrpcEndpoints struct {
+	 Timeout time.Duration
+	 Health  string
+	 Notify string
+ }
+ 
+ type HttpEndpoints struct {
+	 Timeout time.Duration
+ }
+ 
+ func NewConfig() *Config {
+	 defaultCors := cors.DefaultConfig()
+	 defaultCors.AllowWildcard = true
+	 defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
+ 
+	 return &Config{
+		 BaseConfig: config.BaseConfig{
+			 DebugMode: false,
+		 },
+ 
+		 Services: GrpcEndpoints{
+			 Timeout: 3 * time.Second,
+			 Health:  "health:9090",
+			 Notify: "notify:9090",
+		 },
+		 HttpServices: HttpEndpoints{
+			 Timeout: 3 * time.Second,
+		 },
+ 
+		 Server: rest.HttpConfig{
+			 Port: 8080,
+			 Cors: defaultCors,
+		 },
+		 Metrics: *config.DefaultMetrics(),
+	 }
+ }

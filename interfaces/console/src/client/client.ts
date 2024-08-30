@@ -33,9 +33,9 @@ const MetricLink = (baseUrl: string, websocketBaseUrl: string) => {
   );
 };
 
-export const getMetricsClient = (baseUrl: string, websocketBaseUrl: string) => {
+export const getMetricsClient = (baseUrl: string) => {
   return new ApolloClient({
-    link: MetricLink(baseUrl, websocketBaseUrl),
+    uri: `${baseUrl}/graphql`,
     cache: new InMemoryCache(),
     credentials: 'include',
   });

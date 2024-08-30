@@ -1,4 +1,6 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
+
+import { COMPONENT_TYPE } from "../../common/enums";
 
 @ObjectType()
 export class ComponentDto {
@@ -93,4 +95,10 @@ export class ComponentAPIDto {
 export class ComponentsAPIResDto {
   @Field(() => [ComponentAPIDto])
   components: ComponentAPIDto[];
+}
+
+@InputType()
+export class ComponentTypeInputDto {
+  @Field(() => COMPONENT_TYPE)
+  category: COMPONENT_TYPE;
 }

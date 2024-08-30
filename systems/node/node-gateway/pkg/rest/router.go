@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -61,7 +62,7 @@ type Clients struct {
 }
 
 type notify interface {
-	Add(nodeId, severity, ntype, serviceName, description, details string, status, epochTime uint32) (*npb.AddResponse, error)
+	Add(nodeId, severity, ntype, serviceName string, details json.RawMessage, status, epochTime uint32) (*npb.AddResponse, error)
 	Get(id string) (*npb.GetResponse, error)
 	List(nodeId, serviceName, nType string, count uint32, sort bool) (*npb.ListResponse, error)
 	Delete(id string) (*npb.DeleteResponse, error)
@@ -253,7 +254,7 @@ func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb
         return nil, status.Error(codes.InvalidArgument, "notification type must be either 'alert' or 'event'")
     }
 	return r.clients.Notify.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
+		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 }
 
 func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {

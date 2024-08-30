@@ -6,20 +6,33 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
+import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { addInStore, getFromStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
 import { UserResDto, WhoamiDto } from "../../user/resolver/types";
-import { InitSystemAPIResDto, ValidateSessionRes } from "../resolver/types";
-import { dtoToSystenResDto } from "./mapper";
+import {
+  InitSystemAPIResDto,
+  OrgsNameRes,
+  ValidateSessionRes,
+} from "../resolver/types";
+import { dtoToOrgsNameResDto, dtoToSystenResDto } from "./mapper";
 
 class InitAPI extends RESTDataSource {
   baseURL = INIT_API_GW;
+
+  getOrgs = async (): Promise<OrgsNameRes> => {
+    this.logger.info(`GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs`);
+    return this.get(`/${VERSION}/orgs`, {}).then(res =>
+      dtoToOrgsNameResDto(res)
+    );
+  };
 
   getSystem = async (
     orgName: string,
@@ -34,7 +47,10 @@ class InitAPI extends RESTDataSource {
     ).then(res => dtoToSystenResDto(res));
   };
 
-  validateSession = async (cookies: string): Promise<ValidateSessionRes> => {
+  validateSession = async (
+    store: RootDatabase,
+    cookies: string
+  ): Promise<ValidateSessionRes> => {
     this.logger.info(
       `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
     );
@@ -55,6 +71,7 @@ class InitAPI extends RESTDataSource {
     let userId = "";
     let orgId = "";
     let orgName = "";
+    let isWelcomeEligible = false;
     let role = ROLE_TYPE.ROLE_INVALID;
     let userWhoami: WhoamiDto | null = null;
     if (userRes?.uuid) {
@@ -83,22 +100,33 @@ class InitAPI extends RESTDataSource {
           : "";
 
       if (orgId && orgName) {
-        const baseURL = await getBaseURL("member", orgName, null);
+        const baseURL = await getBaseURL("member", orgName, store);
         if (baseURL.status === 200) {
           const member = await memberAPI.getMemberByUserId(
             baseURL.message,
             userWhoami.user.uuid
           );
           role = member.role as ROLE_TYPE;
+          if (role === ROLE_TYPE.ROLE_OWNER) {
+            const isAlreadyWelcomed = await getFromStore(
+              store,
+              `${userWhoami.user.uuid}-welcome`
+            );
+            if (typeof isAlreadyWelcomed !== "boolean") {
+              await addInStore(store, `${userWhoami.user.uuid}-welcome`, true);
+              isWelcomeEligible = true;
+            } else {
+              isWelcomeEligible = false;
+            }
+          }
         } else {
           logger.error(`Error: ${baseURL.message}`);
         }
       }
     }
-
     const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
       whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
-    }`;
+    };${isWelcomeEligible}`;
     const base64Cookie = Buffer.from(cookie).toString("base64");
 
     return {
@@ -111,6 +139,7 @@ class InitAPI extends RESTDataSource {
       token: base64Cookie,
       isEmailVerified:
         whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,
+      isShowWelcome: isWelcomeEligible,
     };
   };
 }

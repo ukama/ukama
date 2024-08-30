@@ -125,14 +125,17 @@ export class AddNetworkInputDto {
   @Field()
   name: string;
 
-  @Field()
-  budget: number;
+  @Field({ defaultValue: false })
+  isDefault?: boolean;
+
+  @Field({ nullable: true })
+  budget?: number;
 
   @Field(() => [String], { nullable: true })
-  countries: string[];
+  countries?: string[];
 
   @Field(() => [String], { nullable: true })
-  networks: string[];
+  networks?: string[];
 }
 
 @InputType()

@@ -3,7 +3,7 @@ services:
  postgresd:
   image: postgres:13.3
   ports:
-   - '5412:5432'
+   - 5412:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -56,8 +56,6 @@ services:
 
  simmanager:
   build: ./sim-manager
-  ports:
-   - '9092:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -101,7 +99,7 @@ services:
  api-gateway-subscriber:
   build: ./api-gateway
   ports:
-   - '8078:8080'
+   - 8078:8080
   restart: always
   environment:
    - BYPASS_AUTH_MODE=true
@@ -128,9 +126,7 @@ services:
    - postgresd
 
  initclient-subscriber:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=subscriber
@@ -165,9 +161,6 @@ services:
 
  subscriber-auth:
   image: oryd/kratos:v1.0.0
-  ports:
-   - '4423:4423' # public
-   - '4424:4424' # admin
   restart: unless-stopped
   command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
   networks:
@@ -179,16 +172,11 @@ services:
 
  subscriber-mailslurper:
   image: oryd/mailslurper:latest-smtps
-  ports:
-   - '4446:4446'
-   - '4447:4447'
   networks:
    - ukama-net
 
  initclient-subscriber-auth:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=subscriber-auth

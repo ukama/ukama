@@ -20,32 +20,33 @@ import (
 
 	"github.com/ukama/ukama/systems/common/notification"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 )
-
-type Clients struct {
-	Registry   providers.RegistryProvider
-	Subscriber providers.SubscriberProvider
-}
 
 type DistributorServer struct {
 	pb.UnimplementedDistributorServiceServer
 	notify             db.NotifyHandler
 	eventNotifyService providers.EventNotifyClientProvider
-	clients            Clients
 	orgName            string
 	orgId              string
+	networkClient      creg.NetworkClient
+	memberkClient      creg.MemberClient
+	subscriberClient   sreg.SubscriberClient
 }
 
-func NewDistributorServer(clients Clients, n db.NotifyHandler, orgName string, orgId string, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
+func NewDistributorServer(nc creg.NetworkClient, mc creg.MemberClient, sc sreg.SubscriberClient, n db.NotifyHandler, orgName string, orgId string, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
 	d := &DistributorServer{
 		notify:             n,
 		orgId:              orgId,
 		orgName:            orgName,
 		eventNotifyService: eventNotifyService,
-		clients:            clients,
+		networkClient:      nc,
+		memberkClient:      mc,
+		subscriberClient:   sc,
 	}
 
 	/* start notification handler routine */
@@ -65,16 +66,16 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 
 	/* validate member of org or member role */
 	if req.GetUserId() != "" {
-		resp, err := n.clients.Registry.GetMember(n.orgName, req.GetUserId())
+		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
 		if err != nil {
 			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
 		}
-		roleType = roles.RoleType(resp.Member.Role)
+		roleType = roles.RoleType(upb.RoleType(upb.RoleType_value[resp.Member.Role]))
 	}
 
 	if req.GetNetworkId() != "" {
-		_, err := n.clients.Registry.GetNetwork(n.orgName, req.GetNetworkId())
+		_, err := n.networkClient.Get(req.GetNetworkId())
 		if err != nil {
 			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid network id. Error %s", err.Error())
@@ -82,7 +83,7 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	}
 
 	if req.GetSubscriberId() != "" {
-		_, err := n.clients.Subscriber.GetSubscriber(n.orgName, req.GetSubscriberId())
+		_, err := n.subscriberClient.Get(req.GetSubscriberId())
 		if err != nil {
 			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid subscriber id. Error %s", err.Error())
@@ -153,51 +154,3 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 EXIT:
 	return nil
 }
-
-// func (n *DistributorServer) GetNotifications(ctx context.Context, req *pb.NotificationsRequest) (*pb.NotificationsResponse, error) {
-// 	log.Infof("Getting notifications %v", req)
-
-// 	var ouuid, nuuid, suuid, uuuid uuid.UUID
-// 	var err error
-
-// 	if req.GetOrgId() != "" {
-// 		ouuid, err = uuid.FromString(req.GetOrgId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of org uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetNetworkId() != "" {
-// 		nuuid, err = uuid.FromString(req.GetNetworkId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of network uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetSubscriberId() != "" {
-// 		suuid, err = uuid.FromString(req.GetSubscriberId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of subscriber uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	if req.GetUserId() != "" {
-// 		uuuid, err = uuid.FromString(req.GetUserId())
-// 		if err != nil {
-// 			return nil, status.Errorf(codes.InvalidArgument,
-// 				"invalid format of user uuid. Error %s", err.Error())
-// 		}
-// 	}
-
-// 	notifications, err := n.s.GetAll(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String())
-// 	if err != nil {
-// 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
-// 	}
-
-// 	return &pb.GetAllResponse{
-// 		Notifications: dbNotificationsToPbNotifications(notifications),
-// 	}, nil
-// }

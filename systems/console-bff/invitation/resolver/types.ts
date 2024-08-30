@@ -65,10 +65,10 @@ export class InvitationAPIDto {
   name: string;
 
   @Field()
-  expireAt: string;
+  expire_at: string;
 
   @Field()
-  userId: string;
+  user_id: string;
 
   @Field()
   role: string;
@@ -125,6 +125,9 @@ export class DeleteInvitationResDto {
 export class UpateInvitationInputDto {
   @Field()
   id: string;
+
+  @Field()
+  email: string;
 
   @Field(() => INVITATION_STATUS)
   status: INVITATION_STATUS;

@@ -16,15 +16,16 @@ import (
 )
 
 type Org struct {
-	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name        string    `gorm:"uniqueIndex"`
-	Owner       uuid.UUID `gorm:"type:uuid"`
-	Certificate string
-	Users       []User `gorm:"many2many:org_users"`
-	Deactivated bool
+	Id          uuid.UUID      `gorm:"primaryKey;type:uuid"`
+	Name        string         `gorm:"uniqueIndex"`
+	Owner       uuid.UUID      `gorm:"type:uuid"`
+	Users       []User         `gorm:"many2many:org_users"`
+	Country     string         `gorm:"default:US"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	Certificate string
+	Deactivated bool
 }
 
 /*

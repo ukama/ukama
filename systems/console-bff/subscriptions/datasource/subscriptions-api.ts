@@ -9,12 +9,9 @@ import { GraphQLError } from "graphql";
 import https from "https";
 
 import { asyncRestCall } from "../../common/axiosClient";
-import {
-  METRIC_API_GW,
-  METRIC_PROMETHEUS,
-  NOTIFICATION_API_GW,
-} from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
+import { logger } from "../../common/logger";
 import {
   GetMetricRangeInput,
   GetNotificationsInput,
@@ -28,7 +25,10 @@ import {
   parsePromethRes,
 } from "./mapper";
 
-const directCall = async (args: GetMetricRangeInput): Promise<MetricRes> => {
+const directCall = async (
+  baseUrl: string,
+  args: GetMetricRangeInput
+): Promise<MetricRes> => {
   const { from, to, step = 1 } = args;
   const agent = new https.Agent({
     rejectUnauthorized: false,
@@ -36,7 +36,7 @@ const directCall = async (args: GetMetricRangeInput): Promise<MetricRes> => {
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     httpsAgent: agent,
-    url: `${METRIC_PROMETHEUS}?query=${args.type}&start=${from}&end=${to}&step=${step}`,
+    url: `${baseUrl}?query=${args.type}&start=${from}&end=${to}&step=${step}`,
   })
     .then(res => parsePromethRes(res.data, args))
     .catch(err => {
@@ -45,12 +45,13 @@ const directCall = async (args: GetMetricRangeInput): Promise<MetricRes> => {
 };
 
 const getMetricRange = async (
+  baseUrl: string,
   args: GetMetricRangeInput
 ): Promise<MetricRes> => {
   const { from, to = 0, step = 1 } = args;
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${METRIC_API_GW}/v1/range/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
+    url: `${baseUrl}/${VERSION}/range/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
   })
     .then(res => parseMetricRes(res.data, args.type))
     .catch(err => {
@@ -59,12 +60,13 @@ const getMetricRange = async (
 };
 
 const getNodeRangeMetric = async (
+  baseUrl: string,
   args: GetMetricRangeInput
 ): Promise<MetricRes> => {
   const { from, to = 0, step = 1 } = args;
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${METRIC_API_GW}/v1/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
+    url: `${baseUrl}/${VERSION}/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
   })
     .then(res => parseNodeMetricRes(res, args))
     .catch(err => {
@@ -73,9 +75,10 @@ const getNodeRangeMetric = async (
 };
 
 const getNotifications = async (
+  baseUrl: string,
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, userId, networkId, forRole } = args;
+  const { orgId, userId, networkId, subscriberId } = args;
 
   let params = "";
   if (orgId) {
@@ -87,14 +90,17 @@ const getNotifications = async (
   if (networkId) {
     params = params + `&network_id=${networkId}`;
   }
-  if (forRole) {
-    params = params + `&role=${forRole}`;
+  if (subscriberId) {
+    params = params + `&subscriber_id=${subscriberId}`;
   }
-  if (params.length > 0) params = params.substring(1);
 
+  if (params.length > 0) params = params.substring(1);
+  logger.info(
+    `GetNotifications [GET]: ${baseUrl}/${VERSION}/event-notification?${params}`
+  );
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${NOTIFICATION_API_GW}/v1/event-notification?${params}`,
+    url: `${baseUrl}/${VERSION}/event-notification?${params}`,
   }).then(res => parseNotificationsRes(res.data));
 };
 

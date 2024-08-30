@@ -1,0 +1,41 @@
+{
+ "master-org-name": "ukama",
+ "orgs": [
+  {
+   "name": "Admin",
+   "type": "community",
+   "org-name": "ukama",
+   "subnet": "10.2.0.0",
+   "password": "@Pass2024",
+   "email": "admin@ukama.com",
+   "key": "the-key-has-to-be-32-bytes-long!",
+   "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221",
+   "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
+   "systems": "auth-services, services, init, nucleus, inventory, registry",
+   "mailer": {
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "username": "smtp",
+    "password": "smtp_password"
+   }
+  },
+  {
+   "name": "Salman",
+   "type": "empowerment",
+   "org-name": "salman-org",
+   "password": "@Pass2024",
+   "subnet": "10.3.0.0",
+   "email": "salman@ukama.com",
+   "key": "the-key-has-to-be-32-bytes-long!",
+   "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b222",
+   "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
+   "systems": "services, registry, notification",
+   "mailer": {
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "username": "smtp",
+    "password": "smtp_password"
+   }
+  }
+ ]
+}

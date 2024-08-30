@@ -96,8 +96,7 @@ function register_user() {
         "password": "'$PASSWORD'",
         "traits": {
             "email": "'$OWNEREMAIL'",
-            "name": "'$OWNERNAME'",
-            "firstVisit": true
+            "name": "'$OWNERNAME'"
         }
     }')
     sleep 2
@@ -163,16 +162,26 @@ sort_systems_by_dependency
 
 IS_INVENTORY_SYS=false
 INVENTORY_SYS_KEY="inventory"
+IS_INIT_SYS="init"
 
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do
     cd ~
     cd $root_dir
+    if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+        cd ../../../ukama-auth/kratos
+        sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+        cd ../../ukama/builder/scripts
+    fi
     if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
         IS_INVENTORY_SYS=true
     fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
+        cd app
+        cp .env.example .env.local
+        cd ../
+        echo ".env.local file created and content copied from .env.example for ukama-auth"
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
         cd ./billing/provider
@@ -180,25 +189,22 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         ./start_provider.sh
         cd ../..
     fi
+    
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
     export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
     run_docker_compose "$(echo "$SYSTEM_OBJECT" | jq -r '.path')" "$(echo "$SYSTEM_OBJECT" | jq -r '.name')" "$(echo "$SYSTEM_OBJECT" | jq -r '.key')"
     case $SYSTEM in
     "auth-services")
-        cd app
-        cp .env.example .env.local
-        cd ..
-        echo ".env.local file created and content copied from .env.example for ukama-auth"
         sleep 2
         register_user
         ;;
     "console")
-        cp .env.example .env.local
-        echo ".env.local file created and content copied from .env.example for console"
+        cp .env.dev.example .env.local
+        echo ".env.local file created and content copied from .env.dev.example for console"
         ;;
      "bff")
-        cp .env.example .env
-        echo ".env file created and content copied from .env.example for bff"
+        cp .env.dev.example .env
+        echo ".env file created and content copied from .env.dev.example for bff"
         ;;
     "init")
         sleep 2
@@ -234,8 +240,6 @@ fi
 # Update system url in lookup db
 sleep 5
 
-echo "$TAG Registering systems URL in lookup db..."
-
 SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
 SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
 SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
@@ -245,6 +249,8 @@ SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080'
 SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
 SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
 
+
+echo "$TAG Registering systems URL in lookup db..."
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
 psql $DB_URI -c "$SYS_QUERY_1"
 psql $DB_URI -c "$SYS_QUERY_2"

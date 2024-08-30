@@ -8,11 +8,10 @@
 
 syntax="proto3";
 
-option go_package = "github.com/ukama/ukama/systems/notification/notify/pb/gen";
+option go_package = "github.com/ukama/ukama/systems/node/notify/pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
-
 package ukama.notification.notify.v1;
 
 
@@ -24,21 +23,17 @@ service NotifyService {
     rpc Purge(PurgeRequest) returns (ListResponse);
 }
 
-
 message AddRequest {
     string nodeId = 1 [json_name = "node_id"];
-    string description = 2;
-    string severity = 3;
-    string type = 4;
-    string serviceName = 5 [json_name = "service_name"];
-    uint32 status = 6;
-    uint32 epochTime = 7 [json_name = "time"];
-    string details = 8;
+    string severity = 2;
+    string type = 3;
+    string serviceName = 4 [json_name = "service_name"];
+    uint32 status = 5;
+    uint32 time = 6 [json_name = "time"];
+    bytes details = 7;
 }
 
-message AddResponse {
-    Notification notification = 1;
-}
+message AddResponse {}
 
 
 message GetRequest {
@@ -48,7 +43,6 @@ message GetRequest {
 message GetResponse {
     Notification notification = 1;
 }
-
 
 message ListRequest {
     string nodeId = 1 [json_name = "node_id"];
@@ -73,17 +67,15 @@ message PurgeRequest {
     string type = 3;
 }
 
-
 message Notification {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string nodeId = 2 [json_name = "node_id"];
     string nodeType = 3 [json_name = "node_type"];;
-    string description = 4;
-    string severity = 5;
-    string type = 6;
-    string serviceName = 7 [json_name = "service_name"];
-    uint32 status = 8;
-    uint32 epochTime = 9 [json_name = "time"];
-    string details = 10;
-    google.protobuf.Timestamp createdAt = 11 [json_name = "stored_at"];
+    string severity = 4;
+    string type = 5;
+    string serviceName = 6 [json_name = "service_name"];
+    uint32 status = 7;
+    uint32 time = 8 [json_name = "time"];
+    bytes details = 9;
+    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
 }

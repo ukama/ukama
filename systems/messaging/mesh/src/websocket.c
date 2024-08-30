@@ -177,16 +177,13 @@ void websocket_incoming_message(const URequest *request,
 		if (ret==FALSE) goto done;
 
         if (strcmp(rcvdMessage->reqType, UKAMA_NODE_REQUEST) == 0) {
-            /* process the incoming and response back on the queue */
-            if (process_incoming_websocket_message(rcvdMessage, &responseRemote)) {
-                add_work_to_queue(&map->transmit, responseRemote, NULL, 0, NULL, 0);
-            }
-        }
-
-        else if (strcmp(rcvdMessage->reqType, UKAMA_SERVICE_RESPONSE) == 0) {
+            process_incoming_websocket_message(rcvdMessage, &responseRemote);
+            add_work_to_queue(&map->transmit, responseRemote, NULL, 0, NULL, 0);
+            free(responseRemote);
+        } else if (strcmp(rcvdMessage->reqType, UKAMA_SERVICE_RESPONSE) == 0) {
 
             forward = is_existing_item_in_list(map->forwardList,
-                                                rcvdMessage->seqNo);
+                                               rcvdMessage->seqNo);
 
             if (forward == NULL) {
                 log_error("No matching uuid in the list. uuid: %s",

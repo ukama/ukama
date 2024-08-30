@@ -10,7 +10,6 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/notification/event-notify/pb/gen";
 
-import "ukama/roles.proto";
 import "ukama/notification.proto";
 import "google/protobuf/timestamp.proto";
 package ukama.notification.eventToNotify.v1;
@@ -34,7 +33,6 @@ message GetAllRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
-    ukama.common.v1.RoleType RoleType = 5 [json_name = "role"];
 }
 
 message GetAllResponse {
@@ -60,8 +58,7 @@ message Notification {
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    ukama.common.v1.RoleType forRole = 10 [json_name = "for_role"];
-    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
+    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
 }
 
 message Notifications {

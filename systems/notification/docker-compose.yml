@@ -4,7 +4,7 @@ services:
  postgresd-notification:
   image: postgres:13.3
   ports:
-   - '5632:5432'
+   - 5632:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -46,6 +46,9 @@ services:
    - EVENTNOTIFY_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - OWNERID=${OWNERID}
+   - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
+   - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
   restart: always
   networks:
    - ukama-net
@@ -54,8 +57,6 @@ services:
 
  distributor:
   build: ./distributor
-  ports:
-   - '9070:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification
@@ -79,7 +80,7 @@ services:
    context: ./api-gateway
   restart: always
   ports:
-   - '8058:8080'
+   - 8058:8080
   networks:
    - ukama-net
   environment:
@@ -95,9 +96,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification
@@ -117,8 +116,6 @@ services:
 
  msgclient-notification:
   build: ../services/msgClient
-  ports:
-   - '9095:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-notification

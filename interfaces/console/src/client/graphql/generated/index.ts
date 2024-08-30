@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -23,8 +30,9 @@ export type AddMemberInputDto = {
 };
 
 export type AddNetworkInputDto = {
-  budget: Scalars['Float']['input'];
+  budget?: InputMaybe<Scalars['Float']['input']>;
   countries?: InputMaybe<Array<Scalars['String']['input']>>;
+  isDefault?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   networks?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -137,6 +145,15 @@ export type CBooleanResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export enum Component_Type {
+  Access = 'ACCESS',
+  All = 'ALL',
+  Backhaul = 'BACKHAUL',
+  Power = 'POWER',
+  Spectrum = 'SPECTRUM',
+  Switch = 'SWITCH'
+}
+
 export type ComponentDto = {
   __typename?: 'ComponentDto';
   category: Scalars['String']['output'];
@@ -152,6 +169,10 @@ export type ComponentDto = {
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
   warranty: Scalars['Float']['output'];
+};
+
+export type ComponentTypeInputDto = {
+  category: Component_Type;
 };
 
 export type ComponentsResDto = {
@@ -174,6 +195,13 @@ export type CreateInvitationInputDto = {
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
   role: Scalars['String']['input'];
+};
+
+export type CurrencyRes = {
+  __typename?: 'CurrencyRes';
+  code: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  symbol: Scalars['String']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -654,11 +682,30 @@ export type NotificationResDto = {
   __typename?: 'NotificationResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
-  forRole: Role_Type;
   id: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  scope: Notification_Scope;
+  subscriberId: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  type: Notification_Type;
+  userId: Scalars['String']['output'];
+};
+
+export type NotificationsDto = {
+  __typename?: 'NotificationsDto';
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isRead: Scalars['Boolean']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
+};
+
+export type NotificationsResDto = {
+  __typename?: 'NotificationsResDto';
+  notifications: Array<NotificationsDto>;
 };
 
 export type OrgDto = {
@@ -735,12 +782,13 @@ export type Query = {
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
   getCountries: CountriesRes;
+  getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getInvitation: InvitationDto;
-  getInvitations: InvitationDto;
-  getInvitationsByOrg: InvitationsResDto;
+  getInvitations: InvitationsResDto;
+  getInvitationsByEmail: InvitationsResDto;
   getMember: MemberDto;
   getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
@@ -755,6 +803,7 @@ export type Query = {
   getNodesByNetwork: Nodes;
   getNodesLocation: NodesLocation;
   getNotification: NotificationResDto;
+  getNotifications: NotificationsResDto;
   getOrg: OrgDto;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
@@ -786,7 +835,12 @@ export type QueryGetComponentByIdArgs = {
 
 
 export type QueryGetComponentsByUserIdArgs = {
-  category: Scalars['String']['input'];
+  data: ComponentTypeInputDto;
+};
+
+
+export type QueryGetCurrencySymbolArgs = {
+  code: Scalars['String']['input'];
 };
 
 
@@ -800,7 +854,7 @@ export type QueryGetInvitationArgs = {
 };
 
 
-export type QueryGetInvitationsArgs = {
+export type QueryGetInvitationsByEmailArgs = {
   email: Scalars['String']['input'];
 };
 
@@ -923,15 +977,6 @@ export type QueryGetSubscribersByNetworkArgs = {
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
-
-export enum Role_Type {
-  RoleAdmin = 'ROLE_ADMIN',
-  RoleInvalid = 'ROLE_INVALID',
-  RoleNetworkOwner = 'ROLE_NETWORK_OWNER',
-  RoleOwner = 'ROLE_OWNER',
-  RoleUser = 'ROLE_USER',
-  RoleVendor = 'ROLE_VENDOR'
-}
 
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
@@ -1127,6 +1172,7 @@ export type ToggleSimStatusInputDto = {
 };
 
 export type UpateInvitationInputDto = {
+  email: Scalars['String']['input'];
   id: Scalars['String']['input'];
   status: Invitation_Status;
 };
@@ -1583,6 +1629,8 @@ export type SetDefaultNetworkMutationVariables = Exact<{
 
 export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
 
+export type USiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string };
+
 export type GetSiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
 }>;
@@ -1612,6 +1660,8 @@ export type UpdateSiteMutationVariables = Exact<{
 
 export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'SiteDto', name: string } };
 
+export type UComponentFragment = { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string };
+
 export type GetComponentByIdQueryVariables = Exact<{
   componentId: Scalars['String']['input'];
 }>;
@@ -1620,11 +1670,11 @@ export type GetComponentByIdQueryVariables = Exact<{
 export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
 
 export type GetComponentsByUserIdQueryVariables = Exact<{
-  category: Scalars['String']['input'];
+  data: ComponentTypeInputDto;
 }>;
 
 
-export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, datasheetUrl: string, imageUrl: string, partNumber: string, category: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
+export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
 export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
@@ -1635,17 +1685,10 @@ export type CreateInvitationMutationVariables = Exact<{
 
 export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
 
-export type GetInvitationsQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
+export type GetInvitationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
-
-export type InvitationsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type InvitationsQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
+export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type DeleteInvitationMutationVariables = Exact<{
   deleteInvitationId: Scalars['String']['input'];
@@ -1661,10 +1704,24 @@ export type UpdateInvitationMutationVariables = Exact<{
 
 export type UpdateInvitationMutation = { __typename?: 'Mutation', updateInvitation: { __typename?: 'UpdateInvitationResDto', id: string } };
 
+export type GetInvitationsByEmailQueryVariables = Exact<{
+  email: Scalars['String']['input'];
+}>;
+
+
+export type GetInvitationsByEmailQuery = { __typename?: 'Query', getInvitationsByEmail: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
+
 export type GetCountriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetCountriesQuery = { __typename?: 'Query', getCountries: { __typename?: 'CountriesRes', countries: Array<{ __typename?: 'CountryDto', name: string, code: string }> } };
+
+export type GetCurrencySymbolQueryVariables = Exact<{
+  code: Scalars['String']['input'];
+}>;
+
+
+export type GetCurrencySymbolQuery = { __typename?: 'Query', getCurrencySymbol: { __typename?: 'CurrencyRes', code: string, symbol: string, image: string } };
 
 export type GetTimezonesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1899,6 +1956,41 @@ export const UNetworkFragmentDoc = gql`
   createdAt
   countries
   networks
+}
+    `;
+export const USiteFragmentDoc = gql`
+    fragment USite on SiteDto {
+  id
+  name
+  networkId
+  backhaulId
+  powerId
+  accessId
+  spectrumId
+  switchId
+  isDeactivated
+  latitude
+  longitude
+  installDate
+  createdAt
+  location
+}
+    `;
+export const UComponentFragmentDoc = gql`
+    fragment UComponent on ComponentDto {
+  id
+  inventoryId
+  type
+  userId
+  description
+  category
+  datasheetUrl
+  imageUrl
+  partNumber
+  manufacturer
+  managed
+  warranty
+  specification
 }
     `;
 export const InvitationFragmentDoc = gql`
@@ -3798,23 +3890,10 @@ export type SetDefaultNetworkMutationOptions = Apollo.BaseMutationOptions<SetDef
 export const GetSiteDocument = gql`
     query getSite($siteId: String!) {
   getSite(siteId: $siteId) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 
 /**
  * __useGetSiteQuery__
@@ -3851,23 +3930,10 @@ export type GetSiteQueryResult = Apollo.QueryResult<GetSiteQuery, GetSiteQueryVa
 export const AddSiteDocument = gql`
     mutation addSite($data: AddSiteInputDto!) {
   addSite(data: $data) {
-    id
-    name
-    networkId
-    backhaulId
-    powerId
-    accessId
-    spectrumId
-    switchId
-    isDeactivated
-    latitude
-    longitude
-    installDate
-    createdAt
-    location
+    ...USite
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 export type AddSiteMutationFn = Apollo.MutationFunction<AddSiteMutation, AddSiteMutationVariables>;
 
 /**
@@ -3898,24 +3964,11 @@ export const GetSitesDocument = gql`
     query getSites($networkId: String!) {
   getSites(networkId: $networkId) {
     sites {
-      id
-      name
-      networkId
-      backhaulId
-      powerId
-      accessId
-      spectrumId
-      switchId
-      isDeactivated
-      latitude
-      longitude
-      installDate
-      createdAt
-      location
+      ...USite
     }
   }
 }
-    `;
+    ${USiteFragmentDoc}`;
 
 /**
  * __useGetSitesQuery__
@@ -3986,22 +4039,10 @@ export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMut
 export const GetComponentByIdDocument = gql`
     query getComponentById($componentId: String!) {
   getComponentById(componentId: $componentId) {
-    id
-    inventoryId
-    type
-    userId
-    description
-    category
-    datasheetUrl
-    imageUrl
-    partNumber
-    manufacturer
-    managed
-    warranty
-    specification
+    ...UComponent
   }
 }
-    `;
+    ${UComponentFragmentDoc}`;
 
 /**
  * __useGetComponentByIdQuery__
@@ -4036,26 +4077,14 @@ export type GetComponentByIdLazyQueryHookResult = ReturnType<typeof useGetCompon
 export type GetComponentByIdSuspenseQueryHookResult = ReturnType<typeof useGetComponentByIdSuspenseQuery>;
 export type GetComponentByIdQueryResult = Apollo.QueryResult<GetComponentByIdQuery, GetComponentByIdQueryVariables>;
 export const GetComponentsByUserIdDocument = gql`
-    query getComponentsByUserId($category: String!) {
-  getComponentsByUserId(category: $category) {
+    query GetComponentsByUserId($data: ComponentTypeInputDto!) {
+  getComponentsByUserId(data: $data) {
     components {
-      id
-      inventoryId
-      type
-      userId
-      description
-      datasheetUrl
-      imageUrl
-      partNumber
-      category
-      manufacturer
-      managed
-      warranty
-      specification
+      ...UComponent
     }
   }
 }
-    `;
+    ${UComponentFragmentDoc}`;
 
 /**
  * __useGetComponentsByUserIdQuery__
@@ -4069,7 +4098,7 @@ export const GetComponentsByUserIdDocument = gql`
  * @example
  * const { data, loading, error } = useGetComponentsByUserIdQuery({
  *   variables: {
- *      category: // value for 'category'
+ *      data: // value for 'data'
  *   },
  * });
  */
@@ -4123,9 +4152,11 @@ export type CreateInvitationMutationHookResult = ReturnType<typeof useCreateInvi
 export type CreateInvitationMutationResult = Apollo.MutationResult<CreateInvitationMutation>;
 export type CreateInvitationMutationOptions = Apollo.BaseMutationOptions<CreateInvitationMutation, CreateInvitationMutationVariables>;
 export const GetInvitationsDocument = gql`
-    query GetInvitations($email: String!) {
-  getInvitations(email: $email) {
-    ...Invitation
+    query GetInvitations {
+  getInvitations {
+    invitations {
+      ...Invitation
+    }
   }
 }
     ${InvitationFragmentDoc}`;
@@ -4142,11 +4173,10 @@ export const GetInvitationsDocument = gql`
  * @example
  * const { data, loading, error } = useGetInvitationsQuery({
  *   variables: {
- *      email: // value for 'email'
  *   },
  * });
  */
-export function useGetInvitationsQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables> & ({ variables: GetInvitationsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetInvitationsQuery(baseOptions?: Apollo.QueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
       }
@@ -4162,47 +4192,6 @@ export type GetInvitationsQueryHookResult = ReturnType<typeof useGetInvitationsQ
 export type GetInvitationsLazyQueryHookResult = ReturnType<typeof useGetInvitationsLazyQuery>;
 export type GetInvitationsSuspenseQueryHookResult = ReturnType<typeof useGetInvitationsSuspenseQuery>;
 export type GetInvitationsQueryResult = Apollo.QueryResult<GetInvitationsQuery, GetInvitationsQueryVariables>;
-export const InvitationsDocument = gql`
-    query Invitations {
-  getInvitationsByOrg {
-    invitations {
-      ...Invitation
-    }
-  }
-}
-    ${InvitationFragmentDoc}`;
-
-/**
- * __useInvitationsQuery__
- *
- * To run a query within a React component, call `useInvitationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useInvitationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useInvitationsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useInvitationsQuery(baseOptions?: Apollo.QueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-      }
-export function useInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-        }
-export function useInvitationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<InvitationsQuery, InvitationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<InvitationsQuery, InvitationsQueryVariables>(InvitationsDocument, options);
-        }
-export type InvitationsQueryHookResult = ReturnType<typeof useInvitationsQuery>;
-export type InvitationsLazyQueryHookResult = ReturnType<typeof useInvitationsLazyQuery>;
-export type InvitationsSuspenseQueryHookResult = ReturnType<typeof useInvitationsSuspenseQuery>;
-export type InvitationsQueryResult = Apollo.QueryResult<InvitationsQuery, InvitationsQueryVariables>;
 export const DeleteInvitationDocument = gql`
     mutation DeleteInvitation($deleteInvitationId: String!) {
   deleteInvitation(id: $deleteInvitationId) {
@@ -4269,6 +4258,48 @@ export function useUpdateInvitationMutation(baseOptions?: Apollo.MutationHookOpt
 export type UpdateInvitationMutationHookResult = ReturnType<typeof useUpdateInvitationMutation>;
 export type UpdateInvitationMutationResult = Apollo.MutationResult<UpdateInvitationMutation>;
 export type UpdateInvitationMutationOptions = Apollo.BaseMutationOptions<UpdateInvitationMutation, UpdateInvitationMutationVariables>;
+export const GetInvitationsByEmailDocument = gql`
+    query GetInvitationsByEmail($email: String!) {
+  getInvitationsByEmail(email: $email) {
+    invitations {
+      ...Invitation
+    }
+  }
+}
+    ${InvitationFragmentDoc}`;
+
+/**
+ * __useGetInvitationsByEmailQuery__
+ *
+ * To run a query within a React component, call `useGetInvitationsByEmailQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvitationsByEmailQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvitationsByEmailQuery({
+ *   variables: {
+ *      email: // value for 'email'
+ *   },
+ * });
+ */
+export function useGetInvitationsByEmailQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables> & ({ variables: GetInvitationsByEmailQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+      }
+export function useGetInvitationsByEmailLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+        }
+export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
+        }
+export type GetInvitationsByEmailQueryHookResult = ReturnType<typeof useGetInvitationsByEmailQuery>;
+export type GetInvitationsByEmailLazyQueryHookResult = ReturnType<typeof useGetInvitationsByEmailLazyQuery>;
+export type GetInvitationsByEmailSuspenseQueryHookResult = ReturnType<typeof useGetInvitationsByEmailSuspenseQuery>;
+export type GetInvitationsByEmailQueryResult = Apollo.QueryResult<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>;
 export const GetCountriesDocument = gql`
     query GetCountries {
   getCountries {
@@ -4311,6 +4342,48 @@ export type GetCountriesQueryHookResult = ReturnType<typeof useGetCountriesQuery
 export type GetCountriesLazyQueryHookResult = ReturnType<typeof useGetCountriesLazyQuery>;
 export type GetCountriesSuspenseQueryHookResult = ReturnType<typeof useGetCountriesSuspenseQuery>;
 export type GetCountriesQueryResult = Apollo.QueryResult<GetCountriesQuery, GetCountriesQueryVariables>;
+export const GetCurrencySymbolDocument = gql`
+    query GetCurrencySymbol($code: String!) {
+  getCurrencySymbol(code: $code) {
+    code
+    symbol
+    image
+  }
+}
+    `;
+
+/**
+ * __useGetCurrencySymbolQuery__
+ *
+ * To run a query within a React component, call `useGetCurrencySymbolQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrencySymbolQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrencySymbolQuery({
+ *   variables: {
+ *      code: // value for 'code'
+ *   },
+ * });
+ */
+export function useGetCurrencySymbolQuery(baseOptions: Apollo.QueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables> & ({ variables: GetCurrencySymbolQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+      }
+export function useGetCurrencySymbolLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+        }
+export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
+        }
+export type GetCurrencySymbolQueryHookResult = ReturnType<typeof useGetCurrencySymbolQuery>;
+export type GetCurrencySymbolLazyQueryHookResult = ReturnType<typeof useGetCurrencySymbolLazyQuery>;
+export type GetCurrencySymbolSuspenseQueryHookResult = ReturnType<typeof useGetCurrencySymbolSuspenseQuery>;
+export type GetCurrencySymbolQueryResult = Apollo.QueryResult<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>;
 export const GetTimezonesDocument = gql`
     query GetTimezones {
   getTimezones {
