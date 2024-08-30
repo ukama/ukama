@@ -16,7 +16,7 @@ package main
 // "os/signal"
 // "time"
 
-// "github.com/ukama/ukama/systems/notification/notify/internal"
+// "github.com/ukama/ukama/systems/node/notify/internal"
 
 // "github.com/ukama/ukama/systems/common/msgbus"
 
@@ -25,7 +25,7 @@ package main
 // "google.golang.org/protobuf/proto"
 
 // log "github.com/sirupsen/logrus"
-// pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
+// pb "github.com/ukama/ukama/systems/node/notify/pb/gen"
 // )
 
 // var mockMsgClient msgbus.IMsgBus
@@ -51,7 +51,7 @@ package main
 // SetDeviceSource().
 // SetContainer(internal.ServiceName).
 // SetEventType().
-// SetObject("notification").
+// SetObject("node").
 // SetAction("*").
 // MustBuild()
 
@@ -77,7 +77,7 @@ package main
 
 // // Add Device Response
 // case routingKey:
-// nMsg := &pb.NotificationMsg{}
+// nMsg := &pb.nodeMsg{}
 
 // err := proto.Unmarshal(d.Body, nMsg)
 // if err != nil {
@@ -85,7 +85,7 @@ package main
 // }
 
 // [> Processing for the event can be done here <]
-// log.Debugf("Mock::Received notification %s msg: %+v", routingKey, nMsg)
+// log.Debugf("Mock::Received node %s msg: %+v", routingKey, nMsg)
 
 // }
 

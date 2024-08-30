@@ -27,7 +27,6 @@ import (
 	jdb "gorm.io/datatypes"
 )
 
-
 func TestNotifyServer_Add(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()

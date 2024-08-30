@@ -45,6 +45,5 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 			},
 		},
-	
 	}
 }
