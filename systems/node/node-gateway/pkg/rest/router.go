@@ -250,9 +250,9 @@ func (r *Router) pingHandler(c *gin.Context) error {
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
 	if req.Type != "alert" && req.Type != "event" {
-        r.logger.Error("Invalid notification type")
-        return nil, status.Error(codes.InvalidArgument, "notification type must be either 'alert' or 'event'")
-    }
+		r.logger.Error("Invalid notification type")
+		return nil, status.Error(codes.InvalidArgument, "notification type must be either 'alert' or 'event'")
+	}
 	return r.clients.Notify.Add(req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 }
