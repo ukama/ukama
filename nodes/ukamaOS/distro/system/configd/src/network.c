@@ -82,14 +82,22 @@ static void setup_unsupported_methods(UInst *instance,
 }
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
-    
+
+    /* ping */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
     setup_unsupported_methods(instance, "GET",
                               URL_PREFIX, API_RES_EP("ping"));
 
+    /* version */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
+    /* config */
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("config"), 0,
                                &web_service_cb_post_config, config);

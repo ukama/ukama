@@ -21,6 +21,8 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
+#include "version.h"
+
 /**
  * @fn      void handle_sigint(int)
  * @brief   Handle terminate signal for Noded
@@ -144,7 +146,7 @@ int main(int argc, char **argv) {
 		break;
 
 		case 'v':
-			usys_puts(CONFIG_VERSION);
+			usys_puts(VERSION);
 			usys_exit(0);
 			break;
 

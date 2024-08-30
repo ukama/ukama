@@ -19,17 +19,11 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-/**
- * @fn      int web_service_cb_ping(const URequest*, UResponse*, void*)
- * @brief   reports ping response to client
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return
- */
-int web_service_cb_ping(const URequest *request, UResponse *response,
-		void *epConfig) {
+#include "version.h"
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *epConfig) {
 
 	ulfius_set_string_body_response(response, HttpStatus_OK,
 			HttpStatusStr(HttpStatus_OK));
@@ -37,18 +31,18 @@ int web_service_cb_ping(const URequest *request, UResponse *response,
 	return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_default(const URequest*, UResponse*, void*)
- * @brief   default callback used by REST framework if valid endpoint is not
- *          requested.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
-int web_service_cb_default(const URequest *request, UResponse *response,
-		void *epConfig) {
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
 
 	ulfius_set_string_body_response(response, HttpStatus_NotFound,
 			HttpStatusStr(HttpStatus_NotFound));
@@ -66,17 +60,9 @@ int web_service_cb_not_allowed(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-/**
- * @fn      int web_service_cb_post_config(const URequest*, UResponse*, void*)
- * @brief   Receive a new config from service.
- *
- * @param   request
- * @param   response
- * @param   epConfig
- * @return  U_CALLBACK_CONTINUE is returned to REST framework.
- */
 int web_service_cb_post_config(const URequest *request,
-		UResponse *response, void *epConfig) {
+                               UResponse *response,
+                               void *epConfig) {
 
 	int ret = STATUS_NOK;
 	char *service=NULL;
