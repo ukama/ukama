@@ -13,6 +13,7 @@
 #include "web.h"
 #include "web_client.h"
 #include "web_service.h"
+
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_getopt.h"
@@ -20,15 +21,10 @@
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
+#include "usys_services.h"
 
 #include "version.h"
 
-/**
- * @fn      void handle_sigint(int)
- * @brief   Handle terminate signal for Noded
- *
- * @param   signum
- */
 void handle_sigint(int signum) {
 	usys_log_debug("Caught terminate signal.\n");
 	usys_log_debug("Cleanup complete.\n");
@@ -36,27 +32,23 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-		{ "port",          required_argument, 0, 'p' },
-		{ "logs",          required_argument, 0, 'l' },
-		{ "noded-host",    required_argument, 0, 'n' },
-		{ "noded-port",    required_argument, 0, 'o' },
-		{ "noded-ep",     required_argument, 0, 'e' },
-		{ "starter-host",    required_argument, 0, 's' },
-		{ "starter-port",    required_argument, 0, 't' },
-		{ "starter-ep",     required_argument, 0, 'r' },
-		{ "help",          no_argument,       0, 'h' },
-		{ "version",       no_argument,       0, 'v' },
-		{ 0,               0,                 0,  0 }
+    { "port",          required_argument, 0, 'p' },
+    { "logs",          required_argument, 0, 'l' },
+    { "noded-host",    required_argument, 0, 'n' },
+    { "noded-port",    required_argument, 0, 'o' },
+    { "noded-ep",     required_argument, 0, 'e' },
+    { "starter-host",    required_argument, 0, 's' },
+    { "starter-port",    required_argument, 0, 't' },
+    { "starter-ep",     required_argument, 0, 'r' },
+    { "help",          no_argument,       0, 'h' },
+    { "version",       no_argument,       0, 'v' },
+    { 0,               0,                 0,  0 }
 };
 
-/**
- * @fn      void set_log_level(char*)
- * @brief   Set the verbosity level for logs.
- *
- * @param   slevel
- */
 void set_log_level(char *slevel) {
+
 	int ilevel = USYS_LOG_TRACE;
+
 	if (!strcmp(slevel, "TRACE")) {
 		ilevel = USYS_LOG_TRACE;
 	} else if (!strcmp(slevel, "DEBUG")) {
@@ -64,56 +56,28 @@ void set_log_level(char *slevel) {
 	} else if (!strcmp(slevel, "INFO")) {
 		ilevel = USYS_LOG_INFO;
 	}
+
 	usys_log_set_level(ilevel);
 }
 
-
-/**
- * @fn      void usage()
- * @brief   Usage options for the ukamaEDR
- *
- */
 void usage() {
-	usys_puts("Usage: noded [options] \n");
+
+	usys_puts("Usage: configd [options] \n");
 	usys_puts("Options:\n");
-	usys_puts(
-			"-h, --help                             Help menu.\n");
-	usys_puts(
-			"-l, --logs <TRACE> <DEBUG> <INFO>      Log level for the process.\n");
-	usys_puts(
-			"-p, --port <port>                      Port at which service will"
-			"listen.\n");
-	usys_puts(
-			"-n, --noded-host <host>               Host at which noded service"
-			"will listen.\n");
-	usys_puts(
-			"-o, --noded-port <port>               Port at which noded service"
-			"will listen.\n");
-	usys_puts(
-			"-e, --noded-ep </node>                API EP at which configd service"
-			"will enquire for node info.\n");
-	usys_puts(
-			"-s, --starter-host <host>             Host at which starter service"
-			"will listen.\n");
-	usys_puts(
-			"-t, --starter-port <port>             Port at which starter service"
-		    "will listen.\n");
-	usys_puts(
-			"-r, --starter-ep </node>              API EP for starter service"
-			"at which configd will post\n");
-	usys_puts(
-			"-v, --version                          Software Version.\n");
+	usys_puts("-h, --help                          Help menu.\n");
+	usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>   Log level for the process.\n");
+	usys_puts("-n, --noded-host <host>             Host at which noded service will listen.\n");
+	usys_puts("-e, --noded-ep </node>                API EP at which configd service"
+              "will enquire for node info.\n");
+	usys_puts("-s, --starter-host <host>             Host at which starter service"
+              "will listen.\n");
+	usys_puts("-r, --starter-ep </node>              API EP for starter service"
+              "at which configd will post\n");
+	usys_puts("-v, --version                          Software Version.\n");
 }
 
-/**
- * @fn      int main(int, char**)
- * @brief
- *
- * @param   argc
- * @param   argv
- * @return  Should stay in main function entire time.
- */
 int main(int argc, char **argv) {
+
 	int ret = USYS_OK, port=0;
 
 	char *debug        = DEF_LOG_LEVEL;
@@ -149,15 +113,6 @@ int main(int argc, char **argv) {
 			usys_puts(VERSION);
 			usys_exit(0);
 			break;
-
-		case 'p':
-			cPort = optarg;
-			if (!cPort) {
-				usage();
-				usys_exit(0);
-			}
-			break;
-
 		case 'l':
 			debug = optarg;
 			set_log_level(debug);
@@ -169,37 +124,9 @@ int main(int argc, char **argv) {
 				usys_exit(0);
 			}
 			break;
-		case 't':
-			starterPort = optarg;
-			if (!starterPort) {
-				usage();
-				usys_exit(0);
-			}
-			break;
-		case 'r':
-			starterEP = optarg;
-			if (!starterEP) {
-				usage();
-				usys_exit(0);
-			}
-			break;
 		case 'n':
 			nodedHost = optarg;
 			if (!nodedHost) {
-				usage();
-				usys_exit(0);
-			}
-			break;
-		case 'o':
-			nodedPort = optarg;
-			if (!nodedPort) {
-				usage();
-				usys_exit(0);
-			}
-			break;
-		case 'e':
-			nodedEP = optarg;
-			if (!nodedEP) {
 				usage();
 				usys_exit(0);
 			}
@@ -211,14 +138,21 @@ int main(int argc, char **argv) {
 	}
 
 	/* Service config update */
-	serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
-	serviceConfig.servicePort  = usys_atoi(cPort);
+	serviceConfig.serviceName  = usys_strdup(SERVICE_CONFIG);
+	serviceConfig.servicePort  = usys_find_service_port(SERVICE_CONFIG);
 	serviceConfig.nodedEP      = usys_strdup(nodedEP);
 	serviceConfig.nodedHost    = usys_strdup(nodedHost);
-	serviceConfig.nodedPort    = usys_atoi(nodedPort);
+	serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
 	serviceConfig.starterEP    = usys_strdup(starterEP);
     serviceConfig.starterHost  = usys_strdup(starterHost);
-	serviceConfig.starterPort  = usys_atoi(starterPort);
+	serviceConfig.starterPort  = usys_find_service_port(SERVICE_STARTER);
+
+    if (!serviceConfig.servicePort ||
+        !serviceConfig.nodedPort   ||
+        !serviceConfig.starterPort) {
+        usys_log_error("Unable to determine port for services");
+        goto done;
+    }
 
 	usys_log_debug("Starting configd ...");
 

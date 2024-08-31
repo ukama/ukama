@@ -6,6 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include "httpStatus.h"
+
 #include "web_client.h"
 #include "config.h"
 #include "jserdes.h"
@@ -90,7 +92,7 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
 		goto cleanup;
 	}
 
-	if (httpResp->status == 200) {
+	if (httpResp->status == HttpStatus_OK) {
 		json = ulfius_get_json_body_response(httpResp, &jErr);
 		if (json) {
 			ret = json_deserialize_node_id(nodeID, json);
@@ -105,7 +107,8 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
 	}
 
 	json_decref(json);
-	cleanup:
+
+cleanup:
 	if (httpReq) {
 		ulfius_clean_request(httpReq);
 		usys_free(httpReq);
@@ -165,11 +168,13 @@ int wc_forward_notification(char* url, char* method,
 }
 
 int wc_read_node_info(Config* config) {
+
 	int ret = STATUS_NOK;
-	/* Send HTTP request */
 	char url[128]={0};
 
-	sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
+	sprintf(url,"http://%s:%d/%s",
+            config->nodedHost,
+            config->nodedPort,
 			config->nodedEP);
 
 	ret = wc_send_node_info_request(url, "GET", &config->nodeId);
@@ -194,6 +199,7 @@ int get_nodeid_from_noded(Config *config) {
 }
 
 int wc_send_restart_req(Config* config, char* app){
+
 	int ret = STATUS_NOK;
 	UResponse *httpResp = NULL;
 	URequest *httpReq = NULL;
