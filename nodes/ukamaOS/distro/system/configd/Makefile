@@ -39,7 +39,6 @@ CFLAGS+=-I./inc
 CFLAGS+=-I./inc/common/
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
-CFLAGS+=-Wno-unused-variable
 
 LDFLAGS+=-L$(VENDOR_LIB)
 LDFLAGS+=-L$(VENDOR_LIB64)
