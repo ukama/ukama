@@ -32,11 +32,11 @@ static int init_framework(UInst *inst, int port) {
 static int start_framework(Config *config, UInst *instance) {
 
 	int ret;
-  
+
     ret = ulfius_start_framework(instance);
 	if (ret != U_OK) {
 		usys_log_error("Error starting the webservice/websocket.");
-    
+
 		ulfius_stop_framework(instance);
 		ulfius_clean_instance(instance);
 
@@ -129,5 +129,3 @@ int start_web_services(Config *config, UInst *serviceInst) {
 
 	return USYS_TRUE;
 }
-
-

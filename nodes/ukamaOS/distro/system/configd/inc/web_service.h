@@ -13,9 +13,9 @@
 #include "ulfius.h"
 
 #define EP_BS                           "/"
-#define WEBSERVICE                      "config"
-//#define REST_API_VERSION                "v1"
-#define REST_API_VERSION                "configd/v1"
+#define REST_API_VERSION                "v1"
+#define URL_PREFIX                      EP_BS REST_API_VERSION
+#define API_RES_EP(RES)                 EP_BS RES
 
 /* API URL parameters*/
 #define UUID                            "uuid"
