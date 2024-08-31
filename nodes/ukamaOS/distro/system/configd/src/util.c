@@ -300,40 +300,55 @@ int remove_dir(const char *path) {
 }
 
 int create_config(ConfigData* c) {
-	char path[512] = {'\0'};
-	char fpath[512] = {'\0'};
-	sprintf(path,"%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
-	remove(path);
-	if (make_path(path)) {
-		usys_log_debug("Directory %s created successfully.\n", path);
+    char path[512] = {'\0'};
+    char fpath[1024] = {'\0'};
 
-		sprintf(fpath,"%s/%s", path, c->fileName);
-		// Create and write to files in the new directory
-		FILE* file = fopen(fpath, "w");
-		if (file == NULL) {
-			usys_log_error("Failed to create file %s\n", fpath);
-			perror(NULL);
-			return -1;
-		}
+    // Construct the directory path
+    snprintf(path, sizeof(path), "%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
-		if (c->data != NULL) {
-			if(fputs(c->data, file) == EOF) {
-				perror("Failed to write to file");
-				fclose(file); // Close the file
-				return -1; // Return an error code
-			}
-		}
-		fclose(file);
-		usys_log_debug("File %s created successfully.\n", fpath);
+    // Remove the existing directory if it exists
+    if (remove(path) != 0 && errno != ENOENT) {
+        usys_log_error("Failed to remove existing directory %s\n", path);
+        perror("remove");
+        return -1;
+    }
 
-	} else {
-		printf("Failed to create directory.\n");
-		perror("error");
-		return -1;
-	}
+    // Create the directory
+    if (make_path(path)) {
+        usys_log_debug("Directory %s created successfully.\n", path);
 
-	return 0;
+        // Construct the full file path
+        snprintf(fpath, sizeof(fpath), "%s/%s", path, c->fileName);
+
+        // Create and write to the file in the new directory
+        FILE* file = fopen(fpath, "w");
+        if (file == NULL) {
+            usys_log_error("Failed to create file %s\n", fpath);
+            perror("fopen");
+            return -1;
+        }
+
+        // Write data to the file if data is not NULL
+        if (c->data != NULL) {
+            if (fputs(c->data, file) == EOF) {
+                usys_log_error("Failed to write to file %s\n", fpath);
+                perror("fputs");
+                fclose(file);
+                return -1;
+            }
+        }
+
+        fclose(file);
+        usys_log_debug("File %s created successfully.\n", fpath);
+
+    } else {
+        usys_log_error("Failed to create directory %s\n", path);
+        perror("make_path");
+        return -1;
+    }
+
+    return 0;
 }
 
 int create_backup_config(){
