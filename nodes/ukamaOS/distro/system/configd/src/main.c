@@ -39,7 +39,6 @@ static UsysOption longOptions[] = {
     { "noded-ep",     required_argument, 0, 'e' },
     { "starter-host",    required_argument, 0, 's' },
     { "starter-port",    required_argument, 0, 't' },
-    { "starter-ep",     required_argument, 0, 'r' },
     { "help",          no_argument,       0, 'h' },
     { "version",       no_argument,       0, 'v' },
     { 0,               0,                 0,  0 }
@@ -64,30 +63,18 @@ void usage() {
 
 	usys_puts("Usage: configd [options] \n");
 	usys_puts("Options:\n");
-	usys_puts("-h, --help                          Help menu.\n");
-	usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>   Log level for the process.\n");
-	usys_puts("-n, --noded-host <host>             Host at which noded service will listen.\n");
-	usys_puts("-e, --noded-ep </node>                API EP at which configd service"
-              "will enquire for node info.\n");
-	usys_puts("-s, --starter-host <host>             Host at which starter service"
-              "will listen.\n");
-	usys_puts("-r, --starter-ep </node>              API EP for starter service"
-              "at which configd will post\n");
+	usys_puts("-h, --help                          Help\n");
+	usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>   Log level for the process\n");
+	usys_puts("-n, --noded-host <host>             Host at which node.d listen\n");
+	usys_puts("-s, --starter-host <host>           Host at which starter.d listen\n");
 	usys_puts("-v, --version                          Software Version.\n");
 }
 
 int main(int argc, char **argv) {
 
-	int ret = USYS_OK, port=0;
-
 	char *debug        = DEF_LOG_LEVEL;
-	char *cPort        = DEF_SERVICE_PORT;
 	char *nodedHost    = DEF_NODED_HOST;
-	char *nodedPort    = DEF_NODED_PORT;
-	char *nodedEP      = DEF_NODED_EP;
 	char *starterHost  = DEF_STARTER_HOST;
-	char *starterPort  = DEF_STARTER_PORT;
-	char *starterEP    = DEF_STARTER_EP;
 
 	UInst serviceInst;
 
@@ -98,25 +85,27 @@ int main(int argc, char **argv) {
 		int opt = 0;
 		int opdIdx = 0;
 
-		opt = getopt_long(argc, argv, "f:p:l:n:hv", longOptions, &opdIdx);
+		opt = getopt_long(argc, argv, "s:l:n:hv", longOptions, &opdIdx);
 		if (opt == -1) {
 			break;
 		}
 
 		switch (opt) {
 		case 'h':
-		usage();
-		usys_exit(0);
+            usage();
+            usys_exit(0);
 		break;
 
 		case 'v':
 			usys_puts(VERSION);
 			usys_exit(0);
 			break;
+
 		case 'l':
 			debug = optarg;
 			set_log_level(debug);
 			break;
+
 		case 's':
 			starterHost = optarg;
 			if (!starterHost) {
@@ -124,6 +113,7 @@ int main(int argc, char **argv) {
 				usys_exit(0);
 			}
 			break;
+
 		case 'n':
 			nodedHost = optarg;
 			if (!nodedHost) {
@@ -131,6 +121,7 @@ int main(int argc, char **argv) {
 				usys_exit(0);
 			}
 			break;
+
 		default:
 			usage();
 			usys_exit(0);
@@ -140,10 +131,10 @@ int main(int argc, char **argv) {
 	/* Service config update */
 	serviceConfig.serviceName  = usys_strdup(SERVICE_CONFIG);
 	serviceConfig.servicePort  = usys_find_service_port(SERVICE_CONFIG);
-	serviceConfig.nodedEP      = usys_strdup(nodedEP);
+	serviceConfig.nodedEP      = usys_strdup(DEF_NODED_EP);
 	serviceConfig.nodedHost    = usys_strdup(nodedHost);
 	serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
-	serviceConfig.starterEP    = usys_strdup(starterEP);
+	serviceConfig.starterEP    = usys_strdup(DEF_STARTER_EP);
     serviceConfig.starterHost  = usys_strdup(starterHost);
 	serviceConfig.starterPort  = usys_find_service_port(SERVICE_STARTER);
 

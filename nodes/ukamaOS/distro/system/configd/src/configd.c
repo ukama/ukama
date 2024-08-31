@@ -176,7 +176,6 @@ int process_config(JsonObj *json, Config *config) {
 	int statusCode = STATUS_NOK;
 	ConfigData *cd = NULL;
 	ConfigSession *session = (ConfigSession*) config->updateSession;
-	unsigned char* jc = NULL;
 	AppState *as = NULL;
 
 	/* Deserialize incoming message from cloud */
@@ -281,7 +280,9 @@ int process_config(JsonObj *json, Config *config) {
 
 /* store incoming config file */
 int configd_process_incoming_config(const char *service,
-		JsonObj *json, Config *config){
+                                    JsonObj *json,
+                                    Config *config){
+
 	int statusCode = STATUS_NOK;
 	statusCode = process_config(json, config);
 	if (statusCode != STATUS_OK ) {
@@ -353,7 +354,7 @@ int configd_trigger_update(Config* c) {
 }
 
 int configd_read_running_config(ConfigData **c) {
-	int statusCode = STATUS_NOK;
+
 	ConfigData *cd = NULL;
 
 	/* Read file */

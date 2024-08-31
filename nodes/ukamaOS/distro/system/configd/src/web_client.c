@@ -125,7 +125,6 @@ int wc_forward_notification(char* url, char* method,
 		JsonObj* body ) {
 	int ret = STATUS_NOK;
 	JsonObj *json = NULL;
-	JsonErrObj jErr;
 
 	UResponse *httpResp = NULL;
 
