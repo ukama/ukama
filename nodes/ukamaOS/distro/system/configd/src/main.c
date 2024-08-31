@@ -25,6 +25,9 @@
 
 #include "version.h"
 
+/* network.c */
+int start_web_services(Config *config, UInst *serviceInst);
+
 void handle_sigint(int signum) {
 	usys_log_debug("Caught terminate signal.\n");
 	usys_log_debug("Cleanup complete.\n");
@@ -32,16 +35,17 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "port",          required_argument, 0, 'p' },
-    { "logs",          required_argument, 0, 'l' },
-    { "noded-host",    required_argument, 0, 'n' },
-    { "noded-port",    required_argument, 0, 'o' },
+
+    { "port",         required_argument, 0, 'p' },
+    { "logs",         required_argument, 0, 'l' },
+    { "noded-host",   required_argument, 0, 'n' },
+    { "noded-port",   required_argument, 0, 'o' },
     { "noded-ep",     required_argument, 0, 'e' },
-    { "starter-host",    required_argument, 0, 's' },
-    { "starter-port",    required_argument, 0, 't' },
-    { "help",          no_argument,       0, 'h' },
-    { "version",       no_argument,       0, 'v' },
-    { 0,               0,                 0,  0 }
+    { "starter-host", required_argument, 0, 's' },
+    { "starter-port", required_argument, 0, 't' },
+    { "help",         no_argument,       0, 'h' },
+    { "version",      no_argument,       0, 'v' },
+    { 0,              0,                 0,  0 }
 };
 
 void set_log_level(char *slevel) {
@@ -67,7 +71,18 @@ void usage() {
 	usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>   Log level for the process\n");
 	usys_puts("-n, --noded-host <host>             Host at which node.d listen\n");
 	usys_puts("-s, --starter-host <host>           Host at which starter.d listen\n");
-	usys_puts("-v, --version                          Software Version.\n");
+	usys_puts("-v, --version                       Version.\n");
+}
+
+void free_config(Config *config) {
+
+    usys_free(config->serviceName);
+	usys_free(config->nodeId);
+	usys_free(config->nodedEP);
+	usys_free(config->nodedHost);
+	usys_free(config->starterEP);
+	usys_free(config->starterHost);
+	free_config_data(config->runningConfig);
 }
 
 int main(int argc, char **argv) {
@@ -141,11 +156,13 @@ int main(int argc, char **argv) {
     if (!serviceConfig.servicePort ||
         !serviceConfig.nodedPort   ||
         !serviceConfig.starterPort) {
+
         usys_log_error("Unable to determine port for services");
-        goto done;
+        free_config(&serviceConfig);
+        usys_exit(1);
     }
 
-	usys_log_debug("Starting configd ...");
+	usys_log_debug("Starting config.d ...");
 
 	/* Signal handler */
 	signal(SIGINT, handle_sigint);
@@ -157,33 +174,30 @@ int main(int argc, char **argv) {
 	} else {
 		if (get_nodeid_from_noded(&serviceConfig) == STATUS_NOK) {
 			usys_log_error("configd: Unable to connect with node.d");
-			goto done;
+            free_config(&serviceConfig);
+            usys_exit(1);
 		}
 	}
 
 	if (configd_read_running_config((ConfigData**)&serviceConfig.runningConfig)) {
 		usys_log_error("Failed to read last running config.");
-		exit(1);
+        free_config(&serviceConfig);
+		usys_exit(1);
 	}
 
 	if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
 		usys_log_error("Webservice failed to setup for clients. Exiting.");
-		exit(1);
+        free_config(&serviceConfig);
+        usys_exit(1);
 	}
 
 	pause();
 
-	done:
 	ulfius_stop_framework(&serviceInst);
 	ulfius_clean_instance(&serviceInst);
 
-	usys_free(serviceConfig.serviceName);
-	usys_free(serviceConfig.nodeId);
-	usys_free(serviceConfig.nodedEP);
-	usys_free(serviceConfig.nodedHost);
-	usys_free(serviceConfig.starterEP);
-	usys_free(serviceConfig.starterHost);
-	free_config_data(serviceConfig.runningConfig);
-	usys_log_debug("Exiting configd ...");
-	return 1;
+    free_config(&serviceConfig);
+	usys_log_debug("Exiting config.d ...");
+
+	return 0;
 }
