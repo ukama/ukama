@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
@@ -37,6 +39,7 @@ type ConfigStore struct {
 	siteClient           creg.SiteClient
 	nodeClient           creg.NodeClient
 	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
+	ConfigRoutingKey msgbus.RoutingKeyBuilder 
 	configRepo           db.ConfigRepo
 	commitRepo           db.CommitRepo
 	OrgName              string
@@ -90,6 +93,7 @@ func NewConfigStore(msgB mb.MsgBusServiceClient, cnet creg.NetworkClient, csite 
 		nodeClient:           cnode,
 		msgbus:               msgB,
 		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
+		ConfigRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		OrgName:              orgName,
 		configRepo:           cfgDb,
 		commitRepo:           cmtDb,
@@ -230,6 +234,17 @@ func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer str
 		return err
 	}
 
+	route := c.ConfigRoutingKey.SetAction("add").SetObject("config").MustBuild()
+
+	evt := &eCfgPb.NodeConfigUpdateEvent{
+		NodeId: nodeid,
+		Commit:rVer,
+	}
+	err = c.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
+	}
 	return c.ProcessConfigStoreEvent(files, rVer, dir)
 }
 
