@@ -231,6 +231,9 @@ func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeSt
 	_, err = n.s.Create(context.Background(), &pb.CreateStateRequest{
 		State: convertStateToProto(newState),
 	})
+	if err != nil {
+		return err
+	}
 
 	// Publish a state update event if the message bus is available
 	if n.s.msgbus != nil {
@@ -295,16 +298,6 @@ func (n *NodeStateEventServer) unmarshalNodeDeassignEvent(msg *anypb.Any) (*epb.
 	err := anypb.UnmarshalTo(msg, evt, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal Node release from site message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return evt, nil
-}
-
-func (n *NodeStateEventServer) unmarshalNodeHealthSeverityHighEvent(msg *anypb.Any) (*epb.Notification, error) {
-	evt := &epb.Notification{}
-	err := anypb.UnmarshalTo(msg, evt, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal Node severity high message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return evt, nil
