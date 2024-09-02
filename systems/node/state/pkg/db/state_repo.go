@@ -77,7 +77,6 @@ func (r *stateRepo) Delete(nodeId ukama.NodeID) error {
 	return nil
 }
 
-
 func (r *stateRepo) GetStateHistory(nodeId ukama.NodeID, from, to time.Time) ([]State, error) {
 	var states []State
 	err := r.Db.GetGormDb().

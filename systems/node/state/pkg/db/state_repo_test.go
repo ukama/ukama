@@ -6,19 +6,19 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package db_test
+package db
 
 import (
+	extsql "database/sql"
+	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/stretchr/testify/assert"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"gorm.io/driver/postgres"
-
 	"gorm.io/gorm"
 )
 
@@ -27,11 +27,11 @@ type UkamaDbMock struct {
 }
 
 func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me: Init()")
+	return nil
 }
 
 func (u UkamaDbMock) Connect() error {
-	panic("implement me: Connect()")
+	return nil
 }
 
 func (u UkamaDbMock) GetGormDb() *gorm.DB {
@@ -44,136 +44,172 @@ func (u UkamaDbMock) InitDB() error {
 
 func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func() error) error {
-	panic("implement me: ExecuteInTransaction()")
+	return nil
 }
 
 func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func(tx *gorm.DB) error) error {
-	panic("implement me: ExecuteInTransaction2()")
+	return nil
 }
 
-func TestState_Create(t *testing.T) {
-	sqlDb, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer sqlDb.Close()
+var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
-	gormDb, err := gorm.Open(postgres.New(postgres.Config{
-		Conn: sqlDb,
-	}), &gorm.Config{})
-	assert.NoError(t, err)
-
-	repo := db.NewStateRepo(&UkamaDbMock{GormDb: gormDb})
-
-	state := &db.State{
-		Id:              uuid.NewV4(),
-		NodeId:          "node1",
-		State:    ukama.StateConfigure,
+func TestCreate(t *testing.T) {
+	stateId := uuid.NewV4()
+	state := State{
+		Id:              stateId,
+		NodeId:          nodeId.String(),
+		State:           ukama.StateConfigure,
+		Type:            "hnode",
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
-		Type:            "someType",
-		Version:         "1.0",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		Connectivity:    Online,
+		Version:         "v34",
 	}
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO \"states\"").WithArgs(
-		state.Id,
-		state.NodeId,
-		state.State,
-		state.LastHeartbeat,
-		state.LastStateChange,
-		state.Type,
-		state.Version,
-		state.CreatedAt,
-		state.UpdatedAt,
-		sqlmock.AnyArg(),
-	).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
-	err = repo.Create(state, nil)
+	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := NewStateRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("Create", func(t *testing.T) {
+		// Arrange
+		mock.ExpectBegin()
+
+		// Adjust the expected arguments according to your State structure
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "states"`)).
+			WithArgs(state.Id, state.NodeId, state.State, state.LastHeartbeat, state.LastStateChange, state.Connectivity, state.Type, state.Version, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		// Act
+		err = r.Create(&state, nil)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+func GetStateByNodeId(t *testing.T) {
+	t.Run("StateExist", func(t *testing.T) {
+		// Arrange
+		stateId := uuid.NewV4()
+		state := State{
+			Id:              stateId,
+			NodeId:          nodeId.String(),
+			State:           ukama.StateConfigure,
+			Type:            "hnode",
+			LastHeartbeat:   time.Now(),
+			LastStateChange: time.Now(),
+			Connectivity:    Online,
+			Version:         "v34",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+			DeletedAt:       gorm.DeletedAt{},
+		}
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"id", "node_id", "state", "type", "lastheartbeat", "laststatechange", "connectivity", "version"}).
+			AddRow(stateId, state.NodeId, state.State, state.Type, state.LastHeartbeat, state.LastStateChange, state.Connectivity, state.Version)
+
+		mock.ExpectQuery(`^SELECT.*states.*`).
+			WithArgs(state.NodeId, 1). // Add '1' for the LIMIT clause
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewStateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		rm, err := r.GetByNodeId(nodeId)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, rm)
+	})
 }
 
-func TestState_GetByNodeId(t *testing.T) {
-	sqlDb, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer sqlDb.Close()
+func TestGetStateHistory(t *testing.T) {
+	t.Run("GetStateHistory", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		fromTime := time.Now().Add(-24 * time.Hour)
+		toTime := time.Now()
+		expectedStates := []State{
+			{
+				Id:              uuid.NewV4(),
+				NodeId:          nodeId.String(),
+				State:           ukama.StateConfigure,
+				Type:            "hnode",
+				LastHeartbeat:   time.Now(),
+				LastStateChange: time.Now(),
+				Connectivity:    Online,
+				Version:         "v34",
+			},
+		}
 
-	gormDb, err := gorm.Open(postgres.New(postgres.Config{
-		Conn: sqlDb,
-	}), &gorm.Config{})
-	assert.NoError(t, err)
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
 
-	repo := db.NewStateRepo(&UkamaDbMock{GormDb: gormDb})
-	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "states"`)).
+			WithArgs(nodeId.String(), fromTime, toTime).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "node_id", "state", "last_heartbeat", "last_state_change", "connectivity", "type", "version"}).
+				AddRow(expectedStates[0].Id, expectedStates[0].NodeId, expectedStates[0].State, expectedStates[0].LastHeartbeat, expectedStates[0].LastStateChange, expectedStates[0].Connectivity, expectedStates[0].Type, expectedStates[0].Version))
 
-	expectedState := &db.State{
-		Id:           uuid.NewV4(),
-		NodeId:       nodeId.String(),
-		State: ukama.StateOperational,
-	}
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
 
-	rows := sqlmock.NewRows([]string{"id", "node_id", "state"}).
-		AddRow(expectedState.Id, expectedState.NodeId, expectedState.State)
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
 
-	mock.ExpectQuery(`^SELECT.*states.*`).
-		WithArgs(nodeId, sqlmock.AnyArg()).
-		WillReturnRows(rows)
-	state, err := repo.GetByNodeId(nodeId)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedState.NodeId, state.NodeId)
-	assert.Equal(t, expectedState.State, state.State)
-	assert.NoError(t, mock.ExpectationsWereMet())
+		r := NewStateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		states, err := r.GetStateHistory(nodeId, fromTime, toTime)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStates, states)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
-
-
-// func TestState_GetStateHistoryByTimeRange(t *testing.T) {
-// 	sqlDb, mock, err := sqlmock.New()
-// 	assert.NoError(t, err)
-// 	defer sqlDb.Close()
-
-// 	gormDb, err := gorm.Open(postgres.New(postgres.Config{
-// 		Conn: sqlDb,
-// 	}), &gorm.Config{})
-// 	assert.NoError(t, err)
-
-// 	repo := db.NewStateRepo(&UkamaDbMock{GormDb: gormDb})
-// 	nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-// 	from := time.Now().Add(-24 * time.Hour)
-// 	to := time.Now()
-
-// 	expectedHistory := []db.StateHistory{
-// 		{
-// 			Id:            uuid.NewV4(),
-// 			NodeStateId:   nodeId.String(),
-// 			PreviousState: db.StateFaulty,
-// 			NewState:      db.StateActive,
-// 			Timestamp:     time.Now().Add(-12 * time.Hour),
-// 		},
-// 		{
-// 			Id:            uuid.NewV4(),
-// 			NodeStateId:   nodeId.String(),
-// 			PreviousState: db.StateFaulty,
-// 			NewState:      db.StateMaintenance,
-// 			Timestamp:     time.Now().Add(-18 * time.Hour),
-// 		},
-// 	}
-
-// 	rows := sqlmock.NewRows([]string{"id", "node_state_id", "previous_state", "new_state", "timestamp"})
-// 	for _, history := range expectedHistory {
-// 		rows.AddRow(history.Id, history.NodeStateId, history.PreviousState, history.NewState, history.Timestamp)
-// 	}
-
-// 	mock.ExpectQuery("SELECT \\* FROM \"state_histories\"").
-// 		WithArgs(nodeId.String(), from, to).
-// 		WillReturnRows(rows)
-
-// 	history, err := repo.GetStateHistoryByTimeRange(nodeId, from, to)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, len(expectedHistory), len(history))
-// 	assert.NoError(t, mock.ExpectationsWereMet())
-// }
-
-

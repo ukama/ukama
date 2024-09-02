@@ -8,89 +8,89 @@
 
 package server
 
-// import (
-// 	"context"
-// 	"testing"
-// 	"time"
+import (
+	"context"
+	"testing"
+	"time"
 
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/mock"
-// 	"github.com/ukama/ukama/systems/common/ukama"
-// 	"github.com/ukama/ukama/systems/common/uuid"
-// 	"github.com/ukama/ukama/systems/node/state/mocks"
-// 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
-// 	"github.com/ukama/ukama/systems/node/state/pkg/db"
-// )
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	mocks "github.com/ukama/ukama/systems/node/state/mocks"
+	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
+	"github.com/ukama/ukama/systems/node/state/pkg/db"
+)
 
-// func TestStateServer_Create(t *testing.T) {
-// 	mockRepo := mocks.NewStateRepo(t)
-// 	server := NewstateServer("testOrg", mockRepo, nil, false)
+var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
-// 	req := &pb.CreateStateRequest{
-// 		State: &pb.State{
-// 			NodeId:       "uk-sa2433-hnode-v0-000c",
-// 			State: pb.NodeStateEnum_STATE_CONFIGURE,
-// 			Type:         "testType",
-// 			Version:      "1.0",
-// 		},
-// 	}
+func TestStateServer_Create(t *testing.T) {
+	mockRepo := new(mocks.StateRepo)
+	server := NewstateServer("testOrg", mockRepo, nil, false)
 
-// 	mockRepo.On("Create", mock.AnythingOfType("*db.State"), mock.AnythingOfType("func(*db.State, *gorm.DB) error")).
-// 		Return(nil)
+	req := &pb.CreateStateRequest{
+		State: &pb.State{
+			NodeId:  nodeId.String(),
+			State:   pb.NodeStateEnum_STATE_CONFIGURE,
+			Type:    "test",
+			Version: "1.0",
+		},
+	}
 
-// 	resp, err := server.Create(context.Background(), req)
+	mockRepo.On("Create", mock.AnythingOfType("*db.State"), mock.Anything).Return(nil)
 
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.Equal(t, req.State.NodeId, resp.State.NodeId)
-// 	mockRepo.AssertExpectations(t)
-// }
+	resp, err := server.Create(context.Background(), req)
 
-// func TestStateServer_GetByNodeId(t *testing.T) {
-// 	mockRepo := mocks.NewStateRepo(t)
-// 	server := NewstateServer("testOrg", mockRepo, nil, false)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, pb.NodeStateEnum_STATE_CONFIGURE, resp.State.State)
 
-// 	nodeId := "uk-sa2433-hnode-v0-000c"
-// 	req := &pb.GetByNodeIdRequest{
-// 		NodeId: nodeId,
-// 	}
+	mockRepo.AssertExpectations(t)
+}
 
-// 	expectedState := &db.State{
-// 		Id:              uuid.NewV4(),
-// 		NodeId:          nodeId,
-// 		State:    ukama.StateConfigure,
-// 		LastHeartbeat:   time.Now(),
-// 		LastStateChange: time.Now(),
-// 		Type:            "testType",
-// 		Version:         "1.0",
-// 	}
+func TestStateServer_GetByNodeId(t *testing.T) {
+	mockRepo := new(mocks.StateRepo)
+	server := NewstateServer("testOrg", mockRepo, nil, false)
 
-// 	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).
-// 		Return(expectedState, nil)
+	req := &pb.GetByNodeIdRequest{
+		NodeId: nodeId.String(),
+	}
 
-// 	resp, err := server.GetByNodeId(context.Background(), req)
+	mockState := &db.State{
+		Id:              uuid.NewV4(),
+		NodeId:          nodeId.String(),
+		State:           ukama.StateOperational,
+		LastHeartbeat:   time.Now(),
+		LastStateChange: time.Now(),
+		Type:            "test",
+		Version:         "1.0",
+	}
 
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.Equal(t, nodeId, resp.State.NodeId)
-// 	mockRepo.AssertExpectations(t)
-// }
+	mockRepo.On("GetByNodeId", mock.AnythingOfType("ukama.NodeID")).Return(mockState, nil)
 
-// func TestStateServer_Delete(t *testing.T) {
-// 	mockRepo := mocks.NewStateRepo(t)
-// 	server := NewstateServer("testOrg", mockRepo, nil, false)
+	resp, err := server.GetByNodeId(context.Background(), req)
 
-// 	nodeId := "UK-SA2433-hnode-V0-000C"
-// 	req := &pb.DeleteStateRequest{
-// 		NodeId: nodeId,
-// 	}
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, pb.NodeStateEnum_STATE_CONFIGURE, resp.State.State)
 
-// 	mockRepo.On("Delete", mock.AnythingOfType("ukama.NodeID")).
-// 		Return(nil)
+	mockRepo.AssertExpectations(t)
+}
 
-// 	resp, err := server.Delete(context.Background(), req)
+func TestStateServer_Delete(t *testing.T) {
+	mockRepo := new(mocks.StateRepo)
+	server := NewstateServer("testOrg", mockRepo, nil, false)
 
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	mockRepo.AssertExpectations(t)
-// }
+	req := &pb.DeleteStateRequest{
+		NodeId: nodeId.String(),
+	}
+
+	mockRepo.On("Delete", mock.AnythingOfType("ukama.NodeID")).Return(nil)
+
+	resp, err := server.Delete(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+
+	mockRepo.AssertExpectations(t)
+}

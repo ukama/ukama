@@ -42,6 +42,7 @@ message State {
     string type = 6;
     string version = 7;
     google.protobuf.Timestamp LastStateChange = 9;
+    string connectivity = 10;
 }
 
 enum NodeStateEnum {

@@ -40,7 +40,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
-				"event.cloud.local.{{ .Org}}.node.notify.notification.config.ready",
+				"event.cloud.local.{{ .Org}}.node.configurator.config.add",
 				"event.cloud.local.{{ .Org}}.registry.node.node.create",
 			},
 		},

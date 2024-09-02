@@ -20,6 +20,7 @@ import (
 	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"google.golang.org/protobuf/proto"
@@ -34,6 +35,44 @@ type NodeStateEventServer struct {
 	stateRoutingKey msgbus.RoutingKeyBuilder
 	epb.UnimplementedEventNotificationServiceServer
 }
+type NotificationType string
+type SeverityType string
+
+const (
+	Event NotificationType = "event"
+)
+
+const (
+	Fatal    SeverityType = "fatal"
+	Critical SeverityType = "critical"
+	High     SeverityType = "high"
+	Medium   SeverityType = "medium"
+	Low      SeverityType = "low"
+	Clean    SeverityType = "clean"
+	Log      SeverityType = "log"
+	Warning  SeverityType = "warning"
+	Debug    SeverityType = "debug"
+	Trace    SeverityType = "trace"
+)
+
+func getNodeStateBySeverity(severity SeverityType) (state ukama.NodeStateEnum) {
+	switch severity {
+	case Fatal, Critical:
+		state = ukama.StateFaulty
+	case High:
+		state = ukama.StateFaulty
+	case Medium:
+		state = ukama.StateOperational
+	case Low, Clean, Log, Warning, Debug, Trace:
+		state = ukama.StateOperational
+	default:
+		state = ukama.StateOperational
+	}
+	return
+}
+func toSeverityType(severity string) SeverityType {
+	return SeverityType(severity)
+}
 
 func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
 	return &NodeStateEventServer{
@@ -47,13 +86,13 @@ func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusSe
 func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	routingHandlers := map[string]func(*anypb.Any) error{
-		"event.cloud.local.{{ .Org}}.registry.node.node.create":         n.handleNodeCreateEvent,
-		"event.cloud.local.{{ .Org}}.messaging.mesh.node.online":        n.handleNodeOnlineEvent,
-		"event.cloud.local.{{ .Org}}.registry.node.node.assign":         n.handleOnboardingEvent,
-		"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline":       n.handleNodeOfflineEvent,
-		"event.cloud.local.{{ .Org}}.node.notify.notification.store":    n.handleNodeHealthSeverityHighEvent,
-		"event.cloud.local.{{ .Org}}.node.notify.notification.config.ready": n.handleNodeConfigReadyEvent,
-		"event.cloud.local.{{ .Org}}.registry.node.node.release":        n.handleNodeDeassignEvent,
+		"event.cloud.local.{{ .Org}}.registry.node.node.create":      n.handleNodeCreateEvent,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.online":     n.handleNodeOnlineEvent,
+		"event.cloud.local.{{ .Org}}.registry.node.node.assign":      n.handleOnboardingEvent,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline":    n.handleNodeOfflineEvent,
+		"event.cloud.local.{{ .Org}}.node.notify.notification.store": n.handleNodeHealthSeverityEvent,
+		"event.cloud.local.{{ .Org}}.registry.node.node.release":     n.handleNodeDeassignEvent,
+		"event.cloud.local.{{ .Org}}node.configurator.config.add":    n.handleNodeConfigEvent,
 	}
 
 	if handler, ok := routingHandlers[e.RoutingKey]; ok {
@@ -69,16 +108,18 @@ func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NodeStateEventServer) handleNodeHealthSeverityHighEvent(msg *anypb.Any) error {
+func (n *NodeStateEventServer) handleNodeHealthSeverityEvent(msg *anypb.Any) error {
 	evt, err := n.unmarshalNotification(msg)
 	if err != nil {
 		return err
 	}
-	if evt.Severity != "high" {
+	if evt.Type != "event" {
 		log.Infof("Ignoring message with low severity for node %s", evt.NodeId)
 		return nil
 	}
-	return n.updateNodeState(evt.NodeId, ukama.StateFaulty)
+	newState := getNodeStateBySeverity(toSeverityType(evt.Severity))
+
+	return n.updateNodeState(evt.NodeId, newState)
 }
 
 func (n *NodeStateEventServer) handleNodeCreateEvent(msg *anypb.Any) error {
@@ -87,6 +128,13 @@ func (n *NodeStateEventServer) handleNodeCreateEvent(msg *anypb.Any) error {
 		return err
 	}
 	return n.updateNodeState(evt.NodeId, ukama.StateUnknown)
+}
+func (n *NodeStateEventServer) handleNodeConfigEvent(msg *anypb.Any) error {
+	evt, err := n.unmarshalNodeConfigCreateEvent(msg)
+	if err != nil {
+		return err
+	}
+	return n.updateNodeState(evt.NodeId, ukama.StateConfigure)
 }
 
 func (n *NodeStateEventServer) handleNodeOnlineEvent(msg *anypb.Any) error {
@@ -107,7 +155,7 @@ func (n *NodeStateEventServer) handleNodeOnlineEvent(msg *anypb.Any) error {
 	}
 	conn := db.Online
 
-	return n.updateNodeState(evt.NodeId, currentState.State,&conn)
+	return n.updateNodeState(evt.NodeId, currentState.State, &conn)
 }
 
 func (n *NodeStateEventServer) handleOnboardingEvent(msg *anypb.Any) error {
@@ -135,15 +183,7 @@ func (n *NodeStateEventServer) handleNodeOfflineEvent(msg *anypb.Any) error {
 		return err
 	}
 	conn := db.Offline
-	return n.updateNodeState(evt.NodeId,currentState.State,&conn)
-}
-
-func (n *NodeStateEventServer) handleNodeConfigReadyEvent(msg *anypb.Any) error {
-	evt, err := n.unmarshalNodeConfigReadyEvent(msg)
-	if err != nil {
-		return err
-	}
-	return n.updateNodeState(evt.NodeId, ukama.StateOperational)
+	return n.updateNodeState(evt.NodeId, currentState.State, &conn)
 }
 
 func (n *NodeStateEventServer) handleNodeDeassignEvent(msg *anypb.Any) error {
@@ -154,7 +194,7 @@ func (n *NodeStateEventServer) handleNodeDeassignEvent(msg *anypb.Any) error {
 	return n.updateNodeState(evt.NodeId, ukama.StateUnknown)
 }
 
-func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeStateEnum,connectivity ...*db.Connectivity) error {
+func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeStateEnum, connectivity ...*db.Connectivity) error {
 	// Validate the Node ID
 	nId, err := ukama.ValidateNodeId(nodeId)
 	if err != nil {
@@ -172,12 +212,10 @@ func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeSt
 	if len(connectivity) > 0 && connectivity[0] != nil {
 		connState = *connectivity[0]
 	} else {
-		connState = db.Unknown 
+		connState = db.Unknown
 	}
 
-	// Set the current time for state updates
 	now := time.Now()
-	// Prepare the new state with optional connectivity status
 	newState := &db.State{
 		Id:              uuid.NewV4(),
 		NodeId:          nId.String(),
@@ -187,14 +225,12 @@ func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeSt
 		LastHeartbeat:   now,
 		CreatedAt:       now,
 		UpdatedAt:       now,
-		Connectivity:   connState, 
+		Connectivity:    connState,
 	}
 
-	// Create the new state record in the repository
-	if err := n.s.sRepo.Create(newState, nil); err != nil {
-		log.Errorf("Error creating new state for node %s in Nodestate repo. Error: %+v", nId, err)
-		return err
-	}
+	_, err = n.s.Create(context.Background(), &pb.CreateStateRequest{
+		State: convertStateToProto(newState),
+	})
 
 	// Publish a state update event if the message bus is available
 	if n.s.msgbus != nil {
@@ -215,7 +251,6 @@ func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeSt
 	log.Infof("Updated node %s state to %s", nId, state)
 	return nil
 }
-
 
 func (n *NodeStateEventServer) unmarshalNotification(msg *anypb.Any) (*epb.Notification, error) {
 	evt := &epb.Notification{}
@@ -255,15 +290,6 @@ func (n *NodeStateEventServer) unmarshalNodeConfigCreateEvent(msg *anypb.Any) (*
 	}
 	return evt, nil
 }
-func (n *NodeStateEventServer) unmarshalNodeConfigReadyEvent(msg *anypb.Any) (*epb.NotificationNodeConfigReady, error) {
-	evt := &epb.NotificationNodeConfigReady{}
-	err := anypb.UnmarshalTo(msg, evt, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal Node create message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return evt, nil
-}
 func (n *NodeStateEventServer) unmarshalNodeDeassignEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
 	evt := &epb.NodeReleasedEvent{}
 	err := anypb.UnmarshalTo(msg, evt, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -284,7 +310,6 @@ func (n *NodeStateEventServer) unmarshalNodeHealthSeverityHighEvent(msg *anypb.A
 	return evt, nil
 }
 
-
 func (n *NodeStateEventServer) unmarshalOnboardingEvent(msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
 	evt := &epb.EventRegistryNodeAssign{}
 	err := anypb.UnmarshalTo(msg, evt, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -294,7 +319,6 @@ func (n *NodeStateEventServer) unmarshalOnboardingEvent(msg *anypb.Any) (*epb.Ev
 	}
 	return evt, nil
 }
-
 
 func (n *NodeStateEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
 	evt := &epb.EventRegistryNodeCreate{}
