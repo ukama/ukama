@@ -15,7 +15,7 @@ gen:
 	mockery --all --recursive --dir ./
 
 gen-unmarshall:
-	python3 pb/generate_unmarshall_func.py
+	python3 pb/generate_unmarshall_func.py > ./pb/gen/events/unmarshals.go
 
 test:
 	go test -v ./...
