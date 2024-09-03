@@ -18,15 +18,15 @@ import (
 )
 
 type State struct {
-	Id              uuid.UUID           `gorm:"primaryKey;type:string;uniqueIndex:idx_nodestate_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
-	NodeId          string              `gorm:"type:string;uniqueIndex:idx_nodestate_node_id_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23;not null"`
-	State           ukama.NodeStateEnum `gorm:"type:uint;not null"`
-	LastHeartbeat   time.Time
-	LastStateChange time.Time
-	Connectivity    ukama.Connectivity `gorm:"type:uint;not null"`
-	Type            string             `gorm:"type:string;not null"`
-	Version         string             `gorm:"type:string"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       gorm.DeletedAt `gorm:"index"`
+    Id              uuid.UUID           `gorm:"primaryKey;type:string;size:23;not null"`
+    NodeId          string              `gorm:"type:string;size:23;not null"` 
+    State           ukama.NodeStateEnum `gorm:"type:uint;not null"`
+    LastHeartbeat   time.Time
+    LastStateChange time.Time
+    Connectivity    ukama.Connectivity `gorm:"type:uint;not null"`
+    Type            string             `gorm:"type:string;not null"`
+    Version         string             `gorm:"type:string"`
+    CreatedAt       time.Time
+    UpdatedAt       time.Time
+    DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
