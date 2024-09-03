@@ -15,19 +15,19 @@
 #define MOVE_DIR true
 #define COPY_DIR false
 
-int is_valid_json(const char *json_string) {
-	json_error_t error;
-	json_t *json = json_loads(json_string, 0, &error);
+bool is_valid_json(const char *json_string) {
 
+	json_error_t error;
+	json_t *json = NULL;
+
+    json = json_loads(json_string, 0, &error);
 	if (json != NULL) {
-		//usys_log_debug("Json data is : \n %s", json_dumps(json, JSON_INDENT(4)));
-		json_decref(json); // Release the JSON object
-		return 1; // Valid JSON
+		json_decref(json);
+		return USYS_TRUE;
 	} else {
-		// Invalid JSON
-		fprintf(stderr, "Error: JSON parsing error at line %d, column %d: %s\n",
-				error.line, error.column, error.text);
-		return 0;
+		usys_log_error("Error: JSON parsing error at line %d, column %d: %s\n",
+                       error.line, error.column, error.text);
+		return USYS_FALSE;
 	}
 }
 
@@ -250,14 +250,17 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 }
 
 int remove_dir(const char *path) {
-	struct dirent *entry;
-	struct stat st;
-	DIR *dir = opendir(path);
 
+	struct dirent *entry = NULL;
+	struct stat st;
+	DIR *dir = NULL;
+
+    dir = opendir(path);
 	if (dir == NULL) {
 		usys_log_error("Failed opening dir %s", dir);
-		perror("Failed to open directory");
-		return -1; // Error opening directory
+		usys_log_error("Failed to open directory: %s. Error: %s",
+                       path, strerror(errno));
+		return -1;
 	}
 
 	while ((entry = readdir(dir))) {
@@ -268,22 +271,22 @@ int remove_dir(const char *path) {
 		snprintf(entryPath, sizeof(entryPath), "%s/%s", path, entry->d_name);
 
 		if (lstat(entryPath, &st) == -1) {
-			usys_log_error("Failed getting file status for %s", entryPath);
-			perror("Error getting file status");
+			usys_log_error("Failed getting file status for %s Error: %s",
+                           entryPath, strerror(errno));
 			continue;
 		}
 
 		if (S_ISDIR(st.st_mode)) {
 			if (remove_dir(entryPath) != 0) {
 				closedir(dir);
-				return -1; // Error deleting subdirectory
+				return -1;
 			}
 		} else {
 			if (remove(entryPath) != 0) {
-				usys_log_error("Failed deleting file %s", entryPath);
-				perror("Error deleting file");
+				usys_log_error("Failed deleting file %s Error: %s",
+                               entryPath, strerror(errno));
 				closedir(dir);
-				return -1; // Error deleting file
+				return -1;
 			}
 		}
 	}
@@ -291,9 +294,9 @@ int remove_dir(const char *path) {
 	closedir(dir);
 
 	if (rmdir(path) != 0) {
-		usys_log_error("Failed deleting dir %s", path);
-		perror("Error deleting directory");
-		return -1; // Error deleting directory
+		usys_log_error("Failed deleting dir %s Error: %s",
+                       path, strerror(errno));
+		return -1;
 	}
 
 	return 0; // Directory and its contents deleted successfully
@@ -422,7 +425,8 @@ int store_config(char* version) {
 }
 
 int prepare_for_new_config(ConfigData* c) {
-	char path[512] = {'\0'};
+
+	char path[512] = {0};
 	sprintf(path,"%s/%s", CONFIG_TMP_PATH, c->version);
 
 	/* remove old residue */

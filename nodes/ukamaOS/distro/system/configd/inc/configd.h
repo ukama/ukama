@@ -15,12 +15,9 @@
 #define MAX_PATH      512
 #define MAX_FILE_PATH 1024
 
-
-int configd_process_incoming_config(const char *service,
-                                    JsonObj *json,
-                                    Config *config);
-int configd_process_complete(Config *config);
+bool process_received_config(JsonObj *json, Config *config);
 int configd_trigger_update(Config* c);
 int read_active_config(ConfigData **c);
 void free_config_data(ConfigData *c);
-#endif /* INC_NOTIFICATION_H_ */
+
+#endif /* INC_CONFIGD_H_ */

@@ -148,28 +148,21 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
     session->count         = 0;
     session->configdVer    = USYS_FALSE;
     session->stored        = USYS_FALSE;
-    /* Need to move this from here. Taking to long */
-    //		if (prepare_for_new_config(cd) == 0) {
-    //			usys_log_debug("New update config session created for commit %s and timestamp %ld", cd->version, cd->timestamp);
-    //		} else {
-    //			clean_session(session);
-    //			session = NULL;
-    //		}
 
 	return session;
 }
 
-int prepare_copy_for_session(ConfigData *cd) {
+static bool prepare_copy_for_session(ConfigData *cd) {
 
 	if (prepare_for_new_config(cd) == 0) {
 		usys_log_debug("New update config session created for "
                        "commit %s and timestamp %ld",
                        cd->version,
                        cd->timestamp);
-		return STATUS_OK;
+		return USYS_TRUE;
 	}
 
-	return STATUS_NOK;
+	return USYS_FALSE;
 }
 
 void update_session(Config* c, AppState* a) {
@@ -280,131 +273,7 @@ response:
 	return ret;
 }
 
-int process_config(JsonObj *json, Config *config) {
-
-	int statusCode = STATUS_NOK;
-	ConfigData *cd = NULL;
-	ConfigSession *session = (ConfigSession*) config->updateSession;
-	AppState *as = NULL;
-
-	/* Deserialize incoming message from ukama */
-	if (!json_deserialize_config_data(json, &cd)) {
-		return STATUS_NOK;
-	}
-
-	/* get or create session */
-	if (config) {
-		if (!session) {
-			pthread_mutex_lock(&mutex);
-			session = create_new_update_session(cd);
-			if (!session) {
-				usys_log_error("failed to create update session.");
-				pthread_mutex_unlock(&mutex);
-				return STATUS_NOK;
-			}
-			config->updateSession = session;
-
-			if (prepare_copy_for_session(cd) != STATUS_OK) {
-				usys_log_error("Failed to prepare_copy for new session %s", cd->version);
-				clean_session(config->updateSession);
-				config->updateSession = NULL;
-				pthread_mutex_unlock(&mutex);
-				return STATUS_NOK;
-			}
-			pthread_mutex_unlock(&mutex);
-
-		}
-	} else {
-		usys_log_error("invalid config for web service.");
-		return STATUS_NOK;
-	}
-
-	if (cd->data) {
-		int len = usys_strlen(cd->data);
-		usys_log_debug("Config base64 [%d bytes] received is %s", len, cd->data);
-		char *jc = usys_calloc(sizeof(char), len);
-		if (jc) {
-			base64_decode(jc, cd->data);
-			usys_free(cd->data);
-			cd->data=jc;
-			usys_log_debug("Config text received is:\n  %s", cd->data);
-		} else {
-			usys_log_error("Memory exhausted for decoding request.");
-			return STATUS_NOK;
-		}
-
-		/* Validate the json data */
-		if (!is_valid_json(cd->data)) {
-			return STATUS_NOK;
-		}
-
-	}
-
-	/* Validate the commit*/
-	if (!is_valid_commit(config, cd, &as)) {
-		return STATUS_NOK;
-	}
-
-	if (cd->reason == CONFIG_DELETED){
-		statusCode = remove_config(cd);
-		if (statusCode != STATUS_OK ) {
-			usys_log_error("Failed to remove config for %s app version %s",
-                           cd->app, cd->version);
-		}
-	}
-	else {
-		pthread_mutex_lock(&mutex);
-		statusCode =  create_config(cd);
-		if (statusCode != STATUS_OK ) {
-			usys_log_error("Failed to create config for %s app version %s",
-                           cd->app, cd->version);
-		}
-		pthread_mutex_unlock(&mutex);
-	}
-
-	/* Update session */
-	update_session(config, as);
-
-	/* In case valid commit opened new update session */
-	session = (ConfigSession*) config->updateSession;
-	if (session->count == session->expectedCount) {
-		if (session->configdVer) {
-			usys_log_debug("Received all expected %d configs", session->expectedCount);
-			statusCode = configd_process_complete(config);
-		} else {
-			usys_log_error("Received %d configs but version.json for "
-                           "configd is missing", session->count);
-			usys_log_error("Cleaning session.");
-			clean_session(config->updateSession);
-			config->updateSession = NULL;
-			statusCode = STATUS_NOK;
-		}
-	} else {
-		usys_log_debug("Received %d files and expected %d configs. Waiting for %d",
-                       session->count,
-                       session->expectedCount,
-                       (session->expectedCount - session->count));
-	}
-
-	free_config_data(cd);
-
-	return statusCode;
-}
-
-/* store incoming config file */
-int configd_process_incoming_config(const char *service,
-                                    JsonObj *json,
-                                    Config *config){
-
-	if ( process_config(json, config) != STATUS_OK ) {
-		usys_log_error("Failed to process config message.");
-        return STATUS_NOK;
-	}
-
-	return STATUS_OK;
-}
-
-int configd_process_complete(Config *config) {
+static int configd_process_complete(Config *config) {
 
 	int statusCode = STATUS_NOK;
 	ConfigSession* s = (ConfigSession*)config->updateSession;
@@ -417,7 +286,7 @@ int configd_process_complete(Config *config) {
 			usys_log_error("Failed to store config %s", s->version);
 			goto cleanup;
 		}
-	
+
 		/* clean up empty dir in store */
 //		char dir[512];
 //		sprintf(dir,"%s/%s", CONFIG_TMP_PATH, s->version);
@@ -437,6 +306,116 @@ cleanup:
 	config->updateSession = NULL;
 
 	return statusCode;
+}
+
+bool process_received_config(JsonObj *json, Config *config) {
+
+	ConfigData    *cd      = NULL;
+	ConfigSession *session = NULL;
+	AppState      *as      = NULL;
+
+    session = (ConfigSession *)config->updateSession;
+
+    if (config == NULL) {
+        usys_log_error("invalid config for web service");
+        return USYS_FALSE;
+    }
+
+	/* Deserialize incoming message from ukama */
+	if (!json_deserialize_config_data(json, &cd)) {
+		return USYS_FALSE;
+	}
+
+    if (!session) {
+        pthread_mutex_lock(&mutex);
+        session = create_new_update_session(cd);
+        if (!session) {
+            usys_log_error("failed to create update session.");
+            pthread_mutex_unlock(&mutex);
+            return USYS_FALSE;
+        }
+        config->updateSession = session;
+
+        if (!prepare_copy_for_session(cd)) {
+            usys_log_error("Failed to prepare_copy for new session %s", cd->version);
+            clean_session(config->updateSession);
+            config->updateSession = NULL;
+            pthread_mutex_unlock(&mutex);
+            return USYS_FALSE;
+        }
+        pthread_mutex_unlock(&mutex);
+    }
+
+	if (cd->data) {
+
+        int len;
+        char *jc;
+
+		len = usys_strlen(cd->data);
+		usys_log_debug("Config base64 [%d bytes] received is %s", len, cd->data);
+		jc = usys_calloc(sizeof(char), len);
+        if (jc == NULL) {
+            usys_log_error("Memory exhausted for decoding request. Size: %d", len);
+			return USYS_FALSE;
+        }
+
+        base64_decode(jc, cd->data);
+        usys_free(cd->data);
+        cd->data=jc;
+        usys_log_debug("Config text received\n:  %s", cd->data);
+
+		/* Validate the json data */
+		if (!is_valid_json(cd->data)) {
+			return USYS_FALSE;
+		}
+	}
+
+	/* Validate the commit*/
+	if (!is_valid_commit(config, cd, &as)) {
+		return USYS_FALSE;
+	}
+
+	if (cd->reason == CONFIG_DELETED){
+		if (!remove_config(cd)) {
+			usys_log_error("Failed to remove config for %s app version %s",
+                           cd->app, cd->version);
+		}
+	} else {
+		pthread_mutex_lock(&mutex);
+		if (!create_config(cd)) {
+			usys_log_error("Failed to create config for %s app version %s",
+                           cd->app, cd->version);
+		}
+		pthread_mutex_unlock(&mutex);
+	}
+
+	/* Update session */
+	update_session(config, as);
+
+	/* In case valid commit opened new update session */
+	session = (ConfigSession*) config->updateSession;
+	if (session->count == session->expectedCount) {
+		if (session->configdVer) {
+			usys_log_debug("Received all expected %d configs", session->expectedCount);
+            free_config_data(cd);
+			return configd_process_complete(config);
+		} else {
+			usys_log_error("Received %d configs but version.json for "
+                           "configd is missing", session->count);
+			usys_log_error("Cleaning session.");
+			clean_session(config->updateSession);
+			config->updateSession = NULL;
+            free_config_data(cd);
+            return USYS_FALSE;
+		}
+	}
+
+    usys_log_debug("Received %d files and expected %d configs. Waiting for %d",
+                   session->count,
+                   session->expectedCount,
+                   (session->expectedCount - session->count));
+
+	return USYS_TRUE;
 }
 
 /* not monitoing anything app status for now */

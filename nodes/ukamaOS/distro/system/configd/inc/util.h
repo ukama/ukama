@@ -21,7 +21,7 @@
 #include "usys_file.h"
 #include "usys_getopt.h"
 
-int is_valid_json(const char *json_string);
+bool is_valid_json(const char *json_string);
 
 int make_path(const char* path);
 

@@ -127,14 +127,11 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 */
 
 bool json_deserialize_config_data(JsonObj *json,
-                                   ConfigData **cd) {
+                                  ConfigData **cd) {
 
-    bool ret=USYS_TRUE;
+    bool ret = USYS_TRUE;
 
-    if (json == NULL) {
-        usys_log_error("No data to deserialize");
-        return USYS_FALSE;
-    }
+    if (json == NULL) return USYS_FALSE;
 
     *cd = (ConfigData *)usys_calloc(1, sizeof(ConfigData));
     if (*cd == NULL) {
@@ -142,7 +139,7 @@ bool json_deserialize_config_data(JsonObj *json,
                        sizeof(ConfigData));
         return USYS_FALSE;
     }
-    
+
     ret &= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
                           &(*cd)->fileName, NULL, NULL);
     ret &= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
@@ -150,13 +147,13 @@ bool json_deserialize_config_data(JsonObj *json,
     ret &= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
                           NULL, &(*cd)->timestamp, NULL);
     ret &= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
-                              NULL, &(*cd)->reason, NULL);
+                          NULL, &(*cd)->reason, NULL);
     ret &= get_json_entry(json, JTAG_DATA, JSON_STRING,
                           &(*cd)->data, NULL, NULL);
     ret &= get_json_entry(json, JTAG_VERSION, JSON_STRING,
                           &(*cd)->version, NULL, NULL);
     ret &= get_json_entry(json, JTAG_FILE_COUNT, JSON_INTEGER,
-                                  NULL, &(*cd)->fileCount, NULL);
+                          NULL, &(*cd)->fileCount, NULL);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the config JSON");
@@ -164,6 +161,7 @@ bool json_deserialize_config_data(JsonObj *json,
         free_config_data(*cd);
         return USYS_FALSE;
     }
+
     return USYS_TRUE;
 }
 
