@@ -149,11 +149,8 @@ sort_systems_by_dependency() {
             "subscriber")
                 SYSTEMS+=("8 $key")
                 ;;
-            "node")
-                SYSTEMS+=("9 $key")
-                ;;
             *)
-                SYSTEMS+=("10 $key")
+                SYSTEMS+=("9 $key")
                 ;;
         esac
     done

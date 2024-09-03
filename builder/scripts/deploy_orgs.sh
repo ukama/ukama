@@ -213,11 +213,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 "subscriber")
                     SYSTEMS+=("8 $key")
                     ;;
-                "node")
-                    SYSTEMS+=("9 $key")
-                    ;;
                 *)
-                    SYSTEMS+=("10 $key")
+                    SYSTEMS+=("9 $key")
                     ;;
             esac
         done
