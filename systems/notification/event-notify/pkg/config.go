@@ -44,6 +44,7 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				evt.EventRoutingKey[evt.EventOrgAdd],
+				evt.EventRoutingKey[evt.EventAddSite],
 				evt.EventRoutingKey[evt.EventUserAdd],
 				evt.EventRoutingKey[evt.EventUserDeactivate],
 				evt.EventRoutingKey[evt.EventUserDelete],
