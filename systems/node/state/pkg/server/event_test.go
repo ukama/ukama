@@ -18,6 +18,8 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 	mocks "github.com/ukama/ukama/systems/node/state/mocks"
+	utils "github.com/ukama/ukama/systems/node/state/pkg/utils"
+
 	db "github.com/ukama/ukama/systems/node/state/pkg/db"
 )
 
@@ -45,7 +47,13 @@ func TestHandleNodeHealthSeverityEvent(t *testing.T) {
 	eventServer := NewControllerEventServer("test-org", mockServer, nil)
 
 	// Simulate a health severity event with medium severity
-	msg, _ := anypb.New(&epb.Notification{NodeId: testNode.String(), Type: "event", Severity: "medium"})
+	msg, _ := anypb.New(&epb.Notification{
+		NodeId:   testNode.String(),
+		Type:     string(utils.Event),
+		Severity: string(utils.Medium),
+		Details:  []byte(`{"config": "ready"}`),
+	})
+
 	mockRepo.On("GetByNodeId", ukama.NodeID(testNode.String())).Return(&db.State{NodeId: testNode.String(), State: ukama.StateUnknown}, nil)
 	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
@@ -66,7 +74,7 @@ func TestUpdateNodeState(t *testing.T) {
 	// Mock Create method
 	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
-	err := eventServer.updateNodeState(testNode.String(), ukama.StateOperational)
+	err := eventServer.updateNodeState(testNode.String(), ukama.StateOperational, utils.Medium, utils.Event)
 
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -76,7 +84,7 @@ func TestUnmarshalNotification(t *testing.T) {
 	eventServer := &NodeStateEventServer{}
 
 	// Create a mock notification message
-	msg, _ := anypb.New(&epb.Notification{NodeId: testNode.String(), Type: "event"})
+	msg, _ := anypb.New(&epb.Notification{NodeId: testNode.String(), Type: string(utils.Event)})
 	evt, err := eventServer.unmarshalNotification(msg)
 
 	assert.NoError(t, err)

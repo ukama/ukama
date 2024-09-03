@@ -31,23 +31,5 @@ message NotificationDeletedEvent{
     string nodeId = 2 [json_name = "node_id"];
 }
 
-message NodeReadyEvent {
-    string nodeId = 1;
-    string name = 2;
-    string status = 3;
-    uint64 timestamp = 4;
-    string details = 5;
-}
-message NodeUpdateEvent {
-    string nodeId = 1;         // Identifier for the node
-    string updateType = 2;    // Type of update (e.g., "Software", "Firmware")
-    string updateVersion = 3; // Version of the update
-    uint64 timestamp = 4;     // Time when the update occurred
-    string details = 5;       // Additional details about the update
-}
-message NodeConfigEvent {
-    string nodeId = 1;         
-    string configName = 2;     
-    uint64 timestamp = 3;     
-    string details = 4;       
-}
+
+

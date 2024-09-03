@@ -202,235 +202,6 @@ func (x *NotificationDeletedEvent) GetNodeId() string {
 	return ""
 }
 
-type NodeReadyEvent struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId    string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Status    string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Timestamp uint64 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Details   string `protobuf:"bytes,5,opt,name=details,proto3" json:"details,omitempty"`
-}
-
-func (x *NodeReadyEvent) Reset() {
-	*x = NodeReadyEvent{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_notification_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *NodeReadyEvent) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeReadyEvent) ProtoMessage() {}
-
-func (x *NodeReadyEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeReadyEvent.ProtoReflect.Descriptor instead.
-func (*NodeReadyEvent) Descriptor() ([]byte, []int) {
-	return file_notification_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *NodeReadyEvent) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *NodeReadyEvent) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *NodeReadyEvent) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *NodeReadyEvent) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *NodeReadyEvent) GetDetails() string {
-	if x != nil {
-		return x.Details
-	}
-	return ""
-}
-
-type NodeUpdateEvent struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId        string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`               // Identifier for the node
-	UpdateType    string `protobuf:"bytes,2,opt,name=updateType,proto3" json:"updateType,omitempty"`       // Type of update (e.g., "Software", "Firmware")
-	UpdateVersion string `protobuf:"bytes,3,opt,name=updateVersion,proto3" json:"updateVersion,omitempty"` // Version of the update
-	Timestamp     uint64 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`        // Time when the update occurred
-	Details       string `protobuf:"bytes,5,opt,name=details,proto3" json:"details,omitempty"`             // Additional details about the update
-}
-
-func (x *NodeUpdateEvent) Reset() {
-	*x = NodeUpdateEvent{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_notification_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *NodeUpdateEvent) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeUpdateEvent) ProtoMessage() {}
-
-func (x *NodeUpdateEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeUpdateEvent.ProtoReflect.Descriptor instead.
-func (*NodeUpdateEvent) Descriptor() ([]byte, []int) {
-	return file_notification_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *NodeUpdateEvent) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *NodeUpdateEvent) GetUpdateType() string {
-	if x != nil {
-		return x.UpdateType
-	}
-	return ""
-}
-
-func (x *NodeUpdateEvent) GetUpdateVersion() string {
-	if x != nil {
-		return x.UpdateVersion
-	}
-	return ""
-}
-
-func (x *NodeUpdateEvent) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *NodeUpdateEvent) GetDetails() string {
-	if x != nil {
-		return x.Details
-	}
-	return ""
-}
-
-type NodeConfigEvent struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId     string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	ConfigName string `protobuf:"bytes,2,opt,name=configName,proto3" json:"configName,omitempty"`
-	Timestamp  uint64 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Details    string `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
-}
-
-func (x *NodeConfigEvent) Reset() {
-	*x = NodeConfigEvent{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_notification_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *NodeConfigEvent) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeConfigEvent) ProtoMessage() {}
-
-func (x *NodeConfigEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeConfigEvent.ProtoReflect.Descriptor instead.
-func (*NodeConfigEvent) Descriptor() ([]byte, []int) {
-	return file_notification_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *NodeConfigEvent) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *NodeConfigEvent) GetConfigName() string {
-	if x != nil {
-		return x.ConfigName
-	}
-	return ""
-}
-
-func (x *NodeConfigEvent) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *NodeConfigEvent) GetDetails() string {
-	if x != nil {
-		return x.Details
-	}
-	return ""
-}
-
 var File_notification_proto protoreflect.FileDescriptor
 
 var file_notification_proto_rawDesc = []byte{
@@ -461,39 +232,11 @@ var file_notification_proto_rawDesc = []byte{
 	0x6e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a,
 	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x17, 0x0a,
 	0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6e,
-	0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x22, 0x8c, 0x01, 0x0a, 0x0e, 0x4e, 0x6f, 0x64, 0x65, 0x52,
-	0x65, 0x61, 0x64, 0x79, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64,
-	0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
-	0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1c, 0x0a,
-	0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04,
-	0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x64,
-	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x64, 0x65,
-	0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0xa7, 0x01, 0x0a, 0x0f, 0x4e, 0x6f, 0x64, 0x65, 0x55, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64,
-	0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
-	0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x79, 0x70, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x24, 0x0a, 0x0d, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69,
-	0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73,
-	0x74, 0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65,
-	0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73,
-	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22,
-	0x81, 0x01, 0x0a, 0x0f, 0x4e, 0x6f, 0x64, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x45, 0x76,
-	0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x63,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0a, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x74,
-	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09,
-	0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x64, 0x65, 0x74,
-	0x61, 0x69, 0x6c, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x64, 0x65, 0x74, 0x61,
-	0x69, 0x6c, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79,
-	0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x70, 0x62, 0x2f,
-	0x67, 0x65, 0x6e, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61,
+	0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f,
+	0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -508,17 +251,14 @@ func file_notification_proto_rawDescGZIP() []byte {
 	return file_notification_proto_rawDescData
 }
 
-var file_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_notification_proto_goTypes = []interface{}{
 	(*Notification)(nil),             // 0: ukama.events.v1.Notification
 	(*NotificationDeletedEvent)(nil), // 1: ukama.events.v1.NotificationDeletedEvent
-	(*NodeReadyEvent)(nil),           // 2: ukama.events.v1.NodeReadyEvent
-	(*NodeUpdateEvent)(nil),          // 3: ukama.events.v1.NodeUpdateEvent
-	(*NodeConfigEvent)(nil),          // 4: ukama.events.v1.NodeConfigEvent
-	(*timestamppb.Timestamp)(nil),    // 5: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),    // 2: google.protobuf.Timestamp
 }
 var file_notification_proto_depIdxs = []int32{
-	5, // 0: ukama.events.v1.Notification.createdAt:type_name -> google.protobuf.Timestamp
+	2, // 0: ukama.events.v1.Notification.createdAt:type_name -> google.protobuf.Timestamp
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -556,42 +296,6 @@ func file_notification_proto_init() {
 				return nil
 			}
 		}
-		file_notification_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeReadyEvent); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_notification_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeUpdateEvent); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_notification_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeConfigEvent); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -599,7 +303,7 @@ func file_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_notification_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

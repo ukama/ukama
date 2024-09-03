@@ -62,7 +62,7 @@ func (s *StateServer) Create(ctx context.Context, req *pb.CreateStateRequest) (*
 		State:           ukama.NodeStateEnum(req.State.State),
 		LastHeartbeat:   now,
 		LastStateChange: now,
-		Connectivity:    db.ParseConnectivityState(req.State.Connectivity),
+		Connectivity:    ukama.ParseConnectivityState(req.State.Connectivity),
 		Type:            req.State.Type,
 		Version:         req.State.Version,
 	}

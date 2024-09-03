@@ -63,7 +63,7 @@ func TestCreate(t *testing.T) {
 		Type:            "hnode",
 		LastHeartbeat:   time.Now(),
 		LastStateChange: time.Now(),
-		Connectivity:    Online,
+		Connectivity:    ukama.Online,
 		Version:         "v34",
 	}
 
@@ -115,7 +115,7 @@ func GetStateByNodeId(t *testing.T) {
 			Type:            "hnode",
 			LastHeartbeat:   time.Now(),
 			LastStateChange: time.Now(),
-			Connectivity:    Online,
+			Connectivity:    ukama.Online,
 			Version:         "v34",
 			CreatedAt:       time.Now(),
 			UpdatedAt:       time.Now(),
@@ -175,7 +175,7 @@ func TestGetStateHistory(t *testing.T) {
 				Type:            "hnode",
 				LastHeartbeat:   time.Now(),
 				LastStateChange: time.Now(),
-				Connectivity:    Online,
+				Connectivity:    ukama.Online,
 				Version:         "v34",
 			},
 		}
