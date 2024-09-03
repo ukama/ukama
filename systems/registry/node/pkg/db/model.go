@@ -9,8 +9,6 @@
 package db
 
 import (
-	"database/sql/driver"
-	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -35,47 +33,8 @@ type Node struct {
 type NodeStatus struct {
 	gorm.Model
 	NodeId string              `gorm:"uniqueIndex:nodestatus_idx,expression:lower(node_id),where:deleted_at is null"`
-	Conn   Connectivity        `gorm:"type:uint;not null"`
+	Conn   ukama.Connectivity        `gorm:"type:uint;not null"`
 	State  ukama.NodeStateEnum `gorm:"type:uint;not null"`
-}
-
-type Connectivity uint8
-
-const (
-	ConnectivityUnknown Connectivity = iota
-	Offline             Connectivity = 1 /* Not connected */
-	Online              Connectivity = 2 /* Connected */
-)
-
-func (c *Connectivity) Scan(value interface{}) error {
-	*c = Connectivity(uint8(value.(int64)))
-
-	return nil
-}
-
-func (c Connectivity) Value() (driver.Value, error) {
-	return int64(c), nil
-}
-
-func (c Connectivity) String() string {
-	cs := map[Connectivity]string{
-		ConnectivityUnknown: "unkown",
-		Offline:             "offline",
-		Online:              "online",
-	}
-
-	return cs[c]
-}
-
-func ParseConnectivityState(s string) Connectivity {
-	switch strings.ToLower(s) {
-	case "offline":
-		return Offline
-	case "online":
-		return Online
-	default:
-		return ConnectivityUnknown
-	}
 }
 
 type Site struct {

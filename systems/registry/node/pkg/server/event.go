@@ -14,8 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -102,7 +102,7 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 	/* Update node status */
 	_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
 		NodeId:       msg.GetNodeId(),
-		Connectivity: db.Online.String(),
+		Connectivity: ukama.Online.String(),
 	})
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (n *NodeEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflin
 		/* Update node status */
 		_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
 			NodeId:       node.Node.Id,
-			Connectivity: db.Offline.String(),
+			Connectivity: ukama.Offline.String(),
 		})
 		if err != nil {
 			return err
