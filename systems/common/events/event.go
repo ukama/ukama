@@ -28,6 +28,7 @@ const (
 	EventUserDelete
 	EventMemberCreate
 	EventMemberDelete
+	EventAddSite
 	EventNetworkAdd
 	EventNetworkDelete
 	EventNodeCreate
@@ -67,6 +68,7 @@ const (
 )
 
 var EventRoutingKey = [...]string{
+	EventAddSite:			"event.cloud.local.{{ .Org}}.registry.site.site.add",
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
@@ -118,6 +120,14 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Organization Added",
 		Description: "Organization Added",
 		Scope:       notif.SCOPE_ORG,
+		Type:        TypeDefault,
+	},
+	EventAddSite:{
+		Key:         EventAddSite,
+		Name:        "EventAddSite",
+		Title:       "Site Added",
+		Description: "Site Added",
+		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
 	},
 	EventUserAdd: {
