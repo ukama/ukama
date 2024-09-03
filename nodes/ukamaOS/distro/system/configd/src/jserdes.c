@@ -125,7 +125,7 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 "file_count":4,
 "data": ""}
 */
-/* Deserialize config data */
+
 bool json_deserialize_config_data(JsonObj *json,
                                    ConfigData **cd) {
 
@@ -167,37 +167,34 @@ bool json_deserialize_config_data(JsonObj *json,
     return USYS_TRUE;
 }
 
-bool json_deserialize_running_config(char* name, ConfigData **cd) {
-	FILE *file = fopen(name, "r");
-	if (file == NULL) {
-		usys_log_error("Failed opening file %s", name);
-		perror("Error");
-		return USYS_FALSE;
-	}
+bool json_deserialize_active_config(char* name, ConfigData **cd) {
 
-	// Parse the JSON data
-	json_t *root;
+    FILE   *file = NULL;
+    json_t *root = NULL;
 	json_error_t error;
+
+    if (name == NULL || cd == NULL) return USYS_FALSE;
+
+	file = fopen(name, "r");
+	if (file == NULL) {
+		usys_log_error("Failed opening file %s Error: %s", name, strerror(errno));
+		return USYS_FALSE;
+	}
+
 	root = json_loadf(file, 0, &error);
-
-	// Check for parsing errors
-	if (!root) {
-		usys_log_error("Failed parsing json file %s. Error %s at line %d, column %d\n", name, error.text, error.line, error.column);
+	if (root == NULL) {
+		usys_log_error("Failed parsing json file %s. "
+                       "Error %s at line %d, column %d\n",
+                       name, error.text, error.line, error.column);
 		return USYS_FALSE;
 	}
 
-	/* deserialize */
 	if (!json_deserialize_config_data(root, cd)) {
+        json_decref(root);
 		return USYS_FALSE;
 	}
 
+    json_decref(root);
 	return USYS_TRUE;
 }
 
-/* Decrement json references */
-void json_free(JsonObj** json) {
-    if (*json){
-        json_decref(*json);
-        *json = NULL;
-    }
-}

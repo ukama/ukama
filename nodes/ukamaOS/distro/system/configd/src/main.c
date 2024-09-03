@@ -82,7 +82,7 @@ void free_config(Config *config) {
 	usys_free(config->nodedHost);
 	usys_free(config->starterEP);
 	usys_free(config->starterHost);
-	free_config_data(config->runningConfig);
+	free_config_data(config->activeConfig);
 }
 
 int main(int argc, char **argv) {
@@ -178,9 +178,14 @@ int main(int argc, char **argv) {
             usys_exit(1);
 		}
 	}
-
-	if (configd_read_running_config((ConfigData**)&serviceConfig.runningConfig)) {
-		usys_log_error("Failed to read last running config.");
+    /*
+      DO WE NEED THIS? LOOKS LIKE WE NEED TO GET THIS, SOMEHOW, FROM THE STARTER.D OR
+      READ IT OURSELVES FROM THE STANDARD LOCATION OR SOMETHING?
+      WE WANT TO KNOW THE RUNNING VERSION OF THE APPS. (STARTER.D PROVIDES
+      US WITH ep)
+    */
+	if (read_active_config((ConfigData **)&serviceConfig.activeConfig)) {
+		usys_log_error("Failed to read active config metadata");
         free_config(&serviceConfig);
 		usys_exit(1);
 	}

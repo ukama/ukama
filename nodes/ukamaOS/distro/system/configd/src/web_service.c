@@ -89,7 +89,8 @@ int web_service_cb_post_config(const URequest *request,
 		usys_log_trace("config.d:: Received POST for an config from %s is responsed with %d.", service, HttpStatus_InternalServerError);
 	}
 
-	json_free(&json);
+    json_decref(json);
+
 	return U_CALLBACK_CONTINUE;
 }
 

@@ -14,14 +14,14 @@ typedef struct {
 	char  *serviceName;
 	int   servicePort;
 	char* nodedHost;
-	int  nodedPort;
+	int   nodedPort;
 	char  *nodedEP;
 	char* starterHost;
-	int  starterPort;
+	int   starterPort;
 	char  *starterEP;
-	char *nodeId;
-	void *updateSession;
-	void *runningConfig;
+	char  *nodeId;
+	void  *updateSession;
+	void  *activeConfig;
 } Config;
 
 #endif /* CONFIG_H_ */
