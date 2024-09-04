@@ -11,6 +11,8 @@ package server
 import (
 	"context"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -44,73 +46,104 @@ func NewHealthServer(orgName string, sRepo db.HealthRepo, msgBus mb.MsgBusServic
 }
 
 func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
-	log.Infof("StoreRunningAppsInfo: %v", req)
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
+    log.Infof("StoreRunningAppsInfo: %v", req)
+    nId, err := ukama.ValidateNodeId(req.NodeId)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument,
+            "invalid format of node id. Error %s", err.Error())
+    }
 
-	healthID := uuid.NewV4()
-	cappID := uuid.NewV4()
+    healthID := uuid.NewV4()
+    cappID := uuid.NewV4()
 
-	// Create a Health instance
-	health := db.Health{
-		Id:        healthID,
-		NodeId:    nId.StringLowercase(),
-		TimeStamp: req.GetTimestamp(),
-	}
+    // Create a Health instance
+    health := db.Health{
+        Id:        healthID,
+        NodeId:    nId.StringLowercase(),
+        TimeStamp: req.GetTimestamp(),
+    }
 
-	// Populate the System array from the request
-	for _, sys := range req.GetSystem() {
-		health.System = append(health.System, db.System{
-			Id:       uuid.NewV4(),
-			HealthID: healthID,
-			Name:     sys.GetName(),
-			Value:    sys.GetValue(),
-		})
-	}
+    for _, sys := range req.GetSystem() {
+        health.System = append(health.System, db.System{
+            Id:       uuid.NewV4(),
+            HealthID: healthID,
+            Name:     sys.GetName(),
+            Value:    sys.GetValue(),
+        })
+    }
 
-	for _, capp := range req.GetCapps() {
-		health.Capps = append(health.Capps, db.Capp{
-			Id:       cappID,
-			HealthID: healthID,
-			Space:    capp.GetSpace(),
-			Name:     capp.GetName(),
-			Tag:      capp.GetTag(),
-			Status:   db.Status(capp.GetStatus()),
-		})
+    for _, capp := range req.GetCapps() {
+        health.Capps = append(health.Capps, db.Capp{
+            Id:       cappID,
+            HealthID: healthID,
+            Space:    capp.GetSpace(),
+            Name:     capp.GetName(),
+            Tag:      capp.GetTag(),
+            Status:   db.Status(capp.GetStatus()),
+        })
 
-		for _, resource := range capp.GetResources() {
-			health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
-				Id:     uuid.NewV4(),
-				CappID: cappID,
-				Name:   resource.GetName(),
-				Value:  resource.GetValue(),
-			})
-		}
-	}
+        for _, resource := range capp.GetResources() {
+            health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
+                Id:     uuid.NewV4(),
+                CappID: cappID,
+                Name:   resource.GetName(),
+                Value:  resource.GetValue(),
+            })
+        }
+    }
 
-	err = h.sRepo.StoreRunningAppsInfo(&health, nil)
-	if err != nil {
-		return nil, err
-	}
+    err = h.sRepo.StoreRunningAppsInfo(&health, nil)
+    if err != nil {
+        return nil, err
+    }
 
-	msg := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    req.NodeId,
-		Timestamp: req.Timestamp,
-		System:    req.System,
-		Capps:     req.Capps,
-	}
-	// Publish the message to the message bus
-	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-	err = h.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+    if h.msgbus != nil {
+        route := h.healthRoutingKey.SetActionCreate().SetObject("node").MustBuild()
 
-	return &pb.StoreRunningAppsInfoResponse{}, nil
+        // Convert db.Health to events.EventStoreRunningAppsInfo
+        evt := &epb.EventStoreRunningAppsInfo{
+            NodeId:    nId.StringLowercase(),
+            Timestamp: health.TimeStamp,
+        }
+
+        for _, sys := range health.System {
+            evt.System = append(evt.System, &epb.System{
+                Id:       sys.Id.String(),
+                HealthId: sys.HealthID.String(),
+                Name:     sys.Name,
+                Value:    sys.Value,
+            })
+        }
+
+        for _, capp := range health.Capps {
+            eventCapp := &epb.Capps{
+                Id:       capp.Id.String(),
+                Space:    capp.Space,
+                Name:     capp.Name,
+                Tag:      capp.Tag,
+                Status:   epb.Status(capp.Status), 
+            }
+
+            for _, resource := range capp.Resources {
+                eventCapp.Resources = append(eventCapp.Resources, &epb.Resource{
+                    Id:     resource.Id.String(),
+                    CappId: resource.CappID.String(),
+                    Name:   resource.Name,
+                    Value:  resource.Value,
+                })
+            }
+
+            evt.Capps = append(evt.Capps, eventCapp)
+        }
+
+        err = h.msgbus.PublishRequest(route, evt)
+        if err != nil {
+            log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+        }
+    }
+    return &pb.StoreRunningAppsInfoResponse{}, nil
 }
+
 
 func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningAppsRequest) (*pb.GetRunningAppsResponse, error) {
 	log.Infof("GetRunningAppsInfo: %v", req)
@@ -134,7 +167,7 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 		Id:        health.Id.String(),
 		NodeId:    health.NodeId,
 		Timestamp: health.TimeStamp,
-		System:    []*pb.System{}, // Initialize System and Capps slices
+		System:    []*pb.System{}, 
 		Capps:     []*pb.Capps{},
 	}
 

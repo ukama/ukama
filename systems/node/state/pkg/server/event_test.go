@@ -1,15 +1,8 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -30,7 +23,6 @@ func TestHandleNodeOnlineEvent(t *testing.T) {
 	mockServer := &StateServer{sRepo: mockRepo}
 	eventServer := NewControllerEventServer("test-org", mockServer, nil)
 
-	// Setup the mock expectation
 	msg, _ := anypb.New(&epb.NodeOnlineEvent{NodeId: testNode.String()})
 	mockRepo.On("GetByNodeId", ukama.NodeID(testNode.String())).Return(&db.State{NodeId: testNode.String(), State: ukama.StateUnknown}, nil)
 	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
@@ -46,7 +38,6 @@ func TestHandleNodeHealthSeverityEvent(t *testing.T) {
 	mockServer := &StateServer{sRepo: mockRepo}
 	eventServer := NewControllerEventServer("test-org", mockServer, nil)
 
-	// Simulate a health severity event with medium severity
 	msg, _ := anypb.New(&epb.Notification{
 		NodeId:   testNode.String(),
 		Type:     string(utils.Event),
@@ -68,10 +59,7 @@ func TestUpdateNodeState(t *testing.T) {
 	mockServer := &StateServer{sRepo: mockRepo}
 	eventServer := NewControllerEventServer("test-org", mockServer, nil)
 
-	// Setup existing state
 	mockRepo.On("GetByNodeId", ukama.NodeID(testNode.String())).Return(&db.State{NodeId: testNode.String(), State: ukama.StateUnknown}, nil)
-
-	// Mock Create method
 	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
 	err := eventServer.updateNodeState(testNode.String(), ukama.StateOperational, utils.Medium, utils.Event)
@@ -83,7 +71,6 @@ func TestUpdateNodeState(t *testing.T) {
 func TestUnmarshalNotification(t *testing.T) {
 	eventServer := &NodeStateEventServer{}
 
-	// Create a mock notification message
 	msg, _ := anypb.New(&epb.Notification{NodeId: testNode.String(), Type: string(utils.Event)})
 	evt, err := eventServer.unmarshalNotification(msg)
 
@@ -95,11 +82,110 @@ func TestUnmarshalNotification(t *testing.T) {
 func TestUnmarshalNodeCreateEvent(t *testing.T) {
 	eventServer := &NodeStateEventServer{}
 
-	// Create a mock node create event message
 	msg, _ := anypb.New(&epb.EventRegistryNodeCreate{NodeId: testNode.String()})
 	evt, err := eventServer.unmarshalNodeCreateEvent(msg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, evt)
 	assert.Equal(t, testNode.String(), evt.NodeId)
+}
+
+func TestDetermineNodeState(t *testing.T) {
+	eventServer := &NodeStateEventServer{}
+
+	tests := []struct {
+		name            string
+		systemStatuses  map[string]string
+		bootstrapStatus string
+		expectedState   ukama.NodeStateEnum
+	}{
+		{
+			name: "All systems operational",
+			systemStatuses: map[string]string{
+				"CPU":    "Fine",
+				"Memory": "Fine",
+				"Radio":  "On",
+			},
+			bootstrapStatus: "Running",
+			expectedState:   ukama.StateOperational,
+		},
+		{
+			name: "Faulty CPU",
+			systemStatuses: map[string]string{
+				"CPU":    "Error",
+				"Memory": "Fine",
+				"Radio":  "On",
+			},
+			bootstrapStatus: "Running",
+			expectedState:   ukama.StateFaulty,
+		},
+		{
+			name: "Bootstrap not running",
+			systemStatuses: map[string]string{
+				"CPU":    "Fine",
+				"Memory": "Fine",
+				"Radio":  "On",
+			},
+			bootstrapStatus: "Not Found",
+			expectedState:   ukama.StateFaulty,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := eventServer.determineNodeState(tt.systemStatuses, tt.bootstrapStatus)
+			assert.Equal(t, tt.expectedState, state)
+		})
+	}
+}
+
+func TestHandleConfigState(t *testing.T) {
+	eventServer := &NodeStateEventServer{}
+
+	tests := []struct {
+		name          string
+		configKey     string
+		currentState  ukama.NodeStateEnum
+		expectedState ukama.NodeStateEnum
+	}{
+		{
+			name:          "Ready config",
+			configKey:     "ready",
+			currentState:  ukama.StateUnknown,
+			expectedState: ukama.StateUnknown, // Remains unchanged until threshold is met
+		},
+		{
+			name:          "Faulty config",
+			configKey:     "faulty",
+			currentState:  ukama.StateOperational,
+			expectedState: ukama.StateFaulty,
+		},
+		{
+			name:          "Other config",
+			configKey:     "other",
+			currentState:  ukama.StateOperational,
+			expectedState: ukama.StateConfigure,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := eventServer.handleConfigState(tt.configKey, testNode.String(), tt.currentState, time.Now())
+			assert.Equal(t, tt.expectedState, state)
+		})
+	}
+
+	// Test for multiple "ready" configs within the timeout
+	t.Run("Multiple ready configs", func(t *testing.T) {
+		configReadyCount = 0
+		now := time.Now()
+		for i := 0; i < configReadyThreshold; i++ {
+			state := eventServer.handleConfigState("ready", testNode.String(), ukama.StateUnknown, now)
+			if i < configReadyThreshold-1 {
+				assert.Equal(t, ukama.StateUnknown, state)
+			} else {
+				assert.Equal(t, ukama.StateOperational, state)
+			}
+		}
+	})
 }

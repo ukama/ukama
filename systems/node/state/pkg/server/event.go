@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 package server
 
 import (
@@ -22,10 +21,9 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
-	utils "github.com/ukama/ukama/systems/node/state/pkg/utils"
-
 	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
+	"github.com/ukama/ukama/systems/node/state/pkg/utils"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	"gorm.io/gorm"
@@ -39,6 +37,16 @@ type NodeStateEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
+const (
+	configReadyThreshold = 3
+	configReadyTimeout   = time.Minute
+)
+
+var (
+	configReadyCount int
+	lastConfigTime   time.Time
+)
+
 func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
 	return &NodeStateEventServer{
 		s:               s,
@@ -51,6 +59,21 @@ func NewControllerEventServer(orgName string, s *StateServer, msgBus mb.MsgBusSe
 func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
+	handler, ok := n.getRoutingHandler(e.RoutingKey)
+	if !ok {
+		log.Errorf("No handler for routing key %s", e.RoutingKey)
+		return &epb.EventResponse{}, nil
+	}
+
+	if err := handler(e.Msg); err != nil {
+		log.Errorf("Error handling event %s: %v", e.RoutingKey, err)
+		return nil, err
+	}
+
+	return &epb.EventResponse{}, nil
+}
+
+func (n *NodeStateEventServer) getRoutingHandler(routingKey string) (func(*anypb.Any) error, bool) {
 	routingHandlers := map[string]func(*anypb.Any) error{
 		"event.cloud.local.{{ .Org}}.registry.node.node.create":      n.handleNodeCreateEvent,
 		"event.cloud.local.{{ .Org}}.messaging.mesh.node.online":     n.handleNodeOnlineEvent,
@@ -59,20 +82,50 @@ func (n *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		"event.cloud.local.{{ .Org}}.node.notify.notification.store": n.handleNodeHealthSeverityEvent,
 		"event.cloud.local.{{ .Org}}.registry.node.node.release":     n.handleNodeDeassignEvent,
 		"event.cloud.local.{{ .Org}}node.configurator.config.add":    n.handleNodeConfigEvent,
+		"event.cloud.local.{{ .Org}}.node.health.node.create":        n.handleNodeHealthEvent,
 	}
-
-	if handler, ok := routingHandlers[e.RoutingKey]; ok {
-		if err := handler(e.Msg); err != nil {
-			log.Errorf("Error handling event %s: %v", e.RoutingKey, err)
-			return nil, err
-		}
-	} else {
-		log.Errorf("No handler for routing key %s", e.RoutingKey)
-	}
-
-	return &epb.EventResponse{}, nil
+	handler, ok := routingHandlers[routingKey]
+	return handler, ok
 }
 
+func (n *NodeStateEventServer) handleNodeHealthEvent(msg *anypb.Any) error {
+	evt, err := n.unmarshalNodeHealthEvent(msg)
+	if err != nil {
+		return err
+	}
+
+	systemStatuses := make(map[string]string)
+	for _, system := range evt.System {
+		systemStatuses[system.Name] = system.Value
+	}
+
+	bootstrapStatus := "Not Found"
+	for _, app := range evt.Capps {
+		if app.Name == "bootstrap" && app.Status == epb.Status_DONE {
+			bootstrapStatus = "Running"
+			break
+		}
+	}
+
+	nId, err := ukama.ValidateNodeId(evt.NodeId)
+	if err != nil {
+		log.Errorf("Error converting NodeId %s to ukama.NodeID: %v", evt.NodeId, err)
+		return err
+	}
+
+	newState := n.determineNodeState(systemStatuses, bootstrapStatus)
+	log.Infof("Node %s: CPU: %s, Memory: %s, Radio: %s, Bootstrap: %s, New State: %s",
+		evt.NodeId, systemStatuses["CPU"], systemStatuses["Memory"], systemStatuses["Radio"], bootstrapStatus, newState)
+
+	return n.updateNodeState(nId.String(), newState, utils.Low, utils.Event)
+}
+func (n *NodeStateEventServer) determineNodeState(systemStatuses map[string]string, bootstrapStatus string) ukama.NodeStateEnum {
+	if systemStatuses["CPU"] == "Fine" && systemStatuses["Memory"] == "Fine" &&
+		systemStatuses["Radio"] == "On" && bootstrapStatus == "Running" {
+		return ukama.StateOperational
+	}
+	return ukama.StateFaulty
+}
 func (n *NodeStateEventServer) handleNodeHealthSeverityEvent(msg *anypb.Any) error {
 	evt, err := n.unmarshalNotification(msg)
 	if err != nil {
@@ -92,46 +145,51 @@ func (n *NodeStateEventServer) handleNodeHealthSeverityEvent(msg *anypb.Any) err
 
 	nId, err := ukama.ValidateNodeId(evt.NodeId)
 	if err != nil {
-		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", evt.NodeId, err)
+		log.Errorf("Error converting NodeId %s to ukama.NodeID: %v", evt.NodeId, err)
 		return err
 	}
 
 	currentState, err := n.s.sRepo.GetByNodeId(nId)
 	if err != nil {
-		log.Errorf("Error getting current state for node %s. Error: %+v", nId, err)
+		log.Errorf("Error getting current state for node %s: %v", nId, err)
 		return err
 	}
 
-	var newState ukama.NodeStateEnum
-	severity := utils.ToSeverityType(evt.Severity)
-
-	if reboot, ok := details["reboot"].(bool); ok && reboot {
-		log.Infof("Received reboot event for node %s. Maintaining current state: %s", nId, currentState.State)
-		newState = currentState.State
-	} else {
-		if severity == utils.Critical {
-			newState = ukama.StateFaulty
-		} else if configKey, ok := details["config"].(string); ok {
-			switch configKey {
-			case "ready":
-				newState = ukama.StateOperational
-			case "update":
-				newState = ukama.StateConfigure
-			default:
-				newState = utils.GetNodeStateBySeverity(severity)
-			}
-		} else {
-			newState = utils.GetNodeStateBySeverity(severity)
-		}
-	}
-
+	newState := n.determineNewState(evt, details, currentState)
 	log.Infof("Node %s: Severity: %s, Details: %v, New State: %s", evt.NodeId, evt.Severity, details, newState)
 
-	if err = n.updateNodeState(evt.NodeId, newState, severity, utils.Event); err != nil {
-		log.Errorf("Failed to update node state: %v", err)
-		return err
+	return n.updateNodeState(evt.NodeId, newState, utils.ToSeverityType(evt.Severity), utils.Event)
+}
+func (n *NodeStateEventServer) determineNewState(evt *epb.Notification, details map[string]interface{}, currentState *db.State) ukama.NodeStateEnum {
+	severity := utils.ToSeverityType(evt.Severity)
+	now := time.Now()
+
+	if configKey, ok := details["config"].(string); ok {
+		return n.handleConfigState(configKey, evt.NodeId, currentState.State, now)
 	}
-	return nil
+
+	return utils.GetNodeStateBySeverity(severity)
+}
+
+func (n *NodeStateEventServer) handleConfigState(configKey, nodeId string, currentState ukama.NodeStateEnum, now time.Time) ukama.NodeStateEnum {
+	switch configKey {
+	case "ready":
+		configReadyCount++
+		lastConfigTime = now
+		if configReadyCount >= configReadyThreshold && now.Sub(lastConfigTime) < configReadyTimeout {
+			log.Infof("Node %s has received multiple 'ready' configurations; transitioning to Operational.", nodeId)
+			configReadyCount = 0
+			return ukama.StateOperational
+		}
+		return currentState
+	case "faulty":
+		log.Warnf("Node %s is transitioning to Faulty due to faulty config.", nodeId)
+		return ukama.StateFaulty
+	default:
+		configReadyCount = 0
+		log.Infof("Node %s received config '%s', maintaining state as Config.", nodeId, configKey)
+		return ukama.StateConfigure
+	}
 }
 
 func (n *NodeStateEventServer) handleNodeCreateEvent(msg *anypb.Any) error {
@@ -185,21 +243,19 @@ func (n *NodeStateEventServer) handleNodeDeassignEvent(msg *anypb.Any) error {
 func (n *NodeStateEventServer) updateNodeState(nodeId string, state ukama.NodeStateEnum, severity utils.SeverityType, eventType utils.NotificationType, connectivity ...*ukama.Connectivity) error {
 	nId, err := ukama.ValidateNodeId(nodeId)
 	if err != nil {
-		log.Errorf("Error converting NodeId %s to ukama.NodeID. Error: %+v", nodeId, err)
+		log.Errorf("Error converting NodeId %s to ukama.NodeID: %v", nodeId, err)
 		return err
 	}
 
 	_, err = n.s.sRepo.GetByNodeId(nId)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Errorf("Error getting latest state for node %s. Error: %+v", nId, err)
+		log.Errorf("Error getting latest state for node %s: %v", nId, err)
 		return err
 	}
 
-	var connState ukama.Connectivity
+	connState := ukama.Unknown
 	if len(connectivity) > 0 && connectivity[0] != nil {
 		connState = *connectivity[0]
-	} else {
-		connState = ukama.Unknown
 	}
 
 	now := time.Now()
@@ -303,5 +359,11 @@ func (n *NodeStateEventServer) unmarshalOnboardingEvent(msg *anypb.Any) (*epb.Ev
 
 func (n *NodeStateEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
 	evt := &epb.EventRegistryNodeCreate{}
+	return evt, n.unmarshalNodeEvent(msg, evt)
+}
+
+// unmarshalNodeHealthEvent unmarshals a health event message
+func (n *NodeStateEventServer) unmarshalNodeHealthEvent(msg *anypb.Any) (*epb.EventStoreRunningAppsInfo, error) {
+	evt := &epb.EventStoreRunningAppsInfo{}
 	return evt, n.unmarshalNodeEvent(msg, evt)
 }
