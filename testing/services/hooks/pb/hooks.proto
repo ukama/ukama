@@ -1,0 +1,36 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax="proto3";
+
+option go_package = "github.com/ukama/ukama/testing/services/hooks/pb/gen";
+
+import "validator.proto";
+
+package ukama.testing.services.hooks.v1;
+
+
+service HookService {
+    rpc StartScheduler(StartRequest) returns (StartResponse);
+    rpc StopScheduler(StopRequest) returns (StopResponse);
+}
+
+
+message StartRequest {
+    bool isFake = 1 [json_name = "is_fake"];
+}
+
+message StartResponse {
+}
+
+
+message StopRequest {
+}
+
+message StopResponse {
+}
