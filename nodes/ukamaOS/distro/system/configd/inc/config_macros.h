@@ -9,7 +9,9 @@
 #ifndef CONFIG_MACROS_H_
 #define CONFIG_MACROS_H_
 
-#define SERVICE_NAME           "configd"
+#include "usys_services.h"
+
+#define SERVICE_NAME           SERVICE_CONFIG
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
