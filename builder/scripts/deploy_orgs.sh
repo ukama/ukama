@@ -314,6 +314,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         if [ "$SYSTEM" == $AUTHSYSKEY ]; then
             cd ../../../ukama-auth/kratos
             sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../app
+            cp .env.example .env.local
             cd ../../ukama/builder/scripts
         fi
         if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
@@ -342,10 +344,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         run_docker_compose "$(echo "$SYSTEM_OBJECT" | jq -r '.path')" "$(echo "$SYSTEM_OBJECT" | jq -r '.name')" "$(echo "$SYSTEM_OBJECT" | jq -r '.key')"
         case $SYSTEM in
         "auth-services")
-            cd app
-            cp .env.example .env.local
-            cd ../
-            echo ".env.local file created and content copied from .env.dev.example for ukama-auth"
             sleep 2
             register_user
             ;;
