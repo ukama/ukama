@@ -192,8 +192,6 @@ void update_session(Config* c, AppState* a) {
 /* Validate commit and creates a new session if required */
 int is_valid_commit(Config *c , ConfigData *cd, AppState **app) {
 
-	int ret = USYS_FALSE;
-
 	/* Discard config is older then current running config */
 	ConfigData* rc = (ConfigData*) c->activeConfig;
 	if (rc) {
@@ -204,16 +202,20 @@ int is_valid_commit(Config *c , ConfigData *cd, AppState **app) {
                            cd->timestamp,
                            rc->version,
                            rc->timestamp);
-			goto response;
+            return USYS_FALSE;
 		}
 	}
 
 	pthread_mutex_lock(&mutex);
 	ConfigSession* s = (ConfigSession*) c->updateSession;
+
+    /* If there mismatch between currently processed session than the
+     * config data just recevied?
+     */
 	if ((cd->timestamp != s->timestamp) ||
         (usys_strcmp(cd->version, s->version))) {
 
-		/* Newer config */
+		/* Have we received another config while processing existing one? */
 		if (cd->timestamp > s->timestamp) {
 			usys_log_debug("Receiving new config %s with timestamp %ld. "
                            "Discarding old config %s with timestamp %d",
@@ -225,31 +227,35 @@ int is_valid_commit(Config *c , ConfigData *cd, AppState **app) {
 			clean_session(c->updateSession);
 			c->updateSession = NULL;
 			c->updateSession = create_new_update_session(cd);
+            if (!c->updateSession) {
+                pthread_mutex_unlock(&mutex);
+                return USYS_FALSE;
+            }
 
-			if (c->updateSession) {
-				s = (ConfigSession*) c->updateSession;
-				if (prepare_copy_for_session(cd) != STATUS_OK) {
-					usys_log_error("Failed to prepare_copy for new session %s",
-                                   cd->version);
-					clean_session(c->updateSession);
-					c->updateSession = NULL;
-					goto response;
-				}
-			} else {
-				goto response;
-			}
+            s = (ConfigSession*) c->updateSession;
+            if (prepare_copy_for_session(cd) != STATUS_OK) {
+                usys_log_error("Failed to prepare_copy for new session %s",
+                               cd->version);
+                clean_session(c->updateSession);
+                c->updateSession = NULL;
+                pthread_mutex_unlock(&mutex);
+                return USYS_FALSE;
+            }
+
 		} else {
-			/* Old rest request or wrog version */
+			/* abnormal case */
 			usys_log_error("Receiving config %s with timestamp %ld. "
                            "expecting config %s with timestamp %d",
                            cd->version,
                            cd->timestamp,
                            s->version,
                            s->timestamp);
-			goto response;
+            pthread_mutex_unlock(&mutex);
+            return USYS_FALSE;
 		}
 	}
 
+#if 0    
 	if (!(usys_strcmp(cd->version, s->version)) &&
         (cd->timestamp == s->timestamp) ) {
 
@@ -267,13 +273,22 @@ int is_valid_commit(Config *c , ConfigData *cd, AppState **app) {
 
 		ret = USYS_TRUE;
 	}
+#endif
 
-response:
 	pthread_mutex_unlock(&mutex);
-	return ret;
+	return USYS_TRUE;
 }
 
-static int configd_process_complete(Config *config) {
+
+/* Do following:
+   1. move all configs from /tmp to each app respective dir
+   /ukama/configs/<app>/archive/<timestamp>
+   2. move the current 'active' to previous.
+   3. cleanup /tmp/<timestamp>
+   4. update the 'active' link to the latest timestamp - for each app
+   5. trigger app to restart - via starter.d
+*/
+static int config_process_complete(Config *config) {
 
 	int statusCode = STATUS_NOK;
 	ConfigSession* s = (ConfigSession*)config->updateSession;
@@ -335,17 +350,10 @@ bool process_received_config(JsonObj *json, Config *config) {
             return USYS_FALSE;
         }
         config->updateSession = session;
-
-        if (!prepare_copy_for_session(cd)) {
-            usys_log_error("Failed to prepare_copy for new session %s", cd->version);
-            clean_session(config->updateSession);
-            config->updateSession = NULL;
-            pthread_mutex_unlock(&mutex);
-            return USYS_FALSE;
-        }
         pthread_mutex_unlock(&mutex);
     }
 
+    /* decode recevied 'data' from base64 to json */
 	if (cd->data) {
 
         int len;
@@ -370,17 +378,21 @@ bool process_received_config(JsonObj *json, Config *config) {
 		}
 	}
 
-	/* Validate the commit*/
+	/* Validate the commit. If ok, create copy of existing running config
+     * into temp 
+     */
 	if (!is_valid_commit(config, cd, &as)) {
 		return USYS_FALSE;
 	}
 
-	if (cd->reason == CONFIG_DELETED){
+    switch(cd->reason) {
+    case CONFIG_DELETED:
 		if (!remove_config(cd)) {
 			usys_log_error("Failed to remove config for %s app version %s",
                            cd->app, cd->version);
 		}
-	} else {
+        break;
+    default:
 		pthread_mutex_lock(&mutex);
 		if (!create_config(cd)) {
 			usys_log_error("Failed to create config for %s app version %s",
@@ -398,7 +410,7 @@ bool process_received_config(JsonObj *json, Config *config) {
 		if (session->configdVer) {
 			usys_log_debug("Received all expected %d configs", session->expectedCount);
             free_config_data(cd);
-			return configd_process_complete(config);
+			return config_process_complete(config);
 		} else {
 			usys_log_error("Received %d configs but version.json for "
                            "configd is missing", session->count);

@@ -35,7 +35,9 @@ int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
 
-    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -44,8 +46,9 @@ int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
 
-	ulfius_set_string_body_response(response, HttpStatus_NotFound,
-			HttpStatusStr(HttpStatus_NotFound));
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_NotFound,
+                                    HttpStatusStr(HttpStatus_NotFound));
 
 	return U_CALLBACK_CONTINUE;
 }
@@ -87,8 +90,3 @@ int web_service_cb_post_config(const URequest *request,
     json_decref(json);
 	return U_CALLBACK_CONTINUE;
 }
-
-
-
-
-

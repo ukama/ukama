@@ -6,11 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-#include "util.h"
-#include "config_macros.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include "util.h"
+#include "config_macros.h"
 
 #define MOVE_DIR true
 #define COPY_DIR false
@@ -90,50 +91,54 @@ int clean_empty_dir(char* path) {
 
 }
 
-int make_path(const char* path) {
+bool make_path(const char* path) {
+
 	char* p = NULL;
 	char* token = NULL;
-	char pathCopy[512]; // Adjust the buffer size as needed
-	char npath[512]={'\0'};
-	// Create a copy of the path to avoid modifying the original
+	char pathCopy[MAX_PATH];
+	char npath[MAX_PATH]={0};
+
+	/* Create a copy of the path to avoid modifying the original (/
 	usys_strncpy(pathCopy, path, sizeof(pathCopy));
 
-	// Tokenize the path by "/"
+	/* Tokenize the path by "/" */
 	p = pathCopy;
 	while ((token = strsep(&p, "/")) != NULL) {
 		if (usys_strlen(token) == 0) {
-			continue;  // Skip empty tokens
+			continue;
 		}
 
-		// Append the token to the current path
+		/* Append the token to the current path */
 		usys_strcat(npath, "/");
 		usys_strcat(npath, token);
 
-		// Check if the directory already exists
+		/* Check if the directory already exists */
 		struct stat st;
 		if (stat(npath, &st) != 0) {
-			// If it doesn't exist, create it
+			/* If it doesn't exist, create it */
 			if (mkdir(npath, 0777) != 0) {
-				usys_log_error("Failed to create directory: %s\n", npath);
-				perror("error");
-				return 0; // Return 0 to indicate failure
+				usys_log_error("Failed to create directory: %s Error: %s",
+                               npath, strerror(errno));
+				return USYS_FALSE;
 			}
 		}
 	}
 
-	return 1; // Return 1 to indicate success
+	return USYS_TRUE;
 }
 
-/* Remove config file */
-int remove_config(ConfigData *c) {
-	char path[512] = {'\0'};
+bool remove_config(ConfigData *c) {
+
+	char path[MAX_PATH] = {0};
+
 	sprintf(path,"%s/%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app, c->fileName);
 	if (remove(path) != 0) {
-		usys_log_error("Failed removing config %s", path);
-		perror("Error deleting file");
-		return -1; // Error deleting file
+		usys_log_error("Failed removing config: %s Error: %s",
+                       path, strerror(errno));
+		return USYS_FALSE;
 	}
-	return 0;
+
+	return USYS_TRUE;
 }
 
 /* Copy or move file.
@@ -302,56 +307,52 @@ int remove_dir(const char *path) {
 	return 0; // Directory and its contents deleted successfully
 }
 
-int create_config(ConfigData* c) {
+bool create_config(ConfigData* c) {
 
-    char path[512] = {'\0'};
-    char fpath[1024] = {'\0'};
+    char path[MAX_PATH] = {0};
+    char fpath[MAX_FILE_PATH] = {0};
 
-    // Construct the directory path
+    FILE *file = NULL;
+
     snprintf(path, sizeof(path), "%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
 
-    // Remove the existing directory if it exists
     if (remove(path) != 0 && errno != ENOENT) {
-        usys_log_error("Failed to remove existing directory %s\n", path);
-        perror("remove");
-        return -1;
+        usys_log_error("Failed to remove existing directory %s Error: %s",
+                       path, strerror(errno));
+        return USYS_FALSE;
     }
 
-    // Create the directory
-    if (make_path(path)) {
-        usys_log_debug("Directory %s created successfully.\n", path);
-
-        // Construct the full file path
-        snprintf(fpath, sizeof(fpath), "%s/%s", path, c->fileName);
-
-        // Create and write to the file in the new directory
-        FILE* file = fopen(fpath, "w");
-        if (file == NULL) {
-            usys_log_error("Failed to create file %s\n", fpath);
-            perror("fopen");
-            return -1;
-        }
-
-        // Write data to the file if data is not NULL
-        if (c->data != NULL) {
-            if (fputs(c->data, file) == EOF) {
-                usys_log_error("Failed to write to file %s\n", fpath);
-                perror("fputs");
-                fclose(file);
-                return -1;
-            }
-        }
-
-        fclose(file);
-        usys_log_debug("File %s created successfully.\n", fpath);
-
+    if (!make_path(path)) {
+        usys_log_error("Failed to create directory: %s Error: %s",
+                       path, strerror(errno));
+        return USYS_FALSE;
     } else {
-        usys_log_error("Failed to create directory %s\n", path);
-        perror("make_path");
-        return -1;
+        usys_log_debug("Directory %s created successfully", path);
     }
 
-    return 0;
+    snprintf(fpath, sizeof(fpath), "%s/%s", path, c->fileName);
+
+    file = fopen(fpath, "w");
+    if (file == NULL) {
+        usys_log_error("Failed to create file %s Error: %s",
+                       fpath, strerror(errno));
+        return USYS_FALSE;
+    }
+
+    /* Write data to the file if data is not NULL */
+    if (c->data != NULL) {
+        if (fputs(c->data, file) == EOF) {
+            usys_log_error("Failed to write to file %s Error: %s",
+                           fpath, strerror(errno));
+            fclose(file);
+            return USYS_FALSE;
+        }
+    }
+
+    fclose(file);
+    usys_log_debug("File %s created successfully", fpath);
+
+    return USYS_TRUE;
 }
 
 int create_backup_config(){
@@ -426,20 +427,21 @@ int store_config(char* version) {
 
 int prepare_for_new_config(ConfigData* c) {
 
-	char path[512] = {0};
-	sprintf(path,"%s/%s", CONFIG_TMP_PATH, c->version);
+    char activePath[MAX_PATH] = {0};
+	char tempPath[MAX_PATH] = {0};
+
+	sprintf(tempPath,   "%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
+    sprintf(activePath, "%s/%s/active", DEF_CONFIG_DIR, SERVICE_NAME);
 
 	/* remove old residue */
-	remove_dir(path);
+	remove_dir(tempPath);
 
 	/* Create new folder and copy current running config */
-	if (clone_dir(CONFIG_RUNNING, path, COPY_DIR) != 0) {
-		usys_log_error("Failed to prepare tmp config for download.\n");
-		perror("error");
+	if (clone_dir(activePath, tempPath, COPY_DIR) != 0) {
+		usys_log_error("Failed to prepare %s for download. Error: %s",
+                       tempPath, strerror(errno));
 		return -1;
 	}
 
 	return 0;
 }
-
-
