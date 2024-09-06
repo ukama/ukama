@@ -14,53 +14,8 @@
 #include "web.h"
 #include "json_types.h"
 
-/**
- * @fn      int wc_forward_notification(char*, char*, char*, JsonObj*)
- * @brief   Forward the node notifications to the remote server
- *
- * @param   url
- * @param   method
- * @param   body
- * @return  On success, STATUS_OK
- *          On Failure, STATUS_NOK
- */
-int wc_forward_notification(char* url, char* method,
-                JsonObj* body );
-
-/**
- * @fn      int wc_read_node_info(char*, char*, char*, int)
- * @brief   Read node UUID and Type form the node info provided by noded
- *          service.
- *
- * @param   nodeID
- * @param   config
- * @return  On success, STATUS_OK
- *          On Failure, STATUS_NOK
- */
 int wc_read_node_info(Config* config);
-
-/**
- * @fn      int web_client_init(char*, char*)
- * @brief   Connected to Noded for reading Unit info.
- *
- * @param   nodeID
- * @param   config
- * @return  On success, STATUS_OK
- *          On Failure, STATUS_NOK
- */
-int web_client_init(char* nodeID, Config* config);
-
-/**
- * @fn      int wc_send_restart_req(Config* c, char* app)
- * @brief   Send a restart request to starter service for restarting app.
- *
- * @param   config
- * @param   app name
- * @return  On success, STATUS_OK
- *          On Failure, STATUS_NOK
- */
-int wc_send_restart_req(Config* config, char* app);
-
+bool wc_send_app_restart_request(Config *config, char *app);
 int get_nodeid_from_noded(Config *config);
 
 #endif /* INC_WEB_CLIENT_H_ */

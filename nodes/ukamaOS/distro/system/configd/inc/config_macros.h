@@ -15,7 +15,7 @@
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
-#define MAX_SERVICE_COUNT      (32)
+#define MAX_APPS               32
 
 #define DEF_LOG_LEVEL          "TRACE"
 

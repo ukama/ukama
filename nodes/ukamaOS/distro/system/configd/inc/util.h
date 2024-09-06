@@ -26,11 +26,7 @@ bool make_path(const char* path);
 int move_dir(const char *source, const char *destination);
 int remove_dir(const char *path);
 int clean_empty_dir(char* path);
-bool create_config(ConfigData* c);
-bool remove_config(ConfigData *c);
-int create_backup_config();
 int restore_config() ;
 int store_config(char* version);
-int prepare_for_new_config(ConfigData* c);
 
 #endif /* UTIL_H_ */

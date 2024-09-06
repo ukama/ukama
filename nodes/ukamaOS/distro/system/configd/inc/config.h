@@ -21,7 +21,6 @@ typedef struct {
 	char  *starterEP;
 	char  *nodeId;
 	void  *updateSession;
-	void  *activeConfig;
 } Config;
 
 #endif /* CONFIG_H_ */

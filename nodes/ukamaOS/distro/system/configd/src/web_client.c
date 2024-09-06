@@ -9,39 +9,41 @@
 #include "httpStatus.h"
 
 #include "web_client.h"
-#include "config.h"
+#include "configd.h"
 #include "jserdes.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
-int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
-
-	int ret = STATUS_NOK;
+bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
 	*httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
-	if (! (*httpResp)) {
+	if (*httpResp == NULL) {
 		usys_log_error("Error allocating memory of size: %lu for http response",
-				sizeof(UResponse));
-		return STATUS_NOK;
+                       sizeof(UResponse));
+		return USYS_FALSE;
 	}
 
 	if (ulfius_init_response(*httpResp)) {
 		usys_log_error("Error initializing new http response.");
-		return STATUS_NOK;
+		return USYS_FALSE;
 	}
 
-	ret = ulfius_send_http_request(httpReq,
-			*httpResp);
-	if (ret != STATUS_OK) {
+	if (ulfius_send_http_request(httpReq, *httpResp) != STATUS_OK) {
 		usys_log_error( "Web client failed to send %s web request to %s",
-				httpReq->http_verb, httpReq->http_url);
+                        httpReq->http_verb, httpReq->http_url);
+
+        ulfius_clean_response(*httpResp);
+        usys_free(*httpResp);
+
+        return USYS_FALSE;
 	}
-	return ret;
+
+	return USYS_TRUE;
 }
 
 URequest* wc_create_http_request(char* url,
-		char* method, JsonObj* body) {
+                                 char* method, JsonObj* body) {
 
 	/* Preparing Request */
 	URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
@@ -121,51 +123,6 @@ cleanup:
 	return ret;
 }
 
-int wc_forward_notification(char* url, char* method,
-		JsonObj* body ) {
-	int ret = STATUS_NOK;
-	JsonObj *json = NULL;
-
-	UResponse *httpResp = NULL;
-
-	URequest* httpReq = wc_create_http_request(url, method, body);
-	if (!httpReq) {
-		return ret;
-	}
-
-	char *logbody = json_dumps(body,
-			(JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
-	if (logbody) {
-		usys_log_trace("Body is :\n %s", logbody);
-		usys_free(logbody);
-		logbody = NULL;
-	}
-
-
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
-		usys_log_error("Failed to send http request.");
-		goto cleanup;
-	}
-
-	if (httpResp->status >= 200 && httpResp->status <= 300) {
-		ret = STATUS_OK;
-	}
-
-	json_decref(json);
-	cleanup:
-	if (httpReq) {
-		ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-	}
-	if (httpResp) {
-		ulfius_clean_response(httpResp);
-		usys_free(httpResp);
-	}
-
-	return ret;
-}
-
 int wc_read_node_info(Config* config) {
 
 	int ret = STATUS_NOK;
@@ -197,46 +154,38 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-int wc_send_restart_req(Config* config, char* app){
+bool wc_send_app_restart_request(Config *config, char *app){
 
-	int ret = STATUS_NOK;
 	UResponse *httpResp = NULL;
-	URequest *httpReq = NULL;
+	URequest  *httpReq  = NULL;
+	char url[MAX_URL] = {0};
 
-	/* Send HTTP request */
-	char url[128]={0};
-
-	sprintf(url,"http://%s:%d%s/%s/%s", config->starterHost, config->starterPort,
-			config->starterEP,"restart",app);
+	snprintf(url, sizeof(url), "http://%s:%d/v1/restart/%s/%s",
+             config->starterHost,
+             config->starterPort,
+             DEF_SPACE_NAME,
+             app);
 
 	httpReq = wc_create_http_request(url, "POST", NULL);
 	if (!httpReq) {
-		return ret;
+		return USYS_FALSE;
 	}
 
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
+	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE){
 		usys_log_error("Failed to send http request.");
-		goto cleanup;
-	}
-
-	if (httpResp->status == 200) {
-		ret = STATUS_OK;
-	}
-	else {
-		ret = STATUS_NOK;
-	}
-
-	cleanup:
-	if (httpReq) {
-		ulfius_clean_request(httpReq);
+        ulfius_clean_request(httpReq);
 		usys_free(httpReq);
-	}
-	if (httpResp) {
-		ulfius_clean_response(httpResp);
-		usys_free(httpResp);
+		return USYS_FALSE;
 	}
 
-	return ret;
+    ulfius_clean_request(httpReq);
+    ulfius_clean_response(httpResp);
+    usys_free(httpReq);
+    usys_free(httpResp);
 
+	if (httpResp->status != HttpStatus_Accepted) {
+		return USYS_FALSE;
+	}
+
+	return USYS_TRUE;
 }

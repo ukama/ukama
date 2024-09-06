@@ -29,6 +29,7 @@ USysMutex mutex;
 static bool is_valid_softlink(char *path) {
 
     struct stat pathStat;
+    char actualPath[MAX_PATH] = {0};
 
     if (lstat(path, &pathStat) == -1) {
         usys_log_error("Unable to get info about config dir: %s. Error: %s",
@@ -37,9 +38,6 @@ static bool is_valid_softlink(char *path) {
     }
 
     if (S_ISLNK(pathStat.st_mode)) {
-
-        char actualPath[MAX_PATH];
-
         if (realpath(path, actualPath) == NULL) {
             usys_log_error("Unable to resolve the actual path for: %s. Error: %s",
                            path, strerror(errno));
@@ -60,78 +58,22 @@ static bool is_valid_softlink(char *path) {
     return USYS_FALSE;
 }
 
-static bool has_nonzero_metadata_file(const char *dirPath) {
-
-    char filePath[PATH_MAX] = {0};
-    struct stat fileStat;
-
-    snprintf(filePath, sizeof(filePath), "%s/metadata.json", dirPath);
-
-    if (stat(filePath, &fileStat) == -1) {
-        if (errno == ENOENT) {
-            usys_log_error("File metadata.json does not exist at: %s", dirPath);
-        } else {
-            usys_log_error("Unable to get stat about: %s Error: %s",
-                           filePath, strerror(errno));
-        }
-
-        return USYS_FALSE;
-    }
-
-    if (fileStat.st_size > 0) {
-        return USYS_TRUE;
-    }
-
-    usys_log_error("File metadata.json is empty at: %s", dirPath);
-
-    return USYS_FALSE;
-}
-
-static void free_apps(AppState **apps, uint32_t count) {
-
-	for (int i = 0; i < count; i++) {
-
-		if (apps[i]) {
-			usys_free(apps[i]->app);
-			usys_free(apps[i]->fileName);
-			usys_free(apps[i]);
-		}
-	}
-}
-
-void free_config_data(ConfigData *c) {
-
-    if (c == NULL) return;
-
-    usys_free(c->fileName);
-    usys_free(c->app);
-    usys_free(c->version);
-    usys_free(c->data);
-}
-
-/* cleans a session for update */
-void clean_session(ConfigSession *session) {
-
-    char path[MAX_PATH] = {0};
+static void free_session(ConfigSession *session) {
 
     if (session == NULL) return;
 
-    snprintf(path, sizeof(path), "%s/%s", CONFIG_TMP_PATH, session->version);
-    remove_dir(path);
+    for (int index; index < session->receviedCount; index++) {
 
-    if (session->version) usys_free(session->version);
-    if (session->apps)    free_apps (session->apps, session->count);
-
-    session->timestamp     = 0;
-    session->count         = 0;
-    session->expectedCount = 0;
-    session->configdVer    = USYS_FALSE;
+        usys_free(session->apps[index]->name);
+        usys_free(session->apps[index]->fileName);
+        usys_free(session->apps[index]->data);
+        usys_free(session->apps[index]->version);
+    }
 
     usys_free(session);
 }
 
-/* creates a new session for update */
-ConfigSession* create_new_update_session(ConfigData *cd) {
+static ConfigSession *create_new_session(SessionData *sd) {
 
 	ConfigSession *session = NULL;
 
@@ -142,210 +84,238 @@ ConfigSession* create_new_update_session(ConfigData *cd) {
         return NULL;
     }
 
-    session->timestamp     = cd->timestamp;
-    session->version       = usys_strdup(cd->version);
-    session->expectedCount = cd->fileCount;
-    session->count         = 0;
-    session->configdVer    = USYS_FALSE;
-    session->stored        = USYS_FALSE;
+    session->apps[0]->name     = strdup(sd->app);
+    session->apps[0]->version  = strdup(sd->version);
+    session->apps[0]->fileName = strdup(sd->fileName);
+    session->apps[0]->data     = strdup(sd->data);
+    session->apps[0]->reason   = sd->reason;
+
+    session->timestamp     = sd->timestamp;
+    session->expectedCount = sd->fileCount;
+    session->receviedCount = 0;
 
 	return session;
 }
 
-static bool prepare_copy_for_session(ConfigData *cd) {
+static void update_config_session(Config *c, SessionData *sd) {
 
-	if (prepare_for_new_config(cd) == 0) {
-		usys_log_debug("New update config session created for "
-                       "commit %s and timestamp %ld",
-                       cd->version,
-                       cd->timestamp);
-		return USYS_TRUE;
-	}
+    ConfigSession *s = NULL;
+    int index = 0;
 
-	return USYS_FALSE;
+    s     = (ConfigSession *) c->updateSession;
+    index = s->receviedCount;
+
+    s->apps[index]->name     = strdup(sd->app);
+    s->apps[index]->version  = strdup(sd->version);
+    s->apps[index]->fileName = strdup(sd->fileName);
+    s->apps[index]->data     = strdup(sd->data);
+    s->apps[index]->reason   = sd->reason;
+
+    s->receviedCount++;
 }
 
-void update_session(Config* c, AppState* a) {
+static bool create_config_staging_area(const char *app, int timestamp) {
 
-	ConfigSession *s = (ConfigSession *) c->updateSession;
+    char path[PATH_MAX]     = {0};
+    char realPath[PATH_MAX] = {0};
+    char destPath[PATH_MAX] = {0};
 
-	/* check if its a duplicate reception of file for session */
-	for (int i = 0; i < s->count; i++) {
-		if (!(usys_strcmp(a->app, s->apps[i]->app)) &&
-            !(usys_strcmp(a->fileName, s->apps[i]->fileName))) {
-			usys_log_debug("Received a duplicate config file %s for app %s.",
-                           a->app, a->fileName);
-			return;
-		}
-	}
+    ssize_t len = 0;
 
-	s->apps[s->count] = a;
-	s->count++;
+    snprintf(path, sizeof(path), "%s/%s/active", DEF_CONFIG_DIR, app);
+    snprintf(destPath, sizeof(destPath), "%s/%d/%s",
+             CONFIG_TMP_PATH, timestamp, app);
 
-	/* version flag for configd/version.json */
-	if (!(usys_strcmp(a->app, c->serviceName)) &&
-        !(usys_strcmp(a->fileName, "version.json"))) {
-		s->configdVer = USYS_TRUE;
-	}
+    // Resolve the symlink to find the actual path
+    len = readlink(path, realPath, sizeof(realPath) - 1);
+    if (len == -1) {
+        usys_log_error("symlink to actual path for app: %s Error: %s",
+                       app, strerror(errno));
+        return USYS_FALSE;
+    }
+    realPath[len] = '\0';
+
+    /* create (if needed) and copy 'active' config to staging area */
+    if (clone_dir(realPath, destPath, false) == 0) {
+        usys_log_debug("Staging area successful for app: %s", app);
+    } else {
+        usys_log_error("Unable to create staging area for app: %s", app);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
 }
 
-/* Validate commit and creates a new session if required */
-int is_valid_commit(Config *c , ConfigData *cd, AppState **app) {
+static bool update_symlinks(char *appName, int timestamp) {
 
-	/* Discard config is older then current running config */
-	ConfigData* rc = (ConfigData*) c->activeConfig;
-	if (rc) {
-		if (rc->timestamp > cd->timestamp) {
-			usys_log_debug("Received config %s with timestamp %ld. "
-                           "expecting config newer than %s with timestamp %d",
-                           cd->version,
-                           cd->timestamp,
-                           rc->version,
-                           rc->timestamp);
-            return USYS_FALSE;
-		}
-	}
+    char basePath[MAX_PATH]      = {0};
+    char activePath[MAX_PATH]    = {0};
+    char previousPath[MAX_PATH]  = {0};
+    char newActivePath[MAX_PATH] = {0};
 
-	pthread_mutex_lock(&mutex);
-	ConfigSession* s = (ConfigSession*) c->updateSession;
+    char currentActivePath[MAX_PATH], currentPreviousPath[MAX_PATH];
 
-    /* If there mismatch between currently processed session than the
-     * config data just recevied?
-     */
-	if ((cd->timestamp != s->timestamp) ||
-        (usys_strcmp(cd->version, s->version))) {
+    snprintf(basePath,      sizeof(basePath),      "%s/%s", DEF_CONFIG_DIR, appName);
+    snprintf(activePath,    sizeof(activePath),    "%s/active", basePath);
+    snprintf(previousPath,  sizeof(previousPath),  "%s/previous", basePath);
+    snprintf(newActivePath, sizeof(newActivePath), "%s/archive/%d", basePath, timestamp);
 
-		/* Have we received another config while processing existing one? */
-		if (cd->timestamp > s->timestamp) {
-			usys_log_debug("Receiving new config %s with timestamp %ld. "
-                           "Discarding old config %s with timestamp %d",
-                           cd->version,
-                           cd->timestamp,
-                           s->version,
-                           s->timestamp);
+    if (realpath(activePath, currentActivePath) == NULL) {
+        usys_log_error("Error reading active symlink for app: %s", appName);
+        return USYS_FALSE;
+    }
 
-			clean_session(c->updateSession);
-			c->updateSession = NULL;
-			c->updateSession = create_new_update_session(cd);
-            if (!c->updateSession) {
-                pthread_mutex_unlock(&mutex);
-                return USYS_FALSE;
-            }
+    if (realpath(previousPath, currentPreviousPath) == NULL) {
+        usys_log_error("Error reading previous symlink for app: %s", appName);
+        return USYS_FALSE;
+    }
 
-            s = (ConfigSession*) c->updateSession;
-            if (prepare_copy_for_session(cd) != STATUS_OK) {
-                usys_log_error("Failed to prepare_copy for new session %s",
-                               cd->version);
-                clean_session(c->updateSession);
-                c->updateSession = NULL;
-                pthread_mutex_unlock(&mutex);
-                return USYS_FALSE;
-            }
+    /* Now create symlink, if fails revert back */
+    if (symlink(currentActivePath, previousPath) != 0 ||
+        symlink(newActivePath,     activePath) != 0 ){
 
-		} else {
-			/* abnormal case */
-			usys_log_error("Receiving config %s with timestamp %ld. "
-                           "expecting config %s with timestamp %d",
-                           cd->version,
-                           cd->timestamp,
-                           s->version,
-                           s->timestamp);
-            pthread_mutex_unlock(&mutex);
-            return USYS_FALSE;
-		}
-	}
+        usys_log_error("Unable to change the active/previous for app: %s", appName);
 
-#if 0    
-	if (!(usys_strcmp(cd->version, s->version)) &&
-        (cd->timestamp == s->timestamp) ) {
+        symlink(activePath, currentActivePath);
+        symlink(previousPath, currentPreviousPath);
 
-		AppState *as = (AppState*) usys_calloc(1, sizeof(AppState));
-        if (as == NULL) {
-            usys_log_error("Unable to allocate memory of size: %d",
-                           sizeof(AppState));
-            goto response;
+        return USYS_FALSE;
+    }
+
+    usys_log_debug("Symlink successfully updated for app: %s", appName);
+
+    return USYS_TRUE;
+}
+
+static bool process_config_session(Config *config) {
+
+    bool ret = USYS_TRUE;
+    int index;
+    ConfigSession *s = NULL;
+    
+    char srcPath[MAX_PATH]  = {0};
+    char destPath[MAX_PATH] = {0};
+
+    s = (ConfigSession*)config->updateSession;
+
+    for (index=0; index < s->receviedCount; index++) {
+
+        snprintf(srcPath, sizeof(srcPath), "%s/%d/%s",
+                 CONFIG_TMP_PATH, s->timestamp, s->apps[index]->name);
+        snprintf(destPath, sizeof(destPath), "%s/%s/archive/%d",
+                 DEF_CONFIG_DIR, s->apps[index]->name, s->timestamp);
+
+        /* copy the config from staging area to the app's config */
+        clone_dir(srcPath, destPath, false);
+
+        /* update the active and previous symlink */
+        update_symlinks(s->apps[index]->name, s->timestamp);
+
+        /* remove the staging area */
+        remove_dir(srcPath);
+
+        /* send message to starter.d to restart the app */
+        if (wc_send_app_restart_request(config, s->apps[index]->name) == USYS_FALSE) {
+            usys_log_error("Unable to restart the app: %s",
+                           s->apps[index]->name);
+            ret = USYS_FALSE;
+            continue;
         }
 
-        as->app      = usys_strdup(cd->app);
-        as->state    = STATE_UPDATE_AVAILABLE;
-        as->fileName = usys_strdup(cd->fileName);
-        *app = as;
+        usys_log_debug("App restart accepted by starter.d: %s",
+                       s->apps[index]->name);
+    }
 
-		ret = USYS_TRUE;
-	}
-#endif
-
-	pthread_mutex_unlock(&mutex);
-	return USYS_TRUE;
-}
-
-
-/* Do following:
-   1. move all configs from /tmp to each app respective dir
-   /ukama/configs/<app>/archive/<timestamp>
-   2. move the current 'active' to previous.
-   3. cleanup /tmp/<timestamp>
-   4. update the 'active' link to the latest timestamp - for each app
-   5. trigger app to restart - via starter.d
-*/
-static int config_process_complete(Config *config) {
-
-	int statusCode = STATUS_NOK;
-	ConfigSession* s = (ConfigSession*)config->updateSession;
-
-	/* Store config */
-	if (!(s->stored)) {
-		s->stored = true;
-		statusCode = store_config(s->version);
-		if (statusCode != STATUS_OK ) {
-			usys_log_error("Failed to store config %s", s->version);
-			goto cleanup;
-		}
-
-		/* clean up empty dir in store */
-//		char dir[512];
-//		sprintf(dir,"%s/%s", CONFIG_TMP_PATH, s->version);
-//		clean_empty_dir(dir);
-
-		/* Trigger updates */
-		statusCode = configd_trigger_update(config);
-
-		/* Update active config */
-		if (read_active_config((ConfigData**)&config->activeConfig)) {
-			usys_log_error("Failed to update active config.");
-		}
-	}
-
-cleanup:
-	clean_session(config->updateSession);
+	free_session(s);
 	config->updateSession = NULL;
 
-	return statusCode;
+	return ret;
+}
+
+static bool is_valid_session_data(SessionData *sd, Config *config) {
+
+    ConfigSession *session = NULL;
+
+    if (sd == NULL)           return USYS_FALSE;
+    if (sd->timestamp <= 0)   return USYS_FALSE;
+    if (sd->fileCount <= 0)   return USYS_FALSE;
+    if (sd->app == NULL)      return USYS_FALSE;
+    if (sd->fileName == NULL) return USYS_FALSE;
+    if (sd->version == NULL)  return USYS_FALSE;
+    if (sd->data == NULL)     return USYS_FALSE;
+
+    if (sd->reason != CONFIG_ADD    ||
+        sd->reason != CONFIG_DELETE ||
+        sd->reason != CONFIG_UPDATE) return USYS_FALSE;
+
+    // TO-DO check against stater.d if the app is valid
+    // /v1/status/:space/:name
+
+    if (config->updateSession) {
+        if (sd->timestamp < ((ConfigSession *)config->updateSession)->timestamp) {
+            usys_log_error("Received config %s with timestamp %ld. "
+                           "expecting config timestamp %d",
+                           sd->timestamp,
+                           ((ConfigSession *)config->updateSession)->timestamp);
+            return USYS_FALSE;
+        }
+    }
+
+    return USYS_TRUE;
+}
+
+static bool decode_data(SessionData *sd) {
+
+    int len;
+    char *jc = NULL;
+
+    if (!sd->data) return USYS_TRUE;
+
+    len = usys_strlen(sd->data);
+    usys_log_debug("Config base64 [%d bytes] received is %s", len, sd->data);
+
+    jc = usys_calloc(sizeof(char), len);
+    if (jc == NULL) {
+        usys_log_error("Memory exhausted for decoding request. Size: %d", len);
+        return USYS_FALSE;
+    }
+
+    base64_decode(jc, sd->data);
+    usys_free(sd->data);
+    sd->data = jc;
+    usys_log_debug("Config text received\n:  %s", sd->data);
+
+    if (!is_valid_json(sd->data)) {
+        usys_free(sd->data);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
 }
 
 bool process_received_config(JsonObj *json, Config *config) {
 
-	ConfigData    *cd      = NULL;
+	SessionData   *sd      = NULL;
 	ConfigSession *session = NULL;
-	AppState      *as      = NULL;
 
     session = (ConfigSession *)config->updateSession;
 
-    if (config == NULL) {
-        usys_log_error("invalid config for web service");
-        return USYS_FALSE;
-    }
-
 	/* Deserialize incoming message from ukama */
-	if (!json_deserialize_config_data(json, &cd)) {
+	if (!json_deserialize_session_data(json, &sd)) {
 		return USYS_FALSE;
 	}
 
+    /* Check if the recevied session data is valid */
+    if (!is_valid_session_data(sd, config)) {
+        return USYS_FALSE;
+    }
+
+    /* No on-going update session going */
     if (!session) {
         pthread_mutex_lock(&mutex);
-        session = create_new_update_session(cd);
+        session = create_new_session(sd);
         if (!session) {
-            usys_log_error("failed to create update session.");
+            usys_log_error("failed to create new session.");
             pthread_mutex_unlock(&mutex);
             return USYS_FALSE;
         }
@@ -353,143 +323,58 @@ bool process_received_config(JsonObj *json, Config *config) {
         pthread_mutex_unlock(&mutex);
     }
 
-    /* decode recevied 'data' from base64 to json */
-	if (cd->data) {
+    if (!decode_data(sd->data)) {
+        usys_log_error("Unable to decode recevied data");
+        return USYS_FALSE;
+    }
 
-        int len;
-        char *jc;
+    /* create config staging area for valid session */
+    create_config_staging_area(sd->app,
+                               ((ConfigSession *)config->updateSession)->timestamp);
 
-		len = usys_strlen(cd->data);
-		usys_log_debug("Config base64 [%d bytes] received is %s", len, cd->data);
-		jc = usys_calloc(sizeof(char), len);
-        if (jc == NULL) {
-            usys_log_error("Memory exhausted for decoding request. Size: %d", len);
-			return USYS_FALSE;
-        }
-
-        base64_decode(jc, cd->data);
-        usys_free(cd->data);
-        cd->data=jc;
-        usys_log_debug("Config text received\n:  %s", cd->data);
-
-		/* Validate the json data */
-		if (!is_valid_json(cd->data)) {
-			return USYS_FALSE;
-		}
-	}
-
-	/* Validate the commit. If ok, create copy of existing running config
-     * into temp 
-     */
-	if (!is_valid_commit(config, cd, &as)) {
-		return USYS_FALSE;
-	}
-
-    switch(cd->reason) {
-    case CONFIG_DELETED:
-		if (!remove_config(cd)) {
+    switch(sd->reason) {
+    case CONFIG_DELETE:
+		if (!remove_config_file_from_staging_area(sd)) {
 			usys_log_error("Failed to remove config for %s app version %s",
-                           cd->app, cd->version);
+                           sd->app, sd->version);
 		}
         break;
-    default:
+    case CONFIG_ADD:
+    case CONFIG_UPDATE:
 		pthread_mutex_lock(&mutex);
-		if (!create_config(cd)) {
+		if (!create_config_file_in_staging_area(sd)) {
 			usys_log_error("Failed to create config for %s app version %s",
-                           cd->app, cd->version);
+                           sd->app, sd->version);
 		}
 		pthread_mutex_unlock(&mutex);
+        break;
+    default:
+        return USYS_FALSE;
 	}
 
 	/* Update session */
-	update_session(config, as);
+	update_config_session(config, sd);
+    free_session_data(sd);
 
-	/* In case valid commit opened new update session */
-	session = (ConfigSession*) config->updateSession;
-	if (session->count == session->expectedCount) {
-		if (session->configdVer) {
-			usys_log_debug("Received all expected %d configs", session->expectedCount);
-            free_config_data(cd);
-			return config_process_complete(config);
-		} else {
-			usys_log_error("Received %d configs but version.json for "
-                           "configd is missing", session->count);
-			usys_log_error("Cleaning session.");
-			clean_session(config->updateSession);
-			config->updateSession = NULL;
-            free_config_data(cd);
-            return USYS_FALSE;
-		}
-	}
+    /* if this was the last data, process the session */
+    if (session->expectedCount == session->receviedCount) {
+        return process_config_session(config);
+    }
 
     usys_log_debug("Received %d files and expected %d configs. Waiting for %d",
-                   session->count,
+                   session->receviedCount,
                    session->expectedCount,
-                   (session->expectedCount - session->count));
+                   (session->expectedCount - session->receviedCount));
 
 	return USYS_TRUE;
 }
 
-/* not monitoing anything app status for now */
-int configd_trigger_update(Config* c) {
+void free_session_data(SessionData *s) {
 
-	int statusCode = STATUS_NOK;
-	ConfigSession *s = (ConfigSession*)c->updateSession;
+    if (s == NULL) return;
 
-	for (int i = 0; i < s->count; i++) {
-		usys_log_debug("Triggering update for %s app to version %s ",
-                       s->apps[i]->app, s->version);
-
-		if (usys_strcmp(s->apps[i]->app, c->serviceName)) {
-
-			/* update runnig config */
-			read_active_config(&(c->activeConfig));
-		} else {
-			/* send start message to restart app */
-			statusCode = wc_send_restart_req(c, s->apps[i]->app);
-			if (statusCode != STATUS_OK) {
-				usys_log_error("Failed to exec app %s.", s->apps[i]->app);
-				continue;
-			}
-		}
-	}
-
-	return statusCode;
-}
-
-int read_active_config(ConfigData **c) {
-
-	ConfigData *cd = NULL;
-    char path[MAX_PATH] = {0};
-    char file[MAX_FILE_PATH] = {0};
-
-    sprintf(path, "%s/%s/active", DEF_CONFIG_DIR, SERVICE_CONFIG);
-
-    /* check if the path is valid - it is soft link to a valid
-     * directory and have non-zero metadata.json file therein 
-     */
-    if (!is_valid_softlink(path) || !has_nonzero_metadata_file(path)) {
-        return USYS_FALSE;
-    }
-
-    snprintf(file, sizeof(file), "%s/metadata.json", path);
-
-	/* Deserialize 'active' config */
-	if (!json_deserialize_active_config(file, &cd)) {
-		usys_log_error("Failed to read active config %s", file);
-		return STATUS_NOK;
-	}
-
-	/* clean and allocate */
-	if (*c) {
-		free_config_data(*c);
-		*c = NULL;
-	}
-
-	if (cd) {
-		*c = cd;
-		usys_log_debug("Active config set to %s.", (*c)->version);
-	}
-
-	return STATUS_OK;
+    usys_free(s->fileName);
+    usys_free(s->app);
+    usys_free(s->version);
+    usys_free(s->data);
 }

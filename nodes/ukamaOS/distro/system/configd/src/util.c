@@ -127,11 +127,11 @@ bool make_path(const char* path) {
 	return USYS_TRUE;
 }
 
-bool remove_config(ConfigData *c) {
+bool remove_config_file_from_staging_area(SessionData *s) {
 
 	char path[MAX_PATH] = {0};
 
-	sprintf(path,"%s/%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app, c->fileName);
+	sprintf(path,"%s/%d/%s/%s", CONFIG_TMP_PATH, s->timestamp, s->app, s->fileName);
 	if (remove(path) != 0) {
 		usys_log_error("Failed removing config: %s Error: %s",
                        path, strerror(errno));
@@ -307,50 +307,33 @@ int remove_dir(const char *path) {
 	return 0; // Directory and its contents deleted successfully
 }
 
-bool create_config(ConfigData* c) {
+bool create_config_file_in_staging_area(SessionData *s) {
 
-    char path[MAX_PATH] = {0};
     char fpath[MAX_FILE_PATH] = {0};
-
     FILE *file = NULL;
 
-    snprintf(path, sizeof(path), "%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
+    if (s->data == NULL) return USYS_FALSE;
 
-    if (remove(path) != 0 && errno != ENOENT) {
-        usys_log_error("Failed to remove existing directory %s Error: %s",
-                       path, strerror(errno));
-        return USYS_FALSE;
-    }
+    snprintf(fpath, sizeof(fpath), "%s/%d/%s/%s",
+             CONFIG_TMP_PATH, s->timestamp, s->app, s->fileName);
 
-    if (!make_path(path)) {
-        usys_log_error("Failed to create directory: %s Error: %s",
-                       path, strerror(errno));
-        return USYS_FALSE;
-    } else {
-        usys_log_debug("Directory %s created successfully", path);
-    }
-
-    snprintf(fpath, sizeof(fpath), "%s/%s", path, c->fileName);
-
-    file = fopen(fpath, "w");
+    /* overwrite an existing or create new file */
+    file = fopen(fpath, "w+");
     if (file == NULL) {
         usys_log_error("Failed to create file %s Error: %s",
                        fpath, strerror(errno));
         return USYS_FALSE;
     }
 
-    /* Write data to the file if data is not NULL */
-    if (c->data != NULL) {
-        if (fputs(c->data, file) == EOF) {
-            usys_log_error("Failed to write to file %s Error: %s",
-                           fpath, strerror(errno));
-            fclose(file);
-            return USYS_FALSE;
-        }
+    if (fputs(s->data, file) == EOF) {
+        usys_log_error("Failed to write to file %s Error: %s",
+                       fpath, strerror(errno));
+        fclose(file);
+        return USYS_FALSE;
     }
 
     fclose(file);
-    usys_log_debug("File %s created successfully", fpath);
+    usys_log_debug("File %s created/updated successfully", fpath);
 
     return USYS_TRUE;
 }
@@ -425,23 +408,3 @@ int store_config(char* version) {
 	return 0;
 }
 
-int prepare_for_new_config(ConfigData* c) {
-
-    char activePath[MAX_PATH] = {0};
-	char tempPath[MAX_PATH] = {0};
-
-	sprintf(tempPath,   "%s/%s/%s", CONFIG_TMP_PATH, c->version, c->app);
-    sprintf(activePath, "%s/%s/active", DEF_CONFIG_DIR, SERVICE_NAME);
-
-	/* remove old residue */
-	remove_dir(tempPath);
-
-	/* Create new folder and copy current running config */
-	if (clone_dir(activePath, tempPath, COPY_DIR) != 0) {
-		usys_log_error("Failed to prepare %s for download. Error: %s",
-                       tempPath, strerror(errno));
-		return -1;
-	}
-
-	return 0;
-}

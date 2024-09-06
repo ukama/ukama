@@ -125,74 +125,43 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 "file_count":4,
 "data": ""}
 */
+bool json_deserialize_session_data(JsonObj *json,
+                                   SessionData **sd) {
 
-bool json_deserialize_config_data(JsonObj *json,
-                                  ConfigData **cd) {
-
-    bool ret = USYS_TRUE;
-
+    int ret = USYS_TRUE;
+    
     if (json == NULL) return USYS_FALSE;
 
-    *cd = (ConfigData *)usys_calloc(1, sizeof(ConfigData));
-    if (*cd == NULL) {
+    *sd = (SessionData *)usys_calloc(1, sizeof(SessionData));
+    if (*sd == NULL) {
         usys_log_error("Error allocating memory of size: %d",
-                       sizeof(ConfigData));
+                       sizeof(SessionData));
         return USYS_FALSE;
     }
 
     ret &= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
-                          &(*cd)->fileName, NULL, NULL);
+                          &(*sd)->fileName, NULL, NULL);
     ret &= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
-                          &(*cd)->app, NULL, NULL);
+                          &(*sd)->app, NULL, NULL);
     ret &= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
-                          NULL, &(*cd)->timestamp, NULL);
+                          NULL, &(*sd)->timestamp, NULL);
     ret &= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
-                          NULL, &(*cd)->reason, NULL);
+                          NULL, &(*sd)->reason, NULL);
     ret &= get_json_entry(json, JTAG_DATA, JSON_STRING,
-                          &(*cd)->data, NULL, NULL);
+                          &(*sd)->data, NULL, NULL);
     ret &= get_json_entry(json, JTAG_VERSION, JSON_STRING,
-                          &(*cd)->version, NULL, NULL);
+                          &(*sd)->version, NULL, NULL);
     ret &= get_json_entry(json, JTAG_FILE_COUNT, JSON_INTEGER,
-                          NULL, &(*cd)->fileCount, NULL);
+                          NULL, &(*sd)->fileCount, NULL);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the config JSON");
         json_log(json);
-        free_config_data(*cd);
+        free_session_data(*sd);
         return USYS_FALSE;
     }
 
     return USYS_TRUE;
 }
 
-bool json_deserialize_active_config(char* name, ConfigData **cd) {
-
-    FILE   *file = NULL;
-    json_t *root = NULL;
-	json_error_t error;
-
-    if (name == NULL || cd == NULL) return USYS_FALSE;
-
-	file = fopen(name, "r");
-	if (file == NULL) {
-		usys_log_error("Failed opening file %s Error: %s", name, strerror(errno));
-		return USYS_FALSE;
-	}
-
-	root = json_loadf(file, 0, &error);
-	if (root == NULL) {
-		usys_log_error("Failed parsing json file %s. "
-                       "Error %s at line %d, column %d\n",
-                       name, error.text, error.line, error.column);
-		return USYS_FALSE;
-	}
-
-	if (!json_deserialize_config_data(root, cd)) {
-        json_decref(root);
-		return USYS_FALSE;
-	}
-
-    json_decref(root);
-	return USYS_TRUE;
-}
 

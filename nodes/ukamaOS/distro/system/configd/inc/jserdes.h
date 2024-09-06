@@ -16,16 +16,8 @@
 #include "usys_types.h"
 #include "session.h"
 
-#define EMPTY_STRING  ""
-
-#define JSON_OK                        STATUS_OK
-#define JSON_FAILURE                   STATUS_NOTOK
-#define JSON_ENCODING_OK               JSON_OK
-#define JSON_DECODING_OK               JSON_OK
-
-bool json_deserialize_config_data(JsonObj *json,ConfigData **cd);
+bool json_deserialize_config_data(JsonObj *json, SessionData **sd);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
-bool json_deserialize_active_config(char* file, ConfigData **cd);
 void json_log(json_t *json);
 void json_free(JsonObj** json);
 
