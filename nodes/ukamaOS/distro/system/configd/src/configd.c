@@ -26,38 +26,6 @@
 
 USysMutex mutex;
 
-static bool is_valid_softlink(char *path) {
-
-    struct stat pathStat;
-    char actualPath[MAX_PATH] = {0};
-
-    if (lstat(path, &pathStat) == -1) {
-        usys_log_error("Unable to get info about config dir: %s. Error: %s",
-                       path, strerror(errno));
-        return USYS_FALSE;
-    }
-
-    if (S_ISLNK(pathStat.st_mode)) {
-        if (realpath(path, actualPath) == NULL) {
-            usys_log_error("Unable to resolve the actual path for: %s. Error: %s",
-                           path, strerror(errno));
-            return USYS_FALSE;
-        }
-
-        if (stat(actualPath, &pathStat) == -1) {
-            usys_log_error("Unable to get stat about actual path: %s Error: %s",
-                           actualPath, strerror(errno));
-            return USYS_FALSE;
-        }
-
-        if (S_ISDIR(pathStat.st_mode)) {
-            return USYS_TRUE;
-        }
-    }
-
-    return USYS_FALSE;
-}
-
 static void free_session(ConfigSession *session) {
 
     if (session == NULL) return;
@@ -148,10 +116,10 @@ static bool create_config_staging_area(const char *app, int timestamp) {
 
 static bool update_symlinks(char *appName, int timestamp) {
 
-    char basePath[MAX_PATH]      = {0};
-    char activePath[MAX_PATH]    = {0};
-    char previousPath[MAX_PATH]  = {0};
-    char newActivePath[MAX_PATH] = {0};
+    char basePath[MAX_PATH]           = {0};
+    char activePath[MAX_FILE_PATH]    = {0};
+    char previousPath[MAX_FILE_PATH]  = {0};
+    char newActivePath[MAX_FILE_PATH] = {0};
 
     char currentActivePath[MAX_PATH], currentPreviousPath[MAX_PATH];
 
@@ -233,8 +201,6 @@ static bool process_config_session(Config *config) {
 }
 
 static bool is_valid_session_data(SessionData *sd, Config *config) {
-
-    ConfigSession *session = NULL;
 
     if (sd == NULL)           return USYS_FALSE;
     if (sd->timestamp <= 0)   return USYS_FALSE;
@@ -323,7 +289,7 @@ bool process_received_config(JsonObj *json, Config *config) {
         pthread_mutex_unlock(&mutex);
     }
 
-    if (!decode_data(sd->data)) {
+    if (!decode_data(sd)) {
         usys_log_error("Unable to decode recevied data");
         return USYS_FALSE;
     }

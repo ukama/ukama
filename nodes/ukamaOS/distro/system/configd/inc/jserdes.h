@@ -16,7 +16,7 @@
 #include "usys_types.h"
 #include "session.h"
 
-bool json_deserialize_config_data(JsonObj *json, SessionData **sd);
+bool json_deserialize_session_data(JsonObj *json, SessionData **sd);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
 void json_log(json_t *json);
 void json_free(JsonObj** json);

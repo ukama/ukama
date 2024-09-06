@@ -187,6 +187,7 @@ int clone_file(const char *source, const char *destination, bool flag) {
  * Flag false => copy
  */
 int clone_dir(const char *source, const char *destination, bool flag) {
+
 	struct dirent *entry;
 	struct stat st;
 	DIR *dir = opendir(source);

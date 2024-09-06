@@ -14,6 +14,8 @@
 
 #include "jansson.h"
 #include "configd.h"
+#include "session.h"
+
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
@@ -26,7 +28,9 @@ bool make_path(const char* path);
 int move_dir(const char *source, const char *destination);
 int remove_dir(const char *path);
 int clean_empty_dir(char* path);
-int restore_config() ;
-int store_config(char* version);
+
+int clone_dir(const char *source, const char *destination, bool flag);
+bool remove_config_file_from_staging_area(SessionData *s);
+bool create_config_file_in_staging_area(SessionData *s);
 
 #endif /* UTIL_H_ */

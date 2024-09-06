@@ -125,8 +125,7 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 "file_count":4,
 "data": ""}
 */
-bool json_deserialize_session_data(JsonObj *json,
-                                   SessionData **sd) {
+bool json_deserialize_session_data(JsonObj *json, SessionData **sd) {
 
     int ret = USYS_TRUE;
     
