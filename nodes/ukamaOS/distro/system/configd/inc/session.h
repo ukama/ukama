@@ -9,7 +9,6 @@
 #ifndef INC_SESSION_H_
 #define INC_SESSION_H_
 
-#include "config_macros.h"
 #include "usys_types.h"
 
 typedef enum {
@@ -41,7 +40,7 @@ typedef struct {
 
 typedef struct {
 
-    AppData  *apps[MAX_APPS];
+    AppData  *apps[32];
     int      timestamp;
     int      expectedCount;
     int      receviedCount;

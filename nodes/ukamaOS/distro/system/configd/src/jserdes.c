@@ -8,7 +8,6 @@
 
 #include "jserdes.h"
 #include "configd.h"
-#include "errorcode.h"
 #include "json_types.h"
 #include "web_service.h"
 

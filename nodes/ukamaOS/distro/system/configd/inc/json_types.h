@@ -9,7 +9,6 @@
 #ifndef INC_JSON_TYPES_H_
 #define INC_JSON_TYPES_H_
 
-#include "config_macros.h"
 #include "usys_types.h"
 
 #include "jansson.h"
