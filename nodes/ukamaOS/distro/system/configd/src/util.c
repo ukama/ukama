@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include "util.h"
-#include "config_macros.h"
 
 #define MOVE_DIR true
 #define COPY_DIR false
@@ -54,77 +53,6 @@ int is_dir_empty(const char *directoryPath) {
 
     // If there are no entries other than "." and "..", the directory is empty
     return entriesCount == 0;
-}
-
-int clean_empty_dir(char* path) {
-	struct dirent *entry;
-	struct stat st;
-	DIR *dir = opendir(path);
-	usys_log_debug("Removing empty directories from %s", path);
-
-	while ((entry = readdir(dir))) {
-		// Skip . and ..
-		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-			continue;
-
-		char sourcePath[512];
-		snprintf(sourcePath, sizeof(sourcePath), "%s/%s", path, entry->d_name);
-
-		if (lstat(sourcePath, &st) == -1) {
-			usys_log_error("Failed getting file status for %s", sourcePath);
-			perror("Error getting file status");
-			return -1;
-		}
-
-		if (S_ISDIR(st.st_mode)) {
-			// If it's a directory, recursively move it
-			if (is_dir_empty(sourcePath)) {
-				remove_dir(sourcePath);
-			} else {
-				clean_empty_dir(sourcePath);
-			}
-		}
-	}
-
-	closedir(dir);
-	return 0;
-
-}
-
-bool make_path(const char* path) {
-
-	char* p = NULL;
-	char* token = NULL;
-	char pathCopy[MAX_PATH];
-	char npath[MAX_PATH]={0};
-
-	/* Create a copy of the path to avoid modifying the original (/
-	usys_strncpy(pathCopy, path, sizeof(pathCopy));
-
-	/* Tokenize the path by "/" */
-	p = pathCopy;
-	while ((token = strsep(&p, "/")) != NULL) {
-		if (usys_strlen(token) == 0) {
-			continue;
-		}
-
-		/* Append the token to the current path */
-		usys_strcat(npath, "/");
-		usys_strcat(npath, token);
-
-		/* Check if the directory already exists */
-		struct stat st;
-		if (stat(npath, &st) != 0) {
-			/* If it doesn't exist, create it */
-			if (mkdir(npath, 0777) != 0) {
-				usys_log_error("Failed to create directory: %s Error: %s",
-                               npath, strerror(errno));
-				return USYS_FALSE;
-			}
-		}
-	}
-
-	return USYS_TRUE;
 }
 
 bool remove_config_file_from_staging_area(SessionData *s) {
@@ -338,74 +266,3 @@ bool create_config_file_in_staging_area(SessionData *s) {
 
     return USYS_TRUE;
 }
-
-int create_backup_config(){
-
-	remove_dir(CONFIG_OLD);
-	if (clone_dir(CONFIG_BACKUP, CONFIG_OLD, MOVE_DIR) == 0) {
-		usys_log_debug("Moved backup config to old config.\n");
-	} else {
-		usys_log_error("failed to create old config.\n");
-		perror("error");
-		return -1;
-	}
-
-	remove_dir(CONFIG_BACKUP);
-	if (clone_dir(CONFIG_RUNNING, CONFIG_BACKUP, MOVE_DIR) == 0) {
-		usys_log_debug("Created a backup config to old config.\n");
-	}else {
-		usys_log_error("failed to create backup config.\n");
-		perror("error");
-		return -1;
-	}
-
-	return 0;
-}
-
-int restore_config() {
-
-	remove_dir(CONFIG_RUNNING);
-	if (clone_dir(CONFIG_BACKUP, CONFIG_RUNNING, MOVE_DIR) == 0) {
-		usys_log_debug("Restore running config done.\n");
-	}else {
-		usys_log_error("failed to restore running config.\n");
-		perror("error");
-		return -1;
-	}
-
-	remove_dir(CONFIG_BACKUP);
-	if (clone_dir(CONFIG_OLD, CONFIG_BACKUP, MOVE_DIR ) == 0) {
-		usys_log_debug("Restore backup config done.\n");
-	}else {
-		usys_log_error("failed to restore backup config.\n");
-		perror("error");
-		return -1;
-	}
-
-	return 0;
-
-}
-
-int store_config(char* version) {
-	char sPath[512] = {'\0'};
-	sprintf(sPath,"%s/%s", CONFIG_TMP_PATH, version);
-
-	/* Create a backup */
-	if (create_backup_config() != 0) {
-		usys_log_error("Failed to move old config for backup. \n");
-		perror("error");
-		return -1;
-	}
-
-	/* Create a config */
-	remove_dir(CONFIG_RUNNING);
-	if (clone_dir(sPath, CONFIG_RUNNING, MOVE_DIR) != 0) {
-		usys_log_error("Failed to create config for backup. Restoring config..\n");
-		perror("error");
-		restore_config();
-		return -1;
-	}
-
-	return 0;
-}
-

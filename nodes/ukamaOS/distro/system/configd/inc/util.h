@@ -24,8 +24,6 @@
 #include "usys_getopt.h"
 
 bool is_valid_json(const char *json_string);
-bool make_path(const char* path);
-int move_dir(const char *source, const char *destination);
 int remove_dir(const char *path);
 int clean_empty_dir(char* path);
 

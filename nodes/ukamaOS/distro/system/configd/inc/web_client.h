@@ -10,7 +10,6 @@
 #define WEB_CLIENT_H_
 
 #include "config.h"
-#include "config_macros.h"
 #include "web.h"
 #include "json_types.h"
 

@@ -8,7 +8,6 @@
 
 #include "config.h"
 #include "configd.h"
-#include "config_macros.h"
 #include "service.h"
 #include "web.h"
 #include "web_client.h"
