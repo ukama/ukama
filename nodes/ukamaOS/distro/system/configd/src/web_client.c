@@ -15,7 +15,7 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
+static bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
 	*httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
 	if (*httpResp == NULL) {
@@ -35,6 +35,7 @@ bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
         ulfius_clean_response(*httpResp);
         usys_free(*httpResp);
+        *httpResp = NULL;
 
         return USYS_FALSE;
 	}
@@ -88,8 +89,7 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
 		return ret;
 	}
 
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
+	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE) {
 		usys_log_error("Failed to send http request.");
 		goto cleanup;
 	}
