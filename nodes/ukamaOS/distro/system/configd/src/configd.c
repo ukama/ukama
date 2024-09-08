@@ -210,8 +210,8 @@ static bool is_valid_session_data(SessionData *sd, Config *config) {
     if (sd->version == NULL)  return USYS_FALSE;
     if (sd->data == NULL)     return USYS_FALSE;
 
-    if (sd->reason != CONFIG_ADD    ||
-        sd->reason != CONFIG_DELETE ||
+    if (sd->reason != CONFIG_ADD    &&
+        sd->reason != CONFIG_DELETE &&
         sd->reason != CONFIG_UPDATE) return USYS_FALSE;
 
     // TO-DO check against stater.d if the app is valid

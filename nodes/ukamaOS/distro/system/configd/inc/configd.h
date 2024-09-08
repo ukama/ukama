@@ -41,7 +41,6 @@
 #define DEF_CONFIG_DIR   "/ukama/configs"
 #define CONFIG_TMP_PATH  "/tmp"
 
-
 bool process_received_config(JsonObj *json, Config *config);
 void free_session_data(SessionData *d);
 
