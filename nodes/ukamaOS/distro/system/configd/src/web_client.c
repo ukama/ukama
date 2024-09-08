@@ -7,10 +7,10 @@
  */
 
 #include "httpStatus.h"
-
 #include "web_client.h"
 #include "configd.h"
 #include "jserdes.h"
+
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
@@ -154,11 +154,12 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-bool wc_send_app_restart_request(Config *config, char *app){
+bool wc_send_app_restart_request(Config *config, char *app) {
 
 	UResponse *httpResp = NULL;
 	URequest  *httpReq  = NULL;
 	char url[MAX_URL] = {0};
+    bool result;
 
 	snprintf(url, sizeof(url), "http://%s:%d/v1/restart/%s/%s",
              config->starterHost,
@@ -178,14 +179,54 @@ bool wc_send_app_restart_request(Config *config, char *app){
 		return USYS_FALSE;
 	}
 
+    result = (httpResp->status != HttpStatus_Accepted) ?
+        USYS_TRUE : USYS_FALSE;
+
     ulfius_clean_request(httpReq);
     ulfius_clean_response(httpResp);
     usys_free(httpReq);
     usys_free(httpResp);
 
-	if (httpResp->status != HttpStatus_Accepted) {
+	return result;
+}
+
+bool wc_is_app_valid(Config *config, char *app) {
+
+	UResponse *httpResp = NULL;
+	URequest  *httpReq  = NULL;
+	char url[MAX_URL] = {0};
+    bool result;
+
+	snprintf(url, sizeof(url), "http://%s:%d/v1/status/%s/%s",
+             config->starterHost,
+             config->starterPort,
+             DEF_SPACE_NAME,
+             app);
+
+	httpReq = wc_create_http_request(url, "GET", NULL);
+	if (!httpReq) {
 		return USYS_FALSE;
 	}
 
-	return USYS_TRUE;
+	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE){
+		usys_log_error("Failed to send http request");
+        ulfius_clean_request(httpReq);
+		usys_free(httpReq);
+		return USYS_FALSE;
+	}
+
+    result = (httpResp->status != HttpStatus_OK) ? USYS_TRUE : USYS_FALSE;
+
+    ulfius_clean_request(httpReq);
+    ulfius_clean_response(httpResp);
+    usys_free(httpReq);
+    usys_free(httpResp);
+
+    if (result) {
+        usys_log_debug("App found by starter.d. Is valid. :%s", app);
+    } else {
+        usys_log_error("App not found by stater.d: %s", app);
+    }
+
+	return result;
 }

@@ -12,7 +12,6 @@
 #include <errno.h>
 
 #include "configd.h"
-
 #include "base64.h"
 #include "util.h"
 #include "web_client.h"
@@ -214,8 +213,9 @@ static bool is_valid_session_data(SessionData *sd, Config *config) {
         sd->reason != CONFIG_DELETE &&
         sd->reason != CONFIG_UPDATE) return USYS_FALSE;
 
-    // TO-DO check against stater.d if the app is valid
-    // /v1/status/:space/:name
+    if (wc_is_app_valid(config, sd->app) == USYS_FALSE) {
+        return USYS_FALSE;
+    }
 
     if (config->updateSession) {
         if (sd->timestamp < ((ConfigSession *)config->updateSession)->timestamp) {

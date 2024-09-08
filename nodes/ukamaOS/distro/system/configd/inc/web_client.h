@@ -15,6 +15,7 @@
 
 int wc_read_node_info(Config* config);
 bool wc_send_app_restart_request(Config *config, char *app);
+bool wc_is_app_valid(Config *config, char *app);
 int get_nodeid_from_noded(Config *config);
 
 #endif /* INC_WEB_CLIENT_H_ */
