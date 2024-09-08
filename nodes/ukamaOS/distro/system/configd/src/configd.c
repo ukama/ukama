@@ -32,10 +32,10 @@ static void free_session(ConfigSession *session) {
 
     for (int index; index < session->receviedCount; index++) {
 
-        usys_free(session->apps[index]->name);
-        usys_free(session->apps[index]->fileName);
-        usys_free(session->apps[index]->data);
-        usys_free(session->apps[index]->version);
+        usys_free(session->apps[index].name);
+        usys_free(session->apps[index].fileName);
+        usys_free(session->apps[index].data);
+        usys_free(session->apps[index].version);
     }
 
     usys_free(session);
@@ -52,11 +52,11 @@ static ConfigSession *create_new_session(SessionData *sd) {
         return NULL;
     }
 
-    session->apps[0]->name     = strdup(sd->app);
-    session->apps[0]->version  = strdup(sd->version);
-    session->apps[0]->fileName = strdup(sd->fileName);
-    session->apps[0]->data     = strdup(sd->data);
-    session->apps[0]->reason   = sd->reason;
+    session->apps[0].name     = strdup(sd->app);
+    session->apps[0].version  = strdup(sd->version);
+    session->apps[0].fileName = strdup(sd->fileName);
+    session->apps[0].data     = strdup(sd->data);
+    session->apps[0].reason   = sd->reason;
 
     session->timestamp     = sd->timestamp;
     session->expectedCount = sd->fileCount;
@@ -73,11 +73,11 @@ static void update_config_session(Config *c, SessionData *sd) {
     s     = (ConfigSession *) c->updateSession;
     index = s->receviedCount;
 
-    s->apps[index]->name     = strdup(sd->app);
-    s->apps[index]->version  = strdup(sd->version);
-    s->apps[index]->fileName = strdup(sd->fileName);
-    s->apps[index]->data     = strdup(sd->data);
-    s->apps[index]->reason   = sd->reason;
+    s->apps[index].name     = strdup(sd->app);
+    s->apps[index].version  = strdup(sd->version);
+    s->apps[index].fileName = strdup(sd->fileName);
+    s->apps[index].data     = strdup(sd->data);
+    s->apps[index].reason   = sd->reason;
 
     s->receviedCount++;
 }
@@ -169,29 +169,29 @@ static bool process_config_session(Config *config) {
     for (index=0; index < s->receviedCount; index++) {
 
         snprintf(srcPath, sizeof(srcPath), "%s/%d/%s",
-                 CONFIG_TMP_PATH, s->timestamp, s->apps[index]->name);
+                 CONFIG_TMP_PATH, s->timestamp, s->apps[index].name);
         snprintf(destPath, sizeof(destPath), "%s/%s/archive/%d",
-                 DEF_CONFIG_DIR, s->apps[index]->name, s->timestamp);
+                 DEF_CONFIG_DIR, s->apps[index].name, s->timestamp);
 
         /* copy the config from staging area to the app's config */
         clone_dir(srcPath, destPath, false);
 
         /* update the active and previous symlink */
-        update_symlinks(s->apps[index]->name, s->timestamp);
+        update_symlinks(s->apps[index].name, s->timestamp);
 
         /* remove the staging area */
         remove_dir(srcPath);
 
         /* send message to starter.d to restart the app */
-        if (wc_send_app_restart_request(config, s->apps[index]->name) == USYS_FALSE) {
+        if (wc_send_app_restart_request(config, s->apps[index].name) == USYS_FALSE) {
             usys_log_error("Unable to restart the app: %s",
-                           s->apps[index]->name);
+                           s->apps[index].name);
             ret = USYS_FALSE;
             continue;
         }
 
         usys_log_debug("App restart accepted by starter.d: %s",
-                       s->apps[index]->name);
+                       s->apps[index].name);
     }
 
 	free_session(s);
@@ -273,6 +273,7 @@ bool process_received_config(JsonObj *json, Config *config) {
 
     /* Check if the recevied session data is valid */
     if (!is_valid_session_data(sd, config)) {
+        free_session_data(sd);
         return USYS_FALSE;
     }
 
@@ -283,6 +284,7 @@ bool process_received_config(JsonObj *json, Config *config) {
         if (!session) {
             usys_log_error("failed to create new session.");
             pthread_mutex_unlock(&mutex);
+            free_session_data(sd);
             return USYS_FALSE;
         }
         config->updateSession = session;
@@ -291,12 +293,17 @@ bool process_received_config(JsonObj *json, Config *config) {
 
     if (!decode_data(sd)) {
         usys_log_error("Unable to decode recevied data");
+        free_session_data(sd);
         return USYS_FALSE;
     }
 
     /* create config staging area for valid session */
-    create_config_staging_area(sd->app,
-                               ((ConfigSession *)config->updateSession)->timestamp);
+    if (!create_config_staging_area(sd->app,
+                      ((ConfigSession *)config->updateSession)->timestamp)) {
+        usys_log_error("Unable to create staging area for app");
+        free_session_data(sd);
+        return USYS_FALSE;
+    }
 
     switch(sd->reason) {
     case CONFIG_DELETE:
@@ -343,4 +350,6 @@ void free_session_data(SessionData *s) {
     usys_free(s->app);
     usys_free(s->version);
     usys_free(s->data);
+
+    usys_free(s);
 }

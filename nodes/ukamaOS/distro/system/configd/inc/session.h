@@ -40,7 +40,7 @@ typedef struct {
 
 typedef struct {
 
-    AppData  *apps[32];
+    AppData  apps[32];
     int      timestamp;
     int      expectedCount;
     int      receviedCount;
