@@ -44,7 +44,7 @@ type HookServer struct {
 
 func NewHookServer(orgName string, pawapayClient clients.PawapayClient, paymentsClient clients.PaymentsClient,
 	webhooksClient clients.WebhooksClient, cdrScheduler scheduler.HookScheduler, msgBus mb.MsgBusServiceClient) *HookServer {
-	return &HookServer{
+	h := &HookServer{
 		orgName:        orgName,
 		pawapayClient:  pawapayClient,
 		paymentsClient: paymentsClient,
@@ -54,16 +54,18 @@ func NewHookServer(orgName string, pawapayClient clients.PawapayClient, payments
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
 			SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
+
+	_, err := h.startScheduler()
+	if err != nil {
+		log.Warnf("failed to auto start webhook scheduler. You need to start RPC manually. Err: %v",
+			err)
+	}
+
+	return h
 }
 
 func (p *HookServer) StartScheduler(ctx context.Context, req *pb.StartRequest) (*pb.StartResponse, error) {
-	err := p.cdrScheduler.Start(p.setActiveTaskFunc())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"an unexpected error has occured while starting scheduler: %v", err)
-	}
-
-	return &pb.StartResponse{}, nil
+	return p.startScheduler()
 }
 
 func (p *HookServer) StopScheduler(ctx context.Context, req *pb.StopRequest) (*pb.StopResponse, error) {
@@ -106,4 +108,14 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 	}
 
 	return nil
+}
+
+func (p *HookServer) startScheduler() (*pb.StartResponse, error) {
+	err := p.cdrScheduler.Start(p.setActiveTaskFunc())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"an unexpected error has occured while starting scheduler: %v", err)
+	}
+
+	return &pb.StartResponse{}, nil
 }
