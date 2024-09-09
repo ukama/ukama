@@ -45,6 +45,7 @@ type Users struct {
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
+	NodeId		 string
 	UserId       string
 	Role         roles.RoleType `gorm:"type:uint;not null;default:0"`
 	CreatedAt    time.Time

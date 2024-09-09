@@ -20,6 +20,7 @@ import (
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg"
@@ -97,6 +98,11 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 
 	var ouuid, nuuid, suuid, uuuid uuid.UUID
 	var err error
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
 
 	if req.GetOrgId() != "" {
 		ouuid, err = uuid.FromString(req.GetOrgId())
@@ -145,7 +151,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		roleType = upb.RoleType(upb.RoleType_value[resp.Member.Role])
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(roleType))
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(),nId.String(), uint8(roleType))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -212,12 +218,16 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	return usersList
 }
 
-func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, nodeId string ,scope notif.NotificationScope) ([]*db.Users, error) {
 	var userList []*db.Users
 	var err error
 	roleTypes := notif.NotificationScopeToRoles[scope]
 	done := make(chan bool)
-
+	nId, err := ukama.ValidateNodeId(nodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
 	go func() {
 
 		/* user specific notification */
@@ -238,6 +248,16 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 			user, err := n.userRepo.GetSubscriber(subscriberId)
 			if err != nil {
 				log.Errorf("Failed to get user with subscriberID %s.Error: %+v", subscriberId, err)
+			} else {
+				userList = append(userList, user)
+			}
+		}
+
+		if nId != "" {
+			log.Debugf("Getting node with id: %s", nodeId)
+			user, err := n.userRepo.GetNode(nId.String())
+			if err != nil {
+				log.Errorf("Failed to get user with nodeID %s.Error: %+v", nodeId, err)
 			} else {
 				userList = append(userList, user)
 			}
@@ -267,7 +287,7 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 		log.Errorf("Error adding notification to db %v", err)
 	}
 
-	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.Scope)
+	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.NodeId,dn.Scope)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)

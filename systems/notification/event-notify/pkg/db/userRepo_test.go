@@ -204,8 +204,8 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role","node_id", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId,user.NodeId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId, user.SubscriberId, user.UserId, user.Role).
 			WillReturnRows(rows)
@@ -227,7 +227,7 @@ func TestUserRepo_GetUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, uint8(roles.TYPE_OWNER))
+		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.NodeId,uint8(roles.TYPE_OWNER))
 
 		// Assert
 		assert.NoError(t, err)
