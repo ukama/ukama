@@ -30,7 +30,7 @@ static void free_session(ConfigSession *session) {
 
     if (session == NULL) return;
 
-    for (int index; index < session->receviedCount; index++) {
+    for (int index=0; index < session->receviedCount; index++) {
 
         usys_free(session->apps[index].name);
         usys_free(session->apps[index].fileName);
