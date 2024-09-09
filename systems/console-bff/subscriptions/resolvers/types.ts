@@ -245,6 +245,9 @@ export class GetNotificationsInput {
   @Field()
   subscriberId: string;
 
+  @Field()
+  nodeId: string;
+
   @Field(() => ROLE_TYPE)
   role: ROLE_TYPE;
 }

@@ -32,7 +32,8 @@ message GetAllRequest {
     string orgId = 1 [json_name = "org_id"];
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
-    string userId = 4 [json_name = "user_id"];
+    string userId = 4 [json_name = "user_id"]; 
+    string nodeId = 5 [json_name = "node_id"];      
 }
 
 message GetAllResponse {

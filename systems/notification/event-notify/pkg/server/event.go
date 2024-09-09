@@ -177,7 +177,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)

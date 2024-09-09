@@ -24,7 +24,6 @@ const (
 	EventInvalid EventId = iota
 	EventOrgAdd
 	EventUserAdd
-	EventNodeStateCreate
 	EventUserDeactivate
 	EventUserDelete
 	EventMemberCreate
@@ -70,7 +69,6 @@ const (
 )
 
 var EventRoutingKey = [...]string{
-	EventNodeStateCreate:"event.cloud.local.{{ .Org}}.node.state..add",
 	EventAddSite:			"event.cloud.local.{{ .Org}}.registry.site.site.add",
 	EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",

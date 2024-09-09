@@ -24,8 +24,9 @@ type UserRepo interface {
 	GetUser(userId string) (*Users, error)
 	GetAllUsers(orgId string) ([]*Users, error)
 	GetSubscriber(subscriberId string) (*Users, error)
+	GetNode(nodeId string) (*Users, error)
 	GetUserWithRoles(orgId string, roles []roles.RoleType) ([]*Users, error)
-	GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error)
+	GetUsers(orgId string, networkId string, subscriberId string, nodeId,userId string, role uint8) ([]*Users, error)
 }
 
 type userRepo struct {
@@ -43,7 +44,7 @@ func (r *userRepo) Add(user *Users) (err error) {
 	return d.Error
 }
 
-func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error) {
+func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string,nodeId string, role uint8) ([]*Users, error) {
 	var users []*Users
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
@@ -62,6 +63,10 @@ func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string,
 
 	if userId != "" && userId != EmptyUUID {
 		tx = tx.Where("user_id = ?", userId)
+	}
+
+	if nodeId != "" {
+		tx = tx.Where("node_id = ?", nodeId)
 	}
 
 	if role != uint8(roles.TYPE_INVALID) {
@@ -135,6 +140,28 @@ func (r *userRepo) GetSubscriber(subscriberId string) (*Users, error) {
 		tx = tx.Where("subscriber_id = ?", subscriberId)
 	} else {
 		return nil, fmt.Errorf("invalid uuid %s", subscriberId)
+	}
+
+	result := tx.Find(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return user, nil
+}
+func (r *userRepo) GetNode(nodeId string) (*Users, error) {
+	var user *Users
+
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+
+	if nodeId != ""  {
+		tx = tx.Where("node_id = ?", nodeId)
+	} else {
+		return nil, fmt.Errorf("invalid uuid %s", nodeId)
 	}
 
 	result := tx.Find(&user)
