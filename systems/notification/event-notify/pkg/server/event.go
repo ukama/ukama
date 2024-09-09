@@ -517,6 +517,19 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateChange]):
+		c := evt.EventToEventConfig[evt.EventNodeStateChange]
+		msg, err := epb.UnmarshalNodeStateChangeEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMarkupUpdate]):
 		c := evt.EventToEventConfig[evt.EventMarkupUpdate]

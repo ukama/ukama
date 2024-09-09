@@ -24,11 +24,13 @@ const (
 	EventInvalid EventId = iota
 	EventOrgAdd
 	EventUserAdd
+	EventNodeStateCreate
 	EventUserDeactivate
 	EventUserDelete
 	EventMemberCreate
 	EventMemberDelete
 	EventAddSite
+	EventNodeStateChange
 	EventNetworkAdd
 	EventNetworkDelete
 	EventNodeCreate
@@ -68,7 +70,9 @@ const (
 )
 
 var EventRoutingKey = [...]string{
+	EventNodeStateCreate:"event.cloud.local.{{ .Org}}.node.state..add",
 	EventAddSite:			"event.cloud.local.{{ .Org}}.registry.site.site.add",
+	EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
@@ -114,6 +118,15 @@ var EventRoutingKey = [...]string{
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
+	
+	EventNodeStateChange: {
+		Key:         EventNodeStateChange,
+		Name:        "EventNodeStateChange",
+		Title:       "Node State Change Notifier",
+		Description: "Notifies about changes in the state of a node each time it occurs.",
+		Scope:       notif.SCOPE_NODE,
+		Type:        TypeDefault,
+	},
 	EventOrgAdd: {
 		Key:         EventOrgAdd,
 		Name:        "EventOrgAdd",
