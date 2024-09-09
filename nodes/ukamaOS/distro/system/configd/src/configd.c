@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <libgen.h>
 
 #include "configd.h"
 #include "base64.h"
@@ -64,46 +65,48 @@ static ConfigSession *create_new_session(SessionData *sd) {
 	return session;
 }
 
-static void update_config_session(Config *c, SessionData *sd) {
-
-    ConfigSession *s = NULL;
-    int index = 0;
-
-    s     = (ConfigSession *) c->updateSession;
-    index = s->receviedCount;
-
-    s->apps[index].name     = strdup(sd->app);
-    s->apps[index].version  = strdup(sd->version);
-    s->apps[index].fileName = strdup(sd->fileName);
-    s->apps[index].data     = strdup(sd->data);
-    s->apps[index].reason   = sd->reason;
-
-    s->receviedCount++;
-}
-
 static bool create_config_staging_area(const char *app, int timestamp) {
 
     char path[PATH_MAX]     = {0};
+    char linkPath[128]      = {0};
     char realPath[PATH_MAX] = {0};
     char destPath[PATH_MAX] = {0};
+    char resolvedLinkPath[PATH_MAX] = {0};
 
     ssize_t len = 0;
 
     snprintf(path, sizeof(path), "%s/%s/active", DEF_CONFIG_DIR, app);
-    snprintf(destPath, sizeof(destPath), "%s/%d/%s",
-             CONFIG_TMP_PATH, timestamp, app);
+    snprintf(destPath, sizeof(destPath), "%s/%d/%s", CONFIG_TMP_PATH, timestamp, app);
 
-    // Resolve the symlink to find the actual path
-    len = readlink(path, realPath, sizeof(realPath) - 1);
+    /* Resolve the symlink to find the actual path */
+    len = readlink(path, linkPath, sizeof(linkPath) - 1);
     if (len == -1) {
-        usys_log_error("symlink to actual path for app: %s Error: %s",
-                       app, strerror(errno));
+        usys_log_error("Error reading symlink for app: %s: %s", app, strerror(errno));
         return USYS_FALSE;
     }
-    realPath[len] = '\0';
+    linkPath[len] = '\0';
+
+    /* Check if the symlink is relative or absolute */
+    if (linkPath[0] == '/') {
+        snprintf(resolvedLinkPath, sizeof(resolvedLinkPath), "%s", linkPath);
+    } else {
+        char pathCopy[PATH_MAX] = {0};
+        snprintf(pathCopy, sizeof(pathCopy), "%s", path);
+        char *dir = dirname(pathCopy);
+
+        snprintf(resolvedLinkPath, sizeof(resolvedLinkPath), "%s/%s", dir, linkPath);
+
+        if (realpath(resolvedLinkPath, realPath) == NULL) {
+            usys_log_error("Error resolving real path for: %s. Error: %s",
+                           resolvedLinkPath, strerror(errno));
+            return USYS_FALSE;
+        }
+
+        snprintf(resolvedLinkPath, sizeof(resolvedLinkPath), "%s", realPath);
+    }
 
     /* create (if needed) and copy 'active' config to staging area */
-    if (clone_dir(realPath, destPath, false) == 0) {
+    if (clone_dir(resolvedLinkPath, destPath, false) == 0) {
         usys_log_debug("Staging area successful for app: %s", app);
     } else {
         usys_log_error("Unable to create staging area for app: %s", app);
@@ -120,31 +123,56 @@ static bool update_symlinks(char *appName, int timestamp) {
     char previousPath[MAX_FILE_PATH]  = {0};
     char newActivePath[MAX_FILE_PATH] = {0};
 
-    char currentActivePath[MAX_PATH], currentPreviousPath[MAX_PATH];
+    char currentActivePath[MAX_PATH] = {0}, currentPreviousPath[MAX_PATH] = {0};
 
     snprintf(basePath,      sizeof(basePath),      "%s/%s", DEF_CONFIG_DIR, appName);
     snprintf(activePath,    sizeof(activePath),    "%s/active", basePath);
-    snprintf(previousPath,  sizeof(previousPath),  "%s/previous", basePath);
+    snprintf(previousPath,  sizeof(previousPath),  "%s/backup", basePath);
     snprintf(newActivePath, sizeof(newActivePath), "%s/archive/%d", basePath, timestamp);
 
     if (realpath(activePath, currentActivePath) == NULL) {
-        usys_log_error("Error reading active symlink for app: %s", appName);
+        usys_log_error("Error reading active symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
         return USYS_FALSE;
     }
 
     if (realpath(previousPath, currentPreviousPath) == NULL) {
-        usys_log_error("Error reading previous symlink for app: %s", appName);
+        usys_log_error("Error reading previous symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
         return USYS_FALSE;
     }
 
-    /* Now create symlink, if fails revert back */
-    if (symlink(currentActivePath, previousPath) != 0 ||
-        symlink(newActivePath,     activePath) != 0 ){
+    if (unlink(previousPath) != 0 && errno != ENOENT) {
+        usys_log_error("Failed to remove old previous symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
+        return USYS_FALSE;
+    }
 
-        usys_log_error("Unable to change the active/previous for app: %s", appName);
+    if (symlink(currentActivePath, previousPath) != 0) {
+        usys_log_error("Unable to create new previous symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
+        return USYS_FALSE;
+    }
 
-        symlink(activePath, currentActivePath);
-        symlink(previousPath, currentPreviousPath);
+    if (unlink(activePath) != 0 && errno != ENOENT) {
+        usys_log_error("Failed to remove old active symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
+
+        /* Rollback: restore the old previous symlink */
+        unlink(previousPath);
+        symlink(currentPreviousPath, previousPath);
+
+        return USYS_FALSE;
+    }
+
+    if (symlink(newActivePath, activePath) != 0) {
+        usys_log_error("Unable to create new active symlink for app: %s. Error: %s",
+                       appName, strerror(errno));
+
+        /* Rollback: restore the old symlinks */
+        unlink(previousPath);
+        symlink(currentPreviousPath, previousPath);
+        symlink(currentActivePath, activePath);
 
         return USYS_FALSE;
     }
@@ -326,7 +354,7 @@ bool process_received_config(JsonObj *json, Config *config) {
 	}
 
 	/* Update session */
-	update_config_session(config, sd);
+    session->receviedCount++;
     free_session_data(sd);
 
     /* if this was the last data, process the session */

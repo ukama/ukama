@@ -55,6 +55,40 @@ int is_dir_empty(const char *directoryPath) {
     return entriesCount == 0;
 }
 
+static int mkdir_p(const char *path, mode_t mode) {
+
+    char temp[PATH_MAX];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(temp, sizeof(temp), "%s", path);
+    len = strlen(temp);
+    if (len > 0 && temp[len - 1] == '/') {
+        temp[len - 1] = 0;
+    }
+
+    for (p = temp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = 0;
+
+            if (mkdir(temp, mode) != 0) {
+                if (errno != EEXIST) {
+                    return -1;
+                }
+            }
+            *p = '/';
+        }
+    }
+
+    if (mkdir(temp, mode) != 0) {
+        if (errno != EEXIST) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 bool remove_config_file_from_staging_area(SessionData *s) {
 
 	char path[MAX_PATH] = {0};
@@ -129,9 +163,8 @@ int clone_dir(const char *source, const char *destination, bool flag) {
 
 	// Create the destination directory
 	if (stat(destination, &st) != 0) {
-		if (mkdir(destination, 0777) != 0) {
+		if (mkdir_p(destination, 0777) != 0) {
 			usys_log_error("Failed creating dir %s", destination);
-			perror("Error creating destination directory");
 			closedir(dir);
 			return -1;
 		}
