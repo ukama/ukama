@@ -179,7 +179,7 @@ bool wc_send_app_restart_request(Config *config, char *app) {
 		return USYS_FALSE;
 	}
 
-    result = (httpResp->status != HttpStatus_Accepted) ?
+    result = (httpResp->status == HttpStatus_Accepted) ?
         USYS_TRUE : USYS_FALSE;
 
     ulfius_clean_request(httpReq);
@@ -215,7 +215,7 @@ bool wc_is_app_valid(Config *config, char *app) {
 		return USYS_FALSE;
 	}
 
-    result = (httpResp->status != HttpStatus_OK) ? USYS_TRUE : USYS_FALSE;
+    result = (httpResp->status == HttpStatus_OK) ? USYS_TRUE : USYS_FALSE;
 
     ulfius_clean_request(httpReq);
     ulfius_clean_response(httpResp);
