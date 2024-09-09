@@ -1,46 +1,51 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include "httpStatus.h"
 #include "web_client.h"
-#include "config.h"
+#include "configd.h"
 #include "jserdes.h"
+
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
-int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
-
-	int ret = STATUS_NOK;
+static bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
 	*httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
-	if (! (*httpResp)) {
+	if (*httpResp == NULL) {
 		usys_log_error("Error allocating memory of size: %lu for http response",
-				sizeof(UResponse));
-		return STATUS_NOK;
+                       sizeof(UResponse));
+		return USYS_FALSE;
 	}
 
 	if (ulfius_init_response(*httpResp)) {
 		usys_log_error("Error initializing new http response.");
-		return STATUS_NOK;
+		return USYS_FALSE;
 	}
 
-	ret = ulfius_send_http_request(httpReq,
-			*httpResp);
-	if (ret != STATUS_OK) {
+	if (ulfius_send_http_request(httpReq, *httpResp) != STATUS_OK) {
 		usys_log_error( "Web client failed to send %s web request to %s",
-				httpReq->http_verb, httpReq->http_url);
+                        httpReq->http_verb, httpReq->http_url);
+
+        ulfius_clean_response(*httpResp);
+        usys_free(*httpResp);
+        *httpResp = NULL;
+
+        return USYS_FALSE;
 	}
-	return ret;
+
+	return USYS_TRUE;
 }
 
-URequest* wc_create_http_request(char* url,
-		char* method, JsonObj* body) {
+URequest* wc_create_http_request(char *url,
+                                 const char *method,
+                                 JsonObj *body) {
 
 	/* Preparing Request */
 	URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
@@ -85,13 +90,12 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
 		return ret;
 	}
 
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
+	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE) {
 		usys_log_error("Failed to send http request.");
 		goto cleanup;
 	}
 
-	if (httpResp->status == 200) {
+	if (httpResp->status == HttpStatus_OK) {
 		json = ulfius_get_json_body_response(httpResp, &jErr);
 		if (json) {
 			ret = json_deserialize_node_id(nodeID, json);
@@ -106,53 +110,8 @@ int wc_send_node_info_request(char *url, char *method, char **nodeID) {
 	}
 
 	json_decref(json);
-	cleanup:
-	if (httpReq) {
-		ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-	}
-	if (httpResp) {
-		ulfius_clean_response(httpResp);
-		usys_free(httpResp);
-	}
 
-	return ret;
-}
-
-int wc_forward_notification(char* url, char* method,
-		JsonObj* body ) {
-	int ret = STATUS_NOK;
-	JsonObj *json = NULL;
-	JsonErrObj jErr;
-
-	UResponse *httpResp = NULL;
-
-	URequest* httpReq = wc_create_http_request(url, method, body);
-	if (!httpReq) {
-		return ret;
-	}
-
-	char *logbody = json_dumps(body,
-			(JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
-	if (logbody) {
-		usys_log_trace("Body is :\n %s", logbody);
-		usys_free(logbody);
-		logbody = NULL;
-	}
-
-
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
-		usys_log_error("Failed to send http request.");
-		goto cleanup;
-	}
-
-	if (httpResp->status >= 200 && httpResp->status <= 300) {
-		ret = STATUS_OK;
-	}
-
-	json_decref(json);
-	cleanup:
+cleanup:
 	if (httpReq) {
 		ulfius_clean_request(httpReq);
 		usys_free(httpReq);
@@ -166,11 +125,13 @@ int wc_forward_notification(char* url, char* method,
 }
 
 int wc_read_node_info(Config* config) {
+
 	int ret = STATUS_NOK;
-	/* Send HTTP request */
 	char url[128]={0};
 
-	sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
+	sprintf(url,"http://%s:%d/%s",
+            config->nodedHost,
+            config->nodedPort,
 			config->nodedEP);
 
 	ret = wc_send_node_info_request(url, "GET", &config->nodeId);
@@ -194,45 +155,91 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-int wc_send_restart_req(Config* config, char* app){
-	int ret = STATUS_NOK;
-	UResponse *httpResp = NULL;
-	URequest *httpReq = NULL;
+static bool wc_send_app_request(Config *config,
+                                char *app,
+                                const char *action,
+                                const char *httpMethod,
+                                int expectedStatus) {
 
-	/* Send HTTP request */
-	char url[128]={0};
+    UResponse *httpResp = NULL;
+    URequest  *httpReq  = NULL;
+    char url[MAX_URL] = {0};
+    bool result;
 
-	sprintf(url,"http://%s:%d%s/%s/%s", config->starterHost, config->starterPort,
-			config->starterEP,"restart",app);
+    if (strcasecmp(action, "exec") == 0) {
+        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s/latest",
+                 config->starterHost,
+                 config->starterPort,
+                 action,
+                 DEF_SPACE_NAME,
+                 app);
+    } else {
+        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s",
+                 config->starterHost,
+                 config->starterPort,
+                 action,
+                 DEF_SPACE_NAME,
+                 app);
+    }
 
-	httpReq = wc_create_http_request(url, "POST", NULL);
-	if (!httpReq) {
-		return ret;
-	}
+    httpReq = wc_create_http_request(url, httpMethod, NULL);
+    if (!httpReq) {
+        return USYS_FALSE;
+    }
 
-	ret = wc_send_http_request(httpReq, &httpResp);
-	if (ret != STATUS_OK) {
-		usys_log_error("Failed to send http request.");
-		goto cleanup;
-	}
+    if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE) {
+        usys_log_error("Failed to send http request.");
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+        return USYS_FALSE;
+    }
 
-	if (httpResp->status == 200) {
-		ret = STATUS_OK;
-	}
-	else {
-		ret = STATUS_NOK;
-	}
+    result = (httpResp->status == expectedStatus) ? USYS_TRUE : USYS_FALSE;
 
-	cleanup:
-	if (httpReq) {
-		ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-	}
-	if (httpResp) {
-		ulfius_clean_response(httpResp);
-		usys_free(httpResp);
-	}
+    ulfius_clean_request(httpReq);
+    ulfius_clean_response(httpResp);
+    usys_free(httpReq);
+    usys_free(httpResp);
 
-	return ret;
+    return result;
+}
 
+bool wc_send_app_restart_request(Config *config, char *app) {
+
+    bool result;
+
+    result = wc_send_app_request(config,
+                                 app,
+                                 "terminate",
+                                 "POST",
+                                 HttpStatus_Accepted);
+
+    if (result) {
+        return  wc_send_app_request(config,
+                               app,
+                               "exec",
+                               "POST",
+                               HttpStatus_Accepted);
+    }
+
+    return USYS_FALSE;
+}
+
+bool wc_is_app_valid(Config *config, char *app) {
+
+    bool result;
+
+    result = wc_send_app_request(config,
+                                 app,
+                                 "status",
+                                 "GET",
+                                 HttpStatus_OK);
+
+    if (result) {
+        usys_log_debug("App found by starter.d. Is valid: %s", app);
+    } else {
+        usys_log_error("App not found by starter.d: %s", app);
+    }
+
+    return result;
 }

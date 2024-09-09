@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef INC_WEB_SERVICE_H_
@@ -14,9 +13,9 @@
 #include "ulfius.h"
 
 #define EP_BS                           "/"
-#define WEBSERVICE                      "config"
-//#define REST_API_VERSION                "v1"
-#define REST_API_VERSION                "configd/v1"
+#define REST_API_VERSION                "v1"
+#define URL_PREFIX                      EP_BS REST_API_VERSION
+#define API_RES_EP(RES)                 EP_BS RES
 
 /* API URL parameters*/
 #define UUID                            "uuid"
@@ -94,6 +93,10 @@ void web_service_exit();
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig);
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig);
 
 int web_service_cb_default(const URequest *request,
 						   UResponse *response,

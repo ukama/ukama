@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2023-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include <ulfius.h>
@@ -33,11 +32,11 @@ static int init_framework(UInst *inst, int port) {
 static int start_framework(Config *config, UInst *instance) {
 
 	int ret;
-  
+
     ret = ulfius_start_framework(instance);
 	if (ret != U_OK) {
 		usys_log_error("Error starting the webservice/websocket.");
-    
+
 		ulfius_stop_framework(instance);
 		ulfius_clean_instance(instance);
 
@@ -83,14 +82,22 @@ static void setup_unsupported_methods(UInst *instance,
 }
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
-    
+
+    /* ping */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
     setup_unsupported_methods(instance, "GET",
                               URL_PREFIX, API_RES_EP("ping"));
 
+    /* version */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &web_service_cb_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("version"));
 
+    /* config */
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("config"), 0,
                                &web_service_cb_post_config, config);
@@ -122,5 +129,3 @@ int start_web_services(Config *config, UInst *serviceInst) {
 
 	return USYS_TRUE;
 }
-
-

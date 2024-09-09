@@ -1,15 +1,13 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #include "jserdes.h"
 #include "configd.h"
-#include "errorcode.h"
 #include "json_types.h"
 #include "web_service.h"
 
@@ -126,79 +124,42 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
 "file_count":4,
 "data": ""}
 */
-/* Deserialize config data */
-bool json_deserialize_config_data(JsonObj *json,
-                                   ConfigData **cd) {
+bool json_deserialize_session_data(JsonObj *json, SessionData **sd) {
 
-    bool ret=USYS_TRUE;
-
-    if (json == NULL) {
-        usys_log_error("No data to deserialize");
-        return USYS_FALSE;
-    }
-
-    *cd = (ConfigData *)usys_calloc(1, sizeof(ConfigData));
-    if (*cd == NULL) {
-        usys_log_error("Error allocating memory of size: %d",
-                       sizeof(ConfigData));
-        return USYS_FALSE;
-    }
+    int ret = USYS_TRUE;
     
+    if (json == NULL) return USYS_FALSE;
+
+    *sd = (SessionData *)usys_calloc(1, sizeof(SessionData));
+    if (*sd == NULL) {
+        usys_log_error("Error allocating memory of size: %d",
+                       sizeof(SessionData));
+        return USYS_FALSE;
+    }
+
     ret &= get_json_entry(json, JTAG_FILE_NAME, JSON_STRING,
-                          &(*cd)->fileName, NULL, NULL);
+                          &(*sd)->fileName, NULL, NULL);
     ret &= get_json_entry(json, JTAG_APP_NAME, JSON_STRING,
-                          &(*cd)->app, NULL, NULL);
+                          &(*sd)->app, NULL, NULL);
     ret &= get_json_entry(json, JTAG_TIME_STAMP, JSON_INTEGER,
-                          NULL, &(*cd)->timestamp, NULL);
+                          NULL, &(*sd)->timestamp, NULL);
     ret &= get_json_entry(json, JTAG_REASON, JSON_INTEGER,
-                              NULL, &(*cd)->reason, NULL);
+                          NULL, &(*sd)->reason, NULL);
     ret &= get_json_entry(json, JTAG_DATA, JSON_STRING,
-                          &(*cd)->data, NULL, NULL);
+                          &(*sd)->data, NULL, NULL);
     ret &= get_json_entry(json, JTAG_VERSION, JSON_STRING,
-                          &(*cd)->version, NULL, NULL);
+                          &(*sd)->version, NULL, NULL);
     ret &= get_json_entry(json, JTAG_FILE_COUNT, JSON_INTEGER,
-                                  NULL, &(*cd)->fileCount, NULL);
+                          NULL, &(*sd)->fileCount, NULL);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the config JSON");
         json_log(json);
-        free_config_data(*cd);
+        free_session_data(*sd);
         return USYS_FALSE;
     }
+
     return USYS_TRUE;
 }
 
-bool json_deserialize_running_config(char* name, ConfigData **cd) {
-	FILE *file = fopen(name, "r");
-	if (file == NULL) {
-		usys_log_error("Failed opening file %s", name);
-		perror("Error");
-		return USYS_FALSE;
-	}
 
-	// Parse the JSON data
-	json_t *root;
-	json_error_t error;
-	root = json_loadf(file, 0, &error);
-
-	// Check for parsing errors
-	if (!root) {
-		usys_log_error("Failed parsing json file %s. Error %s at line %d, column %d\n", name, error.text, error.line, error.column);
-		return USYS_FALSE;
-	}
-
-	/* deserialize */
-	if (!json_deserialize_config_data(root, cd)) {
-		return USYS_FALSE;
-	}
-
-	return USYS_TRUE;
-}
-
-/* Decrement json references */
-void json_free(JsonObj** json) {
-    if (*json){
-        json_decref(*json);
-        *json = NULL;
-    }
-}

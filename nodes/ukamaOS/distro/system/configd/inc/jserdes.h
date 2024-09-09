@@ -1,10 +1,9 @@
-/**
- * Copyright (c) 2022-present, Ukama Inc.
- * All rights reserved.
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef JSERDES_H
@@ -17,16 +16,8 @@
 #include "usys_types.h"
 #include "session.h"
 
-#define EMPTY_STRING  ""
-
-#define JSON_OK                        STATUS_OK
-#define JSON_FAILURE                   STATUS_NOTOK
-#define JSON_ENCODING_OK               JSON_OK
-#define JSON_DECODING_OK               JSON_OK
-
-bool json_deserialize_config_data(JsonObj *json,ConfigData **cd);
+bool json_deserialize_session_data(JsonObj *json, SessionData **sd);
 bool json_deserialize_node_id(char **nodeID, json_t *json);
-bool json_deserialize_running_config(char* file, ConfigData **cd);
 void json_log(json_t *json);
 void json_free(JsonObj** json);
 
