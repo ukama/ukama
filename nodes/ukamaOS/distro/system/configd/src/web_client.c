@@ -43,8 +43,9 @@ static bool wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 	return USYS_TRUE;
 }
 
-URequest* wc_create_http_request(char* url,
-                                 char* method, JsonObj* body) {
+URequest* wc_create_http_request(char *url,
+                                 const char *method,
+                                 JsonObj *body) {
 
 	/* Preparing Request */
 	URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
@@ -154,79 +155,91 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-bool wc_send_app_restart_request(Config *config, char *app) {
+static bool wc_send_app_request(Config *config,
+                                char *app,
+                                const char *action,
+                                const char *httpMethod,
+                                int expectedStatus) {
 
-	UResponse *httpResp = NULL;
-	URequest  *httpReq  = NULL;
-	char url[MAX_URL] = {0};
+    UResponse *httpResp = NULL;
+    URequest  *httpReq  = NULL;
+    char url[MAX_URL] = {0};
     bool result;
 
-	snprintf(url, sizeof(url), "http://%s:%d/v1/restart/%s/%s",
-             config->starterHost,
-             config->starterPort,
-             DEF_SPACE_NAME,
-             app);
+    if (strcasecmp(action, "exec") == 0) {
+        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s/latest",
+                 config->starterHost,
+                 config->starterPort,
+                 action,
+                 DEF_SPACE_NAME,
+                 app);
+    } else {
+        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s",
+                 config->starterHost,
+                 config->starterPort,
+                 action,
+                 DEF_SPACE_NAME,
+                 app);
+    }
 
-	httpReq = wc_create_http_request(url, "POST", NULL);
-	if (!httpReq) {
-		return USYS_FALSE;
-	}
+    httpReq = wc_create_http_request(url, httpMethod, NULL);
+    if (!httpReq) {
+        return USYS_FALSE;
+    }
 
-	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE){
-		usys_log_error("Failed to send http request.");
+    if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE) {
+        usys_log_error("Failed to send http request.");
         ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-		return USYS_FALSE;
-	}
+        usys_free(httpReq);
+        return USYS_FALSE;
+    }
 
-    result = (httpResp->status == HttpStatus_Accepted) ?
-        USYS_TRUE : USYS_FALSE;
+    result = (httpResp->status == expectedStatus) ? USYS_TRUE : USYS_FALSE;
 
     ulfius_clean_request(httpReq);
     ulfius_clean_response(httpResp);
     usys_free(httpReq);
     usys_free(httpResp);
 
-	return result;
+    return result;
+}
+
+bool wc_send_app_restart_request(Config *config, char *app) {
+
+    bool result;
+
+    result = wc_send_app_request(config,
+                                 app,
+                                 "terminate",
+                                 "POST",
+                                 HttpStatus_Accepted);
+
+    if (result) {
+        return  wc_send_app_request(config,
+                               app,
+                               "exec",
+                               "POST",
+                               HttpStatus_Accepted);
+    }
+
+    return USYS_FALSE;
 }
 
 bool wc_is_app_valid(Config *config, char *app) {
 
-	UResponse *httpResp = NULL;
-	URequest  *httpReq  = NULL;
-	char url[MAX_URL] = {0};
     bool result;
 
-	snprintf(url, sizeof(url), "http://%s:%d/v1/status/%s/%s",
-             config->starterHost,
-             config->starterPort,
-             DEF_SPACE_NAME,
-             app);
-
-	httpReq = wc_create_http_request(url, "GET", NULL);
-	if (!httpReq) {
-		return USYS_FALSE;
-	}
-
-	if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE){
-		usys_log_error("Failed to send http request");
-        ulfius_clean_request(httpReq);
-		usys_free(httpReq);
-		return USYS_FALSE;
-	}
-
-    result = (httpResp->status == HttpStatus_OK) ? USYS_TRUE : USYS_FALSE;
-
-    ulfius_clean_request(httpReq);
-    ulfius_clean_response(httpResp);
-    usys_free(httpReq);
-    usys_free(httpResp);
+    result = wc_send_app_request(config,
+                                 app,
+                                 "status",
+                                 "GET",
+                                 HttpStatus_OK);
 
     if (result) {
-        usys_log_debug("App found by starter.d. Is valid. :%s", app);
+        usys_log_debug("App found by starter.d. Is valid: %s", app);
     } else {
-        usys_log_error("App not found by stater.d: %s", app);
+        usys_log_error("App not found by starter.d: %s", app);
     }
 
-	return result;
+    return result;
 }
