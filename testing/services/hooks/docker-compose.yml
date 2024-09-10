@@ -1,0 +1,21 @@
+services:
+ hooks:
+  build: .
+  environment:
+   - DEBUGMODE=true
+   - HOOKS_SERVICE_HOST=hooks
+   - HOOKS_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - PAYMENTSHOST=${PAYMENTSHOST}
+   - WEBHOOKSHOST=${WEBHOOKSHOST}
+   - PAWAPAYHOST=${PAWAPAYHOST}
+   - PAWAPAYKEY=${PAWAPAYKEY}
+   - SCHEDULERINTERVAL=
+  restart: always
+  networks:
+   - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net

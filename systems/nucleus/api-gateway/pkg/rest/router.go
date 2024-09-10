@@ -11,6 +11,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -174,7 +175,7 @@ func (r *Router) removeUserFromOrgHandler(c *gin.Context, req *UserOrgRequest) (
 }
 
 func (r *Router) getUserByEmailHandler(c *gin.Context, req *GetByEmailRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.GetByEmail(req.Email)
+	return r.clients.User.GetByEmail(strings.ToLower(req.Email))
 }
 
 // Users handlers
@@ -193,7 +194,7 @@ func (r *Router) whoamiHandler(c *gin.Context, req *GetUserRequest) (*userspb.Wh
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
 	return r.clients.User.AddUser(&userspb.User{
 		Name:   req.Name,
-		Email:  req.Email,
+		Email:  strings.ToLower(req.Email),
 		Phone:  req.Phone,
 		AuthId: req.AuthId,
 	})

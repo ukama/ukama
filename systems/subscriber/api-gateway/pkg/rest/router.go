@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -257,9 +258,7 @@ func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) 
 }
 
 func (r *Router) getSubscriberByEmail(c *gin.Context, req *SubscriberGetReqByEmail) (*subRegPb.GetSubscriberByEmailResponse, error) {
-	subsEmail := req.Email
-
-	pbResp, err := r.clients.sub.GetSubscriberByEmail(subsEmail)
+	pbResp, err := r.clients.sub.GetSubscriberByEmail(strings.ToLower(req.Email))
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +282,7 @@ func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb
 	pbResp, err := r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{
 		FirstName:             req.FirstName,
 		LastName:              req.LastName,
-		Email:                 req.Email,
+		Email:                 strings.ToLower(req.Email),
 		PhoneNumber:           req.Phone,
 		Dob:                   req.Dob,
 		Address:               req.Address,

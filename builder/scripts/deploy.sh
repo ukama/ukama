@@ -168,9 +168,11 @@ IS_INIT_SYS="init"
 for SYSTEM in "${SYSTEMS[@]}"; do
     cd ~
     cd $root_dir
-    if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+   if [ "$SYSTEM" == $AUTHSYSKEY ]; then
         cd ../../../ukama-auth/kratos
         sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+        cd ../app
+        cp .env.example .env.local
         cd ../../ukama/builder/scripts
     fi
     if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
@@ -178,10 +180,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
-        cd app
-        cp .env.example .env.local
-        cd ../
-        echo ".env.local file created and content copied from .env.example for ukama-auth"
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
         cd ./billing/provider

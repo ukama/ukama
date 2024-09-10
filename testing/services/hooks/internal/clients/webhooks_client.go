@@ -19,6 +19,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	MopayHooksEndpoint = "/v1/pawapay"
+)
+
 type WebhooksClient interface {
 	PostDepositHook(*util.Deposit) (*WebhookInfo, error)
 }
@@ -51,7 +55,7 @@ func (p *webhooksClient) PostDepositHook(req *util.Deposit) (*WebhookInfo, error
 
 	webhook := Webhook{}
 
-	resp, err := p.R.Post(p.u.String()+DepositEndpoint, b)
+	resp, err := p.R.Post(p.u.String()+MopayHooksEndpoint, b)
 	if err != nil {
 		log.Errorf("PostDepositHook failure. error: %s", err.Error())
 
