@@ -11,6 +11,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -364,7 +365,7 @@ func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.A
 }
 
 func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddResponse, error) {
-	return r.clients.Invitation.AddInvitation(req.Name, req.Email, req.Role)
+	return r.clients.Invitation.AddInvitation(req.Name, strings.ToLower(req.Email), req.Role)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetResponse, error) {
@@ -372,7 +373,7 @@ func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest)
 }
 
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateStatusResponse, error) {
-	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status, req.Email)
+	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status, strings.ToLower(req.Email))
 }
 
 func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) (*invpb.DeleteResponse, error) {
@@ -384,7 +385,7 @@ func (r *Router) getAllInvitationsHandler(c *gin.Context) (*invpb.GetAllResponse
 }
 
 func (r *Router) getInvitationsByEmailHandler(c *gin.Context, req *GetInvitationsByEmailReq) (*invpb.GetByEmailResponse, error) {
-	return r.clients.Invitation.GetInvitationsByEmail(req.Email)
+	return r.clients.Invitation.GetInvitationsByEmail(strings.ToLower(req.Email))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
