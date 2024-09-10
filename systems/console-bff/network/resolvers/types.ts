@@ -59,6 +59,15 @@ export class NetworkAPIDto {
   @Field()
   created_at: string;
 
+  @Field()
+  language: string;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
+
   @Field(() => [String])
   allowed_countries: string[];
 
@@ -94,6 +103,15 @@ export class NetworkDto {
 
   @Field()
   overdraft: number;
+
+  @Field()
+  language: string;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
 
   @Field()
   trafficPolicy: number;

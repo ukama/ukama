@@ -190,6 +190,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
+		Country:       req.Country,
 		SyncStatus:    ukama.StatusTypePending,
 	}
 

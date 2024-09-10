@@ -50,7 +50,7 @@ services:
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
    - COUNTRY=COD
-   - CURRENCY=USD
+   - CURRENCY=CDF
    - LANGUAGE=en
    - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
   restart: always

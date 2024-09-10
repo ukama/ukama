@@ -8,6 +8,7 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
 
+import { SIM_TYPE } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
@@ -67,9 +68,10 @@ class PackageApi extends RESTDataSource {
         networks: [],
         type: "prepaid",
         apn: "ukama.tel",
-        country: "CD",
+        country: req.country,
+        currency: req.currency,
         owner_id: headers.userId,
-        sim_type: "operator_data",
+        sim_type: SIM_TYPE,
         to: dayjs().add(5, "year").format(),
         from: dayjs().add(7, "day").format(),
         voice_unit: "seconds",
