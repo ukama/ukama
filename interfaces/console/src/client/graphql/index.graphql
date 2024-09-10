@@ -576,6 +576,9 @@ fragment UNetwork on NetworkDto {
   isDefault
   budget
   overdraft
+  language
+  country
+  currency
   trafficPolicy
   isDeactivated
   paymentLinks
@@ -589,6 +592,12 @@ query getNetworks {
     networks {
       ...UNetwork
     }
+  }
+}
+
+query getNetwork($networkId: String!) {
+  getNetwork(networkId: $networkId) {
+    ...UNetwork
   }
 }
 

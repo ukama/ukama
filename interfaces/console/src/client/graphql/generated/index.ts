@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -51,6 +44,8 @@ export type AddNodeToSiteInput = {
 
 export type AddPackageInputDto = {
   amount: Scalars['Float']['input'];
+  country: Scalars['String']['input'];
+  currency: Scalars['String']['input'];
   dataUnit: Scalars['String']['input'];
   dataVolume: Scalars['Int']['input'];
   duration: Scalars['Int']['input'];
@@ -555,10 +550,13 @@ export type NetworkDto = {
   __typename?: 'NetworkDto';
   budget: Scalars['Float']['output'];
   countries: Array<Scalars['String']['output']>;
+  country: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
   isDefault: Scalars['Boolean']['output'];
+  language: Scalars['String']['output'];
   name: Scalars['String']['output'];
   networks: Array<Scalars['String']['output']>;
   overdraft: Scalars['Float']['output'];
@@ -1608,19 +1606,26 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+
+export type GetNetworkQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type AddNetworkMutationVariables = Exact<{
   data: AddNetworkInputDto;
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type SetDefaultNetworkMutationVariables = Exact<{
   data: SetDefaultNetworkInputDto;
@@ -1950,6 +1955,9 @@ export const UNetworkFragmentDoc = gql`
   isDefault
   budget
   overdraft
+  language
+  country
+  currency
   trafficPolicy
   isDeactivated
   paymentLinks
@@ -3821,6 +3829,46 @@ export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
 export type GetNetworksLazyQueryHookResult = ReturnType<typeof useGetNetworksLazyQuery>;
 export type GetNetworksSuspenseQueryHookResult = ReturnType<typeof useGetNetworksSuspenseQuery>;
 export type GetNetworksQueryResult = Apollo.QueryResult<GetNetworksQuery, GetNetworksQueryVariables>;
+export const GetNetworkDocument = gql`
+    query getNetwork($networkId: String!) {
+  getNetwork(networkId: $networkId) {
+    ...UNetwork
+  }
+}
+    ${UNetworkFragmentDoc}`;
+
+/**
+ * __useGetNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables> & ({ variables: GetNetworkQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
+      }
+export function useGetNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
+        }
+export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
+        }
+export type GetNetworkQueryHookResult = ReturnType<typeof useGetNetworkQuery>;
+export type GetNetworkLazyQueryHookResult = ReturnType<typeof useGetNetworkLazyQuery>;
+export type GetNetworkSuspenseQueryHookResult = ReturnType<typeof useGetNetworkSuspenseQuery>;
+export type GetNetworkQueryResult = Apollo.QueryResult<GetNetworkQuery, GetNetworkQueryVariables>;
 export const AddNetworkDocument = gql`
     mutation AddNetwork($data: AddNetworkInputDto!) {
   addNetwork(data: $data) {
