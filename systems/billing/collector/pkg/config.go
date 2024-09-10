@@ -47,10 +47,11 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
-				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activatepackage",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage",
-				"event.cloud.local.{{ .Org}}.dataplan.package.package.create",
+				"event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage",
 
 				// TODO: we need to add the relevant arch in order to support listening
 				// global events from Ukama to a local deployed org.

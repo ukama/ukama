@@ -174,6 +174,30 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
+	// Send usage event
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
+		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
+		msg, err := unmarshalSimUsage(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleSimUsageEvent(e.RoutingKey, msg, c)
+		if err != nil {
+			return nil, err
+		}
+
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage"):
+		msg, err := unmarshalSimPackageExpire(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleSimManagerSimPackageExpireEvent(e.RoutingKey, msg, c)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -488,6 +512,23 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 	return nil
 }
 
+func handleSimManagerSimPackageExpireEvent(key string, sim *epb.EventSimPackageExpire,
+	b *CollectorEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
+	if err != nil {
+		return fmt.Errorf("fail to terminate subscriber subscripton: %w", err)
+	}
+
+	log.Infof("Successfuly terminated current subscription: %q", subscriptionId)
+
+	return nil
+}
+
 func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) {
 	p := &epb.UserAccountingEvent{}
 
@@ -583,6 +624,20 @@ func unmarshalSimUsage(msg *anypb.Any) (*epb.EventSimUsage, error) {
 
 func unmarshalSimAllocation(msg *anypb.Any) (*epb.EventSimAllocation, error) {
 	p := &epb.EventSimAllocation{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal SimAllocation message with : %+v. Error %s.",
+			msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalSimPackageExpire(msg *anypb.Any) (*epb.EventSimPackageExpire, error) {
+	p := &epb.EventSimPackageExpire{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
