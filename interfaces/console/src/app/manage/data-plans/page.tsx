@@ -39,7 +39,7 @@ const INIT_DATAPLAN = {
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { network, setSnackbarMessage } = useAppContext();
+  const { network, metaInfo, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
