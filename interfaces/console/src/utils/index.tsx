@@ -219,8 +219,8 @@ const getDataPlanUsage = (
   dataVolume: string,
   dataUnit: string,
 ): string => {
-  const symbol = currency === 'Dollar' ? '$' : '';
-  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+  const symbol = currency === 'Dollar' ? '$' : currency;
+  return `${symbol} ${amount} / ${dataVolume} ${getDataUsageSymbol(
     dataUnit,
   )} / ${duration}`;
 };
