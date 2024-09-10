@@ -161,7 +161,7 @@ func (r *userRepo) GetNode(nodeId string) (*Users, error) {
 	if nodeId != ""  {
 		tx = tx.Where("node_id = ?", nodeId)
 	} else {
-		return nil, fmt.Errorf("invalid uuid %s", nodeId)
+		return nil, fmt.Errorf("invalid node format %s", nodeId)
 	}
 
 	result := tx.Find(&user)
