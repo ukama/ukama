@@ -43,14 +43,16 @@ func NewConfig(name string) *Config {
 			Host:    "msg-client-billing:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage",
+				"event.cloud.local.{{ .Org}}.dataplan.package.package.create",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
-				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.package.activate",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage",
-				"event.cloud.local.{{ .Org}}.dataplan.package.package.create",
+				"event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.package.expire",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.package.drain",
 
 				// TODO: we need to add the relevant arch in order to support listening
 				// global events from Ukama to a local deployed org.
