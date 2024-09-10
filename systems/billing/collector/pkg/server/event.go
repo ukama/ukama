@@ -90,18 +90,6 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// Send usage event
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage"):
-		msg, err := unmarshalSimUsage(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = handleSimUsageEvent(e.RoutingKey, msg, c)
-		if err != nil {
-			return nil, err
-		}
-
 	// Create plan
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
@@ -175,6 +163,7 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Send usage event
+	// case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
 		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
 		msg, err := unmarshalSimUsage(e.Msg)
@@ -183,17 +172,6 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 		err = handleSimUsageEvent(e.RoutingKey, msg, c)
-		if err != nil {
-			return nil, err
-		}
-
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage"):
-		msg, err := unmarshalSimPackageExpire(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = handleSimManagerSimPackageExpireEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}

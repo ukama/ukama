@@ -307,7 +307,7 @@ func TestCollectorEventServer_HandleOrgSubscriptionEvent(t *testing.T) {
 
 func TestCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
-	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage")
 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
