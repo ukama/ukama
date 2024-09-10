@@ -23,6 +23,7 @@ message NotificationsRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
+    string nodeId =5 [json_name = "node_id"];
 }
 
 message NotificationsResponse {
@@ -34,7 +35,8 @@ message NotificationStreamRequest {
     string networkId = 2 [json_name = "network_id"];
     string subscriberId = 3 [json_name = "subscriber_id"];
     string userId = 4 [json_name = "user_id"];
-    repeated string scopes = 5 [json_name = "scopes"];
+    string nodeId =5 [json_name = "node_id"];
+    repeated string scopes = 6 [json_name = "scopes"];
 }
 
 message Notification {
@@ -47,6 +49,7 @@ message Notification {
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    bool isRead = 10 [json_name = "is_read"];
-    string createdAt = 11 [json_name = "created_at"];
+    string nodeId = 10 [json_name = "node_id"];
+    bool isRead = 11 [json_name = "is_read"];
+    string createdAt = 12 [json_name = "created_at"];
 }

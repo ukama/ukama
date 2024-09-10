@@ -33,6 +33,7 @@ type Notification struct {
 	SubscriberId string
 	UserId       string
 	NodeId       string
+	Node         *Node  
 	EventMsgID   uint
 	EventMsg     EventMsg
 	CreatedAt    time.Time
@@ -45,7 +46,7 @@ type Users struct {
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
-	NodeId		 string
+	NodeId       string
 	UserId       string
 	Role         roles.RoleType `gorm:"type:uint;not null;default:0"`
 	CreatedAt    time.Time
@@ -63,6 +64,17 @@ type UserNotification struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
 }
 
+type Node struct {
+	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
+	NodeId       string
+	Latitude     float64
+	Longitude    float64
+	CurrentState string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
 type Notifications struct {
 	Id          uuid.UUID `gorm:"type:uuid"`
 	Title       string
@@ -70,6 +82,7 @@ type Notifications struct {
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	IsRead      bool                    `gorm:"default:false"`
+	Node        *Node
 	CreatedAt   string
 	UpdatedAt   string
 }

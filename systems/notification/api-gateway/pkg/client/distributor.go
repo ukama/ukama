@@ -20,7 +20,7 @@ import (
 )
 
 type Distributor interface {
-	GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error)
+	GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string,nodeId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error)
 }
 
 type distributor struct {
@@ -62,7 +62,7 @@ func (m *distributor) Close() {
 	m.conn.Close()
 }
 
-func (n *distributor) GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error) {
+func (n *distributor) GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string, nodeId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error) {
 
 	return n.client.GetNotificationStream(ctx,
 		&pb.NotificationStreamRequest{
@@ -70,6 +70,7 @@ func (n *distributor) GetNotificationStream(ctx context.Context, orgId string, n
 			NetworkId:    networkId,
 			SubscriberId: subscriberId,
 			UserId:       userId,
+			NodeId:		  nodeId,
 			Scopes:       scopes,
 		})
 }

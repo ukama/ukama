@@ -59,7 +59,8 @@ message Notification {
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
+    string nodeId = 10 [json_name = "node_id"];
+    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
 }
 
 message Notifications {

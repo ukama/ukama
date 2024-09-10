@@ -31,6 +31,7 @@ type Sub struct {
 	OrgId        string
 	NetworkId    string
 	UserId       string
+	NodeId		 string
 	SubscriberId string
 	Scopes       []notification.NotificationScope
 	DataChan     chan *pb.Notification
@@ -69,7 +70,7 @@ func NewNotifyHandler(db *uconf.Database, c providers.EventNotifyClientProvider)
 	}
 }
 
-func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, scopes []notification.NotificationScope) (string, *Sub) {
+func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string,nodeId string, scopes []notification.NotificationScope) (string, *Sub) {
 
 	sub := Sub{
 		Id:           uuid.NewV4(),
@@ -77,6 +78,7 @@ func (h *notifyHandler) Register(orgId string, networkId string, subscriberId st
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
+		NodeId:		  nodeId,
 		Scopes:       scopes,
 		DataChan:     make(chan *pb.Notification, BufferCapacity),
 		QuitChan:     make(chan bool),
@@ -188,6 +190,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				Title:        res.Notification.Title,
 				UserId:       res.Notification.UserId,
 				NetworkId:    res.Notification.NetworkId,
+				NodeId:		  res.Notification.NodeId,
 				Description:  res.Notification.Description,
 				SubscriberId: res.Notification.SubscriberId,
 				Type:         upb.NotificationType(res.Notification.Type),

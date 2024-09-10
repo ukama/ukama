@@ -21,7 +21,7 @@ import (
 
 type EventNotification interface {
 	Get(id string) (*pb.GetResponse, error)
-	GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error)
+	GetAll(orgId string, networkId string, subscriberId string, userId string,nodeId string) (*pb.GetAllResponse, error)
 	UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error)
 }
 
@@ -78,7 +78,7 @@ func (n *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStat
 	return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
 }
 
-func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error) {
+func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string,nodeId string) (*pb.GetAllResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
@@ -86,5 +86,6 @@ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId 
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
+		NodeId:		  nodeId,
 	})
 }

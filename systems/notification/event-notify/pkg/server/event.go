@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -585,7 +586,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte) *db.Notification {
 	log.Debugf("Processing event OrgId %s NetworkId %s nodeId %s subscriberId %s userId %s", orgId, networkId, nodeId, subscriberId, userId)
-
+	fmt.Println("EVENT", msg)
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
