@@ -50,7 +50,7 @@ type notifyHandler struct {
 }
 
 type NotifyHandler interface {
-	Register(orgId string, networkId string, subscriberId string, userId string, scopes []notification.NotificationScope) (string, *Sub)
+	Register(orgId string, networkId string, subscriberId string, userId string,nodeId string, scopes []notification.NotificationScope) (string, *Sub)
 	Deregister(id string) error
 	Start()
 	Stop()

@@ -28,23 +28,23 @@ func (_m *NotifyHandler) Deregister(id string) error {
 	return r0
 }
 
-// Register provides a mock function with given fields: orgId, networkId, subscriberId, userId, scopes
-func (_m *NotifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, scopes []notification.NotificationScope) (string, *db.Sub) {
-	ret := _m.Called(orgId, networkId, subscriberId, userId, scopes)
+// Register provides a mock function with given fields: orgId, networkId, subscriberId, userId, nodeId, scopes
+func (_m *NotifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, nodeId string, scopes []notification.NotificationScope) (string, *db.Sub) {
+	ret := _m.Called(orgId, networkId, subscriberId, userId, nodeId, scopes)
 
 	var r0 string
 	var r1 *db.Sub
-	if rf, ok := ret.Get(0).(func(string, string, string, string, []notification.NotificationScope) (string, *db.Sub)); ok {
-		return rf(orgId, networkId, subscriberId, userId, scopes)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, []notification.NotificationScope) (string, *db.Sub)); ok {
+		return rf(orgId, networkId, subscriberId, userId, nodeId, scopes)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, []notification.NotificationScope) string); ok {
-		r0 = rf(orgId, networkId, subscriberId, userId, scopes)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, []notification.NotificationScope) string); ok {
+		r0 = rf(orgId, networkId, subscriberId, userId, nodeId, scopes)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, []notification.NotificationScope) *db.Sub); ok {
-		r1 = rf(orgId, networkId, subscriberId, userId, scopes)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, []notification.NotificationScope) *db.Sub); ok {
+		r1 = rf(orgId, networkId, subscriberId, userId, nodeId, scopes)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*db.Sub)

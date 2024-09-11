@@ -35,6 +35,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	eNotify := &mocks.EventNotifyClientProvider{}
 	nc := &cmocks.NetworkClient{}
+	nodec:=&cmocks.NodeClient{}
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
@@ -69,13 +70,13 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 
 	mc.On("GetByUserId", req.UserId).Return(mresp, nil).Once()
 
-	ndb.On("Register", testOrgId, "", "", req.UserId, []notification.NotificationScope{notification.SCOPE_ORG}).Return(sub.Id.String(), &sub).Once()
+	ndb.On("Register", testOrgId, "", "", req.UserId,"", []notification.NotificationScope{notification.SCOPE_ORG}).Return(sub.Id.String(), &sub).Once()
 
 	ndb.On("Deregister", sub.Id.String()).Return(nil).Once()
 
 	sS.On("Context").Return(context.WithTimeout(context.Background(), 10*time.Millisecond))
 
-	s := NewDistributorServer(nc, mc, sc, ndb, testOrgName, testOrgId, eNotify)
+	s := NewDistributorServer(nc, nodec, mc, sc, ndb, testOrgName, testOrgId, eNotify)
 
 	// Act
 	err := s.GetNotificationStream(req, sS)

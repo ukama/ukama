@@ -72,11 +72,12 @@ func runGrpcServer() {
 	networkClient := creg.NewNetworkClient(regUrl.String())
 	memberClient := creg.NewMemberClient(regUrl.String())
 	subClient := sreg.NewSubscriberClient(subUrl.String())
+	nodeClient:=creg.NewNodeClient(regUrl.String())
 	eventNotifyService := providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost)
 
 	nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
 
-	distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
+	distributorServer := server.NewDistributorServer(networkClient,nodeClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

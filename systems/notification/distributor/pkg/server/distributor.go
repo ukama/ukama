@@ -86,10 +86,12 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	}
 	
 	nId, err := ukama.ValidateNodeId(req.NodeId)
-	_, err = n.nodeClient.Get(nId.String())
+	if err == nil {
+		_, err = n.nodeClient.Get(nId.String())
+	}
 
 	if err != nil {
-		return roleType, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error: %s", err.Error())
+		return roleType, status.Errorf(codes.InvalidArgument, "invalid node id or failed to get node. Error: %s", err.Error())
 	}
 
 	if req.GetSubscriberId() != "" {
@@ -130,7 +132,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 	}
 
 	/* register */
-	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, commonScopes)
+	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId,req.NodeId, commonScopes)
 
 	defer func() {
 		if err := n.notify.Deregister(id); err != nil {

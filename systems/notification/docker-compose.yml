@@ -96,7 +96,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  build: ../services/initClient
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification

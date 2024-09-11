@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -182,7 +183,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
-
+		
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeUpdate]):
@@ -528,6 +529,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
+		if msg.CurrentState == "faulty" {
+			c.Type = notif.TYPE_CRITICAL
+		} else {
+			c.Type = notif.TYPE_INFO
+		}
+
+		c.Title = fmt.Sprintf("Your node is now %s", msg.CurrentState)
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
@@ -586,7 +594,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte) *db.Notification {
 	log.Debugf("Processing event OrgId %s NetworkId %s nodeId %s subscriberId %s userId %s", orgId, networkId, nodeId, subscriberId, userId)
-	fmt.Println("EVENT", msg)
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
@@ -599,6 +606,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 			log.Errorf("failed to store event: %v", err)
 		}
 	}
+	fmt.Println("BRACKLEY", orgId, networkId, nodeId, subscriberId, userId)
 
 	dn := &db.Notification{
 		Id:           uuid.NewV4(),
@@ -615,6 +623,24 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 
 	if id != 0 {
 		dn.EventMsgID = id
+	}
+	if ec.Key == evt.EventNodeStateChange {
+		var nodeStateEvent epb.NodeStateChangeEvent
+		err = json.Unmarshal(msg, &nodeStateEvent)
+		if err != nil {
+			log.Errorf("failed to unmarshal NodeStateChangeEvent: %v", err)
+		} else {
+			nodeState := &db.NodeState{
+				Id:           uuid.NewV4(),
+				NodeId:       nodeId,
+				Latitude:     nodeStateEvent.Latitude,
+				Longitude:    nodeStateEvent.Longitude,
+				CurrentState: nodeStateEvent.CurrentState,
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}
+			dn.NodeState = nodeState
+		}
 	}
 
 	err = es.n.storeNotification(dn)

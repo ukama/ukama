@@ -120,8 +120,8 @@ var EventToEventConfig = map[EventId]EventConfig{
 	EventNodeStateChange: {
 		Key:         EventNodeStateChange,
 		Name:        "EventNodeStateChange",
-		Title:       "Node State Change Notifier",
-		Description: "Notifies about changes in the state of a node each time it occurs.",
+		Title:       "Node State Changed",
+		Description: "Node State Changed",
 		Scope:       notif.SCOPE_NODE,
 		Type:        TypeDefault,
 	},

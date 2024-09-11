@@ -61,6 +61,7 @@ func TestEventProcessor_GetAll(t *testing.T) {
 		NetworkId:    nwId,
 		SubscriberId: subId,
 		UserId:       uId,
+		NodeId: 	  nId,
 	}
 
 	data := &pb.GetAllResponse{
@@ -80,7 +81,7 @@ func TestEventProcessor_GetAll(t *testing.T) {
 
 	c := client.NewEventToNotifyFromClient(en)
 
-	resp, err := c.GetAll(orgId, nwId, subId, uId)
+	resp, err := c.GetAll(orgId, nwId, subId, uId,nId)
 	assert.NoError(t, err)
 
 	if assert.NotNil(t, resp) {

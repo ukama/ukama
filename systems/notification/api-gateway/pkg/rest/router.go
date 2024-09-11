@@ -199,7 +199,7 @@ func (r *Router) getEventNotification(c *gin.Context, req *GetEventNotificationB
 }
 
 func (r *Router) getEventNotifications(c *gin.Context, req *GetEventNotificationRequest) (*epb.GetAllResponse, error) {
-	return r.clients.e.GetAll(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId)
+	return r.clients.e.GetAll(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId,req.NodeId)
 }
 
 func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotificationStatusRequest) (*epb.UpdateStatusResponse, error) {
@@ -221,7 +221,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := r.clients.d.GetNotificationStream(ctx, req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.Scopes)
+	stream, err := r.clients.d.GetNotificationStream(ctx, req.OrgId, req.NetworkId, req.SubscriberId, req.UserId,req.NodeId, req.Scopes)
 	if err != nil {
 		log.Errorf("error getting notification on stream:Error: %s", err.Error())
 		return err
