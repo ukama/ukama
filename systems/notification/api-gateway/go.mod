@@ -26,7 +26,7 @@ require (
 	github.com/ukama/ukama/systems/notification/mailer v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/notification/notify v0.0.0-20240806183533-2a4748d34ecd
 	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.66.2
 )
 
 require (
@@ -102,12 +102,12 @@ require (
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9 // indirect
-	gorm.io/gorm v1.25.11 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
