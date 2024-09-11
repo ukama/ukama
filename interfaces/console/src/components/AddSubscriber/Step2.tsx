@@ -195,7 +195,7 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                     }}
                   >
                     <Typography variant="body1">
-                      {`${pkg.name} - ${pkg.currency} ${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+                      {`${pkg.name} - ${pkg.currency} ${pkg.amount}/${pkg.dataVolume} ${pkg.dataUnit}`}
                     </Typography>
                   </MenuItem>
                 ))
