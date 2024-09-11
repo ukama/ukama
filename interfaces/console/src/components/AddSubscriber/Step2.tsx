@@ -53,7 +53,6 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
     handleSubmitButton,
   }) => {
     const classes = useStyles();
-
     return (
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -196,7 +195,7 @@ const Step2: React.FC<SubscriberDialogProps> = React.memo(
                     }}
                   >
                     <Typography variant="body1">
-                      {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+                      {`${pkg.name} - ${pkg.currency} ${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
                     </Typography>
                   </MenuItem>
                 ))
