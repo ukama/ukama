@@ -55,7 +55,8 @@ type AddSubscriberRequest struct {
 }
 
 type SubscriberClient interface {
-	Get(Id string) (*SubscriberInfo, error)
+	Get(id string) (*SubscriberInfo, error)
+	GetByEmail(email string) (*SubscriberInfo, error)
 	Add(req AddSubscriberRequest) (*SubscriberInfo, error)
 }
 
@@ -113,6 +114,30 @@ func (s *subscriberClient) Get(id string) (*SubscriberInfo, error) {
 	subscriber := Subscriber{}
 
 	resp, err := s.R.Get(s.u.String() + SubscriberEndpoint + "/" + id)
+	if err != nil {
+		log.Errorf("GetSubscriber failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("GetSubscriber failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &subscriber)
+	if err != nil {
+		log.Tracef("Failed to deserialize subscriber info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("subscriber info deserailization failure: %w", err)
+	}
+
+	log.Infof("Subscriber Info: %+v", subscriber.SubscriberInfo)
+
+	return subscriber.SubscriberInfo, nil
+}
+
+func (s *subscriberClient) GetByEmail(email string) (*SubscriberInfo, error) {
+	log.Debugf("Getting subscriber: %v", email)
+
+	subscriber := Subscriber{}
+
+	resp, err := s.R.Get(s.u.String() + SubscriberEndpoint + "/email/" + email)
 	if err != nil {
 		log.Errorf("GetSubscriber failure. error: %s", err.Error())
 
