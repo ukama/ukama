@@ -16,20 +16,19 @@ import (
 
 type Config struct {
 	uconf.BaseConfig  `mapstructure:",squash"`
-	DB                *uconf.Database  `default:"{}"`
-	Grpc              *uconf.Grpc      `default:"{}"`
-	Metrics           *uconf.Metrics   `default:"{}"`
-	Timeout           time.Duration    `default:"3s"`
-	Queue             *uconf.Queue     `default:"{}"`
-	MsgClient         *uconf.MsgClient `default:"{}"`
+	DB                *uconf.Database `default:"{}"`
+	Grpc              *uconf.Grpc     `default:"{}"`
+	Metrics           *uconf.Metrics  `default:"{}"`
+	Timeout           time.Duration   `default:"3s"`
+	Queue             *uconf.Queue    `default:"{}"`
 	Service           *uconf.Service
-	System            string `default:"testing"`
-	OrgName           string
+	System            string        `default:"testing"`
 	SchedulerInterval time.Duration `default:"20s"`
+	PaymentsHost      string        `default:"http://api-gateway-payments:8080"`
+	PawapayHost       string        `default:"https://api.sandbox.pawapay.cloud"`
+	WebhooksHost      string        `default:"http://api-gateway-webhooks:8080"`
+	OrgName           string
 	PawapayKey        string
-	PaymentsHost      string
-	WebhooksHost      string
-	PawapayHost       string `default:"https://api.sandbox.pawapay.cloud"`
 }
 
 func NewConfig(name string) *Config {
@@ -37,12 +36,6 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
-
 		Service: uconf.LoadServiceHostConfig(name),
-
-		MsgClient: &uconf.MsgClient{
-			Host:    "msg-client-testing:9095",
-			Timeout: 5 * time.Second,
-		},
 	}
 }
