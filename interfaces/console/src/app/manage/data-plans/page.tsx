@@ -33,6 +33,8 @@ const INIT_DATAPLAN = {
   dataUnit: '',
   amount: 0,
   duration: 0,
+  currency: '',
+  country: '',
 };
 
 const Page = () => {
@@ -201,6 +203,8 @@ const Page = () => {
         duration: d?.duration ?? 0,
         dataUnit: d?.dataUnit ?? '',
         dataVolume: d?.dataVolume ?? 0,
+        country: d?.country ?? '',
+        currency: d?.currency ?? '',
         amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
       });
       setIsDataPlan(true);
