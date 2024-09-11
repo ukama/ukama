@@ -14,9 +14,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	notif "github.com/ukama/ukama/systems/common/notification"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
@@ -26,14 +28,16 @@ type EventToNotifyEventServer struct {
 	orgName string
 	orgId   string
 	n       *EventToNotifyServer
+	sc      csub.SubscriberClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNotificationEventServer(orgName string, orgId string, n *EventToNotifyServer) *EventToNotifyEventServer {
+func NewNotificationEventServer(orgName string, orgId string, subscriberClient csub.SubscriberClient, n *EventToNotifyServer) *EventToNotifyEventServer {
 
 	return &EventToNotifyEventServer{
 		orgName: orgName,
 		orgId:   orgId,
+		sc:      subscriberClient,
 		n:       n,
 	}
 }
@@ -446,6 +450,20 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg)
 
+		user := &db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        es.orgId,
+			UserId:       msg.SubscriberId,
+			Role:         roles.TYPE_SUBSCRIBER,
+			NetworkId:    msg.NetworkId,
+			SubscriberId: msg.SubscriberId,
+		}
+
+		err = es.n.storeUser(user)
+		if err != nil {
+			log.Errorf("Error storing user: %v", err)
+		}
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberUpdate]
 		msg, err := epb.UnmarshalEventSubscriberAdded(e.Msg, c.Name)
@@ -558,38 +576,25 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
 
-		/*
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
-				c := evt.EventToEventConfig[evt.EventComponentsSync]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventAccountingSync]):
-				c := evt.EventToEventConfig[evt.EventAccountingSync]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
-				c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventHealthCappStore]):
-				c := evt.EventToEventConfig[evt.EventHealthCappStore]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNotificationStore]):
-				//c := evt.EventToEventConfig[evt.EventNotificationStore]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-		*/
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentProcessUpdate]):
+		c := evt.EventToEventConfig[evt.EventPaymentProcessUpdate]
+		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		sub, err := es.sc.GetByEmail(msg.PayerEmail)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, sub.NetworkId.String(), sub.SubscriberId.String(), sub.SubscriberId.String(), "", jmsg)
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}

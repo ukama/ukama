@@ -136,13 +136,15 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 	roleType := upb.RoleType_ROLE_INVALID
 
 	/* validate member of org or member role */
-	if req.GetUserId() != "" {
+	if req.GetUserId() != "" && req.GetSubscriberId() == "" {
 		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
 		}
 		roleType = upb.RoleType(upb.RoleType_value[resp.Member.Role])
+	} else if req.GetSubscriberId() != "" {
+		roleType = upb.RoleType_ROLE_SUBSCRIBER
 	}
 
 	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(roleType))

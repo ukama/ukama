@@ -9,6 +9,7 @@ const (
 	TYPE_NETWORK_OWNER RoleType = 3
 	TYPE_VENDOR        RoleType = 4
 	TYPE_USERS         RoleType = 5
+	TYPE_SUBSCRIBER    RoleType = 6
 )
 
 func (e *RoleType) Scan(value interface{}) error {
