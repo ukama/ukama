@@ -79,7 +79,7 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 }
 
 func (p *SimPoolServer) GetSims(ctx context.Context, req *pb.GetSimsRequest) (*pb.GetSimsResponse, error) {
-	log.Infof("GetSims : %v ", req.GetSimType())
+	log.Infof("GetSims : %v", req.GetSimType())
 
 	sims, err := p.simRepo.GetSims(db.ParseType(req.SimType))
 	if err != nil {

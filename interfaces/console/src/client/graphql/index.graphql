@@ -366,14 +366,14 @@ mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
 ### Package End ###
 
 ### SimPool Start ###
-query getSimpoolStats($type: String!) {
-  getSimPoolStats(type: $type) {
+query GetSimPoolStats($data: GetSimPoolStatsInput!) {
+  getSimPoolStats(data: $data) {
     total
     available
     consumed
     failed
-    physical
     esim
+    physical
   }
 }
 mutation uploadSims($data: UploadSimsInputDto!) {
@@ -441,8 +441,8 @@ query getSim($data: GetSimInputDto!) {
   }
 }
 
-query getSims($type: String!) {
-  getSims(type: $type) {
+query GetSims($data: GetSimsInput!) {
+  getSims(data: $data) {
     sim {
       ...SimPool
     }

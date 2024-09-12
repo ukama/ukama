@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "google.golang.org/protobuf/types/known/structpb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -159,11 +159,6 @@ func (this *AddPackageRequest) Validate() error {
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
-	if this.StartDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("StartDate", err)
-		}
-	}
 	return nil
 }
 func (this *AddPackageResponse) Validate() error {
@@ -267,16 +262,6 @@ func (this *Package) Validate() error {
 	}
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
-	}
-	if this.StartDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("StartDate", err)
-		}
-	}
-	if this.EndDate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndDate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("EndDate", err)
-		}
 	}
 	return nil
 }

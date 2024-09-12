@@ -79,6 +79,7 @@ class SimApi extends RESTDataSource {
       return res;
     });
   };
+
   allocateSim = async (
     baseURL: string,
     req: AllocateSimInputDto
@@ -105,10 +106,10 @@ class SimApi extends RESTDataSource {
     });
 
     if (simRes.sim.id) {
-      const simPackageRes = await this.addPackageToSim(baseURL, {
+      await this.addPackageToSim(baseURL, {
         package_id: req.package_id,
         sim_id: simRes.sim.id,
-        start_date: dayjs().format(),
+        start_date: dayjs().add(10, "seconds").format(),
       });
 
       await this.toggleSimStatus(baseURL, {
@@ -118,7 +119,7 @@ class SimApi extends RESTDataSource {
 
       await this.setActivePackageForSim(baseURL, {
         sim_id: simRes.sim.id,
-        package_id: simPackageRes?.packageId ?? "",
+        package_id: req.package_id,
       });
     }
 
@@ -185,9 +186,14 @@ class SimApi extends RESTDataSource {
     req: AddPackageToSimInputDto
   ): Promise<AddPackageSimResDto> => {
     this.baseURL = baseURL;
-    return this.put(``, {
+    this.logger.info(
+      `AddPackageToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
+    );
+    return this.post(`/${VERSION}/${SIM}/package`, {
       body: {
-        ...req,
+        sim_id: req.sim_id,
+        package_id: req.package_id,
+        start_date: req.start_date,
       },
     }).then(res => res);
   };

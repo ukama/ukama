@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
 
@@ -139,7 +138,7 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: packageID,
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 		assert.NoError(t, err)
 	})
