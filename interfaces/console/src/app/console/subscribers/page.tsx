@@ -689,7 +689,7 @@ const Page = () => {
                       dataUnit,
                       amount,
                     }: any) => (
-                      <Grid item xs={12} sm={6} md={2} key={uuid}>
+                      <Grid item xs={12} sm={6} md={3} key={uuid}>
                         <PlanCard
                           uuid={uuid}
                           name={name}
