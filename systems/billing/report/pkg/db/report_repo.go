@@ -93,7 +93,7 @@ func (r *reportRepo) List(ownerId string, ownerType OwnerType, networkId string,
 	}
 
 	if sort {
-		tx = tx.Order("time DESC")
+		tx = tx.Order("period DESC")
 	}
 
 	if count > 0 {
