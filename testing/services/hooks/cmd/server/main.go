@@ -82,8 +82,6 @@ func runGrpcServer() {
 		generated.RegisterHookServiceServer(s, srv)
 	})
 
-	go msgBusListener(mbClient)
-
 	grpcServer.StartServer()
 }
 
