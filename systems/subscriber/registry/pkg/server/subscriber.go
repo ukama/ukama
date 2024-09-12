@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
@@ -26,6 +27,7 @@ import (
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
@@ -245,6 +247,15 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	// Store Sims by their SubscriberId
 	simMap := make(map[string][]*upb.Sim)
 	for _, sim := range allSims {
+		start, err := validation.FromString(sim.Package.StartDate)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
+
+		end, err := validation.FromString(sim.Package.EndDate)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 		simMap[sim.SubscriberId] = append(simMap[sim.SubscriberId], &upb.Sim{
 			Id:           sim.Id,
 			SubscriberId: sim.SubscriberId,
@@ -253,8 +264,8 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 			Msisdn:       sim.Msisdn,
 			Package: &upb.Package{
 				Id:        sim.Package.Id,
-				StartDate: sim.Package.StartDate,
-				EndDate:   sim.Package.EndDate,
+				StartDate: timestamppb.New(start),
+				EndDate:   timestamppb.New(end),
 			},
 			Type:               sim.Type,
 			Status:             sim.Status,

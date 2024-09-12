@@ -731,9 +731,9 @@ type AddPackageRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SimId     string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId string                 `protobuf:"bytes,3,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	StartDate *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
+	SimId     string `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
+	PackageId string `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	StartDate string `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
 }
 
 func (x *AddPackageRequest) Reset() {
@@ -782,11 +782,11 @@ func (x *AddPackageRequest) GetPackageId() string {
 	return ""
 }
 
-func (x *AddPackageRequest) GetStartDate() *timestamppb.Timestamp {
+func (x *AddPackageRequest) GetStartDate() string {
 	if x != nil {
 		return x.StartDate
 	}
-	return nil
+	return ""
 }
 
 type AddPackageResponse struct {
@@ -935,7 +935,7 @@ type SetActivePackageRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	SimId     string `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId string `protobuf:"bytes,3,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	PackageId string `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
 }
 
 func (x *SetActivePackageRequest) Reset() {
@@ -1028,7 +1028,7 @@ type RemovePackageRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	SimId     string `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId string `protobuf:"bytes,3,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	PackageId string `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
 }
 
 func (x *RemovePackageRequest) Reset() {
@@ -1317,18 +1317,18 @@ func (x *Package) GetPackageId() string {
 	return ""
 }
 
-func (x *Package) GetStartDate() *timestamppb.Timestamp {
+func (x *Package) GetStartDate() string {
 	if x != nil {
 		return x.StartDate
 	}
-	return nil
+	return ""
 }
 
-func (x *Package) GetEndDate() *timestamppb.Timestamp {
+func (x *Package) GetEndDate() string {
 	if x != nil {
 		return x.EndDate
 	}
-	return nil
+	return ""
 }
 
 func (x *Package) GetIsActive() bool {
@@ -1883,8 +1883,8 @@ var file_sim_manager_proto_goTypes = []any{
 	(*UsageResponse)(nil),               // 23: ukama.subscriber.sim_manager.v1.UsageResponse
 	(*Package)(nil),                     // 24: ukama.subscriber.sim_manager.v1.Package
 	(*Sim)(nil),                         // 25: ukama.subscriber.sim_manager.v1.Sim
-	(*timestamppb.Timestamp)(nil),       // 26: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),             // 27: google.protobuf.Struct
+	(*structpb.Struct)(nil),             // 26: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),       // 27: google.protobuf.Timestamp
 }
 var file_sim_manager_proto_depIdxs = []int32{
 	25, // 0: ukama.subscriber.sim_manager.v1.AllocateSimResponse.sim:type_name -> ukama.subscriber.sim_manager.v1.Sim
@@ -1892,45 +1892,42 @@ var file_sim_manager_proto_depIdxs = []int32{
 	25, // 2: ukama.subscriber.sim_manager.v1.ListSimsResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
 	25, // 3: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
 	25, // 4: ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	26, // 5: ukama.subscriber.sim_manager.v1.AddPackageRequest.startDate:type_name -> google.protobuf.Timestamp
-	24, // 6: ukama.subscriber.sim_manager.v1.GetPackagesBySimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
-	27, // 7: ukama.subscriber.sim_manager.v1.UsageResponse.usage:type_name -> google.protobuf.Struct
-	27, // 8: ukama.subscriber.sim_manager.v1.UsageResponse.cost:type_name -> google.protobuf.Struct
-	26, // 9: ukama.subscriber.sim_manager.v1.Package.startDate:type_name -> google.protobuf.Timestamp
-	26, // 10: ukama.subscriber.sim_manager.v1.Package.endDate:type_name -> google.protobuf.Timestamp
-	24, // 11: ukama.subscriber.sim_manager.v1.Sim.package:type_name -> ukama.subscriber.sim_manager.v1.Package
-	26, // 12: ukama.subscriber.sim_manager.v1.Sim.firstActivatedOn:type_name -> google.protobuf.Timestamp
-	26, // 13: ukama.subscriber.sim_manager.v1.Sim.lastActivatedOn:type_name -> google.protobuf.Timestamp
-	26, // 14: ukama.subscriber.sim_manager.v1.Sim.allocatedAt:type_name -> google.protobuf.Timestamp
-	0,  // 15: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:input_type -> ukama.subscriber.sim_manager.v1.AllocateSimRequest
-	2,  // 16: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:input_type -> ukama.subscriber.sim_manager.v1.GetSimRequest
-	4,  // 17: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:input_type -> ukama.subscriber.sim_manager.v1.ListSimsRequest
-	6,  // 18: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:input_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
-	8,  // 19: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:input_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
-	10, // 20: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:input_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusRequest
-	12, // 21: ukama.subscriber.sim_manager.v1.SimManagerService.DeleteSim:input_type -> ukama.subscriber.sim_manager.v1.DeleteSimRequest
-	14, // 22: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:input_type -> ukama.subscriber.sim_manager.v1.AddPackageRequest
-	16, // 23: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesBySim:input_type -> ukama.subscriber.sim_manager.v1.GetPackagesBySimRequest
-	18, // 24: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.SetActivePackageRequest
-	20, // 25: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.RemovePackageRequest
-	22, // 26: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:input_type -> ukama.subscriber.sim_manager.v1.UsageRequest
-	1,  // 27: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:output_type -> ukama.subscriber.sim_manager.v1.AllocateSimResponse
-	3,  // 28: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:output_type -> ukama.subscriber.sim_manager.v1.GetSimResponse
-	5,  // 29: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:output_type -> ukama.subscriber.sim_manager.v1.ListSimsResponse
-	7,  // 30: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:output_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
-	9,  // 31: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:output_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
-	11, // 32: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:output_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusResponse
-	13, // 33: ukama.subscriber.sim_manager.v1.SimManagerService.DeleteSim:output_type -> ukama.subscriber.sim_manager.v1.DeleteSimResponse
-	15, // 34: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:output_type -> ukama.subscriber.sim_manager.v1.AddPackageResponse
-	17, // 35: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesBySim:output_type -> ukama.subscriber.sim_manager.v1.GetPackagesBySimResponse
-	19, // 36: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.SetActivePackageResponse
-	21, // 37: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.RemovePackageResponse
-	23, // 38: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:output_type -> ukama.subscriber.sim_manager.v1.UsageResponse
-	27, // [27:39] is the sub-list for method output_type
-	15, // [15:27] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	24, // 5: ukama.subscriber.sim_manager.v1.GetPackagesBySimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
+	26, // 6: ukama.subscriber.sim_manager.v1.UsageResponse.usage:type_name -> google.protobuf.Struct
+	26, // 7: ukama.subscriber.sim_manager.v1.UsageResponse.cost:type_name -> google.protobuf.Struct
+	24, // 8: ukama.subscriber.sim_manager.v1.Sim.package:type_name -> ukama.subscriber.sim_manager.v1.Package
+	27, // 9: ukama.subscriber.sim_manager.v1.Sim.firstActivatedOn:type_name -> google.protobuf.Timestamp
+	27, // 10: ukama.subscriber.sim_manager.v1.Sim.lastActivatedOn:type_name -> google.protobuf.Timestamp
+	27, // 11: ukama.subscriber.sim_manager.v1.Sim.allocatedAt:type_name -> google.protobuf.Timestamp
+	0,  // 12: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:input_type -> ukama.subscriber.sim_manager.v1.AllocateSimRequest
+	2,  // 13: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:input_type -> ukama.subscriber.sim_manager.v1.GetSimRequest
+	4,  // 14: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:input_type -> ukama.subscriber.sim_manager.v1.ListSimsRequest
+	6,  // 15: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:input_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
+	8,  // 16: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:input_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
+	10, // 17: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:input_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusRequest
+	12, // 18: ukama.subscriber.sim_manager.v1.SimManagerService.DeleteSim:input_type -> ukama.subscriber.sim_manager.v1.DeleteSimRequest
+	14, // 19: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:input_type -> ukama.subscriber.sim_manager.v1.AddPackageRequest
+	16, // 20: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesBySim:input_type -> ukama.subscriber.sim_manager.v1.GetPackagesBySimRequest
+	18, // 21: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.SetActivePackageRequest
+	20, // 22: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.RemovePackageRequest
+	22, // 23: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:input_type -> ukama.subscriber.sim_manager.v1.UsageRequest
+	1,  // 24: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:output_type -> ukama.subscriber.sim_manager.v1.AllocateSimResponse
+	3,  // 25: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:output_type -> ukama.subscriber.sim_manager.v1.GetSimResponse
+	5,  // 26: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:output_type -> ukama.subscriber.sim_manager.v1.ListSimsResponse
+	7,  // 27: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:output_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
+	9,  // 28: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:output_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
+	11, // 29: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:output_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusResponse
+	13, // 30: ukama.subscriber.sim_manager.v1.SimManagerService.DeleteSim:output_type -> ukama.subscriber.sim_manager.v1.DeleteSimResponse
+	15, // 31: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:output_type -> ukama.subscriber.sim_manager.v1.AddPackageResponse
+	17, // 32: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesBySim:output_type -> ukama.subscriber.sim_manager.v1.GetPackagesBySimResponse
+	19, // 33: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.SetActivePackageResponse
+	21, // 34: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.RemovePackageResponse
+	23, // 35: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:output_type -> ukama.subscriber.sim_manager.v1.UsageResponse
+	24, // [24:36] is the sub-list for method output_type
+	12, // [12:24] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_sim_manager_proto_init() }
