@@ -108,6 +108,12 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 			cdr.Iccid, err)
 	}
 
+	if cdr.Type != ukama.CdrTypeData.String() {
+		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
+
+		return nil
+	}
+
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
