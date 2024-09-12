@@ -204,7 +204,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 		// Do we already have a plan with the same code for that org
 		_, err := b.client.GetPlan(ctx, accountItem.Id)
 		if err == nil {
-			// The plan, therefore the subscription exist. Remove those
+			// The plan, therefore the subscription exists. Remove those
 			log.Warnf("Plan with similar code %s was found", accountItem.Id)
 			log.Infof("Removing plan and subscription associated with code: %s", accountItem.Id)
 
@@ -229,8 +229,10 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name:     accountItem.Item + ": " + accountItem.Id,
-			Code:     accountItem.Id,
+			Name: accountItem.Item + ": " + accountItem.Id,
+			Code: accountItem.Id,
+
+			//TODO: update with defaultBillingIntervall for production
 			Interval: testBillingInterval,
 
 			// 0 values are not sent by the upstream billing provider client. see above Todos
@@ -238,8 +240,9 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 			AmountCurrency: defaultCurrency,
 
-			// fails on false (postpaid). See abouve Todos
-			PayInAdvance: true,
+			//TODO: fails on false (postpaid). See abouve Todos
+			// PayInAdvance: true,
+			PayInAdvance: false,
 		}
 
 		log.Infof("Sending plan create event %v with no charge to billing", newPlan)
@@ -334,17 +337,21 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	}
 
 	newPlan := client.Plan{
-		Name:     "Plan: " + pkg.Uuid,
-		Code:     pkg.Uuid,
+		Name: "Plan: " + pkg.Uuid,
+		Code: pkg.Uuid,
+
+		//TODO: set to defaultBillingInterval for production
 		Interval: testBillingInterval,
 
-		// 0 values are not sent by the upstream billing provider client. see above Todos
-		AmountCents: 1,
+		//TODO: 0 values are not sent by the upstream billing provider client. see above Todos
+		// AmountCents: 1,
+		AmountCents: 0,
 
 		AmountCurrency: defaultCurrency,
 
-		// fails on false (postpaid). See abouve Todos
-		PayInAdvance: true,
+		//TOdO: fails on false (postpaid). See abouve Todos
+		// PayInAdvance: true,
+		PayInAdvance: false,
 	}
 
 	log.Infof("Sending plan create event %v with charges %v to billing", newPlan, charge)
