@@ -17,6 +17,6 @@
     string severity = 2;
     string type = 3;
     string current_state = 5;
-    string last_state_change = 6;
-    string connectivity = 7;
+    double latitude = 6;
+    double longitude = 7;
   }

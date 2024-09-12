@@ -9,7 +9,7 @@
 // versions:
 // 	protoc-gen-go v1.30.0
 // 	protoc        v3.21.12
-// source: events/NodeState.proto
+// source: events/nodeState.proto
 
 package events
 
@@ -32,18 +32,18 @@ type NodeStateChangeEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	NodeId          string `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	Severity        string `protobuf:"bytes,2,opt,name=severity,proto3" json:"severity,omitempty"`
-	Type            string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	CurrentState    string `protobuf:"bytes,5,opt,name=current_state,json=currentState,proto3" json:"current_state,omitempty"`
-	LastStateChange string `protobuf:"bytes,6,opt,name=last_state_change,json=lastStateChange,proto3" json:"last_state_change,omitempty"`
-	Connectivity    string `protobuf:"bytes,7,opt,name=connectivity,proto3" json:"connectivity,omitempty"`
+	NodeId       string  `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Severity     string  `protobuf:"bytes,2,opt,name=severity,proto3" json:"severity,omitempty"`
+	Type         string  `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	CurrentState string  `protobuf:"bytes,5,opt,name=current_state,json=currentState,proto3" json:"current_state,omitempty"`
+	Latitude     float64 `protobuf:"fixed64,6,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	Longitude    float64 `protobuf:"fixed64,7,opt,name=longitude,proto3" json:"longitude,omitempty"`
 }
 
 func (x *NodeStateChangeEvent) Reset() {
 	*x = NodeStateChangeEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_events_NodeState_proto_msgTypes[0]
+		mi := &file_events_nodeState_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -56,7 +56,7 @@ func (x *NodeStateChangeEvent) String() string {
 func (*NodeStateChangeEvent) ProtoMessage() {}
 
 func (x *NodeStateChangeEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_events_NodeState_proto_msgTypes[0]
+	mi := &file_events_nodeState_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -69,7 +69,7 @@ func (x *NodeStateChangeEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeStateChangeEvent.ProtoReflect.Descriptor instead.
 func (*NodeStateChangeEvent) Descriptor() ([]byte, []int) {
-	return file_events_NodeState_proto_rawDescGZIP(), []int{0}
+	return file_events_nodeState_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *NodeStateChangeEvent) GetNodeId() string {
@@ -100,26 +100,26 @@ func (x *NodeStateChangeEvent) GetCurrentState() string {
 	return ""
 }
 
-func (x *NodeStateChangeEvent) GetLastStateChange() string {
+func (x *NodeStateChangeEvent) GetLatitude() float64 {
 	if x != nil {
-		return x.LastStateChange
+		return x.Latitude
 	}
-	return ""
+	return 0
 }
 
-func (x *NodeStateChangeEvent) GetConnectivity() string {
+func (x *NodeStateChangeEvent) GetLongitude() float64 {
 	if x != nil {
-		return x.Connectivity
+		return x.Longitude
 	}
-	return ""
+	return 0
 }
 
-var File_events_NodeState_proto protoreflect.FileDescriptor
+var File_events_nodeState_proto protoreflect.FileDescriptor
 
-var file_events_NodeState_proto_rawDesc = []byte{
-	0x0a, 0x16, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x4e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61,
+var file_events_nodeState_proto_rawDesc = []byte{
+	0x0a, 0x16, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61,
 	0x74, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
-	0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x22, 0xd4, 0x01, 0x0a, 0x14, 0x4e, 0x6f,
+	0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x22, 0xbe, 0x01, 0x0a, 0x14, 0x4e, 0x6f,
 	0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x45, 0x76, 0x65,
 	0x6e, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x73,
@@ -128,34 +128,33 @@ var file_events_NodeState_proto_rawDesc = []byte{
 	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x63,
 	0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x05, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x0c, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65,
-	0x12, 0x2a, 0x0a, 0x11, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x5f, 0x63,
-	0x68, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x6c, 0x61, 0x73,
-	0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x22, 0x0a, 0x0c,
-	0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x07, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0c, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79,
-	0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65,
-	0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e,
-	0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x12, 0x1a, 0x0a, 0x08, 0x6c, 0x61, 0x74, 0x69, 0x74, 0x75, 0x64, 0x65, 0x18, 0x06, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x08, 0x6c, 0x61, 0x74, 0x69, 0x74, 0x75, 0x64, 0x65, 0x12, 0x1c, 0x0a, 0x09,
+	0x6c, 0x6f, 0x6e, 0x67, 0x69, 0x74, 0x75, 0x64, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x01, 0x52,
+	0x09, 0x6c, 0x6f, 0x6e, 0x67, 0x69, 0x74, 0x75, 0x64, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x75,
+	0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x63, 0x6f, 0x6d,
+	0x6d, 0x6f, 0x6e, 0x2f, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74,
+	0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_events_NodeState_proto_rawDescOnce sync.Once
-	file_events_NodeState_proto_rawDescData = file_events_NodeState_proto_rawDesc
+	file_events_nodeState_proto_rawDescOnce sync.Once
+	file_events_nodeState_proto_rawDescData = file_events_nodeState_proto_rawDesc
 )
 
-func file_events_NodeState_proto_rawDescGZIP() []byte {
-	file_events_NodeState_proto_rawDescOnce.Do(func() {
-		file_events_NodeState_proto_rawDescData = protoimpl.X.CompressGZIP(file_events_NodeState_proto_rawDescData)
+func file_events_nodeState_proto_rawDescGZIP() []byte {
+	file_events_nodeState_proto_rawDescOnce.Do(func() {
+		file_events_nodeState_proto_rawDescData = protoimpl.X.CompressGZIP(file_events_nodeState_proto_rawDescData)
 	})
-	return file_events_NodeState_proto_rawDescData
+	return file_events_nodeState_proto_rawDescData
 }
 
-var file_events_NodeState_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_events_NodeState_proto_goTypes = []interface{}{
+var file_events_nodeState_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_events_nodeState_proto_goTypes = []interface{}{
 	(*NodeStateChangeEvent)(nil), // 0: ukama.events.v1.NodeStateChangeEvent
 }
-var file_events_NodeState_proto_depIdxs = []int32{
+var file_events_nodeState_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -163,13 +162,13 @@ var file_events_NodeState_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_events_NodeState_proto_init() }
-func file_events_NodeState_proto_init() {
-	if File_events_NodeState_proto != nil {
+func init() { file_events_nodeState_proto_init() }
+func file_events_nodeState_proto_init() {
+	if File_events_nodeState_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_events_NodeState_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_events_nodeState_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*NodeStateChangeEvent); i {
 			case 0:
 				return &v.state
@@ -186,18 +185,18 @@ func file_events_NodeState_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_events_NodeState_proto_rawDesc,
+			RawDescriptor: file_events_nodeState_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_events_NodeState_proto_goTypes,
-		DependencyIndexes: file_events_NodeState_proto_depIdxs,
-		MessageInfos:      file_events_NodeState_proto_msgTypes,
+		GoTypes:           file_events_nodeState_proto_goTypes,
+		DependencyIndexes: file_events_nodeState_proto_depIdxs,
+		MessageInfos:      file_events_nodeState_proto_msgTypes,
 	}.Build()
-	File_events_NodeState_proto = out.File
-	file_events_NodeState_proto_rawDesc = nil
-	file_events_NodeState_proto_goTypes = nil
-	file_events_NodeState_proto_depIdxs = nil
+	File_events_nodeState_proto = out.File
+	file_events_nodeState_proto_rawDesc = nil
+	file_events_nodeState_proto_goTypes = nil
+	file_events_nodeState_proto_depIdxs = nil
 }

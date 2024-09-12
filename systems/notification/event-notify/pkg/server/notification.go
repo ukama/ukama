@@ -37,18 +37,20 @@ type EventToNotifyServer struct {
 	notificationRepo     db.NotificationRepo
 	userRepo             db.UserRepo
 	userNotificationRepo db.UserNotificationRepo
+	nodeStateRepo db.NodeStateRepo
 	eventMsgRepo         db.EventMsgRepo
 	msgbus               mb.MsgBusServiceClient
 	memberkClient        creg.MemberClient
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, nodeStateRepo db.NodeStateRepo,msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
 	return &EventToNotifyServer{
 		orgName:              orgName,
 		orgId:                orgId,
 		notificationRepo:     notificationRepo,
 		userNotificationRepo: userNotificationRepo,
+		nodeStateRepo:nodeStateRepo,
 		userRepo:             userRepo,
 		eventMsgRepo:         eventMsgRepo,
 		msgbus:               msgBus,
@@ -190,19 +192,28 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 }
 
 func dbNotificationToPbNotification(notification *db.Notification) *pb.Notification {
-	return &pb.Notification{
-		Id:           notification.Id.String(),
-		Title:        notification.Title,
-		Description:  notification.Description,
-		Type:         upb.NotificationType(notification.Type),
-		Scope:        upb.NotificationScope(notification.Scope),
-		OrgId:        notification.OrgId,
-		NetworkId:    notification.NetworkId,
-		SubscriberId: notification.SubscriberId,
-		UserId:       notification.UserId,
-		CreatedAt:    timestamppb.New(notification.CreatedAt),
-	}
+    pbNodeState := &pb.NodeState{
+        NodeId:       notification.NodeState.NodeId,
+        Latitude:     notification.NodeState.Latitude,
+        Longitude:    notification.NodeState.Longitude,
+        CurrentState: notification.NodeState.CurrentState,
+    }
+
+    return &pb.Notification{
+        Id:           notification.Id.String(),
+        Title:        notification.Title,
+        Description:  notification.Description,
+        Type:         upb.NotificationType(notification.Type),
+        Scope:        upb.NotificationScope(notification.Scope),
+        OrgId:        notification.OrgId,
+        NetworkId:    notification.NetworkId,
+        SubscriberId: notification.SubscriberId,
+        UserId:       notification.UserId,
+        CreatedAt:    timestamppb.New(notification.CreatedAt),
+        NodeState:    pbNodeState, 
+    }
 }
+
 
 func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	m := map[db.Users]struct{}{}
@@ -282,6 +293,15 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 }
 
 func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
+	if dn.NodeState != nil {
+        err := n.nodeStateRepo.Add(dn.NodeState)
+        if err != nil {
+            log.Errorf("Error adding NodeState to db: %v", err)
+            return err
+        }
+        // Ensure the NodeStateID is set correctly
+        dn.NodeStateID = dn.NodeState.Id
+    }
 	err := n.notificationRepo.Add(dn)
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
@@ -305,6 +325,8 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 				NotificationId: dn.Id,
 				UserId:         u.Id,
 				IsRead:         false,
+				NodeState:      dn.NodeState, 
+				
 			})
 		}
 	}

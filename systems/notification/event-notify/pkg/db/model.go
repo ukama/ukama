@@ -21,26 +21,27 @@ import (
 
 type JSONB map[string]interface{}
 
-type Notification struct {
-	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Title        string
-	Description  string
-	Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
-	Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	ResourceId   uuid.UUID
-	OrgId        string
-	NetworkId    string
-	SubscriberId string
-	UserId       string
-	NodeId       string
-	NodeState         *NodeState  
-	EventMsgID   uint
-	EventMsg     EventMsg
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
-}
 
+type Notification struct {
+    Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
+    Title        string
+    Description  string
+    Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
+    Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
+    ResourceId   uuid.UUID
+    OrgId        string
+    NetworkId    string
+    SubscriberId string
+    UserId       string
+    NodeId       string
+    NodeStateID  uuid.UUID
+    NodeState    *NodeState `gorm:"foreignKey:NodeStateID"`
+    EventMsgID   uint
+    EventMsg     EventMsg
+    CreatedAt    time.Time
+    UpdatedAt    time.Time
+    DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
 type Users struct {
 	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrgId        string
@@ -55,14 +56,15 @@ type Users struct {
 }
 
 type UserNotification struct {
-	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
-	NotificationId uuid.UUID `gorm:"type:uuid"`
-	UserId         uuid.UUID
-	IsRead         bool `gorm:"default:false"`
-	NodeState      *NodeState     
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      gorm.DeletedAt `gorm:"index"`
+    Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
+    NotificationId uuid.UUID `gorm:"type:uuid"`
+    UserId         uuid.UUID
+    IsRead         bool `gorm:"default:false"`
+    NodeStateID    uuid.UUID
+    NodeState      *NodeState `gorm:"foreignKey:NodeStateID"`
+    CreatedAt      time.Time
+    UpdatedAt      time.Time
+    DeletedAt      gorm.DeletedAt `gorm:"index"`
 }
 
 type NodeState struct {

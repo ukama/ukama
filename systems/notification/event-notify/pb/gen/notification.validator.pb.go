@@ -48,6 +48,11 @@ func (this *UpdateStatusResponse) Validate() error {
 	return nil
 }
 func (this *Notification) Validate() error {
+	if this.NodeState != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeState); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeState", err)
+		}
+	}
 	if this.CreatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
@@ -56,6 +61,19 @@ func (this *Notification) Validate() error {
 	return nil
 }
 func (this *Notifications) Validate() error {
+	if this.NodeState != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeState); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeState", err)
+		}
+	}
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	return nil
+}
+func (this *NodeState) Validate() error {
 	if this.CreatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)

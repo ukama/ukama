@@ -64,7 +64,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Notification{}, &db.Users{}, &db.UserNotification{}, &db.EventMsg{})
+	err := d.Init(&db.Notification{}, &db.Users{}, db.NodeState{},&db.UserNotification{}, &db.EventMsg{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -74,9 +74,43 @@ func initDb() sql.Db {
 }
 
 func initTrigger(db sql.Db) {
-	db.GetGormDb().Exec("CREATE OR REPLACE FUNCTION public.user_notifications_trigger() RETURNS TRIGGER AS $$ DECLARE notification_data text; BEGIN notification_data := NEW.id::text || ',' || NEW.notification_id::text || ',' || NEW.user_id::text || ',' || NEW.is_read::text; PERFORM pg_notify('user_notifications_channel', notification_data); RETURN NEW; END; $$ LANGUAGE plpgsql;")
-	db.GetGormDb().Exec("DROP TRIGGER notify_trigger ON user_notifications;")
-	db.GetGormDb().Exec("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON user_notifications FOR EACH ROW EXECUTE FUNCTION public.user_notifications_trigger();")
+	db.GetGormDb().Exec(`
+	CREATE OR REPLACE FUNCTION public.user_notifications_trigger()
+	RETURNS TRIGGER AS $$
+	DECLARE
+		notification_data text;
+		node_state_data text;
+	BEGIN
+		-- Fetch NodeState data
+		SELECT COALESCE(ns.id::text, ''), COALESCE(ns.node_id, ''), COALESCE(ns.current_state, '')
+		INTO node_state_data
+		FROM node_states ns
+		WHERE ns.id = NEW.node_state_id;
+
+		-- Combine UserNotification and NodeState data
+		notification_data := NEW.id::text || ',' || 
+							 NEW.notification_id::text || ',' || 
+							 NEW.user_id::text || ',' || 
+							 NEW.is_read::text || ',' || 
+							 COALESCE(NEW.node_state_id::text, '') || ',' || 
+							 node_state_data;
+
+		-- Send notification
+		PERFORM pg_notify('user_notifications_channel', notification_data);
+		
+		RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	`)
+
+	db.GetGormDb().Exec("DROP TRIGGER IF EXISTS notify_trigger ON user_notifications;")
+
+	db.GetGormDb().Exec(`
+	CREATE TRIGGER notify_trigger
+	AFTER INSERT OR UPDATE ON user_notifications
+	FOR EACH ROW
+	EXECUTE FUNCTION public.user_notifications_trigger();
+	`)
 }
 
 func runGrpcServer(gormdb sql.Db) {
@@ -102,7 +136,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, memberClient, db.NewNotificationRepo(gormdb),
-		db.NewUserRepo(gormdb), db.NewEventMsgRepo(gormdb), db.NewUserNotificationRepo(gormdb), mbClient)
+		db.NewUserRepo(gormdb), db.NewEventMsgRepo(gormdb), db.NewUserNotificationRepo(gormdb),db.NewNodeStateRepo(gormdb), mbClient)
 
 	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, serviceConfig.OrgId, eventToNotifyServer)
 	log.Debugf("MessageBus Client is %+v and config %+v", mbClient, serviceConfig.MsgClient)

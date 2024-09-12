@@ -60,7 +60,8 @@ message Notification {
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
     string nodeId = 10 [json_name = "node_id"];
-    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
+    NodeState nodeState = 11;  // Optional node state information
+    google.protobuf.Timestamp createdAt = 12 [json_name = "created_at"];
 }
 
 message Notifications {
@@ -70,7 +71,15 @@ message Notifications {
     string type = 4;
     string scope = 5;
     bool isRead = 6 [json_name = "is_read"];
-    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
+    NodeState nodeState = 7;
+    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
 }
 
+message NodeState {  
+    string nodeId = 1 [json_name = "node_id"];
+    double latitude = 2;
+    double longitude = 3;
+    string currentState = 4;
+    google.protobuf.Timestamp createdAt = 5 [json_name = "created_at"];
 
+}

@@ -529,12 +529,17 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
-		if msg.CurrentState == "faulty" {
-			c.Type = notif.TYPE_CRITICAL
-		} else {
+		switch msg.Severity {
+		case "low":
 			c.Type = notif.TYPE_INFO
+		case "medium":
+			c.Type = notif.TYPE_WARNING
+		case "high", "critical":
+			c.Type = notif.TYPE_CRITICAL
+		default:
+			c.Type = notif.TYPE_INFO 
 		}
-
+	
 		c.Title = fmt.Sprintf("Your node is now %s", msg.CurrentState)
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
@@ -606,42 +611,43 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 			log.Errorf("failed to store event: %v", err)
 		}
 	}
-	fmt.Println("BRACKLEY", orgId, networkId, nodeId, subscriberId, userId)
 
 	dn := &db.Notification{
-		Id:           uuid.NewV4(),
-		Title:        ec.Title,
-		Description:  ec.Description,
-		Type:         notif.NotificationType(ec.Type),
-		Scope:        notif.NotificationScope(ec.Scope),
-		OrgId:        orgId,
-		UserId:       userId,
-		NetworkId:    networkId,
-		NodeId:       nodeId,
-		SubscriberId: subscriberId,
-	}
+        Id:           uuid.NewV4(),
+        Title:        ec.Title,
+        Description:  ec.Description,
+        Type:         notif.NotificationType(ec.Type),
+        Scope:        notif.NotificationScope(ec.Scope),
+        OrgId:        orgId,
+        UserId:       userId,
+        NetworkId:    networkId,
+        NodeId:       nodeId,
+        SubscriberId: subscriberId,
+    }
 
-	if id != 0 {
-		dn.EventMsgID = id
-	}
-	if ec.Key == evt.EventNodeStateChange {
-		var nodeStateEvent epb.NodeStateChangeEvent
-		err = json.Unmarshal(msg, &nodeStateEvent)
-		if err != nil {
-			log.Errorf("failed to unmarshal NodeStateChangeEvent: %v", err)
-		} else {
-			nodeState := &db.NodeState{
-				Id:           uuid.NewV4(),
-				NodeId:       nodeId,
-				Latitude:     nodeStateEvent.Latitude,
-				Longitude:    nodeStateEvent.Longitude,
-				CurrentState: nodeStateEvent.CurrentState,
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
-			}
-			dn.NodeState = nodeState
-		}
-	}
+    if id != 0 {
+        dn.EventMsgID = id
+    }
+
+    if ec.Key == evt.EventNodeStateChange {
+        var nodeStateEvent epb.NodeStateChangeEvent
+        err = json.Unmarshal(msg, &nodeStateEvent)
+        if err != nil {
+            log.Errorf("failed to unmarshal NodeStateChangeEvent: %v", err)
+        } else {
+            nodeState := &db.NodeState{
+                Id:           uuid.NewV4(),
+                NodeId:       nodeId,
+                Latitude:     nodeStateEvent.Latitude,
+                Longitude:    nodeStateEvent.Longitude,
+                CurrentState: nodeStateEvent.CurrentState,
+                CreatedAt:    time.Now(),
+                UpdatedAt:    time.Now(),
+            }
+            dn.NodeStateID = nodeState.Id
+            dn.NodeState = nodeState
+        }
+    }
 
 	err = es.n.storeNotification(dn)
 	if err != nil {

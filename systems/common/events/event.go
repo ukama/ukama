@@ -70,7 +70,8 @@ const (
 
 var EventRoutingKey = [...]string{
 	EventAddSite:			"event.cloud.local.{{ .Org}}.registry.site.site.add",
-	EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
+	// EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
+	EventNodeStateChange:         "event.cloud.local.{{ .Org}}.registry.node.node.change",
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
