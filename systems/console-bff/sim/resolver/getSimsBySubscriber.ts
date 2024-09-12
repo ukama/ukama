@@ -1,13 +1,11 @@
-import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { GetSimBySubscriberInputDto, SubscriberToSimsDto } from "./types";
 
 @Resolver()
 export class GetSimsBySubscriberResolver {
   @Query(() => SubscriberToSimsDto)
-  @UseMiddleware(Authentication)
   async getSimsBySubscriber(
     @Arg("data") data: GetSimBySubscriberInputDto,
     @Ctx() ctx: Context

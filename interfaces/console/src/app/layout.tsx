@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { Sim_Types } from '@/client/graphql/generated';
 import AppContextWrapper from '@/context';
 import '@/styles/global.css';
 import AppThemeProvider from '@/theme/AppThemeProvider';
@@ -57,7 +58,8 @@ export default function RootLayout({
             token={tokenStr.value}
             initEnv={{
               APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? '',
-              SIM_TYPE: process.env.NEXT_PUBLIC_SIM_TYPE ?? 'operator_data',
+              SIM_TYPE:
+                process.env.NEXT_PUBLIC_SIM_TYPE ?? Sim_Types.OperatorData,
               METRIC_URL: process.env.NEXT_PUBLIC_METRIC_URL ?? '',
               API_GW_URL: process.env.NEXT_PUBLIC_API_GW ?? '',
               AUTH_APP_URL: process.env.NEXT_PUBLIC_AUTH_APP_URL ?? '',
