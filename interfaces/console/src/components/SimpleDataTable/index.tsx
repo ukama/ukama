@@ -153,9 +153,9 @@ const SimpleTableCell = ({
         </Typography>
       ) : (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
-          {row[column.id] === 'true'
+          {row[column.id] === true
             ? 'Assigned'
-            : row[column.id] === 'false'
+            : row[column.id] === false
               ? 'N/A'
               : row[column.id]}
         </Typography>

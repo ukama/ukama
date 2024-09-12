@@ -14,22 +14,23 @@ NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
 root_dir=$(pwd)
 # Parse the JSON file and initialize the variables
+JSON_FILE="../deploy_config.json"
 MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
 BILLINGSYSKEY="billing"
-OWNEREMAIL=$(jq -r '.setup.email' "$1")
-PASSWORD=$(jq -r '.setup.password' "$1")
-OWNERNAME=$(jq -r '.setup.name' "$1")
-ORGNAME=$(jq -r '.setup["org-name"]' "$1")
-ORGID=$(jq -r '.setup["org-id"]' "$1")
-SYS=$(jq -r '.systems' "$1")
-KEY=$(jq -r '.key' "$1")
+OWNEREMAIL=$(jq -r '.setup.email' "$JSON_FILE")
+PASSWORD=$(jq -r '.setup.password' "$JSON_FILE")
+OWNERNAME=$(jq -r '.setup.name' "$JSON_FILE")
+ORGNAME=$(jq -r '.setup["org-name"]' "$JSON_FILE")
+ORGID=$(jq -r '.setup["org-id"]' "$JSON_FILE")
+SYS=$(jq -r '.systems' "$JSON_FILE")
+KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
-MAILERHOST=$(jq -r '.mailer.host' "$1")
-MAILERPORT=$(jq -r '.mailer.port' "$1")
-MAILERUSERNAME=$(jq -r '.mailer.username' "$1")
-MAILERPASSWORD=$(jq -r '.mailer.password' "$1")
-LAGOAPIKEY=$(jq -r '."lago-api-key"' "$1")
+MAILERHOST=$(jq -r '.mailer.host' "$JSON_FILE")
+MAILERPORT=$(jq -r '.mailer.port' "$JSON_FILE")
+MAILERUSERNAME=$(jq -r '.mailer.username' "$JSON_FILE")
+MAILERPASSWORD=$(jq -r '.mailer.password' "$JSON_FILE")
+LAGOAPIKEY=$(jq -r '."lago-api-key"' "$JSON_FILE")
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
     LOCAL_HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')

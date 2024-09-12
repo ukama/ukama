@@ -16,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -1028,7 +1027,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 
 		assert.NoError(t, err)
@@ -1090,7 +1089,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 
 		assert.Error(t, err)
@@ -1134,7 +1133,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 
 		assert.Error(t, err)
@@ -1179,7 +1178,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 
 		assert.Error(t, err)
@@ -1239,7 +1238,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
 
 		assert.Error(t, err)

@@ -24,6 +24,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
@@ -266,18 +267,19 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
 	evt := &epb.EventSimAllocation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		NetworkId:    sim.NetworkId.String(),
-		OrgId:        orgId.String(),
-		DataPlanId:   sim.Package.PackageId.String(),
-		Iccid:        sim.Iccid,
-		Msisdn:       sim.Msisdn,
-		Imsi:         sim.Imsi,
-		Type:         sim.Type.String(),
-		Status:       sim.Status.String(),
-		IsPhysical:   sim.IsPhysical,
-		PackageId:    sim.Package.Id.String(),
+		Id:            sim.Id.String(),
+		SubscriberId:  sim.SubscriberId.String(),
+		NetworkId:     sim.NetworkId.String(),
+		OrgId:         orgId.String(),
+		DataPlanId:    sim.Package.PackageId.String(),
+		Iccid:         sim.Iccid,
+		Msisdn:        sim.Msisdn,
+		Imsi:          sim.Imsi,
+		Type:          sim.Type.String(),
+		Status:        sim.Status.String(),
+		IsPhysical:    sim.IsPhysical,
+		PackageId:     sim.Package.Id.String(),
+		TrafficPolicy: sim.TrafficPolicy,
 	}
 
 	_ = s.PublishEventMessage(route, evt)
@@ -532,17 +534,18 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	log.Infof("Adding package %v to sim: %v", req.GetPackageId(), req.GetSimId())
 
-	if err := req.GetStartDate().CheckValid(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid time format for package start_date. Error %s", err.Error())
+	formattedStart, err := validation.ValidateDate(req.GetStartDate())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validation.IsFutureDate(formattedStart); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
 	}
 
-	startDate := req.GetStartDate().AsTime()
-
-	if startDate.Before(time.Now()) {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package start date on the past: package start date is %s",
-			startDate)
+	startDate, err := time.Parse(time.RFC3339, formattedStart)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
 	}
 
 	sim, err := s.getSim(req.SimId)
@@ -564,17 +567,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	if !pkgInfo.IsActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
-	}
-
-	orgId, err := uuid.FromString(s.orgId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"invalid format of subscriber's org uuid. Error %s", err.Error())
-	}
-
-	if orgId.String() != pkgInfo.OrgId {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid packageID: provided package does not belong to sim org issuer")
 	}
 
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
@@ -1012,11 +1004,11 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	}
 
 	if !pkg.EndDate.IsZero() {
-		res.EndDate = timestamppb.New(pkg.EndDate)
+		res.EndDate = pkg.EndDate.Format(time.RFC3339)
 	}
 
 	if !pkg.StartDate.IsZero() {
-		res.StartDate = timestamppb.New(pkg.StartDate)
+		res.StartDate = pkg.StartDate.Format(time.RFC3339)
 	}
 
 	return res

@@ -7,6 +7,8 @@
  */
 'use client';
 import {
+  Sim_Status,
+  Sim_Types,
   SubscribersResDto,
   useAddPackageToSimMutation,
   useAddSubscriberMutation,
@@ -17,7 +19,7 @@ import {
   useGetPackagesForSimLazyQuery,
   useGetPackagesQuery,
   useGetSimLazyQuery,
-  useGetSimpoolStatsQuery,
+  useGetSimPoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
   useGetSubscriberLazyQuery,
@@ -89,8 +91,13 @@ const Page = () => {
     },
   });
 
-  const { data: simPoolData } = useGetSimsQuery({
-    variables: { type: env.SIM_TYPE },
+  const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
+    variables: {
+      data: {
+        status: Sim_Status.Unassigned,
+        type: env.SIM_TYPE as Sim_Types,
+      },
+    },
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
@@ -362,20 +369,22 @@ const Page = () => {
           show: true,
         });
         setQrCode(res.allocateSim.iccid);
-        getPackagesForSim({
-          variables: {
-            data: {
-              sim_id: res.allocateSim.id,
-            },
-          },
-        });
-        getSim({
-          variables: {
-            data: {
-              simId: res.allocateSim.id,
-            },
-          },
-        });
+        // getPackagesForSim({
+        //   variables: {
+        //     data: {
+        //       sim_id: res.allocateSim.id,
+        //     },
+        //   },
+        // });
+        // getSim({
+        //   variables: {
+        //     data: {
+        //       simId: res.allocateSim.id,
+        //     },
+        //   },
+        // });
+        refetchSimPoolStats();
+        refetchSims();
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -409,7 +418,7 @@ const Page = () => {
               subscriber_id: res.addSubscriber.uuid,
               sim_type: env.SIM_TYPE,
               iccid: addSubscriberData.iccid,
-              traffic_policy: 10,
+              traffic_policy: 0,
             },
           },
         });
@@ -424,18 +433,23 @@ const Page = () => {
       },
     });
 
-  const { data: simStatData } = useGetSimpoolStatsQuery({
-    variables: { type: env.SIM_TYPE },
-    fetchPolicy: 'cache-and-network',
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sims-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  const { data: simStatData, refetch: refetchSimPoolStats } =
+    useGetSimPoolStatsQuery({
+      variables: {
+        data: {
+          type: env.SIM_TYPE as Sim_Types,
+        },
+      },
+      fetchPolicy: 'cache-and-network',
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-stats-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
