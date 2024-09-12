@@ -105,7 +105,12 @@ class SimApi extends RESTDataSource {
       },
     });
 
-    logger.info(`SimRes: ${JSON.stringify(simRes)}`);
+    if (simRes.sim.id) {
+      await this.addPackageToSim(baseURL, {
+        package_id: req.package_id,
+        sim_id: simRes.sim.id,
+        start_date: dayjs().add(10, "seconds").format(),
+      });
 
     if (simRes.sim.id) {
       await this.toggleSimStatus(baseURL, {
