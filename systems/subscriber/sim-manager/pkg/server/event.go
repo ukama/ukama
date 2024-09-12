@@ -109,7 +109,7 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 	}
 
 	if cdr.Type != ukama.CdrTypeData.String() {
-		log.Warnf("Unsupported CDR Type (%s) received for usage count. Skipping", cdr.Type)
+		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
 
 		return nil
 	}
