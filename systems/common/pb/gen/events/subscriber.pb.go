@@ -198,9 +198,11 @@ type EventSubscriberUpdate struct {
 
 func (x *EventSubscriberUpdate) Reset() {
 	*x = EventSubscriberUpdate{}
-	mi := &file_events_subscriber_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_subscriber_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
 }
 
 func (x *EventSubscriberUpdate) String() string {
@@ -211,7 +213,7 @@ func (*EventSubscriberUpdate) ProtoMessage() {}
 
 func (x *EventSubscriberUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_events_subscriber_proto_msgTypes[2]
-	if x != nil {
+	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -337,6 +339,44 @@ func init() { file_events_subscriber_proto_init() }
 func file_events_subscriber_proto_init() {
 	if File_events_subscriber_proto != nil {
 		return
+	}
+	if !protoimpl.UnsafeEnabled {
+		file_events_subscriber_proto_msgTypes[0].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberAdded); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_subscriber_proto_msgTypes[1].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberDeleted); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_subscriber_proto_msgTypes[2].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberUpdate); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
