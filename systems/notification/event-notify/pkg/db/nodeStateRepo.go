@@ -67,4 +67,3 @@ func (r *nodeStateRepo) GetAllNodeStates() ([]*NodeState, error) {
 
 	return nodeStates, nil
 }
-

@@ -37,20 +37,20 @@ type EventToNotifyServer struct {
 	notificationRepo     db.NotificationRepo
 	userRepo             db.UserRepo
 	userNotificationRepo db.UserNotificationRepo
-	nodeStateRepo db.NodeStateRepo
+	nodeStateRepo        db.NodeStateRepo
 	eventMsgRepo         db.EventMsgRepo
 	msgbus               mb.MsgBusServiceClient
 	memberkClient        creg.MemberClient
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, nodeStateRepo db.NodeStateRepo,msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, nodeStateRepo db.NodeStateRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
 	return &EventToNotifyServer{
 		orgName:              orgName,
 		orgId:                orgId,
 		notificationRepo:     notificationRepo,
 		userNotificationRepo: userNotificationRepo,
-		nodeStateRepo:nodeStateRepo,
+		nodeStateRepo:        nodeStateRepo,
 		userRepo:             userRepo,
 		eventMsgRepo:         eventMsgRepo,
 		msgbus:               msgBus,
@@ -78,15 +78,18 @@ func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateSt
 }
 
 func (n *EventToNotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Infof("Getting notification %v", req)
+	log.Infof("Getting notification with ID: %v", req.GetId())
 
 	nuuid, err := uuid.FromString(req.GetId())
 	if err != nil {
+		log.Errorf("Invalid UUID format: %v", err)
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of notification uuid. Error %s", err.Error())
 	}
+
 	notification, err := n.notificationRepo.Get(nuuid)
 	if err != nil {
+		log.Errorf("Error retrieving notification: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
 
@@ -97,13 +100,16 @@ func (n *EventToNotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.
 
 func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
 	log.Infof("Getting notifications %v", req)
-
 	var ouuid, nuuid, suuid, uuuid uuid.UUID
 	var err error
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+	var nId ukama.NodeID
+
+	if req.GetNodeId() != "" {
+		nId, err = ukama.ValidateNodeId(req.NodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of node id. Error %s", err.Error())
+		}
 	}
 
 	if req.GetOrgId() != "" {
@@ -153,7 +159,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		roleType = upb.RoleType(upb.RoleType_value[resp.Member.Role])
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(),nId.String(), uint8(roleType))
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), nId.String(), uint8(roleType))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -184,7 +190,16 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Type:        upb.NotificationType_name[int32(i.Type)],
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
+			NodeStateId: i.NodeState.Id.String(),
 			CreatedAt:   timestamppb.New(createdAt),
+			NodeState: &pb.NodeState{
+				Id:           i.NodeState.Id.String(),
+				Name:         i.NodeState.Name,
+				NodeId:       i.NodeState.NodeId,
+				Latitude:     i.NodeState.Latitude,
+				Longitude:    i.NodeState.Longitude,
+				CurrentState: i.NodeState.CurrentState,
+			},
 		}
 		res = append(res, n)
 	}
@@ -192,28 +207,33 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 }
 
 func dbNotificationToPbNotification(notification *db.Notification) *pb.Notification {
-    pbNodeState := &pb.NodeState{
-        NodeId:       notification.NodeState.NodeId,
-        Latitude:     notification.NodeState.Latitude,
-        Longitude:    notification.NodeState.Longitude,
-        CurrentState: notification.NodeState.CurrentState,
-    }
+	pbNotification := &pb.Notification{
+		Id:           notification.Id.String(),
+		Title:        notification.Title,
+		Description:  notification.Description,
+		Type:         upb.NotificationType(notification.Type),
+		Scope:        upb.NotificationScope(notification.Scope),
+		OrgId:        notification.OrgId,
+		NodeStateId:  notification.NodeStateID.String(),
+		NetworkId:    notification.NetworkId,
+		SubscriberId: notification.SubscriberId,
+		UserId:       notification.UserId,
+		CreatedAt:    timestamppb.New(notification.CreatedAt),
+	}
 
-    return &pb.Notification{
-        Id:           notification.Id.String(),
-        Title:        notification.Title,
-        Description:  notification.Description,
-        Type:         upb.NotificationType(notification.Type),
-        Scope:        upb.NotificationScope(notification.Scope),
-        OrgId:        notification.OrgId,
-        NetworkId:    notification.NetworkId,
-        SubscriberId: notification.SubscriberId,
-        UserId:       notification.UserId,
-        CreatedAt:    timestamppb.New(notification.CreatedAt),
-        NodeState:    pbNodeState, 
-    }
+	if notification.NodeState != nil {
+		pbNotification.NodeState = &pb.NodeState{
+			Id:           notification.NodeState.Id.String(),
+			Name:         notification.NodeState.Name,
+			NodeId:       notification.NodeState.NodeId,
+			Latitude:     notification.NodeState.Latitude,
+			Longitude:    notification.NodeState.Longitude,
+			CurrentState: notification.NodeState.CurrentState,
+		}
+	}
+
+	return pbNotification
 }
-
 
 func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	m := map[db.Users]struct{}{}
@@ -229,7 +249,7 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	return usersList
 }
 
-func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, nodeId string ,scope notif.NotificationScope) ([]*db.Users, error) {
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, nodeId string, scope notif.NotificationScope) ([]*db.Users, error) {
 	var userList []*db.Users
 	var err error
 	roleTypes := notif.NotificationScopeToRoles[scope]
@@ -294,20 +314,19 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 
 func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 	if dn.NodeState != nil {
-        err := n.nodeStateRepo.Add(dn.NodeState)
-        if err != nil {
-            log.Errorf("Error adding NodeState to db: %v", err)
-            return err
-        }
-        // Ensure the NodeStateID is set correctly
-        dn.NodeStateID = dn.NodeState.Id
-    }
+		err := n.nodeStateRepo.Add(dn.NodeState)
+		if err != nil {
+			log.Errorf("Error adding NodeState to db: %v", err)
+			return err
+		}
+		dn.NodeStateID = dn.NodeState.Id
+	}
 	err := n.notificationRepo.Add(dn)
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
 	}
 
-	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.NodeId,dn.Scope)
+	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.NodeId, dn.Scope)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)
@@ -325,8 +344,8 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 				NotificationId: dn.Id,
 				UserId:         u.Id,
 				IsRead:         false,
-				NodeState:      dn.NodeState, 
-				
+				NodeStateID:    dn.NodeStateID,
+				NodeState:      dn.NodeState,
 			})
 		}
 	}

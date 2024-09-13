@@ -31,7 +31,7 @@ type Sub struct {
 	OrgId        string
 	NetworkId    string
 	UserId       string
-	NodeId		 string
+	NodeId       string
 	SubscriberId string
 	Scopes       []notification.NotificationScope
 	DataChan     chan *pb.Notification
@@ -50,7 +50,7 @@ type notifyHandler struct {
 }
 
 type NotifyHandler interface {
-	Register(orgId string, networkId string, subscriberId string, userId string,nodeId string, scopes []notification.NotificationScope) (string, *Sub)
+	Register(orgId string, networkId string, subscriberId string, userId string, nodeId string, scopes []notification.NotificationScope) (string, *Sub)
 	Deregister(id string) error
 	Start()
 	Stop()
@@ -70,7 +70,7 @@ func NewNotifyHandler(db *uconf.Database, c providers.EventNotifyClientProvider)
 	}
 }
 
-func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string,nodeId string, scopes []notification.NotificationScope) (string, *Sub) {
+func (h *notifyHandler) Register(orgId string, networkId string, subscriberId string, userId string, nodeId string, scopes []notification.NotificationScope) (string, *Sub) {
 
 	sub := Sub{
 		Id:           uuid.NewV4(),
@@ -78,7 +78,7 @@ func (h *notifyHandler) Register(orgId string, networkId string, subscriberId st
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,
-		NodeId:		  nodeId,
+		NodeId:       nodeId,
 		Scopes:       scopes,
 		DataChan:     make(chan *pb.Notification, BufferCapacity),
 		QuitChan:     make(chan bool),
@@ -139,6 +139,8 @@ func (h *notifyHandler) processNotification(n *pb.Notification) {
 func (h *notifyHandler) notifyHandlerRoutine() {
 	log.Infof("DB notify handler routine for %+v", h.Db)
 
+	log.Infof("DB notify handler routine for %+v", h.Db)
+
 	db, err := sql.Open(DbDriverName, "postgresql://"+h.Db.Username+":"+h.Db.Password+"@"+h.Db.Host+":"+strconv.Itoa(h.Db.Port)+"/"+h.Db.DbName+"?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
@@ -161,28 +163,41 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 	}
 	defer listener.Close()
 
-	/*TODO: - Close the stream
-	- May be check where the notifivcatins are getting filtered based on userid/kid or subscriberid
-	- This will only report notifcation when websocket is connected if we have any old notification(stores 8Gb)  that had to be reterived by
-	anyother API method
-	- Looks like if this is session/user based we might not get trigeer properly beacuse all of the listner will be reading form the same notify queue.
-	*/
 	for {
 		select {
 		case notification := <-listener.Notify:
-			log.Infof("DB notify received for %+v", notification)
+			log.Infof("DB notify received: %+v", notification)
 
-			/* Parse DB trigger details */
+			if notification == nil {
+				log.Warn("Received nil notification, skipping")
+				continue
+			}
+
 			params := strings.Split(notification.Extra, ",")
-			isRead, _ := strconv.ParseBool(params[2])
+			log.Infof("Parsed notification params: %v", params)
 
-			/* Get notifcation detaild from event-notify service */
-			res, err := h.c.Get(context.Background(), &enpb.GetRequest{Id: params[1]})
+			if len(params) < 5 {
+				log.Errorf("Invalid notification format: %v", notification.Extra)
+				continue
+			}
+
+			isRead, err := strconv.ParseBool(params[2])
+			if err != nil {
+				log.Errorf("Error parsing isRead: %v", err)
+				continue
+			}
+
+			notificationId := params[1]
+			log.Infof("Fetching notification details for ID: %s", notificationId)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			res, err := h.c.Get(ctx, &enpb.GetRequest{Id: notificationId})
+			cancel()
+
 			if err != nil {
 				log.Errorf("Error getting notification: %v", err)
 				continue
 			}
-
 			un := &pb.Notification{
 				IsRead:       isRead,
 				Id:           res.Notification.Id,
@@ -190,19 +205,31 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				Title:        res.Notification.Title,
 				UserId:       res.Notification.UserId,
 				NetworkId:    res.Notification.NetworkId,
-				NodeId:		  res.Notification.NodeId,
+				NodeId:       res.Notification.NodeId,
 				Description:  res.Notification.Description,
 				SubscriberId: res.Notification.SubscriberId,
+				NodeStateId:  res.Notification.NodeStateId,
 				Type:         upb.NotificationType(res.Notification.Type),
 				Scope:        upb.NotificationScope(res.Notification.Scope),
 				CreatedAt:    res.Notification.CreatedAt.AsTime().Format(time.RFC3339),
 			}
-			log.Infof("Notification is %+v", un)
+
+			if res.Notification.NodeState != nil {
+				un.NodeState = &pb.NodeState{
+					Id:           res.Notification.NodeState.Id,
+					Name:         res.Notification.NodeState.Name,
+					NodeId:       res.Notification.NodeState.NodeId,
+					CurrentState: res.Notification.NodeState.CurrentState,
+					Latitude:     res.Notification.NodeState.Latitude,
+					Longitude:    res.Notification.NodeState.Longitude,
+				}
+			}
 
 			h.processNotification(un)
 
 		case <-h.done:
-			log.Infof("Stopping Db notify handler routine.")
+			log.Info("Stopping DB notify handler routine.")
+			return
 		}
 	}
 }

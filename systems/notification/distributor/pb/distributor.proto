@@ -11,6 +11,7 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
 
 import "ukama/notification.proto";
+import "google/protobuf/timestamp.proto";
 package ukama.notification.distributor.v1;
 
 service DistributorService {
@@ -37,6 +38,7 @@ message NotificationStreamRequest {
     string userId = 4 [json_name = "user_id"];
     string nodeId =5 [json_name = "node_id"];
     repeated string scopes = 6 [json_name = "scopes"];
+    NodeState nodeState = 7;
 }
 
 message Notification {
@@ -51,5 +53,17 @@ message Notification {
     string userId = 9 [json_name = "user_id"];
     string nodeId = 10 [json_name = "node_id"];
     bool isRead = 11 [json_name = "is_read"];
-    string createdAt = 12 [json_name = "created_at"];
+    string nodeStateId = 12;
+    NodeState nodeState = 13;  
+    string createdAt = 14 [json_name = "created_at"];
+}
+
+message NodeState {  
+    string id = 1;
+    string name = 2;
+    string nodeId = 3 [json_name = "node_id"];
+    double latitude = 4;
+    double longitude = 5;
+    string currentState = 6;
+    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }

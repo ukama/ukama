@@ -9,8 +9,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -39,11 +37,37 @@ func (r *userNotificationRepo) Add(un []*UserNotification) error {
 
 func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications, error) {
 	var notifications []*Notifications
-	q := fmt.Sprintf("SELECT user_notifications.is_read,notifications.title,notifications.description,notifications.scope,notifications.type,notifications.id,notifications.created_at,notifications.updated_at FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id WHERE user_notifications.user_id = '%s';", id)
-	d := r.Db.GetGormDb().Exec(q).Find(&notifications)
+	query := `
+		SELECT
+			UN.is_read,
+			N.title,
+			N.description,
+			N.scope,
+			N.type,
+			N.id,
+			N.created_at,
+			N.updated_at,
+			NS.id as node_state_id,
+			NS.node_id,
+			NS.latitude,
+			NS.longitude,
+			NS.current_state
+			NS.name
+		FROM
+			user_notifications AS UN
+		INNER JOIN
+			notifications AS N ON UN.notification_id = N.id
+		LEFT JOIN
+			node_state AS NS ON UN.node_state_id = NS.id
+		WHERE
+			UN.user_id = ?;
+	`
+
+	d := r.Db.GetGormDb().Raw(query, id).Scan(&notifications)
 	if d.Error != nil {
 		return nil, d.Error
 	}
+
 	return notifications, nil
 }
 

@@ -39,7 +39,7 @@ type DistributorServer struct {
 	nodeClient         creg.NodeClient
 }
 
-func NewDistributorServer(nc creg.NetworkClient,nodec creg.NodeClient,  mc creg.MemberClient, sc sreg.SubscriberClient, n db.NotifyHandler, orgName string, orgId string, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
+func NewDistributorServer(nc creg.NetworkClient, nodec creg.NodeClient, mc creg.MemberClient, sc sreg.SubscriberClient, n db.NotifyHandler, orgName string, orgId string, eventNotifyService providers.EventNotifyClientProvider) *DistributorServer {
 
 	d := &DistributorServer{
 		notify:             n,
@@ -49,7 +49,7 @@ func NewDistributorServer(nc creg.NetworkClient,nodec creg.NodeClient,  mc creg.
 		networkClient:      nc,
 		memberkClient:      mc,
 		subscriberClient:   sc,
-		nodeClient:nodec,
+		nodeClient:         nodec,
 	}
 
 	/* start notification handler routine */
@@ -66,7 +66,7 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 			return roleType, status.Errorf(codes.InvalidArgument, "invalid org id")
 		}
 	}
-	
+
 	/* validate member of org or member role */
 	if req.GetUserId() != "" {
 		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
@@ -84,14 +84,15 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 				"invalid network id. Error %s", err.Error())
 		}
 	}
-	
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err == nil {
-		_, err = n.nodeClient.Get(nId.String())
-	}
-
-	if err != nil {
-		return roleType, status.Errorf(codes.InvalidArgument, "invalid node id or failed to get node. Error: %s", err.Error())
+	if req.GetNodeId() != "" {
+		nId, err := ukama.ValidateNodeId(req.NodeId)
+		if err == nil {
+			_, err = n.nodeClient.Get(nId.String())
+		}
+		if err != nil {
+			return roleType, status.Errorf(codes.InvalidArgument,
+				"invalid network id. Error %s", err.Error())
+		}
 	}
 
 	if req.GetSubscriberId() != "" {
@@ -132,7 +133,7 @@ func (n *DistributorServer) GetNotificationStream(req *pb.NotificationStreamRequ
 	}
 
 	/* register */
-	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId,req.NodeId, commonScopes)
+	id, sub := n.notify.Register(req.OrgId, req.NetworkId, req.SubscriberId, req.UserId, req.NodeId, commonScopes)
 
 	defer func() {
 		if err := n.notify.Deregister(id); err != nil {
