@@ -78,7 +78,7 @@ const getNotifications = async (
   baseUrl: string,
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, userId, networkId, subscriberId } = args;
+  const { orgId, userId, networkId, subscriberId, nodeId } = args;
 
   let params = "";
   if (orgId) {
@@ -94,6 +94,9 @@ const getNotifications = async (
     params = params + `&subscriber_id=${subscriberId}`;
   }
 
+  if (subscriberId) {
+    params = params + `&node_id=${nodeId}`;
+  }
   if (params.length > 0) params = params.substring(1);
   logger.info(
     `GetNotifications [GET]: ${baseUrl}/${VERSION}/event-notification?${params}`

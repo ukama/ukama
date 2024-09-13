@@ -132,9 +132,20 @@ export const parseNotification = (
     isRead: notification.is_read,
     createdAt: notification.created_at,
     description: notification.description,
+    nodeStateId: notification.node_state_id || "",
+    nodeState: notification.node_state
+      ? {
+          Id: notification.node_state.Id,
+          name: notification.node_state.name,
+          nodeId: notification.node_state.nodeId,
+          current_state: notification.node_state.current_state,
+          latitude: notification.node_state.latitude,
+          longitude: notification.node_state.longitude,
+          created_at: notification.node_state.created_at,
+        }
+      : null,
   };
 };
-
 export const parseNotificationsRes = (
   res: NotificationsAPIRes
 ): NotificationsRes => {
