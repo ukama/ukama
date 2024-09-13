@@ -93,12 +93,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		log.Infof("Default network %+v", networkInfo)
 	}
 
-	// if s.orgId != networkInfo.OrgId {
-	// 	log.Error("Missing network.")
-
-	// 	return nil, fmt.Errorf("Network mismatch")
-	// }
-
 	// if remoteOrg.IsDeactivated {
 	// 	return nil, status.Errorf(codes.FailedPrecondition,
 	// 		"org is deactivated: cannot add network to it")
@@ -134,14 +128,21 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.AddSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing add subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberAdded{
+		Dob:          req.GetDob(),
+		Email:        req.GetEmail(),
+		Gender:       req.GetGender(),
+		LastName:     req.GetLastName(),
+		FirstName:    req.GetFirstName(),
+		NetworkId:    req.GetNetworkId(),
+		PhoneNumber:  req.GetPhoneNumber(),
+		SubscriberId: subscriber.SubscriberId.String(),
 	})
 
 	return &pb.AddSubscriberResponse{
-		Subscriber: subscriberPb,
+		Subscriber: dbSubscriberToPbSubscriber(subscriber, []*upb.Sim{}),
 	}, nil
 }
 
@@ -353,11 +354,15 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
-
 	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.UpdateSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing update subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberUpdate{
+		Email:                 subscriber.Email,
+		Address:               subscriber.Address,
+		IdSerial:              subscriber.IdSerial,
+		PhoneNumber:           subscriber.PhoneNumber,
+		SubscriberId:          subscriber.SubscriberId.String(),
+		ProofOfIdentification: subscriber.ProofOfIdentification,
 	})
 
 	return &pb.UpdateSubscriberResponse{}, nil
@@ -386,11 +391,10 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
-
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.RemoveSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing delete subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberDeleted{
+		SubscriberId: subscriber.SubscriberId.String(),
 	})
 
 	return &pb.DeleteSubscriberResponse{}, nil

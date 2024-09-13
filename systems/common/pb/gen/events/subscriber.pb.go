@@ -194,6 +194,93 @@ func (x *EventSubscriberDeleted) GetSubscriberId() string {
 	return ""
 }
 
+type EventSubscriberUpdate struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SubscriberId          string `protobuf:"bytes,1,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+	Email                 string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	PhoneNumber           string `protobuf:"bytes,3,opt,name=phoneNumber,proto3" json:"phoneNumber,omitempty"`
+	Address               string `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
+	IdSerial              string `protobuf:"bytes,5,opt,name=idSerial,proto3" json:"idSerial,omitempty"`
+	ProofOfIdentification string `protobuf:"bytes,6,opt,name=proofOfIdentification,json=proof_of_identification,proto3" json:"proofOfIdentification,omitempty"`
+}
+
+func (x *EventSubscriberUpdate) Reset() {
+	*x = EventSubscriberUpdate{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_subscriber_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EventSubscriberUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventSubscriberUpdate) ProtoMessage() {}
+
+func (x *EventSubscriberUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_events_subscriber_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventSubscriberUpdate.ProtoReflect.Descriptor instead.
+func (*EventSubscriberUpdate) Descriptor() ([]byte, []int) {
+	return file_events_subscriber_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EventSubscriberUpdate) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+func (x *EventSubscriberUpdate) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *EventSubscriberUpdate) GetPhoneNumber() string {
+	if x != nil {
+		return x.PhoneNumber
+	}
+	return ""
+}
+
+func (x *EventSubscriberUpdate) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *EventSubscriberUpdate) GetIdSerial() string {
+	if x != nil {
+		return x.IdSerial
+	}
+	return ""
+}
+
+func (x *EventSubscriberUpdate) GetProofOfIdentification() string {
+	if x != nil {
+		return x.ProofOfIdentification
+	}
+	return ""
+}
+
 var File_events_subscriber_proto protoreflect.FileDescriptor
 
 var file_events_subscriber_proto_rawDesc = []byte{
@@ -245,10 +332,11 @@ func file_events_subscriber_proto_rawDescGZIP() []byte {
 	return file_events_subscriber_proto_rawDescData
 }
 
-var file_events_subscriber_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_events_subscriber_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_events_subscriber_proto_goTypes = []any{
 	(*EventSubscriberAdded)(nil),   // 0: ukama.events.v1.EventSubscriberAdded
 	(*EventSubscriberDeleted)(nil), // 1: ukama.events.v1.EventSubscriberDeleted
+	(*EventSubscriberUpdate)(nil),  // 2: ukama.events.v1.EventSubscriberUpdate
 }
 var file_events_subscriber_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -288,6 +376,18 @@ func file_events_subscriber_proto_init() {
 				return nil
 			}
 		}
+		file_events_subscriber_proto_msgTypes[2].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberUpdate); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -295,7 +395,7 @@ func file_events_subscriber_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_events_subscriber_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
