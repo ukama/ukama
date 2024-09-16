@@ -31,6 +31,12 @@ export class NotificationsAPIDto {
 
   @Field()
   created_at: string;
+
+  @Field()
+  node_state_id: string;
+
+  @Field(() => NodeState, { nullable: true })
+  node_state: NodeState | null;
 }
 
 @ObjectType()
@@ -63,7 +69,36 @@ export class NotificationAPIDto {
   subscriber_id: string;
 
   @Field()
+  node_state_id: string;
+
+  @Field(() => NodeState, { nullable: true })
+  node_state: NodeState | null;
+
+  @Field()
   user_id: string;
+}
+@ObjectType()
+export class NodeState {
+  @Field()
+  Id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  current_state: string;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+
+  @Field()
+  created_at: string;
 }
 
 @ObjectType()
@@ -104,6 +139,12 @@ export class NotificationResDto {
   subscriberId: string;
 
   @Field()
+  nodeStateId: string;
+
+  @Field(() => NodeState, { nullable: true })
+  nodeState: NodeState | null;
+
+  @Field()
   networkId: string;
 
   @Field()
@@ -126,6 +167,12 @@ export class NotificationsDto {
 
   @Field(() => NOTIFICATION_SCOPE)
   scope: NOTIFICATION_SCOPE;
+
+  @Field()
+  nodeStateId: string;
+
+  @Field(() => NodeState, { nullable: true })
+  nodeState: NodeState | null;
 
   @Field()
   isRead: boolean;

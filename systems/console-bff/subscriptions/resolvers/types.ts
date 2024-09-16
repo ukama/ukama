@@ -165,7 +165,7 @@ export class SubMetricByTabInput {
 }
 
 @ObjectType()
-export class NodeState {
+export class NodeStateAPIResDto {
   @Field()
   Id: string;
 
@@ -207,8 +207,8 @@ export class NotificationsAPIResDto {
   @Field()
   node_state_id: string;
 
-  @Field(() => NodeState, { nullable: true })
-  node_state: NodeState | null;
+  @Field(() => NodeStateAPIResDto, { nullable: true })
+  node_state: NodeStateAPIResDto | null;
 
   @Field()
   is_read: boolean;
@@ -221,6 +221,29 @@ export class NotificationsAPIResDto {
 export class NotificationsAPIRes {
   @Field(() => [NotificationsAPIResDto])
   notifications: NotificationsAPIResDto[];
+}
+@ObjectType()
+export class NodeStateResDto {
+  @Field()
+  Id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  currentState: string;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+
+  @Field()
+  createdAt: string;
 }
 
 @ObjectType()
@@ -246,8 +269,8 @@ export class NotificationsResDto {
   @Field()
   nodeStateId: string;
 
-  @Field(() => NodeState, { nullable: true })
-  nodeState: NodeState | null;
+  @Field(() => NodeStateResDto, { nullable: true })
+  nodeState: NodeStateResDto | null;
 
   @Field()
   isRead: boolean;

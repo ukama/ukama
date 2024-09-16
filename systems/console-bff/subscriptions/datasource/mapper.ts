@@ -138,10 +138,10 @@ export const parseNotification = (
           Id: notification.node_state.Id,
           name: notification.node_state.name,
           nodeId: notification.node_state.nodeId,
-          current_state: notification.node_state.current_state,
+          currentState: notification.node_state.current_state,
           latitude: notification.node_state.latitude,
           longitude: notification.node_state.longitude,
-          created_at: notification.node_state.created_at,
+          createdAt: notification.node_state.created_at,
         }
       : null,
   };
