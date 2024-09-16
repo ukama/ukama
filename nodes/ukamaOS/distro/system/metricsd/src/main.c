@@ -6,10 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "collector.h"
-#include "file.h"
-#include "log.h"
-
 #include <errno.h>
 #include <getopt.h>
 #include <signal.h>
@@ -20,10 +16,24 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "collector.h"
+#include "file.h"
+#include "log.h"
+#include "web_service.h"
+
+#include "usys_error.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+#include "usys_services.h"
+
 #include "version.h"
 
 #define METRIC_CONFIG "./config/metrics_config.toml"
 #define DEF_LOG_LEVEL "TRACE"
+
+/* define in network.c */
+extern int start_admin_web_service(UInst *adminInst);
 
 /* Terminate signal handler for Metrics collector */
 void handle_sigint(int signum) {
@@ -77,6 +87,8 @@ int main(int argc, char **argv) {
   char *cfg = METRIC_CONFIG;
   char *debug = DEF_LOG_LEVEL;
 
+  UInst adminInst;
+  
   /* Parsing command line args. */
   while (true) {
     int opt = 0;
@@ -118,6 +130,12 @@ int main(int argc, char **argv) {
   /* Signal handler */
   signal(SIGINT, handle_sigint);
 
+  /* start admin webservice */
+  if(start_admin_web_service(&adminInst) != USYS_TRUE) {
+      usys_log_error("Webservice failed to setup for admin. Exiting");
+      exit(1);
+  }
+  
   /* Start metrics collector. */
   ret = collector(cfg);
 
