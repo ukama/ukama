@@ -37,11 +37,17 @@ const Page = () => {
   const handleOnInstalled = (isChecked: boolean) => {
     setIsChecked(isChecked);
   };
+  // const onInstallProgressComplete = () => {
+  //   const id = 'uk-sa9001-tnode-a1-1234';
+  //   router.push(`/configure/node/${id}?lat=-4.322447&lng=15.307045`);
+  // };
   const onInstallProgressComplete = () => {
-    const id = 'uk-sa9001-tnode-a1-1234';
-    router.push(`/configure/node/${id}?lat=-4.322447&lng=15.307045`);
-  };
+    const id = searchParams.get('nodeId') ?? 'uk-sa9001-tnode-a1-1234';
+    const lat = searchParams.get('lat') ?? '-4.322447';
+    const lng = searchParams.get('lng') ?? '15.307045';
 
+    router.push(`/configure/node/${id}?lat=${lat}&lng=${lng}`);
+  };
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       {checkForInstallation ? (

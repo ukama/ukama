@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -46,6 +39,7 @@ export type GetMetricByTabInput = {
 
 export type GetNotificationsInput = {
   networkId: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
   role: Role_Type;
@@ -102,6 +96,17 @@ export enum Notification_Type {
   NotifWarning = 'NOTIF_WARNING'
 }
 
+export type NodeStateResDto = {
+  __typename?: 'NodeStateResDto';
+  Id: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  currentState: Scalars['String']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+};
+
 export type NotificationsRes = {
   __typename?: 'NotificationsRes';
   notifications: Array<NotificationsResDto>;
@@ -113,6 +118,8 @@ export type NotificationsResDto = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  nodeState?: Maybe<NodeStateResDto>;
+  nodeStateId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -168,14 +175,14 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', Id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   data: GetNotificationsInput;
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', Id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -207,6 +214,16 @@ export const GetNotificationsDocument = gql`
       isRead
       createdAt
       description
+      nodeStateId
+      nodeState {
+        Id
+        nodeId
+        name
+        currentState
+        latitude
+        longitude
+        createdAt
+      }
     }
   }
 }
@@ -254,6 +271,16 @@ export const NotificationSubscriptionDocument = gql`
     isRead
     createdAt
     description
+    nodeStateId
+    nodeState {
+      Id
+      nodeId
+      name
+      currentState
+      latitude
+      longitude
+      createdAt
+    }
   }
 }
     `;

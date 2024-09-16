@@ -7,7 +7,10 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import {
+  NotificationsResDto,
+  NodeStateResDto,
+} from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -26,6 +29,7 @@ interface ILayoutProps {
   handleAddNetwork: Function;
   handleNetworkChange: Function;
   notifications: NotificationsResDto[];
+  onConfigureSite: (nodeState: NodeStateResDto) => void;
   handleNotificationRead: (id: string) => void;
 }
 
@@ -41,6 +45,7 @@ const AppLayout = ({
   isDarkMode,
   placeholder,
   handleAddNetwork,
+  onConfigureSite,
   handleNetworkChange,
   notifications,
   handleNotificationRead,
@@ -74,6 +79,7 @@ const AppLayout = ({
         isOpen={open}
         isLoading={isLoading}
         onNavigate={onNavigate}
+        onConfigureSite={onConfigureSite}
         notifications={notifications}
         handleNotificationRead={handleNotificationRead}
       />

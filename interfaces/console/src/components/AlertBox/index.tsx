@@ -1,11 +1,5 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import React, { useState } from 'react';
+import { NotificationsResDto, NodeStateResDto } from '@/client/graphql/generated/subscriptions';
 import { Circle, MoreHoriz } from '@mui/icons-material';
 import {
   Box,
@@ -15,16 +9,23 @@ import {
   ListItem,
   Popover,
   Typography,
+  Button,
 } from '@mui/material';
 import { format } from 'date-fns';
-import { useState } from 'react';
 
 interface AlertBoxProps {
   alerts: NotificationsResDto[] | undefined;
   handleNotificationRead: (id: string) => void;
+  configShowButtonState: string;
+  onConfigureSite: (nodeState: NodeStateResDto) => void;
 }
 
-const AlertBox = ({ alerts, handleNotificationRead }: AlertBoxProps) => {
+const AlertBox: React.FC<AlertBoxProps> = ({
+  alerts,
+  handleNotificationRead,
+  configShowButtonState,
+  onConfigureSite,
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -47,7 +48,6 @@ const AlertBox = ({ alerts, handleNotificationRead }: AlertBoxProps) => {
     >
       <Box display="flex" justifyContent="flex-start" alignItems="center" p={2}>
         <Typography variant="h6">Alerts</Typography>
-
         <Typography variant="body1" paddingLeft={1}>
           ({alerts?.filter((alert) => !alert.isRead).length ?? 0})
         </Typography>
@@ -89,6 +89,21 @@ const AlertBox = ({ alerts, handleNotificationRead }: AlertBoxProps) => {
                   <MoreHoriz />
                 </IconButton>
               </Box>
+              {alert.nodeState &&
+                alert.nodeState.currentState === configShowButtonState && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => {
+                      if (alert.nodeState) {
+                        onConfigureSite(alert.nodeState);
+                      }
+                    }}
+                    sx={{ mt: 1 }}
+                  >
+                    Configure Site
+                  </Button>
+                )}
               <Popover
                 id={id}
                 open={open}

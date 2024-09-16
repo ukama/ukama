@@ -9,6 +9,7 @@
 import {
   NotificationsResDto,
   Role_Type,
+  NodeStateResDto,
 } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
@@ -32,6 +33,7 @@ interface IHeaderProps {
   onNavigate: Function;
   notifications: NotificationsResDto[];
   handleNotificationRead: (id: string) => void;
+  onConfigureSite: (nodeState: NodeStateResDto) => void;
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -64,6 +66,7 @@ const Header = ({
   isLoading,
   onNavigate,
   notifications,
+  onConfigureSite,
   handleNotificationRead,
 }: IHeaderProps) => {
   const { user } = useAppContext();
@@ -106,6 +109,7 @@ const Header = ({
             <Alert
               alerts={notifications}
               handleNotificationRead={handleNotificationRead}
+              onConfigureSite={onConfigureSite}
             />
             <AccountPopover />
           </Stack>

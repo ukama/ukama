@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -639,6 +632,17 @@ export type NodeSite = {
   siteId?: Maybe<Scalars['String']['output']>;
 };
 
+export type NodeState = {
+  __typename?: 'NodeState';
+  Id: Scalars['String']['output'];
+  created_at: Scalars['String']['output'];
+  current_state: Scalars['String']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+};
+
 export type NodeStatus = {
   __typename?: 'NodeStatus';
   connectivity: Scalars['String']['output'];
@@ -684,6 +688,8 @@ export type NotificationResDto = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
+  nodeState?: Maybe<NodeState>;
+  nodeStateId: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
   scope: Notification_Scope;
   subscriberId: Scalars['String']['output'];
@@ -698,6 +704,8 @@ export type NotificationsDto = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  nodeState?: Maybe<NodeState>;
+  nodeStateId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;

@@ -23,7 +23,12 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
-
+const (
+	SeverityLow      = "low"
+	SeverityMedium   = "medium"
+	SeverityHigh     = "high"
+	SeverityCritical = "critical"
+)
 type EventToNotifyEventServer struct {
 	orgName string
 	orgId   string
@@ -529,12 +534,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
+	
 		switch msg.Severity {
-		case "low":
+		case SeverityLow:
 			c.Type = notif.TYPE_INFO
-		case "medium":
+		case SeverityMedium:
 			c.Type = notif.TYPE_WARNING
-		case "high", "critical":
+		case SeverityHigh, SeverityCritical:
 			c.Type = notif.TYPE_CRITICAL
 		default:
 			c.Type = notif.TYPE_INFO
