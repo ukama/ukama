@@ -14,6 +14,41 @@
 
 static struct MHD_Daemon *mhd_daemon;
 
+/* Free the KPI config and registry */
+void metric_server_free_kpi(KPIConfig *kpi) {
+  if (kpi) {
+      if (kpi->registry) {
+          switch (kpi->type) {
+          case METRICTYPE_COUNTER:
+              if (kpi->registry->counter) {
+                  prom_counter_destroy(kpi->registry->counter);
+              }
+              break;
+
+          case METRICTYPE_GAUGE:
+              if (kpi->registry->gauge) {
+                  prom_gauge_destroy(kpi->registry->gauge);
+              }
+              break;
+
+          case METRICTYPE_HISTOGRAM:
+              if (kpi->registry->histogram) {
+                  prom_histogram_destroy(kpi->registry->histogram);
+              }
+              break;
+
+          default:
+              log_error("METRICS:: Invalid KPI type %d for KPI %s.",
+                        kpi->type, kpi->name);
+              break;
+          }
+
+          free(kpi->registry);
+          kpi->registry = NULL;
+      }
+  }
+}
+
 /* Initialize metric */
 int metric_server_register_kpi(KPIConfig *kpi) {
 

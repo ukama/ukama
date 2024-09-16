@@ -98,7 +98,6 @@ KPIConfig *alloc_kpi(int count) {
   return kpi;
 }
 
-/* Free KPI */
 void free_kpi(KPIConfig *kpi, int count) {
   if (kpi) {
     for (int idx = 0; idx < count; idx++) {
@@ -108,6 +107,8 @@ void free_kpi(KPIConfig *kpi, int count) {
       free_str_value(kpi[idx].desc);
       free_str_value(kpi[idx].unit);
       free_labels(kpi[idx].labels, kpi[idx].numLabels);
+
+      metric_server_free_kpi(&kpi[idx]);
     }
     free(kpi);
     kpi = NULL;
@@ -140,20 +141,44 @@ MetricsCatConfig *alloc_stat(int count) {
   return stat;
 }
 
-/* Free stat */
 void free_stat(MetricsCatConfig *stat, int count) {
-  if (stat) {
-    for (int idx = 0; idx < count; idx++) {
-      free_str_value(stat[idx].source);
-      free_str_value(stat[idx].agent);
-      free_str_value(stat[idx].url);
-      free_range(stat[idx].range);
-      int kcount = (stat->instances) ? (stat->instances) : 1;
-      free_kpi(stat[idx].kpi, stat[idx].kpiCount * kcount);
+    if (stat) {
+        for (int idx = 0; idx < count; idx++) {
+
+            free_str_value(stat[idx].source);
+            free_str_value(stat[idx].agent);
+            free_str_value(stat[idx].url);
+
+            if (stat[idx].range) {
+                free_range(stat[idx].range);
+                stat[idx].range = NULL;
+            }
+
+            if (stat[idx].kpi) {
+                int kpi_instance_count = (stat[idx].instances) ? stat[idx].instances : 1;
+                free_kpi(stat[idx].kpi, stat[idx].kpiCount * kpi_instance_count);
+            }
+        }
+        free(stat);
+        stat = NULL;
     }
-    free(stat);
-    stat = NULL;
-  }
+}
+
+/* Free stat config */
+void free_stat_cfg(MetricsConfig *stat_cfg, int count) {
+    if (stat_cfg) {
+        for (int idx = 0; idx < count; idx++) {
+            // Free dynamically allocated category name
+            free_str_value(stat_cfg[idx].name);
+            
+            // Free each stat category
+            if (stat_cfg[idx].metricsCategory) {
+                free_stat(stat_cfg[idx].metricsCategory, stat_cfg[idx].eachCategoryCount);
+            }
+        }
+        free(stat_cfg);
+        stat_cfg = NULL;
+    }
 }
 
 /* Allocate stat table */
@@ -163,18 +188,6 @@ MetricsConfig *alloc_stat_cfg(int count) {
     return NULL;
   }
   return stat_cfg;
-}
-
-/* Free stat table*/
-void free_stat_cfg(MetricsConfig *stat_cfg, int count) {
-  if (stat_cfg) {
-    for (int idx = 0; idx < count; idx++) {
-      free_str_value(stat_cfg[idx].name);
-      free_stat(stat_cfg[idx].metricsCategory, stat_cfg[idx].eachCategoryCount);
-    }
-    free(stat_cfg);
-    stat_cfg = NULL;
-  }
 }
 
 /* convert to lower_case */

@@ -143,6 +143,10 @@ int collector(char *cfg) {
     categoryCount = 0;
   }
 
+  if (version) {
+      free(version);
+  }
+
   return ret;
 }
 
