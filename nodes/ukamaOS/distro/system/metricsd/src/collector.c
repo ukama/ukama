@@ -13,6 +13,9 @@
 #include "log.h"
 #include "server.h"
 
+#include "usys_file.h"
+#include "usys_services.h"
+
 static int categoryCount = 0;
 static MetricsConfig *metricsCfg = NULL;
 bool collectionFlag = true;
@@ -92,13 +95,15 @@ int collector(char *cfg) {
   int ret = RETURN_OK;
   char *version;
   int scraping_time_period = 0;
-  int server_port = 7001;
+  int server_port;
 
   /* Registry init */
   metric_server_registry_init();
 
+  server_port = usys_find_service_port(SERVICE_METRICS);
+
   /* Parsing config */
-  ret = toml_parse_config(cfg, &version, &scraping_time_period, &server_port,
+  ret = toml_parse_config(cfg, &version, &scraping_time_period,
                           &metricsCfg, &categoryCount);
   if (metricsCfg && (categoryCount <= 0)) {
     return RETURN_NOTOK;
@@ -108,6 +113,7 @@ int collector(char *cfg) {
   metric_server_set_active_registry();
 
   /* Starting metric server */
+  server_port = usys_find_service_port(SERVICE_METRICS);
   metric_server_start(server_port);
 
   /* Collect KPI metrics */

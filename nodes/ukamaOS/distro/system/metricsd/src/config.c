@@ -570,8 +570,7 @@ static int toml_parse_stat_cat_array(MetricsConfig *stat_cfg,
 }
 
 int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
-                      int *server_port, MetricsConfig **pstat_cfg,
-                      int *cat_count) {
+                      MetricsConfig **pstat_cfg, int *cat_count) {
   FILE *fp;
   char errbuf[200];
   char *node;
@@ -605,9 +604,6 @@ int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
   *scraping_time_period = read_int_value(conf, TAG_SCRAPING_TIME_PERIOD);
   log_trace("Metrics:: Scraping time period read is %d.",
             *scraping_time_period);
-
-  *server_port = read_int_value(conf, TAG_SERVER_PORT);
-  log_trace("Metrics:: Metric server port %d.", *server_port);
 
 #if 0
     /* Parse Source list */
