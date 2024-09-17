@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { NotificationsResDto, NodeStateResDto } from '@/client/graphql/generated/subscriptions';
+import {
+  NotificationsResDto,
+  NodeStateResDto,
+} from '@/client/graphql/generated/subscriptions';
 import { Circle, MoreHoriz } from '@mui/icons-material';
 import {
   Box,
@@ -9,7 +12,7 @@ import {
   ListItem,
   Popover,
   Typography,
-  Button,
+  MenuItem,
 } from '@mui/material';
 import { format } from 'date-fns';
 
@@ -27,13 +30,30 @@ const AlertBox: React.FC<AlertBoxProps> = ({
   onConfigureSite,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedAlert, setSelectedAlert] =
+    useState<NotificationsResDto | null>(null);
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    alert: NotificationsResDto,
+  ) => {
+    if (alert.nodeState) {
+      event.stopPropagation();
+      setAnchorEl(event.currentTarget);
+      setSelectedAlert(alert);
+    }
   };
 
   const handleClose = () => {
     setAnchorEl(null);
+    setSelectedAlert(null);
+  };
+
+  const handleConfigureSite = () => {
+    if (selectedAlert?.nodeState) {
+      onConfigureSite(selectedAlert.nodeState);
+    }
+    handleClose();
   };
 
   const open = Boolean(anchorEl);
@@ -85,46 +105,35 @@ const AlertBox: React.FC<AlertBoxProps> = ({
                 <Typography variant="body2" sx={{ flexGrow: 1 }}>
                   {alert.description}
                 </Typography>
-                <IconButton onClick={handleMenuClick}>
-                  <MoreHoriz />
-                </IconButton>
-              </Box>
-              {alert.nodeState &&
-                alert.nodeState.currentState === configShowButtonState && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => {
-                      if (alert.nodeState) {
-                        onConfigureSite(alert.nodeState);
-                      }
-                    }}
-                    sx={{ mt: 1 }}
-                  >
-                    Configure Site
-                  </Button>
+                {alert.nodeState && (
+                  <IconButton onClick={(e) => handleMenuClick(e, alert)}>
+                    <MoreHoriz />
+                  </IconButton>
                 )}
-              <Popover
-                id={id}
-                open={open}
-                anchorEl={anchorEl}
-                onClose={handleClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'center',
-                }}
-              >
-                {/* <DeleteNotification /> */}
-              </Popover>
+              </Box>
             </ListItem>
             <Divider sx={{ margin: 0 }} />
           </Box>
         ))}
       </List>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        {selectedAlert?.nodeState?.currentState === configShowButtonState && (
+          <MenuItem onClick={handleConfigureSite}>Configure Site</MenuItem>
+        )}
+      </Popover>
     </Box>
   );
 };

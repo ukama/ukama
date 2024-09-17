@@ -70,8 +70,7 @@ const (
 
 var EventRoutingKey = [...]string{
 	EventAddSite:			"event.cloud.local.{{ .Org}}.registry.site.site.add",
-	// EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
-	EventNodeStateChange:         "event.cloud.local.{{ .Org}}.registry.node.node.change",
+	EventNodeStateChange:   "event.cloud.local.{{ .Org}}.node.node.state.change",
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
@@ -122,7 +121,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Key:         EventNodeStateChange,
 		Name:        "EventNodeStateChange",
 		Title:       "Node State Changed",
-		Description: "Node State Changed",
+		Description: "Your Node State has Changed",
 		Scope:       notif.SCOPE_NODE,
 		Type:        TypeDefault,
 	},

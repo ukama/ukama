@@ -28,11 +28,11 @@
     "metric-dev": "nodemon --watch \"metric/**\" --ext \"ts,json,graphql\" --exec \"ts-node metric/index.ts\"",
     "package-dev": "nodemon --watch \"package/**\" --ext \"ts,json,graphql\" --exec \"ts-node package/index.ts\"",
     "notification-dev": "nodemon --watch \"notification/**\" --ext \"ts,json,graphql\" --exec \"ts-node notification/index.ts\"",
-    "all-dev": "concurrently \"yarn notification-dev\" \"yarn metric-dev\" \"yarn init-dev\" \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn subscriber-dev\" \"yarn subscriptions-dev\" \"yarn sim-dev\" \"yarn package-dev\" \"yarn rate-dev\" \"yarn invitation-dev\" \"yarn member-dev\" \"yarn component-dev\" \"yarn site-dev\"  \"yarn gateway-dev\"",
+    "all-dev": "concurrently \"yarn notification-dev\" \"yarn metric-dev\" \"yarn init-dev\" \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn subscriber-dev\" \"yarn sim-dev\" \"yarn package-dev\" \"yarn rate-dev\" \"yarn invitation-dev\" \"yarn member-dev\" \"yarn component-dev\" \"yarn site-dev\"  \"yarn gateway-dev\"",
     "planning-tool-dev": "prisma generate --schema=./planning-tool/prisma/schema.prisma && nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"ts-node planning-tool/index.ts\"",
     "subscriptions-dev": "yarn clear-cache && nodemon --watch \"subscriptions/**\" --ext \"ts,json,graphql\" --exec \"ts-node subscriptions/index.ts\"",
     "test": "TOKEN=ZmJjMmE4MGQtMzM5ZS00ZDNjLWFjYWEtMzI5ZGQzZDFiMjIxO3VrYW1hLXRlc3Qtb3JnO2QyYmZhNTU5LTZjMjMtNDZmYi1hMmI4LWE0M2U2MmMxNWU0YztTYWxtYW47c2FsbWFuQHVrYW1hLmNvbTtST0xFX09XTkVSO3RydWU%3D jest --no-cache",
-    "all-start": "node dist/init/index.js & node dist/org/index.js & node dist/metric/index.js & node dist/member/index.js & node dist/notification/index.js & node dist/user/index.js & node dist/network/index.js & node dist/site/index.js & node dist/node/index.js & node dist/subscriber/index.js & node dist/sim/index.js & node dist/package/index.js & node dist/rate/index.js & node dist/invitation/index.js & node dist/component/index.js & node dist/gateway/index.js & node dist/subscriptions/index.js"
+    "all-start": "node dist/init/index.js & node dist/org/index.js & node dist/metric/index.js & node dist/member/index.js & node dist/notification/index.js & node dist/user/index.js & node dist/network/index.js & node dist/site/index.js & node dist/node/index.js & node dist/subscriber/index.js & node dist/sim/index.js & node dist/package/index.js & node dist/rate/index.js & node dist/invitation/index.js & node dist/component/index.js & node dist/gateway/index.js"
   },
   "dependencies": {
     "@apollo/datasource-rest": "^6.3.0",

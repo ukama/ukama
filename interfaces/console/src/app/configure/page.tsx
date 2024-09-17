@@ -37,10 +37,6 @@ const Page = () => {
   const handleOnInstalled = (isChecked: boolean) => {
     setIsChecked(isChecked);
   };
-  // const onInstallProgressComplete = () => {
-  //   const id = 'uk-sa9001-tnode-a1-1234';
-  //   router.push(`/configure/node/${id}?lat=-4.322447&lng=15.307045`);
-  // };
   const onInstallProgressComplete = () => {
     const id = searchParams.get('nodeId') ?? 'uk-sa9001-tnode-a1-1234';
     const lat = searchParams.get('lat') ?? '-4.322447';
