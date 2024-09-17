@@ -13,6 +13,7 @@
 #include "metrics.h"
 
 int metric_server_add_kpi_data(KPIConfig *kpi, void *value);
+void metric_server_free_kpi(KPIConfig *kpi);
 int metric_server_register_kpi(KPIConfig *kpi);
 int metric_server_start(int port);
 

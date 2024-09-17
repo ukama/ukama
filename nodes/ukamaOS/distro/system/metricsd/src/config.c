@@ -6,15 +6,15 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "config.h"
-#include "log.h"
-#include "server.h"
-#include "toml.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "config.h"
+#include "log.h"
+#include "server.h"
+#include "toml.h"
 
 char g_node[32] = {'\0'};
 

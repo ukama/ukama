@@ -15,6 +15,7 @@
 #include "usys_types.h"
 #include "usys_log.h"
 #include "usys_services.h"
+#include "usys_file.h"
 
 static int init_framework(UInst *inst, int port) {
 
