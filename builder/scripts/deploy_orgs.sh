@@ -359,12 +359,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             cd ../..
         fi
         if [[ " ${SYSTEM} " == " bff " ]]; then
-           cp .env.dev.example .env
-               echo ".env file created and content copied from .env.dev.example for bff"
+            cd console-bff
+            cp .env.dev.example .env
+            echo ".env file created and content copied from .env.dev.example for bff"
+            cd ..
         fi
         if [[ " ${SYSTEM} " == " console " ]]; then
-           cp .env.dev.example .env.local
-           echo ".env.local file created and content copied from .env.dev.example for console"
+            cd ../interfaces/console
+            cp .env.dev.example .env.local
+            echo ".env.local file created and content copied from .env.dev.example for console"
+            cd ../../systems
         fi
         
         SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
