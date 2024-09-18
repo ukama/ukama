@@ -286,6 +286,10 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
                 sed -i '' '/- 5404:5432/d' docker-compose.yml
                 sed -i '' '/- 8074:8080/d' docker-compose.yml
+                sed -i '' '/- 4446:4446/d' docker-compose.yml
+                sed -i '' '/- 4447:4447/d' docker-compose.yml
+                sed -i '' '/- 4423:4423/d' docker-compose.yml
+                sed -i '' '/- 4424:4424/d' docker-compose.yml
             fi
         done
         cd $root_dir
