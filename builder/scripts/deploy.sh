@@ -212,7 +212,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
         ;;
-
     "dataplan")
         sleep 2
         echo  "$TAG Add default baserate in dataplan..."
