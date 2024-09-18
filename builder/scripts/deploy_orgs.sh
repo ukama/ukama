@@ -395,8 +395,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         cd ../
     done
 
-
     cleanup
+
     if [[ "${ORG_TYPE}" =~ "${ORG_COMMUNITY}" ]]; then
         sleep 3
         if ($IS_INVENTORY_SYS); then
